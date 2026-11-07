@@ -94,13 +94,24 @@ struct _SDLWindow:
         the screen on macOS."""
         self.sdl = SDL()
         self.sdl.init_subsystems(offscreen)
+        var window_width = width
+        var window_height = height
         try:
+            # Where SDL sizes windows in pixels (X11, Windows), the requested
+            # size is scaled by the display's content scale so it covers as
+            # much of the screen as on Wayland and macOS, where SDL sizes in
+            # logical units and the content scale is 1. Taken from the primary
+            # display, since the window has none before it exists.
+            if not offscreen:
+                var scale = self.sdl.primary_display_content_scale()
+                window_width = Int(round(Float64(width) * scale))
+                window_height = Int(round(Float64(height) * scale))
             for attribute in gl_attributes:
                 self.sdl.gl_set_attribute(attribute[0], attribute[1])
             self.handle = self.sdl.create_window(
                 title,
-                Int32(width),
-                Int32(height),
+                Int32(window_width),
+                Int32(window_height),
                 resizable,
                 opengl=opengl,
                 fullscreen=fullscreen,
@@ -114,8 +125,8 @@ struct _SDLWindow:
         try:
             # Fullscreen and maximized make SDL ignore the requested size, so
             # the real one has to be queried before anything is sized from it.
-            self.width = width
-            self.height = height
+            self.width = window_width
+            self.height = window_height
             if fullscreen or maximized:
                 self.width, self.height = self.sdl.get_window_size(self.handle)
             self.sdl.start_text_input(self.handle)
