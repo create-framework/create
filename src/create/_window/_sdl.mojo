@@ -259,6 +259,21 @@ struct SDL:
             UInt32(max(seconds, 0.0) * 1000.0),
         )
 
+    def primary_display_content_scale(self) raises -> Float64:
+        """How much the desktop asks apps to enlarge their UI on the primary
+        display, beyond what the platform scales itself: 2.0 for X11 under a
+        scaled GNOME, 1.0 on Wayland and macOS, which scale windows for the
+        app. 1.0 if SDL can't tell."""
+        var display = self.lib.call["SDL_GetPrimaryDisplay", UInt32]()
+        if display == 0:
+            return 1.0
+        var scale = self.lib.call["SDL_GetDisplayContentScale", Float32](
+            display
+        )
+        if scale <= 0:
+            return 1.0
+        return Float64(scale)
+
     def create_window(
         self,
         title: String,
