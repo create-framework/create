@@ -88,7 +88,7 @@ inside both backends' ink — i.e. nowhere near an edge disagreement."""
 comptime _INTERIOR_MARGIN = 3
 """Pixels a candidate must stay clear of any ink/background disagreement.
 1 was enough while every shape's edges were straight, but a rounded
-corner's fill/outline boundary is itself a curve, and the GPU tessellator
+corner's fill/stroke boundary is itself a curve, and the GPU tessellator
 renders it as a fan of straight segments rather than the CPU rasteriser's
 exact circle test — the same kind of disagreement the outer edge is
 already allowed, just one pixel wider where two colours meet on an arc."""
@@ -136,7 +136,7 @@ comptime _SHAPE_BLURRED_CLOSED_SPLINE = 39
 comptime _SHAPE_TRANSLUCENT_ARC = 40
 comptime _SHAPE_SECTOR = 41
 comptime _SHAPE_TRANSLUCENT_PAC_MAN = 42
-comptime _SHAPE_OUTLINED_DISC_SECTOR = 43
+comptime _SHAPE_STROKED_DISC_SECTOR = 43
 comptime _SHAPE_SHADOWED_SECTOR = 44
 comptime _SHAPE_BLURRED_SECTOR_RING = 45
 comptime _SHAPE_POLYGON = 46
@@ -193,7 +193,7 @@ def _blurred(var s: Style) -> Style:
 def _inset(var s: Style, blur: Float64 = 0.0) -> Style:
     """`s` with an opaque inset shadow, its band along the top-left inner
     edges. Over a light fill the band is compared like any interior colour;
-    over no fill it is the only ink inside the outline."""
+    over no fill it is the only ink inside the stroke."""
     s = _shadowed(s^)
     s.shadow_inset = True
     s.shadow_blur = blur
@@ -204,7 +204,7 @@ def _shape_name(shape: Int) -> String:
     if shape == _SHAPE_RECT:
         return "rect"
     elif shape == _SHAPE_STROKED_RECT:
-        return "outlined rect"
+        return "stroked rect"
     elif shape == _SHAPE_CIRCLE:
         return "circle"
     elif shape == _SHAPE_LINE:
@@ -287,8 +287,8 @@ def _shape_name(shape: Int) -> String:
         return "sector"
     elif shape == _SHAPE_TRANSLUCENT_PAC_MAN:
         return "translucent pac-man sector"
-    elif shape == _SHAPE_OUTLINED_DISC_SECTOR:
-        return "outlined whole-turn sector"
+    elif shape == _SHAPE_STROKED_DISC_SECTOR:
+        return "stroked whole-turn sector"
     elif shape == _SHAPE_SHADOWED_SECTOR:
         return "shadowed sector"
     elif shape == _SHAPE_BLURRED_SECTOR_RING:
@@ -318,7 +318,7 @@ def _shape_name(shape: Int) -> String:
     elif shape == _SHAPE_GRADIENT_RECT:
         return "gradient rect"
     elif shape == _SHAPE_GRADIENT_ROUNDED_RECT:
-        return "outlined rounded gradient rect"
+        return "stroked rounded gradient rect"
     elif shape == _SHAPE_RADIAL_CIRCLE:
         return "radial circle"
     elif shape == _SHAPE_RADIAL_ELLIPSE:
@@ -389,26 +389,26 @@ struct _Parity(Program):
 
         if self.shape == _SHAPE_RECT:
             with canvas.style():
-                canvas.outline_enabled(False)
+                canvas.stroke_enabled(False)
                 canvas.fill(Color(0xE0, 0x40, 0x40))
                 canvas.rectangle((-20, 20), 50, 30)
         elif self.shape == _SHAPE_STROKED_RECT:
             with canvas.style():
                 canvas.fill(Color(0x40, 0xC0, 0xE0))
-                canvas.outline(Color.BLACK, thickness=4)
+                canvas.stroke(Color.BLACK, thickness=4)
                 canvas.rectangle((10, 40), 50, 30)
         elif self.shape == _SHAPE_CIRCLE:
             with canvas.style():
-                canvas.outline_enabled(False)
+                canvas.stroke_enabled(False)
                 canvas.fill(Color(0xF0, 0xC0, 0x30))
                 canvas.circle((-60, -20), 24)
         elif self.shape == _SHAPE_LINE:
             with canvas.style():
-                canvas.outline(Color(0x80, 0xFF, 0x80), thickness=3)
+                canvas.stroke(Color(0x80, 0xFF, 0x80), thickness=3)
                 canvas.line((-90, -60), (90, -60))
         elif self.shape == _SHAPE_TRIANGLE:
             with canvas.style():
-                canvas.outline_enabled(False)
+                canvas.stroke_enabled(False)
                 canvas.fill(Color(0xA0, 0x60, 0xF0))
                 canvas.triangle((20, -50), (70, -50), (45, -5))
         elif self.shape == _SHAPE_IMAGE:
@@ -417,14 +417,14 @@ struct _Parity(Program):
             canvas.image(self.image, (70, 50), 2, 2)
         elif self.shape == _SHAPE_TEXT:
             with canvas.style():
-                canvas.outline_enabled(False)
+                canvas.stroke_enabled(False)
                 canvas.text_color(Color.WHITE)
                 canvas.font_size(16)
                 canvas.text_align(Align.CENTER)
                 canvas.text("parity", (0, 0))
         elif self.shape == _SHAPE_ITALIC_TEXT:
             with canvas.style(
-                outline_enabled=False,
+                stroke_enabled=False,
                 text_color=Color.WHITE,
                 font_size=16,
                 font_italic=True,
@@ -436,25 +436,25 @@ struct _Parity(Program):
             # against the GL tessellator's per-vertex transform — the one
             # shape kind the parity set otherwise never touches.
             with canvas.style():
-                canvas.outline_enabled(False)
+                canvas.stroke_enabled(False)
                 canvas.fill(Color(0x60, 0xE0, 0x90))
                 with canvas.transform(rotate(0.5)):
                     canvas.rectangle((30, -70), 40, 20)
         elif self.shape == _SHAPE_ROUNDED_RECT:
-            # Filled and outlined, so both the fill's cross decomposition and
-            # the outline's inset ring get exercised on both backends.
+            # Filled and stroked, so both the fill's cross decomposition and
+            # the stroke's inset ring get exercised on both backends.
             with canvas.style():
                 canvas.fill(Color(0xE0, 0x90, 0x40))
-                canvas.outline(Color.BLACK, thickness=4)
+                canvas.stroke(Color.BLACK, thickness=4)
                 canvas.rectangle((-70, 40), 44, 30, corner_radius=10)
         elif self.shape == _SHAPE_SHADOWED_RECT:
-            # Outlined, so the silhouette has to cover the ring as one layer.
+            # Stroked, so the silhouette has to cover the ring as one layer.
             with canvas.style(
                 _shadowed(
                     Style(
                         fill=Color(0x40, 0xC0, 0xE0),
-                        outline=Color.BLACK,
-                        outline_thickness=4,
+                        stroke=Color.BLACK,
+                        stroke_thickness=4,
                     )
                 )
             ):
@@ -462,18 +462,18 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_SHADOWED_CIRCLE:
             with canvas.style(
                 _shadowed(
-                    Style(fill=Color(0xF0, 0xC0, 0x30), outline_enabled=False)
+                    Style(fill=Color(0xF0, 0xC0, 0x30), stroke_enabled=False)
                 )
             ):
                 canvas.circle((-60, -20), 24)
         elif self.shape == _SHAPE_SHADOWED_TRIANGLE:
-            # Outlined: the silhouette grows by half the centred band.
+            # Stroked: the silhouette grows by half the centred band.
             with canvas.style(
                 _shadowed(
                     Style(
                         fill=Color(0xA0, 0x60, 0xF0),
-                        outline=Color.BLACK,
-                        outline_thickness=4,
+                        stroke=Color.BLACK,
+                        stroke_thickness=4,
                     )
                 )
             ):
@@ -481,7 +481,7 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_SHADOWED_LINE:
             with canvas.style(
                 _shadowed(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=3)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=3)
                 )
             ):
                 canvas.line((-90, -40), (90, -40))
@@ -489,7 +489,7 @@ struct _Parity(Program):
             with canvas.style(
                 _shadowed(
                     Style(
-                        outline_enabled=False,
+                        stroke_enabled=False,
                         text_color=Color.WHITE,
                         font_size=16,
                     )
@@ -505,17 +505,17 @@ struct _Parity(Program):
             # Sharp corners: the exact separable form.
             with canvas.style(
                 _blurred(
-                    Style(fill=Color(0x40, 0xC0, 0xE0), outline_enabled=False)
+                    Style(fill=Color(0x40, 0xC0, 0xE0), stroke_enabled=False)
                 )
             ):
                 canvas.rectangle((-20, 10), 60, 40)
         elif self.shape == _SHAPE_BLURRED_RING:
-            # Outline only, and thicker than sigma, so the hole shows.
+            # Stroke only, and thicker than sigma, so the hole shows.
             with canvas.style(
                 _blurred(
                     Style(
-                        outline=Color(0xE0, 0x90, 0x40),
-                        outline_thickness=12,
+                        stroke=Color(0xE0, 0x90, 0x40),
+                        stroke_thickness=12,
                     )
                 )
             ):
@@ -523,7 +523,7 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_BLURRED_CIRCLE:
             with canvas.style(
                 _blurred(
-                    Style(fill=Color(0xF0, 0xC0, 0x30), outline_enabled=False)
+                    Style(fill=Color(0xF0, 0xC0, 0x30), stroke_enabled=False)
                 )
             ):
                 canvas.circle((-40, 0), 28)
@@ -532,8 +532,8 @@ struct _Parity(Program):
                 _blurred(
                     Style(
                         fill=Color(0xA0, 0x60, 0xF0),
-                        outline=Color.BLACK,
-                        outline_thickness=4,
+                        stroke=Color.BLACK,
+                        stroke_thickness=4,
                     )
                 )
             ):
@@ -541,7 +541,7 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_BLURRED_TRIANGLE_RING:
             with canvas.style(
                 _blurred(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=12)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=12)
                 )
             ):
                 canvas.triangle((-60, -45), (50, -45), (-5, 50))
@@ -549,7 +549,7 @@ struct _Parity(Program):
             # Diagonal, so the quad follows the stroke's own frame.
             with canvas.style(
                 _blurred(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=6)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=6)
                 )
             ):
                 canvas.line((-70, -40), (50, 40))
@@ -558,7 +558,7 @@ struct _Parity(Program):
             with canvas.style(
                 _blurred(
                     Style(
-                        outline_enabled=False,
+                        stroke_enabled=False,
                         text_color=Color.WHITE,
                         font_size=40,
                     )
@@ -574,8 +574,8 @@ struct _Parity(Program):
                 _inset(
                     Style(
                         fill=Color(0xF0, 0xE0, 0xC0),
-                        outline=Color(0x30, 0x60, 0xC0),
-                        outline_thickness=4,
+                        stroke=Color(0x30, 0x60, 0xC0),
+                        stroke_thickness=4,
                     )
                 )
             ):
@@ -583,17 +583,17 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_BLURRED_INSET_RECT:
             with canvas.style(
                 _inset(
-                    Style(fill=Color(0xF0, 0xE0, 0xC0), outline_enabled=False),
+                    Style(fill=Color(0xF0, 0xE0, 0xC0), stroke_enabled=False),
                     8.0,
                 )
             ):
                 canvas.rectangle((-10, 5), 100, 70)
         elif self.shape == _SHAPE_INSET_ROUNDED_RECT:
-            # No fill: the band is the only ink inside the outline.
+            # No fill: the band is the only ink inside the stroke.
             var s = _inset(
                 Style(
-                    outline=Color(0x30, 0x60, 0xC0),
-                    outline_thickness=4,
+                    stroke=Color(0x30, 0x60, 0xC0),
+                    stroke_thickness=4,
                 )
             )
             s.shadow_spread = 3.0
@@ -604,8 +604,8 @@ struct _Parity(Program):
                 _inset(
                     Style(
                         fill=Color(0xF0, 0xE0, 0xC0),
-                        outline=Color(0x30, 0x60, 0xC0),
-                        outline_thickness=4,
+                        stroke=Color(0x30, 0x60, 0xC0),
+                        stroke_thickness=4,
                     ),
                     8.0,
                 )
@@ -614,14 +614,14 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_INSET_CIRCLE:
             with canvas.style(
                 _inset(
-                    Style(outline=Color(0x30, 0x60, 0xC0), outline_thickness=4)
+                    Style(stroke=Color(0x30, 0x60, 0xC0), stroke_thickness=4)
                 )
             ):
                 canvas.circle((-20, 0), 40)
         elif self.shape == _SHAPE_BLURRED_INSET_CIRCLE:
             with canvas.style(
                 _inset(
-                    Style(fill=Color(0xF0, 0xE0, 0xC0), outline_enabled=False),
+                    Style(fill=Color(0xF0, 0xE0, 0xC0), stroke_enabled=False),
                     8.0,
                 )
             ):
@@ -631,8 +631,8 @@ struct _Parity(Program):
                 _inset(
                     Style(
                         fill=Color(0xF0, 0xE0, 0xC0),
-                        outline=Color(0x30, 0x60, 0xC0),
-                        outline_thickness=4,
+                        stroke=Color(0x30, 0x60, 0xC0),
+                        stroke_thickness=4,
                     )
                 )
             ):
@@ -642,7 +642,7 @@ struct _Parity(Program):
                 _inset(
                     Style(
                         fill=Color(0xF0, 0xE0, 0xC0),
-                        outline_enabled=False,
+                        stroke_enabled=False,
                     ),
                     8.0,
                 )
@@ -652,48 +652,48 @@ struct _Parity(Program):
                 )
         elif self.shape == _SHAPE_BEZIER:
             with canvas.style():
-                canvas.outline(Color(0x80, 0xFF, 0x80), thickness=5)
+                canvas.stroke(Color(0x80, 0xFF, 0x80), thickness=5)
                 _bezier(canvas)
         elif self.shape == _SHAPE_TRANSLUCENT_BEZIER:
             # Translucent, so a joint painted twice would show as a darker
             # seam in the interior colour.
             with canvas.style():
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
                 _bezier(canvas)
         elif self.shape == _SHAPE_SHADOWED_BEZIER:
             with canvas.style(
                 _shadowed(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=5)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=5)
                 )
             ):
                 _bezier(canvas)
         elif self.shape == _SHAPE_BLURRED_BEZIER:
             with canvas.style(
                 _blurred(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=5)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=5)
                 )
             ):
                 _bezier(canvas)
         elif self.shape == _SHAPE_SPLINE:
             with canvas.style():
-                canvas.outline(Color(0x80, 0xFF, 0x80), thickness=5)
+                canvas.stroke(Color(0x80, 0xFF, 0x80), thickness=5)
                 _spline(canvas, closed=False)
         elif self.shape == _SHAPE_TRANSLUCENT_CLOSED_SPLINE:
             # Translucent, so a seam painted twice would show darker.
             with canvas.style():
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
                 _spline(canvas, closed=True)
         elif self.shape == _SHAPE_SHADOWED_CLOSED_SPLINE:
             with canvas.style(
                 _shadowed(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=5)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=5)
                 )
             ):
                 _spline(canvas, closed=True)
         elif self.shape == _SHAPE_BLURRED_CLOSED_SPLINE:
             with canvas.style(
                 _blurred(
-                    Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=5)
+                    Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=5)
                 )
             ):
                 _spline(canvas, closed=True)
@@ -701,57 +701,57 @@ struct _Parity(Program):
             # Clockwise past a turn, so it closes; translucent, so the
             # closing joint would show darker if painted twice.
             with canvas.style():
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
                 canvas.arc((0, 0), 70, 0.5, -7.0)
         elif self.shape == _SHAPE_SECTOR:
-            # Under a half turn, rotated, filled and outlined.
+            # Under a half turn, rotated, filled and stroked.
             with canvas.style():
                 canvas.fill(Color(0x50, 0xA0, 0xD0))
-                canvas.outline(Color.BLACK, thickness=6)
+                canvas.stroke(Color.BLACK, thickness=6)
                 with canvas.transform(rotate(0.4)):
                     canvas.sector((-40, -55), 110, 0.2, 1.1)
         elif self.shape == _SHAPE_TRANSLUCENT_PAC_MAN:
             # Past a half turn, clockwise, so the tip is round; translucent,
-            # so a seam between fill and outline would show darker.
+            # so a seam between fill and stroke would show darker.
             with canvas.style():
                 canvas.fill(Color(0xFF, 0xC0, 0x20, 0x80))
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=10)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=10)
                 canvas.sector((0, 0), 65, -0.6, -(TAU - 1.2))
-        elif self.shape == _SHAPE_OUTLINED_DISC_SECTOR:
-            # A whole turn, outline only: a ring.
+        elif self.shape == _SHAPE_STROKED_DISC_SECTOR:
+            # A whole turn, stroke only: a ring.
             with canvas.style():
                 canvas.fill_enabled(False)
-                canvas.outline(Color(0x80, 0xFF, 0x80), thickness=8)
+                canvas.stroke(Color(0x80, 0xFF, 0x80), thickness=8)
                 canvas.sector((0, 0), 60, 1.0, TAU)
         elif self.shape == _SHAPE_SHADOWED_SECTOR:
             # Past a half turn and spread, so the shadow reaches round the
             # tip into the missing wedge.
             var s = _shadowed(
-                Style(fill=Color(0xFF, 0xC0, 0x20), outline_thickness=4)
+                Style(fill=Color(0xFF, 0xC0, 0x20), stroke_thickness=4)
             )
             s.shadow_spread = 6.0
             with canvas.style(s):
                 canvas.sector((-10, 10), 60, 0.6, TAU - 1.2)
         elif self.shape == _SHAPE_BLURRED_SECTOR_RING:
-            # Outline only, under a half turn: the blurred mask of a ring.
+            # Stroke only, under a half turn: the blurred mask of a ring.
             var s = _blurred(
-                Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=8)
+                Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=8)
             )
             s.shadow_spread = 3.0
             with canvas.style(s):
                 canvas.sector((-50, -40), 110, 0.2, 1.2)
         elif self.shape == _SHAPE_POLYGON:
-            # A hexagon under rotation and non-uniform scale, outlined.
+            # A hexagon under rotation and non-uniform scale, stroked.
             with canvas.style():
                 canvas.fill(Color(0x50, 0xA0, 0xD0))
-                canvas.outline(Color.BLACK, thickness=6)
+                canvas.stroke(Color.BLACK, thickness=6)
                 with canvas.transform(rotate(0.3) @ scale(1.3, 0.8)):
                     canvas.draw(Polygon.regular((0, 0), 70, 6))
         elif self.shape == _SHAPE_CONCAVE_POLYGON:
-            # An L: the outline rounds off round the reflex corner.
+            # An L: the stroke rounds off round the reflex corner.
             with canvas.style():
                 canvas.fill(Color(0xFF, 0xC0, 0x20))
-                canvas.outline(Color.BLACK, thickness=8)
+                canvas.stroke(Color.BLACK, thickness=8)
                 canvas.polygon(
                     (-80, -70),
                     (80, -70),
@@ -764,26 +764,26 @@ struct _Parity(Program):
             # Translucent, so a seam between quads would show darker.
             with canvas.style():
                 canvas.fill(Color(0xFF, 0xC0, 0x20, 0x80))
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
                 canvas.draw(Polygon.star((0, 0), 80, 35, 5))
         elif self.shape == _SHAPE_PENTAGRAM:
             # Five self-crossing edges: the centre is wound twice.
             var tips = Polygon.regular((0, 0), 80, 5).vertices.copy()
             with canvas.style():
                 canvas.fill(Color(0x80, 0xFF, 0x80))
-                canvas.outline(Color.BLACK, thickness=3)
+                canvas.stroke(Color.BLACK, thickness=3)
                 canvas.polygon(tips[0], tips[2], tips[4], tips[1], tips[3])
         elif self.shape == _SHAPE_ROUNDED_STAR:
             # Rounded tips and notches, translucent so a seam would show.
             with canvas.style():
                 canvas.fill(Color(0xFF, 0xC0, 0x20, 0x80))
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=8)
                 canvas.draw(Polygon.star((0, 0), 80, 35, 5, corner_radius=12))
         elif self.shape == _SHAPE_ROUNDED_PENTAGRAM:
             var tips = Polygon.regular((0, 0), 80, 5).vertices.copy()
             with canvas.style():
                 canvas.fill(Color(0x80, 0xFF, 0x80))
-                canvas.outline(Color.BLACK, thickness=3)
+                canvas.stroke(Color.BLACK, thickness=3)
                 canvas.polygon(
                     tips[0], tips[2], tips[4], tips[1], tips[3], corner_radius=8
                 )
@@ -791,15 +791,15 @@ struct _Parity(Program):
             # Spread, so the shadow rounds off every tip and fills the
             # notches between them.
             var s = _shadowed(
-                Style(fill=Color(0xFF, 0xC0, 0x20), outline_thickness=4)
+                Style(fill=Color(0xFF, 0xC0, 0x20), stroke_thickness=4)
             )
             s.shadow_spread = 6.0
             with canvas.style(s):
                 canvas.draw(Polygon.star((-10, 10), 70, 30, 5))
         elif self.shape == _SHAPE_BLURRED_POLYGON_RING:
-            # Outline only, concave: the blurred mask of a ring.
+            # Stroke only, concave: the blurred mask of a ring.
             var s = _blurred(
-                Style(outline=Color(0x80, 0xFF, 0x80), outline_thickness=8)
+                Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=8)
             )
             s.shadow_spread = 3.0
             with canvas.style(s):
@@ -813,7 +813,7 @@ struct _Parity(Program):
                 )
         elif self.shape == _SHAPE_GRADIENT_RECT:
             # Three stops, one off-centre, so the ramp has a bend in it.
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.linear(
                         [
@@ -826,7 +826,7 @@ struct _Parity(Program):
                 canvas.rectangle((0, 0), 160, 110)
         elif self.shape == _SHAPE_GRADIENT_ROUNDED_RECT:
             with canvas.style():
-                canvas.outline(Color.BLACK, thickness=5)
+                canvas.stroke(Color.BLACK, thickness=5)
                 canvas.fill(
                     Gradient.linear(
                         Color(0xFF, 0xE0, 0x40),
@@ -836,14 +836,14 @@ struct _Parity(Program):
                 )
                 canvas.rectangle((0, 0), 150, 100, corner_radius=18)
         elif self.shape == _SHAPE_RADIAL_CIRCLE:
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.radial(Color.WHITE, Color(0x20, 0x60, 0xFF))
                 )
                 canvas.circle((0, 0), 60)
         elif self.shape == _SHAPE_RADIAL_ELLIPSE:
             # A long box, so the radial is an ellipse, centred off its middle.
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.radial(
                         Color(0xFF, 0xFF, 0xA0),
@@ -853,7 +853,7 @@ struct _Parity(Program):
                 )
                 canvas.rectangle((0, 0), 170, 90)
         elif self.shape == _SHAPE_ROTATED_GRADIENT_RECT:
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.linear(
                         Color(0xFF, 0x80, 0x20), Color(0x20, 0x80, 0xFF)
@@ -862,7 +862,7 @@ struct _Parity(Program):
                 with canvas.transform(rotate(0.6)):
                     canvas.rectangle((0, 0), 120, 70)
         elif self.shape == _SHAPE_TRANSLUCENT_GRADIENT_RECT:
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.linear(
                         Color(0xFF, 0x40, 0x40, 0xF0),
@@ -873,7 +873,7 @@ struct _Parity(Program):
                 canvas.rectangle((0, 0), 160, 100)
         elif self.shape == _SHAPE_GRADIENT_TRIANGLE:
             with canvas.style():
-                canvas.outline(Color.BLACK, thickness=3)
+                canvas.stroke(Color.BLACK, thickness=3)
                 canvas.fill(
                     Gradient.linear(
                         Color(0xFF, 0xD0, 0x20), Color(0xD0, 0x20, 0x20)
@@ -881,7 +881,7 @@ struct _Parity(Program):
                 )
                 canvas.triangle((-80, -60), (80, -50), (10, 65))
         elif self.shape == _SHAPE_GRADIENT_ROUNDED_TRIANGLE:
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.radial(
                         Color(0xA0, 0xFF, 0xA0), Color(0x20, 0x60, 0x20)
@@ -892,7 +892,7 @@ struct _Parity(Program):
                 )
         elif self.shape == _SHAPE_GRADIENT_SECTOR:
             with canvas.style():
-                canvas.outline(Color.BLACK, thickness=3)
+                canvas.stroke(Color.BLACK, thickness=3)
                 canvas.fill(
                     Gradient.linear(
                         Color(0x40, 0xFF, 0x40),
@@ -905,11 +905,11 @@ struct _Parity(Program):
             # Past a half turn: a concave tip, its notch filled.
             with canvas.style():
                 canvas.fill(Color(0xFF, 0xC0, 0x20, 0x80))
-                canvas.outline(Color(0x20, 0x40, 0xFF, 0x80), thickness=6)
+                canvas.stroke(Color(0x20, 0x40, 0xFF, 0x80), thickness=6)
                 canvas.sector((0, 0), 80.0, 0.6, 5.1, corner_radius=14)
         elif self.shape == _SHAPE_GRADIENT_ROUNDED_SECTOR:
             with canvas.style():
-                canvas.outline(Color.BLACK, thickness=3)
+                canvas.stroke(Color.BLACK, thickness=3)
                 canvas.fill(
                     Gradient.linear(
                         Color(0x40, 0xFF, 0x40),
@@ -921,13 +921,13 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_STYLE_ROUNDED_RECT:
             with canvas.style(
                 fill=Color(0x40, 0xC0, 0xE0),
-                outline=Color.BLACK,
-                outline_thickness=4,
+                stroke=Color.BLACK,
+                stroke_thickness=4,
                 corner_radius=18,
             ):
                 canvas.rectangle((0, 0), 140, 90)
         elif self.shape == _SHAPE_GRADIENT_STAR:
-            with canvas.style(outline_enabled=False):
+            with canvas.style(stroke_enabled=False):
                 canvas.fill(
                     Gradient.linear(
                         Color(0xFF, 0xA0, 0x40), Color(0xFF, 0x60, 0xC0)
@@ -947,7 +947,7 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_ROTATED_TEXT:
             # The same masks as upright text, read bilinearly on both.
             with canvas.style(
-                outline_enabled=False,
+                stroke_enabled=False,
                 text_color=Color.WHITE,
                 font_size=24,
                 text_align=Align.CENTER,
@@ -958,7 +958,7 @@ struct _Parity(Program):
             with canvas.style(
                 _blurred(
                     Style(
-                        outline_enabled=False,
+                        stroke_enabled=False,
                         text_color=Color.WHITE,
                         font_size=40,
                     )
@@ -967,12 +967,12 @@ struct _Parity(Program):
                 with canvas.transform(rotate(0.5)):
                     canvas.text("Il", (0, 0))
         else:
-            # Scalene (one acute, one obtuse vertex) and outlined, so both
-            # the per-vertex `PI - theta` span math and the centred-outline
+            # Scalene (one acute, one obtuse vertex) and stroked, so both
+            # the per-vertex `PI - theta` span math and the centred-stroke
             # convention are exercised against the CPU's.
             with canvas.style():
                 canvas.fill(Color(0x50, 0xA0, 0xD0))
-                canvas.outline(Color.BLACK, thickness=4)
+                canvas.stroke(Color.BLACK, thickness=4)
                 canvas.triangle((40, 5), (95, 15), (65, 70), corner_radius=9)
 
 

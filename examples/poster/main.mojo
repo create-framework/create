@@ -88,7 +88,7 @@ struct Poster(Program):
         canvas.background(paper)
 
         # A translucent accent shape behind the words.
-        with canvas.style(fill=accent.with_alpha(110), outline_enabled=False):
+        with canvas.style(fill=accent.with_alpha(110), stroke_enabled=False):
             canvas.circle(
                 (
                     random.float(canvas.left(), canvas.right()),

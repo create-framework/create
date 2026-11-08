@@ -79,7 +79,7 @@ struct App(Program):
             self.pentagram = self.pentagram.translate(mouse + self.grab - first)
 
         canvas.background(_BACKGROUND)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
 
         # Regular polygons, three sides to eight; the one under the mouse
         # lights up.
@@ -130,20 +130,20 @@ struct App(Program):
             fill = Color(240, 236, 222, 190)
         with canvas.style(
             fill=fill,
-            outline=Color(226, 46, 56) if hit else Color(240, 236, 222),
-            outline_thickness=6,
+            stroke=Color(226, 46, 56) if hit else Color(240, 236, 222),
+            stroke_thickness=6,
             shadow=Color(0, 0, 0, 170),
             shadow_offset=Vector2D(10, -14),
             shadow_blur=24,
         ):
             canvas.draw(u)
 
-        # Translucent, so the outline shows every edge, the crossing ones
+        # Translucent, so the stroke shows every edge, the crossing ones
         # through the middle too, while the middle is filled just once.
         with canvas.style(
             fill=Color(201, 140, 150, 90),
-            outline=Color(201, 140, 150),
-            outline_thickness=3,
+            stroke=Color(201, 140, 150),
+            stroke_thickness=3,
         ):
             canvas.draw(self.pentagram)
 

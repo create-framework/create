@@ -32,7 +32,7 @@ struct App(Program):
             fill_gradient=Gradient.linear(
                 Color.hex(0xF0ECDE), Color.hex(0xC98C96)
             ),
-            outline_enabled=False,
+            stroke_enabled=False,
             shadow=Color(0, 0, 0, 90),
             shadow_offset=Vector2D(0, -10),
             shadow_blur=16,
@@ -43,7 +43,7 @@ struct App(Program):
         canvas.background(self.sky)
         self.angle += 0.5 * context.time.delta
 
-        canvas.outline(Color(240, 236, 222), thickness=2)
+        canvas.stroke(Color(240, 236, 222), thickness=2)
         # Left to right.
         canvas.fill(
             Gradient.linear(
@@ -90,13 +90,13 @@ struct App(Program):
                 canvas.rectangle((0, 0), 220, 130, corner_radius=18)
 
         # A fade to transparent: a glow over whatever is behind it.
-        with canvas.style(fill=Color.hex(0x6268A8), outline_enabled=False):
+        with canvas.style(fill=Color.hex(0x6268A8), stroke_enabled=False):
             canvas.circle((150, -140), 45)
         with canvas.style(
             fill_gradient=Gradient.radial(
                 Color(255, 255, 255, 220), Color(240, 236, 222).with_alpha(0)
             ),
-            outline_enabled=False,
+            stroke_enabled=False,
         ):
             canvas.circle((150, -140), 120)
 

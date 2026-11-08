@@ -13,13 +13,13 @@ the batching exists to remove. Applying it on the CPU with the same
 cannot drift geometrically: a vertex here and a scanned pixel there come from
 one function.
 
-**Fill stops where the outline starts.** The CPU replay decides per pixel — a
-pixel is fill *or* outline, never blended twice — so a translucent shape does
-not darken under its own outline. Overlaying a full-size fill quad with a
-outline ring would blend twice and diverge on every alpha edge, so a outlined
-shape's fill is emitted inset to the outline's inner edge instead.
+**Fill stops where the stroke starts.** The CPU replay decides per pixel — a
+pixel is fill *or* stroke, never blended twice — so a translucent shape does
+not darken under its own stroke. Overlaying a full-size fill quad with a
+stroke ring would blend twice and diverge on every alpha edge, so a stroked
+shape's fill is emitted inset to the stroke's inner edge instead.
 
-Outline width is resolved in device pixels through `outline_thickness_px` (so the
+Stroke width is resolved in device pixels through `stroke_thickness_px` (so the
 one-pixel floor is shared with the CPU path) and converted back to local units
 where the ring has to follow a rotated edge.
 """
@@ -47,10 +47,10 @@ from ._shadow import (
     BlurredSilhouette,
     InsetRegion,
     inset_interior,
-    local_outline_thickness,
+    local_stroke_thickness,
     shadow_transform,
 )
-from ._transform import pixel_scale, outline_thickness_px
+from ._transform import pixel_scale, stroke_thickness_px
 from create.color.color import Color
 
 comptime _VERTEX_FLOATS = 13
@@ -239,8 +239,8 @@ def _segment_quad(
 ):
     """A `width`-thick quad along the device segment `(x0, y0)`-`(x1, y1)`.
 
-    Device space, because a outlined *edge* is a pixel-width band about a
-    mapped line — unlike a outlined box's ring, which has to follow the shape
+    Device space, because a stroked *edge* is a pixel-width band about a
+    mapped line — unlike a stroked box's ring, which has to follow the shape
     in local space to survive a rotation.
     """
     var dx = x1 - x0
@@ -359,7 +359,7 @@ def _rounded_rect_ring(
     sf: Float64,
     color: Color,
 ):
-    """The outline ring's own cross decomposition: four straight bands
+    """The stroke ring's own cross decomposition: four straight bands
     between the tangent points, plus a corner annulus fan at each corner.
     Inner and outer corner centres coincide (insetting by `sw` shrinks the
     radius by exactly `sw` too), so each corner is one concentric fan."""
@@ -410,7 +410,7 @@ def _shade_fill(
 def emit_rect(
     mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
 ):
-    """Fill quad plus, when outlined, a four-quad ring inset from the edge.
+    """Fill quad plus, when stroked, a four-quad ring inset from the edge.
 
     Rounded corners need no uniform/non-uniform split like
     `_backend.mojo::_rect` does: every vertex here is already mapped
@@ -429,7 +429,7 @@ def emit_rect(
     var r = rect_corner_radius(c.corner_radius, c.geom[2], c.geom[3])
 
     if r <= 0.0:
-        if not c.style._outline_visible():
+        if not c.style._stroke_visible():
             if c.style._fill_visible():
                 _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.style.fill_color)
                 _shade_fill(vb, first, c, ramp_row)
@@ -438,7 +438,7 @@ def emit_rect(
         # The ring is built in local units so it follows a rotated edge, but
         # its thickness is decided in pixels so the CPU path's one-pixel
         # floor holds.
-        var sw = Float64(outline_thickness_px(c.style, m, scale)) / pixel_scale(
+        var sw = Float64(stroke_thickness_px(c.style, m, scale)) / pixel_scale(
             m, scale
         )
         var ix0 = lx0 + sw
@@ -446,8 +446,8 @@ def emit_rect(
         var ix1 = lx1 - sw
         var iy1 = ly1 - sw
         if ix0 >= ix1 or iy0 >= iy1:
-            # Thicker than the rectangle: all outline, nothing left to fill.
-            _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.style.outline_color)
+            # Thicker than the rectangle: all stroke, nothing left to fill.
+            _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.style.stroke_color)
             return
 
         if c.style._fill_visible():
@@ -455,7 +455,7 @@ def emit_rect(
             # blending.
             _mapped_quad(vb, m, ix0, iy0, ix1, iy1, c.style.fill_color)
             _shade_fill(vb, first, c, ramp_row)
-        var sc = c.style.outline_color
+        var sc = c.style.stroke_color
         _mapped_quad(vb, m, lx0, ly0, lx1, iy0, sc)
         _mapped_quad(vb, m, lx0, iy1, lx1, ly1, sc)
         _mapped_quad(vb, m, lx0, iy0, ix0, iy1, sc)
@@ -463,7 +463,7 @@ def emit_rect(
         return
 
     var sf = pixel_scale(m, scale)
-    if not c.style._outline_visible():
+    if not c.style._stroke_visible():
         if c.style._fill_visible():
             _rounded_rect_fill(
                 vb, m, lx0, ly0, lx1, ly1, r, sf, c.style.fill_color
@@ -471,15 +471,15 @@ def emit_rect(
             _shade_fill(vb, first, c, ramp_row)
         return
 
-    var sw = Float64(outline_thickness_px(c.style, m, scale)) / sf
+    var sw = Float64(stroke_thickness_px(c.style, m, scale)) / sf
     var ix0 = lx0 + sw
     var iy0 = ly0 + sw
     var ix1 = lx1 - sw
     var iy1 = ly1 - sw
     if ix0 >= ix1 or iy0 >= iy1:
-        # Thicker than the rectangle: all outline, nothing left to fill.
+        # Thicker than the rectangle: all stroke, nothing left to fill.
         _rounded_rect_fill(
-            vb, m, lx0, ly0, lx1, ly1, r, sf, c.style.outline_color
+            vb, m, lx0, ly0, lx1, ly1, r, sf, c.style.stroke_color
         )
         return
 
@@ -508,14 +508,14 @@ def emit_rect(
         r,
         inner_r,
         sf,
-        c.style.outline_color,
+        c.style.stroke_color,
     )
 
 
 def emit_circle(
     mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
 ):
-    """A fan for the fill and a ring of quads for the outline.
+    """A fan for the fill and a ring of quads for the stroke.
 
     Both are generated in local space and mapped per vertex, so a non-uniform
     transform turns the circle into the ellipse it should be.
@@ -530,17 +530,17 @@ def emit_circle(
     var n = circle_segments(r * sf)
     var step = 2.0 * PI / Float64(n)
 
-    var inner = r - Float64(outline_thickness_px(c.style, m, scale)) / sf
-    var outlined = c.style._outline_visible() and inner > 0.0
-    # Matching the CPU replay: with a outline at least as wide as the radius,
+    var inner = r - Float64(stroke_thickness_px(c.style, m, scale)) / sf
+    var stroked = c.style._stroke_visible() and inner > 0.0
+    # Matching the CPU replay: with a stroke at least as wide as the radius,
     # a fill wins the whole disc and no ring is rendered at all.
-    var solid_all = c.style._outline_visible() and inner <= 0.0
-    var fill_r = inner if outlined else r
+    var solid_all = c.style._stroke_visible() and inner <= 0.0
+    var fill_r = inner if stroked else r
     var fill_c = c.style.fill_color
     var fill_on = c.style._fill_visible()
     if solid_all and not fill_on:
         fill_on = True
-        fill_c = c.style.outline_color
+        fill_c = c.style.stroke_color
         fill_r = r
 
     var centre = mat_apply(m, cx, cy)
@@ -558,7 +558,7 @@ def emit_circle(
             )
         if c.style._fill_visible():
             _shade_fill(vb, first, c, ramp_row)
-    if outlined:
+    if stroked:
         for i in range(n):
             var a0 = Float64(i) * step
             var a1 = Float64(i + 1) * step
@@ -579,13 +579,13 @@ def emit_circle(
                 o1[1],
                 i1[0],
                 i1[1],
-                c.style.outline_color,
+                c.style.stroke_color,
             )
 
 
 def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     """One quad. A line has no interior, so `fill` never applies."""
-    if not c.style._outline_visible():
+    if not c.style._stroke_visible():
         return
     var m = c.transform
     var p0 = mat_apply(m, c.geom[0], c.geom[1])
@@ -596,50 +596,50 @@ def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
         p0[1],
         p1[0],
         p1[1],
-        Float64(outline_thickness_px(c.style, m, scale)),
-        c.style.outline_color,
+        Float64(stroke_thickness_px(c.style, m, scale)),
+        c.style.stroke_color,
     )
 
 
 def emit_bezier(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     """`stroke_quads`' mitred strip, the same quads the CPU fills. Like a
     line, a curve has no interior, so `fill` never applies."""
-    if not c.style._outline_visible():
+    if not c.style._stroke_visible():
         return
     var m = c.transform
     var corners = stroke_quads(
         bezier_device_points(c, m),
-        Float64(outline_thickness_px(c.style, m, scale)),
+        Float64(stroke_thickness_px(c.style, m, scale)),
     )
-    _emit_quads(vb, corners, c.style.outline_color)
+    _emit_quads(vb, corners, c.style.stroke_color)
 
 
 def emit_sector(
     mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
 ):
     """`sector_quads`' tiling, the same quads the CPU fills: fill, then
-    outline."""
+    stroke."""
     var quads = sector_quads(c, c.transform, scale)
     if c.style._fill_visible():
         var first = vb.count()
         _emit_quads(vb, quads.fill, c.style.fill_color)
         _shade_fill(vb, first, c, ramp_row)
-    if c.style._outline_visible():
-        _emit_quads(vb, quads.outline, c.style.outline_color)
+    if c.style._stroke_visible():
+        _emit_quads(vb, quads.stroke, c.style.stroke_color)
 
 
 def emit_polygon(
     mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
 ):
     """`polygon_quads`' tiling, the same quads the CPU fills: fill, then
-    outline."""
+    stroke."""
     var quads = polygon_quads(c, c.transform, scale)
     if c.style._fill_visible():
         var first = vb.count()
         _emit_quads(vb, quads.fill, c.style.fill_color)
         _shade_fill(vb, first, c, ramp_row)
-    if c.style._outline_visible():
-        _emit_quads(vb, quads.outline, c.style.outline_color)
+    if c.style._stroke_visible():
+        _emit_quads(vb, quads.stroke, c.style.stroke_color)
 
 
 def _emit_quads(mut vb: VertexBuffer, corners: List[Point2D], color: Color):
@@ -696,7 +696,7 @@ def _rounded_triangle_fill(
     a corner fan per vertex — the same (eroded triangle) union (3 fillet
     discs) decomposition `_backend.mojo::_triangle`'s uniform branch uses,
     cheap here because every vertex is mapped individually anyway. Full
-    size, not inset — the fill is unaffected by whether an outline is
+    size, not inset — the fill is unaffected by whether a stroke is
     rendered, exactly as the unrounded triangle's own fill is."""
     var centre = mat_apply(m, cx, cy)
     var tx0 = f0[2]
@@ -772,12 +772,12 @@ def _rounded_triangle_fill(
 def emit_triangle(
     mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
 ):
-    """The mapped triangle; rounded or outlined, `triangle_pieces`' tiling,
-    the same pieces the CPU fills: fill, then outline."""
+    """The mapped triangle; rounded or stroked, `triangle_pieces`' tiling,
+    the same pieces the CPU fills: fill, then stroke."""
     var m = c.transform
     var fill_visible = c.style._fill_visible()
-    var outline_visible = c.style._outline_visible()
-    if c.corner_radius <= 0.0 and not outline_visible:
+    var stroke_visible = c.style._stroke_visible()
+    if c.corner_radius <= 0.0 and not stroke_visible:
         if fill_visible:
             var p1 = mat_apply(m, c.geom[0], c.geom[1])
             var p2 = mat_apply(m, c.geom[2], c.geom[3])
@@ -804,8 +804,8 @@ def emit_triangle(
                 c.style.fill_color,
             )
         _shade_fill(vb, first, c, ramp_row)
-    if outline_visible:
-        _emit_quads(vb, pieces.ring, c.style.outline_color)
+    if stroke_visible:
+        _emit_quads(vb, pieces.ring, c.style.stroke_color)
 
 
 def emit_letterbox(
@@ -1007,7 +1007,7 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     it.
     """
     var m = c.transform
-    var interior = inset_interior(c, local_outline_thickness(c, m, scale))
+    var interior = inset_interior(c, local_stroke_thickness(c, m, scale))
     if interior.empty:
         return
     var sm = shadow_transform(c, scale)
@@ -1055,7 +1055,7 @@ def emit_blurred_shadow(
     exactly the value at its centre; the rest are constant across the quad.
     """
     var m = sh.transform
-    var shape = BlurredSilhouette(sh, local_outline_thickness(sh, m, scale))
+    var shape = BlurredSilhouette(sh, local_stroke_thickness(sh, m, scale))
     var k = shape.inv_sigma
     var reach = shape.reach()
     var ring = shape.ring * k

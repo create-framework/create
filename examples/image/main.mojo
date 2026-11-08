@@ -145,9 +145,7 @@ struct Images(Program):
                     ") is ",
                     color,
                 )
-                with canvas.style(
-                    fill=color, outline=_TEXT, outline_thickness=2
-                ):
+                with canvas.style(fill=color, stroke=_TEXT, stroke_thickness=2):
                     canvas.rectangle(input.mouse + Vector2D(30, 30), 36, 36)
 
         with canvas.style(text_color=_TEXT, font_size=18):

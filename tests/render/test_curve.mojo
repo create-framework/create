@@ -167,7 +167,7 @@ def test_zero_width_gives_no_quads() raises -> None:
 
 def _stroked(thickness: Float64) -> Style:
     var s = Style()
-    s.outline_thickness = thickness
+    s.stroke_thickness = thickness
     return s^
 
 
@@ -236,7 +236,7 @@ def test_a_blurred_mask_grows_by_the_reach_and_keeps_its_mass() raises -> None:
 
 def test_an_invisible_stroke_gives_an_empty_mask() raises -> None:
     var s = _stroked(5)
-    s.outline_enabled = False
+    s.stroke_enabled = False
     var c = bezier_command(identity[3](), s, _s_curve())
     var placed = bezier_shadow_mask(c, c.transform, 1.0, 8)
     assert_equal(placed.mask.width, 0)

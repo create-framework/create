@@ -2,7 +2,7 @@
 
 On the left, three circles whose colours are half transparent mix where
 they cross: alpha belongs to each colour. On the right, a card of fill,
-outline, text and image fades in and out by one `opacity`, which reaches
+stroke, text and image fades in and out by one `opacity`, which reaches
 every part of a render call at once.
 """
 
@@ -27,7 +27,7 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_BACKGROUND)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
 
         # A panel behind each demonstration.
         canvas.fill(_PANEL)
@@ -42,14 +42,14 @@ struct App(Program):
         canvas.fill(Color(98, 104, 168, 128))
         canvas.circle((-185.0, 65.0), 60.0)
 
-        # One value fades fill, outline, text and image alike. Each shape
-        # still composites once, so the outline never shows through the fill.
+        # One value fades fill, stroke, text and image alike. Each shape
+        # still composites once, so the stroke never shows through the fill.
         var opacity = 0.5 + 0.5 * sin(context.time.elapsed * 1.5)
         with canvas.style(opacity=opacity):
             with canvas.style(
                 fill=Color(201, 140, 150),
-                outline=Color(240, 236, 222),
-                outline_thickness=6,
+                stroke=Color(240, 236, 222),
+                stroke_thickness=6,
             ):
                 canvas.rectangle(_CARD, 220.0, 170.0, corner_radius=18)
             canvas.image(self.logo, _CARD + Vector2D(0, 20), 100, 100)

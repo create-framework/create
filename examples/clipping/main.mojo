@@ -39,7 +39,7 @@ struct Clipping(Program):
 
         # Stripes seen through a star: the clip stays put while they turn.
         with canvas.clip(self.window):
-            canvas.outline_enabled(False)
+            canvas.stroke_enabled(False)
             with canvas.transform(translate(200.0, 0.0) @ rotate(t * 0.5)):
                 for i in range(-10, 11):
                     canvas.fill(

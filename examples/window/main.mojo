@@ -75,7 +75,7 @@ struct App(Program):
             self.dir = 1.0
 
         canvas.background(_BACKGROUND)
-        with canvas.style(outline_enabled=False):
+        with canvas.style(stroke_enabled=False):
             canvas.fill(_BALL)
             canvas.circle((self.x, 150), 40)
             canvas.fill(_BOX)

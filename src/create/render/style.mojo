@@ -13,13 +13,13 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     """How the next shape or glyph is painted, independent of where it goes.
 
     The canvas holds one, set piece by piece through `canvas.fill`,
-    `canvas.outline` and the other style setters, read by every render call
+    `canvas.stroke` and the other style setters, read by every render call
     until changed and rebuilt fresh each frame. A program can also build its
     own and apply it whole with `canvas.style(s)`, to reuse one look across
     render calls, frames or entities:
 
     ```mojo
-    var label = Style(outline_enabled=False, text_color=Color.WHITE, font_size=24)
+    var label = Style(stroke_enabled=False, text_color=Color.WHITE, font_size=24)
     with canvas.style(label):
         canvas.text("Score", (0, canvas.top() - 20))
     ```
@@ -29,7 +29,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     ```mojo
     var card = Style(
         fill=Color.WHITE,
-        outline_enabled=False,
+        stroke_enabled=False,
         shadow=Color(0, 0, 0, 80),
         shadow_blur=16,
     )
@@ -42,8 +42,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     style's: what is drawn from a shape is what its `contains` tests.
 
     The constructor's keywords are named after the canvas setters and act
-    like them: naming any part of the fill, outline or shadow switches it
-    on, unless `fill_enabled`, `outline_enabled` or `shadow_enabled` says
+    like them: naming any part of the fill, stroke or shadow switches it
+    on, unless `fill_enabled`, `stroke_enabled` or `shadow_enabled` says
     otherwise, so `Style(shadow=Color.RED, shadow_enabled=False)` keeps a
     shadow ready but off. `fill_gradient` is the keyword for `fill`'s
     `Gradient` overload, since one keyword can't take both: given beside
@@ -56,9 +56,9 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     """Paints the fill instead of `fill_color` while set; `fill_color` is
     kept for when it is cleared."""
     var fill_enabled: Bool
-    var outline_color: Color
-    var outline_thickness: Float64
-    var outline_enabled: Bool
+    var stroke_color: Color
+    var stroke_thickness: Float64
+    var stroke_enabled: Bool
     var corner_radius: Float64
     """How far the shapes the canvas builds from numbers are rounded, in
     world units; 0 is sharp. A shape value keeps its own."""
@@ -86,9 +86,9 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         fill: Optional[Color] = None,
         fill_gradient: Optional[Gradient] = None,
         fill_enabled: Optional[Bool] = None,
-        outline: Optional[Color] = None,
-        outline_thickness: _OptionalFloat64 = None,
-        outline_enabled: Optional[Bool] = None,
+        stroke: Optional[Color] = None,
+        stroke_thickness: _OptionalFloat64 = None,
+        stroke_enabled: Optional[Bool] = None,
         corner_radius: _OptionalFloat64 = None,
         text_color: Color = Color.BLACK,
         font: Optional[Font] = None,
@@ -112,9 +112,9 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.fill_enabled = fill_enabled.or_else(
             Bool(fill) or Bool(fill_gradient)
         )
-        self.outline_color = outline.or_else(Color.BLACK)
-        self.outline_thickness = outline_thickness.or_else(1.0)
-        self.outline_enabled = outline_enabled.or_else(True)
+        self.stroke_color = stroke.or_else(Color.BLACK)
+        self.stroke_thickness = stroke_thickness.or_else(1.0)
+        self.stroke_enabled = stroke_enabled.or_else(True)
         self.corner_radius = corner_radius.or_else(0.0)
         self.text_color = text_color
         self.font = font
@@ -154,12 +154,12 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         writer.write(
             ", fill_enabled=",
             self.fill_enabled,
-            ", outline=",
-            self.outline_color,
-            ", outline_thickness=",
-            self.outline_thickness,
-            ", outline_enabled=",
-            self.outline_enabled,
+            ", stroke=",
+            self.stroke_color,
+            ", stroke_thickness=",
+            self.stroke_thickness,
+            ", stroke_enabled=",
+            self.stroke_enabled,
             ", corner_radius=",
             self.corner_radius,
             ", text_color=",
@@ -215,17 +215,17 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             return self.fill_gradient.value()._visible()
         return self.fill_color.a > 0
 
-    def _outline_visible(self) -> Bool:
-        """Whether the outline actually paints anything.
+    def _stroke_visible(self) -> Bool:
+        """Whether the stroke actually paints anything.
 
-        `outline_enabled` alone isn't enough — a fully transparent color or a
+        `stroke_enabled` alone isn't enough — a fully transparent color or a
         zero thickness paints nothing either, and every rasteriser gate
-        should skip that work rather than render an invisible outline.
+        should skip that work rather than render an invisible stroke.
         """
         return (
-            self.outline_enabled
-            and self.outline_color.a > 0
-            and self.outline_thickness > 0
+            self.stroke_enabled
+            and self.stroke_color.a > 0
+            and self.stroke_thickness > 0
         )
 
     def _shadow_visible(self) -> Bool:

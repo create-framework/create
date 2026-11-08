@@ -164,9 +164,9 @@ struct Logo(Program):
         if self.count < _MAX_POINTS:
             # A point on the logo's edge would stick half a pixel out past
             # it, and nothing drawn later covers the outside: clip to it.
-            var outline = Triangle(_corner(0, 0), _corner(4, 0), _corner(4, 4))
-            with self.layer.clip(outline):
-                with self.layer.style(fill=Color.BLACK, outline_enabled=False):
+            var stroke = Triangle(_corner(0, 0), _corner(4, 0), _corner(4, 4))
+            with self.layer.clip(stroke):
+                with self.layer.style(fill=Color.BLACK, stroke_enabled=False):
                     for _ in range(_POINTS_PER_FRAME):
                         self.point = self.point.lerp(self.random_corner(), 0.5)
                         self.layer.rectangle(self.point, 1, 1)
@@ -193,7 +193,7 @@ struct Logo(Program):
 
         canvas.background(_PAPER)
         canvas.image(self.picture, (0, 0), canvas.width(), canvas.height())
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         if landed:
             # Under the landed pieces, so no seam shows where two meet.
             canvas.fill(Color.BLACK)

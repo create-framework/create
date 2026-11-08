@@ -63,7 +63,7 @@ struct _PersistentCanvasState(Movable):
     images — is moved out at the end of one frame and into
     the next. The transform stack and the style are deliberately absent: both
     start fresh every frame by construction, so a missing pop or a forgotten
-    `outline_enabled(False)` cannot leak into the next frame.
+    `stroke_enabled(False)` cannot leak into the next frame.
 
     It also holds the frame-wide settings a program sets once and keeps —
     the autoclear, the letterbox colour and the antialiasing — so they can be
@@ -274,7 +274,7 @@ struct Canvas(DrawTarget, Movable):
     device pixels. A style is resolved at record time, so a later `fill()`
     cannot reach back and change what an earlier command paints.
 
-    Every pixel write blends source-over, so a fill, outline, image, glyph or
+    Every pixel write blends source-over, so a fill, stroke, image, glyph or
     `background` with `a < 255` composites with what is already there —
     unless `blend_mode` picks another way to combine them.
     """
@@ -420,7 +420,7 @@ struct Canvas(DrawTarget, Movable):
         return Rectangle(Point2D(0.0, 0.0), self._width, self._height)
 
     def scale(self) -> Float64:
-        """Window pixels per screen unit: what font size, outline thickness
+        """Window pixels per screen unit: what font size, stroke thickness
         and image size are scaled by."""
         return self._scale
 
@@ -465,7 +465,7 @@ struct Canvas(DrawTarget, Movable):
             letterbox_command(self._state.letterbox_color, cx0, cy0, cx1, cy1)
         )
 
-    # `_uniform`, `_pixel_scale`, `_device_bounds` and `_outline_thickness_px`
+    # `_uniform`, `_pixel_scale`, `_device_bounds` and `_stroke_thickness_px`
     # used to live here. They are properties of a matrix, not of a frame, and only
     # the replay needs them now — see `_backend.mojo`.
 
@@ -490,9 +490,9 @@ struct Canvas(DrawTarget, Movable):
         fill: Optional[Color] = None,
         fill_gradient: Optional[Gradient] = None,
         fill_enabled: Optional[Bool] = None,
-        outline: Optional[Color] = None,
-        outline_thickness: _OptionalFloat64 = None,
-        outline_enabled: Optional[Bool] = None,
+        stroke: Optional[Color] = None,
+        stroke_thickness: _OptionalFloat64 = None,
+        stroke_enabled: Optional[Bool] = None,
         corner_radius: _OptionalFloat64 = None,
         text_color: Optional[Color] = None,
         font: Optional[Font] = None,
@@ -518,11 +518,11 @@ struct Canvas(DrawTarget, Movable):
         behaves exactly like calling that setter; the rest of the style is kept.
         `fill_gradient` goes through `fill`'s `Gradient` overload; given
         beside `fill`, the gradient paints. With no keywords it only scopes: for helpers that set style before
-        rendering, where without it a callee's `outline_enabled(False)`
+        rendering, where without it a callee's `stroke_enabled(False)`
         silently applies to whatever the caller renders next.
 
         ```mojo
-        with canvas.style(fill=Color.RED, outline_enabled=False):
+        with canvas.style(fill=Color.RED, stroke_enabled=False):
             canvas.circle(position, 10)
         ```
         """
@@ -533,14 +533,14 @@ struct Canvas(DrawTarget, Movable):
         # paints and the colour is kept.
         if fill_gradient:
             self.fill(fill_gradient.value())
-        if outline or outline_thickness:
-            self.outline(outline, outline_thickness)
-        # After the colors, which switch fill and outline on: an explicit
+        if stroke or stroke_thickness:
+            self.stroke(stroke, stroke_thickness)
+        # After the colors, which switch fill and stroke on: an explicit
         # `*_enabled=False` beside a color wins.
         if fill_enabled:
             self.fill_enabled(fill_enabled.value())
-        if outline_enabled:
-            self.outline_enabled(outline_enabled.value())
+        if stroke_enabled:
+            self.stroke_enabled(stroke_enabled.value())
         if corner_radius:
             self.corner_radius(corner_radius.value())
         if text_color:
@@ -704,7 +704,7 @@ struct Canvas(DrawTarget, Movable):
     def fill(mut self, gradient: Gradient):
         """Paint the inside of shapes with `gradient`, switching the fill on.
         It spans each shape's own bounding box, so it moves and turns with
-        the shape; see `Gradient`. Only fills take one: outlines, text and
+        the shape; see `Gradient`. Only fills take one: strokes, text and
         shadows keep their colours.
 
         Holds until a `fill(color)` replaces it or the frame ends. The fill
@@ -713,15 +713,15 @@ struct Canvas(DrawTarget, Movable):
         self._style.fill_gradient = gradient
         self._style.fill_enabled = True
 
-    def outline(
+    def stroke(
         mut self,
         color: Optional[Color] = None,
         thickness: _OptionalFloat64 = None,
     ):
-        """Outline shapes, switching the outline on if `outline_enabled(False)`
+        """Stroke shapes, switching the stroke on if `stroke_enabled(False)`
         had turned it off. `color`/`thickness` left unset keep their current
-        values. Worth knowing outline is *on* by default, in black, 1 unit
-        thick — a `rectangle` rendered without `outline_enabled(False)` gets
+        values. Worth knowing stroke is *on* by default, in black, 1 unit
+        thick — a `rectangle` rendered without `stroke_enabled(False)` gets
         one nobody asked for.
 
         Thickness is in world units, scaled by autoscale like every other
@@ -729,10 +729,10 @@ struct Canvas(DrawTarget, Movable):
         one (`thickness=1.5`) rounds to whole pixels once scaled.
         """
         if color:
-            self._style.outline_color = color.value()
+            self._style.stroke_color = color.value()
         if thickness:
-            self._style.outline_thickness = thickness.value()
-        self._style.outline_enabled = True
+            self._style.stroke_thickness = thickness.value()
+        self._style.stroke_enabled = True
 
     def fill_enabled(mut self, enabled: Bool):
         """Switch the fill off or back on. The fill color and any gradient
@@ -740,11 +740,11 @@ struct Canvas(DrawTarget, Movable):
         fill; `fill(...)` switches it on too."""
         self._style.fill_enabled = enabled
 
-    def outline_enabled(mut self, enabled: Bool):
-        """Switch the outline off or back on. Color and thickness are kept
-        while off, so `outline_enabled(True)` brings back the same outline;
-        `outline(...)` switches it on too."""
-        self._style.outline_enabled = enabled
+    def stroke_enabled(mut self, enabled: Bool):
+        """Switch the stroke off or back on. Color and thickness are kept
+        while off, so `stroke_enabled(True)` brings back the same stroke;
+        `stroke(...)` switches it on too."""
+        self._style.stroke_enabled = enabled
 
     def corner_radius(mut self, radius: Float64):
         """Round the shapes built from numbers by `rectangle`, `triangle`,
@@ -1181,14 +1181,14 @@ struct Canvas(DrawTarget, Movable):
 
         Angles are radians, counter-clockwise from the +x axis (y is up); a
         negative sweep runs clockwise, and a full turn or more is the whole
-        disc. The outline is inset, as a circle's is: the fill stops where it
+        disc. The stroke is inset, as a circle's is: the fill stops where it
         starts, and a translucent sector composites once. It casts no inset
         shadow; a blurred drop shadow costs what a `bezier`'s does. A zero
         radius or sweep draws nothing.
 
         `corner_radius`, or the style's when not given, rounds the tip and
         both ends of the arc, as `Sector` describes. A rounded sector is drawn as a polygon, so it costs what
-        an outlined `polygon` of its flattened outline does.
+        a stroked `polygon` of its flattened outline does.
         """
         self.draw(
             Sector(
@@ -1223,7 +1223,7 @@ struct Canvas(DrawTarget, Movable):
         """Draw the polygon through `vertices`, closed back to the first.
 
         Filled by the nonzero rule, so a self-crossing polygon fills every
-        area its edges wind round, whichever way they run. The outline is
+        area its edges wind round, whichever way they run. The stroke is
         inset along the outside, as a sector's is, and centred on an edge
         running through the inside — a pentagram's inner pentagon — so every
         edge is stroked as thick; a translucent polygon composites once. It
@@ -1265,10 +1265,10 @@ struct Canvas(DrawTarget, Movable):
         end: Point2D,
     ):
         """Stroke the cubic Bézier from `start` to `end`, shaped by the two
-        controls, in the outline colour and thickness.
+        controls, in the stroke colour and thickness.
 
         A curve, like a line, has no interior: `fill` never applies, and with
-        the outline off nothing is drawn. The curve is flattened at replay,
+        the stroke off nothing is drawn. The curve is flattened at replay,
         in device pixels, so it stays smooth under any camera zoom; its ends
         are butt, like a line's, unless `end` is `start`: then the curve
         closes on a mitred joint. Joints are mitred, so a translucent stroke
@@ -1286,7 +1286,7 @@ struct Canvas(DrawTarget, Movable):
         closed: Bool = False,
     ):
         """Stroke a smooth curve through every one of `points`, in order, in
-        the outline colour and thickness: a `Spline`, which is Catmull-Rom.
+        the stroke colour and thickness: a `Spline`, which is Catmull-Rom.
 
         `alpha` sets how the spacing of the points shapes the curve: 0 can
         loop or cusp where points bunch up, 0.5 (centripetal) never does,
@@ -1294,7 +1294,7 @@ struct Canvas(DrawTarget, Movable):
         on from the last point back to the first, and that joint is mitred
         like the rest.
 
-        Drawn as one stroke, like `bezier`: no fill, nothing with the outline
+        Drawn as one stroke, like `bezier`: no fill, nothing with the stroke
         off, butt ends when open, and a translucent stroke composites once. A
         blurred shadow costs what a `bezier`'s does. Fewer than two distinct
         points draw nothing.
@@ -1309,14 +1309,14 @@ struct Canvas(DrawTarget, Movable):
         sweep_angle: Float64,
     ):
         """Stroke the arc of the circle around `position` with radius `r`,
-        from `start_angle` round by `sweep_angle`, in the outline colour and
+        from `start_angle` round by `sweep_angle`, in the stroke colour and
         thickness: an `Arc`.
 
         Angles are radians, counter-clockwise from the +x axis (y is up); a
         negative sweep runs clockwise, and a full turn or more is the whole
         circle, closed on a mitred joint.
 
-        Drawn as one stroke, like `bezier`: no fill, nothing with the outline
+        Drawn as one stroke, like `bezier`: no fill, nothing with the stroke
         off, butt ends when open, and a translucent stroke composites once. A
         blurred shadow costs what a `bezier`'s does. A zero radius or sweep
         draws nothing.
@@ -1383,10 +1383,10 @@ struct Canvas(DrawTarget, Movable):
         )
 
     def _line(mut self, l: Line):
-        # Recorded only when it would render: an outline-less line is the one
+        # Recorded only when it would render: a stroke-less line is the one
         # shape with nothing left to paint, so the command would be pure
         # overhead.
-        if not self._style.outline_enabled:
+        if not self._style.stroke_enabled:
             return
         self._state._backend.record(
             shape_command(l, self._transform, self._style, self._scale)
@@ -1395,7 +1395,7 @@ struct Canvas(DrawTarget, Movable):
     def _curves(mut self, curves: List[Bezier]):
         # Recorded only when it would render, as `line` is; no curves, no
         # stroke.
-        if not self._style.outline_enabled or len(curves) == 0:
+        if not self._style.stroke_enabled or len(curves) == 0:
             return
         self._state._backend.record(
             curves_command(curves, self._transform, self._style)
@@ -1482,11 +1482,11 @@ struct Canvas(DrawTarget, Movable):
     def tint(mut self, color: Color):
         """Multiply whatever is rendered next by `color`, channel by channel.
 
-        Reaches fill, gradient, outline, text, image and shadow alike, never
+        Reaches fill, gradient, stroke, text, image and shadow alike, never
         `background`. `Color.WHITE` (the default) leaves it untouched; a
         colour recolours and darkens, and its alpha fades like `opacity`,
         which it stacks with. Tints a whole look at once, where `fill`,
-        `outline` and `text_color` each set one part:
+        `stroke` and `text_color` each set one part:
 
         ```mojo
         with canvas.style(tint=Color(255, 90, 90)):
@@ -1497,10 +1497,10 @@ struct Canvas(DrawTarget, Movable):
         self._style.tint = color
 
     def opacity(mut self, value: Float64):
-        """Fade whatever is rendered next: fill, gradient, outline, text,
+        """Fade whatever is rendered next: fill, gradient, stroke, text,
         image and shadow alike, never `background`. `1.0` (the default)
         leaves it untouched; `0.0` renders nothing visible. Each shape
-        composites once, so a translucent one is evenly translucent, outline
+        composites once, so a translucent one is evenly translucent, stroke
         and fill included. Resolved at record time, like every other style
         setting — it cannot reach back and fade what was already rendered."""
         self._style.opacity = value
@@ -1529,7 +1529,7 @@ struct Canvas(DrawTarget, Movable):
         `(4, -4)` (down and right, since y is up), a blur of 8 and no spread.
 
         Works like CSS `drop-shadow`: the shadow is the shape's whole
-        silhouette, fill and outline together, cast once — a translucent
+        silhouette, fill and stroke together, cast once — a translucent
         fill shows its own shadow through it. Lines cast their stroke, text
         its glyphs and images their alpha. `blur` is the CSS blur radius,
         twice the Gaussian's standard deviation; `spread` grows the
@@ -1537,7 +1537,7 @@ struct Canvas(DrawTarget, Movable):
         coordinate.
 
         `inset=True` paints the shadow inside the shape instead, over its
-        fill and within its outline, as if the shape were a hole cut in a
+        fill and within its stroke, as if the shape were a hole cut in a
         surface: the band shows on the side the offset points away from.
         Only rectangles, circles and triangles take an inset shadow; lines,
         text and images cast none while it is set.

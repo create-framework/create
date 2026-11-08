@@ -132,7 +132,7 @@ def _fill_bench():
 def _shape_style(alpha: Bool) -> Style:
     var st = Style()
     st.fill_enabled = True
-    st.outline_enabled = False
+    st.stroke_enabled = False
     st.fill_color = Color(200, 60, 60, 192) if alpha else Color(200, 60, 60)
     return st^
 
@@ -309,12 +309,12 @@ def _frame_bench(
 def _antialiasing_bench(
     m: Matrix[3, 3], mut be: Backend, mut mem: MemorySurface
 ) raises:
-    """The `gpu`-shaped frame and a few large outlined circles at every
+    """The `gpu`-shaped frame and a few large stroked circles at every
     antialiasing level: many small shapes are all edge, large ones mostly
     interior."""
-    var outlined = _shape_style(True)
-    outlined.outline_enabled = True
-    outlined.outline_color = Color(240, 240, 240)
+    var stroked = _shape_style(True)
+    stroked.stroke_enabled = True
+    stroked.stroke_color = Color(240, 240, 240)
     var levels: List[Antialiasing] = [
         Antialiasing.OFF,
         Antialiasing.LOW,
@@ -331,7 +331,7 @@ def _antialiasing_bench(
             for _i in range(20):
                 var x = rng.float(-700.0, 700.0)
                 var y = rng.float(-300.0, 300.0)
-                be.record(circle_command(m, outlined, x, y, 200.0))
+                be.record(circle_command(m, stroked, x, y, 200.0))
             var s = mem.surface()
             be.present(s, 1.0)
         var t1 = perf_counter_ns()

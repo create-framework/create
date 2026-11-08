@@ -50,7 +50,7 @@ struct InkOnFirstFrameOnly(Program):
         mut context: Context, mut canvas: Canvas
     ) raises -> InkOnFirstFrameOnly:
         canvas.autoclear(False)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0, 0), 40, 40)
         return InkOnFirstFrameOnly(0)
@@ -171,7 +171,7 @@ def test_switching_on_mid_frame_clears_under_what_is_drawn() raises -> None:
     state.autoclear = False
     context._set_viewport(state, 200, 100)
     var canvas = context._new_canvas(state^)
-    with canvas.style(fill=Color.RED, outline_enabled=False):
+    with canvas.style(fill=Color.RED, stroke_enabled=False):
         canvas.rectangle((0, 0), 20, 20)
     canvas.autoclear(True)
     assert_equal(canvas.color_at((0, 0)), Color.RED)
@@ -217,7 +217,7 @@ struct Dots(Program):
         return Dots(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        with canvas.style(fill=Color.RED, outline_enabled=False):
+        with canvas.style(fill=Color.RED, stroke_enabled=False):
             canvas.rectangle((context.frame_count() * 20 - 60, 0), 10, 10)
 
 

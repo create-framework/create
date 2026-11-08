@@ -26,7 +26,7 @@ comptime _VOLUME_STEP = 0.6
 def _volume_bar(mut canvas: Canvas, label: String, level: Float64, y: Float64):
     """A labelled bar, filled to `level` of its width."""
     var left = -_BAR_WIDTH / 2.0
-    with canvas.style(outline_enabled=False):
+    with canvas.style(stroke_enabled=False):
         canvas.fill(_TRACK)
         canvas.rectangle((0.0, y), _BAR_WIDTH, 14.0, corner_radius=7)
         if level > 0.0:
@@ -101,7 +101,7 @@ struct AudioDemo(Program):
         var since = context.time.elapsed - self.chimed_at
         var flash = clamp(1.0 - since / 0.5, 0.0, 1.0)
         with canvas.style(
-            fill=_TRACK.lerp(_CHIME, flash), outline_enabled=False
+            fill=_TRACK.lerp(_CHIME, flash), stroke_enabled=False
         ):
             canvas.circle((-250.0, 40.0), 40.0 + 12.0 * flash)
         with canvas.style(text_color=_HINT, font_size=18):

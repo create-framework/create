@@ -2,16 +2,16 @@ from std.testing import TestSuite, assert_equal, assert_true, assert_false
 
 from create import *
 from create.render._text import _pixel_size
-from create.render._transform import outline_thickness_px
+from create.render._transform import stroke_thickness_px
 
 
 def test_default_style_matches_a_fresh_frame() raises -> None:
     var s = Style()
     assert_equal(s.fill_color, Color.WHITE)
     assert_false(s.fill_enabled)
-    assert_equal(s.outline_color, Color.BLACK)
-    assert_equal(s.outline_thickness, 1)
-    assert_true(s.outline_enabled)
+    assert_equal(s.stroke_color, Color.BLACK)
+    assert_equal(s.stroke_thickness, 1)
+    assert_true(s.stroke_enabled)
     assert_equal(s.text_color, Color.BLACK)
     assert_equal(s.font_size, 16)
     assert_equal(s.font_weight, FontWeight.REGULAR)
@@ -33,9 +33,9 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     var s = Style(
         fill=Color.RED,
         fill_enabled=False,
-        outline=Color.BLUE,
-        outline_thickness=3,
-        outline_enabled=False,
+        stroke=Color.BLUE,
+        stroke_thickness=3,
+        stroke_enabled=False,
         corner_radius=5,
         text_color=Color.WHITE,
         font_size=32,
@@ -55,9 +55,9 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     )
     assert_equal(s.fill_color, Color.RED)
     assert_false(s.fill_enabled)
-    assert_equal(s.outline_color, Color.BLUE)
-    assert_equal(s.outline_thickness, 3)
-    assert_false(s.outline_enabled)
+    assert_equal(s.stroke_color, Color.BLUE)
+    assert_equal(s.stroke_thickness, 3)
+    assert_false(s.stroke_enabled)
     assert_equal(s.corner_radius, 5.0)
     assert_equal(s.text_color, Color.WHITE)
     assert_equal(s.font_size, 32)
@@ -90,9 +90,7 @@ def test_an_explicit_enabled_beside_a_part_wins() raises -> None:
     var s = Style(shadow=Color.RED, shadow_enabled=False)
     assert_false(s.shadow_enabled)
     assert_equal(s.shadow_color, Color.RED)
-    assert_false(
-        Style(outline=Color.RED, outline_enabled=False).outline_enabled
-    )
+    assert_false(Style(stroke=Color.RED, stroke_enabled=False).stroke_enabled)
     assert_false(Style(fill=Color.RED, fill_enabled=False).fill_enabled)
 
 
@@ -101,8 +99,8 @@ def test_style_writes_constructor_keywords() raises -> None:
         String(Style()),
         (
             "Style(fill=Color(255, 255, 255, 255), fill_gradient=None,"
-            " fill_enabled=False, outline=Color(0, 0, 0, 255),"
-            " outline_thickness=1.0, outline_enabled=True, corner_radius=0.0,"
+            " fill_enabled=False, stroke=Color(0, 0, 0, 255),"
+            " stroke_thickness=1.0, stroke_enabled=True, corner_radius=0.0,"
             " text_color=Color(0, 0, 0, 255), font=None, font_size=16.0,"
             " font_weight=FontWeight.REGULAR, font_italic=False,"
             " text_align=Align.CENTER, tint=Color(255, 255, 255, 255),"
@@ -149,27 +147,26 @@ def test_fill_visibility_follows_the_gradient() raises -> None:
 
 
 def test_fractional_sizes_are_kept_as_given() raises -> None:
-    var s = Style(outline_thickness=1.5, font_size=13.5)
-    assert_equal(s.outline_thickness, 1.5)
+    var s = Style(stroke_thickness=1.5, font_size=13.5)
+    assert_equal(s.stroke_thickness, 1.5)
     assert_equal(s.font_size, 13.5)
 
 
 def test_integer_literals_still_reach_the_float_keywords() raises -> None:
-    var s = Style(outline_thickness=2, font_size=24)
-    assert_equal(s.outline_thickness, 2.0)
+    var s = Style(stroke_thickness=2, font_size=24)
+    assert_equal(s.stroke_thickness, 2.0)
     assert_equal(s.font_size, 24.0)
     assert_true(
-        Style(outline_thickness=3, outline_enabled=False).outline_thickness
-        == 3.0
+        Style(stroke_thickness=3, stroke_enabled=False).stroke_thickness == 3.0
     )
 
 
 def test_fractional_sizes_round_once_scaled() raises -> None:
     """World-unit sizes become whole pixels only at the device: 1.5 units
     at 2 pixels a unit is exactly 3 pixels."""
-    var s = Style(outline_thickness=1.5, font_size=13.5)
-    assert_equal(outline_thickness_px(s, scale(2.0), 2.0), 3)
-    assert_equal(outline_thickness_px(s, scale(1.0), 1.0), 2)
+    var s = Style(stroke_thickness=1.5, font_size=13.5)
+    assert_equal(stroke_thickness_px(s, scale(2.0), 2.0), 3)
+    assert_equal(stroke_thickness_px(s, scale(1.0), 1.0), 2)
     assert_equal(_pixel_size(s, 2.0), 27)
 
 
@@ -181,13 +178,13 @@ def test_unset_number_keywords_take_none_or_any_number() raises -> None:
     assert_equal(s.shadow_spread, 1.5)
     assert_true(s.shadow_enabled)
 
-    var unset = Style(shadow_blur=None, outline_thickness=None)
+    var unset = Style(shadow_blur=None, stroke_thickness=None)
     assert_equal(unset.shadow_blur, 8.0)
-    assert_equal(unset.outline_thickness, 1.0)
+    assert_equal(unset.stroke_thickness, 1.0)
     assert_false(unset.shadow_enabled)
 
     var forwarded: Optional[Float64] = 3.0
-    assert_equal(Style(outline_thickness=forwarded).outline_thickness, 3.0)
+    assert_equal(Style(stroke_thickness=forwarded).stroke_thickness, 3.0)
 
 
 def test_float_keywords_take_an_int_variable() raises -> None:

@@ -6,12 +6,12 @@ silhouette it takes, how spread grows it — is decided once, here, and the CPU
 and GL paths cannot drift on it.
 
 **One layer.** A shadow is a single silhouette in `shadow_color`, never a
-fill-shadow plus an outline-shadow: those overlap along the outline, and a
+fill-shadow plus a stroke-shadow: those overlap along the stroke, and a
 translucent shadow colour would darken the overlap twice. With the fill
-visible the silhouette is the whole shape out to the outline's outer edge;
-with only the outline visible it is the ring.
+visible the silhouette is the whole shape out to the stroke's outer edge;
+with only the stroke visible it is the ring.
 
-**Growing a shape by `d`** (the outline's outward extent plus spread) is the
+**Growing a shape by `d`** (the stroke's outward extent plus spread) is the
 Minkowski sum with a disc of radius `d`: every edge moves out by `d` and every
 corner rounds by `d` more, centred on the original vertex. That is exactly
 what a larger `corner_radius` on the grown rectangle or triangle renders, so
@@ -51,7 +51,7 @@ from ._curve import PlacedMask
 from ._image_mapping import image_mapping
 from ._raster import blit_image_mapped
 from ._surface import MemorySurface
-from ._transform import outline_thickness_px, pixel_scale
+from ._transform import stroke_thickness_px, pixel_scale
 
 
 def casts_outer_shadow(c: RenderCommand) -> Bool:
@@ -69,9 +69,9 @@ def casts_outer_shadow(c: RenderCommand) -> Bool:
         or c.kind == CMD_SECTOR
         or c.kind == CMD_POLYGON
     ):
-        return c.style._fill_visible() or c.style._outline_visible()
+        return c.style._fill_visible() or c.style._stroke_visible()
     if c.kind == CMD_LINE or c.kind == CMD_BEZIER:
-        return c.style._outline_visible()
+        return c.style._stroke_visible()
     if c.kind == CMD_TEXT:
         return c.style.text_color.a > 0
     return c.kind == CMD_IMAGE
@@ -152,7 +152,7 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
 
     Assumes `casts_outer_shadow(c)`. Blur is carried along in the style for
     the replays that soften it; the geometry here is the unblurred shape.
-    Spread is in world units, like the outline thickness, and widens a
+    Spread is in world units, like the stroke thickness, and widens a
     stroke by twice itself, one spread either side.
     """
     var s = c.copy()
@@ -179,10 +179,10 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     if ring:
         # The stroke alone, dilated by `spread` on both sides.
         s.style.fill_enabled = False
-        s.style.outline_color = color
-        s.style.outline_enabled = True
-        s.style.outline_thickness = max(
-            c.style.outline_thickness + 2.0 * spread, 0.0
+        s.style.stroke_color = color
+        s.style.stroke_enabled = True
+        s.style.stroke_thickness = max(
+            c.style.stroke_thickness + 2.0 * spread, 0.0
         )
         if c.kind == CMD_RECT:
             s.geom[2] = max(s.geom[2] + 2.0 * spread, 0.0)
@@ -198,14 +198,14 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
 
     s.style.fill_color = color
     s.style.fill_enabled = True
-    s.style.outline_enabled = False
-    # Rectangle, circle, sector and polygon outlines are inset rings, so the fill's
-    # edge is already the outer edge; a triangle's outline is centred on its edges and
+    s.style.stroke_enabled = False
+    # Rectangle, circle, sector and polygon strokes are inset rings, so the fill's
+    # edge is already the outer edge; a triangle's stroke is centred on its edges and
     # reaches half its width further out.
     var d = spread
-    if c.kind == CMD_TRIANGLE and c.style._outline_visible():
+    if c.kind == CMD_TRIANGLE and c.style._stroke_visible():
         var sf = pixel_scale(c.transform, scale)
-        d += Float64(outline_thickness_px(c.style, c.transform, scale)) / (
+        d += Float64(stroke_thickness_px(c.style, c.transform, scale)) / (
             2.0 * sf
         )
     if c.kind == CMD_RECT:
@@ -384,12 +384,12 @@ def blurs_analytically(c: RenderCommand) -> Bool:
     )
 
 
-def local_outline_thickness(
+def local_stroke_thickness(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> Float64:
-    """`c`'s outline as the rasterisers draw it — rounded to whole pixels,
+    """`c`'s stroke as the rasterisers draw it — rounded to whole pixels,
     never under one — back in local units."""
-    return Float64(outline_thickness_px(c.style, m, scale)) / pixel_scale(
+    return Float64(stroke_thickness_px(c.style, m, scale)) / pixel_scale(
         m, scale
     )
 
@@ -424,11 +424,11 @@ struct BlurredSilhouette(Copyable, Movable):
     point.
 
     Built from the command `shadow_command` returns, in that command's
-    local units. A ring (an outline-only shape) is the outer shape minus the
+    local units. A ring (a stroke-only shape) is the outer shape minus the
     same shape shrunk by `ring`: blurring is linear, so the blurred ring is
     the difference of the two blurred shapes, exactly. Shrinking by `ring`
     moves every edge in by it and the corner radius down by it, which is
-    what both outlines are — a rectangle's inset ring and a triangle's
+    what both strokes are — a rectangle's inset ring and a triangle's
     centred band, once the outer triangle has grown by half the band. A
     triangle's `corner_radius` is left out: its blurred corners are the
     product of their two edges'.
@@ -450,8 +450,8 @@ struct BlurredSilhouette(Copyable, Movable):
     """The outer silhouette's local bounds, before the blur's reach."""
 
     def __init__(out self, sh: RenderCommand, thickness: Float64):
-        """`sh` is a shadow command; `thickness` its outline in local units
-        (see `local_outline_thickness`)."""
+        """`sh` is a shadow command; `thickness` its stroke in local units
+        (see `local_stroke_thickness`)."""
         self.inv_sigma = (
             2.0 / sh.style.shadow_blur if sh.style.shadow_blur > 0.0 else 0.0
         )
@@ -476,7 +476,7 @@ struct BlurredSilhouette(Copyable, Movable):
             self.x1 = sh.geom[0] + hw
             self.y0 = sh.geom[1] - hh
             self.y1 = sh.geom[1] + hh
-            # Both outlines are inset rings.
+            # Both strokes are inset rings.
             if ring and hw - thickness > 0.0 and hh - thickness > 0.0:
                 self.ring = thickness
         elif sh.kind == CMD_TRIANGLE:
@@ -631,14 +631,14 @@ def _segment_distance(
 struct InsetRegion(Copyable, Movable):
     """A filled rectangle, circle or triangle with corners rounded by
     `radius`: what an inset shadow is clipped to — the shape inside its
-    outline — and, shifted and shrunk by the spread, the silhouette the
+    stroke — and, shifted and shrunk by the spread, the silhouette the
     shadow is cut from.
 
     Shrinking by `d` is the reverse of `shadow_command`'s growing: every
     edge moves in by `d` and the corner radius drops by `d`, bottoming out
-    at a sharp corner. That is also exactly where an outline's inner edge
+    at a sharp corner. That is also exactly where a stroke's inner edge
     runs — a rectangle's or circle's inset ring, a triangle's centred band —
-    so the interior is the shape shrunk by the outline's inward extent. The
+    so the interior is the shape shrunk by the stroke's inward extent. The
     radius is a `Float64` rather than the style's `Int`, because those
     shrinks move it by fractions of a unit.
     """
@@ -756,14 +756,14 @@ struct InsetRegion(Copyable, Movable):
 
 
 def inset_interior(c: RenderCommand, thickness: Float64) -> InsetRegion:
-    """What `c`'s inset shadow is clipped to: the shape inside its outline.
+    """What `c`'s inset shadow is clipped to: the shape inside its stroke.
 
-    `thickness` is the outline in local units, as the rasterisers draw it
-    (`local_outline_thickness`), and ignored when the outline is off. A
-    rectangle's or circle's outline is an inset ring, all of it inside; a
+    `thickness` is the stroke in local units, as the rasterisers draw it
+    (`local_stroke_thickness`), and ignored when the stroke is off. A
+    rectangle's or circle's stroke is an inset ring, all of it inside; a
     triangle's is centred, half of it inside.
     """
-    var inset = thickness if c.style._outline_visible() else 0.0
+    var inset = thickness if c.style._stroke_visible() else 0.0
     if c.kind == CMD_TRIANGLE:
         inset /= 2.0
     return InsetRegion(c, inset)

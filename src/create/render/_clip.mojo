@@ -23,7 +23,7 @@ def clip_style() -> Style:
     var s = Style()
     s.fill_color = Color.WHITE
     s.fill_enabled = True
-    s.outline_enabled = False
+    s.stroke_enabled = False
     return s
 
 

@@ -87,14 +87,14 @@ struct Clock(Program):
 
         canvas.background(_BACKGROUND)
 
-        with canvas.style(fill=_FACE, outline_enabled=False):
+        with canvas.style(fill=_FACE, stroke_enabled=False):
             canvas.circle(_CENTER, _RADIUS)
 
         # The seconds ring: a full track, and an arc swept clockwise (a
         # negative sweep, since y is up) from the top.
-        with canvas.style(outline=_TRACK, outline_thickness=8):
+        with canvas.style(stroke=_TRACK, stroke_thickness=8):
             canvas.arc(_CENTER, _RADIUS + 16.0, 0.0, TAU)
-        with canvas.style(outline=_SECONDS, outline_thickness=8):
+        with canvas.style(stroke=_SECONDS, stroke_thickness=8):
             canvas.arc(_CENTER, _RADIUS + 16.0, PI / 2.0, -TAU * seconds / 60.0)
 
         # Sixty ticks, every fifth longer and heavier: the hours.
@@ -103,8 +103,8 @@ struct Clock(Program):
             var direction = Vector2D.from_angle(_clock_angle(Float64(i) / 60))
             var inner = _RADIUS * (0.82 if hour_mark else 0.9)
             with canvas.style(
-                outline=_HAND if hour_mark else _TRACK,
-                outline_thickness=6 if hour_mark else 2,
+                stroke=_HAND if hour_mark else _TRACK,
+                stroke_thickness=6 if hour_mark else 2,
             ):
                 canvas.draw(
                     Line(
@@ -113,13 +113,13 @@ struct Clock(Program):
                     )
                 )
 
-        with canvas.style(outline=_HAND, outline_thickness=10):
+        with canvas.style(stroke=_HAND, stroke_thickness=10):
             canvas.draw(_hand(hours / 12.0, _RADIUS * 0.5))
-        with canvas.style(outline=_HAND, outline_thickness=6):
+        with canvas.style(stroke=_HAND, stroke_thickness=6):
             canvas.draw(_hand(minutes / 60.0, _RADIUS * 0.75))
-        with canvas.style(outline=_SECONDS, outline_thickness=2):
+        with canvas.style(stroke=_SECONDS, stroke_thickness=2):
             canvas.draw(_hand(seconds / 60.0, _RADIUS * 0.85))
-        with canvas.style(fill=_SECONDS, outline_enabled=False):
+        with canvas.style(fill=_SECONDS, stroke_enabled=False):
             canvas.circle(_CENTER, 8)
 
         # The time, bold, in cells as wide as the widest digit.

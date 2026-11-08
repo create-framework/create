@@ -59,7 +59,7 @@ struct CameraDemo(Program):
 
         # World content: a strip of posts stretching far past what any single
         # screen shows, and a marker at the world origin.
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         for i in range(-20, 20):
             var x = Float64(i) * 120.0
             var t = (sin(context.time.elapsed + Float64(i)) + 1.0) / 2.0
@@ -70,7 +70,7 @@ struct CameraDemo(Program):
         canvas.circle((0.0, 140.0), 14.0)
 
         # In world units, so a marker grows and shrinks with the zoom.
-        with canvas.style(fill=_MARKER, outline=_TEXT, outline_thickness=2):
+        with canvas.style(fill=_MARKER, stroke=_TEXT, stroke_thickness=2):
             for marker in self.markers:
                 canvas.circle(marker, 10.0)
 

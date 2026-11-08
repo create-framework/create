@@ -1,10 +1,10 @@
 """Every kind of render call composites once, so a translucent one is as
-translucent everywhere — fill and outline included — and opacity reaches
+translucent everywhere — fill and stroke included — and opacity reaches
 images like everything else. Tint reaches the same calls and composites the
 same way.
 
 Each scene draws one shape in red at opacity 0.5 over black with a 6-pixel
-outline where it has one: every inked pixel must come out half red (127),
+stroke where it has one: every inked pixel must come out half red (127),
 never 191 (two layers) or more. The tinted scenes draw it white under a
 half-transparent red tint instead, which must come out the same and with no
 green. Run through both backends; the GPU half skips with no GL context.
@@ -30,10 +30,10 @@ def _name(kind: Int) -> String:
         "circle",
         "ellipse",
         "triangle",
-        "outline-only triangle",
+        "stroke-only triangle",
         "needle triangle",
         "rounded triangle",
-        "thickly outlined rounded triangle",
+        "thickly stroked rounded triangle",
         "sheared triangle",
         "sector",
         "rounded wide sector",
@@ -72,7 +72,7 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.triangle((-20, -20), (20, -20), (0, 20))
     elif kind == 9:
         canvas.fill_enabled(False)
-        canvas.outline(Color.RED, 10)
+        canvas.stroke(Color.RED, 10)
         canvas.triangle((-30, -25), (30, -25), (0, 25))
     elif kind == 10:
         # Corners far past the miter limit: bevelled.
@@ -80,7 +80,7 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
     elif kind == 11:
         canvas.triangle((-25, -20), (25, -20), (0, 25), corner_radius=6)
     elif kind == 12:
-        canvas.outline(Color.RED, 10)
+        canvas.stroke(Color.RED, 10)
         canvas.triangle((-30, -25), (30, -25), (0, 25), corner_radius=3)
     elif kind == 13:
         var shear = identity[3]()
@@ -121,12 +121,12 @@ struct HalfRed[kind: Int, tinted: Bool = False](Program):
         canvas.background(Color.BLACK)
         comptime if Self.tinted:
             canvas.fill(Color.WHITE)
-            canvas.outline(Color.WHITE, 6)
+            canvas.stroke(Color.WHITE, 6)
             canvas.text_color(Color.WHITE)
             canvas.tint(Color(255, 0, 0, 128))
         else:
             canvas.fill(Color.RED)
-            canvas.outline(Color.RED, 6)
+            canvas.stroke(Color.RED, 6)
             canvas.text_color(Color.RED)
             canvas.opacity(0.5)
         _draw(canvas, Self.kind)
@@ -188,7 +188,7 @@ struct WideRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         # Stretched, so the general path; 20 units wide is 40 pixels.
         with canvas.transform(scale(2.0, 1.0)):

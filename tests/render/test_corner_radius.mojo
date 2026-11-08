@@ -12,7 +12,7 @@ from create import *
 def _canvas() raises -> Canvas:
     var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
     canvas.fill(Color.RED)
-    canvas.outline_enabled(False)
+    canvas.stroke_enabled(False)
     return canvas^
 
 
@@ -167,11 +167,11 @@ def test_a_rounded_sector_keeps_its_circle_for_a_gradient() raises -> None:
         Color.RED, Color.BLUE, direction=Vector2D.RIGHT
     )
     var sharp = Canvas(100, 100, antialiasing=Antialiasing.OFF)
-    sharp.outline_enabled(False)
+    sharp.stroke_enabled(False)
     sharp.fill(gradient)
     sharp.sector((0.0, 0.0), 45.0, 0.2, 1.2)
     var rounded = Canvas(100, 100, antialiasing=Antialiasing.OFF)
-    rounded.outline_enabled(False)
+    rounded.stroke_enabled(False)
     rounded.fill(gradient)
     rounded.sector((0.0, 0.0), 45.0, 0.2, 1.2, corner_radius=8.0)
     # Away from the corners, the same colour: both span the whole circle.
@@ -266,7 +266,7 @@ def test_a_float_radius_reaches_every_keyword() raises -> None:
         styled.rectangle((0.0, 0.0), 60.0, 40.0)
     var whole = _canvas()
     with whole.style(
-        Style(fill=Color.RED, outline_enabled=False, corner_radius=r)
+        Style(fill=Color.RED, stroke_enabled=False, corner_radius=r)
     ):
         whole.rectangle((0.0, 0.0), 60.0, 40.0)
     assert_true(_same(named, styled))

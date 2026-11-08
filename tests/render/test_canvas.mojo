@@ -59,7 +59,7 @@ struct CentredRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
@@ -87,7 +87,7 @@ struct HighRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.GREEN)
         canvas.rectangle((0.0, 30.0), 10.0, 10.0)
 
@@ -113,7 +113,7 @@ struct CentredCircle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.CYAN)
         canvas.circle((0.0, 0.0), 20.0)
 
@@ -144,7 +144,7 @@ struct UprightTriangle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.MAGENTA)
         # Apex up, base below — in world terms, since y grows upward.
         canvas.triangle((0.0, 30.0), (-30.0, -30.0), (30.0, -30.0))
@@ -172,7 +172,7 @@ struct AlphaOverRed(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.RED)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color(0, 0, 255, 128))
         canvas.rectangle((0.0, 0.0), 40.0, 40.0)
 
@@ -193,12 +193,12 @@ struct ThickLine(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=3)
+        canvas.stroke(Color.WHITE, thickness=3)
         canvas.line((-10.0, 0.0), (10.0, 0.0))
 
 
-def test_outline_thickness_scales_to_pixels() raises -> None:
-    # 50x50 design in a 100x100 buffer is a 2x scale, so a 3-unit outline is 6
+def test_stroke_thickness_scales_to_pixels() raises -> None:
+    # 50x50 design in a 100x100 buffer is a 2x scale, so a 3-unit stroke is 6
     # pixels thick: rows 47..52 around the centre row.
     var m = run_headless[ThickLine](50, 50, 1, window_size=(100, 100))
     for row in range(47, 53):
@@ -259,7 +259,7 @@ struct RotatedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
         with canvas.transform(rotate(PI / 4.0)):
             canvas.rectangle((0.0, 0.0), 20.0, 20.0)
@@ -286,7 +286,7 @@ struct SharpRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0, corner_radius=0)
 
@@ -309,7 +309,7 @@ struct RoundedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0, corner_radius=10)
 
@@ -325,34 +325,34 @@ def test_rect_corner_radius_rounds_the_corner() raises -> None:
 
 
 @fieldwise_init
-struct RoundedRectOutlined(Program):
+struct RoundedRectStroked(Program):
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> RoundedRectOutlined:
-        return RoundedRectOutlined(0)
+    ) raises -> RoundedRectStroked:
+        return RoundedRectStroked(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.BLUE, thickness=2)
+        canvas.stroke(Color.BLUE, thickness=2)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0, corner_radius=10)
 
 
-def test_rect_corner_radius_outline_follows_the_arc() raises -> None:
+def test_rect_corner_radius_stroke_follows_the_arc() raises -> None:
     # Same fillet, centred on device pixel (40, 40), radius 10, with a 2-unit
-    # outline: outer ring at distance 10, inner edge at distance 8. Probing
+    # stroke: outer ring at distance 10, inner edge at distance 8. Probing
     # along the diagonal (not an axis) is what actually exercises the arc
     # rather than a square corner's straight edges.
-    var m = run_headless[RoundedRectOutlined](100, 100)
+    var m = run_headless[RoundedRectStroked](100, 100)
     # Distance from (40, 40) is about 9.9 — inside the outer radius, outside
     # the inner one: on the ring.
     assert_equal(m.pixel(33, 33), Color.BLUE)
     # Distance about 11.3 — outside the fillet disc entirely.
     assert_equal(m.pixel(32, 32), Color.BLACK)
-    # Distance about 7.1 — inside the inner radius: fill, not outline.
+    # Distance about 7.1 — inside the inner radius: fill, not stroke.
     assert_equal(m.pixel(35, 35), Color.RED)
 
 
@@ -376,7 +376,7 @@ struct ScaledRoundedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0, corner_radius=5)
 
@@ -402,7 +402,7 @@ struct RotatedRoundedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
         with canvas.transform(rotate(PI / 4.0)):
             canvas.rectangle((0.0, 0.0), 20.0, 20.0, corner_radius=6)
@@ -432,7 +432,7 @@ struct SharpTriangle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         # Right angle at world (-20, -20), legs of length 20 along +x and +y.
         canvas.triangle(
@@ -460,7 +460,7 @@ struct RoundedTriangle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         # Right angle at world (-20, -20), legs of length 20 along +x and +y —
         # same corner shape as corner_fillet's own known right-angle test.
@@ -487,41 +487,41 @@ def test_triangle_corner_radius_rounds_the_corner() raises -> None:
 
 
 @fieldwise_init
-struct RoundedTriangleOutlined(Program):
+struct RoundedTriangleStroked(Program):
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> RoundedTriangleOutlined:
-        return RoundedTriangleOutlined(0)
+    ) raises -> RoundedTriangleStroked:
+        return RoundedTriangleStroked(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.BLUE, thickness=4)
+        canvas.stroke(Color.BLUE, thickness=4)
         canvas.fill(Color.RED)
         canvas.triangle(
             (-20.0, -20.0), (0.0, -20.0), (-20.0, 0.0), corner_radius=5
         )
 
 
-def test_triangle_corner_radius_outline_is_centred() raises -> None:
+def test_triangle_corner_radius_stroke_is_centred() raises -> None:
     # Same fillet as RoundedTriangle (radius clamped to about 4.14), with a
-    # 4-unit outline. The outline band is centred on the arc (unlike a
+    # 4-unit stroke. The stroke band is centred on the arc (unlike a
     # rect's inset ring), so it straddles both sides of the fillet boundary
     # — bleeding outward, past the arc, into the wedge that was cut away
-    # from the original sharp corner. A rect-style inset outline would
+    # from the original sharp corner. A rect-style inset stroke would
     # leave that whole wedge as bare background instead.
-    var m = run_headless[RoundedTriangleOutlined](100, 100)
+    var m = run_headless[RoundedTriangleStroked](100, 100)
     # On the arc itself, toward the old sharp vertex.
     assert_equal(m.pixel(31, 69), Color.BLUE)
     # Further out along the same direction, past the arc — in the cut-away
     # wedge — but still within the centred band's outward half.
     assert_equal(m.pixel(30, 68), Color.BLUE)
-    # Past the old sharp vertex and past the outline band entirely: plain
+    # Past the old sharp vertex and past the stroke band entirely: plain
     # background.
     assert_equal(m.pixel(25, 71), Color.BLACK)
-    # Well inside the fillet disc: fill, not outline.
+    # Well inside the fillet disc: fill, not stroke.
     assert_equal(m.pixel(35, 65), Color.RED)
 
 
@@ -537,7 +537,7 @@ struct ThinRoundedTriangle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         # A requested radius far larger than this sliver triangle could ever
         # support — triangle_corner_radius must clamp it, not let the
@@ -570,7 +570,7 @@ struct RotatedRoundedTriangle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
         with canvas.transform(rotate(PI / 4.0)):
             canvas.triangle(
@@ -722,7 +722,7 @@ struct StyleAcrossFrames(Program):
         canvas.background(Color.BLACK)
         if self.frame == 1:
             canvas.fill(Color.RED)
-            canvas.outline_enabled(False)
+            canvas.stroke_enabled(False)
         else:
             canvas.rectangle((0, 0), 20, 20)
 
@@ -745,7 +745,7 @@ struct GuardedStyle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         with canvas.style():
             canvas.fill(Color.BLUE)
@@ -769,9 +769,9 @@ struct KeywordStyle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.GREEN, thickness=4)
+        canvas.stroke(Color.GREEN, thickness=4)
         canvas.fill(Color.RED)
-        # Names only the fill, so the green outline set above is kept.
+        # Names only the fill, so the green stroke set above is kept.
         with canvas.style(fill=Color.BLUE):
             canvas.rectangle((-25, 0), 20, 20)
         canvas.rectangle((25, 0), 20, 20)
@@ -780,7 +780,7 @@ struct KeywordStyle(Program):
 def test_style_keywords_change_only_what_they_name() raises -> None:
     var m = run_headless[KeywordStyle](100, 100)
     assert_equal(m.pixel(25, 50), Color.BLUE)
-    assert_equal(m.pixel(16, 50), Color.GREEN)  # outline kept
+    assert_equal(m.pixel(16, 50), Color.GREEN)  # stroke kept
     assert_equal(m.pixel(75, 50), Color.RED)  # restored on exit
     assert_equal(m.pixel(66, 50), Color.GREEN)
 
@@ -797,9 +797,9 @@ struct KeywordSwitches(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.GREEN, thickness=4)
+        canvas.stroke(Color.GREEN, thickness=4)
         canvas.fill(Color.RED)
-        with canvas.style(outline_enabled=False):
+        with canvas.style(stroke_enabled=False):
             canvas.rectangle((-30, 0), 16, 16)
         # A color switches fill on, but an explicit `fill_enabled` beside it
         # wins.
@@ -807,11 +807,11 @@ struct KeywordSwitches(Program):
             canvas.rectangle((30, 0), 16, 16)
 
 
-def test_style_keywords_switch_fill_and_outline() raises -> None:
+def test_style_keywords_switch_fill_and_stroke() raises -> None:
     var m = run_headless[KeywordSwitches](100, 100)
-    assert_equal(m.pixel(13, 50), Color.RED)  # outline off, fill reaches edge
+    assert_equal(m.pixel(13, 50), Color.RED)  # stroke off, fill reaches edge
     assert_equal(m.pixel(80, 50), Color.BLACK)  # fill off
-    assert_equal(m.pixel(73, 50), Color.GREEN)  # outline untouched
+    assert_equal(m.pixel(73, 50), Color.GREEN)  # stroke untouched
 
 
 @fieldwise_init
@@ -824,9 +824,9 @@ struct AppliedStyle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.GREEN, thickness=4)
+        canvas.stroke(Color.GREEN, thickness=4)
         canvas.fill(Color.RED)
-        # Sets no outline, so the block renders with the default 1-unit
+        # Sets no stroke, so the block renders with the default 1-unit
         # black one rather than the green set above.
         with canvas.style(Style(fill=Color.BLUE)):
             canvas.rectangle((-25, 0), 20, 20)
@@ -836,7 +836,7 @@ struct AppliedStyle(Program):
 def test_style_object_replaces_the_whole_style_in_scope() raises -> None:
     var m = run_headless[AppliedStyle](100, 100)
     assert_equal(m.pixel(25, 50), Color.BLUE)
-    assert_equal(m.pixel(15, 50), Color.BLACK)  # default outline, not green
+    assert_equal(m.pixel(15, 50), Color.BLACK)  # default stroke, not green
     assert_equal(m.pixel(75, 50), Color.RED)  # restored on exit
     assert_equal(m.pixel(66, 50), Color.GREEN)
 
@@ -851,8 +851,8 @@ struct NestedStyles(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        var outer = Style(fill=Color.RED, outline_enabled=False)
-        var inner = Style(fill=Color.BLUE, outline_enabled=False)
+        var outer = Style(fill=Color.RED, stroke_enabled=False)
+        var inner = Style(fill=Color.BLUE, stroke_enabled=False)
         with canvas.style(outer):
             with canvas.style(inner):
                 canvas.rectangle((-30, 0), 16, 16)
@@ -864,7 +864,7 @@ def test_style_objects_nest() raises -> None:
     var m = run_headless[NestedStyles](100, 100)
     assert_equal(m.pixel(20, 50), Color.BLUE)
     assert_equal(m.pixel(50, 50), Color.RED)
-    # Back to the frame's own style: transparent fill, black outline.
+    # Back to the frame's own style: transparent fill, black stroke.
     assert_equal(m.pixel(80, 50), Color.BLACK)
 
 
@@ -880,7 +880,7 @@ struct BareStyleCall(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        _ = canvas.style(Style(fill=Color.BLUE, outline_enabled=False))
+        _ = canvas.style(Style(fill=Color.BLUE, stroke_enabled=False))
         canvas.rectangle((0, 0), 20, 20)
 
 
@@ -890,9 +890,9 @@ def test_style_object_outside_a_with_block_holds() raises -> None:
 
 
 def _red_square(mut canvas: Canvas, position: Point2D):
-    """20x20, red, no outline — the caster in the shadow tests."""
+    """20x20, red, no stroke — the caster in the shadow tests."""
     canvas.fill(Color.RED)
-    canvas.outline_enabled(False)
+    canvas.stroke_enabled(False)
     canvas.rectangle(position, 20, 20)
 
 
@@ -1055,11 +1055,11 @@ struct StrokedRect(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.RED)
-        canvas.outline(Color.BLUE, thickness=4)
+        canvas.stroke(Color.BLUE, thickness=4)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0)
 
 
-def test_rect_outline_renders_all_four_bands() raises -> None:
+def test_rect_stroke_renders_all_four_bands() raises -> None:
     # The border is four separate fill_pixels calls, so a single-corner
     # assertion would miss three of them.
     var m = run_headless[StrokedRect](100, 100)
@@ -1083,13 +1083,13 @@ struct StrokedCircle(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.GREEN)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.circle((0.0, 0.0), 20.0)
 
 
-def test_circle_outline_renders_the_ring() raises -> None:
+def test_circle_stroke_renders_the_ring() raises -> None:
     var m = run_headless[StrokedCircle](100, 100)
-    # Radius 20, outline thickness 4: the ring is d in (16, 20].
+    # Radius 20, stroke thickness 4: the ring is d in (16, 20].
     assert_equal(m.pixel(69, 50), Color.WHITE)  # just inside the outer radius
     assert_equal(m.pixel(65, 50), Color.GREEN)  # just inside the inner radius
     assert_equal(m.pixel(75, 50), Color.BLACK)  # outside the outer radius
@@ -1108,11 +1108,11 @@ struct StrokedTriangle(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.ORANGE)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.triangle((0.0, 30.0), (-30.0, -30.0), (30.0, -30.0))
 
 
-def test_triangle_outline_renders_the_edges() raises -> None:
+def test_triangle_stroke_renders_the_edges() raises -> None:
     var m = run_headless[StrokedTriangle](100, 100)
     # (-15, 0) sits exactly on the apex-to-base-left edge.
     assert_equal(m.pixel(35, 50), Color.WHITE)
@@ -1134,7 +1134,7 @@ struct BezierBothWays(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.bezier((-40.0, 20.0), (-20.0, 40.0), (20.0, 40.0), (40.0, 20.0))
         canvas.draw(
             Bezier((-40.0, -20.0), (-20.0, -40.0), (20.0, -40.0), (40.0, -20.0))
@@ -1168,7 +1168,7 @@ struct ZoomedBezier(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.camera(Camera(zoom=8.0))
-        canvas.outline(Color.WHITE, thickness=1)
+        canvas.stroke(Color.WHITE, thickness=1)
         canvas.draw(_zoomed_curve())
 
 
@@ -1206,26 +1206,26 @@ def test_bezier_stays_smooth_under_camera_zoom() raises -> None:
 
 
 @fieldwise_init
-struct UnoutlinedBezier(Program):
+struct UnstrokedBezier(Program):
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> UnoutlinedBezier:
-        return UnoutlinedBezier(0)
+    ) raises -> UnstrokedBezier:
+        return UnstrokedBezier(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         var before = len(canvas._state._backend.commands)
         canvas.bezier((-40.0, 0.0), (-20.0, 40.0), (20.0, 40.0), (40.0, 0.0))
         if len(canvas._state._backend.commands) != before:
-            raise Error("an outline-less bezier was recorded")
+            raise Error("a stroke-less bezier was recorded")
 
 
-def test_an_unoutlined_bezier_records_nothing() raises -> None:
-    var m = run_headless[UnoutlinedBezier](100, 100)
+def test_an_unstroked_bezier_records_nothing() raises -> None:
+    var m = run_headless[UnstrokedBezier](100, 100)
     assert_equal(m.pixel(50, 20), Color.BLACK)
 
 
@@ -1246,7 +1246,7 @@ struct ClosedSpline(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.shadow(Color.RED, blur=0)
         canvas.spline(_square_corners(), closed=True)
 
@@ -1263,7 +1263,7 @@ struct OpenSpline(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.draw(Spline(_square_corners()))
 
 
@@ -1306,7 +1306,7 @@ struct UnrecordedSpline(Program):
         var before = len(canvas._state._backend.commands)
         # One distinct point is no curve.
         canvas.spline([(10.0, 10.0), (10.0, 10.0)])
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.spline(_square_corners())
         if len(canvas._state._backend.commands) != before:
             raise Error("a spline that draws nothing was recorded")
@@ -1329,7 +1329,7 @@ struct ArcEveryWay(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         # The upper half.
         canvas.arc((0.0, 0.0), 30.0, 0.0, PI)
         # Clockwise from +x: the lower right quarter.
@@ -1363,7 +1363,7 @@ struct ArcRing(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.shadow(Color.RED, blur=0)
         canvas.arc((0.0, 0.0), 30.0, 0.0, self.sweep)
 
@@ -1378,7 +1378,7 @@ struct ArcGap(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.arc((0.0, 0.0), 30.0, 0.0, TAU - 0.1)
 
 
@@ -1407,7 +1407,7 @@ struct UnrecordedArc(Program):
         var before = len(canvas._state._backend.commands)
         canvas.arc((0.0, 0.0), 0.0, 0.0, PI)
         canvas.arc((0.0, 0.0), 30.0, 1.0, 0.0)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.arc((0.0, 0.0), 30.0, 0.0, PI)
         if len(canvas._state._backend.commands) != before:
             raise Error("an arc that draws nothing was recorded")
@@ -1433,7 +1433,7 @@ struct SectorEveryWay(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.WHITE)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         # Counter-clockwise from +x: the upper right quarter.
         canvas.sector((0.0, 0.0), 30.0, 0.0, PI / 2.0)
         # Clockwise from -x: the upper left quarter.
@@ -1451,44 +1451,44 @@ def test_sector_fills_through_every_overload() raises -> None:
     assert_equal(m.pixel(70, 70), Color.BLACK)
 
 
-def _outlined_quarter(mut canvas: Canvas, filled: Bool):
-    """A quarter with a 4-unit white outline, filled red or not at all."""
+def _stroked_quarter(mut canvas: Canvas, filled: Bool):
+    """A quarter with a 4-unit white stroke, filled red or not at all."""
     canvas.background(Color.BLACK)
     canvas.fill(Color.RED)
     canvas.fill_enabled(filled)
-    canvas.outline(Color.WHITE, thickness=4)
+    canvas.stroke(Color.WHITE, thickness=4)
     canvas.sector((0.0, 0.0), 40.0, 0.0, PI / 2.0)
 
 
 @fieldwise_init
-struct OutlinedSector(Program):
+struct StrokedSector(Program):
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> OutlinedSector:
-        return OutlinedSector(0)
+    ) raises -> StrokedSector:
+        return StrokedSector(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        _outlined_quarter(canvas, filled=True)
+        _stroked_quarter(canvas, filled=True)
 
 
 @fieldwise_init
-struct OutlineOnlySector(Program):
+struct StrokeOnlySector(Program):
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> OutlineOnlySector:
-        return OutlineOnlySector(0)
+    ) raises -> StrokeOnlySector:
+        return StrokeOnlySector(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        _outlined_quarter(canvas, filled=False)
+        _stroked_quarter(canvas, filled=False)
 
 
-def _assert_quarter_outline(m: Image) raises:
+def _assert_quarter_stroke(m: Image) raises:
     # Just inside the arc, and just above the start edge.
     assert_equal(m.pixel(76, 23), Color.WHITE)
     assert_equal(m.pixel(70, 48), Color.WHITE)
@@ -1496,18 +1496,18 @@ def _assert_quarter_outline(m: Image) raises:
     assert_equal(m.pixel(70, 52), Color.BLACK)
 
 
-def test_sector_outline_is_inset() raises -> None:
-    var filled = run_headless[OutlinedSector](100, 100)
-    var hollow = run_headless[OutlineOnlySector](100, 100)
-    _assert_quarter_outline(filled)
-    _assert_quarter_outline(hollow)
+def test_sector_stroke_is_inset() raises -> None:
+    var filled = run_headless[StrokedSector](100, 100)
+    var hollow = run_headless[StrokeOnlySector](100, 100)
+    _assert_quarter_stroke(filled)
+    _assert_quarter_stroke(hollow)
     assert_equal(filled.pixel(70, 30), Color.RED)
     assert_equal(hollow.pixel(70, 30), Color.BLACK)
 
 
 @fieldwise_init
 struct TranslucentPacMan(Program):
-    """Past a half turn, so its tip is round, fill and outline the same
+    """Past a half turn, so its tip is round, fill and stroke the same
     translucent colour."""
 
     var _unused: Int
@@ -1521,7 +1521,7 @@ struct TranslucentPacMan(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color(255, 255, 255, 128))
-        canvas.outline(Color(255, 255, 255, 128), thickness=6)
+        canvas.stroke(Color(255, 255, 255, 128), thickness=6)
         canvas.sector((0.0, 0.0), 40.0, 0.6, TAU - 1.2)
 
 
@@ -1557,7 +1557,7 @@ struct PolygonEveryWay(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.WHITE)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.draw(
             Polygon(
                 (-40.0, -40.0),
@@ -1584,29 +1584,29 @@ def test_polygon_fills_through_every_overload() raises -> None:
 
 
 @fieldwise_init
-struct OutlinedSquare(Program):
-    """A 60-wide square, red with an 8-unit white outline."""
+struct StrokedSquare(Program):
+    """A 60-wide square, red with an 8-unit white stroke."""
 
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> OutlinedSquare:
-        return OutlinedSquare(0)
+    ) raises -> StrokedSquare:
+        return StrokedSquare(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.RED)
-        canvas.outline(Color.WHITE, thickness=8)
+        canvas.stroke(Color.WHITE, thickness=8)
         canvas.polygon(
             (-30.0, -30.0), (30.0, -30.0), (30.0, 30.0), (-30.0, 30.0)
         )
 
 
-def test_polygon_outline_is_inset() raises -> None:
-    var m = run_headless[OutlinedSquare](100, 100)
-    # Inside the edge at x = 80: outline to 72, then fill.
+def test_polygon_stroke_is_inset() raises -> None:
+    var m = run_headless[StrokedSquare](100, 100)
+    # Inside the edge at x = 80: stroke to 72, then fill.
     assert_equal(m.pixel(76, 50), Color.WHITE)
     assert_equal(m.pixel(68, 50), Color.RED)
     assert_equal(m.pixel(82, 50), Color.BLACK)
@@ -1616,7 +1616,7 @@ def test_polygon_outline_is_inset() raises -> None:
 
 @fieldwise_init
 struct TranslucentStar(Program):
-    """Fill and outline the same translucent colour, turned and squashed."""
+    """Fill and stroke the same translucent colour, turned and squashed."""
 
     var _unused: Int
 
@@ -1629,7 +1629,7 @@ struct TranslucentStar(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color(255, 255, 255, 128))
-        canvas.outline(Color(255, 255, 255, 128), thickness=5)
+        canvas.stroke(Color(255, 255, 255, 128), thickness=5)
         with canvas.transform(rotate(0.4) @ scale(1.2, 0.8)):
             canvas.draw(Polygon.star((0.0, 0.0), 40.0, 16.0, 5))
         # Self-crossing too: a pentagram beside it.
@@ -1668,7 +1668,7 @@ struct RotatedSectorUnderCamera(Program):
         canvas.background(Color.BLACK)
         canvas.camera(Camera(Point2D(10.0, 0.0), 2.0))
         canvas.fill(Color.WHITE)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         # The upper right quarter turned a quarter: the upper left, in
         # world space, twice the size on screen, its tip at (-20, 0).
         with canvas.transform(rotate(PI / 2.0)):
@@ -1693,14 +1693,14 @@ struct NoFillRect(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill_enabled(False)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0)
 
 
 def test_no_fill_leaves_the_rect_interior_untouched() raises -> None:
     var m = run_headless[NoFillRect](100, 100)
     assert_equal(m.pixel(50, 50), Color.BLACK)  # interior stayed background
-    assert_equal(m.pixel(50, 31), Color.WHITE)  # border still outlines
+    assert_equal(m.pixel(50, 31), Color.WHITE)  # border still strokes
 
 
 @fieldwise_init
@@ -1714,14 +1714,14 @@ struct NoFillCircle(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill_enabled(False)
-        canvas.outline(Color.WHITE, thickness=4)
+        canvas.stroke(Color.WHITE, thickness=4)
         canvas.circle((0.0, 0.0), 20.0)
 
 
 def test_no_fill_leaves_the_circle_interior_untouched() raises -> None:
     var m = run_headless[NoFillCircle](100, 100)
     assert_equal(m.pixel(60, 50), Color.BLACK)  # interior stayed background
-    assert_equal(m.pixel(69, 50), Color.WHITE)  # ring still outlines
+    assert_equal(m.pixel(69, 50), Color.WHITE)  # ring still strokes
 
 
 @fieldwise_init
@@ -1736,7 +1736,7 @@ struct FillSwitching(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.fill_enabled(False)
         canvas.rectangle((-30, 0), 16, 16)  # off
@@ -1764,7 +1764,7 @@ struct DefaultFill(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.rectangle((-20, 0), 16, 16)  # off by default
         canvas.fill()
         canvas.rectangle((20, 0), 16, 16)  # on, in the default white
@@ -1777,30 +1777,30 @@ def test_fill_alone_switches_on_the_default_white() raises -> None:
 
 
 @fieldwise_init
-struct OutlineSwitching(Program):
+struct StrokeSwitching(Program):
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> OutlineSwitching:
-        return OutlineSwitching(0)
+    ) raises -> StrokeSwitching:
+        return StrokeSwitching(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.RED, thickness=4)
-        canvas.outline_enabled(False)
+        canvas.stroke(Color.RED, thickness=4)
+        canvas.stroke_enabled(False)
         canvas.rectangle((-30, 0), 16, 16)  # off
-        canvas.outline_enabled(True)
+        canvas.stroke_enabled(True)
         canvas.rectangle((0, 0), 16, 16)  # back on, color remembered
-        canvas.outline_enabled(False)
-        canvas.outline(Color.BLUE)
+        canvas.stroke_enabled(False)
+        canvas.stroke(Color.BLUE)
         canvas.rectangle((30, 0), 16, 16)  # a new color switches it on
 
 
-def test_outline_enabled_switches_outline_and_keeps_its_color() raises -> None:
+def test_stroke_enabled_switches_stroke_and_keeps_its_color() raises -> None:
     # Sampled one pixel inside each rectangle's left edge, on the inset ring.
-    var m = run_headless[OutlineSwitching](100, 100)
+    var m = run_headless[StrokeSwitching](100, 100)
     assert_equal(m.pixel(13, 50), Color.BLACK)
     assert_equal(m.pixel(43, 50), Color.RED)
     assert_equal(m.pixel(73, 50), Color.BLUE)
@@ -1818,7 +1818,7 @@ struct RotatedCircle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.CYAN)
         with canvas.transform(rotate(PI / 4.0)):
             canvas.circle((0.0, 0.0), 20.0)
@@ -1851,7 +1851,7 @@ struct QuarterTurnRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
         with canvas.transform(rotate(PI / 2.0)):
             canvas.rectangle((0.0, 0.0), 20.0, 40.0)
@@ -1867,7 +1867,7 @@ struct SwappedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
         canvas.rectangle((0.0, 0.0), 40.0, 20.0)
 
@@ -1900,17 +1900,17 @@ struct GeometryOverloads(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.draw(Rectangle((-90.0, 40.0), 20.0, 20.0))
 
         canvas.fill(Color.GREEN)
         canvas.draw(Circle((-30.0, 40.0), 10.0))
 
-        canvas.outline(Color.BLUE, thickness=3)
+        canvas.stroke(Color.BLUE, thickness=3)
         canvas.draw(Line((20.0, 40.0), (40.0, 40.0)))
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.CYAN)
         canvas.draw(Triangle((90.0, 50.0), (80.0, 30.0), (100.0, 30.0)))
 
@@ -1920,10 +1920,10 @@ struct GeometryOverloads(Program):
         canvas.fill(Color.YELLOW)
         canvas.circle(Point2D(-30.0, -40.0), 10.0)
 
-        canvas.outline(Color.ORANGE, thickness=3)
+        canvas.stroke(Color.ORANGE, thickness=3)
         canvas.line(Point2D(20.0, -40.0), Point2D(40.0, -40.0))
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.LIGHT_GRAY)
         canvas.triangle(
             Point2D(90.0, -30.0), Point2D(80.0, -50.0), Point2D(100.0, -50.0)
@@ -2013,17 +2013,17 @@ struct ThickLineUnderNonUniformScale(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline(Color.WHITE, thickness=3)
+        canvas.stroke(Color.WHITE, thickness=3)
         with canvas.transform(scale(3.0, 1.0)):
             canvas.line((-10.0 / 3.0, 0.0), (10.0 / 3.0, 0.0))
 
 
-def test_outline_thickness_under_non_uniform_transform_follows_autoscale() raises -> (
+def test_stroke_thickness_under_non_uniform_transform_follows_autoscale() raises -> (
     None
 ):
     # scale(3.0, 1.0) makes the transform non-uniform, so _pixel_scale must
     # fall back to canvas.scale() (the autoscale factor, 2x here) rather than
-    # the local transform's own 3x — a 3-unit outline comes out 6 pixels
+    # the local transform's own 3x — a 3-unit stroke comes out 6 pixels
     # thick, not 18.
     var m = run_headless[ThickLineUnderNonUniformScale](
         50, 50, 1, window_size=(100, 100)
@@ -2176,7 +2176,7 @@ struct MeasuredText(Program):
             assert_almost_equal(canvas.text_width("Hi"), width, atol=0.5)
         canvas.text("Hi", (0.0, 0.0))
         # Mark where the text should end, in red, below it.
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((width, -40.0), 1.0, 10.0)
 
@@ -2232,7 +2232,7 @@ struct TextBesideShape(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((-60.0, 0.0), 40.0, 40.0)
         canvas.text_color(Color.GREEN)
@@ -2318,7 +2318,7 @@ struct QuitOnFrameTwo(Program):
             context.quit()
 
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         if self.frame == 1:
             canvas.fill(Color.RED)
         elif self.frame == 2:
@@ -2564,7 +2564,7 @@ def _scene(mut canvas: Canvas):
     export can be checked against design coordinates directly.
     """
     canvas.background(Color.BLACK)
-    canvas.outline_enabled(False)
+    canvas.stroke_enabled(False)
     canvas.fill(Color.RED)
     canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
@@ -2780,7 +2780,7 @@ struct GradientFills(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(_SKY)
         canvas.rectangle((-25, 0), 20, 20)
         with canvas.style(fill_gradient=_SKY):
@@ -2797,17 +2797,17 @@ def test_float_size_keywords_take_integer_literals() raises -> None:
     """`thickness`, `font_size` and `opacity` are Float64 keywords that a
     bare integer still reaches."""
     var canvas = Canvas(10, 10)
-    canvas.outline(thickness=2)
-    assert_equal(canvas._style.outline_thickness, 2.0)
-    canvas.outline(Color.RED, 1.5)
-    assert_equal(canvas._style.outline_thickness, 1.5)
+    canvas.stroke(thickness=2)
+    assert_equal(canvas._style.stroke_thickness, 2.0)
+    canvas.stroke(Color.RED, 1.5)
+    assert_equal(canvas._style.stroke_thickness, 1.5)
     canvas.font_size(12.5)
     assert_equal(canvas._style.font_size, 12.5)
-    with canvas.style(outline_thickness=3, font_size=20, opacity=1):
-        assert_equal(canvas._style.outline_thickness, 3.0)
+    with canvas.style(stroke_thickness=3, font_size=20, opacity=1):
+        assert_equal(canvas._style.stroke_thickness, 3.0)
         assert_equal(canvas._style.font_size, 20.0)
         assert_equal(canvas._style.opacity, 1.0)
-    assert_equal(canvas._style.outline_thickness, 1.5)
+    assert_equal(canvas._style.stroke_thickness, 1.5)
 
 
 def test_image_draws_at_a_fractional_size() raises -> None:

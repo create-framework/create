@@ -50,7 +50,7 @@ struct DrawsInCreate(Program):
     def create(
         mut context: Context, mut canvas: Canvas
     ) raises -> DrawsInCreate:
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0, 0), 20, 20)
         return DrawsInCreate(0)

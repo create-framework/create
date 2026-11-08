@@ -103,7 +103,7 @@ struct Game(Program):
         canvas.background(_SKY)
         canvas.camera(self.camera)
 
-        with canvas.style(outline_enabled=False):
+        with canvas.style(stroke_enabled=False):
             canvas.fill(_GROUND)
             canvas.draw(self.platforms[0])
             canvas.fill(_PLATFORM)

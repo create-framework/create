@@ -1,17 +1,17 @@
-"""Fill and outline geometry for sectors, shared by both replays.
+"""Fill and stroke geometry for sectors, shared by both replays.
 
 A sector is tiled in *device* space at replay into convex quads — a fan
 triangle is a quad with its first corner repeated — and both backends fill
 those same quads, the CPU through `fill_quad` and the GPU as vertices,
 which is what keeps them in parity. Neighbouring quads share their corners
 exactly, so under `fill_quad`'s half-open rule a translucent sector
-composites once everywhere, fill and outline together.
+composites once everywhere, fill and stroke together.
 
-The outline is an inset band, as a circle's is: the fill stops where the
-outline starts, `outline_thickness` inside every edge. The tiling walks the
+The stroke is an inset band, as a circle's is: the fill stops where the
+stroke starts, `stroke_thickness` inside every edge. The tiling walks the
 sweep in thin wedges around the tip, and along each wedge's rays the sector
 is one stretch of distances from the tip: the fill is the stretch of the
-sector eroded by the outline, the outline what lies either side of it.
+sector eroded by the stroke, the stroke what lies either side of it.
 
 A shadow's spread offsets the whole sector first (`geom[5]`, zero for a
 render call). Growing it keeps it one stretch per ray — a sector grown by a
@@ -30,33 +30,33 @@ from create.math.point2d import Point2D
 from ._command import RenderCommand
 from ._curve import PlacedMask, quads_shadow_mask
 from ._tessellate import _arc_segments
-from ._transform import outline_thickness_px, pixel_scale
+from ._transform import stroke_thickness_px, pixel_scale
 
 
 struct SectorQuads(Movable):
     """A sector's device-space tiling: four corners per quad, in order
     around the quad's edge, quad after quad. `fill` is painted in the fill
-    colour, `outline` in the outline colour; the two never overlap."""
+    colour, `stroke` in the stroke colour; the two never overlap."""
 
     var fill: List[Point2D]
-    var outline: List[Point2D]
+    var stroke: List[Point2D]
 
     def __init__(out self):
         self.fill = List[Point2D]()
-        self.outline = List[Point2D]()
+        self.stroke = List[Point2D]()
 
 
 def sector_quads(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> SectorQuads:
-    """`c` (a `CMD_SECTOR`) mapped by `m` and tiled into fill and outline
+    """`c` (a `CMD_SECTOR`) mapped by `m` and tiled into fill and stroke
     quads.
 
     The tiling is built in local space and mapped per corner, so a
     non-uniform transform gives the elliptical sector it should. With no
-    visible outline everything is fill. With an outline too wide to leave
+    visible stroke everything is fill. With a stroke too wide to leave
     any fill, the whole sector is one colour, as a circle's is: the fill's
-    if the fill is visible, else the outline's. `geom[5]` offsets the sector
+    if the fill is visible, else the stroke's. `geom[5]` offsets the sector
     by that many local units first, outwards if positive.
     """
     var out = SectorQuads()
@@ -72,8 +72,8 @@ def sector_quads(
     var full = theta >= TAU
     var sf = pixel_scale(m, scale)
     var t = 0.0
-    if c.style._outline_visible():
-        t = min(Float64(outline_thickness_px(c.style, m, scale)) / sf, r + grow)
+    if c.style._stroke_visible():
+        t = min(Float64(stroke_thickness_px(c.style, m, scale)) / sf, r + grow)
 
     # Sample angles into the sweep: an even split fine enough for the arc,
     # plus every angle where either boundary changes shape, so each wedge
@@ -92,8 +92,8 @@ def sector_quads(
             _breakpoints(alphas, theta, r, grow - t, sf)
     sort(alphas)
 
-    # Along each ray, from the tip: outline to `inner`, fill to `middle`,
-    # outline to `outer`. Any stretch may be empty.
+    # Along each ray, from the tip: stroke to `inner`, fill to `middle`,
+    # stroke to `outer`. Any stretch may be empty.
     var tip = List[Point2D]()
     var inner = List[Point2D]()
     var middle = List[Point2D]()
@@ -125,13 +125,13 @@ def sector_quads(
         if lengths[i][1] > 0.0 or lengths[j][1] > 0.0:
             _append_quad(out.fill, inner[i], middle[i], middle[j], inner[j])
         if lengths[i][0] > 0.0 or lengths[j][0] > 0.0:
-            _append_quad(out.outline, tip[i], inner[i], inner[j], tip[j])
+            _append_quad(out.stroke, tip[i], inner[i], inner[j], tip[j])
         if lengths[i][2] > 0.0 or lengths[j][2] > 0.0:
-            _append_quad(out.outline, middle[i], outer[i], outer[j], middle[j])
+            _append_quad(out.stroke, middle[i], outer[i], outer[j], middle[j])
 
     if t > 0.0 and len(out.fill) == 0 and c.style._fill_visible():
-        out.fill = out.outline^
-        out.outline = List[Point2D]()
+        out.fill = out.stroke^
+        out.stroke = List[Point2D]()
     return out^
 
 
@@ -141,13 +141,13 @@ def sector_shadow_mask(
     """The shadow command `c` (a `CMD_SECTOR`, one colour) mapped by `m`,
     rasterised into an alpha mask and blurred by `blur` device pixels."""
     var q = sector_quads(c, m, scale)
-    # Only what the command paints: an outline-only ring leaves its middle.
+    # Only what the command paints: a stroke-only ring leaves its middle.
     var corners = List[Point2D]()
     if c.style._fill_visible():
         for p in q.fill:
             corners.append(p)
-    if c.style._outline_visible():
-        for p in q.outline:
+    if c.style._stroke_visible():
+        for p in q.stroke:
             corners.append(p)
     return quads_shadow_mask(corners, blur)
 

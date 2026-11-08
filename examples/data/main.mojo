@@ -58,7 +58,7 @@ struct Chart(Program):
         var bar_start = canvas.left() + 180
         var bar_room = canvas.right() - 40 - widest - 12 - bar_start
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         for i in range(self.scores.row_count()):
             ref row = self.scores.row(i)
             var y = canvas.top() - 120 - (Float64(i) + 0.5) * row_height

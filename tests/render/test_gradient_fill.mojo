@@ -1,6 +1,6 @@
 # Gradient fills through the real Canvas and the CPU replay: every region
 # kind paints its gradient over its own box, the gradient turns with the
-# shape, and everything a gradient isn't part of — outline, shadow — keeps
+# shape, and everything a gradient isn't part of — stroke, shadow — keeps
 # its colour.
 from std.os import remove
 from std.testing import TestSuite, assert_equal, assert_true
@@ -17,7 +17,7 @@ comptime RECT_RIGHT = 1
 comptime RADIAL_CIRCLE = 2
 comptime ROTATED_RECT = 3
 comptime ZERO_DIRECTION = 4
-comptime OUTLINED = 5
+comptime STROKED = 5
 comptime TRANSLUCENT_STOP = 6
 comptime TRIANGLE = 7
 comptime SECTOR = 8
@@ -41,7 +41,7 @@ struct Scene[n: Int](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(_RED_TO_BLUE)
         comptime if Self.n == RECT_DOWN:
             canvas.rectangle((0, 0), 80, 80)
@@ -62,8 +62,8 @@ struct Scene[n: Int](Program):
                 Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.ZERO)
             )
             canvas.rectangle((0, 0), 80, 80)
-        elif Self.n == OUTLINED:
-            canvas.outline(Color.GREEN, thickness=4)
+        elif Self.n == STROKED:
+            canvas.stroke(Color.GREEN, thickness=4)
             canvas.rectangle((0, 0), 80, 80)
         elif Self.n == TRANSLUCENT_STOP:
             canvas.fill(Gradient.linear(Color.RED.with_alpha(128), Color.RED))
@@ -134,7 +134,7 @@ struct TransparentCapture(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_RED_TO_BLUE)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.GREEN)
         canvas.rectangle((0, 0), 20, 20)
         canvas.save_image(_IMG_TRANSPARENT, transparent=True)
@@ -198,8 +198,8 @@ def test_a_zero_direction_paints_the_first_stop() raises -> None:
     _near(m.pixel(50, 89), Color.RED, tolerance=0)
 
 
-def test_the_outline_keeps_its_colour() raises -> None:
-    var m = _render[OUTLINED]()
+def test_the_stroke_keeps_its_colour() raises -> None:
+    var m = _render[STROKED]()
     _near(m.pixel(11, 50), Color.GREEN, tolerance=0)
     _near(m.pixel(88, 50), Color.GREEN, tolerance=0)
     _assert_runs_down(m, 50, 15, 84)
@@ -352,7 +352,7 @@ def test_the_gpu_paints_the_same_gradients() raises -> None:
     _ = _gpu_matches_cpu[RADIAL_CIRCLE]()
     _ = _gpu_matches_cpu[ROTATED_RECT]()
     _ = _gpu_matches_cpu[ZERO_DIRECTION]()
-    _ = _gpu_matches_cpu[OUTLINED]()
+    _ = _gpu_matches_cpu[STROKED]()
     _ = _gpu_matches_cpu[TRANSLUCENT_STOP]()
     _ = _gpu_matches_cpu[TRIANGLE]()
     _ = _gpu_matches_cpu[SECTOR]()

@@ -41,7 +41,7 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color(240, 236, 222))
-        canvas.outline(Color(40, 40, 44), thickness=3)
+        canvas.stroke(Color(40, 40, 44), thickness=3)
 
         for b in self.buttons:
             var hovered = b.plate.contains(context.input.mouse)

@@ -69,7 +69,7 @@ def test_screen_fixed_offset_ignores_rotation() raises -> None:
     var m = _device() @ rotate(PI / 2.0)
     var c = rect_command(m, _shadowed(), 0.0, 0.0, 10.0, 10.0)
     # A rotated transform has no single pixel scale, so the length comes from
-    # the frame's autoscale factor, as outline thickness does.
+    # the frame's autoscale factor, as stroke thickness does.
     var d = _moved(m, shadow_transform(c, 2.0))
     # Down-right on screen: device rows run downwards.
     assert_almost_equal(d[0], 8.0)
@@ -92,7 +92,7 @@ def test_only_render_calls_that_paint_cast_a_shadow() raises -> None:
     assert_true(casts_outer_shadow(rect_command(identity[3](), s, 0, 0, 1, 1)))
     assert_false(casts_outer_shadow(clear_command(Color.RED)))
     s.fill_enabled = False
-    s.outline_enabled = False
+    s.stroke_enabled = False
     assert_false(casts_outer_shadow(rect_command(identity[3](), s, 0, 0, 1, 1)))
     var off = _shadowed()
     off.shadow_enabled = False
@@ -113,21 +113,21 @@ def test_filled_shape_casts_one_filled_layer() raises -> None:
     var sh = shadow_command(c, 1.0)
     assert_true(sh.style.fill_enabled)
     assert_equal(sh.style.fill_color, Color(0, 0, 0, 100))
-    assert_false(sh.style.outline_enabled)
+    assert_false(sh.style.stroke_enabled)
     assert_false(sh.style.shadow_enabled)
-    # A rectangle's outline is inset, so the silhouette is the rectangle.
+    # A rectangle's stroke is inset, so the silhouette is the rectangle.
     assert_equal(sh.geom[2], 10.0)
     assert_equal(sh.geom[3], 6.0)
 
 
-def test_outline_only_shape_casts_its_ring() raises -> None:
-    var s = Style(outline=Color.RED, outline_thickness=3, shadow_enabled=True)
+def test_stroke_only_shape_casts_its_ring() raises -> None:
+    var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
     var c = circle_command(identity[3](), s, 0.0, 0.0, 10.0)
     var sh = shadow_command(c, 1.0)
     assert_false(sh.style.fill_enabled)
-    assert_true(sh.style.outline_enabled)
-    assert_equal(sh.style.outline_color, s.shadow_color)
-    assert_equal(sh.style.outline_thickness, 3)
+    assert_true(sh.style.stroke_enabled)
+    assert_equal(sh.style.stroke_color, s.shadow_color)
+    assert_equal(sh.style.stroke_thickness, 3)
     assert_equal(sh.geom[2], 10.0)
 
 
@@ -135,27 +135,27 @@ def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
     # A curve has no interior: a fill in its style changes nothing, and its
     # silhouette is the stroke, widened by the spread on both sides.
     var s = _shadowed()
-    s.outline_enabled = True
-    s.outline_thickness = 3
+    s.stroke_enabled = True
+    s.stroke_thickness = 3
     s.shadow_spread = 1.0
     var curve = Bezier((0.0, 0.0), (10.0, 20.0), (20.0, -20.0), (30.0, 0.0))
     var c = bezier_command(identity[3](), s, curve)
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
     assert_false(sh.style.fill_enabled)
-    assert_true(sh.style.outline_enabled)
-    assert_equal(sh.style.outline_color, s.shadow_color)
-    assert_equal(sh.style.outline_thickness, 5)
+    assert_true(sh.style.stroke_enabled)
+    assert_equal(sh.style.stroke_color, s.shadow_color)
+    assert_equal(sh.style.stroke_thickness, 5)
     assert_equal(len(sh.points), len(c.points))
     for i in range(len(c.points)):
         assert_equal(sh.points[i], c.points[i])
-    s.outline_enabled = False
+    s.stroke_enabled = False
     assert_false(casts_outer_shadow(bezier_command(identity[3](), s, curve)))
 
 
 def test_a_bezier_chain_casts_every_curve() raises -> None:
     var s = _shadowed()
-    s.outline_enabled = True
+    s.stroke_enabled = True
     var chain: List[Point2D] = [
         (0.0, 0.0),
         (10.0, 20.0),
@@ -175,7 +175,7 @@ def test_a_bezier_chain_casts_every_curve() raises -> None:
 
 def test_spread_grows_each_kind() raises -> None:
     var s = _shadowed()
-    s.outline_enabled = False
+    s.stroke_enabled = False
     s.shadow_spread = 2.0
     var r = shadow_command(rect_command(identity[3](), s, 0, 0, 10, 6), 1.0)
     assert_equal(r.geom[2], 14.0)
@@ -184,7 +184,7 @@ def test_spread_grows_each_kind() raises -> None:
     var c = shadow_command(circle_command(identity[3](), s, 0, 0, 5), 1.0)
     assert_equal(c.geom[2], 7.0)
     var l = shadow_command(line_command(identity[3](), s, 0, 0, 5, 0), 1.0)
-    assert_equal(l.style.outline_thickness, 5)
+    assert_equal(l.style.stroke_thickness, 5)
 
 
 def test_negative_spread_never_inverts_a_shape() raises -> None:
@@ -197,7 +197,7 @@ def test_negative_spread_never_inverts_a_shape() raises -> None:
 
 def test_triangle_grows_every_edge_by_the_spread() raises -> None:
     var s = _shadowed()
-    s.outline_enabled = False
+    s.stroke_enabled = False
     s.shadow_spread = 1.0
     # Right isosceles triangle, legs along the axes.
     var c = triangle_command(identity[3](), s, 0, 0, 10, 0, 0, 10)
@@ -208,9 +208,9 @@ def test_triangle_grows_every_edge_by_the_spread() raises -> None:
     assert_equal(sh.corner_radius, 1.0)
 
 
-def test_triangle_silhouette_reaches_the_outline_outer_edge() raises -> None:
+def test_triangle_silhouette_reaches_the_stroke_outer_edge() raises -> None:
     var s = _shadowed()
-    s.outline_thickness = 2
+    s.stroke_thickness = 2
     s.shadow_spread = 0.0
     var c = triangle_command(identity[3](), s, 0, 0, 10, 0, 0, 10)
     var sh = shadow_command(c, 1.0)
@@ -220,7 +220,7 @@ def test_triangle_silhouette_reaches_the_outline_outer_edge() raises -> None:
 
 
 def test_a_sector_casts_its_grown_silhouette() raises -> None:
-    # The outline is inset, so the silhouette is the sector; the spread
+    # The stroke is inset, so the silhouette is the sector; the spread
     # rides along for `sector_quads` to grow it exactly.
     var s = _shadowed()
     s.shadow_spread = 2.0
@@ -229,22 +229,22 @@ def test_a_sector_casts_its_grown_silhouette() raises -> None:
     var sh = shadow_command(c, 1.0)
     assert_true(sh.style.fill_enabled)
     assert_equal(sh.style.fill_color, s.shadow_color)
-    assert_false(sh.style.outline_enabled)
+    assert_false(sh.style.stroke_enabled)
     for i in range(5):
         assert_equal(sh.geom[i], c.geom[i])
     assert_equal(sh.geom[5], 2.0)
 
 
-def test_an_outline_only_sector_casts_its_ring() raises -> None:
-    var s = Style(outline=Color.RED, outline_thickness=3, shadow_enabled=True)
+def test_an_stroke_only_sector_casts_its_ring() raises -> None:
+    var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
     s.shadow_spread = 1.0
     var c = sector_command(identity[3](), s, 0.0, 0.0, 10.0, 0.0, 1.0)
     var sh = shadow_command(c, 1.0)
     assert_false(sh.style.fill_enabled)
-    assert_equal(sh.style.outline_color, s.shadow_color)
-    assert_equal(sh.style.outline_thickness, 5)
+    assert_equal(sh.style.stroke_color, s.shadow_color)
+    assert_equal(sh.style.stroke_thickness, 5)
     assert_equal(sh.geom[5], 1.0)
-    s.outline_enabled = False
+    s.stroke_enabled = False
     assert_false(
         casts_outer_shadow(sector_command(identity[3](), s, 0, 0, 10, 0, 1))
     )
@@ -263,7 +263,7 @@ def _square() -> List[Point2D]:
 
 
 def test_a_polygon_casts_its_grown_silhouette() raises -> None:
-    # The outline is inset, so the silhouette is the polygon; the spread
+    # The stroke is inset, so the silhouette is the polygon; the spread
     # rides along for `polygon_quads` to grow it exactly.
     var s = _shadowed()
     s.shadow_spread = 2.0
@@ -272,23 +272,23 @@ def test_a_polygon_casts_its_grown_silhouette() raises -> None:
     var sh = shadow_command(c, 1.0)
     assert_true(sh.style.fill_enabled)
     assert_equal(sh.style.fill_color, s.shadow_color)
-    assert_false(sh.style.outline_enabled)
+    assert_false(sh.style.stroke_enabled)
     assert_equal(len(sh.points), 4)
     for i in range(4):
         assert_true(sh.points[i] == c.points[i])
     assert_equal(sh.geom[0], 2.0)
 
 
-def test_an_outline_only_polygon_casts_its_ring() raises -> None:
-    var s = Style(outline=Color.RED, outline_thickness=3, shadow_enabled=True)
+def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
+    var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
     s.shadow_spread = 1.0
     var c = polygon_command(identity[3](), s, _square())
     var sh = shadow_command(c, 1.0)
     assert_false(sh.style.fill_enabled)
-    assert_equal(sh.style.outline_color, s.shadow_color)
-    assert_equal(sh.style.outline_thickness, 5)
+    assert_equal(sh.style.stroke_color, s.shadow_color)
+    assert_equal(sh.style.stroke_thickness, 5)
     assert_equal(sh.geom[0], 1.0)
-    s.outline_enabled = False
+    s.stroke_enabled = False
     assert_false(
         casts_outer_shadow(polygon_command(identity[3](), s, _square()))
     )

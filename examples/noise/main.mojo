@@ -40,7 +40,7 @@ struct App(Program):
         var cell_h = (canvas.top() - canvas.bottom()) / Float64(_ROWS)
         var low = Color(44, 46, 84)
         var high = Color(240, 236, 222)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         for column in range(_COLUMNS):
             for row in range(_ROWS):
                 var center = Point2D(
@@ -56,7 +56,7 @@ struct App(Program):
         # The same range as Random.float(), so lerp turns it into a position.
         var x = lerp(canvas.left() + 40, canvas.right() - 40, self.wobble.at(t))
         canvas.fill(Color(226, 46, 56))
-        canvas.outline(Color(240, 236, 222), thickness=3)
+        canvas.stroke(Color(240, 236, 222), thickness=3)
         canvas.circle((x, 0), 24)
 
         canvas.text_color(Color(240, 236, 222))

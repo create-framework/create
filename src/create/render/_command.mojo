@@ -21,7 +21,7 @@ already in pixels, because it is the frame's clip rather than something a
 program drew."""
 comptime CMD_BEZIER = 8
 """A stroke along a chain of cubic Béziers, its control points in `points`
-rather than `geom`. Outline only — a curve has no interior."""
+rather than `geom`. Stroke only — a curve has no interior."""
 comptime CMD_SECTOR = 9
 """A pie slice: the tip `(cx, cy)`, radius `r`, and a signed sweep from
 `start` in radians, counter-clockwise positive."""
@@ -146,8 +146,8 @@ struct RenderCommand(Copyable, Movable):
                 self.style.fill_gradient = (
                     self.style.fill_gradient.value()._tinted(tint, opacity)
                 )
-            self.style.outline_color = _tinted(
-                self.style.outline_color, tint, opacity
+            self.style.stroke_color = _tinted(
+                self.style.stroke_color, tint, opacity
             )
             self.style.text_color = _tinted(
                 self.style.text_color, tint, opacity

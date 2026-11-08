@@ -21,7 +21,7 @@ from create.math.vector2d import Vector2D
 from ._blur import BlurredMask, blur_alpha
 from ._command import RenderCommand
 from ._raster import fill_quad
-from ._transform import outline_thickness_px
+from ._transform import stroke_thickness_px
 from create.color.color import Color
 from ._surface import MemorySurface
 
@@ -152,10 +152,10 @@ def bezier_shadow_mask(
     stroke gives an empty mask.
     """
     var corners = List[Point2D]()
-    if c.style._outline_visible():
+    if c.style._stroke_visible():
         corners = stroke_quads(
             bezier_device_points(c, m),
-            Float64(outline_thickness_px(c.style, m, scale)),
+            Float64(stroke_thickness_px(c.style, m, scale)),
         )
     return quads_shadow_mask(corners, blur)
 

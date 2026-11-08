@@ -70,7 +70,7 @@ struct App(Program):
         for i in range(len(self.curves)):
             var y = _row_y(i)
             var active = i == self.hovered
-            canvas.outline(
+            canvas.stroke(
                 Color(90, 90, 98) if active else Color(62, 62, 68), thickness=3
             )
             canvas.line((_TRACK_START, y), (_TRACK_END, y))
@@ -81,7 +81,7 @@ struct App(Program):
             var t = 0.0
             if active:
                 t = ease(self.curves[i], self.clock.progress())
-            with canvas.style(fill=Color(98, 104, 168), outline_enabled=False):
+            with canvas.style(fill=Color(98, 104, 168), stroke_enabled=False):
                 canvas.circle((lerp(_TRACK_START, _TRACK_END, t), y), 11)
 
             canvas.text_color(

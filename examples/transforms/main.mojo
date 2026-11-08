@@ -29,18 +29,18 @@ struct Transforms(Program):
         var sun = Circle((0.0, 0.0), 40.0)
         var sun_hovered = sun.contains(canvas.to_local(context.input.mouse))
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color(226, 46, 56) if sun_hovered else Color(230, 180, 20))
         canvas.draw(sun)
 
         # Planet — rotate then translate so it orbits the sun
         with canvas.transform(rotate(planet_angle) @ translate(160.0, 0.0)):
             # Thin orbit guide rendered in planet's frame before further nesting
-            canvas.outline(Color(62, 62, 68), thickness=1)
+            canvas.stroke(Color(62, 62, 68), thickness=1)
             canvas.fill_enabled(False)
             canvas.circle((0.0, 0.0), 45.0)
 
-            canvas.outline_enabled(False)
+            canvas.stroke_enabled(False)
             canvas.fill(Color(98, 104, 168))
             canvas.circle((0.0, 0.0), 18.0)
 
@@ -52,7 +52,7 @@ struct Transforms(Program):
         # Spinning rect cluster: same transform pattern, different shape.
         # Below and left of centre, so both coordinates are negative.
         with canvas.transform(translate(-232.0, -165.0)):
-            canvas.outline_enabled(False)
+            canvas.stroke_enabled(False)
             canvas.fill(Color(62, 62, 68))
             canvas.circle((0.0, 0.0), 8.0)
 
@@ -75,7 +75,7 @@ struct Transforms(Program):
             for i in range(5):
                 var a = elapsed * 0.6 + Float64(i) * TAU / 5.0
                 with canvas.transform(rotate(a)):
-                    canvas.outline_enabled(False)
+                    canvas.stroke_enabled(False)
                     canvas.fill(
                         Color(98, 104, 168).lerp(
                             Color(201, 140, 150), Float64(i) / 4.0

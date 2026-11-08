@@ -226,7 +226,7 @@ methods build a shape from numbers and draw it: `canvas.rectangle(p, w, h)` is
 
 ### Style and clear
 
-`Style()` defaults are not blank: **outline `BLACK`, on, 1 unit**; fill `WHITE`, off; `BLACK`
+`Style()` defaults are not blank: **stroke `BLACK`, on, 1 unit**; fill `WHITE`, off; `BLACK`
 text. Every frame opens with a clear to gray 200 so those defaults are visible;
 `canvas.background()` is the only way to choose the colour. `corner_radius` is style only for
 shapes the canvas builds from numbers; a shape value keeps its own (see Terminology), so
@@ -244,9 +244,9 @@ from frame to frame (on the internal `_PersistentCanvasState`) and last until ch
 default) and `antialiasing`. A frame-wide setting applies to the whole frame it is set in, since
 nothing is rasterised until present, and reads back with no arguments.
 
-`fill`, `outline` and `text_color` set three independent colours; `fill_enabled(False)` does not
-hide text. Text is hidden by a zero-alpha `text_color`. `fill_enabled`/`outline_enabled` switch
-off without losing the colour; `fill(...)`/`outline(...)`/`shadow(...)` switch back on, and with
+`fill`, `stroke` and `text_color` set three independent colours; `fill_enabled(False)` does not
+hide text. Text is hidden by a zero-alpha `text_color`. `fill_enabled`/`stroke_enabled` switch
+off without losing the colour; `fill(...)`/`stroke(...)`/`shadow(...)` switch back on, and with
 no arguments keep every part, so `fill()` alone paints the default white.
 
 **Three ways to style**, all additive:
@@ -258,7 +258,7 @@ no arguments keep every part, so `fill()` alone paints the default white.
 | `with canvas.style(heading):` | A whole `Style` value, for the block — unset fields are `Style()` defaults, not the previous style |
 
 `Style(...)` takes the setters' names as keywords and, like them, naming any part of the fill,
-outline or shadow switches it on unless its `*_enabled` keyword says otherwise. A reusable style is
+stroke or shadow switches it on unless its `*_enabled` keyword says otherwise. A reusable style is
 a field built in `create`.
 
 **Fonts** are part of the style: `canvas.font(f)`, `Style(font=f)` or `with canvas.style(font=f):`,
@@ -282,7 +282,7 @@ implicit conversions from a bare `Color`, which Mojo won't chain.
 - While set, the gradient fills and `fill_color` is kept: `fill(color)` clears the gradient,
   `fill()`/`fill_enabled(...)` keep it. Given `fill=` and `fill_gradient=` together, the gradient
   wins.
-- Fills only: outlines, lines, curves and text ignore it, and a shadow stays the silhouette in
+- Fills only: strokes, lines, curves and text ignore it, and a shadow stays the silhouette in
   `shadow_color` (a fill fading to transparent still casts a full shadow).
 - `background(gradient)` spans the screen (`left()`…`top()`), ignoring the camera; it replaces the
   autoclear only if every stop is opaque.
@@ -294,23 +294,23 @@ inset=)` switches one on (unset parts keep their values, so `shadow()` alone swi
 one on; an unset part is `None`, like every optional keyword; a `Float64` one — `blur`, `spread`, `thickness`, `font_size`, `opacity` — is the internal `_OptionalFloat64`, which takes `12`, `1.5`, `None` or an `Optional[Float64]` in one step, since an integer literal won't convert through `Optional[Float64]`),
 `shadow_enabled(False)` switches it off, and `canvas.style(...)` takes the same parts as `shadow*`
 keywords.
-- **One silhouette, like CSS `drop-shadow`:** fill plus outline cast together (outline only casts
+- **One silhouette, like CSS `drop-shadow`:** fill plus stroke cast together (stroke only casts
   a ring); lines and arcs cast their stroke, text its glyphs, images their alpha. A translucent fill shows
   its own shadow through it. Clear, background and letterbox never cast.
 - **`blur` is the CSS radius** (σ = blur / 2); `blur` and `spread` are world units, scaled like
   coordinates. Blur 0 is hard.
 - **`shadow_inset`** paints inside the shape instead, after it, clipped to the interior within the
-  outline. Rectangles, circles and triangles only — sectors, polygons, lines, arcs, text and
+  stroke. Rectangles, circles and triangles only — sectors, polygons, lines, arcs, text and
   images cast nothing while it is set.
 - **The offset is screen-fixed** by default (`(4, -4)`, down-right): rotation doesn't turn it, but
   camera zoom and autoscale scale it. `shadow_follows_transform(True)` turns it with the shape.
 - Shadows use the command's own tint, opacity and blend mode.
 
 **Tint, opacity and blend modes reach every render call** (images included, `background()` never), and
-every shape composites once: fill and outline never overlap, so a translucent shape is evenly
+every shape composites once: fill and stroke never overlap, so a translucent shape is evenly
 translucent. `canvas.tint(color)` multiplies every colour of the call — fill, gradient stops,
-outline, text, shadow, each image texel — channel by channel; white (the default) is no tint, and
-its alpha stacks with `opacity`. It recolours a whole look at once, where `fill`/`outline`/
+stroke, text, shadow, each image texel — channel by channel; white (the default) is no tint, and
+its alpha stacks with `opacity`. It recolours a whole look at once, where `fill`/`stroke`/
 `text_color` set one part each; scope it with `with canvas.style(tint=...)`. Multiplying only
 darkens, so it can't flash a sprite white.
 
@@ -329,7 +329,7 @@ window or headless target (capped at the driver's maximum), the CPU samples each
 grid (`LOW` 2x2, `MEDIUM` 4x4, `HIGH` 8x8 per pixel). Shapes, and the edge of a rotated or
 sheared image — text and an image's own pixels are smooth already; a clip's edge is antialiased
 like a shape's (see Clipping). A shape's fill and
-outline composite together, so no seam shows between them; two separate shapes meeting inside a pixel can
+stroke composite together, so no seam shows between them; two separate shapes meeting inside a pixel can
 show a faint one. `run_headless` defaults to `MEDIUM` too, so a test asserting an edge pixel's exact
 colour passes `antialiasing=Antialiasing.OFF`.
 
@@ -455,7 +455,7 @@ space the program is authored in, not a window size. Fullscreen/maximized scale 
 display. `run(..., autoscale=)` (or `context.autoscale(mode)` later) takes `FIT` (default),
 `EXTEND` or `OFF`; `OFF` makes coordinates the window's own pixels. Both decide frame 1's mapping
 only as `run` arguments: the viewport is derived before `create`. Under `EXTEND` the reported size
-grows with the window, so anchor layout to the edges. Font size, outline thickness and image size
+grows with the window, so anchor layout to the edges. Font size, stroke thickness and image size
 scale by `canvas.scale()`. See [examples/window/main.mojo](examples/window/main.mojo).
 
 `Context` dials are the run's, not the drawing's: `design_size`, `autoscale`, `title`,
@@ -505,12 +505,12 @@ frame body returns. Headless runs ignore the window dials, like `rumble`.
 | `overlaps` / `intersects` / `contains` | `overlaps(a, b)`: free, symmetric, regions only (`Rectangle`/`Circle`/`Triangle`/`Sector`/`Polygon`). `curve.intersects(x)`: every curve (`Line`, `Arc`, `Bezier`, `Spline`) against every shape and `Point2D`, both ways round, since a curve has no interior. `region.contains(x)`: asymmetric, every region against every region and every curve. A curve is never a region. All three see a shape's `corner_radius`. `Line` and `Arc` are exact (to `_RADIUS_EPSILON` with an arc); `Bezier` and `Spline` flatten themselves to within 1e-4 of their size, so a crossing is always found but a graze or near miss is decided only that closely; a region's `contains` follows `Arc`, `Bezier` and `Spline` the same way |
 | `Drawable` / `DrawTarget` | `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts (`draw_to[T: DrawTarget](self, mut target: T)`). `DrawTarget` is where it draws: `Canvas`, through one `_`-named primitive per kind and the provided `draw` |
 | `Shape` / `Region` / `Curve` | The geometry's traits, so every shape of a kind answers the same methods and generic code takes any (`def f[C: Curve](c: C)`). `Shape(Drawable)`, every one of the nine, `Copyable` and `Deinitable`: `bounds`, `closest_point`, `translate`. `Region(Shape)`, the five with an inside (`Rectangle`, `Circle`, `Triangle`, `Sector`, `Polygon`), which `canvas.clip` takes: `center`, `area`, `contains(Point2D)`, `move_to`. `Curve(Shape)`, the four without (`Line`, `Arc`, `Bezier`, `Spline` — a straight line is a curve, as in mathematics): `at`, `tangent` (the derivative, not unit), `length`, `at_distance`, `flatten`, `beziers`. Tests between two shapes (`overlaps`, `contains(shape)`, `intersects`) stay overloads per pair, so they are not trait methods; nor is a curve's `move_to`, which only `Line` (its midpoint) and `Arc` (its centre) have, or `split(t)`, which `Line`, `Arc` and `Bezier` have — a piece of a `Spline` is not a `Spline` |
-| `corner_radius` | A keyword-only field of `Rectangle`, `Triangle`, `Polygon` and `Sector` (`Rectangle(p, w, h, corner_radius=8)`): a shape value is drawn and clipped by its own radius, whatever the style says. The scalar canvas calls (`rectangle`, `triangle`, `polygon`, `sector`) take a `corner_radius=` keyword, and without one use the style's: `canvas.corner_radius(r)`, `Style(corner_radius=)`, `canvas.style(corner_radius=)`. A named keyword beats the style, `corner_radius=0` included. Clamped as drawn: a rectangle to half its shorter side, a triangle's one radius so no corner overruns half an edge; a polygon's and a sector's corners each on their own, a concave corner filling its notch. Every `contains`/`overlaps`/`intersects`/`closest_point`/`area` sees it: rectangles and triangles exactly, polygons and sectors through their outline with each curve flattened (within ~0.1% of the radius). A rounded polygon or sector draws as a polygon of more vertices, so it costs more outlined (see `Polygon`) |
+| `corner_radius` | A keyword-only field of `Rectangle`, `Triangle`, `Polygon` and `Sector` (`Rectangle(p, w, h, corner_radius=8)`): a shape value is drawn and clipped by its own radius, whatever the style says. The scalar canvas calls (`rectangle`, `triangle`, `polygon`, `sector`) take a `corner_radius=` keyword, and without one use the style's: `canvas.corner_radius(r)`, `Style(corner_radius=)`, `canvas.style(corner_radius=)`. A named keyword beats the style, `corner_radius=0` included. Clamped as drawn: a rectangle to half its shorter side, a triangle's one radius so no corner overruns half an edge; a polygon's and a sector's corners each on their own, a concave corner filling its notch. Every `contains`/`overlaps`/`intersects`/`closest_point`/`area` sees it: rectangles and triangles exactly, polygons and sectors through their stroke with each curve flattened (within ~0.1% of the radius). A rounded polygon or sector draws as a polygon of more vertices, so it costs more stroked (see `Polygon`) |
 | Sweep | `Arc` and `Sector` share `position` (the circle's centre), `r`, `start_angle` and a **signed** `sweep_angle`, in radians from +x: positive is counter-clockwise (y is up), negative clockwise, and \|sweep\| ≥ `TAU` is the whole circle. Stored as given, so `==` and printing round-trip; `end_angle()` is `start_angle + sweep_angle` |
 | `Arc` | A curve, like `Line`: no interior, never in `overlaps`. Constant speed, so `at_distance(d)` is exact. `beziers()` splits it into Béziers of at most 45°; `canvas.arc` strokes those as one chain, like `canvas.spline` |
-| `Sector` | A pie slice, a region: its tip at `position`, fanned out to its arc. Wider than a half turn it is not convex — the missing wedge is outside it, for `contains` and `overlaps` alike. `center()` is `position`, like `Circle`'s, not the centroid. `canvas.sector` insets its outline as a circle's; no inset shadow. `corner_radius` rounds the tip and both ends of the arc, the ends tangent to the arc from inside; past a half turn the tip is concave and its rounding fills the notch, at exactly a half turn it runs straight and stays, and a whole disc has no corners |
-| `Polygon` | Any `vertices`, in order, closed back to the first: concave or crossing itself, a region. Inside by the **nonzero rule** (a pentagram of five crossing vertices is solid through its middle), vertex order irrelevant, boundary inside. `Polygon.regular(position, r, sides)` and `Polygon.star(position, r, inner_radius, tips)` start at `start_angle`, straight up by default. `center()` is the area centroid and `area()` the shoelace area, both meaningful only for a simple polygon. `canvas.polygon` insets its outline along the outside but centres it on an edge running through the inside (a pentagram's inner pentagon), so every edge is stroked as thick; no inset shadow. `corner_radius` rounds every vertex (not the crossings of a self-crossing one). Outlined, on the CPU at `MEDIUM`, a 5-tip star costs ~160 µs a frame, a pentagram ~380 µs, a 40-tip star ~2 ms; rounded, ~360 µs, ~460 µs and ~20 ms. Filled only, a fraction of that |
-| `Bezier` | A cubic Bézier: `start`, `control1`, `control2`, `end`; passes through the endpoints only. A curve, not a region: `canvas.bezier` strokes it in the outline style and draws nothing with the outline off. `at(t)` is uneven in speed; `at_distance(d)` moves along it at constant speed. `closest_point` is a search (samples, then Newton), accurate to rounding |
+| `Sector` | A pie slice, a region: its tip at `position`, fanned out to its arc. Wider than a half turn it is not convex — the missing wedge is outside it, for `contains` and `overlaps` alike. `center()` is `position`, like `Circle`'s, not the centroid. `canvas.sector` insets its stroke as a circle's; no inset shadow. `corner_radius` rounds the tip and both ends of the arc, the ends tangent to the arc from inside; past a half turn the tip is concave and its rounding fills the notch, at exactly a half turn it runs straight and stays, and a whole disc has no corners |
+| `Polygon` | Any `vertices`, in order, closed back to the first: concave or crossing itself, a region. Inside by the **nonzero rule** (a pentagram of five crossing vertices is solid through its middle), vertex order irrelevant, boundary inside. `Polygon.regular(position, r, sides)` and `Polygon.star(position, r, inner_radius, tips)` start at `start_angle`, straight up by default. `center()` is the area centroid and `area()` the shoelace area, both meaningful only for a simple polygon. `canvas.polygon` insets its stroke along the outside but centres it on an edge running through the inside (a pentagram's inner pentagon), so every edge is stroked as thick; no inset shadow. `corner_radius` rounds every vertex (not the crossings of a self-crossing one). Stroked, on the CPU at `MEDIUM`, a 5-tip star costs ~160 µs a frame, a pentagram ~380 µs, a 40-tip star ~2 ms; rounded, ~360 µs, ~460 µs and ~20 ms. Filled only, a fraction of that |
+| `Bezier` | A cubic Bézier: `start`, `control1`, `control2`, `end`; passes through the endpoints only. A curve, not a region: `canvas.bezier` strokes it in the stroke style and draws nothing with the stroke off. `at(t)` is uneven in speed; `at_distance(d)` moves along it at constant speed. `closest_point` is a search (samples, then Newton), accurate to rounding |
 | `Spline` | A smooth curve through every one of `points`, in order (Catmull-Rom); `closed` runs it on back to the first. `alpha` spaces its knots: 0 uniform (can loop where points bunch), 0.5 centripetal (default, never does), 1 chordal. Same sampling methods as `Bezier`, `t` split evenly per stretch. `beziers()` converts it exactly; `canvas.spline` draws it as one stroke of those Béziers |
 
 ## Do
