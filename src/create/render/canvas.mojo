@@ -1267,6 +1267,10 @@ struct Canvas(DrawTarget, Movable):
         )
 
     def line(mut self, start: Point2D, end: Point2D):
+        """Stroke the line from `start` to `end` in the stroke colour and
+        thickness, its ends finished as `stroke_cap` says. A line has no
+        interior, so `fill` never applies; a line of no length is a dot under
+        `StrokeCap.ROUND` or `SQUARE` and nothing under `BUTT`."""
         self.draw(Line(start, end))
 
     def bezier(
@@ -1282,8 +1286,9 @@ struct Canvas(DrawTarget, Movable):
         A curve, like a line, has no interior: `fill` never applies, and with
         the stroke off nothing is drawn. The curve is flattened at replay,
         in device pixels, so it stays smooth under any camera zoom; its ends
-        are butt, like a line's, unless `end` is `start`: then the curve
-        closes on a mitred joint. Joints are mitred, so a translucent stroke
+        are finished as `stroke_cap` says, like a line's, unless `end` is
+        `start`: then the curve closes on a mitred joint and has none. Joints
+        are mitred and caps share the end's edge, so a translucent stroke
         composites once, except at a sharp cusp, where it may overlap slightly.
 
         A blurred shadow is blurred afresh every frame (it cannot be cached
@@ -1307,8 +1312,9 @@ struct Canvas(DrawTarget, Movable):
         like the rest.
 
         Drawn as one stroke, like `bezier`: no fill, nothing with the stroke
-        off, butt ends when open, and a translucent stroke composites once. A
-        blurred shadow costs what a `bezier`'s does. Fewer than two distinct
+        off, ends as `stroke_cap` says when open, and a translucent stroke
+        composites once. A blurred shadow costs what a `bezier`'s does. Fewer
+        than two distinct
         points draw nothing.
         """
         self.draw(Spline(points^, alpha, closed))
@@ -1329,8 +1335,9 @@ struct Canvas(DrawTarget, Movable):
         circle, closed on a mitred joint.
 
         Drawn as one stroke, like `bezier`: no fill, nothing with the stroke
-        off, butt ends when open, and a translucent stroke composites once. A
-        blurred shadow costs what a `bezier`'s does. A zero radius or sweep
+        off, ends as `stroke_cap` says short of a whole turn, and a translucent
+        stroke composites once. A blurred shadow costs what a `bezier`'s does.
+        A zero radius or sweep
         draws nothing.
         """
         self.draw(Arc(position, r, start_angle, sweep_angle))
