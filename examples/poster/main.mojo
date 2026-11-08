@@ -130,12 +130,12 @@ struct Poster(Program):
                 canvas.font_size(size)
 
                 if align == 0:
-                    canvas.text_align(Align.LEFT)
+                    canvas.text_alignment(Align.LEFT)
                     canvas.text(word, (canvas.left() + _MARGIN, y))
                 elif align == 1:
                     canvas.text(word, (0.0, y))
                 else:
-                    canvas.text_align(Align.RIGHT)
+                    canvas.text_alignment(Align.RIGHT)
                     canvas.text(word, (canvas.right() - _MARGIN, y))
 
         with canvas.style(
@@ -143,7 +143,7 @@ struct Poster(Program):
             font_size=16,
             text_color=ink,
             opacity=0.6,
-            text_align=Align.BOTTOM,
+            text_alignment=Align.BOTTOM,
         ):
             canvas.text(
                 String("Seed ", self.seed, "   Space: a new poster"),

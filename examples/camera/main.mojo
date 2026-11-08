@@ -78,7 +78,7 @@ struct CameraDemo(Program):
         # how far it has zoomed.
         with canvas.overlay():
             with canvas.style(
-                text_color=_TEXT, font_size=18, text_align=Align.TOP
+                text_color=_TEXT, font_size=18, text_alignment=Align.TOP
             ):
                 canvas.text(
                     "Left/Right pan, the wheel zooms, a click drops a marker, C"

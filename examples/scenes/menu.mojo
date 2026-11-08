@@ -16,10 +16,14 @@ struct Menu:
 
         canvas.background(Color(40, 40, 44))
         with canvas.style(
-            text_color=Color(240, 236, 222), font_size=48, text_align=Align.TOP
+            text_color=Color(240, 236, 222),
+            font_size=48,
+            text_alignment=Align.TOP,
         ):
             canvas.text("Scenes", (0, 40))
         with canvas.style(
-            text_color=Color(176, 172, 162), font_size=20, text_align=Align.TOP
+            text_color=Color(176, 172, 162),
+            font_size=20,
+            text_alignment=Align.TOP,
         ):
             canvas.text("Click to start painting", (0, -20))

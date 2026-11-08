@@ -37,7 +37,7 @@ struct Paint:
         with canvas.style(
             text_color=Color(176, 172, 162),
             font_size=18,
-            text_align=Align.BOTTOM,
+            text_alignment=Align.BOTTOM,
         ):
             canvas.text(
                 "Left-drag to paint   Right-click for the menu",

@@ -87,7 +87,7 @@ struct TextAndImage(Program):
         canvas.image(img, (-30, 0), 16, 16)
         canvas.text_color(Color.WHITE)
         canvas.font_size(24)
-        canvas.text_align(Align.TOP_LEFT)
+        canvas.text_alignment(Align.TOP_LEFT)
         canvas.text("Hi", (0.0, 20.0))
 
 

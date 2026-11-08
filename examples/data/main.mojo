@@ -67,9 +67,9 @@ struct Chart(Program):
             canvas.fill(self.best if i == 0 else self.bar)
             canvas.rectangle((bar_start + w / 2, y), w, row_height * 0.7)
 
-            with canvas.style(text_align=Align.RIGHT):
+            with canvas.style(text_alignment=Align.RIGHT):
                 canvas.text(row.string("name"), (bar_start - 16, y))
-            with canvas.style(text_align=Align.LEFT):
+            with canvas.style(text_alignment=Align.LEFT):
                 canvas.text(labels[i], (bar_start + w + 12, y))
 
 

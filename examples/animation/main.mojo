@@ -110,7 +110,7 @@ struct Game(Program):
         )
 
         canvas.text_color(Color(176, 172, 162))
-        canvas.text_align(Align.TOP)
+        canvas.text_alignment(Align.TOP)
         canvas.font_size(20)
         canvas.text(
             "A/D: run   Space: spin   P: pause",

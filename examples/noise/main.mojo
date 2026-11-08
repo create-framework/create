@@ -61,7 +61,7 @@ struct App(Program):
 
         canvas.text_color(Color(240, 236, 222))
         canvas.font_size(16)
-        canvas.text_align(Align.BOTTOM_LEFT)
+        canvas.text_alignment(Align.BOTTOM_LEFT)
         canvas.text(
             String(self.terrain), (canvas.left() + 12, canvas.bottom() + 12)
         )

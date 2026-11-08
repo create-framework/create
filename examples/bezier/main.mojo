@@ -98,7 +98,7 @@ struct App(Program):
 
         canvas.text_color(Color(240, 236, 222))
         canvas.font_size(30)
-        canvas.text_align(Align.TOP)
+        canvas.text_alignment(Align.TOP)
         canvas.text("Cubic Bézier", (0, 362))
         canvas.font_size(18)
         canvas.text("Drag the handles to reshape the curve", (0, 322))

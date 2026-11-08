@@ -420,7 +420,7 @@ struct _Parity(Program):
                 canvas.stroke_enabled(False)
                 canvas.text_color(Color.WHITE)
                 canvas.font_size(16)
-                canvas.text_align(Align.CENTER)
+                canvas.text_alignment(Align.CENTER)
                 canvas.text("parity", (0, 0))
         elif self.shape == _SHAPE_ITALIC_TEXT:
             with canvas.style(
@@ -950,7 +950,7 @@ struct _Parity(Program):
                 stroke_enabled=False,
                 text_color=Color.WHITE,
                 font_size=24,
-                text_align=Align.CENTER,
+                text_alignment=Align.CENTER,
             ):
                 with canvas.transform(rotate(0.5)):
                     canvas.text("parity", (0, 0))
