@@ -2810,6 +2810,18 @@ def test_float_size_keywords_take_integer_literals() raises -> None:
     assert_equal(canvas._style.stroke_thickness, 1.5)
 
 
+def test_stroke_cap_is_set_and_scoped() raises -> None:
+    var canvas = Canvas(10, 10)
+    assert_true(canvas._style.stroke_cap == StrokeCap.BUTT)
+    canvas.stroke_cap(StrokeCap.ROUND)
+    assert_true(canvas._style.stroke_cap == StrokeCap.ROUND)
+    with canvas.style(stroke_cap=StrokeCap.SQUARE):
+        assert_true(canvas._style.stroke_cap == StrokeCap.SQUARE)
+    assert_true(canvas._style.stroke_cap == StrokeCap.ROUND)
+    with canvas.style(stroke_thickness=2):
+        assert_true(canvas._style.stroke_cap == StrokeCap.ROUND)
+
+
 def test_image_draws_at_a_fractional_size() raises -> None:
     var canvas = Canvas(10, 10, antialiasing=Antialiasing.OFF)
     var dot = Image.solid(1, 1, Color.RED)
