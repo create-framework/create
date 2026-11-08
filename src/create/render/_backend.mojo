@@ -33,6 +33,7 @@ from ._curve import (
     bezier_device_points,
     bezier_shadow_mask,
     stroke_quads,
+    stroke_segment,
 )
 from ._sector import sector_quads, sector_shadow_mask
 from ._polygon import polygon_quads, polygon_shadow_mask
@@ -54,7 +55,6 @@ from ._raster import (
     fill_quad,
     fill_span,
     fill_triangle,
-    line_pixels,
 )
 from ._gl_backend import GLRenderer
 from ._image_mapping import image_mapping, upright, upright_rect
@@ -2138,19 +2138,23 @@ struct Backend(Movable):
         scale: Float64,
         m: Matrix[3, 3],
     ):
+        """Stroke the segment as `stroke_segment`'s quad, the band curves
+        are built from, by `fill_quad`."""
         if not c.style._stroke_visible():
             return
         var p0 = mat_apply(m, c.geom[0], c.geom[1])
         var p1 = mat_apply(m, c.geom[2], c.geom[3])
-        line_pixels(
-            s,
-            p0[0],
-            p0[1],
-            p1[0],
-            p1[1],
-            c.style.stroke_color,
-            stroke_thickness_px(c.style, m, scale),
+        var quad = stroke_segment(
+            Point2D(p0[0], p0[1]),
+            Point2D(p1[0], p1[1]),
+            Float64(stroke_thickness_px(c.style, m, scale)),
         )
+        if not quad:
+            return
+        ref q = quad.value()
+        var qx: Array[Float64, 4] = [q[0].x, q[1].x, q[2].x, q[3].x]
+        var qy: Array[Float64, 4] = [q[0].y, q[1].y, q[2].y, q[3].y]
+        fill_quad(s, qx, qy, c.style.stroke_color)
 
     def _bezier[
         o: Origin[mut=True]

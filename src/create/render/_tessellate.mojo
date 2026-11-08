@@ -31,7 +31,7 @@ from create.math.matrix import Matrix, inverse, _apply as mat_apply
 from create.math.point2d import Point2D
 
 from ._command import RenderCommand, _fill_box
-from ._curve import bezier_device_points, stroke_quads
+from ._curve import bezier_device_points, stroke_quads, stroke_segment
 from ._sector import sector_quads
 from ._polygon import polygon_quads
 from ._triangle import triangle_pieces
@@ -226,41 +226,6 @@ def _mapped_quad(
     var c = mat_apply(m, x1, y1)
     var d = mat_apply(m, x0, y1)
     vb.quad(a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1], color)
-
-
-def _segment_quad(
-    mut vb: VertexBuffer,
-    x0: Float64,
-    y0: Float64,
-    x1: Float64,
-    y1: Float64,
-    width: Float64,
-    color: Color,
-):
-    """A `width`-thick quad along the device segment `(x0, y0)`-`(x1, y1)`.
-
-    Device space, because a stroked *edge* is a pixel-width band about a
-    mapped line — unlike a stroked box's ring, which has to follow the shape
-    in local space to survive a rotation.
-    """
-    var dx = x1 - x0
-    var dy = y1 - y0
-    var length = sqrt(dx * dx + dy * dy)
-    if length == 0.0:
-        return
-    var nx = -dy / length * width / 2.0
-    var ny = dx / length * width / 2.0
-    vb.quad(
-        x0 + nx,
-        y0 + ny,
-        x1 + nx,
-        y1 + ny,
-        x1 - nx,
-        y1 - ny,
-        x0 - nx,
-        y0 - ny,
-        color,
-    )
 
 
 def _corner_fan(
@@ -584,19 +549,30 @@ def emit_circle(
 
 
 def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
-    """One quad. A line has no interior, so `fill` never applies."""
+    """`stroke_segment`'s quad, the same one the CPU fills. A line has no
+    interior, so `fill` never applies."""
     if not c.style._stroke_visible():
         return
     var m = c.transform
     var p0 = mat_apply(m, c.geom[0], c.geom[1])
     var p1 = mat_apply(m, c.geom[2], c.geom[3])
-    _segment_quad(
-        vb,
-        p0[0],
-        p0[1],
-        p1[0],
-        p1[1],
+    var quad = stroke_segment(
+        Point2D(p0[0], p0[1]),
+        Point2D(p1[0], p1[1]),
         Float64(stroke_thickness_px(c.style, m, scale)),
+    )
+    if not quad:
+        return
+    ref q = quad.value()
+    vb.quad(
+        q[0].x,
+        q[0].y,
+        q[1].x,
+        q[1].y,
+        q[2].x,
+        q[2].y,
+        q[3].x,
+        q[3].y,
         c.style.stroke_color,
     )
 

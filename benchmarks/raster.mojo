@@ -55,8 +55,9 @@ from create.render._raster import (
     fill_all,
     fill_pixels,
     blit_image,
-    line_pixels,
+    fill_quad,
 )
+from create.render._curve import stroke_segment
 from create.render import Style
 from create.math.matrix import identity
 
@@ -239,7 +240,13 @@ def _line_bench():
             var x = rng.float(-900.0, 900.0)
             var y = rng.float(-500.0, 500.0)
             var len = rng.float(20.0, 80.0)
-            line_pixels(s, x, y, x + len, y + len * 0.3, c, 6)
+            var quad = stroke_segment(
+                Point2D(x, y), Point2D(x + len, y + len * 0.3), 6.0
+            )
+            ref q = quad.value()
+            var qx: Array[Float64, 4] = [q[0].x, q[1].x, q[2].x, q[3].x]
+            var qy: Array[Float64, 4] = [q[0].y, q[1].y, q[2].y, q[3].y]
+            fill_quad(s, qx, qy, c)
     var t1 = perf_counter_ns()
     _report("2000 thick alpha lines        ", t0, t1)
 
