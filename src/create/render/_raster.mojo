@@ -473,45 +473,6 @@ def fill_pixels[
         fill_span(s, (row * W + c0) * 4, c1 - c0, c)
 
 
-def line_pixels[
-    o: Origin[mut=True]
-](
-    s: Surface[o],
-    x0: Float64,
-    y0: Float64,
-    x1: Float64,
-    y1: Float64,
-    c: Color,
-    stroke_thickness: Int,
-):
-    """Stroke the device segment `(x0, y0)`-`(x1, y1)` as an
-    `stroke_thickness`-wide band with butt ends.
-
-    The band is the same quad `_tessellate.mojo::_segment_quad` hands the
-    GPU — the segment pushed out by half the thickness along its normal —
-    and a pixel is covered when its centre is: each row's covered run is the
-    quad's span at the row's centre line, filled once through `fill_span`.
-    So a slanted band is as wide across as a level one, and each pixel is
-    composited exactly once under alpha. Ties follow a half-open rule (a
-    centre on the left or top edge is in, on the right or bottom edge out),
-    so two bands sharing an edge don't both paint it. A zero-length segment
-    paints nothing, as on the GPU.
-    """
-    if c.a == 0 or stroke_thickness <= 0:
-        return
-    var dx = x1 - x0
-    var dy = y1 - y0
-    var length = sqrt(dx * dx + dy * dy)
-    if length == 0.0:
-        return
-    var half = Float64(stroke_thickness) / 2.0
-    var nx = -dy / length * half
-    var ny = dx / length * half
-    var qx: Array[Float64, 4] = [x0 + nx, x1 + nx, x1 - nx, x0 - nx]
-    var qy: Array[Float64, 4] = [y0 + ny, y1 + ny, y1 - ny, y0 - ny]
-    fill_quad(s, qx, qy, c)
-
-
 def fill_quad[
     o: Origin[mut=True]
 ](s: Surface[o], qx: Array[Float64, 4], qy: Array[Float64, 4], c: FillPaint):

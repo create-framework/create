@@ -58,6 +58,26 @@ def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point2D]:
     return points^
 
 
+def stroke_segment(
+    a: Point2D, b: Point2D, width: Float64
+) -> Optional[Array[Point2D, 4]]:
+    """The one quad of `stroke_quads([a, b], width)`, without a list: `a`-`b`
+    pushed out by half the width along its normal, left edge first. None
+    when it has no width or no length. Stroking lines is hot, so this
+    allocates nothing; the arithmetic is the general path's."""
+    var d = b - a
+    if width <= 0.0 or (d.x == 0.0 and d.y == 0.0):
+        return None
+    var offset = Vector2D(-d.y, d.x) / d.magnitude() * (width / 2.0)
+    var corners: Array[Point2D, 4] = [
+        a + offset,
+        b + offset,
+        b - offset,
+        a - offset,
+    ]
+    return corners^
+
+
 def stroke_quads(points: List[Point2D], width: Float64) -> List[Point2D]:
     """The `width`-thick band along the polyline `points`, as quads: four
     corners each, in order around the quad's edge, quad after quad.

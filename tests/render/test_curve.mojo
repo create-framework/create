@@ -8,6 +8,7 @@ from std.testing import (
 from create.geometry.bezier import Bezier
 from create.math.matrix import identity, scale, translate
 from create.math.point2d import Point2D
+from create.math.vector2d import Vector2D
 from create.color.color import Color
 from create.render.style import Style
 from create.render._surface import MemorySurface
@@ -18,8 +19,9 @@ from create.render._curve import (
     bezier_device_points,
     bezier_shadow_mask,
     stroke_quads,
+    stroke_segment,
 )
-from create.render._raster import fill_quad
+from create.render._raster import fill_all, fill_quad
 
 
 def _assert_point_near(p: Point2D, q: Point2D, tol: Float64 = 1e-9) raises:
@@ -241,6 +243,135 @@ def test_an_invisible_stroke_gives_an_empty_mask() raises -> None:
     var placed = bezier_shadow_mask(c, c.transform, 1.0, 8)
     assert_equal(placed.mask.width, 0)
     assert_equal(len(placed.mask.pixels), 0)
+
+
+def _stroke_line(
+    mut mem: MemorySurface,
+    x0: Float64,
+    y0: Float64,
+    x1: Float64,
+    y1: Float64,
+    c: Color,
+    thickness: Int,
+):
+    """A line as both replays draw one: `stroke_segment`'s quad, filled by
+    `fill_quad`."""
+    var quad = stroke_segment(
+        Point2D(x0, y0), Point2D(x1, y1), Float64(thickness)
+    )
+    if not quad:
+        return
+    ref q = quad.value()
+    var qx: Array[Float64, 4] = [q[0].x, q[1].x, q[2].x, q[3].x]
+    var qy: Array[Float64, 4] = [q[0].y, q[1].y, q[2].y, q[3].y]
+    fill_quad(mem.surface(), qx, qy, c)
+
+
+def _filled(width: Int, height: Int, c: Color) raises -> MemorySurface:
+    var mem = MemorySurface(width, height)
+    fill_all(mem.surface(), c)
+    return mem^
+
+
+def test_two_points_give_a_line_band() raises -> None:
+    # One quad, the segment pushed out by half the width along its normal
+    # (-dy, dx): left edge first, then the right, in order around the quad.
+    var corners = stroke_quads([Point2D(1.0, 2.0), Point2D(4.0, 6.0)], 10.0)
+    assert_equal(len(corners), 4)
+    # d = (3, 4), length 5: the unit normal (-0.8, 0.6) times half of 10.
+    var n = Vector2D(-4.0, 3.0)
+    _assert_point_near(corners[0], Point2D(1.0, 2.0) + n)
+    _assert_point_near(corners[1], Point2D(4.0, 6.0) + n)
+    _assert_point_near(corners[2], Point2D(4.0, 6.0) - n)
+    _assert_point_near(corners[3], Point2D(1.0, 2.0) - n)
+
+
+def test_a_segment_is_the_two_point_strip_exactly() raises -> None:
+    # Lines take `stroke_segment`, curves `stroke_quads`: the same corners to
+    # the bit, so a line meets a curve's band as one stroke would.
+    var a = Point2D(1.3, -2.7)
+    var b = Point2D(40.1, 9.9)
+    var corners = stroke_quads([a, b], 3.0)
+    var quad = stroke_segment(a, b, 3.0)
+    assert_true(Bool(quad))
+    for i in range(4):
+        assert_equal(quad.value()[i], corners[i])
+
+
+def test_a_segment_of_no_length_or_width_has_no_quad() raises -> None:
+    assert_true(not stroke_segment(Point2D(2, 2), Point2D(2, 2), 3.0))
+    assert_true(not stroke_segment(Point2D(0, 0), Point2D(5, 0), 0.0))
+
+
+def test_two_point_stroke_ends_flush_with_the_segment() raises -> None:
+    # Butt ends: covered columns are those whose centre lies in [1, 6).
+    var mem = MemorySurface(8, 8)
+    _stroke_line(mem, 1.0, 1.5, 6.0, 1.5, Color.WHITE, 1)
+    assert_equal(mem.pixel(1, 1), Color.WHITE)
+    assert_equal(mem.pixel(5, 1), Color.WHITE)
+    assert_equal(mem.pixel(0, 1).a, 0)
+    assert_equal(mem.pixel(6, 1).a, 0)
+    assert_equal(mem.pixel(3, 0).a, 0)
+    assert_equal(mem.pixel(3, 2).a, 0)
+
+
+def test_two_point_stroke_thickens_with_stroke_thickness() raises -> None:
+    var mem = MemorySurface(8, 8)
+    _stroke_line(mem, 1.0, 4.5, 6.0, 4.5, Color.WHITE, 3)
+    # The band spans y in [3, 6], so rows 3..5.
+    assert_equal(mem.pixel(3, 2).a, 0)
+    assert_equal(mem.pixel(3, 3), Color.WHITE)
+    assert_equal(mem.pixel(3, 4), Color.WHITE)
+    assert_equal(mem.pixel(3, 5), Color.WHITE)
+    assert_equal(mem.pixel(3, 6).a, 0)
+
+
+def test_two_point_stroke_measures_thickness_across_the_segment() raises -> (
+    None
+):
+    # At 45 degrees a 4-wide band crosses a row over 4 * sqrt(2) ~ 5.66
+    # pixels, centred on the segment: row 10's centre line meets it at
+    # x = 10.5, so columns 8..12. An axis-aligned extent would give 4.
+    var mem = MemorySurface(20, 20)
+    _stroke_line(mem, 2.0, 2.0, 18.0, 18.0, Color.WHITE, 4)
+    assert_equal(mem.pixel(7, 10).a, 0)
+    for x in range(8, 13):
+        assert_equal(mem.pixel(x, 10), Color.WHITE)
+    assert_equal(mem.pixel(13, 10).a, 0)
+
+
+def test_two_point_stroke_paints_nothing_for_a_zero_length_segment() raises -> (
+    None
+):
+    var mem = MemorySurface(8, 8)
+    _stroke_line(mem, 3.5, 3.5, 3.5, 3.5, Color.WHITE, 3)
+    for y in range(8):
+        for x in range(8):
+            assert_equal(mem.pixel(x, y).a, 0)
+
+
+def test_two_point_stroke_clips_outside_the_surface() raises -> None:
+    var mem = MemorySurface(4, 4)
+    _stroke_line(mem, -5.0, 2.5, 9.0, 2.5, Color.WHITE, 1)
+    for x in range(4):
+        assert_equal(mem.pixel(x, 2), Color.WHITE)
+    assert_equal(mem.pixel(0, 0).a, 0)
+
+
+def test_two_point_stroke_composites_each_covered_pixel_exactly_once() raises -> (
+    None
+):
+    # A thick alpha line must match one `over` per pixel, not several stacked
+    # up from overlapping stamps (which would read darker here).
+    var src = Color(255, 255, 255, 128)
+    var dst = Color(0, 0, 0, 255)
+    var mem = _filled(8, 8, dst)
+    _stroke_line(mem, 1.0, 4.5, 6.0, 4.5, src, 3)
+    assert_equal(mem.pixel(3, 4), src.over(dst))
+
+    var vmem = _filled(8, 8, dst)
+    _stroke_line(vmem, 4.5, 1.0, 4.5, 6.0, src, 3)
+    assert_equal(vmem.pixel(4, 3), src.over(dst))
 
 
 def main() raises:
