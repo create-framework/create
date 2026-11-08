@@ -68,7 +68,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     var font_size: Float64
     var font_weight: FontWeight
     var font_italic: Bool
-    var text_align: Align
+    var text_alignment: Align
     var tint: Color
     var opacity: Float64
     var blend_mode: BlendMode
@@ -95,7 +95,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         font_size: _OptionalFloat64 = None,
         font_weight: FontWeight = FontWeight.REGULAR,
         font_italic: Bool = False,
-        text_align: Align = Align.CENTER,
+        text_alignment: Align = Align.CENTER,
         tint: Color = Color.WHITE,
         opacity: _OptionalFloat64 = None,
         blend_mode: BlendMode = BlendMode.NORMAL,
@@ -121,7 +121,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.font_size = font_size.or_else(16.0)
         self.font_weight = font_weight
         self.font_italic = font_italic
-        self.text_align = text_align
+        self.text_alignment = text_alignment
         self.tint = tint
         self.opacity = opacity.or_else(1.0)
         self.blend_mode = blend_mode
@@ -177,8 +177,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             self.font_weight,
             ", font_italic=",
             self.font_italic,
-            ", text_align=",
-            self.text_align,
+            ", text_alignment=",
+            self.text_alignment,
             ", tint=",
             self.tint,
             ", opacity=",

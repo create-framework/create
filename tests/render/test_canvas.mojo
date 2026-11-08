@@ -2072,7 +2072,7 @@ struct TextThroughCanvas(Program):
         canvas.background(Color.BLACK)
         canvas.text_color(Color.WHITE)
         canvas.font_size(24)
-        canvas.text_align(Align.TOP_LEFT)
+        canvas.text_alignment(Align.TOP_LEFT)
         canvas.text("Hi", (0.0, 0.0))
 
 
@@ -2108,7 +2108,7 @@ struct TransformedText[transform: Int](Program):
         canvas.background(Color.BLACK)
         canvas.text_color(Color.WHITE)
         canvas.font_size(24)
-        canvas.text_align(Align.TOP_LEFT)
+        canvas.text_alignment(Align.TOP_LEFT)
         var m = identity[3]()
         comptime if Self.transform == _TURNED_TEXT:
             m = rotate(PI / 2.0)
@@ -2164,7 +2164,7 @@ struct MeasuredText(Program):
         canvas.background(Color.BLACK)
         canvas.text_color(Color.WHITE)
         canvas.font_size(24)
-        canvas.text_align(Align.LEFT)
+        canvas.text_alignment(Align.LEFT)
         var width = canvas.text_width("Hi")
         assert_true(width > 0, "Hi measured no width")
         # A caret after "H" sits between the two glyphs.
@@ -2237,7 +2237,7 @@ struct TextBesideShape(Program):
         canvas.rectangle((-60.0, 0.0), 40.0, 40.0)
         canvas.text_color(Color.GREEN)
         canvas.font_size(48)
-        canvas.text_align(Align.CENTER)
+        canvas.text_alignment(Align.CENTER)
         canvas.text("Hi", (40.0, 0.0))
 
 
@@ -2269,7 +2269,7 @@ struct SmallText(Program):
         canvas.background(Color.BLACK)
         canvas.text_color(Color.WHITE)
         canvas.font_size(12)
-        canvas.text_align(Align.TOP_LEFT)
+        canvas.text_alignment(Align.TOP_LEFT)
         canvas.text("Hi", (0.0, 0.0))
 
 
@@ -2285,7 +2285,7 @@ struct BigText(Program):
         canvas.background(Color.BLACK)
         canvas.text_color(Color.WHITE)
         canvas.font_size(48)
-        canvas.text_align(Align.TOP_LEFT)
+        canvas.text_alignment(Align.TOP_LEFT)
         canvas.text("Hi", (0.0, 0.0))
 
 

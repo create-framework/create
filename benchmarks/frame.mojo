@@ -115,7 +115,7 @@ struct Bench(Program):
             canvas.stroke_enabled(False)
             canvas.font_size(48)
             canvas.font_weight(FontWeight.MEDIUM)
-            canvas.text_align(Align.CENTER)
+            canvas.text_alignment(Align.CENTER)
             canvas.text(
                 String(_SHAPES) + " shapes, two images, this text", (0, 0)
             )

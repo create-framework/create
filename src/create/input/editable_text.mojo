@@ -12,7 +12,7 @@ struct EditableText(Copyable, Movable, Writable):
 
     ```mojo
     self.name.update(context.input)                 # in update
-    canvas.text_align(Align.LEFT)
+    canvas.text_alignment(Align.LEFT)
     canvas.text(self.name.text, (left, 0))
     var caret_x = left + canvas.text_width(self.name.before_caret())
     canvas.line((caret_x, -20), (caret_x, 20))

@@ -86,9 +86,13 @@ struct Collisions(Program):
         _reach(canvas, self.line, mouse)
         _reach(canvas, self.arc, mouse)
 
-        with canvas.style(text_color=_TEXT, font_size=30, text_align=Align.TOP):
+        with canvas.style(
+            text_color=_TEXT, font_size=30, text_alignment=Align.TOP
+        ):
             canvas.text("Collisions", (0, 362))
-        with canvas.style(text_color=_TEXT, font_size=18, text_align=Align.TOP):
+        with canvas.style(
+            text_color=_TEXT, font_size=18, text_alignment=Align.TOP
+        ):
             canvas.text(
                 "Regions light up as they overlap the circle, curves as they"
                 + " cross it; lines run to each shape's closest point",

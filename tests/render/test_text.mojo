@@ -53,7 +53,7 @@ def _style(align: Align) -> Style:
     var s = Style()
     s.text_color = Color.WHITE
     s.font_size = 24
-    s.text_align = align
+    s.text_alignment = align
     return s^
 
 
@@ -177,7 +177,7 @@ def test_style_defaults() raises -> None:
     assert_equal(s.text_color, Color.BLACK)
     assert_equal(s.font_size, 16)
     assert_equal(s.font_weight, FontWeight.REGULAR)
-    assert_true(s.text_align == Align.CENTER)
+    assert_true(s.text_alignment == Align.CENTER)
 
 
 def test_repeating_a_render_adds_no_cache_entries() raises -> None:
@@ -274,7 +274,7 @@ def test_width_follows_the_italic() raises -> None:
     var t = TextRenderer()
     var style = _italic(_style(Align.LEFT))
     var right = style
-    right.text_align = Align.RIGHT
+    right.text_alignment = Align.RIGHT
     var left_glyphs = t.layout("Hi", 40.0, 30.0, style, 1.0)
     var right_glyphs = t.layout("Hi", 40.0, 30.0, right, 1.0)
     assert_equal(

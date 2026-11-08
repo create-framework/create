@@ -71,7 +71,7 @@ struct App(Program):
             text_color=Color(150, 146, 138),
             font_size=20,
             font_italic=True,
-            text_align=Align.LEFT,
+            text_alignment=Align.LEFT,
         ):
             canvas.text("Type here…", (-500, -170))
 

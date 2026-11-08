@@ -124,7 +124,7 @@ struct App(Program):
             kind = "chordal"
         canvas.text_color(Color(240, 236, 222))
         canvas.font_size(30)
-        canvas.text_align(Align.TOP)
+        canvas.text_alignment(Align.TOP)
         canvas.text(
             String(
                 "Spline, ",

@@ -82,7 +82,9 @@ struct Capture(Program):
                 canvas.circle((0, 0), 70)
 
         with canvas.style(
-            text_color=Color(240, 236, 222), font_size=24, text_align=Align.TOP
+            text_color=Color(240, 236, 222),
+            font_size=24,
+            text_alignment=Align.TOP,
         ):
             canvas.text(
                 "S: screenshot   I: image   Shift+I: image at 2x   R: record",

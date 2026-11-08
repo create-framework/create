@@ -108,21 +108,21 @@ struct App(Program):
         with canvas.style(
             text_color=Color(240, 236, 222),
             font_size=28,
-            text_align=Align.CENTER,
+            text_alignment=Align.CENTER,
         ):
             canvas.text("Centre / middle", (0, 0))
 
         with canvas.style(
             text_color=Color(201, 140, 150),
             font_size=20,
-            text_align=Align.TOP_LEFT,
+            text_alignment=Align.TOP_LEFT,
         ):
             canvas.text("Left / top", (canvas.left() + 12, canvas.top() - 12))
 
         with canvas.style(
             text_color=Color(240, 236, 222, 0xA0),
             font_size=20,
-            text_align=Align.BOTTOM_RIGHT,
+            text_alignment=Align.BOTTOM_RIGHT,
         ):
             canvas.text(
                 "Right / bottom — translucent",
@@ -135,7 +135,7 @@ struct App(Program):
         with canvas.style(
             text_color=Color(240, 236, 222),
             font_size=20,
-            text_align=Align.TOP_RIGHT,
+            text_alignment=Align.TOP_RIGHT,
         ):
             canvas.text(
                 "FPS: " + String(self.fps),

@@ -302,7 +302,7 @@ struct TextRenderer(Movable):
 
         var pen_x = Int(tx)
         var pen_y = Int(ty)
-        var align = style.text_align
+        var align = style.text_alignment
         if align._right():
             pen_x -= tw
         elif not align._left():

@@ -69,7 +69,7 @@ struct TypingTest(Program):
         # Both lines start at the same left edge, so each typed letter sits
         # under the one it should match.
         canvas.font_size(28)
-        canvas.text_align(Align.LEFT)
+        canvas.text_alignment(Align.LEFT)
         var left = -canvas.text_width(self.phrases[self.phrase]) / 2
         canvas.text_color(Color(176, 172, 162))
         canvas.text(self.phrases[self.phrase], (left, 60))
@@ -90,7 +90,7 @@ struct TypingTest(Program):
             canvas.line((caret_x, -16), (caret_x, 16))
 
         canvas.font_size(20)
-        canvas.text_align(Align.CENTER)
+        canvas.text_alignment(Align.CENTER)
         canvas.text_color(Color(176, 172, 162))
         if finished:
             canvas.text(self.result, (0, -80))

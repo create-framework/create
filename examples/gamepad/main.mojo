@@ -62,7 +62,7 @@ struct Gamepads(Program):
             canvas.text(String(i + 1), self.positions[i] + Vector2D(0, 45))
 
         canvas.text_color(Color(240, 236, 222))
-        canvas.text_align(Align.LEFT)
+        canvas.text_alignment(Align.LEFT)
         var connected = 0
         for i in range(_PLAYERS):
             if context.input.gamepad(i).connected:
@@ -76,7 +76,7 @@ struct Gamepads(Program):
                 self.message, (canvas.left() + 20, canvas.bottom() + 20)
             )
         if connected == 0:
-            canvas.text_align(Align.CENTER)
+            canvas.text_alignment(Align.CENTER)
             canvas.text("Plug in a gamepad", (0, 0))
 
     def say(mut self, context: Context, message: String):

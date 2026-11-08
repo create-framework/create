@@ -120,7 +120,7 @@ struct Game(Program):
 
         with canvas.overlay():
             with canvas.style(
-                text_color=_HINT, font_size=20, text_align=Align.TOP_LEFT
+                text_color=_HINT, font_size=20, text_alignment=Align.TOP_LEFT
             ):
                 canvas.text(
                     "A/D: move   W: jump (again in the air)",

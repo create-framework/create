@@ -499,7 +499,7 @@ struct Canvas(DrawTarget, Movable):
         font_size: _OptionalFloat64 = None,
         font_weight: Optional[FontWeight] = None,
         font_italic: Optional[Bool] = None,
-        text_align: Optional[Align] = None,
+        text_alignment: Optional[Align] = None,
         tint: Optional[Color] = None,
         opacity: _OptionalFloat64 = None,
         blend_mode: Optional[BlendMode] = None,
@@ -553,8 +553,8 @@ struct Canvas(DrawTarget, Movable):
             self.font_weight(font_weight.value())
         if font_italic:
             self.font_italic(font_italic.value())
-        if text_align:
-            self.text_align(text_align.value())
+        if text_alignment:
+            self.text_alignment(text_alignment.value())
         if tint:
             self.tint(tint.value())
         if opacity:
@@ -1582,7 +1582,7 @@ struct Canvas(DrawTarget, Movable):
         """
         self._style.shadow_follows_transform = follows
 
-    def text_align(mut self, align: Align):
+    def text_alignment(mut self, align: Align):
         """Anchor the next text at one of the nine points of its box.
 
         One argument covers both axes: `Align.CENTER` (the default) centres
@@ -1591,7 +1591,7 @@ struct Canvas(DrawTarget, Movable):
         midpoint — `Align.TOP` is top-centre. These are edges of the text box,
         not typographic baselines.
         """
-        self._style.text_align = align
+        self._style.text_alignment = align
 
     def antialiasing(self) -> Antialiasing:
         """How smooth shape edges are: `run`'s `antialiasing` unless set."""

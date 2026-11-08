@@ -33,9 +33,13 @@ def _volume_bar(mut canvas: Canvas, label: String, level: Float64, y: Float64):
             canvas.fill(_LEVEL)
             var w = _BAR_WIDTH * level
             canvas.rectangle((left + w / 2.0, y), w, 14.0, corner_radius=7)
-    with canvas.style(text_color=_TEXT, font_size=18, text_align=Align.RIGHT):
+    with canvas.style(
+        text_color=_TEXT, font_size=18, text_alignment=Align.RIGHT
+    ):
         canvas.text(label, (left - 20.0, y))
-    with canvas.style(text_color=_TEXT, font_size=18, text_align=Align.LEFT):
+    with canvas.style(
+        text_color=_TEXT, font_size=18, text_alignment=Align.LEFT
+    ):
         canvas.text(String(Int(level * 100.0 + 0.5), "%"), (-left + 20.0, y))
 
 
@@ -127,7 +131,9 @@ struct AudioDemo(Program):
                 (0.0, -200.0),
             )
 
-        with canvas.style(text_color=_TEXT, font_size=30, text_align=Align.TOP):
+        with canvas.style(
+            text_color=_TEXT, font_size=30, text_alignment=Align.TOP
+        ):
             canvas.text("Audio", (0, canvas.top() - 20.0))
 
 
