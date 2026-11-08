@@ -31,7 +31,16 @@ from create.math.matrix import Matrix, inverse, _apply as mat_apply
 from create.math.point2d import Point2D
 
 from ._command import RenderCommand, _fill_box
-from ._curve import bezier_device_points, stroke_quads, stroke_segment
+from ._curve import (
+    _MIN_CIRCLE_SEGMENTS,
+    bezier_device_points,
+    device_x_axis,
+    circle_segments,
+    StrokePieces,
+    stroke_pieces,
+    stroke_segment,
+)
+from .stroke_cap import StrokeCap
 from ._sector import sector_quads
 from ._polygon import polygon_quads
 from ._triangle import triangle_pieces
@@ -95,23 +104,6 @@ comptime _HARD_SHADOW_SHARPNESS = 64.0
 """The inverse sigma, per device pixel, standing in for a blur of 0 in the
 inset modes: steep enough that no pixel centre lands in the ramp unless it
 sits on the silhouette's edge to within a sixty-fourth of a pixel."""
-
-comptime _MIN_CIRCLE_SEGMENTS = 12
-comptime _MAX_CIRCLE_SEGMENTS = 256
-
-
-def circle_segments(radius_px: Float64) -> Int:
-    """How many segments a circle of this device radius is worth.
-
-    One segment per pixel of radius is far finer than the eye needs and still
-    cheap; the floor keeps a tiny circle from becoming a triangle, and the cap
-    keeps a huge one from flooding the batch.
-    """
-    if radius_px <= 0.0:
-        return _MIN_CIRCLE_SEGMENTS
-    return max(
-        _MIN_CIRCLE_SEGMENTS, min(_MAX_CIRCLE_SEGMENTS, Int(ceil(radius_px)))
-    )
 
 
 def _arc_segments(radius_px: Float64, span: Float64) -> Int:
@@ -549,18 +541,26 @@ def emit_circle(
 
 
 def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
-    """`stroke_segment`'s quad, the same one the CPU fills. A line has no
+    """`stroke_segment`'s quad, the same one the CPU fills, or
+    `stroke_pieces` for a round cap or a line of no length. A line has no
     interior, so `fill` never applies."""
     if not c.style._stroke_visible():
         return
     var m = c.transform
     var p0 = mat_apply(m, c.geom[0], c.geom[1])
     var p1 = mat_apply(m, c.geom[2], c.geom[3])
-    var quad = stroke_segment(
-        Point2D(p0[0], p0[1]),
-        Point2D(p1[0], p1[1]),
-        Float64(stroke_thickness_px(c.style, m, scale)),
-    )
+    var a = Point2D(p0[0], p0[1])
+    var b = Point2D(p1[0], p1[1])
+    var width = Float64(stroke_thickness_px(c.style, m, scale))
+    var cap = c.style.stroke_cap
+    if cap == StrokeCap.ROUND or a == b:
+        _emit_stroke_pieces(
+            vb,
+            stroke_pieces([a, b], width, cap, device_x_axis(m)),
+            c.style.stroke_color,
+        )
+        return
+    var quad = stroke_segment(a, b, width, cap)
     if not quad:
         return
     ref q = quad.value()
@@ -578,16 +578,18 @@ def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
 
 
 def emit_bezier(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
-    """`stroke_quads`' mitred strip, the same quads the CPU fills. Like a
-    line, a curve has no interior, so `fill` never applies."""
+    """`stroke_pieces`' mitred strip and caps, the same pieces the CPU
+    fills. Like a line, a curve has no interior, so `fill` never applies."""
     if not c.style._stroke_visible():
         return
     var m = c.transform
-    var corners = stroke_quads(
+    var pieces = stroke_pieces(
         bezier_device_points(c, m),
         Float64(stroke_thickness_px(c.style, m, scale)),
+        c.style.stroke_cap,
+        device_x_axis(m),
     )
-    _emit_quads(vb, corners, c.style.stroke_color)
+    _emit_stroke_pieces(vb, pieces, c.style.stroke_color)
 
 
 def emit_sector(
@@ -616,6 +618,29 @@ def emit_polygon(
         _shade_fill(vb, first, c, ramp_row)
     if c.style._stroke_visible():
         _emit_quads(vb, quads.stroke, c.style.stroke_color)
+
+
+def _emit_stroke_pieces(
+    mut vb: VertexBuffer, pieces: StrokePieces, color: Color
+):
+    """A stroke's quads, then each cap fanned from its first corner."""
+    _emit_quads(vb, pieces.quads, color)
+    for cap in pieces.caps:
+        _emit_convex(vb, cap, color)
+
+
+def _emit_convex(mut vb: VertexBuffer, corners: List[Point2D], color: Color):
+    """The convex polygon `corners` as a fan of triangles."""
+    for i in range(1, len(corners) - 1):
+        vb.triangle(
+            corners[0].x,
+            corners[0].y,
+            corners[i].x,
+            corners[i].y,
+            corners[i + 1].x,
+            corners[i + 1].y,
+            color,
+        )
 
 
 def _emit_quads(mut vb: VertexBuffer, corners: List[Point2D], color: Color):

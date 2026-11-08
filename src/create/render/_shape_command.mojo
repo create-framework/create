@@ -43,7 +43,7 @@ from ._command import (
     triangle_command,
 )
 from .style import Style
-from ._tessellate import circle_segments
+from ._curve import circle_segments
 from ._transform import pixel_scale
 
 

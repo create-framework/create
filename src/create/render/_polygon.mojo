@@ -55,7 +55,7 @@ from create.math.vector2d import Vector2D
 
 from ._command import RenderCommand
 from ._curve import PlacedMask, quads_shadow_mask
-from ._tessellate import circle_segments
+from ._curve import circle_segments
 from ._transform import stroke_thickness_px, pixel_scale
 
 comptime _NOTHING = 0

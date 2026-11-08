@@ -16,7 +16,7 @@ from create import *
 from create.core.headless import run_headless
 from create.render.render_backend import RenderBackend
 
-comptime _KINDS = 21
+comptime _KINDS = 27
 
 
 def _name(kind: Int) -> String:
@@ -40,6 +40,12 @@ def _name(kind: Int) -> String:
         "polygon",
         "rounded star",
         "rounded pentagram",
+        "round-capped line",
+        "square-capped line",
+        "round-capped bezier",
+        "round-capped arc",
+        "square-capped open spline",
+        "round dot",
         "text",
         "image",
     ]
@@ -101,6 +107,32 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
             tips[0], tips[2], tips[4], tips[1], tips[3], corner_radius=3
         )
     elif kind == 19:
+        canvas.stroke(Color.RED, 14)
+        canvas.stroke_cap(StrokeCap.ROUND)
+        with canvas.transform(rotate(0.3)):
+            canvas.line((-50, 0), (50, 0))
+    elif kind == 20:
+        canvas.stroke(Color.RED, 14)
+        canvas.stroke_cap(StrokeCap.SQUARE)
+        with canvas.transform(rotate(0.3)):
+            canvas.line((-50, 0), (50, 0))
+    elif kind == 21:
+        canvas.stroke(Color.RED, 14)
+        canvas.stroke_cap(StrokeCap.ROUND)
+        canvas.bezier((-60, -20), (-20, 40), (20, -40), (60, 20))
+    elif kind == 22:
+        canvas.stroke(Color.RED, 14)
+        canvas.stroke_cap(StrokeCap.ROUND)
+        canvas.arc((0, 0), 30, 0.5, 4.0)
+    elif kind == 23:
+        canvas.stroke(Color.RED, 14)
+        canvas.stroke_cap(StrokeCap.SQUARE)
+        canvas.spline([(-60, -20), (-20, 25), (20, -25), (60, 20)])
+    elif kind == 24:
+        canvas.stroke(Color.RED, 20)
+        canvas.stroke_cap(StrokeCap.ROUND)
+        canvas.line((0, 0), (0, 0))
+    elif kind == 25:
         canvas.font_size(40)
         canvas.text("WM", (0, 0))
     else:

@@ -18,9 +18,11 @@ from create.render._curve import (
     MITER_LIMIT,
     bezier_device_points,
     bezier_shadow_mask,
+    stroke_pieces,
     stroke_quads,
     stroke_segment,
 )
+from create.render.stroke_cap import StrokeCap
 from create.render._raster import fill_all, fill_quad
 
 
@@ -372,6 +374,113 @@ def test_two_point_stroke_composites_each_covered_pixel_exactly_once() raises ->
     var vmem = _filled(8, 8, dst)
     _stroke_line(vmem, 4.5, 1.0, 4.5, 6.0, src, 3)
     assert_equal(vmem.pixel(4, 3), src.over(dst))
+
+
+def test_square_caps_push_the_ends_out_by_half_the_width() raises -> None:
+    var pieces = stroke_pieces(
+        [Point2D(10, 10), Point2D(30, 10)], 6.0, StrokeCap.SQUARE
+    )
+    assert_equal(len(pieces.caps), 0)
+    assert_equal(len(pieces.quads), 4)
+    _assert_point_near(pieces.quads[0], Point2D(7, 13))
+    _assert_point_near(pieces.quads[1], Point2D(33, 13))
+    _assert_point_near(pieces.quads[2], Point2D(33, 7))
+    _assert_point_near(pieces.quads[3], Point2D(7, 7))
+
+
+def test_a_square_capped_segment_is_the_strip_exactly() raises -> None:
+    var a = Point2D(1.3, -2.7)
+    var b = Point2D(40.1, 9.9)
+    var pieces = stroke_pieces([a, b], 3.0, StrokeCap.SQUARE)
+    var quad = stroke_segment(a, b, 3.0, StrokeCap.SQUARE)
+    assert_true(Bool(quad))
+    for i in range(4):
+        assert_equal(quad.value()[i], pieces.quads[i])
+
+
+def test_a_round_capped_segment_has_no_single_quad() raises -> None:
+    assert_true(
+        not stroke_segment(Point2D(0, 0), Point2D(5, 0), 3.0, StrokeCap.ROUND)
+    )
+
+
+def test_round_caps_start_and_end_on_the_end_quads_corners() raises -> None:
+    # Exactly, so the shared edge is walked identically and paints once.
+    var pieces = stroke_pieces(
+        [Point2D(10, 10), Point2D(20, 14), Point2D(30, 10)],
+        6.0,
+        StrokeCap.ROUND,
+    )
+    assert_equal(len(pieces.caps), 2)
+    var q = len(pieces.quads) - 4
+    ref start = pieces.caps[0]
+    ref end = pieces.caps[1]
+    assert_equal(start[0], pieces.quads[0])
+    assert_equal(start[len(start) - 1], pieces.quads[3])
+    assert_equal(end[0], pieces.quads[q + 2])
+    assert_equal(end[len(end) - 1], pieces.quads[q + 1])
+
+
+def test_round_caps_bulge_away_from_the_band() raises -> None:
+    var pieces = stroke_pieces(
+        [Point2D(10, 10), Point2D(30, 10)], 6.0, StrokeCap.ROUND
+    )
+    var least = 1e9
+    for p in pieces.caps[0]:
+        assert_true(p.x <= 10.0 + 1e-9)
+        least = min(least, p.x)
+    assert_almost_equal(least, 7.0, atol=1e-9)
+    var most = -1e9
+    for p in pieces.caps[1]:
+        assert_true(p.x >= 30.0 - 1e-9)
+        most = max(most, p.x)
+    assert_almost_equal(most, 33.0, atol=1e-9)
+
+
+def test_a_closed_ring_has_no_caps() raises -> None:
+    for cap in [StrokeCap.ROUND, StrokeCap.SQUARE]:
+        var pieces = stroke_pieces(
+            [Point2D(0, 0), Point2D(20, 0), Point2D(10, 15), Point2D(0, 0)],
+            4.0,
+            cap,
+        )
+        assert_equal(len(pieces.caps), 0)
+        assert_equal(len(pieces.quads), 12)
+
+
+def test_a_round_dot_is_a_whole_disc() raises -> None:
+    var pieces = stroke_pieces(
+        [Point2D(5, 5), Point2D(5, 5)], 8.0, StrokeCap.ROUND
+    )
+    assert_equal(len(pieces.quads), 0)
+    assert_equal(len(pieces.caps), 1)
+    assert_true(len(pieces.caps[0]) >= 8)
+    for p in pieces.caps[0]:
+        assert_almost_equal((p - Point2D(5, 5)).magnitude(), 4.0, atol=1e-9)
+
+
+def test_a_square_dot_lines_up_with_the_axis() raises -> None:
+    var upright = stroke_pieces([Point2D(5, 5)], 8.0, StrokeCap.SQUARE)
+    assert_equal(len(upright.quads), 4)
+    for p in upright.quads:
+        assert_almost_equal(abs(p.x - 5.0), 4.0, atol=1e-9)
+        assert_almost_equal(abs(p.y - 5.0), 4.0, atol=1e-9)
+    # Under a turned transform the square turns with the local axes.
+    var turned = stroke_pieces(
+        [Point2D(0, 0)], 2.0, StrokeCap.SQUARE, Vector2D(3, 3)
+    )
+    for p in turned.quads:
+        var on_axis = abs(p.x) < 1e-9 or abs(p.y) < 1e-9
+        assert_true(on_axis)
+        assert_almost_equal(
+            Vector2D(p).magnitude(), 1.4142135623730951, atol=1e-9
+        )
+
+
+def test_a_butt_dot_is_nothing() raises -> None:
+    var pieces = stroke_pieces([Point2D(5, 5)], 8.0, StrokeCap.BUTT)
+    assert_equal(len(pieces.quads), 0)
+    assert_equal(len(pieces.caps), 0)
 
 
 def main() raises:

@@ -28,10 +28,14 @@ from ._command import (
     _clear_is_opaque,
     _fill_box,
 )
+from .stroke_cap import StrokeCap
 from ._curve import (
     PlacedMask,
     bezier_device_points,
+    device_x_axis,
     bezier_shadow_mask,
+    StrokePieces,
+    stroke_pieces,
     stroke_quads,
     stroke_segment,
 )
@@ -139,6 +143,17 @@ def _fill_quads[
             corners[q + 3].y,
         ]
         fill_quad(s, qx, qy, color)
+
+
+def _fill_stroke_pieces[
+    o: Origin[mut=True]
+](s: Surface[o], pieces: StrokePieces, color: FillPaint):
+    """Fill a stroke's quads with `fill_quad` and its caps with
+    `fill_convex`, which walks edges as `fill_quad` does: a cap and the quad
+    it meets share that edge exactly, so it composites once."""
+    _fill_quads(s, pieces.quads, color)
+    for cap in pieces.caps:
+        fill_convex(s, cap, color)
 
 
 def _fill_paint(c: RenderCommand, m: Matrix[3, 3]) -> FillPaint:
@@ -2139,16 +2154,24 @@ struct Backend(Movable):
         m: Matrix[3, 3],
     ):
         """Stroke the segment as `stroke_segment`'s quad, the band curves
-        are built from, by `fill_quad`."""
+        are built from, by `fill_quad`; a round cap, or a dot where the line
+        has no length, takes `stroke_pieces`."""
         if not c.style._stroke_visible():
             return
         var p0 = mat_apply(m, c.geom[0], c.geom[1])
         var p1 = mat_apply(m, c.geom[2], c.geom[3])
-        var quad = stroke_segment(
-            Point2D(p0[0], p0[1]),
-            Point2D(p1[0], p1[1]),
-            Float64(stroke_thickness_px(c.style, m, scale)),
-        )
+        var a = Point2D(p0[0], p0[1])
+        var b = Point2D(p1[0], p1[1])
+        var width = Float64(stroke_thickness_px(c.style, m, scale))
+        var cap = c.style.stroke_cap
+        if cap == StrokeCap.ROUND or a == b:
+            _fill_stroke_pieces(
+                s,
+                stroke_pieces([a, b], width, cap, device_x_axis(m)),
+                c.style.stroke_color,
+            )
+            return
+        var quad = stroke_segment(a, b, width, cap)
         if not quad:
             return
         ref q = quad.value()
@@ -2165,16 +2188,18 @@ struct Backend(Movable):
         scale: Float64,
         m: Matrix[3, 3],
     ):
-        """Stroke the curve as `stroke_quads`' mitred strip, one `fill_quad`
-        each: neighbours share an edge and the fill is half-open, so every
-        pixel is composited once."""
+        """Stroke the curve as `stroke_pieces`' mitred strip, one
+        `fill_quad` each, and its caps: neighbours share an edge and the fill
+        is half-open, so every pixel is composited once."""
         if not c.style._stroke_visible():
             return
-        var corners = stroke_quads(
+        var pieces = stroke_pieces(
             bezier_device_points(c, m),
             Float64(stroke_thickness_px(c.style, m, scale)),
+            c.style.stroke_cap,
+            device_x_axis(m),
         )
-        _fill_quads(s, corners, c.style.stroke_color)
+        _fill_stroke_pieces(s, pieces, c.style.stroke_color)
 
     def _sector[
         o: Origin[mut=True]

@@ -2822,6 +2822,48 @@ def test_stroke_cap_is_set_and_scoped() raises -> None:
         assert_true(canvas._style.stroke_cap == StrokeCap.ROUND)
 
 
+def _capped_line(cap: StrokeCap) raises -> Canvas:
+    # A 20-thick line from x = -20 to 20: past its ends lies only its cap.
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.stroke(Color.WHITE, 20)
+    canvas.stroke_cap(cap)
+    canvas.line((-20, 0), (20, 0))
+    return canvas^
+
+
+def test_a_round_cap_paints_past_the_end_but_not_its_corner() raises -> None:
+    var canvas = _capped_line(StrokeCap.ROUND)
+    assert_equal(canvas.color_at((29, 0)), Color.WHITE)
+    assert_equal(canvas.color_at((-30, 0)), Color.WHITE)
+    assert_equal(canvas.color_at((28, 8)), Color.TRANSPARENT)
+    assert_equal(canvas.color_at((31, 0)), Color.TRANSPARENT)
+
+
+def test_a_square_cap_paints_past_the_end_to_its_corner() raises -> None:
+    var canvas = _capped_line(StrokeCap.SQUARE)
+    assert_equal(canvas.color_at((29, 0)), Color.WHITE)
+    assert_equal(canvas.color_at((28, 8)), Color.WHITE)
+    assert_equal(canvas.color_at((-29, -9)), Color.WHITE)
+    assert_equal(canvas.color_at((31, 0)), Color.TRANSPARENT)
+
+
+def test_a_butt_cap_ends_at_the_end_point() raises -> None:
+    var canvas = _capped_line(StrokeCap.BUTT)
+    assert_equal(canvas.color_at((19, 0)), Color.WHITE)
+    assert_equal(canvas.color_at((21, 0)), Color.TRANSPARENT)
+    assert_equal(canvas.color_at((28, 8)), Color.TRANSPARENT)
+
+
+def test_a_round_capped_line_of_no_length_is_a_dot() raises -> None:
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.stroke(Color.WHITE, 20)
+    canvas.stroke_cap(StrokeCap.ROUND)
+    canvas.line((0, 0), (0, 0))
+    assert_equal(canvas.color_at((0, 0)), Color.WHITE)
+    assert_equal(canvas.color_at((0, 9)), Color.WHITE)
+    assert_equal(canvas.color_at((8, 8)), Color.TRANSPARENT)
+
+
 def test_image_draws_at_a_fractional_size() raises -> None:
     var canvas = Canvas(10, 10, antialiasing=Antialiasing.OFF)
     var dot = Image.solid(1, 1, Color.RED)

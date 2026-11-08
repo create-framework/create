@@ -165,7 +165,13 @@ comptime _SHAPE_BLURRED_ROTATED_IMAGE = 68
 comptime _SHAPE_ROTATED_TEXT = 69
 comptime _SHAPE_BLURRED_ROTATED_TEXT = 70
 comptime _SHAPE_STYLE_ROUNDED_RECT = 71
-comptime _SHAPE_COUNT = 72
+comptime _SHAPE_ROUND_CAPPED_LINE = 72
+comptime _SHAPE_SQUARE_CAPPED_LINE = 73
+comptime _SHAPE_ROUND_CAPPED_BEZIER = 74
+comptime _SHAPE_SQUARE_CAPPED_BEZIER = 75
+comptime _SHAPE_ROUND_CAPPED_ARC = 76
+comptime _SHAPE_SQUARE_CAPPED_ARC = 77
+comptime _SHAPE_COUNT = 78
 
 comptime _SHADOW_INK = Color(0x10, 0x10, 0x10)
 """Opaque and far from `_BACKGROUND`, so a shadow counts as ink and its
@@ -311,6 +317,18 @@ def _shape_name(shape: Int) -> String:
         return "gradient rounded sector"
     elif shape == _SHAPE_STYLE_ROUNDED_RECT:
         return "rectangle rounded by the style"
+    elif shape == _SHAPE_ROUND_CAPPED_LINE:
+        return "round-capped line"
+    elif shape == _SHAPE_SQUARE_CAPPED_LINE:
+        return "square-capped line"
+    elif shape == _SHAPE_ROUND_CAPPED_BEZIER:
+        return "translucent round-capped bezier"
+    elif shape == _SHAPE_SQUARE_CAPPED_BEZIER:
+        return "square-capped bezier"
+    elif shape == _SHAPE_ROUND_CAPPED_ARC:
+        return "translucent round-capped arc"
+    elif shape == _SHAPE_SQUARE_CAPPED_ARC:
+        return "square-capped arc"
     elif shape == _SHAPE_SHADOWED_STAR:
         return "shadowed star"
     elif shape == _SHAPE_BLURRED_POLYGON_RING:
@@ -926,6 +944,52 @@ struct _Parity(Program):
                 corner_radius=18,
             ):
                 canvas.rectangle((0, 0), 140, 90)
+        elif self.shape == _SHAPE_ROUND_CAPPED_LINE:
+            with canvas.style(
+                stroke=Color(0x80, 0xFF, 0x80),
+                stroke_thickness=16,
+                stroke_cap=StrokeCap.ROUND,
+            ):
+                with canvas.transform(rotate(0.3)):
+                    canvas.line((-70, 0), (70, 0))
+        elif self.shape == _SHAPE_SQUARE_CAPPED_LINE:
+            with canvas.style(
+                stroke=Color(0x80, 0xFF, 0x80),
+                stroke_thickness=16,
+                stroke_cap=StrokeCap.SQUARE,
+            ):
+                with canvas.transform(rotate(0.3)):
+                    canvas.line((-70, 0), (70, 0))
+        elif self.shape == _SHAPE_ROUND_CAPPED_BEZIER:
+            # Translucent, so a cap painted over its end quad would show as
+            # a darker seam.
+            with canvas.style(
+                stroke=Color(0x20, 0x40, 0xFF, 0x80),
+                stroke_thickness=14,
+                stroke_cap=StrokeCap.ROUND,
+            ):
+                _bezier(canvas)
+        elif self.shape == _SHAPE_SQUARE_CAPPED_BEZIER:
+            with canvas.style(
+                stroke=Color(0x80, 0xFF, 0x80),
+                stroke_thickness=14,
+                stroke_cap=StrokeCap.SQUARE,
+            ):
+                _bezier(canvas)
+        elif self.shape == _SHAPE_ROUND_CAPPED_ARC:
+            with canvas.style(
+                stroke=Color(0x20, 0x40, 0xFF, 0x80),
+                stroke_thickness=14,
+                stroke_cap=StrokeCap.ROUND,
+            ):
+                canvas.arc((0, 0), 50, 0.5, 4.0)
+        elif self.shape == _SHAPE_SQUARE_CAPPED_ARC:
+            with canvas.style(
+                stroke=Color(0x80, 0xFF, 0x80),
+                stroke_thickness=14,
+                stroke_cap=StrokeCap.SQUARE,
+            ):
+                canvas.arc((0, 0), 50, 0.5, 4.0)
         elif self.shape == _SHAPE_GRADIENT_STAR:
             with canvas.style(stroke_enabled=False):
                 canvas.fill(
