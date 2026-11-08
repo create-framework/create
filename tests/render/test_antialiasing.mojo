@@ -1,5 +1,5 @@
 """CPU antialiasing: a shape's edge pixels take the share of their samples
-the shape covers, its fill and outline meet without a seam, and an edge on
+the shape covers, its fill and stroke meet without a seam, and an edge on
 the pixel grid comes out as it would without antialiasing.
 
 A 100 x 100 design maps 1:1, its origin at device pixel (50, 50).
@@ -27,7 +27,7 @@ struct OffGrid[gradient: Bool](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         comptime if Self.gradient:
             canvas.fill(Gradient.linear(Color.RED, Color.RED))
         else:
@@ -68,7 +68,7 @@ struct OnGrid(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.RED)
-        canvas.outline(Color.WHITE, 3)
+        canvas.stroke(Color.WHITE, 3)
         canvas.rectangle((0.0, 0.0), 40.0, 20.0)
         canvas.rectangle((-30.0, 30.0), 10.0, 10.0)
 
@@ -83,7 +83,7 @@ def test_an_edge_on_the_pixel_grid_is_unchanged() raises -> None:
 
 @fieldwise_init
 struct SameColorRing(Program):
-    """An opaque red disc whose outline is red too, at a radius off the
+    """An opaque red disc whose stroke is red too, at a radius off the
     pixel grid: inside its outer edge it must be solid red throughout."""
 
     var _unused: Int
@@ -97,13 +97,13 @@ struct SameColorRing(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.fill(Color.RED)
-        canvas.outline(Color.RED, 3)
+        canvas.stroke(Color.RED, 3)
         canvas.circle((0.0, 0.0), 30.3)
 
 
-def test_fill_and_outline_meet_without_a_seam() raises -> None:
-    # The outline's inner edge, near radius 27.3, crosses pixels the fill
-    # shares with it: each must be fill and outline together, whole.
+def test_fill_and_stroke_meet_without_a_seam() raises -> None:
+    # The stroke's inner edge, near radius 27.3, crosses pixels the fill
+    # shares with it: each must be fill and stroke together, whole.
     var m = run_headless[SameColorRing](100, 100)
     var checked = 0
     for y in range(100):
@@ -141,7 +141,7 @@ struct SwitchedOffLate[backend: Int](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.25, 0.0), 20.0, 20.0)
         comptime if Self.backend == 0:
@@ -187,7 +187,7 @@ struct OffFromCreate(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.25, 0.0), 20.0, 20.0)
 

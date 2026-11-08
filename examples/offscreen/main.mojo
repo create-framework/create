@@ -19,7 +19,7 @@ def _badge() raises -> Image:
     var badge = Canvas(_BADGE_SIZE, _BADGE_SIZE, scale=2.0)
     badge.shadow(blur=6)
     badge.fill(Gradient.radial(Color(236, 196, 202), Color(170, 90, 104)))
-    badge.outline(Color(90, 40, 50), thickness=3)
+    badge.stroke(Color(90, 40, 50), thickness=3)
     badge.circle((0, 0), 32)
     badge.shadow_enabled(False)
     badge.text_color(Color(60, 20, 30))
@@ -55,11 +55,11 @@ struct Offscreen(Program):
                 input.mouse if input.mouse_pressed() else self.last_mouse
             )
             with self.layer.style(
-                outline=Color(98, 104, 168).lerp(
+                stroke=Color(98, 104, 168).lerp(
                     Color(201, 140, 150),
                     0.5 + 0.5 * sin(context.time.elapsed * 2.0),
                 ),
-                outline_thickness=12,
+                stroke_thickness=12,
             ):
                 self.layer.line(start, input.mouse)
                 self.layer.circle(input.mouse, 6)
@@ -70,7 +70,7 @@ struct Offscreen(Program):
         # The frame under the layer, redrawn and cleared every frame.
         canvas.background(Color(40, 40, 44))
         var t = context.time.elapsed
-        with canvas.style(fill=Color(62, 62, 68), outline_enabled=False):
+        with canvas.style(fill=Color(62, 62, 68), stroke_enabled=False):
             canvas.circle((cos(t) * 200, sin(t * 1.3) * 120), 40)
 
         canvas.image(self.strokes, (0, 0), canvas.width(), canvas.height())

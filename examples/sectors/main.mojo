@@ -104,7 +104,7 @@ struct App(Program):
 
         # A pie chart: slices laid clockwise from the top. The one under the
         # mouse slides out along the middle of its sweep.
-        canvas.outline(_BACKGROUND, thickness=3)
+        canvas.stroke(_BACKGROUND, thickness=3)
         var shares = _shares()
         var start = PI / 2.0
         for i in range(len(shares)):
@@ -124,8 +124,8 @@ struct App(Program):
         var hit = not eaten and overlaps(pacman, self.ball)
         with canvas.style(
             fill=body,
-            outline=Color(226, 46, 56) if hit else _BACKGROUND,
-            outline_thickness=6,
+            stroke=Color(226, 46, 56) if hit else _BACKGROUND,
+            stroke_thickness=6,
             shadow=Color(0, 0, 0, 170),
             shadow_offset=Vector2D(8, -12),
             shadow_blur=20,
@@ -133,7 +133,7 @@ struct App(Program):
             canvas.draw(pacman)
 
         if self.respawn_in == 0.0:
-            canvas.outline_enabled(False)
+            canvas.stroke_enabled(False)
             canvas.fill(Color(98, 104, 168))
             canvas.draw(self.ball)
 

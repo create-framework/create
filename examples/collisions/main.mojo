@@ -19,9 +19,9 @@ def _reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point2D):
     """A line from the mouse to the nearest point of `shape`, and a dot
     there. Any shape answers `closest_point`, so one function serves all."""
     var nearest = shape.closest_point(mouse)
-    with canvas.style(outline=_GUIDE, outline_thickness=2):
+    with canvas.style(stroke=_GUIDE, stroke_thickness=2):
         canvas.line(mouse, nearest)
-    with canvas.style(fill=_GUIDE, outline_enabled=False):
+    with canvas.style(fill=_GUIDE, stroke_enabled=False):
         canvas.circle(nearest, 5)
 
 
@@ -55,7 +55,7 @@ struct Collisions(Program):
         canvas.background(_BACKGROUND)
 
         # Regions: filled, lit while they overlap the probe.
-        with canvas.style(outline_enabled=False):
+        with canvas.style(stroke_enabled=False):
             canvas.fill(
                 _HIT if overlaps(self.rectangle, self.probe) else _SHAPE
             )
@@ -68,14 +68,14 @@ struct Collisions(Program):
             canvas.draw(self.star)
 
         # Curves: stroked, lit while they cross the probe.
-        with canvas.style(outline_thickness=8):
-            canvas.outline(_HIT if self.line.intersects(self.probe) else _SHAPE)
+        with canvas.style(stroke_thickness=8):
+            canvas.stroke(_HIT if self.line.intersects(self.probe) else _SHAPE)
             canvas.draw(self.line)
-            canvas.outline(_HIT if self.arc.intersects(self.probe) else _SHAPE)
+            canvas.stroke(_HIT if self.arc.intersects(self.probe) else _SHAPE)
             canvas.draw(self.arc)
 
         with canvas.style(
-            fill=Color(240, 236, 222, 60), outline=_TEXT, outline_thickness=2
+            fill=Color(240, 236, 222, 60), stroke=_TEXT, stroke_thickness=2
         ):
             canvas.draw(self.probe)
 

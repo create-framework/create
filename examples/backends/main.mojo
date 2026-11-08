@@ -7,8 +7,8 @@ could disagree about.
 
 The two frames should be indistinguishable apart from the GPU's
 multisampled edges. Everything on screen is deliberately such a case — the
-five solid command kinds, a translucent fill under an outline, an
-outline wider than its shape, a rotated rect, a diagonal line, and in
+five solid command kinds, a translucent fill under a stroke, an
+stroke wider than its shape, a rotated rect, a diagonal line, and in
 fullscreen a letterbox bar under `FIT`: the 4:3 design keeps its size, so
 on a 16:9 display the bars are on screen from the first frame. A cycles
 the antialiasing level, to compare the edges at each. Escape quits.
@@ -43,61 +43,61 @@ struct App(Program):
 
         canvas.background(Color(40, 40, 44))
 
-        # A plain filled rect and an outlined one, side by side.
-        with canvas.style(fill=Color(98, 104, 168), outline_enabled=False):
+        # A plain filled rect and a stroked one, side by side.
+        with canvas.style(fill=Color(98, 104, 168), stroke_enabled=False):
             canvas.rectangle((-260, 180), 160, 100)
 
         with canvas.style(
             fill=Color(201, 140, 150),
-            outline=Color.BLACK,
-            outline_thickness=6,
+            stroke=Color.BLACK,
+            stroke_thickness=6,
         ):
             canvas.rectangle((-60, 180), 160, 100)
 
-        # An outline wider than the shape: all outline, no interior.
+        # A stroke wider than the shape: all stroke, no interior.
         with canvas.style(
             fill=Color(226, 46, 56),
-            outline=Color(240, 236, 222),
-            outline_thickness=30,
+            stroke=Color(240, 236, 222),
+            stroke_thickness=30,
         ):
             canvas.rectangle((160, 180), 40, 40)
 
         # Translucent over the indigo rect — the case a double-blended fill
-        # under its own outline would get visibly wrong.
+        # under its own stroke would get visibly wrong.
         with canvas.style(
             fill=Color(201, 140, 150, 0x80),
-            outline=Color(240, 236, 222, 0x80),
-            outline_thickness=8,
+            stroke=Color(240, 236, 222, 0x80),
+            stroke_thickness=8,
         ):
             canvas.circle((-260, 180), 70)
 
-        with canvas.style(fill=Color(226, 46, 56), outline_enabled=False):
+        with canvas.style(fill=Color(226, 46, 56), stroke_enabled=False):
             canvas.circle((0, 0), 90)
 
         with canvas.style(
             fill=Color(30, 30, 33),
-            outline=Color(201, 140, 150),
-            outline_thickness=10,
+            stroke=Color(201, 140, 150),
+            stroke_thickness=10,
         ):
             canvas.circle((220, 0), 80)
 
         # A rotating rect: the transform is baked per vertex, so a rotated
-        # outline ring has to follow the shape rather than stay axis-aligned.
+        # stroke ring has to follow the shape rather than stay axis-aligned.
         with canvas.transform(translate(-230, 0) @ rotate(self.angle)):
             with canvas.style(
                 fill=Color(240, 236, 222),
-                outline=Color.BLACK,
-                outline_thickness=4,
+                stroke=Color.BLACK,
+                stroke_thickness=4,
             ):
                 canvas.rectangle((0, 0), 120, 120)
 
-        with canvas.style(outline=Color(150, 154, 206), outline_thickness=5):
+        with canvas.style(stroke=Color(150, 154, 206), stroke_thickness=5):
             canvas.line((-340, -140), (340, -260))
 
         with canvas.style(
             fill=Color(150, 154, 206),
-            outline=Color(240, 236, 222),
-            outline_thickness=3,
+            stroke=Color(240, 236, 222),
+            stroke_thickness=3,
         ):
             canvas.triangle((-140, -180), (40, -180), (-50, -30))
 

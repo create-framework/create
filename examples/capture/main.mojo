@@ -74,7 +74,7 @@ struct Capture(Program):
 
         canvas.background(Color(40, 40, 44))
 
-        with canvas.style(outline_enabled=False):
+        with canvas.style(stroke_enabled=False):
             with canvas.transform(rotate(self.angle)):
                 canvas.fill(Color(98, 104, 168))
                 canvas.rectangle((0, 0), 220, 220)
@@ -94,7 +94,7 @@ struct Capture(Program):
                 # Drawn like everything else, so it is in the recording too.
                 var dot = -canvas.text_width(label) / 2.0 - 16.0
                 with canvas.style(
-                    fill=Color(226, 46, 56), outline_enabled=False
+                    fill=Color(226, 46, 56), stroke_enabled=False
                 ):
                     canvas.circle((dot, -200), 8)
                 canvas.text(label, (0, -200))

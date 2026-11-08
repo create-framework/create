@@ -111,7 +111,7 @@ def test_line_pixels_ends_flush_with_the_segment() raises -> None:
     assert_equal(mem.pixel(3, 2).a, 0)
 
 
-def test_line_pixels_thickens_with_outline_thickness() raises -> None:
+def test_line_pixels_thickens_with_stroke_thickness() raises -> None:
     var mem = MemorySurface(8, 8)
     line_pixels(mem.surface(), 1.0, 4.5, 6.0, 4.5, Color.WHITE, 3)
     # The band spans y in [3, 6], so rows 3..5.

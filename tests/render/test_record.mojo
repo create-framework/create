@@ -69,7 +69,7 @@ struct Recorder[scenario: Int](Program):
         canvas.background(Color(UInt8(frame * 8), UInt8(frame * 8), 100))
         with canvas.style(
             fill=Color.GREEN if canvas.recording() else Color.BLUE,
-            outline_enabled=False,
+            stroke_enabled=False,
         ):
             canvas.rectangle((canvas.left() + 4, canvas.top() - 4), 8, 8)
 

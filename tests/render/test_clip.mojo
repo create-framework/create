@@ -44,7 +44,7 @@ struct Clipped[scene: Int](Program):
         return Clipped[Self.scene](0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         comptime if Self.scene == _RECT:
             with canvas.clip(Rectangle((0, 0), 40, 20)):
@@ -117,7 +117,7 @@ struct EdgeOf[clipped: Bool](Program):
             with canvas.clip(disc):
                 canvas.background(Color.RED)
         else:
-            canvas.outline_enabled(False)
+            canvas.stroke_enabled(False)
             canvas.fill(Color.RED)
             canvas.circle(disc.position, disc.r)
 

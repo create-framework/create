@@ -33,8 +33,8 @@ from create.math.matrix import identity, translate, rotate
 def _styled() -> Style:
     var s = Style()
     s.fill_color = Color(10, 20, 30)
-    s.outline_color = Color(40, 50, 60)
-    s.outline_thickness = 3
+    s.stroke_color = Color(40, 50, 60)
+    s.stroke_thickness = 3
     s.font_size = 21
     return s^
 
@@ -160,9 +160,9 @@ def test_the_style_is_resolved_at_record_time() raises -> None:
     var c = rect_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0)
     # Mutating the style afterwards must not reach the recorded command.
     s.fill_color = Color(200, 200, 200)
-    s.outline_thickness = 99
+    s.stroke_thickness = 99
     assert_equal(c.style.fill_color.r, 10)
-    assert_equal(c.style.outline_thickness, 3)
+    assert_equal(c.style.stroke_thickness, 3)
     assert_equal(c.style.font_size, 21)
 
 
@@ -210,14 +210,14 @@ def test_opacity_folds_into_the_fill_gradient() raises -> None:
 def test_tint_folds_into_every_colour() raises -> None:
     var s = Style(
         fill=Color(200, 100, 50),
-        outline=Color.WHITE,
+        stroke=Color.WHITE,
         text_color=Color.WHITE,
         tint=Color(255, 128, 0, 128),
         opacity=0.5,
     )
     var c = rect_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0)
     assert_equal(c.style.fill_color, Color(200, 50, 0, 64))
-    assert_equal(c.style.outline_color, Color(255, 128, 0, 64))
+    assert_equal(c.style.stroke_color, Color(255, 128, 0, 64))
     assert_equal(c.style.text_color, Color(255, 128, 0, 64))
     assert_equal(c.style.tint, Color.WHITE)
     assert_equal(c.image_tint, Color(255, 128, 0, 64))

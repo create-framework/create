@@ -95,15 +95,15 @@ struct App(Program):
         # Translucent, so any joint painted twice would show as a brighter
         # seam; there is none, closed or not.
         with canvas.style(
-            outline=Color(98, 104, 168, 170),
-            outline_thickness=14,
+            stroke=Color(98, 104, 168, 170),
+            stroke_thickness=14,
             shadow=Color(0, 0, 0, 160),
             shadow_offset=Vector2D(6, -10),
             shadow_blur=18,
         ):
             canvas.draw(spline)
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         if len(self.points) > 0:
             canvas.fill(Color(226, 46, 56))
             canvas.circle(dot, 13)

@@ -23,7 +23,7 @@ from create.render._polygon import (
     polygon_shadow_mask,
 )
 from create.render._raster import fill_quad
-from create.render._transform import outline_thickness_px, pixel_scale
+from create.render._transform import stroke_thickness_px, pixel_scale
 
 comptime _SIZE = 64
 comptime _INK = Color(255, 255, 255, 128)
@@ -88,7 +88,7 @@ def _painted(q: PolygonQuads) -> MemorySurface:
     out brighter than one only one of them covers."""
     var surface = MemorySurface(_SIZE, _SIZE)
     _paint(surface, q.fill)
-    _paint(surface, q.outline)
+    _paint(surface, q.stroke)
     return surface^
 
 
@@ -143,12 +143,12 @@ def _assert_tiles(
     """Quads convex, painted at most once, and covering the polygon grown
     by `grow`: each pixel centre more than a pixel from an edge is painted
     exactly when it lies no further than `grow` outside the polygon, and
-    painted in the fill exactly when it lies the outline's width further in
+    painted in the fill exactly when it lies the stroke's width further in
     and more than half of it from the seams.
     """
     var device = _device(m)
     var q = _quads(s, device, style, grow)
-    for corners in [q.fill.copy(), q.outline.copy()]:
+    for corners in [q.fill.copy(), q.stroke.copy()]:
         for i in range(0, len(corners), 4):
             assert_true(_convex(corners, i))
     var surface = _painted(q)
@@ -160,8 +160,8 @@ def _assert_tiles(
     var near = 1.5 * pixel_units
     var pieces = s._pieces()
     var t = 0.0
-    if style._outline_visible() and len(q.fill) > 0 and len(q.outline) > 0:
-        t = Float64(outline_thickness_px(style, device, 1.0)) / pixel_scale(
+    if style._stroke_visible() and len(q.fill) > 0 and len(q.stroke) > 0:
+        t = Float64(stroke_thickness_px(style, device, 1.0)) / pixel_scale(
             device, 1.0
         )
     for y in range(_SIZE):
@@ -185,8 +185,8 @@ def _assert_tiles(
                 )
 
 
-def _outlined(thickness: Float64) -> Style:
-    return Style(fill=Color.RED, outline_thickness=thickness)
+def _stroked(thickness: Float64) -> Style:
+    return Style(fill=Color.RED, stroke_thickness=thickness)
 
 
 def test_polygon_command_records_its_vertices() raises -> None:
@@ -199,68 +199,68 @@ def test_polygon_command_records_its_vertices() raises -> None:
 
 
 def test_fill_only_tiles_the_polygon() raises -> None:
-    var style = Style(fill=Color.RED, outline_enabled=False)
+    var style = Style(fill=Color.RED, stroke_enabled=False)
     for p in _polygons():
         var q = _quads(p, identity[3](), style)
-        assert_equal(len(q.outline), 0)
+        assert_equal(len(q.stroke), 0)
         _assert_tiles(p, identity[3](), style)
 
 
-def test_fill_and_outline_tile_the_polygon_once() raises -> None:
+def test_fill_and_stroke_tile_the_polygon_once() raises -> None:
     for p in _polygons():
-        _assert_tiles(p, identity[3](), _outlined(3))
-        _assert_tiles(p, identity[3](), _outlined(6))
+        _assert_tiles(p, identity[3](), _stroked(3))
+        _assert_tiles(p, identity[3](), _stroked(6))
 
 
 def test_quads_cover_the_area_exactly() raises -> None:
-    # Fill and outline together cover a simple polygon's area, no more.
+    # Fill and stroke together cover a simple polygon's area, no more.
     for p in [_polygons()[0].copy(), _polygons()[1].copy(), _l_shape()]:
-        var q = _quads(p, identity[3](), _outlined(3))
-        assert_true(abs(_area(q.fill) + _area(q.outline) - p.area()) < 1e-6)
+        var q = _quads(p, identity[3](), _stroked(3))
+        assert_true(abs(_area(q.fill) + _area(q.stroke) - p.area()) < 1e-6)
 
 
 def test_the_pentagram_fills_its_centre() raises -> None:
     # Nonzero: the doubly wound pentagon counts, once.
     var p = _pentagram()
     var q = _quads(
-        p, identity[3](), Style(fill=Color.RED, outline_enabled=False)
+        p, identity[3](), Style(fill=Color.RED, stroke_enabled=False)
     )
     var star = Polygon.star((0.0, 0.0), 26.0, 26.0 * 0.381966, 5)
     assert_true(abs(_area(q.fill) - star.area()) < 1e-3)
 
 
 def test_the_l_shape_leaves_its_notch_empty() raises -> None:
-    var q = _quads(_l_shape(), identity[3](), _outlined(2))
-    for corners in [q.fill.copy(), q.outline.copy()]:
+    var q = _quads(_l_shape(), identity[3](), _stroked(2))
+    for corners in [q.fill.copy(), q.stroke.copy()]:
         for c in corners:
             assert_true(not (c.x > -4.0 + 1e-9 and c.y > -4.0 + 1e-9))
 
 
-def test_square_outline_is_as_thick_as_asked() raises -> None:
-    # A 40-wide square with a 5-unit outline: a 30-wide fill.
+def test_square_stroke_is_as_thick_as_asked() raises -> None:
+    # A 40-wide square with a 5-unit stroke: a 30-wide fill.
     var p = Polygon((-20.0, -20.0), (20.0, -20.0), (20.0, 20.0), (-20.0, 20.0))
-    var q = _quads(p, identity[3](), _outlined(5))
+    var q = _quads(p, identity[3](), _stroked(5))
     assert_true(abs(_area(q.fill) - 900.0) < 1e-6)
-    assert_true(abs(_area(q.outline) - 700.0) < 1e-6)
+    assert_true(abs(_area(q.stroke) - 700.0) < 1e-6)
 
 
 def test_transformed_polygons_tile_once() raises -> None:
     for p in _polygons():
-        _assert_tiles(p, rotate(0.7) @ scale(1.2), _outlined(3))
-        _assert_tiles(p, scale(1.3, 0.6), _outlined(3))
+        _assert_tiles(p, rotate(0.7) @ scale(1.2), _stroked(3))
+        _assert_tiles(p, scale(1.3, 0.6), _stroked(3))
 
 
-def test_outline_wider_than_the_polygon_leaves_one_colour() raises -> None:
+def test_stroke_wider_than_the_polygon_leaves_one_colour() raises -> None:
     var p = Polygon.regular((0.0, 0.0), 10.0, 6)
-    var q = _quads(p, identity[3](), _outlined(12))
+    var q = _quads(p, identity[3](), _stroked(12))
     assert_true(len(q.fill) > 0)
-    assert_equal(len(q.outline), 0)
-    _assert_tiles(p, identity[3](), _outlined(12))
-    var style = _outlined(12)
+    assert_equal(len(q.stroke), 0)
+    _assert_tiles(p, identity[3](), _stroked(12))
+    var style = _stroked(12)
     style.fill_enabled = False
     q = _quads(p, identity[3](), style)
     assert_equal(len(q.fill), 0)
-    assert_true(len(q.outline) > 0)
+    assert_true(len(q.stroke) > 0)
     _assert_tiles(p, identity[3](), style)
 
 
@@ -268,7 +268,7 @@ def test_grown_square_is_rounded() raises -> None:
     # w² + 4wd + πd², less what the discs' 12 segments cut off the corners.
     var p = Polygon((-10.0, -10.0), (10.0, -10.0), (10.0, 10.0), (-10.0, 10.0))
     var q = _quads(
-        p, identity[3](), Style(fill=Color.RED, outline_enabled=False), 4.0
+        p, identity[3](), Style(fill=Color.RED, stroke_enabled=False), 4.0
     )
     var expected = 400.0 + 4.0 * 20.0 * 4.0 + PI * 16.0
     var area = _area(q.fill)
@@ -278,38 +278,38 @@ def test_grown_square_is_rounded() raises -> None:
 
 def test_grown_polygons_tile_their_minkowski_sum() raises -> None:
     for p in _polygons():
-        _assert_tiles(p, identity[3](), _outlined(3), 4.0)
-        _assert_tiles(p, rotate(0.7) @ scale(1.1), _outlined(3), 3.0)
+        _assert_tiles(p, identity[3](), _stroked(3), 4.0)
+        _assert_tiles(p, rotate(0.7) @ scale(1.1), _stroked(3), 3.0)
 
 
 def test_shrunk_polygons_tile_their_erosion() raises -> None:
     for p in _polygons():
-        _assert_tiles(p, identity[3](), _outlined(3), -3.0)
+        _assert_tiles(p, identity[3](), _stroked(3), -3.0)
 
 
-def test_a_grown_outline_only_polygon_is_a_ring() raises -> None:
-    var style = _outlined(6)
+def test_a_grown_stroke_only_polygon_is_a_ring() raises -> None:
+    var style = _stroked(6)
     style.fill_enabled = False
     for p in _polygons():
         _assert_tiles(p, identity[3](), style, 3.0)
 
 
 def test_a_square_shadow_ring_has_its_area() raises -> None:
-    # A 40-wide square, 4-unit outline, spread 2: the ring runs from 2
+    # A 40-wide square, 4-unit stroke, spread 2: the ring runs from 2
     # outside the edge to 6 inside, round only at its outer corners.
     var p = Polygon((-20.0, -20.0), (20.0, -20.0), (20.0, 20.0), (-20.0, 20.0))
-    var style = _outlined(8)
+    var style = _stroked(8)
     style.fill_enabled = False
     var q = _quads(p, identity[3](), style, 2.0)
     var outside = 40.0 * 40.0 + 4.0 * 40.0 * 2.0 + PI * 4.0
     var expected = outside - 28.0 * 28.0
-    var area = _area(q.outline)
+    var area = _area(q.stroke)
     assert_true(area < expected)
     assert_true(area > expected - 1.0)
 
 
-def test_an_outline_only_polygon_masks_only_its_ring() raises -> None:
-    var style = Style(outline=Color.RED, outline_thickness=4)
+def test_an_stroke_only_polygon_masks_only_its_ring() raises -> None:
+    var style = Style(stroke=Color.RED, stroke_thickness=4)
     var p = Polygon((-20.0, -20.0), (20.0, -20.0), (20.0, 20.0), (-20.0, 20.0))
     var c = polygon_command(identity[3](), style, p.vertices.copy())
     var placed = polygon_shadow_mask(c, c.transform, 1.0, 0)
@@ -325,9 +325,9 @@ def test_degenerate_polygons_give_no_quads() raises -> None:
         Polygon((0.0, 0.0), (10.0, 0.0), (20.0, 0.0)),
         Polygon(List[Point2D]()),
     ]:
-        var q = _quads(p, identity[3](), _outlined(2))
+        var q = _quads(p, identity[3](), _stroked(2))
         assert_equal(len(q.fill), 0)
-        assert_equal(len(q.outline), 0)
+        assert_equal(len(q.stroke), 0)
 
 
 def main() raises:

@@ -20,7 +20,7 @@ struct GPURect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color(10, 20, 30))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
@@ -49,7 +49,7 @@ struct GPUMover(Program):
         self.x += 20.0
 
         canvas.background(Color(10, 20, 30))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((self.x, 0.0), 16.0, 16.0)
 
@@ -103,7 +103,7 @@ struct GPURoundedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color(10, 20, 30))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0, corner_radius=8)
 
@@ -141,7 +141,7 @@ struct GPURoundedTriangle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color(10, 20, 30))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.triangle((-20, -20), (20, -20), (-20, 20), corner_radius=8)
 
@@ -215,7 +215,7 @@ struct GPUCircle(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.WHITE)
         canvas.circle((0.0, 0.0), 20.0)
 

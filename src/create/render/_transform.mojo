@@ -1,7 +1,7 @@
 """What a transform means to a rasteriser, independent of which one.
 
 Three questions every backend asks of a `RenderCommand`'s matrix — is it
-axis-aligned, how many pixels is a world unit, how thick is an outline — and one
+axis-aligned, how many pixels is a world unit, how thick is a stroke — and one
 answer each, so the CPU replay and the GL tessellator cannot disagree about
 them. They lived in `_backend.mojo` until the GL backend needed them too;
 importing them from there would have closed a cycle, since `_backend` reaches
@@ -40,7 +40,7 @@ def uniform(m: Matrix[3, 3]) -> Bool:
 def pixel_scale(m: Matrix[3, 3], fallback: Float64) -> Float64:
     """Pixels per world unit along `m`.
 
-    Outline thickness, font size and image extents are authored in world
+    Stroke thickness, font size and image extents are authored in world
     units but rasterised in pixels, so they all scale by this. `fallback` is
     the frame's autoscale factor, used when `m` is not uniform and no single
     factor exists.
@@ -83,11 +83,11 @@ def glyph_transform(
     )
 
 
-def outline_thickness_px(
+def stroke_thickness_px(
     style: Style, m: Matrix[3, 3], fallback: Float64
 ) -> Int:
-    """Outline thickness in framebuffer pixels, never thinner than one."""
+    """Stroke thickness in framebuffer pixels, never thinner than one."""
     return max(
-        Int(style.outline_thickness * pixel_scale(m, fallback) + 0.5),
+        Int(style.stroke_thickness * pixel_scale(m, fallback) + 0.5),
         1,
     )

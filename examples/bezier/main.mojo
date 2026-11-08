@@ -67,22 +67,22 @@ struct App(Program):
         canvas.background(Color(40, 40, 44))
 
         # The control polygon: each control's pull on its endpoint.
-        canvas.outline(Color(62, 62, 68), thickness=2)
+        canvas.stroke(Color(62, 62, 68), thickness=2)
         canvas.line(self.handles[0], self.handles[1])
         canvas.line(self.handles[3], self.handles[2])
 
         # The curve itself, with a soft shadow. A curve has no interior, so
-        # only the outline draws and casts.
+        # only the stroke draws and casts.
         with canvas.style(
-            outline=Color(98, 104, 168),
-            outline_thickness=12,
+            stroke=Color(98, 104, 168),
+            stroke_thickness=12,
             shadow=Color(0, 0, 0, 160),
             shadow_offset=Vector2D(6, -10),
             shadow_blur=18,
         ):
             canvas.draw(curve)
 
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color(226, 46, 56))
         canvas.circle(dot, 13)
 

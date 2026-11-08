@@ -1,10 +1,10 @@
-"""A triangle's fill and outline as pieces shared by both replays.
+"""A triangle's fill and stroke as pieces shared by both replays.
 
-A triangle's outline is centred on its edges, so it reaches half its width
+A triangle's stroke is centred on its edges, so it reaches half its width
 into the fill. Drawn as a fill with three edge bands over it, as it once
 was, a translucent triangle composited twice under each band and three
-times where two bands crossed at a corner, and a thick outline left a notch
-at every outer corner. Here the outline is the band between an outer and an
+times where two bands crossed at a corner, and a thick stroke left a notch
+at every outer corner. Here the stroke is the band between an outer and an
 inner edge, cut into convex pieces that meet without overlapping, and the
 fill is what the inner edge encloses:
 
@@ -25,7 +25,7 @@ covered once: the CPU fills the pieces with `fill_quad` and the fill with
 `fill_convex`, whose half-open rule composites a shared edge once, and the
 GPU pushes them as vertices, as for sectors and polygons. Built in local
 space and mapped per point, so a sheared rounded corner is the ellipse arc
-it should be; `h` is the outline thickness in device pixels taken back to
+it should be; `h` is the stroke thickness in device pixels taken back to
 local units.
 """
 
@@ -39,17 +39,17 @@ from ._command import RenderCommand
 from ._curve import MITER_LIMIT, stroke_quads
 from create.geometry._fillet import triangle_corner_radius
 from ._tessellate import _arc_segments
-from ._transform import outline_thickness_px, pixel_scale
+from ._transform import stroke_thickness_px, pixel_scale
 
 
 struct TrianglePieces(Movable):
-    """A triangle's fill and outline in device space, ready to rasterise."""
+    """A triangle's fill and stroke in device space, ready to rasterise."""
 
     var fill: List[Point2D]
     """The fill as one convex polygon, in order round its edge; empty when
-    the outline leaves no room for it."""
+    the stroke leaves no room for it."""
     var ring: List[Point2D]
-    """The outline as convex quads, four corners each, in order around the
+    """The stroke as convex quads, four corners each, in order around the
     quad's edge; a corner repeats where a piece is a triangle."""
 
     def __init__(out self):
@@ -60,9 +60,9 @@ struct TrianglePieces(Movable):
 def triangle_pieces(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> TrianglePieces:
-    """`c`'s fill and outline (`c` a `CMD_TRIANGLE`) as device pieces,
+    """`c`'s fill and stroke (`c` a `CMD_TRIANGLE`) as device pieces,
     whichever of the two its style shows; the caller draws what is visible.
-    Without an outline the fill is the whole (rounded) triangle."""
+    Without a stroke the fill is the whole (rounded) triangle."""
     var out = TrianglePieces()
     # Fixed-size and on the stack: this runs once per triangle drawn.
     var xs = Array[Float64, 3](fill=0.0)
@@ -85,8 +85,8 @@ def triangle_pieces(
         cross = -cross
     var sf = pixel_scale(m, scale)
     var h = 0.0
-    if c.style._outline_visible():
-        h = Float64(outline_thickness_px(c.style, m, scale)) / (2.0 * sf)
+    if c.style._stroke_visible():
+        h = Float64(stroke_thickness_px(c.style, m, scale)) / (2.0 * sf)
 
     var lengths = Array[Float64, 3](fill=0.0)
     for i in range(3):
@@ -94,7 +94,7 @@ def triangle_pieces(
         lengths[i] = sqrt((xs[j] - xs[i]) ** 2 + (ys[j] - ys[i]) ** 2)
     var perimeter = lengths[0] + lengths[1] + lengths[2]
     if cross <= 1e-12 or perimeter <= 0.0:
-        # No interior: nothing to fill, and the outline is the band along
+        # No interior: nothing to fill, and the stroke is the band along
         # the edges there are.
         if h > 0.0:
             var path = List[Point2D](capacity=4)

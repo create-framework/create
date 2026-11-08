@@ -72,12 +72,12 @@ def _viewport(design: Int, pixels: Int) -> Viewport:
 
 
 def _plain() -> Style:
-    """Fill only — the outline that `Style()` enables by default would double
+    """Fill only — the stroke that `Style()` enables by default would double
     every vertex count these tests are asserting on."""
     var s = Style()
     s.fill_color = Color.RED
     s.fill_enabled = True
-    s.outline_enabled = False
+    s.stroke_enabled = False
     return s^
 
 
@@ -161,12 +161,12 @@ def test_the_scale_factor_reaches_the_vertices() raises -> None:
     assert_equal(max_x - min_x, 20.0)
 
 
-def test_an_outlined_rect_emits_a_fill_and_a_four_quad_ring() raises -> None:
+def test_an_stroked_rect_emits_a_fill_and_a_four_quad_ring() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 2
+    s.stroke_enabled = True
+    s.stroke_thickness = 2
     emit_rect(
         vb, rect_command(v.base_matrix(), s, 0.0, 0.0, 20.0, 20.0), v.scale
     )
@@ -174,30 +174,30 @@ def test_an_outlined_rect_emits_a_fill_and_a_four_quad_ring() raises -> None:
     assert_equal(vb.count(), 30)
 
 
-def test_an_outline_wider_than_the_rect_leaves_no_fill() raises -> None:
+def test_an_stroke_wider_than_the_rect_leaves_no_fill() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 40
+    s.stroke_enabled = True
+    s.stroke_thickness = 40
     emit_rect(
         vb, rect_command(v.base_matrix(), s, 0.0, 0.0, 10.0, 10.0), v.scale
     )
     assert_equal(vb.count(), 6)
 
 
-def test_an_outlined_rect_fill_is_inset_not_full_size() raises -> None:
-    # The fill stops at the outline's inner edge so a translucent shape is not
-    # blended twice where the outline overlaps it.
+def test_an_stroked_rect_fill_is_inset_not_full_size() raises -> None:
+    # The fill stops at the stroke's inner edge so a translucent shape is not
+    # blended twice where the stroke overlaps it.
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 2
+    s.stroke_enabled = True
+    s.stroke_thickness = 2
     var vb = VertexBuffer()
     emit_rect(
         vb, rect_command(v.base_matrix(), s, 0.0, 0.0, 20.0, 20.0), v.scale
     )
-    # The fill quad is emitted first: its corners are inset by the 2px outline.
+    # The fill quad is emitted first: its corners are inset by the 2px stroke.
     var min_x = _x(vb, 0)
     var max_x = _x(vb, 0)
     for i in range(1, 6):
@@ -235,13 +235,13 @@ def test_a_circle_reaches_its_radius_in_pixels() raises -> None:
     assert_equal(max_x, 80.0)
 
 
-def test_a_line_is_one_quad_of_the_outline_thickness() raises -> None:
+def test_a_line_is_one_quad_of_the_stroke_thickness() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 4
-    s.outline_color = Color.BLUE
+    s.stroke_enabled = True
+    s.stroke_thickness = 4
+    s.stroke_color = Color.BLUE
     emit_line(
         vb, line_command(v.base_matrix(), s, -10.0, 0.0, 10.0, 0.0), v.scale
     )
@@ -254,7 +254,7 @@ def test_a_line_is_one_quad_of_the_outline_thickness() raises -> None:
     assert_equal(max_y - min_y, 4.0)
 
 
-def test_an_unoutlined_line_emits_nothing() raises -> None:
+def test_an_unstroked_line_emits_nothing() raises -> None:
     # A line has no interior, so a fill-only style has nothing to render.
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
@@ -270,8 +270,8 @@ def test_a_bezier_is_two_triangles_per_stroke_quad() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 3
+    s.stroke_enabled = True
+    s.stroke_thickness = 3
     var c = bezier_command(
         v.base_matrix(),
         s,
@@ -290,14 +290,14 @@ def test_a_sector_is_two_triangles_per_quad() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 3
+    s.stroke_enabled = True
+    s.stroke_thickness = 3
     var c = sector_command(v.base_matrix(), s, 0.0, 0.0, 40.0, 0.5, 4.0)
     emit_sector(vb, c, v.scale)
     var quads = sector_quads(c, c.transform, v.scale)
     assert_true(len(quads.fill) > 0)
-    assert_true(len(quads.outline) > 0)
-    assert_equal(vb.count(), 6 * ((len(quads.fill) + len(quads.outline)) // 4))
+    assert_true(len(quads.stroke) > 0)
+    assert_equal(vb.count(), 6 * ((len(quads.fill) + len(quads.stroke)) // 4))
     # Fill first, its corners the CPU's, vertex for vertex.
     assert_equal(_x(vb, 0), Float64(Float32(quads.fill[0].x)))
     assert_equal(_y(vb, 1), Float64(Float32(quads.fill[1].y)))
@@ -310,7 +310,7 @@ def test_a_sector_emits_only_its_visible_parts() raises -> None:
     var c = sector_command(v.base_matrix(), _plain(), 0.0, 0.0, 40.0, 0.5, 4.0)
     emit_sector(vb, c, v.scale)
     var quads = sector_quads(c, c.transform, v.scale)
-    assert_equal(len(quads.outline), 0)
+    assert_equal(len(quads.stroke), 0)
     assert_equal(vb.count(), 6 * (len(quads.fill) // 4))
 
 
@@ -323,14 +323,14 @@ def test_a_polygon_is_two_triangles_per_quad() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
-    s.outline_thickness = 3
+    s.stroke_enabled = True
+    s.stroke_thickness = 3
     var c = _star_command(v, s)
     emit_polygon(vb, c, v.scale)
     var quads = polygon_quads(c, c.transform, v.scale)
     assert_true(len(quads.fill) > 0)
-    assert_true(len(quads.outline) > 0)
-    assert_equal(vb.count(), 6 * ((len(quads.fill) + len(quads.outline)) // 4))
+    assert_true(len(quads.stroke) > 0)
+    assert_equal(vb.count(), 6 * ((len(quads.fill) + len(quads.stroke)) // 4))
     # Fill first, its corners the CPU's, vertex for vertex.
     assert_equal(_x(vb, 0), Float64(Float32(quads.fill[0].x)))
     assert_equal(_y(vb, 1), Float64(Float32(quads.fill[1].y)))
@@ -343,11 +343,11 @@ def test_a_polygon_emits_only_its_visible_parts() raises -> None:
     var c = _star_command(v, _plain())
     emit_polygon(vb, c, v.scale)
     var quads = polygon_quads(c, c.transform, v.scale)
-    assert_equal(len(quads.outline), 0)
+    assert_equal(len(quads.stroke), 0)
     assert_equal(vb.count(), 6 * (len(quads.fill) // 4))
 
 
-def test_an_unoutlined_bezier_emits_nothing() raises -> None:
+def test_an_unstroked_bezier_emits_nothing() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     emit_bezier(
@@ -362,15 +362,15 @@ def test_an_unoutlined_bezier_emits_nothing() raises -> None:
     assert_equal(vb.count(), 0)
 
 
-def test_an_outlined_triangle_is_a_shrunk_triangle_in_a_ring_of_quads() raises -> (
+def test_an_stroked_triangle_is_a_shrunk_triangle_in_a_ring_of_quads() raises -> (
     None
 ):
     # Every corner within the miter limit, so no bevels: one ring quad per
-    # edge around the fill, the triangle shrunk by half the outline.
+    # edge around the fill, the triangle shrunk by half the stroke.
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()
-    s.outline_enabled = True
+    s.stroke_enabled = True
     emit_triangle(
         vb,
         triangle_command(
@@ -579,12 +579,12 @@ def test_a_blurred_rect_shadow_is_one_box_quad() raises -> None:
     assert_equal(_x(vb, 0), 50.0 - 26.0)
 
 
-def test_an_outline_only_blurred_rect_shadow_carries_its_ring() raises -> None:
+def test_an_stroke_only_blurred_rect_shadow_carries_its_ring() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = Style()
     s.fill_enabled = False
-    s.outline_thickness = 4
+    s.stroke_thickness = 4
     var c = rect_command(v.base_matrix(), _blurred(s^), 0.0, 0.0, 20.0, 20.0)
     emit_blurred_shadow(vb, shadow_command(c, v.scale), v.scale)
     assert_equal(_shape_parameter(vb, 0, 3), 1.0)
@@ -621,7 +621,7 @@ def test_a_blurred_line_shadow_is_a_box_along_the_stroke() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = Style()
-    s.outline_thickness = 2
+    s.stroke_thickness = 2
     var c = line_command(v.base_matrix(), _blurred(s^), -10.0, 0.0, 10.0, 0.0)
     emit_blurred_shadow(vb, shadow_command(c, v.scale), v.scale)
     assert_equal(vb.count(), 6)

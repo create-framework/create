@@ -7,7 +7,7 @@ rasteriser knows antialiasing exists. `composite_coverage` then counts, for
 each pixel, how many of its `grid * grid` samples each paint covered, and
 composites the pixel once.
 
-Once matters. A shape's fill and outline never overlap, at any resolution,
+Once matters. A shape's fill and stroke never overlap, at any resolution,
 so where both cross a pixel their coverages add up and the pixel is mixed
 from both before it is blended: there is no seam of background between the
 two, and a translucent shape stays evenly translucent. Two separate shapes

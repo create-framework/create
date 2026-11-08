@@ -1,10 +1,10 @@
-"""Fill and outline geometry for polygons, shared by both replays.
+"""Fill and stroke geometry for polygons, shared by both replays.
 
 A polygon is tiled at replay into convex quads, like a sector, and both
 backends fill those same quads — the CPU through `fill_quad`, the GPU as
 vertices — which keeps them in parity. Neighbouring quads share their
 corners exactly, so under `fill_quad`'s half-open rule a translucent
-polygon composites once everywhere, fill and outline together, however it
+polygon composites once everywhere, fill and stroke together, however it
 folds over itself.
 
 The tiling cuts the plane into horizontal slabs at every y where an edge
@@ -15,8 +15,8 @@ is nonzero.
 
 The edges are cut where others cross them into the *rim*, pieces with the
 outside along one side, and the *seams*, pieces running through the inside
-(a pentagram's inner pentagon). The outline is an inset band along the rim
--- what lies inside and within `outline_thickness` of it -- and a band
+(a pentagram's inner pentagon). The stroke is an inset band along the rim
+-- what lies inside and within `stroke_thickness` of it -- and a band
 centred on each seam, as thick in all, so every edge is stroked as thick.
 Points within `d` of some pieces make a *band*: a rectangle of half-width
 `d` along every piece and a disc at every end, each wound once, so a point
@@ -39,9 +39,9 @@ walk across a slab passes over the stretches of no width between them.
 
 A shadow's spread offsets the whole polygon first (`geom[0]`, zero for a
 render call): outwards it is the polygon or its rim's band, inwards the
-polygon without it. The fill is the polygon offset by the outline's width
-less, off the seams' band, so the outline is an inset band of the offset
-polygon. A shadow ring's thickness is the outline's plus twice the spread,
+polygon without it. The fill is the polygon offset by the stroke's width
+less, off the seams' band, so the stroke is an inset band of the offset
+polygon. A shadow ring's thickness is the stroke's plus twice the spread,
 so its seams' band grows by the spread as well.
 """
 
@@ -56,24 +56,24 @@ from create.math.vector2d import Vector2D
 from ._command import RenderCommand
 from ._curve import PlacedMask, quads_shadow_mask
 from ._tessellate import circle_segments
-from ._transform import outline_thickness_px, pixel_scale
+from ._transform import stroke_thickness_px, pixel_scale
 
 comptime _NOTHING = 0
 comptime _FILL = 1
-comptime _OUTLINE = 2
+comptime _STROKE = 2
 
 
 struct PolygonQuads(Movable):
     """A polygon's device-space tiling: four corners per quad, in order
     around the quad's edge, quad after quad. `fill` is painted in the fill
-    colour, `outline` in the outline colour; the two never overlap."""
+    colour, `stroke` in the stroke colour; the two never overlap."""
 
     var fill: List[Point2D]
-    var outline: List[Point2D]
+    var stroke: List[Point2D]
 
     def __init__(out self):
         self.fill = List[Point2D]()
-        self.outline = List[Point2D]()
+        self.stroke = List[Point2D]()
 
 
 struct _Edge(Copyable, ImplicitlyCopyable, Movable):
@@ -121,14 +121,14 @@ struct _Edge(Copyable, ImplicitlyCopyable, Movable):
 def polygon_quads(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> PolygonQuads:
-    """`c` (a `CMD_POLYGON`) mapped by `m` and tiled into fill and outline
+    """`c` (a `CMD_POLYGON`) mapped by `m` and tiled into fill and stroke
     quads.
 
     The tiling is built in local space and mapped per corner, so a
     non-uniform transform gives the sheared polygon it should. With no
-    visible outline everything is fill. With an outline too wide to leave
+    visible stroke everything is fill. With a stroke too wide to leave
     any fill, the whole polygon is one colour, as a sector's is: the fill's
-    if the fill is visible, else the outline's. `geom[0]` offsets the
+    if the fill is visible, else the stroke's. `geom[0]` offsets the
     polygon by that many local units first, outwards if positive.
     """
     var out = PolygonQuads()
@@ -139,12 +139,12 @@ def polygon_quads(
     var grow = c.geom[0]
     var sf = pixel_scale(m, scale)
     var t = 0.0
-    if c.style._outline_visible():
-        t = Float64(outline_thickness_px(c.style, m, scale)) / sf
+    if c.style._stroke_visible():
+        t = Float64(stroke_thickness_px(c.style, m, scale)) / sf
 
     # The polygon's outer edge is offset by `grow`, the fill's by `grow - t`;
     # each needs the rim's band of that radius, unless the offset is zero.
-    # The seams' band is half the outline's width, either side.
+    # The seams' band is half the stroke's width, either side.
     var outer = grow
     var inner = grow - t
     var edges = List[_Edge]()
@@ -283,8 +283,8 @@ def polygon_quads(
         y_lo = y_hi
 
     if t > 0.0 and len(out.fill) == 0 and c.style._fill_visible():
-        out.fill = out.outline^
-        out.outline = List[Point2D]()
+        out.fill = out.stroke^
+        out.stroke = List[Point2D]()
     return out^
 
 
@@ -294,13 +294,13 @@ def polygon_shadow_mask(
     """The shadow command `c` (a `CMD_POLYGON`, one colour) mapped by `m`,
     rasterised into an alpha mask and blurred by `blur` device pixels."""
     var q = polygon_quads(c, m, scale)
-    # Only what the command paints: an outline-only ring leaves its middle.
+    # Only what the command paints: a stroke-only ring leaves its middle.
     var corners = List[Point2D]()
     if c.style._fill_visible():
         for p in q.fill:
             corners.append(p)
-    if c.style._outline_visible():
-        for p in q.outline:
+    if c.style._stroke_visible():
+        for p in q.stroke:
             corners.append(p)
     return quads_shadow_mask(corners, blur)
 
@@ -328,21 +328,21 @@ def _classify(
     outer: Float64,
     inner: Float64,
     layers: _Layers,
-    outlined: Bool,
+    stroked: Bool,
 ) -> Int:
-    """Whether a stretch with these winding counts is fill, outline or
-    neither: inside the polygon offset by `outer` and, if outlined, inside
+    """Whether a stretch with these winding counts is fill, stroke or
+    neither: inside the polygon offset by `outer` and, if stroked, inside
     it offset by `inner` and off the seams, or not."""
     var inside = counts[0] != 0
     if not _offset_holds(inside, counts[layers.outer] != 0, outer):
         return _NOTHING
-    if not outlined:
+    if not stroked:
         return _FILL
     if layers.seams != 0 and counts[layers.seams] != 0:
-        return _OUTLINE
+        return _STROKE
     if _offset_holds(inside, counts[layers.inner] != 0, inner):
         return _FILL
-    return _OUTLINE
+    return _STROKE
 
 
 def _offset_holds(inside: Bool, banded: Bool, offset: Float64) -> Bool:
@@ -373,7 +373,7 @@ def _emit(
     if cls == _FILL:
         _append_quad(out.fill, a, b, c, d)
     else:
-        _append_quad(out.outline, a, b, c, d)
+        _append_quad(out.stroke, a, b, c, d)
 
 
 def _add_loop(mut edges: List[_Edge], points: List[Point2D], layer: Int):

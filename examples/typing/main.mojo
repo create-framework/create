@@ -86,7 +86,7 @@ struct TypingTest(Program):
 
         if not finished and Int(context.time.elapsed * 2) % 2 == 0:
             var caret_x = left + canvas.text_width(self.typed.before_caret())
-            canvas.outline(Color(240, 236, 222), thickness=2)
+            canvas.stroke(Color(240, 236, 222), thickness=2)
             canvas.line((caret_x, -16), (caret_x, 16))
 
         canvas.font_size(20)

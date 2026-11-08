@@ -45,7 +45,7 @@ struct App(Program):
         # A card lifted off the page: soft, offset down, a rounded silhouette.
         with canvas.style(
             fill=Color.WHITE,
-            outline_enabled=False,
+            stroke_enabled=False,
             shadow=Color(40, 40, 44, 70),
             shadow_offset=Vector2D(0, -10),
             shadow_blur=blur * 1.5,
@@ -60,7 +60,7 @@ struct App(Program):
         # top-left inner edges, as if lit from above.
         with canvas.style(
             fill=Color(250, 248, 242),
-            outline=Color(200, 196, 186),
+            stroke=Color(200, 196, 186),
             shadow=Color(40, 40, 44, 90),
             shadow_offset=Vector2D(3, -4),
             shadow_blur=blur / 2.0,
@@ -80,7 +80,7 @@ struct App(Program):
         # the square.
         canvas.shadow(Color(0, 0, 0, 80), offset=Vector2D(14, -14), blur=blur)
         var square = Rectangle((0, 0), 120, 120, corner_radius=14)
-        with canvas.style(fill=Color(98, 104, 168), outline_enabled=False):
+        with canvas.style(fill=Color(98, 104, 168), stroke_enabled=False):
             with canvas.transform(translate(170, 110) @ rotate(self.angle)):
                 canvas.draw(square)
             with canvas.style(shadow_follows_transform=True):

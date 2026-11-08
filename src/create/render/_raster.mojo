@@ -337,7 +337,7 @@ struct FillPaint(Copyable, ImplicitlyCopyable, Movable):
     """What a fill's runs paint: one colour, or a gradient sampled per pixel.
 
     `fill_span`, `fill_pixels`, `fill_quad` and `fill_triangle` take one, and
-    a `Color` converts implicitly, so a caller painting an outline or a
+    a `Color` converts implicitly, so a caller painting a stroke or a
     shadow passes its colour as before; only the fill-colour call sites build
     a gradient one. The choice is made once per run, never per pixel of a
     solid fill, and a solid one is no more than its colour and a flag.
@@ -482,10 +482,10 @@ def line_pixels[
     x1: Float64,
     y1: Float64,
     c: Color,
-    outline_thickness: Int,
+    stroke_thickness: Int,
 ):
     """Stroke the device segment `(x0, y0)`-`(x1, y1)` as an
-    `outline_thickness`-wide band with butt ends.
+    `stroke_thickness`-wide band with butt ends.
 
     The band is the same quad `_tessellate.mojo::_segment_quad` hands the
     GPU — the segment pushed out by half the thickness along its normal —
@@ -497,14 +497,14 @@ def line_pixels[
     so two bands sharing an edge don't both paint it. A zero-length segment
     paints nothing, as on the GPU.
     """
-    if c.a == 0 or outline_thickness <= 0:
+    if c.a == 0 or stroke_thickness <= 0:
         return
     var dx = x1 - x0
     var dy = y1 - y0
     var length = sqrt(dx * dx + dy * dy)
     if length == 0.0:
         return
-    var half = Float64(outline_thickness) / 2.0
+    var half = Float64(stroke_thickness) / 2.0
     var nx = -dy / length * half
     var ny = dx / length * half
     var qx: Array[Float64, 4] = [x0 + nx, x1 + nx, x1 - nx, x0 - nx]

@@ -29,7 +29,7 @@ struct Pixels(Program):
             canvas.background(Color(40, 40, 44, 30))
 
         var t = context.time.elapsed
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         var colors: List[Color] = [
             Color(226, 46, 56),
             Color(201, 140, 150),
@@ -45,7 +45,7 @@ struct Pixels(Program):
 
         var under = canvas.color_at(context.input.mouse)
         canvas.fill(under)
-        canvas.outline(Color(240, 236, 222))
+        canvas.stroke(Color(240, 236, 222))
         canvas.rectangle((0, canvas.bottom() + 40), 60, 40)
         canvas.text_color(Color(240, 236, 222))
         canvas.text(String(under), (0, canvas.bottom() + 80))

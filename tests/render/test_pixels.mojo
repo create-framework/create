@@ -37,7 +37,7 @@ def _present(
 
 
 def _square(mut canvas: Canvas, position: Point2D, color: Color):
-    with canvas.style(fill=color, outline_enabled=False):
+    with canvas.style(fill=color, stroke_enabled=False):
         canvas.rectangle(position, 20, 20)
 
 

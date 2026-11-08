@@ -21,7 +21,7 @@ struct IdentityCameraRect(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.camera(Camera())
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
@@ -49,7 +49,7 @@ struct PannedCameraRect(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.camera(Camera(Point2D(20.0, 0.0), 1.0))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
@@ -75,7 +75,7 @@ struct ZoomedCameraRect(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.camera(Camera(Point2D(0.0, 0.0), 2.0))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
@@ -101,7 +101,7 @@ struct OverlayIgnoresCamera(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.camera(Camera(Point2D(50.0, 0.0), 1.0))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         with canvas.overlay():
             canvas.rectangle((0.0, 0.0), 20.0, 20.0)
@@ -128,7 +128,7 @@ struct OverlayRestoresCamera(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.camera(Camera(Point2D(20.0, 0.0), 1.0))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         with canvas.overlay():
             pass

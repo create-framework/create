@@ -14,7 +14,7 @@ from create.render.style import Style
 from create.render._backend import Backend
 from create.render._interned_image import IMAGE_KEEP_FRAMES
 from create.render._raster import blend
-from create.render._transform import pixel_scale, outline_thickness_px
+from create.render._transform import pixel_scale, stroke_thickness_px
 from create.render._shadow import box_coverage
 from create.render._command import (
     CMD_CLEAR,
@@ -52,7 +52,7 @@ def _solid(fill: Color) -> Style:
     var s = Style()
     s.fill_color = fill
     s.fill_enabled = True
-    s.outline_enabled = False
+    s.stroke_enabled = False
     return s^
 
 
@@ -97,11 +97,11 @@ def test_rect_above_the_origin_lands_above_it() raises -> None:
     assert_equal(m.pixel(50, 70), Color.BLACK)
 
 
-def test_rect_outline_frames_the_fill() raises -> None:
+def test_rect_stroke_frames_the_fill() raises -> None:
     var st = _solid(Color.RED)
-    st.outline_enabled = True
-    st.outline_color = Color.BLUE
-    st.outline_thickness = 2
+    st.stroke_enabled = True
+    st.stroke_color = Color.BLUE
+    st.stroke_thickness = 2
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(rect_command(_base(), st, 0.0, 0.0, 20.0, 20.0))
@@ -110,37 +110,37 @@ def test_rect_outline_frames_the_fill() raises -> None:
     assert_equal(m.pixel(50, 50), Color.RED)
 
 
-def test_rect_outline_with_zero_alpha_matches_outline_disabled() raises -> None:
-    # An outline nobody can see should skip rasterisation the same way an
+def test_rect_stroke_with_zero_alpha_matches_stroke_disabled() raises -> None:
+    # A stroke nobody can see should skip rasterisation the same way an
     # explicitly disabled one does — both must leave the fill untouched and
-    # paint no outline colour anywhere.
+    # paint no stroke colour anywhere.
     var st = _solid(Color.RED)
-    st.outline_enabled = True
-    st.outline_color = Color(0, 0, 255, 0)
-    st.outline_thickness = 2
+    st.stroke_enabled = True
+    st.stroke_color = Color(0, 0, 255, 0)
+    st.stroke_thickness = 2
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(rect_command(_base(), st, 0.0, 0.0, 20.0, 20.0))
     var m = _replay(cmds)
-    # Column 40 is where a visible outline this thick would land — see
-    # test_rect_outline_frames_the_fill's pixel(41, 50) with thickness 2.
+    # Column 40 is where a visible stroke this thick would land — see
+    # test_rect_stroke_frames_the_fill's pixel(41, 50) with thickness 2.
     assert_equal(m.pixel(40, 50), Color.RED)
     assert_equal(m.pixel(50, 50), Color.RED)
     assert_equal(m.pixel(30, 50), Color.BLACK)
 
 
-def test_rect_outline_with_zero_thickness_matches_outline_disabled() raises -> (
+def test_rect_stroke_with_zero_thickness_matches_stroke_disabled() raises -> (
     None
 ):
     var st = _solid(Color.RED)
-    st.outline_enabled = True
-    st.outline_color = Color.BLUE
-    st.outline_thickness = 0
+    st.stroke_enabled = True
+    st.stroke_color = Color.BLUE
+    st.stroke_thickness = 0
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(rect_command(_base(), st, 0.0, 0.0, 20.0, 20.0))
     var m = _replay(cmds)
-    # outline_thickness_px floors at 1px, so a naive gate would still paint a
+    # stroke_thickness_px floors at 1px, so a naive gate would still paint a
     # 1px BLUE ring at column 40 — this is what catches that.
     assert_equal(m.pixel(40, 50), Color.RED)
     assert_equal(m.pixel(50, 50), Color.RED)
@@ -198,7 +198,7 @@ def _brute_circle(
     var pcy = p[1] - 0.5
     var pr = r * pixel_scale(m, scale)
     var pr2 = pr * pr
-    var pr_inner = pr - Float64(outline_thickness_px(style, m, scale))
+    var pr_inner = pr - Float64(stroke_thickness_px(style, m, scale))
     var pr_inner2 = pr_inner * pr_inner
     var x0 = max(Int(pcx - pr), 0)
     var y0 = max(Int(pcy - pr), 0)
@@ -212,13 +212,13 @@ def _brute_circle(
             if d2 <= pr2:
                 var off = (row * W + col) * 4
                 if style.fill_enabled and (
-                    not style.outline_enabled
+                    not style.stroke_enabled
                     or pr_inner <= 0.0
                     or d2 <= pr_inner2
                 ):
                     blend(s, off, style.fill_color)
-                elif style.outline_enabled and d2 > pr_inner2:
-                    blend(s, off, style.outline_color)
+                elif style.stroke_enabled and d2 > pr_inner2:
+                    blend(s, off, style.stroke_color)
 
 
 def _check_circle_matches_brute_force(
@@ -226,16 +226,16 @@ def _check_circle_matches_brute_force(
     cy: Float64,
     r: Float64,
     fill_enabled: Bool,
-    outline_enabled: Bool,
-    outline_thickness: Float64,
+    stroke_enabled: Bool,
+    stroke_thickness: Float64,
 ) raises -> None:
     var m = _base()
     var st = Style()
     st.fill_color = Color.RED
     st.fill_enabled = fill_enabled
-    st.outline_color = Color.BLUE
-    st.outline_enabled = outline_enabled
-    st.outline_thickness = outline_thickness
+    st.stroke_color = Color.BLUE
+    st.stroke_enabled = stroke_enabled
+    st.stroke_thickness = stroke_thickness
 
     var want = MemorySurface(_W, _H)
     _brute_circle(want, m, st, cx, cy, r, 1.0)
@@ -257,11 +257,11 @@ def test_circle_span_matches_brute_force_fill_only() raises -> None:
     _check_circle_matches_brute_force(0.0, 0.0, 20.0, True, False, 1)
 
 
-def test_circle_span_matches_brute_force_outline_only() raises -> None:
+def test_circle_span_matches_brute_force_stroke_only() raises -> None:
     _check_circle_matches_brute_force(0.0, 0.0, 20.0, False, True, 3)
 
 
-def test_circle_span_matches_brute_force_fill_and_outline() raises -> None:
+def test_circle_span_matches_brute_force_fill_and_stroke() raises -> None:
     _check_circle_matches_brute_force(0.0, 0.0, 20.0, True, True, 3)
 
 
@@ -272,7 +272,7 @@ def test_circle_span_matches_brute_force_radius_under_one_pixel() raises -> (
     _check_circle_matches_brute_force(10.0, -8.0, 0.6, True, False, 1)
 
 
-def test_circle_span_matches_brute_force_outline_wider_than_radius() raises -> (
+def test_circle_span_matches_brute_force_stroke_wider_than_radius() raises -> (
     None
 ):
     _check_circle_matches_brute_force(-15.0, 5.0, 12.0, True, True, 40)
@@ -286,11 +286,11 @@ def test_circle_span_matches_brute_force_pr_inner_exactly_zero() raises -> None:
 def test_line_replays_between_its_endpoints() raises -> None:
     var st = Style()
     st.fill_enabled = False
-    st.outline_enabled = True
-    st.outline_color = Color.WHITE
+    st.stroke_enabled = True
+    st.stroke_color = Color.WHITE
     # Two wide, so the band covers whole rows either side of y = 0, which
     # sits on the boundary between rows 49 and 50.
-    st.outline_thickness = 2
+    st.stroke_thickness = 2
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(line_command(_base(), st, -20.0, 0.0, 20.0, 0.0))
@@ -301,9 +301,9 @@ def test_line_replays_between_its_endpoints() raises -> None:
     assert_equal(m.pixel(50, 40), Color.BLACK)
 
 
-def test_line_with_outline_disabled_renders_nothing() raises -> None:
+def test_line_with_stroke_disabled_renders_nothing() raises -> None:
     var st = Style()
-    st.outline_enabled = False
+    st.stroke_enabled = False
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(line_command(_base(), st, -20.0, 0.0, 20.0, 0.0))
@@ -317,9 +317,9 @@ def _s_curve() -> Bezier:
 
 def _stroke(color: Color, thickness: Float64) -> Style:
     var st = Style()
-    st.outline_enabled = True
-    st.outline_color = color
-    st.outline_thickness = thickness
+    st.stroke_enabled = True
+    st.stroke_color = color
+    st.stroke_thickness = thickness
     return st^
 
 
@@ -342,9 +342,9 @@ def test_bezier_replays_along_the_curve_without_gaps() raises -> None:
     assert_equal(m.pixel(95, 95), Color.BLACK)
 
 
-def test_bezier_with_outline_disabled_renders_nothing() raises -> None:
+def test_bezier_with_stroke_disabled_renders_nothing() raises -> None:
     var st = _stroke(Color.WHITE, 4)
-    st.outline_enabled = False
+    st.stroke_enabled = False
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(bezier_command(_base(), st, _s_curve()))
@@ -662,7 +662,7 @@ struct RotatedRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         with canvas.transform(rotate(_ANGLE)):
             canvas.rectangle((12.0, 6.0), _RECT_W, _RECT_H)
@@ -730,16 +730,16 @@ def test_shadow_lands_down_right_and_under_the_shape() raises -> None:
     assert_equal(m.pixel(72, 72), Color.BLACK)
 
 
-def test_translucent_shadow_is_one_even_layer_under_an_outline() raises -> None:
+def test_translucent_shadow_is_one_even_layer_under_an_stroke() raises -> None:
     var s = _shadowed(Color.WHITE, Color(0, 0, 0, 128))
-    s.outline_enabled = True
-    s.outline_color = Color.BLUE
-    s.outline_thickness = 3
+    s.stroke_enabled = True
+    s.stroke_color = Color.BLUE
+    s.stroke_thickness = 3
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.WHITE))
     cmds.append(rect_command(_base(), s, 0.0, 0.0, 20.0, 20.0))
     var m = _replay(cmds)
-    # Row 51 is where the shifted outline ring would run; it must not be any
+    # Row 51 is where the shifted stroke ring would run; it must not be any
     # darker than the middle of the silhouette.
     assert_equal(m.pixel(65, 51), m.pixel(65, 65))
     assert_true(m.pixel(65, 65) != Color.WHITE)
@@ -780,9 +780,9 @@ def test_circle_and_line_cast_shadows() raises -> None:
         )
     )
     var ls = _shadowed(Color.WHITE, Color.RED)
-    ls.outline_enabled = True
-    ls.outline_color = Color.WHITE
-    ls.outline_thickness = 2
+    ls.stroke_enabled = True
+    ls.stroke_color = Color.WHITE
+    ls.stroke_thickness = 2
     cmds.append(line_command(_base(), ls, -40.0, 40.0, -20.0, 40.0))
     var m = _replay(cmds)
     # Circle centre (50, 50) shadow centre (60, 60), outside the disc.
@@ -795,9 +795,9 @@ def test_bezier_casts_its_stroke_at_the_offset() raises -> None:
     var plain = _stroke(Color.WHITE, 4)
     var shadowed = _shadowed(Color.WHITE, Color.RED)
     shadowed.fill_enabled = False
-    shadowed.outline_enabled = True
-    shadowed.outline_color = Color.WHITE
-    shadowed.outline_thickness = 4
+    shadowed.stroke_enabled = True
+    shadowed.stroke_color = Color.WHITE
+    shadowed.stroke_thickness = 4
     var alone = List[RenderCommand]()
     alone.append(clear_command(Color.BLACK))
     alone.append(bezier_command(_base(), plain, _s_curve()))
@@ -860,9 +860,9 @@ def test_blurred_rect_shadow_follows_the_box_profile() raises -> None:
 def test_blurred_ring_shadow_is_hollow() raises -> None:
     var s = _blurred(Color.GREEN, 2.0)
     s.fill_enabled = False
-    s.outline_enabled = True
-    s.outline_color = Color.GREEN
-    s.outline_thickness = 4
+    s.stroke_enabled = True
+    s.stroke_color = Color.GREEN
+    s.stroke_thickness = 4
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(rect_command(_base(), s, -30.0, 0.0, 30.0, 30.0))
@@ -891,9 +891,9 @@ def test_every_shape_kind_casts_a_blurred_shadow() raises -> None:
         )
     )
     var ls = _blurred(Color.GREEN, 4.0)
-    ls.outline_enabled = True
-    ls.outline_color = Color.GREEN
-    ls.outline_thickness = 4
+    ls.stroke_enabled = True
+    ls.stroke_color = Color.GREEN
+    ls.stroke_thickness = 4
     cmds.append(line_command(_base(), ls, -40.0, -35.0, -20.0, -35.0))
     var m = _replay(cmds)
     # Each shadow's middle is solid, and it softens away from it.
@@ -995,9 +995,9 @@ def test_a_blurred_bezier_shadow_fades_past_the_stroke() raises -> None:
     # Red under green, so a pixel with red and no green is shadow alone.
     var hard = _shadowed(Color.GREEN, Color.RED)
     hard.fill_enabled = False
-    hard.outline_enabled = True
-    hard.outline_color = Color.GREEN
-    hard.outline_thickness = 4
+    hard.stroke_enabled = True
+    hard.stroke_color = Color.GREEN
+    hard.stroke_thickness = 4
     hard.shadow_offset = Vector2D(0, 0)
     var soft = hard.copy()
     soft.shadow_blur = 8.0
@@ -1062,12 +1062,12 @@ def test_an_inset_shadow_bands_the_edges_the_offset_leaves() raises -> None:
     assert_equal(m.pixel(72, 72), Color.BLACK)
 
 
-def test_an_inset_shadow_stays_inside_the_outline() raises -> None:
+def test_an_inset_shadow_stays_inside_the_stroke() raises -> None:
     for blur in [0.0, 8.0]:
         var s = _inset(Color.WHITE, Vector2D(4, -4), blur)
-        s.outline_enabled = True
-        s.outline_color = Color.BLUE
-        s.outline_thickness = 3
+        s.stroke_enabled = True
+        s.stroke_color = Color.BLUE
+        s.stroke_thickness = 3
         var cmds = List[RenderCommand]()
         cmds.append(clear_command(Color.BLACK))
         cmds.append(rect_command(_base(), s, 0.0, 0.0, 40.0, 40.0))
@@ -1080,7 +1080,7 @@ def test_an_inset_shadow_stays_inside_the_outline() raises -> None:
                     assert_equal(m.pixel(x, y), Color.BLACK)
                 elif ring:
                     assert_equal(m.pixel(x, y), Color.BLUE)
-        # The band starts at the outline's inner edge: red over the white
+        # The band starts at the stroke's inner edge: red over the white
         # fill, not blue.
         var band = m.pixel(33, 50)
         assert_equal(band.r, 255)
@@ -1167,9 +1167,9 @@ def test_circles_and_triangles_take_inset_shadows_inside_only() raises -> None:
 
 def test_lines_ignore_inset() raises -> None:
     var s = _inset(Color.WHITE, Vector2D(4, -4))
-    s.outline_enabled = True
-    s.outline_color = Color.WHITE
-    s.outline_thickness = 6
+    s.stroke_enabled = True
+    s.stroke_color = Color.WHITE
+    s.stroke_thickness = 6
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(line_command(_base(), s, -30.0, 0.0, 30.0, 0.0))
@@ -1181,9 +1181,9 @@ def test_lines_ignore_inset() raises -> None:
 
 def test_beziers_ignore_inset() raises -> None:
     var s = _inset(Color.WHITE, Vector2D(4, -4))
-    s.outline_enabled = True
-    s.outline_color = Color.WHITE
-    s.outline_thickness = 6
+    s.stroke_enabled = True
+    s.stroke_color = Color.WHITE
+    s.stroke_thickness = 6
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(bezier_command(_base(), s, _s_curve()))

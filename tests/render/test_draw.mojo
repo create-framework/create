@@ -12,7 +12,7 @@ from create import *
 def _canvas() raises -> Canvas:
     var canvas = Canvas(120, 100, antialiasing=Antialiasing.OFF)
     canvas.fill(Color(0x40, 0x80, 0xFF))
-    canvas.outline(Color.BLACK, thickness=3)
+    canvas.stroke(Color.BLACK, thickness=3)
     return canvas^
 
 
@@ -147,7 +147,7 @@ def test_a_generic_helper_draws_any_drawable() raises -> None:
 
 def test_draw_uses_the_current_style() raises -> None:
     var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
-    canvas.outline_enabled(False)
+    canvas.stroke_enabled(False)
     with canvas.style(fill=Color.RED):
         canvas.draw(Rectangle((0.0, 0.0), 40.0, 40.0))
     canvas.fill(Color.GREEN)

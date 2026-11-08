@@ -46,7 +46,7 @@ struct App(Program):
         # paints over it. Bars that merely abutted would each antialias their
         # shared edge against the clear colour underneath, which shows as a
         # thin light seam whenever the window scale puts an edge mid-pixel.
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         var bar_w = (canvas.right() - canvas.left()) / Float64(_BARS)
         for i in range(_BARS):
             var gray = UInt8(i * 255 // (_BARS - 1))

@@ -20,7 +20,7 @@ struct Button(Drawable):
 ```
 
 Style is the target's, not the shape's: each part is drawn in whatever
-fill, outline and transform the canvas has when `draw` is called.
+fill, stroke and transform the canvas has when `draw` is called.
 """
 
 from .bezier import Bezier

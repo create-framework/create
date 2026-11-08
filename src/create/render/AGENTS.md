@@ -20,9 +20,9 @@ and the layering rules.
 | `_tessellate.mojo` | `RenderCommand` to triangles for the GPU |
 | `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (an inset shadow's interior and cut) |
 | `_curve.mojo` | Bézier stroke geometry for both replays: flattening in device pixels, the mitred quad strip; the blurred shadow mask of any device quads (`quads_shadow_mask`) |
-| `_sector.mojo` | Sector fill and outline tiled into device quads for both replays (`sector_quads`), and its blurred shadow mask |
-| `_polygon.mojo` | Polygon fill and outline tiled into device quads for both replays (`polygon_quads`), and its blurred shadow mask |
-| `_triangle.mojo` | A rounded or outlined triangle as a convex fill and ring quads for both replays (`triangle_pieces`) |
+| `_sector.mojo` | Sector fill and stroke tiled into device quads for both replays (`sector_quads`), and its blurred shadow mask |
+| `_polygon.mojo` | Polygon fill and stroke tiled into device quads for both replays (`polygon_quads`), and its blurred shadow mask |
+| `_triangle.mojo` | A rounded or stroked triangle as a convex fill and ring quads for both replays (`triangle_pieces`) |
 | `_coverage.mojo` | CPU antialiasing: `composite_coverage` turns a shape's runs recorded on a finer grid into per-pixel coverage, composited once |
 | `_clip.mojo` | `_Clip` (one `canvas.clip` level: region command, invert, parent) and `_ClipRows`, the CPU replay's per-row runs of a clip, each with its coverage |
 | `_blur.mojo` | Three-box-blur approximation of a Gaussian over an alpha mask, for text and image shadows; the blurred-mask cache limit and key |
@@ -95,7 +95,7 @@ backends agree:
   Bayer threshold (`_BAYER`) before flooring to bytes. Exact ramp colours come out unchanged.
 
 **CPU:** the fill call sites pass a `FillPaint` (`_raster.mojo`) from `_fill_paint(c, m)` — a
-`Color` converts implicitly, so outline and shadow calls are untouched. `fill_span`'s `FillPaint`
+`Color` converts implicitly, so stroke and shadow calls are untouched. `fill_span`'s `FillPaint`
 overload is the choke point: a solid goes to the colour loop, a gradient to `_shade_span`, which
 steps the mapping along the row and `blend`s each pixel. Decide solid-or-gradient once per run (or
 per rect, in `fill_pixels`), never per pixel; a solid `FillPaint` is a colour and an empty
@@ -142,14 +142,14 @@ A `CMD_SECTOR` (`cx, cy, r, start, sweep`, and a grow in `geom[5]`) is tiled at 
 `sector_quads` into convex device quads — the same quads for both backends, so they agree the way
 curves do: the CPU fills them with `fill_quad`, whose half-open rule composites shared edges once,
 and the GPU pushes them as vertices. The tiling walks the sweep in thin wedges about the tip, and
-along each ray the sector is one stretch from the tip: fill in the middle, outline either side. The
-outline is inset, as a circle's is: the fill is the sector eroded by the outline thickness. Built in
+along each ray the sector is one stretch from the tip: fill in the middle, stroke either side. The
+stroke is inset, as a circle's is: the fill is the sector eroded by the stroke thickness. Built in
 local space and mapped per corner, so a non-uniform transform gives an elliptical sector.
 
 `geom[5]` is 0 for a render call. A shadow sets it to its spread, and the tiling grows (or shrinks)
 the sector by exactly that first — round the tip and the arc's ends, into the missing wedge — rather
-than leaning on a corner radius, which a `CMD_SECTOR` has none of. An outline-only sector's shadow ring
-is the grown sector's outline band, thickened by twice the spread.
+than leaning on a corner radius, which a `CMD_SECTOR` has none of. A stroke-only sector's shadow ring
+is the grown sector's stroke band, thickened by twice the spread.
 
 A **rounded** sector never reaches `sector_quads`: its `shape_command` records it as a
 `CMD_POLYGON` through its outline (`rounded_sector_vertices`, each curve flattened as finely as a
@@ -166,7 +166,7 @@ The cut is into **horizontal slabs**: every y where an edge ends or two edges cr
 slab no edges cross, the edges sort by x, and a walk from the left keeps a winding count per
 *layer*. The slabs come from a sweep upwards: each runs to the next edge's start or end, cut down
 to the lowest crossing between neighbours in its middle's order until none cross — any crossing
-inside a slab flips some neighbouring pair, so only neighbours are searched. Each stretch between neighbouring edges is classified fill, outline or nothing
+inside a slab flips some neighbouring pair, so only neighbours are searched. Each stretch between neighbouring edges is classified fill, stroke or nothing
 (`_classify`), runs of one class merge, and each run is one trapezoid, every x taken from the
 edge's lower end so neighbouring quads share corners exactly.
 
@@ -176,7 +176,7 @@ rectangle along each seam and a polygonised disc at each end. `Polygon._pieces()
 the lower-indexed edge so both edges share its point exactly, into the **rim** (outside along one
 side) and the **seams** (wound on both sides). The outer band (radius `grow`) and the inner band
 (`grow - t`) are the rim's; offsetting by `d` is the polygon with (outwards) or without (inwards)
-its band. The seam band has radius `t/2`: fill is the inner offset off the seams, outline the rest
+its band. The seam band has radius `t/2`: fill is the inner offset off the seams, stroke the rest
 of the outer offset, so a seam is stroked centred and as thick as the rim. A seam disc already
 inside an inner-band disc is left out.
 
@@ -190,18 +190,18 @@ just inside each corner's narrower wedge; a corner that is not two pieces meetin
 disc. A half rectangle's base lies on the rim's own line, so the walk across a slab skips the
 stretches of no width between them rather than starting a run there.
 
-`geom[0]` is 0 for a render call and the spread for a shadow; an outline-only shadow's thickness
-`t + 2·spread` grows the seam band by the spread too, so the ring is the outline grown. Cost is
+`geom[0]` is 0 for a render call and the spread for a shadow; a stroke-only shadow's thickness
+`t + 2·spread` grows the seam band by the spread too, so the ring is the stroke grown. Cost is
 slabs × the edges spanning them, bands included: every slab runs the polygon's whole width, so
-a crossing in one corner cuts quads everywhere. Outlined, at `MEDIUM` on the CPU: ~160 µs per
+a crossing in one corner cuts quads everywhere. Stroked, at `MEDIUM` on the CPU: ~160 µs per
 5-tip star, ~380 µs per pentagram, ~2 ms per 40-tip star. Filled only, a 5-tip star is ~30 µs.
 
 A **rounded** polygon (`Polygon.corner_radius`) is flattened by its `shape_command` when recorded,
 through `rounded_vertices`, each fillet as finely as a circle of that radius is drawn at the
 current transform, so every replay, shadow and clip sees an ordinary polygon. Its fillets add
-vertices and so slabs: outlined, ~360 µs per rounded 5-tip star, ~460 µs per rounded pentagram,
-~20 ms per rounded 40-tip star. Drawing a simple polygon's outline from its inset loop instead of
-bands would be far cheaper, but the inset folds wherever a fillet is tighter than the outline or
+vertices and so slabs: stroked, ~360 µs per rounded 5-tip star, ~460 µs per rounded pentagram,
+~20 ms per rounded 40-tip star. Drawing a simple polygon's stroke from its inset loop instead of
+bands would be far cheaper, but the inset folds wherever a fillet is tighter than the stroke or
 a tip or neck is thin, which a band never does; that needs a fold check and a band fallback.
 
 ## Clips
@@ -270,14 +270,14 @@ antialiased on the same grid inside `blit_image_mapped` (see Images).
 - **Record at `grid`×.** `_shape` replays the command through the kind's own rasteriser
   (`_shape_pixels`) onto a recording surface `grid` times wider and taller, with `mat_scale(grid)`
   in front of the device matrix and `scale × grid` as the fallback pixel scale. So every rasteriser
-  samples at sample centres instead of pixel centres, outline thickness and curve flattening
+  samples at sample centres instead of pixel centres, stroke thickness and curve flattening
   refine with it, and no rasteriser knows. Each run is `(row, lo, hi, key)`, the key
-  `_color_key(color)` or `GRADIENT_KEY`, so fill and outline stay apart.
+  `_color_key(color)` or `GRADIENT_KEY`, so fill and stroke stay apart.
 - **Composite once** (`composite_coverage`): runs are bucketed by pixel row; each adds its coverage
   changes (partial samples at either end, `grid` between) to a difference array per paint and
   notes the columns it touches. The sorted touched columns split the row into stretches of constant
   coverage: full ones go to `fill_span` as one run, partial ones mix their paints premultiplied by
-  sample share and blend once — so fill and outline crossing one pixel leave no seam, and a
+  sample share and blend once — so fill and stroke crossing one pixel leave no seam, and a
   translucent shape stays one layer deep. A gradient's partial stretch samples per pixel.
 - **Clip regions** take the same grid, recorded by `_clip_rows` itself (see Clips); `_shape`
   passes a recording surface straight to `_shape_pixels`.
@@ -285,7 +285,7 @@ antialiased on the same grid inside `blit_image_mapped` (see Images).
   `List` access cost as much as the compositing did.
 
 Cost (`pixi run benchmark raster`, 1920×1080): 2000 small alpha shapes ~4.8 ms off, ~11 ms `LOW`,
-~16 ms `MEDIUM`, ~23 ms `HIGH`; 20 outlined circles of radius 200 ~3.2 / 6 / 8 / 11.5 ms. Small
+~16 ms `MEDIUM`, ~23 ms `HIGH`; 20 stroked circles of radius 200 ~3.2 / 6 / 8 / 11.5 ms. Small
 shapes are nearly all edge, so they pay most. The GPU's MSAA costs it little; it is unaffected.
 
 ## Reads
@@ -380,23 +380,23 @@ nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and ca
   keyed under the style's face's slot, since that face decided to fall back. Italic text falls
   back to the fallback's italic.
 
-## Outlines
+## Strokes
 
 A rectangle's or triangle's rounding is its shape's `corner_radius`, carried on
 `RenderCommand.corner_radius` (a triangle fills every `geom` slot) and clamped at replay; a
-shadow's spread grows it. Outlines mean different things per shape, and the rounding must preserve
+shadow's spread grows it. Strokes mean different things per shape, and the rounding must preserve
 that: a rectangle's is an **inset ring** inside the fill; a triangle's is a **centred band**, half
 its width outside the edges and half inside.
 
-**Every kind composites once.** Fill and outline never overlap, and neither do pieces of either, so
+**Every kind composites once.** Fill and stroke never overlap, and neither do pieces of either, so
 a translucent shape or a non-`NORMAL` blend mode is as translucent everywhere.
 `test_translucency.mojo` draws every kind at opacity 0.5, and again white under a half-transparent
 red tint, on both backends and fails on any pixel deeper than one layer. A new shape or path must keep this:
-- **Rectangles:** the fill is inset by the outline. The CPU's axis-aligned paths split each row into
-  outline, fill, outline: four bands when sharp, `_rounded_box_row` when rounded. Rotated and
+- **Rectangles:** the fill is inset by the stroke. The CPU's axis-aligned paths split each row into
+  stroke, fill, stroke: four bands when sharp, `_rounded_box_row` when rounded. Rotated and
   stretched rectangles take the general affine path, which samples pixel **centres**, as every
   path must (it once sampled corners and drew a 40-pixel rectangle 41 wide).
-- **Triangles:** a rounded or outlined triangle is `triangle_pieces`, the same pieces on both
+- **Triangles:** a rounded or stroked triangle is `triangle_pieces`, the same pieces on both
   backends.
   - **Sharp:** the ring is one quad per edge between the outer edge (mitred, or bevelled past
     `MITER_LIMIT`) and the inner edge, which is the triangle scaled about its incentre.
@@ -405,7 +405,7 @@ red tint, on both backends and fails on any pixel deeper than one layer. A new s
   - **Fill:** the inner edge as one convex polygon. The CPU fills it with `fill_convex`, which walks
     edges exactly as `fill_quad` does (slope precomputed from the lower end), so a shared edge
     gives bit-identical crossings. The GPU fans it.
-  - A plain unoutlined sharp triangle keeps its single-pass fill.
+  - A plain unstroked sharp triangle keeps its single-pass fill.
   - Built in local space, with `h` the device thickness divided by the pixel scale, and mapped per
     point, so a sheared rounded corner stays an ellipse arc.
 

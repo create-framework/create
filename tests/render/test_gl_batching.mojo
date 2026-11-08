@@ -47,7 +47,7 @@ struct ClearMidFrame(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color.BLUE)
         canvas.rectangle((0.0, 0.0), 40.0, 40.0)
         # An opaque clear must flush the blue rect to the framebuffer before
@@ -101,7 +101,7 @@ struct ManyShapes(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         for gy in range(_GRID):
             for gx in range(_GRID):
                 var idx = gy * _GRID + gx
@@ -151,7 +151,7 @@ struct GradientsAmongSolids[gradients: Bool](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         for i in range(8):
             comptime if Self.gradients:
                 if i % 2 == 1:
@@ -188,7 +188,7 @@ struct ManyGradients(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         for gy in range(_RAMP_CELLS_Y):
             for gx in range(_RAMP_CELLS_X):
                 var c = _ramp_cell_color(gy * _RAMP_CELLS_X + gx)
@@ -213,7 +213,7 @@ struct BlendModes(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color(100, 150, 200))
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(Color(200, 100, 50))
         var modes = [
             BlendMode.ADD,
@@ -250,7 +250,7 @@ struct BlurredShapes[shadows: Bool](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        var st = Style(fill=Color.RED, outline=Color.WHITE, outline_thickness=3)
+        var st = Style(fill=Color.RED, stroke=Color.WHITE, stroke_thickness=3)
         st.shadow_enabled = Self.shadows
         st.shadow_blur = 8.0
         with canvas.style(st):
@@ -318,7 +318,7 @@ struct BlurredBezier[shadows: Bool](Program):
         canvas.background(Color.BLACK)
         canvas.fill(Color.RED)
         canvas.rectangle((-30.0, 0.0), 20.0, 20.0)
-        var st = Style(outline=Color.GREEN, outline_thickness=4)
+        var st = Style(stroke=Color.GREEN, stroke_thickness=4)
         st.shadow_enabled = Self.shadows
         st.shadow_blur = 8.0
         with canvas.style(st):

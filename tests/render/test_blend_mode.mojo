@@ -88,7 +88,7 @@ struct BlendModes(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_DST)
-        canvas.outline_enabled(False)
+        canvas.stroke_enabled(False)
         canvas.fill(_SRC)
         var modes = [
             BlendMode.ADD,

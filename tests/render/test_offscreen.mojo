@@ -19,7 +19,7 @@ def _canvas(scale: Float64 = 1.0) raises -> Canvas:
 
 
 def _square(mut canvas: Canvas, position: Point2D, color: Color):
-    with canvas.style(fill=color, outline_enabled=False):
+    with canvas.style(fill=color, stroke_enabled=False):
         canvas.rectangle(position, 20, 20)
 
 
@@ -107,7 +107,7 @@ def test_bad_sizes_and_scales_raise() raises -> None:
 
 def test_it_antialiases_by_default() raises -> None:
     var canvas = Canvas(100, 60)
-    with canvas.style(fill=Color.BLUE, outline_enabled=False):
+    with canvas.style(fill=Color.BLUE, stroke_enabled=False):
         canvas.circle((0, 0), 20.3)
     var edge = canvas.color_at((20, 0))
     assert_true(edge.a > 0 and edge.a < 255, "a partly covered edge pixel")

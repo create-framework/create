@@ -27,7 +27,7 @@ struct Paint:
             self._entering = False
 
         if context.input.mouse_down(MouseButton.LEFT):
-            with canvas.style(fill=Color(201, 140, 150), outline_enabled=False):
+            with canvas.style(fill=Color(201, 140, 150), stroke_enabled=False):
                 canvas.circle(context.input.mouse, 14.0)
 
         # Align.BOTTOM anchors the text box's bottom edge at y, so it grows
