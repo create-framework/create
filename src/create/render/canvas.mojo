@@ -4,6 +4,7 @@ from std.math import ceil, floor
 from create.color.color import Color
 from create.color.gradient import Gradient
 from .align import Align
+from .stroke_cap import StrokeCap
 from create.color.blend_mode import BlendMode
 from .antialiasing import Antialiasing
 from .autoscale import Autoscale
@@ -493,6 +494,7 @@ struct Canvas(DrawTarget, Movable):
         stroke: Optional[Color] = None,
         stroke_thickness: _OptionalFloat64 = None,
         stroke_enabled: Optional[Bool] = None,
+        stroke_cap: Optional[StrokeCap] = None,
         corner_radius: _OptionalFloat64 = None,
         text_color: Optional[Color] = None,
         font: Optional[Font] = None,
@@ -541,6 +543,8 @@ struct Canvas(DrawTarget, Movable):
             self.fill_enabled(fill_enabled.value())
         if stroke_enabled:
             self.stroke_enabled(stroke_enabled.value())
+        if stroke_cap:
+            self.stroke_cap(stroke_cap.value())
         if corner_radius:
             self.corner_radius(corner_radius.value())
         if text_color:
@@ -745,6 +749,14 @@ struct Canvas(DrawTarget, Movable):
         while off, so `stroke_enabled(True)` brings back the same stroke;
         `stroke(...)` switches it on too."""
         self._style.stroke_enabled = enabled
+
+    def stroke_cap(mut self, cap: StrokeCap):
+        """Finish the open ends of lines and curves with `cap`:
+        `StrokeCap.BUTT` (the default) flush with the end point, `ROUND` a
+        half disc, `SQUARE` pushed out by half the thickness. A region's
+        stroke and a closed curve have no ends, so it changes nothing there.
+        Doesn't switch the stroke on."""
+        self._style.stroke_cap = cap
 
     def corner_radius(mut self, radius: Float64):
         """Round the shapes built from numbers by `rectangle`, `triangle`,

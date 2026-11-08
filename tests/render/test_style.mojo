@@ -12,6 +12,7 @@ def test_default_style_matches_a_fresh_frame() raises -> None:
     assert_equal(s.stroke_color, Color.BLACK)
     assert_equal(s.stroke_thickness, 1)
     assert_true(s.stroke_enabled)
+    assert_true(s.stroke_cap == StrokeCap.BUTT)
     assert_equal(s.text_color, Color.BLACK)
     assert_equal(s.font_size, 16)
     assert_equal(s.font_weight, FontWeight.REGULAR)
@@ -36,6 +37,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
         stroke=Color.BLUE,
         stroke_thickness=3,
         stroke_enabled=False,
+        stroke_cap=StrokeCap.ROUND,
         corner_radius=5,
         text_color=Color.WHITE,
         font_size=32,
@@ -58,6 +60,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     assert_equal(s.stroke_color, Color.BLUE)
     assert_equal(s.stroke_thickness, 3)
     assert_false(s.stroke_enabled)
+    assert_true(s.stroke_cap == StrokeCap.ROUND)
     assert_equal(s.corner_radius, 5.0)
     assert_equal(s.text_color, Color.WHITE)
     assert_equal(s.font_size, 32)
@@ -100,7 +103,8 @@ def test_style_writes_constructor_keywords() raises -> None:
         (
             "Style(fill=Color(255, 255, 255, 255), fill_gradient=None,"
             " fill_enabled=False, stroke=Color(0, 0, 0, 255),"
-            " stroke_thickness=1.0, stroke_enabled=True, corner_radius=0.0,"
+            " stroke_thickness=1.0, stroke_enabled=True,"
+            " stroke_cap=StrokeCap.BUTT, corner_radius=0.0,"
             " text_color=Color(0, 0, 0, 255), font=None, font_size=16.0,"
             " font_weight=FontWeight.REGULAR, font_italic=False,"
             " text_alignment=Align.CENTER, tint=Color(255, 255, 255, 255),"
@@ -110,6 +114,19 @@ def test_style_writes_constructor_keywords() raises -> None:
             " shadow_follows_transform=False, shadow_enabled=False)"
         ),
     )
+
+
+def test_stroke_cap_does_not_switch_the_stroke_on() raises -> None:
+    var s = Style(stroke_enabled=False, stroke_cap=StrokeCap.SQUARE)
+    assert_false(s.stroke_enabled)
+    assert_true(s.stroke_cap == StrokeCap.SQUARE)
+
+
+def test_stroke_cap_prints_its_name() raises -> None:
+    assert_equal(String(StrokeCap.BUTT), "StrokeCap.BUTT")
+    assert_equal(String(StrokeCap.ROUND), "StrokeCap.ROUND")
+    assert_equal(String(StrokeCap.SQUARE), "StrokeCap.SQUARE")
+    assert_equal(String(StrokeCap(7)), "StrokeCap(7)")
 
 
 def test_shadow_is_visible_only_when_enabled_and_opaque_enough() raises -> None:

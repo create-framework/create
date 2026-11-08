@@ -1,6 +1,7 @@
 from .render_backend import RenderBackend
 from .antialiasing import Antialiasing
 from .align import Align
+from .stroke_cap import StrokeCap
 from .autoscale import Autoscale
 from .style import Style
 from .camera import Camera
