@@ -6,3 +6,9 @@
 
 # Rename Options→Context, Frame→Canvas
 daceb034448035e59c6eb0698cd25fcac1a1d913
+
+# Rename outline to stroke across the API
+be4c4a911fb3cc5069300fcfb307ef76a21c01f8
+
+# Rename text_align to text_alignment
+48c1a7650185f041d68f1da038f2f4dc575b8b51
