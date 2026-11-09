@@ -288,17 +288,20 @@ def _rounded_rect_fill(
     x1: Float64,
     y1: Float64,
     r: Float64,
-    sf: Float64,
+    n: Int,
     color: Color,
 ):
     """The local-space cross decomposition: a full-height centre band, a
-    shorter band on each side, and a quarter-circle fan at each corner —
-    the same split `_backend.mojo::_rect`'s uniform branch uses, cheap here
-    because every vertex is mapped individually anyway."""
+    shorter band on each side, and a quarter-circle fan of `n` segments at
+    each corner — the same split `_backend.mojo::_rect`'s uniform branch
+    uses, cheap here because every vertex is mapped individually anyway.
+
+    `n` is the caller's, not derived from `r`: inside a stroke ring the
+    fill's arcs must be the ring's inner arcs, segment for segment, or the
+    two polylines cross and slivers of the corner are drawn twice."""
     _mapped_quad(vb, m, x0 + r, y0, x1 - r, y1, color)
     _mapped_quad(vb, m, x0, y0 + r, x0 + r, y1 - r, color)
     _mapped_quad(vb, m, x1 - r, y0 + r, x1, y1 - r, color)
-    var n = _arc_segments(r * sf, PI / 2.0)
     _corner_fan(vb, m, x0 + r, y0 + r, r, PI, PI / 2.0, n, color)
     _corner_fan(vb, m, x1 - r, y0 + r, r, 3.0 * PI / 2.0, PI / 2.0, n, color)
     _corner_fan(vb, m, x1 - r, y1 - r, r, 0.0, PI / 2.0, n, color)
@@ -318,7 +321,7 @@ def _rounded_rect_ring(
     iy1: Float64,
     r: Float64,
     inner_r: Float64,
-    sf: Float64,
+    n: Int,
     color: Color,
 ):
     """The stroke ring's own cross decomposition: four straight bands
@@ -329,7 +332,6 @@ def _rounded_rect_ring(
     _mapped_quad(vb, m, x0 + r, y0, x1 - r, iy0, color)
     _mapped_quad(vb, m, x0, y0 + r, ix0, y1 - r, color)
     _mapped_quad(vb, m, ix1, y0 + r, x1, y1 - r, color)
-    var n = _arc_segments(r * sf, PI / 2.0)
     _corner_ring_fan(vb, m, x0 + r, y0 + r, r, inner_r, PI, n, color)
     _corner_ring_fan(
         vb, m, x1 - r, y0 + r, r, inner_r, 3.0 * PI / 2.0, n, color
@@ -425,10 +427,12 @@ def emit_rect(
         return
 
     var sf = pixel_scale(m, scale)
+    # One count for the fill's corners and the ring's, as `emit_circle`.
+    var n = _arc_segments(r * sf, PI / 2.0)
     if not c.style._stroke_visible():
         if c.style._fill_visible():
             _rounded_rect_fill(
-                vb, m, lx0, ly0, lx1, ly1, r, sf, c.style.fill_color
+                vb, m, lx0, ly0, lx1, ly1, r, n, c.style.fill_color
             )
             _shade_fill(vb, first, c, ramp_row)
         return
@@ -441,7 +445,7 @@ def emit_rect(
     if ix0 >= ix1 or iy0 >= iy1:
         # Thicker than the rectangle: all stroke, nothing left to fill.
         _rounded_rect_fill(
-            vb, m, lx0, ly0, lx1, ly1, r, sf, c.style.stroke_color
+            vb, m, lx0, ly0, lx1, ly1, r, n, c.style.stroke_color
         )
         return
 
@@ -449,7 +453,7 @@ def emit_rect(
     if c.style._fill_visible():
         if inner_r > 0.0:
             _rounded_rect_fill(
-                vb, m, ix0, iy0, ix1, iy1, inner_r, sf, c.style.fill_color
+                vb, m, ix0, iy0, ix1, iy1, inner_r, n, c.style.fill_color
             )
         else:
             # The inset silhouette has collapsed: a sharp inner rect, same
@@ -469,7 +473,7 @@ def emit_rect(
         iy1,
         r,
         inner_r,
-        sf,
+        n,
         c.style.stroke_color,
     )
 
@@ -963,10 +967,14 @@ def _emit_region(
     region: InsetRegion,
     m: Matrix[3, 3],
     sf: Float64,
+    stroke_inset: Float64,
     color: Color,
 ):
     """`region` filled, mapped by `m`, with the fill emitters' own
-    decompositions — so its edge follows the command's fill exactly."""
+    decompositions — so its edge follows the command's fill exactly.
+    `stroke_inset` is how far in of the shape's own edge `region` lies: a
+    rounded rectangle's corners take their segment count from the shape's
+    radius, as `emit_rect`'s fill does."""
     ref g = region.geom
     if region.kind == SIL_RECT:
         var r = min(region.radius, min(g[2], g[3]))
@@ -977,7 +985,8 @@ def _emit_region(
         if r <= 0.0:
             _mapped_quad(vb, m, x0, y0, x1, y1, color)
         else:
-            _rounded_rect_fill(vb, m, x0, y0, x1, y1, r, sf, color)
+            var n = _arc_segments((r + stroke_inset) * sf, PI / 2.0)
+            _rounded_rect_fill(vb, m, x0, y0, x1, y1, r, n, color)
         return
     var r = region.radius
     if r <= 0.0:
@@ -1013,7 +1022,8 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     it.
     """
     var m = c.transform
-    var interior = inset_interior(c, local_stroke_thickness(c, m, scale))
+    var thickness = local_stroke_thickness(c, m, scale)
+    var interior = inset_interior(c, thickness)
     if interior.empty:
         return
     var sm = shadow_transform(c, scale)
@@ -1026,7 +1036,8 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     if blur == 0:
         k = _HARD_SHADOW_SHARPNESS * pixel_scale(sm, scale)
     var first = vb.count()
-    _emit_region(vb, interior, m, sf, c.style.shadow_color)
+    var stroke_inset = thickness if c.style._stroke_visible() else 0.0
+    _emit_region(vb, interior, m, sf, stroke_inset, c.style.shadow_color)
     var sminv = inverse(sm)
     ref g = shape.outer
     for i in range(first, vb.count()):

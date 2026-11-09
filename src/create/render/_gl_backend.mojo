@@ -146,6 +146,7 @@ from ._tessellate import (
     emit_mapped_glyph,
     emit_triangle,
 )
+from ._stroke import aligned_stroke, stroke_offset
 from ._shadow import (
     blurs_analytically,
     casts_inset_shadow,
@@ -946,44 +947,19 @@ struct GLRenderer(Movable):
             # must not force a flush; a translucent one sets it in `_clear`.
             if c.kind != CMD_CLEAR:
                 self._blend_mode(c.style.blend_mode)
-            # The shadow shares the command's blend mode, so it joins the
-            # same batch; an image's samples the image's own texture.
-            if casts_outer_shadow(c):
-                var sh = shadow_command(c, scale)
-                # Quantised as the CPU replay does, so both agree on when a
-                # shadow is hard and which cached mask a soft one uses.
-                var sf = text_pixel_scale(
-                    sh.transform, scale
-                ) if c.kind == CMD_TEXT else pixel_scale(sh.transform, scale)
-                var blur = Int(c.style.shadow_blur * sf + 0.5)
-                if blur == 0:
-                    self._one(sh, images, text, width, height, scale)
-                elif blurs_analytically(c):
-                    emit_blurred_shadow(self.vertices, sh, scale)
-                elif c.kind == CMD_TEXT:
-                    self._text(sh, text, scale, blur)
-                elif c.kind == CMD_IMAGE:
-                    self._image_shadow(sh, images, scale, blur)
-                elif c.kind == CMD_BEZIER:
-                    self._mask_shadow(
-                        bezier_shadow_mask(sh, sh.transform, scale, blur),
-                        c.style.shadow_color,
-                    )
-                elif c.kind == CMD_SECTOR:
-                    self._mask_shadow(
-                        sector_shadow_mask(sh, sh.transform, scale, blur),
-                        c.style.shadow_color,
-                    )
-                elif c.kind == CMD_POLYGON:
-                    self._mask_shadow(
-                        polygon_shadow_mask(sh, sh.transform, scale, blur),
-                        c.style.shadow_color,
-                    )
-            self._one(c, images, text, width, height, scale)
-            # Over the command, clipped to its interior; solid-mode
-            # geometry, so it batches with anything.
-            if casts_inset_shadow(c):
-                emit_inset_shadow(self.vertices, c, scale)
+            # Aligned once, before its shadows, so they see the same shape.
+            var offset = stroke_offset(c, c.transform, scale)
+            if offset > 0.0:
+                self._command(
+                    aligned_stroke(c, offset),
+                    images,
+                    text,
+                    width,
+                    height,
+                    scale,
+                )
+            else:
+                self._command(c, images, text, width, height, scale)
         self._apply_clip(0, clips, images, text, width, height, scale)
         self._flush()
         for name in self.frame_textures:
@@ -991,6 +967,56 @@ struct GLRenderer(Movable):
             if name == self.bound:
                 self.bound = 0
         self.frame_textures.clear()
+
+    def _command(
+        mut self,
+        c: RenderCommand,
+        images: Dict[Int, _InternedImage],
+        mut text: TextRenderer,
+        width: Int,
+        height: Int,
+        scale: Float64,
+    ) raises:
+        """Emit one command with its shadows, its stroke already aligned. The
+        blend state and clip are already set."""
+        # The shadow shares the command's blend mode, so it joins the
+        # same batch; an image's samples the image's own texture.
+        if casts_outer_shadow(c):
+            var sh = shadow_command(c, scale)
+            # Quantised as the CPU replay does, so both agree on when a
+            # shadow is hard and which cached mask a soft one uses.
+            var sf = text_pixel_scale(
+                sh.transform, scale
+            ) if c.kind == CMD_TEXT else pixel_scale(sh.transform, scale)
+            var blur = Int(c.style.shadow_blur * sf + 0.5)
+            if blur == 0:
+                self._one(sh, images, text, width, height, scale)
+            elif blurs_analytically(c):
+                emit_blurred_shadow(self.vertices, sh, scale)
+            elif c.kind == CMD_TEXT:
+                self._text(sh, text, scale, blur)
+            elif c.kind == CMD_IMAGE:
+                self._image_shadow(sh, images, scale, blur)
+            elif c.kind == CMD_BEZIER:
+                self._mask_shadow(
+                    bezier_shadow_mask(sh, sh.transform, scale, blur),
+                    c.style.shadow_color,
+                )
+            elif c.kind == CMD_SECTOR:
+                self._mask_shadow(
+                    sector_shadow_mask(sh, sh.transform, scale, blur),
+                    c.style.shadow_color,
+                )
+            elif c.kind == CMD_POLYGON:
+                self._mask_shadow(
+                    polygon_shadow_mask(sh, sh.transform, scale, blur),
+                    c.style.shadow_color,
+                )
+        self._one(c, images, text, width, height, scale)
+        # Over the command, clipped to its interior; solid-mode
+        # geometry, so it batches with anything.
+        if casts_inset_shadow(c):
+            emit_inset_shadow(self.vertices, c, scale)
 
     def _one(
         mut self,

@@ -16,7 +16,7 @@ from create import *
 from create.core.headless import run_headless
 from create.render.render_backend import RenderBackend
 
-comptime _KINDS = 27
+comptime _KINDS = 35
 
 
 def _name(kind: Int) -> String:
@@ -46,6 +46,14 @@ def _name(kind: Int) -> String:
         "round-capped arc",
         "square-capped open spline",
         "round dot",
+        "centred rectangle",
+        "outside rounded rectangle",
+        "centred circle",
+        "outside ellipse",
+        "outside sector",
+        "centred polygon",
+        "outside rounded star",
+        "outside rotated rectangle",
         "text",
         "image",
     ]
@@ -133,6 +141,32 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.stroke_cap(StrokeCap.ROUND)
         canvas.line((0, 0), (0, 0))
     elif kind == 25:
+        canvas.stroke_alignment(StrokeAlign.CENTER)
+        canvas.rectangle((0, 0), 40, 40)
+    elif kind == 26:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        canvas.rectangle((0, 0), 40, 40, corner_radius=8)
+    elif kind == 27:
+        canvas.stroke_alignment(StrokeAlign.CENTER)
+        canvas.circle((0, 0), 20)
+    elif kind == 28:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        with canvas.transform(scale(2.0, 1.0)):
+            canvas.circle((0, 0), 20)
+    elif kind == 29:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        canvas.sector((0, 0), 30, 0.0, 2.0)
+    elif kind == 30:
+        canvas.stroke_alignment(StrokeAlign.CENTER)
+        canvas.polygon((-20, -20), (20, -20), (20, 20), (-20, 20))
+    elif kind == 31:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        canvas.draw(Polygon.star((0, 0), 30, 13, 5, corner_radius=4))
+    elif kind == 32:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        with canvas.transform(rotate(0.4)):
+            canvas.rectangle((0, 0), 40, 40, corner_radius=8)
+    elif kind == 33:
         canvas.font_size(40)
         canvas.text("WM", (0, 0))
     else:

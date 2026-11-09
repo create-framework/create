@@ -52,6 +52,7 @@ from ._image_mapping import image_mapping
 from ._raster import blit_image_mapped
 from ._surface import MemorySurface
 from ._transform import stroke_thickness_px, pixel_scale
+from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
 
 
@@ -163,6 +164,8 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     var s = c.copy()
     s.transform = shadow_transform(c, scale)
     s.style.shadow_enabled = False
+    # `c` is already aligned; its silhouette must not move out again.
+    s.style.stroke_alignment = StrokeAlign.INSIDE
     # A shadow is one colour: the fill's gradient stays with the shape.
     s.style.fill_gradient = None
     var color = c.style.shadow_color
@@ -196,16 +199,16 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
         elif c.kind == CMD_CIRCLE:
             s.geom[2] = max(s.geom[2] + spread, 0.0)
         elif c.kind == CMD_SECTOR:
-            s.geom[5] = spread
+            s.geom[5] = c.geom[5] + spread
         elif c.kind == CMD_POLYGON:
-            s.geom[0] = spread
+            s.geom[0] = c.geom[0] + spread
         return s^
 
     s.style.fill_color = color
     s.style.fill_enabled = True
     s.style.stroke_enabled = False
-    # Rectangle, circle, sector and polygon strokes are inset rings, so the fill's
-    # edge is already the outer edge; a triangle's stroke is centred on its edges and
+    # Rectangle, circle, sector and polygon strokes are inset rings (an aligned
+    # one of the grown shape), so the fill's edge is already the outer edge; a triangle's stroke is centred on its edges and
     # reaches half its width further out.
     var d = spread
     if c.kind == CMD_TRIANGLE and c.style._stroke_visible():
@@ -224,9 +227,9 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
         s.corner_radius = max(c.corner_radius + d, 0.0)
     elif c.kind == CMD_SECTOR:
         # Grown exactly, by `sector_quads`: no corner radius to lean on.
-        s.geom[5] = d
+        s.geom[5] = c.geom[5] + d
     elif c.kind == CMD_POLYGON:
-        s.geom[0] = d
+        s.geom[0] = c.geom[0] + d
     return s^
 
 

@@ -73,6 +73,7 @@ from ._transform import (
     text_upright,
     uniform,
 )
+from ._stroke import aligned_stroke, stroke_offset
 from ._shadow import (
     BlurredSilhouette,
     blurs_analytically,
@@ -1543,6 +1544,24 @@ struct Backend(Movable):
         return out^
 
     def _one[
+        o: Origin[mut=True]
+    ](
+        mut self,
+        s: Surface[o],
+        c: RenderCommand,
+        scale: Float64,
+        pre: Matrix[3, 3],
+    ) raises:
+        """Replay `c` onto `s`, its stroke aligned first: the one place, so
+        its shadows and the shape itself see the same geometry. Copies `c`
+        only when there is something to align."""
+        var offset = stroke_offset(c, pre @ c.transform, scale)
+        if offset > 0.0:
+            self._replay(s, aligned_stroke(c, offset), scale, pre)
+        else:
+            self._replay(s, c, scale, pre)
+
+    def _replay[
         o: Origin[mut=True]
     ](
         mut self,
