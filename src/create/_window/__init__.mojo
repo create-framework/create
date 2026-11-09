@@ -13,7 +13,21 @@ a typed `Event` before it leaves this package, and nothing SDL-specific
 crosses into a signature outside `_sdl.mojo`.
 """
 
-from ._sdl_window import NativeWindow
+from ._sdl_window import (
+    NativeWindow,
+    SYSTEM_CURSOR_ARROW,
+    SYSTEM_CURSOR_CROSSHAIR,
+    SYSTEM_CURSOR_HAND,
+    SYSTEM_CURSOR_MOVE,
+    SYSTEM_CURSOR_NOT_ALLOWED,
+    SYSTEM_CURSOR_PROGRESS,
+    SYSTEM_CURSOR_RESIZE_DIAGONAL_FALLING,
+    SYSTEM_CURSOR_RESIZE_DIAGONAL_RISING,
+    SYSTEM_CURSOR_RESIZE_HORIZONTAL,
+    SYSTEM_CURSOR_RESIZE_VERTICAL,
+    SYSTEM_CURSOR_TEXT,
+    SYSTEM_CURSOR_WAIT,
+)
 from .window import Window
 from .gl_window import GLWindow
 from .event import (

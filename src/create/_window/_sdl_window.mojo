@@ -5,6 +5,19 @@ surface — a pixel buffer, or a GL context."""
 from ._sdl import (
     SDL,
     SDL_EVENT_SIZE,
+    SDL_SYSTEM_CURSOR_COUNT,
+    SDL_SYSTEM_CURSOR_CROSSHAIR,
+    SDL_SYSTEM_CURSOR_DEFAULT,
+    SDL_SYSTEM_CURSOR_EW_RESIZE,
+    SDL_SYSTEM_CURSOR_MOVE,
+    SDL_SYSTEM_CURSOR_NESW_RESIZE,
+    SDL_SYSTEM_CURSOR_NOT_ALLOWED,
+    SDL_SYSTEM_CURSOR_NS_RESIZE,
+    SDL_SYSTEM_CURSOR_NWSE_RESIZE,
+    SDL_SYSTEM_CURSOR_POINTER,
+    SDL_SYSTEM_CURSOR_PROGRESS,
+    SDL_SYSTEM_CURSOR_TEXT,
+    SDL_SYSTEM_CURSOR_WAIT,
     SDL_EVENT_QUIT,
     SDL_EVENT_WINDOW_RESIZED,
     event_type,
@@ -18,6 +31,23 @@ from .event import (
     translate_event,
     translate_gamepad_device,
 )
+
+
+# The system cursors `set_system_cursor` takes, named here so that no SDL
+# name leaves the package. The resize ones are named by the line they run
+# along, read left to right with y up: rising is `/`, falling `\`.
+comptime SYSTEM_CURSOR_ARROW = SDL_SYSTEM_CURSOR_DEFAULT
+comptime SYSTEM_CURSOR_CROSSHAIR = SDL_SYSTEM_CURSOR_CROSSHAIR
+comptime SYSTEM_CURSOR_HAND = SDL_SYSTEM_CURSOR_POINTER
+comptime SYSTEM_CURSOR_TEXT = SDL_SYSTEM_CURSOR_TEXT
+comptime SYSTEM_CURSOR_WAIT = SDL_SYSTEM_CURSOR_WAIT
+comptime SYSTEM_CURSOR_PROGRESS = SDL_SYSTEM_CURSOR_PROGRESS
+comptime SYSTEM_CURSOR_MOVE = SDL_SYSTEM_CURSOR_MOVE
+comptime SYSTEM_CURSOR_NOT_ALLOWED = SDL_SYSTEM_CURSOR_NOT_ALLOWED
+comptime SYSTEM_CURSOR_RESIZE_HORIZONTAL = SDL_SYSTEM_CURSOR_EW_RESIZE
+comptime SYSTEM_CURSOR_RESIZE_VERTICAL = SDL_SYSTEM_CURSOR_NS_RESIZE
+comptime SYSTEM_CURSOR_RESIZE_DIAGONAL_RISING = SDL_SYSTEM_CURSOR_NESW_RESIZE
+comptime SYSTEM_CURSOR_RESIZE_DIAGONAL_FALLING = SDL_SYSTEM_CURSOR_NWSE_RESIZE
 
 
 trait NativeWindow:
@@ -56,6 +86,16 @@ trait NativeWindow:
         """Whether the user can drag the window's edges to resize it."""
         ...
 
+    def set_system_cursor(mut self, id: Int) raises:
+        """Show the `SYSTEM_CURSOR_*` `id` over the window. A request:
+        a video driver without cursors leaves the cursor as it is."""
+        ...
+
+    def show_cursor(mut self, visible: Bool) raises:
+        """Show or hide the mouse cursor over the window; a request, like
+        `set_system_cursor`."""
+        ...
+
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:
@@ -73,6 +113,10 @@ struct _SDLWindow:
     var width: Int
     """Logical size: what resize events report, not the backing pixels."""
     var height: Int
+    var cursors: List[Int]
+    """Each system cursor's handle by `SYSTEM_CURSOR_*` id, created on
+    first use and kept: SDL holds no reference to the one it shows. 0 where
+    not yet created, or where the driver had none."""
 
     def __init__(
         out self,
@@ -93,6 +137,7 @@ struct _SDLWindow:
         offscreen driver never shows anyway and which is what keeps it off
         the screen on macOS."""
         self.sdl = SDL()
+        self.cursors = List[Int](length=SDL_SYSTEM_CURSOR_COUNT, fill=0)
         self.sdl.init_subsystems(offscreen)
         var window_width = width
         var window_height = height
@@ -137,6 +182,9 @@ struct _SDLWindow:
         self.open = True
 
     def __deinit__(deinit self):
+        for cursor in self.cursors:
+            if cursor != 0:
+                self.sdl.destroy_cursor(cursor)
         try:
             self.sdl.destroy_window(self.handle)
             self.sdl.quit_subsystems()
@@ -148,6 +196,20 @@ struct _SDLWindow:
 
     def set_resizable(mut self, enabled: Bool) raises:
         _ = self.sdl.set_window_resizable(self.handle, enabled)
+
+    def set_system_cursor(mut self, id: Int) raises:
+        """SDL's cursor is the process's, not this window's: with one window
+        a run, the same thing."""
+        if self.cursors[id] == 0:
+            self.cursors[id] = self.sdl.create_system_cursor(id)
+        if self.cursors[id] != 0:
+            _ = self.sdl.set_cursor(self.cursors[id])
+
+    def show_cursor(mut self, visible: Bool) raises:
+        if visible:
+            _ = self.sdl.show_cursor()
+        else:
+            _ = self.sdl.hide_cursor()
 
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
