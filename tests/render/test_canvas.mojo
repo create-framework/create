@@ -2810,6 +2810,18 @@ def test_float_size_keywords_take_integer_literals() raises -> None:
     assert_equal(canvas._style.stroke_thickness, 1.5)
 
 
+def test_stroke_alignment_is_set_and_scoped() raises -> None:
+    var canvas = Canvas(10, 10)
+    assert_true(canvas._style.stroke_alignment == StrokeAlign.INSIDE)
+    canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+    assert_true(canvas._style.stroke_alignment == StrokeAlign.OUTSIDE)
+    with canvas.style(stroke_alignment=StrokeAlign.CENTER):
+        assert_true(canvas._style.stroke_alignment == StrokeAlign.CENTER)
+    assert_true(canvas._style.stroke_alignment == StrokeAlign.OUTSIDE)
+    with canvas.style(stroke_thickness=2):
+        assert_true(canvas._style.stroke_alignment == StrokeAlign.OUTSIDE)
+
+
 def test_stroke_cap_is_set_and_scoped() raises -> None:
     var canvas = Canvas(10, 10)
     assert_true(canvas._style.stroke_cap == StrokeCap.BUTT)

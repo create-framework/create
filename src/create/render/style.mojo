@@ -1,6 +1,7 @@
 from std.collections import Optional
 
 from .align import Align
+from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
@@ -44,7 +45,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     The constructor's keywords are named after the canvas setters and act
     like them: naming any part of the fill, stroke or shadow switches it
-    on (a part, not a modifier such as `stroke_cap` or `corner_radius`),
+    on (a part, not a modifier such as `stroke_alignment`, `stroke_cap` or
+    `corner_radius`),
     unless `fill_enabled`, `stroke_enabled` or `shadow_enabled` says
     otherwise, so `Style(shadow=Color.RED, shadow_enabled=False)` keeps a
     shadow ready but off. `fill_gradient` is the keyword for `fill`'s
@@ -61,6 +63,9 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     var stroke_color: Color
     var stroke_thickness: Float64
     var stroke_enabled: Bool
+    var stroke_alignment: StrokeAlign
+    """Where a region's stroke sits against its edge; `INSIDE` unless
+    set. Lines and curves are always stroked centred."""
     var stroke_cap: StrokeCap
     """How the open ends of lines and curves are finished; `BUTT` unless
     set. Regions' strokes and closed curves have no ends."""
@@ -94,6 +99,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         stroke: Optional[Color] = None,
         stroke_thickness: _OptionalFloat64 = None,
         stroke_enabled: Optional[Bool] = None,
+        stroke_alignment: StrokeAlign = StrokeAlign.INSIDE,
         stroke_cap: StrokeCap = StrokeCap.BUTT,
         corner_radius: _OptionalFloat64 = None,
         text_color: Color = Color.BLACK,
@@ -121,6 +127,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.stroke_color = stroke.or_else(Color.BLACK)
         self.stroke_thickness = stroke_thickness.or_else(1.0)
         self.stroke_enabled = stroke_enabled.or_else(True)
+        self.stroke_alignment = stroke_alignment
         self.stroke_cap = stroke_cap
         self.corner_radius = corner_radius.or_else(0.0)
         self.text_color = text_color
@@ -167,6 +174,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             self.stroke_thickness,
             ", stroke_enabled=",
             self.stroke_enabled,
+            ", stroke_alignment=",
+            self.stroke_alignment,
             ", stroke_cap=",
             self.stroke_cap,
             ", corner_radius=",
