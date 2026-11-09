@@ -3,6 +3,7 @@ from create.render.canvas import Canvas, _PersistentCanvasState
 
 from .time import Time
 from .window_mode import WindowMode
+from .cursor import Cursor
 from create.input.input import Input
 
 
@@ -58,6 +59,7 @@ struct Context(Copyable, Movable):
     var _quit_on_escape: Bool
     var _title: String
     var _resizable: Bool
+    var _cursor: Cursor
     var _window_mode: WindowMode
     var _design_w: Int
     var _design_h: Int
@@ -75,6 +77,7 @@ struct Context(Copyable, Movable):
         self._quit_on_escape = True
         self._title = ""
         self._resizable = True
+        self._cursor = Cursor.ARROW
         self._window_mode = WindowMode.WINDOWED
         self._design_w = 0
         self._design_h = 0
@@ -145,6 +148,22 @@ struct Context(Copyable, Movable):
         ignores it.
         """
         self._resizable = enabled
+
+    def cursor(self) -> Cursor:
+        """The mouse cursor over the window: `ARROW` unless set."""
+        return self._cursor
+
+    def cursor(mut self, cursor: Cursor):
+        """Change the mouse cursor over the window — `Cursor.CROSSHAIR` for
+        aiming, `HAND` over something clickable — or hide it with
+        `Cursor.HIDDEN`, like Processing's `cursor()` and `noCursor()`.
+
+        Shows with the frame it is set in, like `title`, and only when it
+        changed, so setting it every frame from a hover test costs nothing.
+        Set it in `create` to have it from the first frame. A headless run
+        ignores it, and so does a video driver without cursors.
+        """
+        self._cursor = cursor
 
     def window_mode(self) -> WindowMode:
         """How the window presents itself: `run`'s `mode` unless set."""

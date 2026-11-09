@@ -11,6 +11,7 @@ from create.core._window_loop import (
     _apply_window_dials,
     _apply_window_mode,
 )
+from create._window import SYSTEM_CURSOR_ARROW, SYSTEM_CURSOR_CROSSHAIR
 
 
 struct CountingWindow(NativeWindow):
@@ -22,6 +23,10 @@ struct CountingWindow(NativeWindow):
     var resizable: Bool
     var modes: Int
     var fullscreen: Bool
+    var cursors: Int
+    var cursor: Int
+    var visibility_changes: Int
+    var cursor_visible: Bool
 
     def __init__(out self):
         self.titles = 0
@@ -30,6 +35,10 @@ struct CountingWindow(NativeWindow):
         self.resizable = True
         self.modes = 0
         self.fullscreen = False
+        self.cursors = 0
+        self.cursor = SYSTEM_CURSOR_ARROW
+        self.visibility_changes = 0
+        self.cursor_visible = True
 
     def is_open(self) -> Bool:
         return True
@@ -67,10 +76,12 @@ struct CountingWindow(NativeWindow):
         self.fullscreen = fullscreen
 
     def set_system_cursor(mut self, id: Int) raises:
-        pass
+        self.cursors += 1
+        self.cursor = id
 
     def show_cursor(mut self, visible: Bool) raises:
-        pass
+        self.visibility_changes += 1
+        self.cursor_visible = visible
 
 
 def test_an_unchanged_dial_is_not_sent() raises -> None:
@@ -83,6 +94,50 @@ def test_an_unchanged_dial_is_not_sent() raises -> None:
         _apply_window_dials(win, applied, context)
     assert_equal(win.titles, 0)
     assert_equal(win.resizes, 0)
+    assert_equal(win.cursors, 0)
+    assert_equal(win.visibility_changes, 0)
+
+
+def test_a_changed_cursor_is_sent_once() raises -> None:
+    var context = Context()
+    var applied = _AppliedWindow(context)
+    var win = CountingWindow()
+    for _ in range(3):
+        context.cursor(Cursor.CROSSHAIR)
+        _apply_window_dials(win, applied, context)
+    assert_equal(win.cursors, 1)
+    assert_equal(win.cursor, SYSTEM_CURSOR_CROSSHAIR)
+    assert_equal(win.visibility_changes, 0, "it was never hidden")
+
+
+def test_a_hidden_cursor_is_hidden_and_shown_again_with_its_shape() raises -> (
+    None
+):
+    var context = Context()
+    var applied = _AppliedWindow(context)
+    var win = CountingWindow()
+    context.cursor(Cursor.HIDDEN)
+    _apply_window_dials(win, applied, context)
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.visibility_changes, 1)
+    assert_equal(win.cursor_visible, False)
+    assert_equal(win.cursors, 0, "hiding sets no shape")
+    context.cursor(Cursor.CROSSHAIR)
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.visibility_changes, 2)
+    assert_equal(win.cursor_visible, True)
+    assert_equal(win.cursors, 1)
+    assert_equal(win.cursor, SYSTEM_CURSOR_CROSSHAIR)
+
+
+def test_an_unnamed_cursor_falls_back_to_the_arrow() raises -> None:
+    var context = Context()
+    var applied = _AppliedWindow(context)
+    var win = CountingWindow()
+    win.cursor = -1
+    context.cursor(Cursor(99))
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.cursor, SYSTEM_CURSOR_ARROW)
 
 
 def test_a_changed_dial_is_sent_once() raises -> None:
