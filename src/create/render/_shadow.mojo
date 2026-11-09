@@ -43,6 +43,7 @@ from ._command import (
     CMD_TRIANGLE,
     RenderCommand,
     _GEOM_SLOTS,
+    _grow_triangle,
 )
 from create.geometry._fillet import rect_corner_radius, triangle_corner_radius
 from create.color.color import Color
@@ -114,45 +115,6 @@ def shadow_transform(c: RenderCommand, scale: Float64) -> Matrix[3, 3]:
     return translate(o.x * sf, -o.y * sf) @ c.transform
 
 
-def _grow_triangle(mut g: Array[Float64, _GEOM_SLOTS], d: Float64):
-    """Move each vertex out along its corner's bisector so every edge lands
-    `d` further out. Shrinks for a negative `d`; a degenerate triangle is left
-    alone."""
-    var xs = Array[Float64, 3](fill=0.0)
-    var ys = Array[Float64, 3](fill=0.0)
-    var out = Array[Float64, 6](fill=0.0)
-    for i in range(3):
-        xs[i] = g[2 * i]
-        ys[i] = g[2 * i + 1]
-    for i in range(3):
-        var px = xs[(i + 2) % 3]
-        var py = ys[(i + 2) % 3]
-        var nx = xs[(i + 1) % 3]
-        var ny = ys[(i + 1) % 3]
-        var l1 = sqrt((px - xs[i]) ** 2 + (py - ys[i]) ** 2)
-        var l2 = sqrt((nx - xs[i]) ** 2 + (ny - ys[i]) ** 2)
-        if l1 <= 0.0 or l2 <= 0.0:
-            return
-        var ux = (px - xs[i]) / l1
-        var uy = (py - ys[i]) / l1
-        var wx = (nx - xs[i]) / l2
-        var wy = (ny - ys[i]) / l2
-        # `u + w` points inward along the bisector; its length is
-        # `2 cos(theta/2)` and the vertex has to move `d / sin(theta/2)`.
-        var bx = ux + wx
-        var by = uy + wy
-        var bl = sqrt(bx * bx + by * by)
-        var cross = ux * wy - uy * wx
-        var sin_half = sqrt(max(0.0, (1.0 - (ux * wx + uy * wy)) / 2.0))
-        if bl <= 1e-12 or sin_half <= 1e-6 or abs(cross) <= 1e-12:
-            return
-        var k = d / sin_half
-        out[2 * i] = xs[i] - bx / bl * k
-        out[2 * i + 1] = ys[i] - by / bl * k
-    for i in range(6):
-        g[i] = out[i]
-
-
 def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     """The hard silhouette `c` casts, ready to replay before `c`.
 
@@ -207,15 +169,9 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     s.style.fill_color = color
     s.style.fill_enabled = True
     s.style.stroke_enabled = False
-    # Rectangle, circle, sector and polygon strokes are inset rings (an aligned
-    # one of the grown shape), so the fill's edge is already the outer edge; a triangle's stroke is centred on its edges and
-    # reaches half its width further out.
+    # Every region's stroke is an inset ring (an aligned one of the grown
+    # shape), so the fill's edge is already the outer edge.
     var d = spread
-    if c.kind == CMD_TRIANGLE and c.style._stroke_visible():
-        var sf = pixel_scale(c.transform, scale)
-        d += Float64(stroke_thickness_px(c.style, c.transform, scale)) / (
-            2.0 * sf
-        )
     if c.kind == CMD_RECT:
         s.geom[2] = max(s.geom[2] + 2.0 * d, 0.0)
         s.geom[3] = max(s.geom[3] + 2.0 * d, 0.0)
@@ -523,8 +479,7 @@ struct BlurredSilhouette(Copyable, Movable):
     same shape shrunk by `ring`: blurring is linear, so the blurred ring is
     the difference of the two blurred shapes, exactly. Shrinking by `ring`
     moves every edge in by it and the corner radius down by it, which is
-    what both strokes are — a rectangle's inset ring and a triangle's
-    centred band, once the outer triangle has grown by half the band. A
+    what every region's stroke is: an inset ring. A
     triangle's `corner_radius` is left out: its blurred corners are the
     product of their two edges'.
 
@@ -577,11 +532,9 @@ struct BlurredSilhouette(Copyable, Movable):
         elif sh.kind == CMD_TRIANGLE:
             self.kind = SIL_TRIANGLE
             var o = sh.copy()
-            if ring:
-                # A centred band: half the stroke out, half in.
-                _grow_triangle(o.geom, thickness / 2.0)
-                if _inradius(sh.geom) > thickness / 2.0:
-                    self.ring = thickness
+            # An inset ring, as a rectangle's.
+            if ring and _inradius(sh.geom) > thickness:
+                self.ring = thickness
             var xs = Array[Float64, 3](fill=0.0)
             var ys = Array[Float64, 3](fill=0.0)
             for k in range(3):
@@ -750,7 +703,7 @@ struct InsetRegion(Copyable, Movable):
     Shrinking by `d` is the reverse of `shadow_command`'s growing: every
     edge moves in by `d` and the corner radius drops by `d`, bottoming out
     at a sharp corner. That is also exactly where a stroke's inner edge
-    runs — a rectangle's or circle's inset ring, a triangle's centred band —
+    runs — every region's stroke is an inset ring —
     so the interior is the shape shrunk by the stroke's inward extent. The
     radius is a `Float64` rather than the style's `Int`, because those
     shrinks move it by fractions of a unit.
@@ -873,10 +826,7 @@ def inset_interior(c: RenderCommand, thickness: Float64) -> InsetRegion:
 
     `thickness` is the stroke in local units, as the rasterisers draw it
     (`local_stroke_thickness`), and ignored when the stroke is off. A
-    rectangle's or circle's stroke is an inset ring, all of it inside; a
-    triangle's is centred, half of it inside.
+    region's stroke is an inset ring, all of it inside.
     """
     var inset = thickness if c.style._stroke_visible() else 0.0
-    if c.kind == CMD_TRIANGLE:
-        inset /= 2.0
     return InsetRegion(c, inset)

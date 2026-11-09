@@ -1,31 +1,30 @@
 """A triangle's fill and stroke as pieces shared by both replays.
 
-A triangle's stroke is centred on its edges, so it reaches half its width
-into the fill. Drawn as a fill with three edge bands over it, as it once
-was, a translucent triangle composited twice under each band and three
-times where two bands crossed at a corner, and a thick stroke left a notch
-at every outer corner. Here the stroke is the band between an outer and an
-inner edge, cut into convex pieces that meet without overlapping, and the
-fill is what the inner edge encloses:
+A triangle's stroke is an inset ring, as every region's is: its outer edge
+is the triangle's own, and it reaches the thickness `t` into the shape
+(`stroke_alignment` moves it out by growing the triangle first, in
+`aligned_stroke`). Drawn as a fill with three edge bands over it, a
+translucent triangle would composite twice under each band and three times
+where two crossed at a corner. Here the stroke is the band between an outer
+and an inner edge, cut into convex pieces that meet without overlapping,
+and the fill is what the inner edge encloses:
 
-- **Sharp** (`corner_radius` 0): the outer edge is the triangle grown by
-  half the band `h`, each corner mitred, or bevelled where the miter would
-  reach past `MITER_LIMIT` half-widths, as a curve's corners are; the inner
-  edge is the triangle shrunk by `h`, which is the triangle scaled about its
-  incentre. One quad per edge, one triangle per bevel.
+- **Sharp** (`corner_radius` 0): the outer edge is the triangle itself; the
+  inner edge is the triangle shrunk by `t`, which is the triangle scaled
+  about its incentre. One quad per edge.
 - **Rounded**: the triangle is its corner centres' triangle grown by the
-  radius `r`, so the outer edge has arcs of radius `r + h` and the inner
-  arcs of `r - h` about the same centres, at the same angles: one quad per
-  arc segment and one per edge. Once the band is wider than the corners,
-  the inner edge is the shrunk sharp triangle again, and each corner is a
-  fan from its inner vertex.
+  radius `r`, so the outer edge has arcs of radius `r` and the inner arcs
+  of `r - t` about the same centres, at the same angles: one quad per arc
+  segment and one per edge. Once the band is wider than the corners, the
+  inner edge is the shrunk sharp triangle again, and each corner is a fan
+  from its inner vertex.
 
 Neighbouring pieces share the very points they meet at, so each pixel is
 covered once: the CPU fills the pieces with `fill_quad` and the fill with
 `fill_convex`, whose half-open rule composites a shared edge once, and the
 GPU pushes them as vertices, as for sectors and polygons. Built in local
 space and mapped per point, so a sheared rounded corner is the ellipse arc
-it should be; `h` is the stroke thickness in device pixels taken back to
+it should be; `t` is the stroke thickness in device pixels taken back to
 local units.
 """
 
@@ -36,7 +35,7 @@ from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 
 from ._command import RenderCommand
-from ._curve import MITER_LIMIT, stroke_quads
+from ._curve import stroke_quads
 from create.geometry._fillet import triangle_corner_radius
 from ._tessellate import _arc_segments
 from ._transform import stroke_thickness_px, pixel_scale
@@ -84,9 +83,9 @@ def triangle_pieces(
         ys[2] = y1
         cross = -cross
     var sf = pixel_scale(m, scale)
-    var h = 0.0
+    var t = 0.0
     if c.style._stroke_visible():
-        h = Float64(stroke_thickness_px(c.style, m, scale)) / (2.0 * sf)
+        t = Float64(stroke_thickness_px(c.style, m, scale)) / sf
 
     var lengths = Array[Float64, 3](fill=0.0)
     for i in range(3):
@@ -96,11 +95,11 @@ def triangle_pieces(
     if cross <= 1e-12 or perimeter <= 0.0:
         # No interior: nothing to fill, and the stroke is the band along
         # the edges there are.
-        if h > 0.0:
+        if t > 0.0:
             var path = List[Point2D](capacity=4)
             for i in range(4):
                 path.append(mat_apply(m, xs[i % 3], ys[i % 3]))
-            out.ring = stroke_quads(path, 2.0 * h * sf)
+            out.ring = stroke_quads(path, t * sf)
         return out^
 
     # Edge `i` runs from corner `i` to `i + 1`, so corner `i` faces edge
@@ -132,9 +131,9 @@ def triangle_pieces(
         nx[i] = (ys[j] - ys[i]) / lengths[i]
         ny[i] = -(xs[j] - xs[i]) / lengths[i]
 
-    # The inner edge once it is sharp: the triangle shrunk by `h`, or the
+    # The inner edge once it is sharp: the triangle shrunk by `t`, or the
     # incentre alone once the band fills it.
-    var k = max((inradius - h) / inradius, 0.0)
+    var k = max((inradius - t) / inradius, 0.0)
     var sharp_inner = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
     for i in range(3):
         sharp_inner[i] = mat_apply(
@@ -144,7 +143,7 @@ def triangle_pieces(
     if r > 0.0:
         # Corner `i`'s arc runs about its centre from the incoming edge's
         # normal round to the outgoing one's; `outer[i]` and `inner[i]` are
-        # its points at the same angles, `inner` only while `h < r`.
+        # its points at the same angles, `inner` only while `t < r`.
         var ck = (inradius - r) / inradius
         var outer = List[List[Point2D]](capacity=3)
         var inner = List[List[Point2D]](capacity=3)
@@ -156,23 +155,21 @@ def triangle_pieces(
             var a1 = atan2(ny[i], nx[i])
             if a1 < a0:
                 a1 += TAU
-            var n = _arc_segments((r + h) * sf, a1 - a0)
+            var n = _arc_segments(r * sf, a1 - a0)
             var o = List[Point2D](capacity=n + 1)
             var q = List[Point2D](capacity=n + 1)
             for step in range(n + 1):
                 var a = a0 + (a1 - a0) * Float64(step) / Float64(n)
-                o.append(
-                    mat_apply(m, kx + (r + h) * cos(a), ky + (r + h) * sin(a))
-                )
-                if h > 0.0 and h < r:
+                o.append(mat_apply(m, kx + r * cos(a), ky + r * sin(a)))
+                if t > 0.0 and t < r:
                     q.append(
                         mat_apply(
-                            m, kx + (r - h) * cos(a), ky + (r - h) * sin(a)
+                            m, kx + (r - t) * cos(a), ky + (r - t) * sin(a)
                         )
                     )
             outer.append(o^)
             inner.append(q^)
-        if h == 0.0:
+        if t == 0.0:
             for i in range(3):
                 for p in outer[i]:
                     out.fill.append(p)
@@ -180,7 +177,7 @@ def triangle_pieces(
         for i in range(3):
             var j = (i + 1) % 3
             var last = len(outer[i]) - 1
-            if h < r:
+            if t < r:
                 for step in range(last):
                     _quad(
                         out.ring,
@@ -212,7 +209,7 @@ def triangle_pieces(
                     sharp_inner[j],
                     sharp_inner[i],
                 )
-        if h < r:
+        if t < r:
             for i in range(3):
                 for p in inner[i]:
                     out.fill.append(p)
@@ -221,39 +218,17 @@ def triangle_pieces(
                 out.fill.append(p)
         return out^
 
-    if h == 0.0:
+    if t == 0.0:
         for i in range(3):
             out.fill.append(mat_apply(m, xs[i], ys[i]))
         return out^
-    # Sharp: where each corner's band leaves along its outgoing edge and
-    # arrives along its incoming one — one miter point, or a bevel's two.
-    var leaves = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
-    var arrives = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
-    var bevelled = Array[Bool, 3](fill=False)
+    # Sharp: the outer edge is the triangle's own corners.
+    var corners = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
     for i in range(3):
-        var reach = sqrt((xs[i] - ix) ** 2 + (ys[i] - iy) ** 2) / inradius
-        if reach <= MITER_LIMIT:
-            var g = (inradius + h) / inradius
-            var miter = mat_apply(
-                m, ix + (xs[i] - ix) * g, iy + (ys[i] - iy) * g
-            )
-            leaves[i] = miter
-            arrives[i] = miter
-        else:
-            var prev = (i + 2) % 3
-            leaves[i] = mat_apply(m, xs[i] + nx[i] * h, ys[i] + ny[i] * h)
-            arrives[i] = mat_apply(
-                m, xs[i] + nx[prev] * h, ys[i] + ny[prev] * h
-            )
-            bevelled[i] = True
+        corners[i] = mat_apply(m, xs[i], ys[i])
     for i in range(3):
         var j = (i + 1) % 3
-        _quad(out.ring, leaves[i], arrives[j], sharp_inner[j], sharp_inner[i])
-        if bevelled[i]:
-            _quad(
-                out.ring, arrives[i], leaves[i], sharp_inner[i], sharp_inner[i]
-            )
-    out.ring.reserve(24)
+        _quad(out.ring, corners[i], corners[j], sharp_inner[j], sharp_inner[i])
     if k > 0.0:
         for p in sharp_inner:
             out.fill.append(p)
