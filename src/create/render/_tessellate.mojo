@@ -81,7 +81,8 @@ comptime MODE_TEXTURE: Float32 = 2.0
 comptime MODE_SILHOUETTE: Float32 = 3.0
 """Image shadow: the vertex colour, its alpha scaled by the sampled alpha."""
 comptime MODE_SHADOW_BOX: Float32 = 4.0
-"""Blurred rectangle, rounded rectangle, circle or line shadow: `uv` is the
+"""Blurred rectangle, rounded rectangle, circle or butt- or square-capped
+line shadow: `uv` is the
 position relative to the box's centre, `s0, s1` its half-extents, `s2` its
 corner radius and `s3` its ring thickness, all over sigma."""
 comptime MODE_SHADOW_EDGES: Float32 = 5.0
@@ -99,6 +100,10 @@ comptime MODE_GRADIENT: Float32 = 8.0
 parameter itself, or for a radial gradient the position whose length it
 is), `s0` is 1 for radial and 0 for linear, and `s1` the ramp texture row.
 The colour is unread."""
+comptime MODE_SHADOW_CAPSULE: Float32 = 9.0
+"""Blurred round-capped line shadow, `capsule_coverage`: `uv` is the position
+relative to the capsule's centre in its own frame, `s0` its core's
+half-length and `s1` its radius, all over sigma."""
 
 comptime _HARD_SHADOW_SHARPNESS = 64.0
 """The inverse sigma, per device pixel, standing in for a blur of 0 in the
@@ -1128,15 +1133,31 @@ def emit_blurred_shadow(
             var dx = x - g[0]
             var dy = y - g[1]
             var half = g[4] / 2.0
-            vb.push(
-                p[0],
-                p[1],
-                (dx * g[2] + dy * g[3] - half) * k,
-                (dx * g[3] - dy * g[2]) * k,
-                color,
-                MODE_SHADOW_BOX,
-                half * k,
-                g[5] * k,
-                0.0,
-                0.0,
-            )
+            var u = (dx * g[2] + dy * g[3] - half) * k
+            var v = (dx * g[3] - dy * g[2]) * k
+            if g[6] > 0.0:
+                vb.push(
+                    p[0],
+                    p[1],
+                    u,
+                    v,
+                    color,
+                    MODE_SHADOW_CAPSULE,
+                    (half - g[6]) * k,
+                    g[6] * k,
+                    0.0,
+                    0.0,
+                )
+            else:
+                vb.push(
+                    p[0],
+                    p[1],
+                    u,
+                    v,
+                    color,
+                    MODE_SHADOW_BOX,
+                    half * k,
+                    g[5] * k,
+                    0.0,
+                    0.0,
+                )

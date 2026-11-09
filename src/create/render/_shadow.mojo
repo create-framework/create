@@ -27,7 +27,7 @@ alpha at a point from its distances to the silhouette's edges. They are
 spelled out again in the GL shader, so keep the two in step.
 """
 
-from std.math import abs, exp, max, min, sqrt
+from std.math import abs, asin, cos, exp, max, min, sin, sqrt
 
 from create.math.matrix import Matrix, translate
 
@@ -52,6 +52,7 @@ from ._image_mapping import image_mapping
 from ._raster import blit_image_mapped
 from ._surface import MemorySurface
 from ._transform import stroke_thickness_px, pixel_scale
+from .stroke_cap import StrokeCap
 
 
 def casts_outer_shadow(c: RenderCommand) -> Bool:
@@ -70,6 +71,10 @@ def casts_outer_shadow(c: RenderCommand) -> Bool:
         or c.kind == CMD_POLYGON
     ):
         return c.style._fill_visible() or c.style._stroke_visible()
+    if c.kind == CMD_LINE and c.style.stroke_cap == StrokeCap.BUTT:
+        # A butt line of no length paints nothing, so casts nothing.
+        if c.geom[0] == c.geom[2] and c.geom[1] == c.geom[3]:
+            return False
     if c.kind == CMD_LINE or c.kind == CMD_BEZIER:
         return c.style._stroke_visible()
     if c.kind == CMD_TEXT:
@@ -357,6 +362,91 @@ def rounded_rect_coverage(
     return gaussian_cdf(-sdf)
 
 
+comptime _CAP_NODES: Array[Float64, 4] = [
+    0.1834346424956498,
+    0.5255324099163290,
+    0.7966664774136267,
+    0.9602898564975363,
+]
+"""8-point Gauss-Legendre nodes on [-1, 1], the positive half: each is
+used with its negation."""
+comptime _CAP_WEIGHTS: Array[Float64, 4] = [
+    0.3626837833783620,
+    0.3137066458778873,
+    0.2223810344533745,
+    0.1012285362903763,
+]
+
+
+def _cap_coverage(
+    px: Float64, py: Float64, core_half: Float64, radius: Float64
+) -> Float64:
+    """The blurred half disc capping a capsule's core at `x = core_half`,
+    reaching right; every length over sigma.
+
+    Each slice of the cap at height `t` is the interval from `core_half`
+    to `core_half + sqrt(radius² - t²)`, blurred along `x` exactly, then
+    weighted by the Gaussian across: an integral over `t`, taken in
+    `t = radius · sin(θ)`, which removes the square root's kink at the
+    cap's rim. Only the stretch within `BLUR_REACH` of `py` carries any
+    weight, so the nodes go there, and stay dense however thick the cap.
+    """
+    var base = gaussian_cdf(core_half - px)
+    if base >= 1.0:
+        return 0.0  # Too far inside the core for the cap to add anything.
+    var lo = max((py - BLUR_REACH) / radius, -1.0)
+    var hi = min((py + BLUR_REACH) / radius, 1.0)
+    if lo >= hi:
+        return 0.0
+    var a0 = asin(lo)
+    var a1 = asin(hi)
+    # Two panels: one alone leaves a full-width Gaussian ~1e-3 short.
+    var half = (a1 - a0) / 4.0
+    var sum = 0.0
+    for panel in range(2):
+        var mid = a0 + half * Float64(2 * panel + 1)
+        comptime for i in range(4):
+            comptime node = _CAP_NODES[i]
+            comptime weight = _CAP_WEIGHTS[i]
+            for sign in range(2):
+                var a = mid + (half if sign == 0 else -half) * node
+                var t = radius * sin(a)
+                var w = radius * cos(a)
+                var u = t - py
+                var across = exp(-0.5 * u * u) * _INV_SQRT_TAU
+                var along = gaussian_cdf(core_half + w - px) - base
+                sum += weight * across * along * w
+    return sum * half
+
+
+comptime _INV_SQRT_TAU = 0.3989422804014327
+"""1 / sqrt(2π): the unit Gaussian's peak."""
+
+
+def capsule_coverage(
+    px: Float64, py: Float64, core_half: Float64, radius: Float64
+) -> Float64:
+    """A blurred capsule's alpha at `(px, py)` relative to its centre, in
+    its own frame (the core along `x`); every length already divided by
+    sigma.
+
+    The core's rectangle is exact (`box_coverage`) and each half-disc cap
+    a short integral (`_cap_coverage`), so a thin round-capped stroke
+    blurs as faintly as a butt-capped one, where `rounded_rect_coverage`'s
+    one step across the outline sees only the nearer edge. A dozen-odd
+    more `exp` per pixel than a box, which a line's narrow shadow can
+    afford and a large disc's would not: circles keep the one step.
+    """
+    var core = box_coverage(
+        core_half + px, core_half - px, radius + py, radius - py
+    )
+    return (
+        core
+        + _cap_coverage(px, py, core_half, radius)
+        + _cap_coverage(-px, py, core_half, radius)
+    )
+
+
 # --- Blurred silhouettes -----------------------------------------------------
 
 comptime BLUR_REACH = 4.0
@@ -369,8 +459,10 @@ circle is one with all three extents equal."""
 comptime SIL_TRIANGLE = 1
 """`[nx, ny, c] x 3`: each edge's inward unit normal and offset."""
 comptime SIL_LINE = 2
-"""`[x0, y0, ux, uy, length, half_thickness]`: a stroke's rectangle, in its
-own frame."""
+"""`[x0, y0, ux, uy, length, half_thickness, radius]`: a stroke's rectangle,
+in its own frame, its caps included: lengthened by half the thickness at
+both ends under `SQUARE` and `ROUND`, and under `ROUND` rounded by it into
+a capsule, which blurs through `capsule_coverage`."""
 
 
 def blurs_analytically(c: RenderCommand) -> Bool:
@@ -505,16 +597,29 @@ struct BlurredSilhouette(Copyable, Movable):
             var ey = sh.geom[3] - ay
             var l = sqrt(ex * ex + ey * ey)
             var h = thickness / 2.0
+            var ux = ex / l if l > 0.0 else 1.0
+            var uy = ey / l if l > 0.0 else 0.0
+            var cap = sh.style.stroke_cap
+            if cap != StrokeCap.BUTT:
+                # Both caps reach half the thickness past the ends; a
+                # round one is the capsule that rounds them by as much.
+                ax -= ux * h
+                ay -= uy * h
+                l += 2.0 * h
+                if cap == StrokeCap.ROUND:
+                    self.outer[6] = h
             self.outer[0] = ax
             self.outer[1] = ay
-            self.outer[2] = ex / l if l > 0.0 else 1.0
-            self.outer[3] = ey / l if l > 0.0 else 0.0
+            self.outer[2] = ux
+            self.outer[3] = uy
             self.outer[4] = l
             self.outer[5] = h
-            self.x0 = min(ax, sh.geom[2]) - h
-            self.x1 = max(ax, sh.geom[2]) + h
-            self.y0 = min(ay, sh.geom[3]) - h
-            self.y1 = max(ay, sh.geom[3]) + h
+            var bx = ax + ux * l
+            var by = ay + uy * l
+            self.x0 = min(ax, bx) - h
+            self.x1 = max(ax, bx) + h
+            self.y0 = min(ay, by) - h
+            self.y1 = max(ay, by) + h
 
     def __init__(out self, region: InsetRegion, blur: Float64):
         """`region` blurred by `blur` local units: an inset shadow's
@@ -578,6 +683,11 @@ struct BlurredSilhouette(Copyable, Movable):
         var dy = y - g[1]
         var along = dx * g[2] + dy * g[3]
         var across = dx * g[3] - dy * g[2]
+        if g[6] > 0.0:
+            var half = g[4] / 2.0
+            return capsule_coverage(
+                (along - half) * k, across * k, (half - g[6]) * k, g[6] * k
+            )
         return box_coverage(
             along * k,
             (g[4] - along) * k,

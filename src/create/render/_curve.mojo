@@ -307,15 +307,26 @@ def bezier_shadow_mask(
     """The stroke of `c` (a `CMD_BEZIER` shadow command) mapped by `m`,
     rasterised into an alpha mask and blurred by `blur` device pixels.
 
-    The quads are the ones the stroke itself fills. A curve with no visible
-    stroke gives an empty mask.
+    The quads are the ones the stroke itself fills, and each cap is fanned
+    into quads of its own, three corners each with the last repeated: the
+    mask is one opaque colour, so where they overlap does not matter. A
+    curve with no visible stroke gives an empty mask.
     """
     var corners = List[Point2D]()
     if c.style._stroke_visible():
-        corners = stroke_quads(
+        var pieces = stroke_pieces(
             bezier_device_points(c, m),
             Float64(stroke_thickness_px(c.style, m, scale)),
+            c.style.stroke_cap,
+            device_x_axis(m),
         )
+        corners = pieces.quads.copy()
+        for cap in pieces.caps:
+            for i in range(1, len(cap) - 1):
+                corners.append(cap[0])
+                corners.append(cap[i])
+                corners.append(cap[i + 1])
+                corners.append(cap[i + 1])
     return quads_shadow_mask(corners, blur)
 
 
