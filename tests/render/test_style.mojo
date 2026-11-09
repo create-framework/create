@@ -12,6 +12,7 @@ def test_default_style_matches_a_fresh_frame() raises -> None:
     assert_equal(s.stroke_color, Color.BLACK)
     assert_equal(s.stroke_thickness, 1)
     assert_true(s.stroke_enabled)
+    assert_true(s.stroke_alignment == StrokeAlign.INSIDE)
     assert_true(s.stroke_cap == StrokeCap.BUTT)
     assert_equal(s.text_color, Color.BLACK)
     assert_equal(s.font_size, 16)
@@ -37,6 +38,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
         stroke=Color.BLUE,
         stroke_thickness=3,
         stroke_enabled=False,
+        stroke_alignment=StrokeAlign.OUTSIDE,
         stroke_cap=StrokeCap.ROUND,
         corner_radius=5,
         text_color=Color.WHITE,
@@ -60,6 +62,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     assert_equal(s.stroke_color, Color.BLUE)
     assert_equal(s.stroke_thickness, 3)
     assert_false(s.stroke_enabled)
+    assert_true(s.stroke_alignment == StrokeAlign.OUTSIDE)
     assert_true(s.stroke_cap == StrokeCap.ROUND)
     assert_equal(s.corner_radius, 5.0)
     assert_equal(s.text_color, Color.WHITE)
@@ -104,6 +107,7 @@ def test_style_writes_constructor_keywords() raises -> None:
             "Style(fill=Color(255, 255, 255, 255), fill_gradient=None,"
             " fill_enabled=False, stroke=Color(0, 0, 0, 255),"
             " stroke_thickness=1.0, stroke_enabled=True,"
+            " stroke_alignment=StrokeAlign.INSIDE,"
             " stroke_cap=StrokeCap.BUTT, corner_radius=0.0,"
             " text_color=Color(0, 0, 0, 255), font=None, font_size=16.0,"
             " font_weight=FontWeight.REGULAR, font_italic=False,"
@@ -120,6 +124,25 @@ def test_stroke_cap_does_not_switch_the_stroke_on() raises -> None:
     var s = Style(stroke_enabled=False, stroke_cap=StrokeCap.SQUARE)
     assert_false(s.stroke_enabled)
     assert_true(s.stroke_cap == StrokeCap.SQUARE)
+
+
+def test_stroke_alignment_does_not_switch_the_stroke_on() raises -> None:
+    var s = Style(stroke_enabled=False, stroke_alignment=StrokeAlign.CENTER)
+    assert_false(s.stroke_enabled)
+    assert_true(s.stroke_alignment == StrokeAlign.CENTER)
+
+
+def test_stroke_alignment_prints_its_name() raises -> None:
+    assert_equal(String(StrokeAlign.INSIDE), "StrokeAlign.INSIDE")
+    assert_equal(String(StrokeAlign.CENTER), "StrokeAlign.CENTER")
+    assert_equal(String(StrokeAlign.OUTSIDE), "StrokeAlign.OUTSIDE")
+    assert_equal(String(StrokeAlign(7)), "StrokeAlign(7)")
+
+
+def test_stroke_alignment_moves_the_stroke_out_by_a_fraction() raises -> None:
+    assert_equal(StrokeAlign.INSIDE._offset_fraction(), 0.0)
+    assert_equal(StrokeAlign.CENTER._offset_fraction(), 0.5)
+    assert_equal(StrokeAlign.OUTSIDE._offset_fraction(), 1.0)
 
 
 def test_stroke_cap_prints_its_name() raises -> None:
