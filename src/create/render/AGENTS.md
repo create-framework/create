@@ -18,8 +18,10 @@ and the layering rules.
 | `_text.mojo` | `TextRenderer` — the glyph cache and layout both backends place text with; faces are `create.text.Font` |
 | `_gl_backend.mojo` | `GLRenderer` — shader, vertex buffer, glyph atlas, image textures, batching |
 | `_tessellate.mojo` | `RenderCommand` to triangles for the GPU |
+| `_stroke.mojo` | Stroke alignment for both replays: `stroke_offset` (how far a command grows) and `aligned_stroke` (the command grown so its inset ring lands where `stroke_alignment` says) |
+| `stroke_cap.mojo` / `stroke_align.mojo` | The public `StrokeCap` and `StrokeAlign` enums |
 | `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (an inset shadow's interior and cut) |
-| `_curve.mojo` | Bézier stroke geometry for both replays: flattening in device pixels, the mitred quad strip; the blurred shadow mask of any device quads (`quads_shadow_mask`) |
+| `_curve.mojo` | Bézier stroke geometry for both replays: flattening in device pixels, the mitred quad strip and its caps (`stroke_pieces`); the blurred shadow mask of any device quads (`quads_shadow_mask`) |
 | `_sector.mojo` | Sector fill and stroke tiled into device quads for both replays (`sector_quads`), and its blurred shadow mask |
 | `_polygon.mojo` | Polygon fill and stroke tiled into device quads for both replays (`polygon_quads`), and its blurred shadow mask |
 | `_triangle.mojo` | A rounded or stroked triangle as a convex fill and ring quads for both replays (`triangle_pieces`) |
@@ -126,15 +128,24 @@ affine-invariant), flattens each curve in device pixels (`FLATTEN_TOLERANCE_PX`)
 under any zoom, and joins the pieces into one polyline. `stroke_quads` turns that into a strip of
 quads sharing mitred edges — no gap, no overlap, so a translucent stroke composites once, across the
 joints between curves too — which the CPU fills with `fill_quad` and the GPU pushes as vertices.
-Ends are butt; a polyline whose last point is its first is a ring instead, its closing joint
+Ends follow `stroke_cap` (below); a polyline whose last point is its first is a ring instead, its closing joint
 mitred like any other. Known limitation: at a cusp the miter is clamped (`MITER_LIMIT`) and the
 quads either side overlap slightly.
+
+`stroke_pieces(points, width, cap, x_axis)` returns the strip as `quads` plus convex `caps`. `SQUARE`
+pushes both end points out by half the width along the end tangent, so it is quads only. `ROUND`
+adds a half disc per open end whose first and last vertices are exactly the end quad's corners, so
+the shared edge composites once: the CPU fills it with `fill_convex` (edges walked as `fill_quad`
+walks them), the GPU fans it. A ring gets no caps. A zero-length path gives one disc (`ROUND`), one
+square lined up with the local x axis (`SQUARE`) or nothing. `CMD_LINE` strokes through the same
+function, a two-point path, so lines and curves cap alike.
 
 `canvas.spline` converts its `Spline` (Catmull-Rom) to Béziers **at record time, in local space**,
 and records one chain. The conversion is exact, and doing it before the transform matters: the
 centripetal knot spacing depends on distances, which a non-uniform scale would change, so a spline
 converted after it would change shape rather than just stretch. Separate commands per curve would
-meet on butt ends and double-blend a translucent joint; one chain doesn't.
+meet on their ends (butt, or overlapping round caps) and double-blend a translucent joint; one
+chain doesn't.
 
 ## Sectors
 
@@ -143,7 +154,8 @@ A `CMD_SECTOR` (`cx, cy, r, start, sweep`, and a grow in `geom[5]`) is tiled at 
 curves do: the CPU fills them with `fill_quad`, whose half-open rule composites shared edges once,
 and the GPU pushes them as vertices. The tiling walks the sweep in thin wedges about the tip, and
 along each ray the sector is one stretch from the tip: fill in the middle, stroke either side. The
-stroke is inset, as a circle's is: the fill is the sector eroded by the stroke thickness. Built in
+stroke is an inset ring, as a circle's is: the fill is the sector eroded by the stroke thickness
+(alignment grows the sector first; see Strokes). Built in
 local space and mapped per corner, so a non-uniform transform gives an elliptical sector.
 
 `geom[5]` is 0 for a render call. A shadow sets it to its spread, and the tiling grows (or shrinks)
@@ -384,9 +396,19 @@ nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and ca
 
 A rectangle's or triangle's rounding is its shape's `corner_radius`, carried on
 `RenderCommand.corner_radius` (a triangle fills every `geom` slot) and clamped at replay; a
-shadow's spread grows it. Strokes mean different things per shape, and the rounding must preserve
-that: a rectangle's is an **inset ring** inside the fill; a triangle's is a **centred band**, half
-its width outside the edges and half inside.
+shadow's spread grows it.
+
+**Every region draws its stroke as an inset ring** inside its edge, the fill inside that.
+`stroke_alignment` is then one grow: `aligned_stroke` (`_stroke.mojo`) grows the command by
+`o = fraction × t` (0, ½ or 1 of `local_stroke_thickness`, the stroke as rasterised, in local
+units) before anything draws it — rectangle `w`/`h` by `2o`, circle `r` by `o`, triangle through
+`_grow_triangle`, sector `geom[5]`, polygon `geom[0]` — so the inset ring of the grown shape lands
+inside, centred or outside. A rounded corner's radius grows by `o` too; a sharp one stays sharp.
+It is applied once per backend, at its choke point (the CPU's `Backend._one`, the GPU's
+`GLRenderer._command`), so the shape, its hard, blurred and inset shadows, pixel reads and
+captures all see the same geometry, and no rasteriser takes a new parameter. A clip's region has
+its stroke off and is never grown. The grow is kept in `RenderCommand.stroke_grow`, and `_fill_box`
+takes it back out, so a gradient spans the true shape under every alignment.
 
 **Every kind composites once.** Fill and stroke never overlap, and neither do pieces of either, so
 a translucent shape or a non-`NORMAL` blend mode is as translucent everywhere.
@@ -398,15 +420,16 @@ red tint, on both backends and fails on any pixel deeper than one layer. A new s
   path must (it once sampled corners and drew a 40-pixel rectangle 41 wide).
 - **Triangles:** a rounded or stroked triangle is `triangle_pieces`, the same pieces on both
   backends.
-  - **Sharp:** the ring is one quad per edge between the outer edge (mitred, or bevelled past
-    `MITER_LIMIT`) and the inner edge, which is the triangle scaled about its incentre.
-  - **Rounded:** one quad per arc segment between concentric arcs of radius `r ± h`, and one per
-    edge. Once `h ≥ r` the inner edge is sharp, and each corner is a fan from its inner vertex.
+  - **Sharp:** the ring is one quad per edge between the triangle's own edge and the inner edge,
+    which is the triangle scaled about its incentre by `(inradius − t) / inradius`.
+  - **Rounded:** one quad per arc segment between concentric arcs of radius `r` and `r − t`, and
+    one per edge. Once `t ≥ r` the inner edge is sharp, and each corner is a fan from its inner
+    vertex.
   - **Fill:** the inner edge as one convex polygon. The CPU fills it with `fill_convex`, which walks
     edges exactly as `fill_quad` does (slope precomputed from the lower end), so a shared edge
     gives bit-identical crossings. The GPU fans it.
   - A plain unstroked sharp triangle keeps its single-pass fill.
-  - Built in local space, with `h` the device thickness divided by the pixel scale, and mapped per
+  - Built in local space, with `t` the device thickness divided by the pixel scale, and mapped per
     point, so a sheared rounded corner stays an ellipse arc.
 
 ## Shadows
@@ -422,7 +445,15 @@ Both replays handle a command's shadow around the command itself, in the command
   dropped whole at `SHADOW_MASK_LIMIT` — while the image is upright. Under a rotation, shear or
   mirror the mask depends on the whole transform, so `image_shadow_mask` builds it each frame,
   uncached like a Bézier's (below).
-  A Bézier's stroke and a sector's or polygon's quads are rasterised into a mask and blurred too
+  A line's silhouette is its box, lengthened by half the thickness at each end for `SQUARE`, and
+  a capsule (radius half the thickness) for `ROUND`, blurred by `capsule_coverage`: the core's box
+  exactly, each cap a 16-node integral across it (`MODE_SHADOW_CAPSULE` on the GPU). Not the
+  rounded-box coverage, a single step across the outline that ignores the far edge — fine for a
+  shape wide against sigma, but a thin stroke's whole width is within a sigma or two of both edges,
+  so it came out several times too dark. Circles and rounded rectangles keep that step: their
+  shadows are large, and the integral costs a dozen-odd `exp` a pixel.
+  A Bézier's stroke (its quads, each round cap fanned into more) and a sector's or polygon's quads
+  are rasterised into a mask and blurred too
   (`quads_shadow_mask`, via `bezier_shadow_mask`/`sector_shadow_mask`/`polygon_shadow_mask`), but
   **uncached**: they have no stable id to key by, so each blurred Bézier, sector or polygon shadow
   costs one blur per frame, and on
@@ -478,10 +509,11 @@ only ever hold quantities affine across a triangle, so interpolation evaluates t
 | `MODE_MASK` | 1 | Glyph: atlas red scales alpha |
 | `MODE_TEXTURE` | 2 | Image: sampled RGBA × colour |
 | `MODE_SILHOUETTE` | 3 | Image shadow: sampled alpha scales colour alpha |
-| `MODE_SHADOW_BOX` | 4 | Blurred rect/rounded rect/circle/line shadow; `s3` a ring |
+| `MODE_SHADOW_BOX` | 4 | Blurred rect/rounded rect/circle/butt or square line shadow; `s3` a ring |
 | `MODE_SHADOW_EDGES` | 5 | Blurred triangle shadow, three edge distances; `s3` a ring |
 | `MODE_INSET_BOX` / `MODE_INSET_EDGES` | 6 / 7 | 4 / 5 without ring, coverage inverted |
 | `MODE_GRADIENT` | 8 | Gradient fill: `uv` the device mapping, `s0` radial, `s1` ramp row; samples unit 2, dithers |
+| `MODE_SHADOW_CAPSULE` | 9 | Blurred round-capped line shadow: `s0` the core's half-length, `s1` the radius |
 
 A batch breaks only on an opaque `CMD_CLEAR`, a second distinct unit-1 texture, a `BlendMode`
 change, a clip change (see Clips), or frame end — glyph atlas on texture unit 0, images on unit 1, gradient ramps on unit 2
