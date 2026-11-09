@@ -4,8 +4,23 @@ import and which must not pull in a window."""
 
 from std.time import sleep
 
-from create._window import NativeWindow
+from create._window import (
+    NativeWindow,
+    SYSTEM_CURSOR_ARROW,
+    SYSTEM_CURSOR_CROSSHAIR,
+    SYSTEM_CURSOR_HAND,
+    SYSTEM_CURSOR_MOVE,
+    SYSTEM_CURSOR_NOT_ALLOWED,
+    SYSTEM_CURSOR_PROGRESS,
+    SYSTEM_CURSOR_RESIZE_DIAGONAL_FALLING,
+    SYSTEM_CURSOR_RESIZE_DIAGONAL_RISING,
+    SYSTEM_CURSOR_RESIZE_HORIZONTAL,
+    SYSTEM_CURSOR_RESIZE_VERTICAL,
+    SYSTEM_CURSOR_TEXT,
+    SYSTEM_CURSOR_WAIT,
+)
 from create.core.context import Context
+from create.core.cursor import Cursor
 from create.core.window_mode import WindowMode
 
 
@@ -15,6 +30,7 @@ struct _AppliedWindow(Movable):
 
     var title: String
     var resizable: Bool
+    var cursor: Cursor
     var mode: WindowMode
 
     def __init__(out self, context: Context):
@@ -22,21 +38,61 @@ struct _AppliedWindow(Movable):
         opened with."""
         self.title = context._title
         self.resizable = context._resizable
+        # Seeded before `create` runs, from the default: the arrow a new
+        # window shows.
+        self.cursor = context._cursor
         self.mode = context._window_mode
 
 
 def _apply_window_dials[
     W: NativeWindow
 ](mut win: W, mut applied: _AppliedWindow, context: Context) raises:
-    """Send the window the title and resizability the program set, if they
-    changed. Called before presenting, so the change shows with the frame it
-    was made in."""
+    """Send the window the title, resizability and cursor the program set,
+    if they changed. Called before presenting, so the change shows with the
+    frame it was made in."""
     if context._title != applied.title:
         win.set_title(context._title)
         applied.title = context._title
     if context._resizable != applied.resizable:
         win.set_resizable(context._resizable)
         applied.resizable = context._resizable
+    var cursor = context._cursor
+    if cursor != applied.cursor:
+        if cursor == Cursor.HIDDEN:
+            win.show_cursor(False)
+        else:
+            if applied.cursor == Cursor.HIDDEN:
+                win.show_cursor(True)
+            win.set_system_cursor(_system_cursor(cursor))
+        applied.cursor = cursor
+
+
+def _system_cursor(cursor: Cursor) -> Int:
+    """`cursor` as the window layer's system cursor id; an unnamed value
+    falls back to the arrow. Not for `Cursor.HIDDEN`, which is no cursor."""
+    if cursor == Cursor.CROSSHAIR:
+        return SYSTEM_CURSOR_CROSSHAIR
+    if cursor == Cursor.HAND:
+        return SYSTEM_CURSOR_HAND
+    if cursor == Cursor.TEXT:
+        return SYSTEM_CURSOR_TEXT
+    if cursor == Cursor.WAIT:
+        return SYSTEM_CURSOR_WAIT
+    if cursor == Cursor.PROGRESS:
+        return SYSTEM_CURSOR_PROGRESS
+    if cursor == Cursor.MOVE:
+        return SYSTEM_CURSOR_MOVE
+    if cursor == Cursor.NOT_ALLOWED:
+        return SYSTEM_CURSOR_NOT_ALLOWED
+    if cursor == Cursor.RESIZE_HORIZONTAL:
+        return SYSTEM_CURSOR_RESIZE_HORIZONTAL
+    if cursor == Cursor.RESIZE_VERTICAL:
+        return SYSTEM_CURSOR_RESIZE_VERTICAL
+    if cursor == Cursor.RESIZE_DIAGONAL_RISING:
+        return SYSTEM_CURSOR_RESIZE_DIAGONAL_RISING
+    if cursor == Cursor.RESIZE_DIAGONAL_FALLING:
+        return SYSTEM_CURSOR_RESIZE_DIAGONAL_FALLING
+    return SYSTEM_CURSOR_ARROW
 
 
 def _apply_window_mode[

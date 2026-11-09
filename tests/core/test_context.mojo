@@ -11,6 +11,7 @@ from std.testing import (
 )
 
 from create.core.context import Context
+from create.core.cursor import Cursor
 from create.core.window_mode import WindowMode
 from create.render import Autoscale
 
@@ -70,6 +71,22 @@ def test_dials_read_back_their_defaults() raises -> None:
     assert_true(context.autoscale() == Autoscale.FIT)
     assert_true(context.quit_on_escape())
     assert_equal(context.max_frame_rate(), 0)
+    assert_true(context.cursor() == Cursor.ARROW)
+
+
+def test_the_cursor_reads_back_what_was_set() raises -> None:
+    var context = Context()
+    context.cursor(Cursor.CROSSHAIR)
+    assert_true(context.cursor() == Cursor.CROSSHAIR)
+    context.cursor(Cursor.HIDDEN)
+    assert_true(context.cursor() == Cursor.HIDDEN)
+
+
+def test_a_cursor_prints_as_written() raises -> None:
+    assert_equal(String(Cursor.CROSSHAIR), "Cursor.CROSSHAIR")
+    assert_equal(String(Cursor.HIDDEN), "Cursor.HIDDEN")
+    assert_equal(String(Cursor(99)), "Cursor(99)")
+    assert_equal(String(Cursor(-1)), "Cursor(-1)")
 
 
 def test_dials_read_back_what_was_set() raises -> None:

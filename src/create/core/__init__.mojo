@@ -4,5 +4,6 @@ from .date_time import DateTime
 from .path import source_path
 from .program import Program
 from .window_mode import WindowMode
+from .cursor import Cursor
 from .run import run
 from .headless import run_headless

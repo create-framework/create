@@ -94,6 +94,31 @@ def test_create_is_frame_one_and_the_first_update_frame_two() raises -> None:
 
 
 @fieldwise_init
+struct SetsTheCursor(Program):
+    """Changes the cursor every frame: a headless run has none to change."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> SetsTheCursor:
+        context.cursor(Cursor.CROSSHAIR)
+        return SetsTheCursor(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        context.cursor(
+            Cursor.HIDDEN if context.cursor() != Cursor.HIDDEN else Cursor.HAND
+        )
+        canvas.background(Color.GREEN)
+
+
+def test_a_headless_run_ignores_the_cursor() raises -> None:
+    var m = run_headless[SetsTheCursor](10, 10, 3)
+    assert_equal(m.pixel(5, 5), Color.GREEN)
+
+
+@fieldwise_init
 struct Labelled[in_create: Bool, every_frame: Bool](Program):
     """Writes a label each `update`, in the symbols face if asked: once in
     `create`, or every frame from a field."""
