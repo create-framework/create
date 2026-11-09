@@ -76,6 +76,7 @@ struct App(Program):
         with canvas.style(
             stroke=Color(98, 104, 168),
             stroke_thickness=12,
+            stroke_cap=StrokeCap.ROUND,
             shadow=Color(0, 0, 0, 160),
             shadow_offset=Vector2D(6, -10),
             shadow_blur=18,
