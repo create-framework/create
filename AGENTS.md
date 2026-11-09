@@ -23,7 +23,7 @@ it makes the library better.
 | Module | Path | Responsibility |
 |---|---|---|
 | root | `src/create/__init__.mojo` | The preamble: star-imports all ten subpackages below |
-| `core` | `src/create/core/` | `Program`, the run state (`Context`, `Time`), the run loops (windowed, GPU, headless), `step`, event-to-`Input` translation, `WindowMode`, `source_path`, `DateTime` |
+| `core` | `src/create/core/` | `Program`, the run state (`Context`, `Time`), the run loops (windowed, GPU, headless), `step`, event-to-`Input` translation, `WindowMode`, `Cursor`, `source_path`, `DateTime` |
 | `input` | `src/create/input/` | `Input` (keyboard, mouse, gamepads, typed text), `Key`, `MouseButton`, `Gamepad`, `GamepadButton`, `EditableText` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
@@ -474,13 +474,22 @@ grows with the window, so anchor layout to the edges. Font size, stroke thicknes
 scale by `canvas.scale()`. See [examples/window/main.mojo](examples/window/main.mojo).
 
 `Context` dials are the run's, not the drawing's: `design_size`, `autoscale`, `title`,
-`window_mode`, `resizable`, `quit_on_escape`, `max_frame_rate`. They are methods
+`window_mode`, `resizable`, `cursor`, `quit_on_escape`, `max_frame_rate`. They are methods
 (`context.autoscale(Autoscale.EXTEND)`, like the canvas setters), each read back with no arguments;
 `Context`'s only fields are the readings `time` and `input`. Every `run` argument but `backend`
 has a setter — a dial here, or `canvas.antialiasing` — and the argument is only the starting value.
+Not every dial is a `run` argument: `cursor`, `quit_on_escape` and `max_frame_rate` are set in
+`create`.
+
+**Cursor:** `context.cursor(Cursor.CROSSHAIR)` is Processing's `cursor(CROSS)`, and
+`Cursor.HIDDEN` its `noCursor()`; any other value shows the cursor again. Each `Cursor` is the
+platform's own system cursor (`ARROW` by default, `CROSSHAIR`, `HAND`, `TEXT`, `WAIT`, `PROGRESS`,
+`MOVE`, `NOT_ALLOWED`, and four resize ones, the diagonals named by slope: `RISING` is `/`). Sent
+only when it changes, so setting it every frame from a hover test is free. Image cursors are not
+supported.
 
 **When a change applies:** a frame-wide setting applies to the frame it is set in — the canvas
-ones above, and `title`/`resizable`, which the windowed loops send before presenting. What
+ones above, and `title`/`resizable`/`cursor`, which the windowed loops send before presenting. What
 decides the frame's geometry waits for the next frame: `design_size`, `autoscale` and
 `window_mode` (switched after presenting; some compositors report the new size a frame later). A
 getter reports the value as set. `max_frame_rate()`, `quit()` and `rumble()` are read after the
