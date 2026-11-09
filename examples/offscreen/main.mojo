@@ -60,9 +60,10 @@ struct Offscreen(Program):
                     0.5 + 0.5 * sin(context.time.elapsed * 2.0),
                 ),
                 stroke_thickness=12,
+                stroke_cap=StrokeCap.ROUND,
             ):
+                # Round caps join each segment to the next without a notch.
                 self.layer.line(start, input.mouse)
-                self.layer.circle(input.mouse, 6)
             # Read only when something was painted: a read copies the layer.
             self.strokes = self.layer.snapshot()
         self.last_mouse = input.mouse
