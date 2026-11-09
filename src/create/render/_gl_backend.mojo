@@ -275,6 +275,49 @@ float edge_coverage(vec3 d) {
     return gaussian_cdf(d.x) * gaussian_cdf(d.y) * gaussian_cdf(d.z);
 }
 
+const float CAP_NODES[4] = float[4](
+    0.1834346424956498, 0.5255324099163290,
+    0.7966664774136267, 0.9602898564975363
+);
+const float CAP_WEIGHTS[4] = float[4](
+    0.3626837833783620, 0.3137066458778873,
+    0.2223810344533745, 0.1012285362903763
+);
+
+float cap_coverage(vec2 p, float core_half, float radius) {
+    float base = gaussian_cdf(core_half - p.x);
+    if (base >= 1.0) return 0.0;
+    float lo = max((p.y - 4.0) / radius, -1.0);
+    float hi = min((p.y + 4.0) / radius, 1.0);
+    if (lo >= hi) return 0.0;
+    float a0 = asin(lo);
+    float a1 = asin(hi);
+    float half_step = (a1 - a0) / 4.0;
+    float sum = 0.0;
+    for (int panel = 0; panel < 2; panel++) {
+        float mid = a0 + half_step * float(2 * panel + 1);
+        for (int i = 0; i < 8; i++) {
+            float node = (i < 4 ? 1.0 : -1.0) * CAP_NODES[i & 3];
+            float a = mid + half_step * node;
+            float w = radius * cos(a);
+            float u = radius * sin(a) - p.y;
+            float across = exp(-0.5 * u * u) * 0.3989422804014327;
+            float along = gaussian_cdf(core_half + w - p.x) - base;
+            sum += CAP_WEIGHTS[i & 3] * across * along * w;
+        }
+    }
+    return sum * half_step;
+}
+
+float capsule_coverage(vec2 p, float core_half, float radius) {
+    float x = gaussian_cdf(core_half + p.x)
+        + gaussian_cdf(core_half - p.x) - 1.0;
+    float y = gaussian_cdf(radius + p.y) + gaussian_cdf(radius - p.y) - 1.0;
+    return max(x, 0.0) * max(y, 0.0)
+        + cap_coverage(p, core_half, radius)
+        + cap_coverage(vec2(-p.x, p.y), core_half, radius);
+}
+
 void main() {
     if (v_mode < 0.5) {
         frag_color = v_color;
@@ -284,6 +327,9 @@ void main() {
         frag_color = v_color * texture(u_image, v_uv);
     } else if (v_mode < 3.5) {
         frag_color = vec4(v_color.rgb, v_color.a * texture(u_image, v_uv).a);
+    } else if (v_mode > 8.5) {
+        float c = capsule_coverage(v_uv, v_shape.x, v_shape.y);
+        frag_color = vec4(v_color.rgb, v_color.a * max(c, 0.0));
     } else if (v_mode > 7.5) {
         // Gradient: `Gradient._sample`, with texture filtering reading
         // between ramp entries and the dither indexed by device pixel, rows

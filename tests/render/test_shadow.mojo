@@ -1,4 +1,4 @@
-from std.math import erf, sqrt
+from std.math import erf, exp, sqrt
 from create.math import PI
 from std.testing import (
     TestSuite,
@@ -44,7 +44,10 @@ from create.render._shadow import (
     rounded_rect_coverage,
     shadow_command,
     shadow_transform,
+    BlurredSilhouette,
 )
+from create.render._curve import bezier_shadow_mask
+from create.render.stroke_cap import StrokeCap
 
 
 def _shadowed() -> Style:
@@ -385,6 +388,125 @@ def test_rounded_rect_coverage_is_symmetric_and_rounds_corners() raises -> None:
     assert_almost_equal(
         rounded_rect_coverage(d, d, 4.0, 4.0, 4.0), 0.5, atol=1e-7
     )
+
+
+def _blurred_line(
+    cap: StrokeCap, thickness: Float64 = 6, blur: Float64 = 4
+) -> BlurredSilhouette:
+    """A line from (0, 0) to (20, 0), 6 thick and its shadow blurred by 4
+    (sigma 2) unless given."""
+    var s = Style(
+        stroke=Color.BLACK,
+        stroke_thickness=thickness,
+        stroke_cap=cap,
+        shadow_blur=blur,
+    )
+    var sh = shadow_command(line_command(identity[3](), s, 0, 0, 20, 0), 1.0)
+    return BlurredSilhouette(sh, thickness)
+
+
+def _capsule_reference(
+    x: Float64, y: Float64, core_half: Float64, radius: Float64
+) -> Float64:
+    """A blurred capsule centred on the origin (unit sigma), integrated row
+    by row: each row of a capsule is one interval, blurred along it
+    exactly, so only the sum across is numeric."""
+    var rows = 20000
+    var dy = 2.0 * radius / Float64(rows)
+    var total = 0.0
+    for j in range(rows):
+        var t = -radius + (Float64(j) + 0.5) * dy
+        var w = core_half + sqrt(max(radius * radius - t * t, 0.0))
+        var along = 0.5 * (erf((w - x) / sqrt(2.0)) - erf((-w - x) / sqrt(2.0)))
+        total += exp(-0.5 * (t - y) * (t - y)) * along
+    return total * dy / sqrt(2.0 * PI)
+
+
+def _line_end() -> Float64:
+    """`_blurred_line`'s coverage on its axis where its silhouette ends: half
+    along, times the 6-thick band's blur across (3 / sigma 2 = 1.5 either
+    side)."""
+    return 0.5 * (gaussian_cdf(1.5) - gaussian_cdf(-1.5))
+
+
+def test_a_butt_line_shadow_fades_past_its_end() raises -> None:
+    var b = _blurred_line(StrokeCap.BUTT)
+    assert_almost_equal(b.coverage(20, 0), _line_end(), atol=1e-6)
+    assert_true(b.coverage(23, 0) < 0.07)
+
+
+def test_a_round_line_shadow_is_a_blurred_capsule() raises -> None:
+    var b = _blurred_line(StrokeCap.ROUND)
+    # In sigma units (2): a core from -5 to 5 around (10, 0), radius 1.5.
+    for p in [(23.0, 0.0), (23.0, 3.0), (21.0, 2.0), (10.0, 4.0)]:
+        assert_almost_equal(
+            b.coverage(p[0], p[1]),
+            _capsule_reference((p[0] - 10.0) / 2.0, p[1] / 2.0, 5.0, 1.5),
+            atol=1e-5,
+        )
+    assert_almost_equal(b.coverage(23, 0), b.coverage(-3, 0), atol=1e-12)
+    assert_true(b.x1 >= 26.0 and b.x0 <= -6.0)
+
+
+def test_a_round_cap_is_inside_a_square_one() raises -> None:
+    # So its blur is fainter everywhere past the line's end.
+    var round = _blurred_line(StrokeCap.ROUND)
+    var square = _blurred_line(StrokeCap.SQUARE)
+    for p in [(21.0, 0.0), (23.0, 0.0), (23.0, 3.0), (25.0, 1.0)]:
+        assert_true(round.coverage(p[0], p[1]) < square.coverage(p[0], p[1]))
+
+
+def test_a_thin_round_line_blurs_as_faintly_as_a_butt_one() raises -> None:
+    # 2 thick under blur 20 (sigma 10): away from the ends, both are the
+    # same thin band blurred, about 8% dark rather than half.
+    var round = _blurred_line(StrokeCap.ROUND, thickness=2, blur=20)
+    var butt = _blurred_line(StrokeCap.BUTT, thickness=2, blur=20)
+    # Butt: the band across (0.1 sigma either side) times 1 sigma along.
+    var band = gaussian_cdf(0.1) - gaussian_cdf(-0.1)
+    var along = gaussian_cdf(1.0) - gaussian_cdf(-1.0)
+    assert_almost_equal(butt.coverage(10, 0), band * along, atol=1e-6)
+    # Round: the same, its caps adding their little area.
+    var r = round.coverage(10, 0)
+    assert_almost_equal(r, _capsule_reference(0.0, 0.0, 1.0, 0.1), atol=1e-5)
+    assert_true(r > butt.coverage(10, 0) and r < 0.1)
+
+
+def test_a_square_line_shadow_reaches_the_corner() raises -> None:
+    var b = _blurred_line(StrokeCap.SQUARE)
+    assert_almost_equal(b.coverage(23, 0), _line_end(), atol=1e-6)
+    assert_almost_equal(b.coverage(23, 3), 0.25, atol=2e-3)
+    assert_almost_equal(b.coverage(-3, -3), 0.25, atol=2e-3)
+
+
+def test_a_butt_line_of_no_length_casts_nothing() raises -> None:
+    var s = Style(stroke=Color.BLACK, stroke_thickness=6, shadow_blur=4)
+    assert_false(casts_outer_shadow(line_command(identity[3](), s, 5, 5, 5, 5)))
+    s.stroke_cap = StrokeCap.ROUND
+    assert_true(casts_outer_shadow(line_command(identity[3](), s, 5, 5, 5, 5)))
+
+
+def _mask_mass(cap: StrokeCap) -> Int:
+    var s = Style(
+        stroke=Color.BLACK, stroke_thickness=8, stroke_cap=cap, shadow_blur=4
+    )
+    var c = bezier_command(
+        identity[3](),
+        s,
+        Bezier(
+            Point2D(10, 10), Point2D(20, 30), Point2D(40, 30), Point2D(50, 10)
+        ),
+    )
+    var mask = bezier_shadow_mask(c, identity[3](), 1.0, 0)
+    var total = 0
+    for a in mask.mask.pixels:
+        total += Int(a)
+    return total
+
+
+def test_a_bezier_shadow_mask_includes_its_caps() raises -> None:
+    var butt = _mask_mass(StrokeCap.BUTT)
+    assert_true(_mask_mass(StrokeCap.ROUND) > butt)
+    assert_true(_mask_mass(StrokeCap.SQUARE) > _mask_mass(StrokeCap.ROUND))
 
 
 def main() raises:

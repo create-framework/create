@@ -171,7 +171,11 @@ comptime _SHAPE_ROUND_CAPPED_BEZIER = 74
 comptime _SHAPE_SQUARE_CAPPED_BEZIER = 75
 comptime _SHAPE_ROUND_CAPPED_ARC = 76
 comptime _SHAPE_SQUARE_CAPPED_ARC = 77
-comptime _SHAPE_COUNT = 78
+comptime _SHAPE_BLURRED_ROUND_LINE = 78
+comptime _SHAPE_BLURRED_SQUARE_LINE = 79
+comptime _SHAPE_BLURRED_ROUND_BEZIER = 80
+comptime _SHAPE_BLURRED_SQUARE_BEZIER = 81
+comptime _SHAPE_COUNT = 82
 
 comptime _SHADOW_INK = Color(0x10, 0x10, 0x10)
 """Opaque and far from `_BACKGROUND`, so a shadow counts as ink and its
@@ -329,6 +333,14 @@ def _shape_name(shape: Int) -> String:
         return "translucent round-capped arc"
     elif shape == _SHAPE_SQUARE_CAPPED_ARC:
         return "square-capped arc"
+    elif shape == _SHAPE_BLURRED_ROUND_LINE:
+        return "blurred round-capped line"
+    elif shape == _SHAPE_BLURRED_SQUARE_LINE:
+        return "blurred square-capped line"
+    elif shape == _SHAPE_BLURRED_ROUND_BEZIER:
+        return "blurred round-capped bezier"
+    elif shape == _SHAPE_BLURRED_SQUARE_BEZIER:
+        return "blurred square-capped bezier"
     elif shape == _SHAPE_SHADOWED_STAR:
         return "shadowed star"
     elif shape == _SHAPE_BLURRED_POLYGON_RING:
@@ -990,6 +1002,43 @@ struct _Parity(Program):
                 stroke_cap=StrokeCap.SQUARE,
             ):
                 canvas.arc((0, 0), 50, 0.5, 4.0)
+        elif (
+            self.shape == _SHAPE_BLURRED_ROUND_LINE
+            or self.shape == _SHAPE_BLURRED_SQUARE_LINE
+        ):
+            var cap = (
+                StrokeCap.ROUND if self.shape
+                == _SHAPE_BLURRED_ROUND_LINE else StrokeCap.SQUARE
+            )
+            with canvas.style(
+                _blurred(
+                    Style(
+                        stroke=Color(0x80, 0xFF, 0x80),
+                        stroke_thickness=16,
+                        stroke_cap=cap,
+                    )
+                )
+            ):
+                with canvas.transform(rotate(0.3)):
+                    canvas.line((-60, 0), (60, 0))
+        elif (
+            self.shape == _SHAPE_BLURRED_ROUND_BEZIER
+            or self.shape == _SHAPE_BLURRED_SQUARE_BEZIER
+        ):
+            var cap = (
+                StrokeCap.ROUND if self.shape
+                == _SHAPE_BLURRED_ROUND_BEZIER else StrokeCap.SQUARE
+            )
+            with canvas.style(
+                _blurred(
+                    Style(
+                        stroke=Color(0x80, 0xFF, 0x80),
+                        stroke_thickness=14,
+                        stroke_cap=cap,
+                    )
+                )
+            ):
+                _bezier(canvas)
         elif self.shape == _SHAPE_GRADIENT_STAR:
             with canvas.style(stroke_enabled=False):
                 canvas.fill(
