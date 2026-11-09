@@ -4,7 +4,21 @@
 
 from std.os import setenv
 from std.testing import TestSuite, assert_true, assert_false
-from create._window import Window
+from create._window import (
+    Window,
+    SYSTEM_CURSOR_ARROW,
+    SYSTEM_CURSOR_CROSSHAIR,
+    SYSTEM_CURSOR_HAND,
+    SYSTEM_CURSOR_MOVE,
+    SYSTEM_CURSOR_NOT_ALLOWED,
+    SYSTEM_CURSOR_PROGRESS,
+    SYSTEM_CURSOR_RESIZE_DIAGONAL_FALLING,
+    SYSTEM_CURSOR_RESIZE_DIAGONAL_RISING,
+    SYSTEM_CURSOR_RESIZE_HORIZONTAL,
+    SYSTEM_CURSOR_RESIZE_VERTICAL,
+    SYSTEM_CURSOR_TEXT,
+    SYSTEM_CURSOR_WAIT,
+)
 
 
 def test_open_then_close() raises -> None:
@@ -42,6 +56,34 @@ def test_title_resizability_and_mode_change_after_opening() raises -> None:
     w.set_mode(False, False, True)
     w.set_mode(False, False, False)
     assert_true(w.is_open())
+
+
+def test_cursors_change_hide_and_free_with_the_window() raises -> None:
+    """The dummy driver has no cursors, so each is refused: what matters is
+    that nothing raises, and that a window whose cursors were asked for
+    tears down cleanly, again and again."""
+    var ids: List[Int] = [
+        SYSTEM_CURSOR_ARROW,
+        SYSTEM_CURSOR_CROSSHAIR,
+        SYSTEM_CURSOR_HAND,
+        SYSTEM_CURSOR_TEXT,
+        SYSTEM_CURSOR_WAIT,
+        SYSTEM_CURSOR_PROGRESS,
+        SYSTEM_CURSOR_MOVE,
+        SYSTEM_CURSOR_NOT_ALLOWED,
+        SYSTEM_CURSOR_RESIZE_HORIZONTAL,
+        SYSTEM_CURSOR_RESIZE_VERTICAL,
+        SYSTEM_CURSOR_RESIZE_DIAGONAL_RISING,
+        SYSTEM_CURSOR_RESIZE_DIAGONAL_FALLING,
+    ]
+    for _ in range(3):
+        var w = Window("t", 64, 64)
+        for id in ids:
+            w.set_system_cursor(id)
+            w.set_system_cursor(id)
+        w.show_cursor(False)
+        w.show_cursor(True)
+        assert_true(w.is_open())
 
 
 def test_ticks_monotonic() raises -> None:

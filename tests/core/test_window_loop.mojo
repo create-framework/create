@@ -66,6 +66,12 @@ struct CountingWindow(NativeWindow):
         self.modes += 1
         self.fullscreen = fullscreen
 
+    def set_system_cursor(mut self, id: Int) raises:
+        pass
+
+    def show_cursor(mut self, visible: Bool) raises:
+        pass
+
 
 def test_an_unchanged_dial_is_not_sent() raises -> None:
     var context = Context()

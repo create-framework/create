@@ -95,6 +95,12 @@ struct Window(NativeWindow):
     def set_resizable(mut self, enabled: Bool) raises:
         self._native.set_resizable(enabled)
 
+    def set_system_cursor(mut self, id: Int) raises:
+        self._native.set_system_cursor(id)
+
+    def show_cursor(mut self, visible: Bool) raises:
+        self._native.show_cursor(visible)
+
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:

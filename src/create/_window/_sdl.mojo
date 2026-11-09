@@ -88,6 +88,22 @@ concrete value, not the byte-order-generic macro."""
 
 comptime SDL_TEXTUREACCESS_STREAMING: Int32 = 1
 
+# `SDL_SystemCursor`, the ones `core` maps `Cursor` onto.
+comptime SDL_SYSTEM_CURSOR_DEFAULT = 0
+comptime SDL_SYSTEM_CURSOR_TEXT = 1
+comptime SDL_SYSTEM_CURSOR_WAIT = 2
+comptime SDL_SYSTEM_CURSOR_CROSSHAIR = 3
+comptime SDL_SYSTEM_CURSOR_PROGRESS = 4
+comptime SDL_SYSTEM_CURSOR_NWSE_RESIZE = 5
+comptime SDL_SYSTEM_CURSOR_NESW_RESIZE = 6
+comptime SDL_SYSTEM_CURSOR_EW_RESIZE = 7
+comptime SDL_SYSTEM_CURSOR_NS_RESIZE = 8
+comptime SDL_SYSTEM_CURSOR_MOVE = 9
+comptime SDL_SYSTEM_CURSOR_NOT_ALLOWED = 10
+comptime SDL_SYSTEM_CURSOR_POINTER = 11
+comptime SDL_SYSTEM_CURSOR_COUNT = 20
+"""How many system cursors SDL defines, the edge resize ones included."""
+
 # Byte offsets into an SDL_Event buffer, shared by every event struct
 # variant (SDL_CommonEvent header: type@0, reserved@4, timestamp@8).
 comptime _OFF_WINDOW_ID = 16
@@ -439,6 +455,29 @@ struct SDL:
     def restore_window(self, window: Int) -> Bool:
         """A request, like `maximize_window`."""
         return self.lib.call["SDL_RestoreWindow", Bool](window)
+
+    def create_system_cursor(self, id: Int) -> Int:
+        """An `SDL_SYSTEM_CURSOR_*` as a cursor handle, or 0 where the video
+        driver has none (dummy, offscreen) — so it reports rather than
+        raises, like `maximize_window`. Freed with `destroy_cursor`."""
+        return self.lib.call["SDL_CreateSystemCursor", Int](Int32(id))
+
+    def set_cursor(self, cursor: Int) -> Bool:
+        """Make `cursor` the mouse cursor. A request, like
+        `create_system_cursor`. SDL holds no reference: the handle must
+        outlive its use."""
+        return self.lib.call["SDL_SetCursor", Bool](cursor)
+
+    def destroy_cursor(self, cursor: Int):
+        self.lib.call["SDL_DestroyCursor"](cursor)
+
+    def show_cursor(self) -> Bool:
+        """A request, like `set_cursor`."""
+        return self.lib.call["SDL_ShowCursor", Bool]()
+
+    def hide_cursor(self) -> Bool:
+        """A request, like `set_cursor`."""
+        return self.lib.call["SDL_HideCursor", Bool]()
 
     def gl_set_attribute(self, attr: Int32, value: Int32) raises:
         if not self.lib.call["SDL_GL_SetAttribute", Bool](attr, value):
