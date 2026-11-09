@@ -175,7 +175,10 @@ comptime _SHAPE_BLURRED_ROUND_LINE = 78
 comptime _SHAPE_BLURRED_SQUARE_LINE = 79
 comptime _SHAPE_BLURRED_ROUND_BEZIER = 80
 comptime _SHAPE_BLURRED_SQUARE_BEZIER = 81
-comptime _SHAPE_COUNT = 82
+comptime _SHAPE_ALIGNED = 82
+"""The first of 20 aligned-stroke cases: five region kinds, each centred and
+outside, each without and then with a blurred shadow (`_draw_aligned`)."""
+comptime _SHAPE_COUNT = 102
 
 comptime _SHADOW_INK = Color(0x10, 0x10, 0x10)
 """Opaque and far from `_BACKGROUND`, so a shadow counts as ink and its
@@ -210,7 +213,55 @@ def _inset(var s: Style, blur: Float64 = 0.0) -> Style:
     return s^
 
 
+def _aligned_parts(i: Int) -> Tuple[Int, StrokeAlign, Bool]:
+    """The `i`-th aligned case's region kind, alignment and whether it casts
+    a blurred shadow."""
+    var alignment = StrokeAlign.CENTER if (i // 5) % 2 == 0 else (
+        StrokeAlign.OUTSIDE
+    )
+    return (i % 5, alignment, i >= 10)
+
+
+def _draw_aligned(mut canvas: Canvas, i: Int) raises:
+    var parts = _aligned_parts(i)
+    var kind = parts[0]
+    var look = Style(
+        fill=Color(0x40, 0xC0, 0xE0),
+        stroke=Color(0x30, 0x30, 0xA0),
+        stroke_thickness=8,
+        stroke_alignment=parts[1],
+    )
+    if parts[2]:
+        look = _blurred(look^)
+    with canvas.style(look):
+        if kind == 0:
+            canvas.rectangle((0, 0), 80, 50)
+        elif kind == 1:
+            canvas.rectangle((0, 0), 80, 50, corner_radius=12)
+        elif kind == 2:
+            canvas.circle((0, 0), 35)
+        elif kind == 3:
+            canvas.sector((0, 0), 50, 0.3, 4.0)
+        else:
+            canvas.draw(Polygon.star((0, 0), 55, 25, 5))
+
+
 def _shape_name(shape: Int) -> String:
+    if shape >= _SHAPE_ALIGNED:
+        var parts = _aligned_parts(shape - _SHAPE_ALIGNED)
+        var kinds: List[String] = [
+            "rect",
+            "rounded rect",
+            "circle",
+            "sector",
+            "star",
+        ]
+        return (
+            ("blurred " if parts[2] else "")
+            + kinds[parts[0]]
+            + " stroked "
+            + String(parts[1])
+        )
     if shape == _SHAPE_RECT:
         return "rect"
     elif shape == _SHAPE_STROKED_RECT:
@@ -417,7 +468,9 @@ struct _Parity(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_BACKGROUND)
 
-        if self.shape == _SHAPE_RECT:
+        if self.shape >= _SHAPE_ALIGNED:
+            _draw_aligned(canvas, self.shape - _SHAPE_ALIGNED)
+        elif self.shape == _SHAPE_RECT:
             with canvas.style():
                 canvas.stroke_enabled(False)
                 canvas.fill(Color(0xE0, 0x40, 0x40))

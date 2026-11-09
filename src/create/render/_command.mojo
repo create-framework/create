@@ -111,6 +111,10 @@ struct RenderCommand(Copyable, Movable):
     """The id of the innermost `canvas.clip` this was rendered under — an
     index into `Backend.clips`, one past — or 0 for none. Stamped by
     `Backend.record`, so no builder below has to know about clips."""
+    var stroke_grow: Float64
+    """How far `aligned_stroke` grew the shape to move its stroke out, in
+    local units; 0 for a command as recorded. `_fill_box` takes it back off
+    a rectangle and a circle, so a fill gradient stays where the shape is."""
 
     def __init__(
         out self,
@@ -166,6 +170,7 @@ struct RenderCommand(Copyable, Movable):
         self.silhouette = False
         self.image_tint = image_tint
         self.clip = 0
+        self.stroke_grow = 0.0
 
 
 def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
@@ -175,14 +180,20 @@ def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
     turns with it. A sector spans its whole circle, like a circle, so a
     slice shows the part of the circle's gradient it covers; a triangle and
     a polygon span their vertices' bounds. Both replays read this, so they
-    agree on where a gradient lies.
+    agree on where a gradient lies. A stroke moved out by `aligned_stroke`
+    leaves it where it was.
     """
     if c.kind == CMD_RECT or c.kind == CMD_CLEAR:
         return (
             Point2D(c.geom[0], c.geom[1]),
-            Vector2D(c.geom[2] / 2.0, c.geom[3] / 2.0),
+            Vector2D(
+                c.geom[2] / 2.0 - c.stroke_grow, c.geom[3] / 2.0 - c.stroke_grow
+            ),
         )
-    if c.kind == CMD_CIRCLE or c.kind == CMD_SECTOR:
+    if c.kind == CMD_CIRCLE:
+        var r = c.geom[2] - c.stroke_grow
+        return (Point2D(c.geom[0], c.geom[1]), Vector2D(r, r))
+    if c.kind == CMD_SECTOR:
         return (Point2D(c.geom[0], c.geom[1]), Vector2D(c.geom[2], c.geom[2]))
     if c.kind == CMD_POLYGON and c.geom[5] != 0.0:
         return (Point2D(c.geom[1], c.geom[2]), Vector2D(c.geom[3], c.geom[4]))
