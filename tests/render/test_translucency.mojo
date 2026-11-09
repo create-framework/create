@@ -16,7 +16,7 @@ from create import *
 from create.core.headless import run_headless
 from create.render.render_backend import RenderBackend
 
-comptime _KINDS = 35
+comptime _KINDS = 37
 
 
 def _name(kind: Int) -> String:
@@ -54,6 +54,8 @@ def _name(kind: Int) -> String:
         "centred polygon",
         "outside rounded star",
         "outside rotated rectangle",
+        "centred triangle",
+        "outside rounded triangle",
         "text",
         "image",
     ]
@@ -167,6 +169,12 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         with canvas.transform(rotate(0.4)):
             canvas.rectangle((0, 0), 40, 40, corner_radius=8)
     elif kind == 33:
+        canvas.stroke_alignment(StrokeAlign.CENTER)
+        canvas.triangle((-30, -25), (30, -25), (0, 30))
+    elif kind == 34:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        canvas.triangle((-30, -25), (30, -25), (0, 30), corner_radius=6)
+    elif kind == 35:
         canvas.font_size(40)
         canvas.text("WM", (0, 0))
     else:

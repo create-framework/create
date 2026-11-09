@@ -1,3 +1,5 @@
+from std.math import sqrt
+
 from create.color.color import Color, _tinted
 from create.color.gradient import Gradient
 from .style import Style
@@ -173,6 +175,45 @@ struct RenderCommand(Copyable, Movable):
         self.stroke_grow = 0.0
 
 
+def _grow_triangle(mut g: Array[Float64, _GEOM_SLOTS], d: Float64):
+    """Move each vertex out along its corner's bisector so every edge lands
+    `d` further out. Shrinks for a negative `d`; a degenerate triangle is left
+    alone."""
+    var xs = Array[Float64, 3](fill=0.0)
+    var ys = Array[Float64, 3](fill=0.0)
+    var out = Array[Float64, 6](fill=0.0)
+    for i in range(3):
+        xs[i] = g[2 * i]
+        ys[i] = g[2 * i + 1]
+    for i in range(3):
+        var px = xs[(i + 2) % 3]
+        var py = ys[(i + 2) % 3]
+        var nx = xs[(i + 1) % 3]
+        var ny = ys[(i + 1) % 3]
+        var l1 = sqrt((px - xs[i]) ** 2 + (py - ys[i]) ** 2)
+        var l2 = sqrt((nx - xs[i]) ** 2 + (ny - ys[i]) ** 2)
+        if l1 <= 0.0 or l2 <= 0.0:
+            return
+        var ux = (px - xs[i]) / l1
+        var uy = (py - ys[i]) / l1
+        var wx = (nx - xs[i]) / l2
+        var wy = (ny - ys[i]) / l2
+        # `u + w` points inward along the bisector; its length is
+        # `2 cos(theta/2)` and the vertex has to move `d / sin(theta/2)`.
+        var bx = ux + wx
+        var by = uy + wy
+        var bl = sqrt(bx * bx + by * by)
+        var cross = ux * wy - uy * wx
+        var sin_half = sqrt(max(0.0, (1.0 - (ux * wx + uy * wy)) / 2.0))
+        if bl <= 1e-12 or sin_half <= 1e-6 or abs(cross) <= 1e-12:
+            return
+        var k = d / sin_half
+        out[2 * i] = xs[i] - bx / bl * k
+        out[2 * i + 1] = ys[i] - by / bl * k
+    for i in range(6):
+        g[i] = out[i]
+
+
 def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
     """The local box a fill gradient spans: its centre and half-extents.
 
@@ -202,11 +243,14 @@ def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
     var hi_x = -Float64.MAX
     var hi_y = -Float64.MAX
     if c.kind == CMD_TRIANGLE:
+        var g = c.geom.copy()
+        if c.stroke_grow != 0.0:
+            _grow_triangle(g, -c.stroke_grow)
         for i in range(3):
-            lo_x = min(lo_x, c.geom[2 * i])
-            hi_x = max(hi_x, c.geom[2 * i])
-            lo_y = min(lo_y, c.geom[2 * i + 1])
-            hi_y = max(hi_y, c.geom[2 * i + 1])
+            lo_x = min(lo_x, g[2 * i])
+            hi_x = max(hi_x, g[2 * i])
+            lo_y = min(lo_y, g[2 * i + 1])
+            hi_y = max(hi_y, g[2 * i + 1])
     else:
         for p in c.points:
             lo_x = min(lo_x, p.x)

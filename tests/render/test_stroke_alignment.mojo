@@ -15,6 +15,9 @@ comptime _ROUNDED_RECT = 1
 comptime _CIRCLE = 2
 comptime _SECTOR = 3
 comptime _POLYGON = 4
+comptime _TRIANGLE = 5
+comptime _ROUNDED_TRIANGLE = 6
+comptime _KINDS = 7
 
 
 def _shape_canvas(kind: Int, alignment: StrokeAlign) raises -> Canvas:
@@ -30,8 +33,12 @@ def _shape_canvas(kind: Int, alignment: StrokeAlign) raises -> Canvas:
         canvas.circle((0, 0), 20)
     elif kind == _SECTOR:
         canvas.sector((0, 0), 20, -0.5, 1.0)
-    else:
+    elif kind == _POLYGON:
         canvas.polygon((-20, -20), (20, -20), (20, 20), (-20, 20))
+    elif kind == _TRIANGLE:
+        canvas.triangle((20, -20), (20, 20), (-20, 0))
+    else:
+        canvas.triangle((20, -20), (20, 20), (-20, 0), corner_radius=8)
     return canvas^
 
 
@@ -42,6 +49,8 @@ def _name(kind: Int) -> String:
         "circle",
         "sector",
         "polygon",
+        "triangle",
+        "rounded triangle",
     ]
     return names[kind]
 
@@ -68,17 +77,17 @@ def _check_band(
 
 
 def test_inside_keeps_the_stroke_within_the_edge() raises -> None:
-    for kind in range(5):
+    for kind in range(_KINDS):
         _check_band(kind, StrokeAlign.INSIDE, 14, 20)
 
 
 def test_center_straddles_the_edge() raises -> None:
-    for kind in range(5):
+    for kind in range(_KINDS):
         _check_band(kind, StrokeAlign.CENTER, 17, 23)
 
 
 def test_outside_leaves_the_whole_shape_to_the_fill() raises -> None:
-    for kind in range(5):
+    for kind in range(_KINDS):
         _check_band(kind, StrokeAlign.OUTSIDE, 20, 26)
 
 
@@ -115,15 +124,19 @@ def _gradient_at(
     canvas.stroke_alignment(alignment)
     if kind == _RECT:
         canvas.rectangle((0, 0), 40, 40)
-    else:
+    elif kind == _CIRCLE:
         canvas.circle((0, 0), 20)
+    else:
+        canvas.triangle((20, -20), (20, 20), (-20, 0))
     return canvas.color_at(position)
 
 
 def test_a_gradient_stays_where_the_shape_is() raises -> None:
-    for kind in [_RECT, _CIRCLE]:
+    # Each probe is in the fill under both alignments: the triangle's
+    # slanted edges come within 6.93 of the leftmost, past its 6 stroke.
+    for kind in [_RECT, _CIRCLE, _TRIANGLE]:
         for i in range(3):
-            var x = -10.5 + 10.0 * Float64(i)
+            var x = -4.5 + 7.0 * Float64(i)
             assert_equal(
                 _gradient_at(kind, StrokeAlign.OUTSIDE, Point2D(x, 0)),
                 _gradient_at(kind, StrokeAlign.INSIDE, Point2D(x, 0)),

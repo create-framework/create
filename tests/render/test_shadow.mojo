@@ -211,15 +211,17 @@ def test_triangle_grows_every_edge_by_the_spread() raises -> None:
     assert_equal(sh.corner_radius, 1.0)
 
 
-def test_triangle_silhouette_reaches_the_stroke_outer_edge() raises -> None:
+def test_triangle_silhouette_is_the_shape_its_stroke_is_inset_in() raises -> (
+    None
+):
     var s = _shadowed()
     s.stroke_thickness = 2
     s.shadow_spread = 0.0
     var c = triangle_command(identity[3](), s, 0, 0, 10, 0, 0, 10)
     var sh = shadow_command(c, 1.0)
-    # Centred bands reach half the thickness past each edge.
-    assert_almost_equal(sh.geom[0], -1.0)
-    assert_almost_equal(sh.geom[1], -1.0)
+    # The stroke is an inset ring, so its outer edge is the triangle's.
+    for i in range(6):
+        assert_almost_equal(sh.geom[i], c.geom[i])
 
 
 def test_a_sector_casts_its_grown_silhouette() raises -> None:

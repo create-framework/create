@@ -365,8 +365,8 @@ def test_an_unstroked_bezier_emits_nothing() raises -> None:
 def test_an_stroked_triangle_is_a_shrunk_triangle_in_a_ring_of_quads() raises -> (
     None
 ):
-    # Every corner within the miter limit, so no bevels: one ring quad per
-    # edge around the fill, the triangle shrunk by half the stroke.
+    # One ring quad per edge around the fill, the triangle shrunk by the
+    # stroke.
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
     var s = _plain()

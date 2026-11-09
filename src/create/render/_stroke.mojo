@@ -17,7 +17,9 @@ from ._command import (
     CMD_POLYGON,
     CMD_RECT,
     CMD_SECTOR,
+    CMD_TRIANGLE,
     RenderCommand,
+    _grow_triangle,
 )
 from ._shadow import local_stroke_thickness
 from .stroke_align import StrokeAlign
@@ -34,6 +36,7 @@ def stroke_offset(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Float64:
         or c.kind == CMD_CIRCLE
         or c.kind == CMD_SECTOR
         or c.kind == CMD_POLYGON
+        or c.kind == CMD_TRIANGLE
     ):
         return 0.0
     var fraction = c.style.stroke_alignment._offset_fraction()
@@ -46,7 +49,7 @@ def aligned_stroke(c: RenderCommand, offset: Float64) -> RenderCommand:
     """`c` grown by `offset` (from `stroke_offset`), so its inset stroke
     is the aligned one, and marked `INSIDE` so nothing grows it twice.
 
-    A rounded rectangle's radius grows with it, so the stroke's outer edge
+    A rounded rectangle's or triangle's radius grows with it, so the stroke's outer edge
     stays parallel to the shape's; a sharp one stays sharp, as a mitred
     stroke's corner is. `stroke_grow` records the grow, so `_fill_box` keeps
     a gradient where the shape is. A sector and a polygon grow through
@@ -66,4 +69,8 @@ def aligned_stroke(c: RenderCommand, offset: Float64) -> RenderCommand:
         a.geom[5] += offset
     elif c.kind == CMD_POLYGON:
         a.geom[0] += offset
+    elif c.kind == CMD_TRIANGLE:
+        _grow_triangle(a.geom, offset)
+        if c.corner_radius > 0.0:
+            a.corner_radius += offset
     return a^

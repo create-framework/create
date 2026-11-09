@@ -499,6 +499,7 @@ struct RoundedTriangleStroked(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.stroke(Color.BLUE, thickness=4)
+        canvas.stroke_alignment(StrokeAlign.CENTER)
         canvas.fill(Color.RED)
         canvas.triangle(
             (-20.0, -20.0), (0.0, -20.0), (-20.0, 0.0), corner_radius=5
@@ -507,8 +508,8 @@ struct RoundedTriangleStroked(Program):
 
 def test_triangle_corner_radius_stroke_is_centred() raises -> None:
     # Same fillet as RoundedTriangle (radius clamped to about 4.14), with a
-    # 4-unit stroke. The stroke band is centred on the arc (unlike a
-    # rect's inset ring), so it straddles both sides of the fillet boundary
+    # 4-unit stroke, aligned `CENTER`. The stroke band is centred on the arc,
+    # so it straddles both sides of the fillet boundary
     # — bleeding outward, past the arc, into the wedge that was cut away
     # from the original sharp corner. A rect-style inset stroke would
     # leave that whole wedge as bare background instead.
