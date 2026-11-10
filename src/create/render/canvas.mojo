@@ -18,6 +18,7 @@ from create.geometry.spline import Spline
 from create.geometry.drawable import DrawTarget, Region
 from create.geometry.geometry import (
     Arc,
+    Capsule,
     Circle,
     Ellipse,
     Line,
@@ -1210,6 +1211,23 @@ struct Canvas(DrawTarget, Movable):
     def ellipse(mut self, position: Point2D, w: Int, h: Int):
         self.ellipse(position, Float64(w), Float64(h))
 
+    def capsule(mut self, start: Point2D, end: Point2D, r: Float64):
+        """Draw the capsule round the segment from `start` to `end`: every
+        point within `r` of it, a `Capsule`, its ends half discs.
+
+        The stroke is inset, as a circle's is: the fill stops where it
+        starts, and a translucent capsule composites once. Unlike a
+        round-capped `line`, it has a fill and a stroke of its own. It is
+        drawn as a polygon, each end flattened as finely as a circle of `r`,
+        so filled it costs what a circle does and stroked what a stroked
+        `polygon` of its outline does. It casts no inset shadow; a blurred
+        drop shadow costs what a `bezier`'s does. A zero `r` draws nothing.
+        """
+        self.draw(Capsule(start, end, r))
+
+    def capsule(mut self, start: Point2D, end: Point2D, r: Int):
+        self.capsule(start, end, Float64(r))
+
     def sector(
         mut self,
         position: Point2D,
@@ -1421,6 +1439,11 @@ struct Canvas(DrawTarget, Movable):
     def _ellipse(mut self, e: Ellipse):
         self._state._backend.record(
             shape_command(e, self._transform, self._style, self._scale)
+        )
+
+    def _capsule(mut self, c: Capsule):
+        self._state._backend.record(
+            shape_command(c, self._transform, self._style, self._scale)
         )
 
     def _triangle(mut self, t: Triangle):

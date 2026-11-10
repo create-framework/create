@@ -3,6 +3,7 @@ from .geometry import (
     Rectangle,
     Circle,
     Ellipse,
+    Capsule,
     Line,
     Triangle,
     Arc,

@@ -402,11 +402,26 @@ def rounded_sector_command(
     """A rounded sector, recorded as the polygon through its flattened
     outline `vertices`, its gradient still spanning its whole circle (at
     `(cx, cy)`, radius `r`) as a sector's does."""
+    return framed_polygon_command(transform, style, vertices^, cx, cy, r, r)
+
+
+def framed_polygon_command(
+    transform: Matrix[3, 3],
+    style: Style,
+    var vertices: List[Point2D],
+    cx: Float64,
+    cy: Float64,
+    half_w: Float64,
+    half_h: Float64,
+) -> RenderCommand:
+    """The polygon through a curved shape's flattened outline `vertices`,
+    its gradient spanning the box at `(cx, cy)` with these half-extents
+    rather than the vertices' bounds, which the chords fall short of."""
     var c = polygon_command(transform, style, vertices^)
     c.geom[1] = cx
     c.geom[2] = cy
-    c.geom[3] = r
-    c.geom[4] = r
+    c.geom[3] = half_w
+    c.geom[4] = half_h
     c.geom[5] = 1.0
     return c^
 

@@ -16,7 +16,7 @@ from create import *
 from create.core.headless import run_headless
 from create.render.render_backend import RenderBackend
 
-comptime _KINDS = 40
+comptime _KINDS = 43
 
 
 def _name(kind: Int) -> String:
@@ -59,6 +59,9 @@ def _name(kind: Int) -> String:
         "ellipse shape",
         "stroke-only ellipse shape",
         "outside turned ellipse shape",
+        "capsule",
+        "stroke-only capsule",
+        "centred capsule",
         "text",
         "image",
     ]
@@ -188,6 +191,15 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         with canvas.transform(rotate(0.5)):
             canvas.ellipse((0, 0), 70, 36)
     elif kind == 38:
+        canvas.capsule((-35, -10), (35, 10), 16)
+    elif kind == 39:
+        canvas.fill_enabled(False)
+        canvas.stroke(Color.RED, 10)
+        canvas.capsule((-35, -10), (35, 10), 16)
+    elif kind == 40:
+        canvas.stroke_alignment(StrokeAlign.CENTER)
+        canvas.capsule((0, -20), (0, 20), 14)
+    elif kind == 41:
         canvas.font_size(40)
         canvas.text("WM", (0, 0))
     else:

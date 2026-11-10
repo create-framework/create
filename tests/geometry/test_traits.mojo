@@ -7,6 +7,7 @@ from std.testing import (
 from create.geometry import (
     Arc,
     Bezier,
+    Capsule,
     Circle,
     Curve,
     Ellipse,
@@ -65,6 +66,7 @@ def test_every_shape_moves_with_its_bounds() raises -> None:
     _moves_with_its_bounds(Rectangle((0.0, 0.0), 4.0, 2.0))
     _moves_with_its_bounds(Circle((1.0, 1.0), 2.0))
     _moves_with_its_bounds(Ellipse((1.0, 1.0), 6.0, 2.0))
+    _moves_with_its_bounds(Capsule((0.0, 0.0), (4.0, 3.0), 1.0))
     _moves_with_its_bounds(Triangle((0.0, 0.0), (4.0, 0.0), (1.0, 3.0)))
     _moves_with_its_bounds(Sector((0.0, 0.0), 3.0, 0.0, PI / 2.0))
     _moves_with_its_bounds(Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=5))
@@ -82,6 +84,7 @@ def test_every_region_holds_its_center() raises -> None:
     _holds_its_center(Rectangle((0.0, 0.0), 4.0, 2.0))
     _holds_its_center(Circle((1.0, 1.0), 2.0))
     _holds_its_center(Ellipse((1.0, 1.0), 6.0, 2.0))
+    _holds_its_center(Capsule((0.0, 0.0), (4.0, 3.0), 1.0))
     _holds_its_center(Triangle((0.0, 0.0), (4.0, 0.0), (1.0, 3.0)))
     _holds_its_center(Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=5))
     # A sector's center() is its tip, on its boundary; move_to places it.

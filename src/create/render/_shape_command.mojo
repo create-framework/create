@@ -1,8 +1,8 @@
 """A shape as the command that records it, for the canvas and its clips.
 
 `shape_command` has one overload per kind of shape: the command a render
-call records for it, in `style`, mapped by `transform`. Ellipses and rounded
-polygons and sectors are flattened here, as finely as a circle of their
+call records for it, in `style`, mapped by `transform`. Ellipses, capsules and
+rounded polygons and sectors are flattened here, as finely as a circle of their
 radius is drawn at that transform and `scale`, so every replay sees a plain
 polygon. `Canvas`'s
 `DrawTarget` primitives record these, and `RegionCapture` takes the one a
@@ -16,6 +16,7 @@ from create.math import TAU
 from create.geometry.bezier import Bezier
 from create.geometry.drawable import DrawTarget
 from create.geometry.geometry import (
+    Capsule,
     Circle,
     Ellipse,
     Line,
@@ -37,6 +38,7 @@ from ._command import (
     RenderCommand,
     bezier_chain_command,
     circle_command,
+    framed_polygon_command,
     line_command,
     polygon_command,
     rect_command,
@@ -83,6 +85,30 @@ def shape_command(
     var radius_px = max(e.w, e.h) / 2.0 * pixel_scale(transform, scale)
     var segments = (circle_segments(radius_px) + 3) // 4 * 4
     return polygon_command(transform, style, e._vertices(segments))
+
+
+def shape_command(
+    c: Capsule, transform: Matrix[3, 3], style: Style, scale: Float64
+) -> RenderCommand:
+    """The polygon through the capsule's outline, each half circle in half
+    the chords a circle of its radius is drawn with, its gradient spanning
+    its bounds. With no radius there is no inside, and fewer than three
+    vertices draw nothing."""
+    if c.r <= 0.0:
+        return polygon_command(transform, style, List[Point2D]())
+    var steps = max(
+        (circle_segments(c.r * pixel_scale(transform, scale)) + 1) // 2, 2
+    )
+    var b = c.bounds()
+    return framed_polygon_command(
+        transform,
+        style,
+        c._vertices(steps),
+        b.position.x,
+        b.position.y,
+        b.w / 2.0,
+        b.h / 2.0,
+    )
 
 
 def shape_command(
@@ -202,6 +228,11 @@ struct RegionCapture(DrawTarget):
     def _ellipse(mut self, e: Ellipse):
         self.command = shape_command(
             e, self.transform, clip_style(), self.scale
+        )
+
+    def _capsule(mut self, c: Capsule):
+        self.command = shape_command(
+            c, self.transform, clip_style(), self.scale
         )
 
     def _triangle(mut self, t: Triangle):

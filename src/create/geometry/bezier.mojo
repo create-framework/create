@@ -1,6 +1,7 @@
 from std.math import abs, ceil, min, max, sqrt
 from .geometry import (
     Arc,
+    Capsule,
     Circle,
     Ellipse,
     Line,
@@ -317,6 +318,14 @@ struct Bezier(
     # A region is met where the curve enters it or runs inside it: each
     # segment's `Line.intersects`, which sees the region's rounding.
     def intersects(self, c: Circle) -> Bool:
+        if not overlaps(self._reach(), c.bounds()):
+            return False
+        for segment in self._segments():
+            if segment.intersects(c):
+                return True
+        return False
+
+    def intersects(self, c: Capsule) -> Bool:
         if not overlaps(self._reach(), c.bounds()):
             return False
         for segment in self._segments():
