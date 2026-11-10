@@ -2,6 +2,7 @@ from std.math import max, min, pow
 from .bezier import Bezier
 from .geometry import (
     Arc,
+    Capsule,
     Circle,
     Ellipse,
     Line,
@@ -253,6 +254,12 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         return False
 
     def intersects(self, c: Circle) -> Bool:
+        for curve in self.beziers():
+            if curve.intersects(c):
+                return True
+        return False
+
+    def intersects(self, c: Capsule) -> Bool:
         for curve in self.beziers():
             if curve.intersects(c):
                 return True

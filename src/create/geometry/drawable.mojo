@@ -25,6 +25,7 @@ fill, stroke and transform the canvas has when `draw` is called.
 
 from .bezier import Bezier
 from .geometry import (
+    Capsule,
     Circle,
     Ellipse,
     Line,
@@ -67,7 +68,7 @@ trait Shape(Copyable, Deinitable, Drawable):
 
 
 trait Region(Shape):
-    """A shape with an inside: `Rectangle`, `Circle`, `Ellipse`,
+    """A shape with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`,
     `Triangle`, `Sector` and `Polygon`, the region types of `overlaps` and `contains`, and what
     `canvas.clip` takes. A curve has no inside, so it is not one."""
 
@@ -134,6 +135,9 @@ trait DrawTarget:
         ...
 
     def _ellipse(mut self, e: Ellipse):
+        ...
+
+    def _capsule(mut self, c: Capsule):
         ...
 
     def _triangle(mut self, t: Triangle):
