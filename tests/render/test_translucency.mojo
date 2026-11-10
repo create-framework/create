@@ -16,7 +16,7 @@ from create import *
 from create.core.headless import run_headless
 from create.render.render_backend import RenderBackend
 
-comptime _KINDS = 37
+comptime _KINDS = 40
 
 
 def _name(kind: Int) -> String:
@@ -56,6 +56,9 @@ def _name(kind: Int) -> String:
         "outside rotated rectangle",
         "centred triangle",
         "outside rounded triangle",
+        "ellipse shape",
+        "stroke-only ellipse shape",
+        "outside turned ellipse shape",
         "text",
         "image",
     ]
@@ -175,6 +178,16 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.stroke_alignment(StrokeAlign.OUTSIDE)
         canvas.triangle((-30, -25), (30, -25), (0, 30), corner_radius=6)
     elif kind == 35:
+        canvas.ellipse((0, 0), 70, 36)
+    elif kind == 36:
+        canvas.fill_enabled(False)
+        canvas.stroke(Color.RED, 10)
+        canvas.ellipse((0, 0), 80, 40)
+    elif kind == 37:
+        canvas.stroke_alignment(StrokeAlign.OUTSIDE)
+        with canvas.transform(rotate(0.5)):
+            canvas.ellipse((0, 0), 70, 36)
+    elif kind == 38:
         canvas.font_size(40)
         canvas.text("WM", (0, 0))
     else:

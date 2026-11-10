@@ -176,9 +176,9 @@ comptime _SHAPE_BLURRED_SQUARE_LINE = 79
 comptime _SHAPE_BLURRED_ROUND_BEZIER = 80
 comptime _SHAPE_BLURRED_SQUARE_BEZIER = 81
 comptime _SHAPE_ALIGNED = 82
-"""The first of 24 aligned-stroke cases: six region kinds, each centred and
+"""The first of 28 aligned-stroke cases: seven region kinds, each centred and
 outside, each without and then with a blurred shadow (`_draw_aligned`)."""
-comptime _SHAPE_COUNT = 106
+comptime _SHAPE_COUNT = 110
 
 comptime _SHADOW_INK = Color(0x10, 0x10, 0x10)
 """Opaque and far from `_BACKGROUND`, so a shadow counts as ink and its
@@ -216,10 +216,10 @@ def _inset(var s: Style, blur: Float64 = 0.0) -> Style:
 def _aligned_parts(i: Int) -> Tuple[Int, StrokeAlign, Bool]:
     """The `i`-th aligned case's region kind, alignment and whether it casts
     a blurred shadow."""
-    var alignment = StrokeAlign.CENTER if (i // 6) % 2 == 0 else (
+    var alignment = StrokeAlign.CENTER if (i // 7) % 2 == 0 else (
         StrokeAlign.OUTSIDE
     )
-    return (i % 6, alignment, i >= 12)
+    return (i % 7, alignment, i >= 14)
 
 
 def _draw_aligned(mut canvas: Canvas, i: Int) raises:
@@ -244,6 +244,9 @@ def _draw_aligned(mut canvas: Canvas, i: Int) raises:
             canvas.sector((0, 0), 50, 0.3, 4.0)
         elif kind == 4:
             canvas.draw(Polygon.star((0, 0), 55, 25, 5))
+        elif kind == 5:
+            with canvas.transform(rotate(0.4)):
+                canvas.ellipse((0, 0), 100, 50)
         else:
             canvas.triangle((-45, -30), (45, -30), (0, 40), corner_radius=8)
 
@@ -257,6 +260,7 @@ def _shape_name(shape: Int) -> String:
             "circle",
             "sector",
             "star",
+            "turned ellipse",
             "rounded triangle",
         ]
         return (

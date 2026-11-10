@@ -2,6 +2,7 @@ from std.math import abs, ceil, min, max, sqrt
 from .geometry import (
     Arc,
     Circle,
+    Ellipse,
     Line,
     Polygon,
     Rectangle,
@@ -320,6 +321,14 @@ struct Bezier(
             return False
         for segment in self._segments():
             if segment.intersects(c):
+                return True
+        return False
+
+    def intersects(self, e: Ellipse) -> Bool:
+        if not overlaps(self._reach(), e.bounds()):
+            return False
+        for segment in self._segments():
+            if segment.intersects(e):
                 return True
         return False
 

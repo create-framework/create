@@ -24,7 +24,15 @@ fill, stroke and transform the canvas has when `draw` is called.
 """
 
 from .bezier import Bezier
-from .geometry import Circle, Line, Polygon, Rectangle, Sector, Triangle
+from .geometry import (
+    Circle,
+    Ellipse,
+    Line,
+    Polygon,
+    Rectangle,
+    Sector,
+    Triangle,
+)
 from create.math import Point2D
 from create.math import Vector2D
 
@@ -59,8 +67,8 @@ trait Shape(Copyable, Deinitable, Drawable):
 
 
 trait Region(Shape):
-    """A shape with an inside: `Rectangle`, `Circle`, `Triangle`, `Sector`
-    and `Polygon`, the region types of `overlaps` and `contains`, and what
+    """A shape with an inside: `Rectangle`, `Circle`, `Ellipse`,
+    `Triangle`, `Sector` and `Polygon`, the region types of `overlaps` and `contains`, and what
     `canvas.clip` takes. A curve has no inside, so it is not one."""
 
     def center(self) -> Point2D:
@@ -123,6 +131,9 @@ trait DrawTarget:
         ...
 
     def _circle(mut self, c: Circle):
+        ...
+
+    def _ellipse(mut self, e: Ellipse):
         ...
 
     def _triangle(mut self, t: Triangle):

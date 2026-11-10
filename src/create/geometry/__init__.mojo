@@ -2,6 +2,7 @@ from .geometry import (
     overlaps,
     Rectangle,
     Circle,
+    Ellipse,
     Line,
     Triangle,
     Arc,
