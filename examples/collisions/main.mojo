@@ -46,10 +46,11 @@ struct Collisions(Program):
             circle=Circle((-140, 110), 80),
             triangle=Triangle((80, 40), (240, 40), (160, 190)),
             star=Polygon.star((440, 110), 95, 42, 5),
-            ellipse=Ellipse((-40, -210), 150, 90),
-            capsule=Capsule((390, -270), (530, -160), 35),
-            line=Line((-520, -140), (-160, -280)),
-            arc=Arc((180, -250), 130, 0.3, 2.5),
+            # The bottom row on the top row's columns, each about as big.
+            ellipse=Ellipse((-420, -170), 200, 130),
+            capsule=Capsule((-205, -205), (-75, -135), 35),
+            line=Line((80, -240), (240, -100)),
+            arc=Arc((440, -170), 75, 0.6, 5.0),
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
