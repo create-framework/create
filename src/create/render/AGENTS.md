@@ -9,7 +9,7 @@ and the layering rules.
 |---|---|
 | `canvas.mojo` | `Canvas` (records commands, touches no pixels), `_PersistentCanvasState`, the guards |
 | `_command.mojo` | `RenderCommand` and its kind constants; `_fill_box`, the box a fill gradient spans |
-| `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
+| `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the text renderer, interned images; replays commands via `present` (CPU) or `present_gpu` |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_backend.mojo` |
 | `_surface.mojo` | `Surface`, the borrowed RGBA view the rasteriser writes, and `MemorySurface`, an owned buffer (headless runs, pixel reads, offscreen canvases); `run_headless` hands its pixels over as an `Image` |
@@ -47,7 +47,7 @@ and laid out at replay. Add a shape by extending `_command.mojo`'s kinds and `_b
 
 **Shapes reach the canvas through `DrawTarget`** (in `create.geometry`). `canvas.draw(shape)` is
 `shape.draw_to(canvas)`, which calls the primitive for the shape's kind (`_rectangle`, `_circle`,
-`_triangle`, `_sector`, `_polygon`, `_line`, `_curves`); each records
+`_ellipse`, `_triangle`, `_sector`, `_polygon`, `_line`, `_curves`); each records
 `shape_command(shape, transform, style, scale)`. The named methods (`rectangle(p, w, h)`, …) only
 build the shape, resolving `corner_radius` against the style, and call `draw`. A new shape kind
 needs a geometry type with `draw_to`, a primitive on `DrawTarget` and `Canvas`, a `shape_command`
@@ -215,6 +215,16 @@ vertices and so slabs: stroked, ~360 µs per rounded 5-tip star, ~460 µs per ro
 ~20 ms per rounded 40-tip star. Drawing a simple polygon's stroke from its inset loop instead of
 bands would be far cheaper, but the inset folds wherever a fillet is tighter than the stroke or
 a tip or neck is thin, which a band never does; that needs a fold check and a band fallback.
+
+An **ellipse** has no command of its own: its `shape_command` records a `CMD_POLYGON` through
+`Ellipse._vertices`, as many as `circle_segments` gives its larger radius at the current transform,
+rounded up to a multiple of four so a vertex lands on each end of both axes and `_fill_box` (the
+vertices' bounds) is the ellipse's. Its stroke, alignment, shadows and clip are a polygon's, so it
+is as thick all round, which a ring between two concentric ellipses is not. A flat one records the
+zero-size `CMD_RECT` it is. Stroked, at `MEDIUM` on the CPU, 2000 small ones cost ~3x as many
+circles (~93 against ~33 ms) and 20 of radius 200 by 100 ~5x (~44 against ~9 ms); filled only,
+the same as circles. A dedicated kind with its inset ring tiled like `triangle_pieces` would close
+that, at the cost of every replay, shadow and clip path learning it.
 
 ## Clips
 

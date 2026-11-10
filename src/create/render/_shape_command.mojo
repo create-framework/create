@@ -1,9 +1,10 @@
 """A shape as the command that records it, for the canvas and its clips.
 
 `shape_command` has one overload per kind of shape: the command a render
-call records for it, in `style`, mapped by `transform`. Rounded polygons and
-sectors are flattened here, as finely as a circle of their radius is drawn at
-that transform and `scale`, so every replay sees a plain polygon. `Canvas`'s
+call records for it, in `style`, mapped by `transform`. Ellipses and rounded
+polygons and sectors are flattened here, as finely as a circle of their
+radius is drawn at that transform and `scale`, so every replay sees a plain
+polygon. `Canvas`'s
 `DrawTarget` primitives record these, and `RegionCapture` takes the one a
 `clip` region draws as, so a clip and a fill of the same shape are the same
 command but for its style.
@@ -16,6 +17,7 @@ from create.geometry.bezier import Bezier
 from create.geometry.drawable import DrawTarget
 from create.geometry.geometry import (
     Circle,
+    Ellipse,
     Line,
     Polygon,
     Rectangle,
@@ -65,6 +67,22 @@ def shape_command(
     c: Circle, transform: Matrix[3, 3], style: Style, scale: Float64
 ) -> RenderCommand:
     return circle_command(transform, style, c.position.x, c.position.y, c.r)
+
+
+def shape_command(
+    e: Ellipse, transform: Matrix[3, 3], style: Style, scale: Float64
+) -> RenderCommand:
+    """The polygon through the ellipse's outline, flattened as finely as a
+    circle of its larger radius is drawn, in a multiple of four segments so
+    its vertices span its bounds and a gradient spans them as a
+    rectangle's. A flat one is the zero-size rectangle it is."""
+    if e._is_flat():
+        return rect_command(
+            transform, style, e.position.x, e.position.y, e.w, e.h, 0.0
+        )
+    var radius_px = max(e.w, e.h) / 2.0 * pixel_scale(transform, scale)
+    var segments = (circle_segments(radius_px) + 3) // 4 * 4
+    return polygon_command(transform, style, e._vertices(segments))
 
 
 def shape_command(
@@ -179,6 +197,11 @@ struct RegionCapture(DrawTarget):
     def _circle(mut self, c: Circle):
         self.command = shape_command(
             c, self.transform, clip_style(), self.scale
+        )
+
+    def _ellipse(mut self, e: Ellipse):
+        self.command = shape_command(
+            e, self.transform, clip_style(), self.scale
         )
 
     def _triangle(mut self, t: Triangle):

@@ -19,6 +19,7 @@ from create.geometry.drawable import DrawTarget, Region
 from create.geometry.geometry import (
     Arc,
     Circle,
+    Ellipse,
     Line,
     Rectangle,
     Polygon,
@@ -1190,6 +1191,25 @@ struct Canvas(DrawTarget, Movable):
     def circle(mut self, position: Point2D, r: Int):
         self.circle(position, Float64(r))
 
+    def ellipse(mut self, position: Point2D, w: Float64, h: Float64):
+        """Draw the axis-aligned ellipse centred on `position`, `w` wide and
+        `h` high: an `Ellipse`, filling the rectangle `rectangle(position, w,
+        h)` would draw. Turn one with `transform`.
+
+        The stroke is inset, as a circle's is, and as thick all round: the
+        fill stops where it starts, and a translucent ellipse composites
+        once. It is drawn as a polygon, flattened as finely as a circle of
+        its larger radius, so filled it costs what a circle does and
+        stroked what a stroked `polygon` of its outline does, about three
+        times a circle's. It casts no inset shadow; a blurred drop shadow
+        costs what a `bezier`'s does. With `w == h` it covers what
+        `circle(position, w / 2)` does, to within its flattening.
+        """
+        self.draw(Ellipse(position, w, h))
+
+    def ellipse(mut self, position: Point2D, w: Int, h: Int):
+        self.ellipse(position, Float64(w), Float64(h))
+
     def sector(
         mut self,
         position: Point2D,
@@ -1396,6 +1416,11 @@ struct Canvas(DrawTarget, Movable):
     def _circle(mut self, c: Circle):
         self._state._backend.record(
             shape_command(c, self._transform, self._style, self._scale)
+        )
+
+    def _ellipse(mut self, e: Ellipse):
+        self._state._backend.record(
+            shape_command(e, self._transform, self._style, self._scale)
         )
 
     def _triangle(mut self, t: Triangle):
