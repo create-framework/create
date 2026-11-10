@@ -1,6 +1,6 @@
 """Collision tests against a circle that follows the mouse.
 
-The four regions light up while they `overlap` it, and the two curves, a
+The five regions light up while they `overlap` it, and the two curves, a
 `Line` and an `Arc`, while they `intersect` it: a curve has no inside, so it
 is crossed rather than overlapped. A thin line runs from the mouse to each
 shape's `closest_point`, which inside a region is the mouse itself.
@@ -33,6 +33,7 @@ struct Collisions(Program):
     var circle: Circle
     var triangle: Triangle
     var star: Polygon
+    var ellipse: Ellipse
     var line: Line
     var arc: Arc
 
@@ -44,6 +45,7 @@ struct Collisions(Program):
             circle=Circle((-140, 110), 80),
             triangle=Triangle((80, 40), (240, 40), (160, 190)),
             star=Polygon.star((440, 110), 95, 42, 5),
+            ellipse=Ellipse((-40, -210), 150, 90),
             line=Line((-520, -140), (-160, -280)),
             arc=Arc((180, -250), 130, 0.3, 2.5),
         )
@@ -66,6 +68,8 @@ struct Collisions(Program):
             canvas.draw(self.triangle)
             canvas.fill(_HIT if overlaps(self.star, self.probe) else _SHAPE)
             canvas.draw(self.star)
+            canvas.fill(_HIT if overlaps(self.ellipse, self.probe) else _SHAPE)
+            canvas.draw(self.ellipse)
 
         # Curves: stroked, lit while they cross the probe.
         with canvas.style(stroke_thickness=8):
@@ -83,6 +87,7 @@ struct Collisions(Program):
         _reach(canvas, self.circle, mouse)
         _reach(canvas, self.triangle, mouse)
         _reach(canvas, self.star, mouse)
+        _reach(canvas, self.ellipse, mouse)
         _reach(canvas, self.line, mouse)
         _reach(canvas, self.arc, mouse)
 
