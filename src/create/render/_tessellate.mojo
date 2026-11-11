@@ -290,7 +290,7 @@ def _rounded_rect_fill(
 ):
     """The local-space cross decomposition: a full-height centre band, a
     shorter band on each side, and a quarter-circle fan of `n` segments at
-    each corner — the same split `_backend.mojo::_rect`'s uniform branch
+    each corner — the same split `_cpu_replay.mojo::_rect`'s uniform branch
     uses, cheap here because every vertex is mapped individually anyway.
 
     `n` is the caller's, not derived from `r`: inside a stroke ring the
@@ -374,7 +374,7 @@ def emit_rect(
     """Fill quad plus, when stroked, a four-quad ring inset from the edge.
 
     Rounded corners need no uniform/non-uniform split like
-    `_backend.mojo::_rect` does: every vertex here is already mapped
+    `_cpu_replay.mojo::_rect` does: every vertex here is already mapped
     individually, so a sheared rounded corner comes out as the ellipse arc
     it should be for free, exactly as `emit_circle` already relies on.
 
@@ -618,8 +618,7 @@ def _fillet_arc_span(
     ]
 ) -> Float64:
     """The signed sweep from a fillet's `angle_in` to its `angle_out`,
-    normalised to `[-PI, PI]` — matches `_backend.mojo::_render_fillet_arc`'s
-    own normalisation so the two backends walk the identical arc."""
+    normalised to `[-PI, PI]`, so the arc is walked the short way round."""
     var delta = f[7] - f[6]
     if delta > PI:
         delta -= 2.0 * PI
@@ -647,9 +646,8 @@ def _rounded_triangle_fill(
     color: Color,
 ):
     """The eroded hexagon (a centroid fan over the six tangent points) union
-    a corner fan per vertex — the same (eroded triangle) union (3 fillet
-    discs) decomposition `_backend.mojo::_triangle`'s uniform branch uses,
-    cheap here because every vertex is mapped individually anyway. Full
+    a corner fan per vertex: the eroded triangle union its three fillet
+    discs, cheap here because every vertex is mapped individually anyway. Full
     size, not inset — the fill is unaffected by whether a stroke is
     rendered, exactly as the unrounded triangle's own fill is."""
     var centre = mat_apply(m, cx, cy)

@@ -468,7 +468,7 @@ struct Canvas(DrawTarget, Movable):
 
     # `_uniform`, `_pixel_scale`, `_device_bounds` and `_stroke_thickness_px`
     # used to live here. They are properties of a matrix, not of a frame, and only
-    # the replay needs them now — see `_backend.mojo`.
+    # the replay needs them now — see `_transform.mojo`.
 
     def transform(mut self, m: Matrix[3, 3]) -> TransformGuard[origin_of(self)]:
         """Apply `m` to everything rendered inside a `with` block.

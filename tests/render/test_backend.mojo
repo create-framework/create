@@ -931,9 +931,9 @@ def test_a_blurred_image_shadow_softens_past_its_silhouette() raises -> None:
     assert_true(mem.pixel(94, 50).r > 0, "the blur stops at the edge")
     assert_true(mem.pixel(94, 50).r < 128)
     # Once the frame is cached, a repeat blurs nothing new.
-    assert_equal(len(backend.shadow_masks), 1)
+    assert_equal(len(backend.cpu.shadow_masks), 1)
     _blurred_image_frame(backend, mem, image)
-    assert_equal(len(backend.shadow_masks), 1)
+    assert_equal(len(backend.cpu.shadow_masks), 1)
 
 
 def test_a_blurred_shadow_turns_with_its_image() raises -> None:
@@ -959,7 +959,7 @@ def test_a_blurred_shadow_turns_with_its_image() raises -> None:
     assert_true(mem.pixel(90, 39).r > 128, "the top tip is missing")
     assert_true(mem.pixel(99, 41).r < 64, "the square's corner is shaded")
     # A turned image's mask isn't cached.
-    assert_equal(len(backend.shadow_masks), 0)
+    assert_equal(len(backend.cpu.shadow_masks), 0)
 
 
 def test_a_blurred_text_shadow_is_softer_than_a_hard_one() raises -> None:

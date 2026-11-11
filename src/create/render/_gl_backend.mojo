@@ -605,7 +605,7 @@ struct GLRenderer(Movable):
     time."""
     var shadow_textures: Dict[Int, UInt32]
     """Blurred image silhouettes as textures, keyed by `shadow_mask_key`
-    like the CPU's `Backend.shadow_masks`. Each is a texture of its own on
+    like the CPU's `CpuReplay.shadow_masks`. Each is a texture of its own on
     the image unit, so a blurred image shadow costs a draw call per
     distinct mask it switches to, where a hard one samples the image's own
     texture and costs none."""
