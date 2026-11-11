@@ -23,7 +23,11 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     `speed` at full tilt and never faster on a diagonal. Each has a radial
     dead zone of `STICK_DEAD_ZONE`, rescaled so the stick still eases up
     from zero past it: a resting stick reads exactly `Vector2D.ZERO` rather
-    than drifting. Triggers are 0 (released) to 1 (pulled all the way).
+    than drifting. Triggers are 0 (released) to 1 (pulled all the way), and
+    also buttons, `GamepadButton.LEFT_TRIGGER`/`RIGHT_TRIGGER`, so "fire on
+    pull" is `pad.pressed(GamepadButton.RIGHT_TRIGGER)`: down from
+    `TRIGGER_PRESS` and up again below `TRIGGER_RELEASE`, so a trigger held
+    near halfway doesn't flicker between the two.
 
     A slot that holds no gamepad reads all zero and `connected` False, so a
     program can read player two's pad before one is plugged in.
@@ -38,6 +42,12 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     tilt. A resting stick sits up to about a quarter of the way off centre on
     a worn pad; 0.2 hides that on most without making small moves sluggish.
     """
+
+    comptime TRIGGER_PRESS = 0.5
+    """How far a trigger is pulled before it reads as its button down."""
+    comptime TRIGGER_RELEASE = 0.4
+    """How far a trigger falls back before its button reads up again: below
+    `TRIGGER_PRESS`, so a pull resting near the line stays one press."""
 
     var connected: Bool
     var connected_this_frame: Bool
@@ -58,7 +68,7 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     # needs both axes of a stick and each event brings one.
     var _left_raw: Vector2D
     var _right_raw: Vector2D
-    # 26 buttons, one bit each.
+    # 26 buttons and the two triggers, one bit each.
     var _held_buttons: Int
     var _pressed_buttons: Int
     var _released_buttons: Int
@@ -139,6 +149,12 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
         self._held_buttons &= ~button._bit()
         self._released_buttons |= button._bit()
 
+    def _trigger_as_button(mut self, value: Float64, button: GamepadButton):
+        if value >= Self.TRIGGER_PRESS:
+            self._press(button)
+        elif value < Self.TRIGGER_RELEASE and self.down(button):
+            self._release(button)
+
     def _set_axis(mut self, axis: Int, value: Float64):
         """Record one axis reading, `value` as `GamepadAxisMoved` carries it:
         y positive down, which is flipped here."""
@@ -152,8 +168,10 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
             self._right_raw.y = -value
         elif axis == _LEFT_TRIGGER:
             self.left_trigger = value
+            self._trigger_as_button(value, GamepadButton.LEFT_TRIGGER)
         elif axis == _RIGHT_TRIGGER:
             self.right_trigger = value
+            self._trigger_as_button(value, GamepadButton.RIGHT_TRIGGER)
         self.left_stick = _dead_zone(self._left_raw)
         self.right_stick = _dead_zone(self._right_raw)
 

@@ -306,5 +306,55 @@ def test_focus_lost_releases_pad_buttons() raises -> None:
     assert_true(context.gamepad().released(GamepadButton.SOUTH))
 
 
+def _pull(mut context: Context, value: Float64):
+    # SDL's right trigger axis is 5.
+    _frame(context, [Event(GamepadAxisMoved(1, 5, value))])
+
+
+def test_a_trigger_reads_as_a_button_with_edges() raises -> None:
+    var context = Context()
+    _frame(context, [Event(GamepadAdded(1, "Pad 1"))])
+    _pull(context, 0.3)
+    assert_false(context.gamepad().down(GamepadButton.RIGHT_TRIGGER))
+
+    _pull(context, 0.6)
+    var pad = context.gamepad()
+    assert_true(pad.down(GamepadButton.RIGHT_TRIGGER))
+    assert_true(pad.pressed(GamepadButton.RIGHT_TRIGGER))
+    assert_equal(pad.button, GamepadButton.RIGHT_TRIGGER)
+    assert_false(pad.down(GamepadButton.LEFT_TRIGGER))
+
+    _pull(context, 1.0)
+    assert_false(context.gamepad().pressed(GamepadButton.RIGHT_TRIGGER))
+
+    _pull(context, 0.0)
+    pad = context.gamepad()
+    assert_false(pad.down(GamepadButton.RIGHT_TRIGGER))
+    assert_true(pad.released(GamepadButton.RIGHT_TRIGGER))
+
+
+def test_a_trigger_near_halfway_does_not_flicker() raises -> None:
+    # Pressed at 0.5, released only below 0.4: a pull wavering between the
+    # two is one press, not one a frame.
+    var context = Context()
+    _frame(context, [Event(GamepadAdded(1, "Pad 1"))])
+    _pull(context, 0.5)
+    assert_true(context.gamepad().pressed(GamepadButton.RIGHT_TRIGGER))
+    for value in [0.45, 0.52, 0.41, 0.49]:
+        _pull(context, value)
+        var pad = context.gamepad()
+        assert_true(pad.down(GamepadButton.RIGHT_TRIGGER))
+        assert_false(pad.pressed(GamepadButton.RIGHT_TRIGGER))
+        assert_false(pad.released(GamepadButton.RIGHT_TRIGGER))
+    _pull(context, 0.39)
+    assert_true(context.gamepad().released(GamepadButton.RIGHT_TRIGGER))
+
+
+def test_trigger_buttons_print_as_their_constants() raises -> None:
+    assert_equal(
+        String(GamepadButton.LEFT_TRIGGER), "GamepadButton.LEFT_TRIGGER"
+    )
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

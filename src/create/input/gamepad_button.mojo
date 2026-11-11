@@ -49,6 +49,11 @@ struct GamepadButton(
     comptime MISC_4 = GamepadButton(23)
     comptime MISC_5 = GamepadButton(24)
     comptime MISC_6 = GamepadButton(25)
+    comptime LEFT_TRIGGER = GamepadButton(26)
+    """The left trigger pulled past halfway, read as a button: not one SDL
+    sends, but worked out from `Gamepad.left_trigger` so a pull has edges."""
+    comptime RIGHT_TRIGGER = GamepadButton(27)
+    """The right trigger pulled past halfway, like `LEFT_TRIGGER`."""
 
     def __init__(out self, value: Int):
         self.value = value
@@ -104,4 +109,6 @@ comptime _NAMED_BUTTONS = [
     (GamepadButton.MISC_4, StaticString("MISC_4")),
     (GamepadButton.MISC_5, StaticString("MISC_5")),
     (GamepadButton.MISC_6, StaticString("MISC_6")),
+    (GamepadButton.LEFT_TRIGGER, StaticString("LEFT_TRIGGER")),
+    (GamepadButton.RIGHT_TRIGGER, StaticString("RIGHT_TRIGGER")),
 ]
