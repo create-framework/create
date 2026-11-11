@@ -67,14 +67,23 @@ jobs:
           # Examples, then a built program run outside the environment.
           - name: linux-examples
             run: pixi run build-examples && pixi run check-standalone
-          - name: linux-tests
-            # GL tests skip without a context; here a skip means the Mesa
-            # setup broke, so it fails the job rather than passing silently.
-            run: pixi run test | tee test.log && ! grep -q SKIP test.log
+          # The suite in four shards on four runners: built cold, after a
+          # library change, it is about an hour of CPU, three times what one
+          # runner gets through in the time the other checks take. GL tests
+          # skip without a context; here a skip means the Mesa setup broke,
+          # so it fails the job rather than passing silently.
+          - name: linux-tests-1
+            run: pixi run test --shard 1/4 | tee test.log && ! grep -q SKIP test.log
+          - name: linux-tests-2
+            run: pixi run test --shard 2/4 | tee test.log && ! grep -q SKIP test.log
+          - name: linux-tests-3
+            run: pixi run test --shard 3/4 | tee test.log && ! grep -q SKIP test.log
+          - name: linux-tests-4
+            run: pixi run test --shard 4/4 | tee test.log && ! grep -q SKIP test.log
     steps:
       - uses: actions/checkout@v7
       - name: Install Mesa EGL
-        if: matrix.name == 'linux-tests'
+        if: startsWith(matrix.name, 'linux-tests')
         run: |
           sudo apt-get update
           sudo apt-get install -y libegl1 libgl1-mesa-dri

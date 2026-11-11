@@ -49,6 +49,7 @@ pixi run benchmark frame                  # benchmarks/, same form; frame cpu fo
 pixi run test                             # whole suite, concurrent
 pixi run test render                      # subpackage, file name sans test_, or path; several allowed
 pixi run test -j 4 canvas tween           # pin worker count (default nproc, max 8)
+pixi run test --shard 2/4                 # every 4th file from the 2nd; CI runs 4 shards
 pixi run precompile                       # type-check the library into build/create.mojoc
 pixi run build-examples                   # type-check every example and benchmark; a warning fails it
 pixi run check-standalone                 # a `mojo build` program, run outside the environment
@@ -76,9 +77,10 @@ the allowlist is in `.githooks/_inert.sh`, read by the hook and the workflow ali
 
 **Workflow.** `main` is protected by a ruleset: no direct pushes, no force pushes, no deletion,
 and a linear history. Every change lands as a pull request, merged once the required check `ci`
-passes — it passes when `linux-format`, `linux-precompile`, `linux-examples` and `linux-tests` all
-passed, or were skipped for an inert change; no approval is required. **Rebase and merge** is the
-only merge method enabled: squash and merge commits are off.
+passes — it passes when `linux-format`, `linux-precompile`, `linux-examples` and the four test
+shards `linux-tests-1`…`linux-tests-4` all passed, or were skipped for an inert change; no approval
+is required. **Rebase and merge** is the only merge method enabled: squash and merge commits are
+off.
 
 ```bash
 git switch -c some-change                 # from an up-to-date main
