@@ -40,7 +40,8 @@ from create.math.matrix import (
 )
 from create.image.image import Image
 from create.image.animator import Animator
-from ._backend import Backend, _ImageRequest, _Recording, _seed
+from ._backend import Backend, _seed
+from ._captures import _ImageRequest, _Recording
 from ._gif import GifWriter
 from ._command import (
     clear_command,
@@ -879,7 +880,7 @@ struct Canvas(DrawTarget, Movable):
         var pw = Int(self._width * scale + 0.5)
         var ph = Int(self._height * scale + 0.5)
         capture.set_size(pw, ph)
-        self._state._backend.request_image(
+        self._state._backend.captures.request_image(
             _ImageRequest(
                 path,
                 pw,
@@ -1036,7 +1037,7 @@ struct Canvas(DrawTarget, Movable):
             self._state._backend.bake(self._scale)
             self._state._backend.target.value().save(path, opaque=False)
             return
-        self._state._backend.request_screenshot(path)
+        self._state._backend.captures.request_screenshot(path)
 
     def start_recording(
         mut self,
@@ -1122,7 +1123,7 @@ struct Canvas(DrawTarget, Movable):
         var max_slots = Optional[Int]()
         if seconds:
             max_slots = Int(ceil(seconds.value() * fps - 1e-9))
-        self._state._backend.start_recording(
+        self._state._backend.captures.start_recording(
             _Recording(
                 GifWriter(path, pw, ph),
                 capture.scale,
@@ -1139,17 +1140,17 @@ struct Canvas(DrawTarget, Movable):
         complete when this returns, and the frame it is called in is not in
         it. `cancel_recording` ends one without saving. Nothing happens when
         nothing is being recorded."""
-        self._state._backend.finish_recording()
+        self._state._backend.captures.finish_recording()
 
     def cancel_recording(mut self) raises:
         """End the recording in progress without saving it: no file appears
         at its path, and a file already there is left as it was. Nothing
         happens when nothing is being recorded."""
-        self._state._backend.cancel_recording()
+        self._state._backend.captures.cancel_recording()
 
     def recording(self) -> Bool:
         """Whether a recording started by `start_recording` is in progress."""
-        return Bool(self._state._backend.recording)
+        return Bool(self._state._backend.captures.recording)
 
     def rectangle(
         mut self,

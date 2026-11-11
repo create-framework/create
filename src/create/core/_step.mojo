@@ -17,7 +17,7 @@ def first_step[
     """
     context._count_frame()
     # The clock a recording is timed by: render never sees `Context`.
-    state._backend.clock = context.time.elapsed
+    state._backend.captures.clock = context.time.elapsed
     var canvas = context._new_canvas(state^)
     try:
         var program = P.create(context, canvas)
@@ -60,7 +60,7 @@ def step[
     know how to build; in the windowed case that is only valid after events
     have been pumped.
     """
-    state._backend.clock = context.time.elapsed
+    state._backend.captures.clock = context.time.elapsed
     var canvas = context._new_canvas(state^)
     program.update(context, canvas)
     # Recorded last, so it doubles as the clip for anything rendered out of
