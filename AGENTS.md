@@ -59,8 +59,9 @@ pixi run setup                            # once per clone: git hooks + blame ig
 `example` and `benchmark` run against `build/create.mojoc` (`-I build`), not the source: they
 depend on `precompile`, which pixi's task cache skips while no `src/create/**/*.mojo` file and
 nothing in the environment has changed. So a run with the library unchanged starts in about 2 s
-rather than 8; the first one after a library edit pays the ~10 s rebuild. Tests and the CI
-builds still compile from `src`.
+rather than 8; the first one after a library edit pays the ~10 s rebuild. `test`,
+`build-examples` and `check-standalone` precompile `src` afresh into a temporary package of their
+own and build every file against it, so none is ever stale or re-parses the library per file.
 
 Two tiers of automated checks, and a third run by hand:
 
