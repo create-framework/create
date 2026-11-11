@@ -56,6 +56,28 @@ def _point_on_segment(p: Point2D, a: Point2D, b: Point2D) -> Bool:
     ) <= p.y <= max(a.y, b.y)
 
 
+def _segments_meet(a: Point2D, b: Point2D, c: Point2D, d: Point2D) -> Bool:
+    """Whether the segment from `a` to `b` meets the one from `c` to `d`,
+    touching included, exactly: decided by the signs of cross products. A
+    zero-length segment is the point it collapses to."""
+    var o1 = _orientation(a, b, c)
+    var o2 = _orientation(a, b, d)
+    var o3 = _orientation(c, d, a)
+    var o4 = _orientation(c, d, b)
+    if o1 != 0 and o2 != 0 and o1 != o2 and o3 != 0 and o4 != 0 and o3 != o4:
+        return True
+    # Collinear arms -- inclusive: touching or overlapping counts.
+    if o1 == 0 and _point_on_segment(c, a, b):
+        return True
+    if o2 == 0 and _point_on_segment(d, a, b):
+        return True
+    if o3 == 0 and _point_on_segment(a, c, d):
+        return True
+    if o4 == 0 and _point_on_segment(b, c, d):
+        return True
+    return False
+
+
 def _distance_squared(p: Point2D, q: Point2D) -> Float64:
     var d = p - q
     return d.dot(d)
@@ -205,70 +227,6 @@ def _arc_middles(a: Arc, crossings: List[Point2D]) -> List[Point2D]:
         var middle = s[0] + (cuts[i] + cuts[i + 1]) / 2.0
         middles.append(a.position + _unit(middle) * a.r)
     return middles^
-
-
-def _project_range[
-    N: Int
-](nx: Float64, ny: Float64, pts: Array[Point2D, N]) -> Tuple[Float64, Float64]:
-    var lo = nx * pts[0].x + ny * pts[0].y
-    var hi = lo
-    for i in range(1, N):
-        var proj = nx * pts[i].x + ny * pts[i].y
-        lo = min(lo, proj)
-        hi = max(hi, proj)
-    return (lo, hi)
-
-
-def _ranges_separate[
-    N: Int, M: Int
-](
-    nx: Float64,
-    ny: Float64,
-    a: Array[Point2D, N],
-    b: Array[Point2D, M],
-) -> Bool:
-    var ra = _project_range(nx, ny, a)
-    var rb = _project_range(nx, ny, b)
-    return ra[1] < rb[0] or rb[1] < ra[0]
-
-
-def _polygons_overlap[
-    N: Int, M: Int
-](a: Array[Point2D, N], b: Array[Point2D, M]) -> Bool:
-    # SAT over both polygons' edge normals -- exact for convex polygons.
-    # A zero-length edge contributes no normal, so its axis is skipped; its
-    # direction is tested instead (needed to separate collinear degenerate
-    # polygons), and the world axes are always tested (needed when both
-    # polygons collapse to points and contribute no edge axes at all).
-    # Testing extra axes is always sound: separation on any axis proves
-    # disjointness, and genuinely overlapping shapes separate on none.
-    for i in range(N):
-        var p0 = a[i]
-        var p1 = a[(i + 1) % N]
-        var dx = p1.x - p0.x
-        var dy = p1.y - p0.y
-        if dx == 0.0 and dy == 0.0:
-            continue
-        if _ranges_separate(-dy, dx, a, b):
-            return False
-        if _ranges_separate(dx, dy, a, b):
-            return False
-    for i in range(M):
-        var p0 = b[i]
-        var p1 = b[(i + 1) % M]
-        var dx = p1.x - p0.x
-        var dy = p1.y - p0.y
-        if dx == 0.0 and dy == 0.0:
-            continue
-        if _ranges_separate(-dy, dx, a, b):
-            return False
-        if _ranges_separate(dx, dy, a, b):
-            return False
-    if _ranges_separate(1.0, 0.0, a, b):
-        return False
-    if _ranges_separate(0.0, 1.0, a, b):
-        return False
-    return True
 
 
 def _rounded_outline[

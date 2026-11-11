@@ -4,6 +4,7 @@ from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import triangle_corner_radius
 from .bezier import _curve_segments
 from .drawable import Curve, DrawTarget, Region
+from ._collider import _Collider, _Core, _contains
 from ._shared import (
     _closest_on_segment,
     _distance_squared,
@@ -22,7 +23,13 @@ from .sector import Sector
 
 
 struct Triangle(
-    Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
+    Copyable,
+    Equatable,
+    ImplicitlyCopyable,
+    Movable,
+    Region,
+    Writable,
+    _Collider,
 ):
     """A triangle defined by its three vertices `a`, `b`, `c`: `center`,
     `area`, `closest_point`, `contains`, `move_to`, `translate`.
@@ -164,53 +171,23 @@ struct Triangle(
         var has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
         return not (has_neg and has_pos)
 
-    # As for `Rectangle`: a rounded triangle, or a rounded shape it is
-    # given, is tested as its outline polygon.
+    # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
+    # a `Line`, is a convex core grown by a radius, and is held exactly when
+    # a disc of its radius round every corner of its core is (`_contains`).
     def contains(self, other: Triangle) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(other)
-        if other._radius() > 0.0:
-            return self.contains(other._outline())
-        for p in other._points():
-            if not self.contains(p):
-                return False
-        return True
+        return _contains(self, other)
 
     def contains(self, r: Rectangle) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(r)
-        if r._radius() > 0.0:
-            return self.contains(r._outline())
-        for p in r._points():
-            if not self.contains(p):
-                return False
-        return True
+        return _contains(self, r)
 
     def contains(self, c: Circle) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(c)
-        if not self.contains(c.position):
-            return False
-        var r_sq = c.r * c.r
-        return (
-            _distance_squared(
-                _closest_on_segment(c.position, self.a, self.b), c.position
-            )
-            >= r_sq
-            and _distance_squared(
-                _closest_on_segment(c.position, self.b, self.c), c.position
-            )
-            >= r_sq
-            and _distance_squared(
-                _closest_on_segment(c.position, self.c, self.a), c.position
-            )
-            >= r_sq
-        )
+        return _contains(self, c)
 
     def contains(self, l: Line) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(l)
-        return self.contains(l.start) and self.contains(l.end)
+        return _contains(self, l)
+
+    def contains(self, c: Capsule) -> Bool:
+        return _contains(self, c)
 
     def contains[C: Curve](self, curve: C) -> Bool:
         """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
@@ -222,6 +199,8 @@ struct Triangle(
                 return False
         return True
 
+    # A rounded triangle holds the rest as its outline polygon, and a
+    # rounded shape is tested as its own.
     def contains(self, s: Sector) -> Bool:
         if self._radius() > 0.0:
             return self._outline().contains(s)
@@ -264,14 +243,6 @@ struct Triangle(
             return self.contains(e.bounds())
         return e._to_unit(self).contains(_UNIT_CIRCLE)
 
-    def contains(self, c: Capsule) -> Bool:
-        # Convex, so it holds the capsule when it holds the discs at both
-        # ends, whose hull the capsule is.
-        for end in c._ends():
-            if not self.contains(end):
-                return False
-        return True
-
     def draw_to[T: DrawTarget](self, mut target: T):
         target._triangle(self)
 
@@ -284,6 +255,15 @@ struct Triangle(
         moved.b = moved.b + delta
         moved.c = moved.c + delta
         return moved^
+
+    comptime _corner_count = 3
+
+    def _core(self) -> _Core[Self._corner_count]:
+        """The inner triangle, grown by the corner radius."""
+        var r = self._radius()
+        if r > 0.0:
+            return _Core[Self._corner_count](self._inner()._points(), r)
+        return _Core[Self._corner_count](self._points(), 0.0)
 
     def _radius(self) -> Float64:
         """The corner radius as drawn, clamped as `canvas.triangle` clamps
