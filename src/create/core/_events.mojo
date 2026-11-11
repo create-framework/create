@@ -11,6 +11,7 @@ The window itself is deliberately absent: the arms only ever need to say
 """
 
 from create._window.event import (
+    ClipboardChanged,
     Event,
     FocusLost,
     GamepadAdded,
@@ -64,10 +65,11 @@ def apply_events(
         if event.isa[Quit]():
             quit = True
         elif event.isa[KeyDown]():
-            var key = Key(event[KeyDown].scancode)
+            ref down = event[KeyDown]
+            var key = Key(down.scancode)
             if key == Key.ESCAPE and context._quit_on_escape:
                 quit = True
-            context.keyboard._key_down(key)
+            context.keyboard._key_down(key, down.keycode)
         elif event.isa[KeyUp]():
             context.keyboard._key_up(Key(event[KeyUp].scancode))
         elif event.isa[TextInput]():
@@ -110,6 +112,8 @@ def apply_events(
         elif event.isa[GamepadButtonUp]():
             var e = event[GamepadButtonUp]
             context._gamepads._button_up(e.id, GamepadButton(e.button))
+        elif event.isa[ClipboardChanged]():
+            context._clipboard = event[ClipboardChanged].text
         elif event.isa[FocusLost]():
             context._release_held()
         elif event.isa[Resized]():

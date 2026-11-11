@@ -39,6 +39,7 @@ from create._window._sdl import (
     SDL_EVENT_MOUSE_WHEEL,
     SDL_EVENT_WINDOW_FOCUS_LOST,
     _OFF_KEY_SCANCODE,
+    _OFF_KEY_KEYCODE,
     _OFF_TEXT_TEXT,
     _OFF_MOTION_X,
     _OFF_MOTION_Y,
@@ -222,6 +223,15 @@ def test_focus_lost_translates() raises -> None:
         SDL_EVENT_WINDOW_FOCUS_LOST, buf.unsafe_ptr()
     )
     assert_true(translated.value().isa[FocusLost]())
+
+
+def test_key_down_carries_its_position_and_its_label() raises -> None:
+    var buf = new_event_buffer(SDL_EVENT_KEY_DOWN)
+    write_u32(buf, _OFF_KEY_SCANCODE, 20)  # where QWERTY has Q
+    write_u32(buf, _OFF_KEY_KEYCODE, 97)  # labelled a, as on AZERTY
+    var translated = translate_event(SDL_EVENT_KEY_DOWN, buf.unsafe_ptr())
+    assert_equal(translated.value()[KeyDown].scancode, 20)
+    assert_equal(translated.value()[KeyDown].keycode, 97)
 
 
 def main() raises:

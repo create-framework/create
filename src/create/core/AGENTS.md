@@ -13,6 +13,7 @@ layering rules; the render side is in [../render/AGENTS.md](../render/AGENTS.md)
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor — before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |
 | `_events.mojo` | `apply_events` — the one `Event` fold, into `context.keyboard`, `context.mouse` and the gamepads, through each device's per-event methods |
 | `context.mojo`, `time.mojo` | The run state the loop owns and the program reads: `Context` and its `time` reading. Its devices (`keyboard`, `mouse`, `_gamepads`) are `create.input`'s |
+| `editable_text.mojo` | `EditableText`, a consumer of `Context` rather than run state: it replays `keyboard._strokes` and reaches the clipboard, which is why it sits in `core` and not `input` |
 | `date_time.mojo` | `DateTime`, the wall clock via libc `clock_gettime` + `localtime_r`. Not run state: nothing in the loop touches it |
 
 ## Rules
@@ -71,6 +72,17 @@ until it is opened, so `_SDLWindow.events()` — the one event pump both windows
 it on removed, and a pad that fails to open is never announced. `apply_events` only assigns slots by
 SDL's id. The gamepad subsystem is best-effort: `SDL.init_subsystems` raises only if video fails, and
 a refused gamepad subsystem just means no gamepad events.
+
+**The clipboard is mirrored, not queried.** `Context` keeps the clipboard's text so a program reads
+it with no window in reach: the windowed loops seed it from `win.clipboard()` before `create`, and
+`_SDLWindow.events()` reads the new text on `SDL_EVENT_CLIPBOARD_UPDATE` into a `ClipboardChanged`
+event. `context.clipboard(text)` counts its writes, and `_apply_window_dials` sends each one once —
+the count compared against `_AppliedWindow`'s, as a dial's value is. A headless run's clipboard is
+the mirror alone.
+
+**Typing is also kept in order.** Beside its sets, `Keyboard` records each key-down (with the
+layout's keycode as its label, and the modifiers then held) and each text event as a `_Stroke`,
+cleared with the edges, which is what `EditableText` replays.
 
 **Rumble flows the other way.** `context.rumble` queues a request addressed by SDL's id; both
 windowed loops send the queue after presenting (`_finish_frame`), and `_advance_frame` empties it, which is also how

@@ -13,6 +13,9 @@ from std.testing import (
 
 from create.core.context import Context
 from create.core.cursor import Cursor
+from create.core._events import apply_events
+from create.render._viewport import Viewport
+from create._window.event import ClipboardChanged, Event
 from create.core.window_mode import WindowMode
 from create.render import Autoscale
 
@@ -120,6 +123,17 @@ def test_cursor_from_name() raises -> None:
     assert_equal(Cursor.from_name("Not_Allowed").value(), Cursor.NOT_ALLOWED)
     assert_equal(Cursor.from_name("HIDDEN").value(), Cursor.HIDDEN)
     assert_false(Cursor.from_name("pointer"))
+
+
+def test_clipboard_reads_back_and_follows_the_system() raises -> None:
+    var context = Context()
+    assert_equal(context.clipboard(), "")
+    context.clipboard("mine")
+    assert_equal(context.clipboard(), "mine")
+    # Another program's copy arrives as an event.
+    var events: List[Event] = [ClipboardChanged("theirs")]
+    _ = apply_events(events, Viewport(), context)
+    assert_equal(context.clipboard(), "theirs")
 
 
 def main() raises:

@@ -33,6 +33,7 @@ struct _AppliedWindow(Movable):
     var cursor: Cursor
     var mouse_locked: Bool
     var text_input: Bool
+    var clipboard_writes: Int
     var mode: WindowMode
 
     def __init__(out self, context: Context):
@@ -47,14 +48,15 @@ struct _AppliedWindow(Movable):
         self.mouse_locked = False
         # A window starts taking text as it opens.
         self.text_input = True
+        self.clipboard_writes = context._clipboard_writes
         self.mode = context._window_mode
 
 
 def _apply_window_dials[
     W: NativeWindow
 ](mut win: W, mut applied: _AppliedWindow, context: Context) raises:
-    """Send the window the title, resizability, cursor, pointer lock and
-    text input the program set, if they changed. Called before presenting, so the change shows with the
+    """Send the window the title, resizability, cursor, pointer lock, text
+    input and clipboard the program set, if they changed. Called before presenting, so the change shows with the
     frame it was made in."""
     if context._title != applied.title:
         win.set_title(context._title)
@@ -77,6 +79,9 @@ def _apply_window_dials[
     if context._text_input != applied.text_input:
         win.set_text_input(context._text_input)
         applied.text_input = context._text_input
+    if context._clipboard_writes != applied.clipboard_writes:
+        win.set_clipboard(context._clipboard)
+        applied.clipboard_writes = context._clipboard_writes
 
 
 def _system_cursor(cursor: Cursor) -> Int:

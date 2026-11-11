@@ -20,11 +20,13 @@ from ._sdl import (
     SDL_SYSTEM_CURSOR_WAIT,
     SDL_EVENT_QUIT,
     SDL_EVENT_WINDOW_RESIZED,
+    SDL_EVENT_CLIPBOARD_UPDATE,
     event_type,
     window_data1,
     window_data2,
 )
 from .event import (
+    ClipboardChanged,
     Event,
     Quit,
     Resized,
@@ -94,6 +96,14 @@ trait NativeWindow:
     def show_cursor(mut self, visible: Bool) raises:
         """Show or hide the mouse cursor over the window; a request, like
         `set_system_cursor`."""
+        ...
+
+    def clipboard(self) raises -> String:
+        """The clipboard's text, empty for none."""
+        ...
+
+    def set_clipboard(mut self, text: String) raises:
+        """Put `text` on the clipboard; a request, like `set_system_cursor`."""
         ...
 
     def set_text_input(mut self, enabled: Bool) raises:
@@ -224,6 +234,12 @@ struct _SDLWindow:
     def lock_mouse(mut self, enabled: Bool) raises:
         _ = self.sdl.set_window_relative_mouse_mode(self.handle, enabled)
 
+    def clipboard(self) raises -> String:
+        return self.sdl.clipboard_text()
+
+    def set_clipboard(mut self, text: String) raises:
+        _ = self.sdl.set_clipboard_text(text)
+
     def set_text_input(mut self, enabled: Bool) raises:
         if enabled:
             self.sdl.start_text_input(self.handle)
@@ -276,6 +292,12 @@ struct _SDLWindow:
                 self.width = Int(window_data1(ptr))
                 self.height = Int(window_data2(ptr))
                 events.append(Event(Resized(self.width, self.height)))
+            elif kind == SDL_EVENT_CLIPBOARD_UPDATE:
+                # Read as it changes rather than when asked, so the program
+                # reads it from its `Context` with no window in reach.
+                events.append(
+                    Event(ClipboardChanged(self.sdl.clipboard_text()))
+                )
             else:
                 var translated = translate_gamepad_device(self.sdl, kind, ptr)
                 if not translated:

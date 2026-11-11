@@ -69,6 +69,10 @@ struct Context(Copyable, Movable):
     var _cursor: Cursor
     var _lock_mouse: Bool
     var _text_input: Bool
+    var _clipboard: String
+    # Counts `clipboard(text)` calls, so the windowed loops send each one
+    # once, without the dial-sending code needing to write to the context.
+    var _clipboard_writes: Int
     var _window_mode: WindowMode
     var _design_w: Int
     var _design_h: Int
@@ -91,6 +95,8 @@ struct Context(Copyable, Movable):
         self._cursor = Cursor.ARROW
         self._lock_mouse = False
         self._text_input = True
+        self._clipboard = ""
+        self._clipboard_writes = 0
         self._window_mode = WindowMode.WINDOWED
         self._design_w = 0
         self._design_h = 0
@@ -213,6 +219,24 @@ struct Context(Copyable, Movable):
         ignores it: there, text is whatever the program feeds in.
         """
         self._text_input = enabled
+
+    def clipboard(self) -> String:
+        """The system clipboard's text, empty when it holds none.
+
+        Read as it changes, so this costs nothing and is the same all frame:
+        another program's copy shows from the next frame. A headless run has
+        a clipboard of its own, empty to start.
+        """
+        return self._clipboard
+
+    def clipboard(mut self, text: String):
+        """Put `text` on the system clipboard, for pasting anywhere.
+
+        Reads back at once; the windowed loops hand it to the system with
+        the frame it is set in, like `title`.
+        """
+        self._clipboard = text
+        self._clipboard_writes += 1
 
     def window_mode(self) -> WindowMode:
         """How the window presents itself: `run`'s `mode` unless set."""

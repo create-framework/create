@@ -31,6 +31,8 @@ struct CountingWindow(NativeWindow):
     var mouse_locked: Bool
     var text_input_changes: Int
     var text_input: Bool
+    var clipboard_writes: Int
+    var clipboard_text: String
 
     def __init__(out self):
         self.titles = 0
@@ -47,6 +49,8 @@ struct CountingWindow(NativeWindow):
         self.mouse_locked = False
         self.text_input_changes = 0
         self.text_input = True
+        self.clipboard_writes = 0
+        self.clipboard_text = ""
 
     def is_open(self) -> Bool:
         return True
@@ -98,6 +102,13 @@ struct CountingWindow(NativeWindow):
     def set_text_input(mut self, enabled: Bool) raises:
         self.text_input_changes += 1
         self.text_input = enabled
+
+    def clipboard(self) raises -> String:
+        return self.clipboard_text
+
+    def set_clipboard(mut self, text: String) raises:
+        self.clipboard_writes += 1
+        self.clipboard_text = text
 
 
 def test_an_unchanged_dial_is_not_sent() raises -> None:
@@ -216,6 +227,19 @@ def test_text_input_is_switched_only_when_changed() raises -> None:
     _apply_window_dials(win, applied, context)
     assert_equal(win.text_input_changes, 2)
     assert_equal(win.text_input, True)
+
+
+def test_each_clipboard_write_is_sent_once() raises -> None:
+    var context = Context()
+    var applied = _AppliedWindow(context)
+    var win = CountingWindow()
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.clipboard_writes, 0)
+    context.clipboard("copied")
+    _apply_window_dials(win, applied, context)
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.clipboard_writes, 1)
+    assert_equal(win.clipboard_text, "copied")
 
 
 def main() raises:

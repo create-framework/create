@@ -73,6 +73,7 @@ comptime SDL_EVENT_GAMEPAD_BUTTON_DOWN: UInt32 = 0x651
 comptime SDL_EVENT_GAMEPAD_BUTTON_UP: UInt32 = 0x652
 comptime SDL_EVENT_GAMEPAD_ADDED: UInt32 = 0x653
 comptime SDL_EVENT_GAMEPAD_REMOVED: UInt32 = 0x654
+comptime SDL_EVENT_CLIPBOARD_UPDATE: UInt32 = 0x900
 
 comptime SDL_JOYSTICK_AXIS_MAX = 32767
 """Full deflection of a gamepad axis; the stick minimum is one further,
@@ -355,6 +356,29 @@ struct SDL:
         """
         if not self.lib.call["SDL_StartTextInput", Bool](window):
             raise Error("SDL_StartTextInput failed: " + self.get_error())
+
+    def clipboard_text(self) raises -> String:
+        """The clipboard's text, or empty when it holds none (or something
+        that isn't text)."""
+        var text = self.lib.call["SDL_GetClipboardText", Int]()
+        if text == 0:
+            return ""
+        var copied = String(
+            unsafe_from_utf8_ptr=Pointer[UInt8, MutUntrackedOrigin](
+                unsafe_from_address=text
+            )
+        )
+        # SDL hands over a copy of its own, which is ours to free.
+        self.lib.call["SDL_free"](text)
+        return copied^
+
+    def set_clipboard_text(self, text: String) -> Bool:
+        """Put `text` on the clipboard. A request: a driver without a
+        clipboard keeps its own, process-wide."""
+        var nul_terminated = text.copy()
+        return self.lib.call["SDL_SetClipboardText", Bool](
+            nul_terminated.as_c_string_span().ptr()
+        )
 
     def stop_text_input(self, window: Int) -> Bool:
         """Turns `SDL_EVENT_TEXT_INPUT` delivery for `window` back off,
