@@ -1,8 +1,8 @@
 """Which renderer replays a frame's `RenderCommand`s.
 
-A selector with a type of its own: `Backend.kind` and the `backend`
-parameter of `run`/`run_headless` are all `RenderBackend`, compared with `==`,
-the same shape as `WindowMode`. The type keeps a backend constant from binding
+A selector with a type of its own: the `backend` parameter of
+`run`/`run_headless` is a `RenderBackend`, compared with `==`, the same shape
+as `WindowMode`; the run picks its loop by it. The type keeps a backend constant from binding
 to a neighbouring `Int` parameter by position — `run_headless(w, h,
 RenderBackend.GPU)` used to mean `frames=1` on the CPU backend and compile.
 The constructor is deliberately not `@implicit` for the same reason.

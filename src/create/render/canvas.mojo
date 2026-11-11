@@ -218,14 +218,16 @@ struct ClipGuard[origin: Origin[mut=True]](Movable):
         var _region: RenderCommand,
         _invert: Bool,
     ):
-        self._saved = _canvas._state._backend.push_clip(_region^, _invert)
+        self._saved = _canvas._state._backend.buffer.push_clip(
+            _region^, _invert
+        )
         self._canvas = Pointer(to=_canvas)
 
     def __enter__(mut self):
         pass
 
     def __exit__(mut self):
-        self._canvas[]._state._backend.clip = self._saved
+        self._canvas[]._state._backend.buffer.clip = self._saved
 
 
 struct Canvas(DrawTarget, Movable):
@@ -330,7 +332,7 @@ struct Canvas(DrawTarget, Movable):
         # Recorded here rather than by the loop so both loops get it from one
         # place, and so a program's own `background()` can coalesce with it.
         if self._state.autoclear:
-            self._state._backend.open_with_clear(
+            self._state._backend.buffer.open_with_clear(
                 clear_command(_AUTOCLEAR_COLOR)
             )
 
@@ -463,7 +465,7 @@ struct Canvas(DrawTarget, Movable):
         var cy1 = Float64(
             Int(self._view.offset_y + self._height * self._scale + 0.5)
         )
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             letterbox_command(self._state.letterbox_color, cx0, cy0, cx1, cy1)
         )
 
@@ -795,7 +797,7 @@ struct Canvas(DrawTarget, Movable):
         """
         self._state._backend.discard()
         if self._state.autoclear and not self._offscreen():
-            self._state._backend.open_with_clear(
+            self._state._backend.buffer.open_with_clear(
                 clear_command(_AUTOCLEAR_COLOR)
             )
 
@@ -811,7 +813,7 @@ struct Canvas(DrawTarget, Movable):
         An opaque color replaces the autoclear rather than
         stacking on it, so opening `update` with this costs one clear, not two.
         """
-        self._state._backend.record_clear(clear_command(color))
+        self._state._backend.buffer.record_clear(clear_command(color))
 
     def background(mut self, gradient: Gradient):
         """Paint the whole framebuffer with `gradient` — a sky, a vignette.
@@ -824,7 +826,7 @@ struct Canvas(DrawTarget, Movable):
         Like a colour, it replaces the autoclear if every stop
         is opaque, and blends over what is there otherwise.
         """
-        self._state._backend.record_clear(
+        self._state._backend.buffer.record_clear(
             clear_command(
                 gradient,
                 self._base,
@@ -1425,37 +1427,37 @@ struct Canvas(DrawTarget, Movable):
     # through its shape.
 
     def _rectangle(mut self, r: Rectangle):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(r, self._transform, self._style, self._scale)
         )
 
     def _circle(mut self, c: Circle):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(c, self._transform, self._style, self._scale)
         )
 
     def _ellipse(mut self, e: Ellipse):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(e, self._transform, self._style, self._scale)
         )
 
     def _capsule(mut self, c: Capsule):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(c, self._transform, self._style, self._scale)
         )
 
     def _triangle(mut self, t: Triangle):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(t, self._transform, self._style, self._scale)
         )
 
     def _sector(mut self, s: Sector):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(s, self._transform, self._style, self._scale)
         )
 
     def _polygon(mut self, p: Polygon):
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(p, self._transform, self._style, self._scale)
         )
 
@@ -1465,7 +1467,7 @@ struct Canvas(DrawTarget, Movable):
         # overhead.
         if not self._style.stroke_enabled:
             return
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             shape_command(l, self._transform, self._style, self._scale)
         )
 
@@ -1474,7 +1476,7 @@ struct Canvas(DrawTarget, Movable):
         # stroke.
         if not self._style.stroke_enabled or len(curves) == 0:
             return
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             curves_command(curves, self._transform, self._style)
         )
 
@@ -1499,7 +1501,7 @@ struct Canvas(DrawTarget, Movable):
         var id = self._state._backend.resources.intern_image(
             image._id, image._pixels, image.width(), image.height()
         )
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             image_command(
                 self._transform,
                 self._style,
@@ -1685,7 +1687,7 @@ struct Canvas(DrawTarget, Movable):
         """
         self._state._backend.antialiasing = level
         # A read cached under the old level is stale now.
-        self._state._backend.recorded += 1
+        self._state._backend.buffer.recorded += 1
 
     def autoclear(self) -> Bool:
         """Whether frames open with the clear to gray 200. On unless set."""
@@ -1709,7 +1711,7 @@ struct Canvas(DrawTarget, Movable):
         self._state.autoclear = enabled
         if self._offscreen():
             return
-        self._state._backend.set_autoclear(
+        self._state._backend.buffer.set_autoclear(
             enabled, clear_command(_AUTOCLEAR_COLOR)
         )
 
@@ -1761,7 +1763,7 @@ struct Canvas(DrawTarget, Movable):
         # Deferred whole. Nothing about the layout is decided here: the
         # advances, the alignment and the baseline all come out of the font,
         # which the backend owns, so they are resolved at replay.
-        self._state._backend.record(
+        self._state._backend.buffer.record(
             text_command(
                 self._transform,
                 self._style,

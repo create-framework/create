@@ -152,11 +152,15 @@ def _shapes_bench(
                     var y = rng.float(-500.0, 500.0)
                     var size = rng.float(8.0, 34.0)
                     if kind == 0:
-                        be.record(rect_command(m, st, x, y, size, size * 0.7))
+                        be.buffer.record(
+                            rect_command(m, st, x, y, size, size * 0.7)
+                        )
                     elif kind == 1:
-                        be.record(circle_command(m, st, x, y, size * 0.5))
+                        be.buffer.record(
+                            circle_command(m, st, x, y, size * 0.5)
+                        )
                     else:
-                        be.record(
+                        be.buffer.record(
                             triangle_command(
                                 m,
                                 st,
@@ -189,7 +193,7 @@ def _rotated_bench(
             var x = rng.float(-400.0, 400.0)
             var y = rng.float(-300.0, 300.0)
             var size = rng.float(8.0, 34.0)
-            be.record(rect_command(rot, st, x, y, size, size * 0.7))
+            be.buffer.record(rect_command(rot, st, x, y, size, size * 0.7))
         var s = mem.surface()
         be.present(s, 1.0)
     var t1 = perf_counter_ns()
@@ -258,7 +262,7 @@ def _text_bench(
     var t0 = perf_counter_ns()
     for _ in range(_REPS):
         for _i in range(20):
-            be.record(
+            be.buffer.record(
                 text_command(
                     m,
                     st,
@@ -284,18 +288,18 @@ def _frame_bench(
     var t0 = perf_counter_ns()
     for _ in range(_REPS):
         var rng = Random(1234)
-        be.record(clear_command(Color(0x10, 0x12, 0x18)))
+        be.buffer.record(clear_command(Color(0x10, 0x12, 0x18)))
         for i in range(_SHAPES):
             var x = rng.float(-900.0, 900.0)
             var y = rng.float(-500.0, 500.0)
             var size = rng.float(8.0, 34.0)
             var kind = i % 3
             if kind == 0:
-                be.record(rect_command(m, st, x, y, size, size * 0.7))
+                be.buffer.record(rect_command(m, st, x, y, size, size * 0.7))
             elif kind == 1:
-                be.record(circle_command(m, st, x, y, size * 0.5))
+                be.buffer.record(circle_command(m, st, x, y, size * 0.5))
             else:
-                be.record(
+                be.buffer.record(
                     triangle_command(
                         m,
                         st,
@@ -338,7 +342,7 @@ def _antialiasing_bench(
             for _i in range(20):
                 var x = rng.float(-700.0, 700.0)
                 var y = rng.float(-300.0, 300.0)
-                be.record(circle_command(m, stroked, x, y, 200.0))
+                be.buffer.record(circle_command(m, stroked, x, y, 200.0))
             var s = mem.surface()
             be.present(s, 1.0)
         var t1 = perf_counter_ns()
