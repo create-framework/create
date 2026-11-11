@@ -23,8 +23,8 @@ it makes the library better.
 | Module | Path | Responsibility |
 |---|---|---|
 | root | `src/create/__init__.mojo` | The preamble: star-imports all ten subpackages below |
-| `core` | `src/create/core/` | `Program`, the run state (`Context`, `Time`), the run loops (windowed, GPU, headless), `step`, event-to-`Input` translation, `WindowMode`, `Cursor`, `source_path`, `DateTime` |
-| `input` | `src/create/input/` | `Input` (keyboard, mouse, gamepads, typed text), `Key`, `MouseButton`, `Gamepad`, `GamepadButton`, `EditableText` |
+| `core` | `src/create/core/` | `Program`, the run state (`Context`, `Time`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path`, `DateTime` |
+| `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton`, `EditableText` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
 | `math` | `src/create/math/` | `Point2D`, `Vector2D`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease` and `Tween`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
@@ -109,9 +109,10 @@ and pass it to `run[T]`. Minimum: [tests/core/test_smoke.mojo](tests/core/test_s
 **`create` draws frame 1**, like Processing's `setup`: its `canvas` is a real frame, presented like
 every later one, so drawing there shows and geometry is as valid as on any first frame (Gotcha 3).
 `context.frame_count()` is 1 there and 2 in the first `update`; `context.time` is zero and
-`context.input` empty. Drawing that needs the program's fields builds `Self` into a local first.
+no key or button is down. Drawing that needs the program's fields builds `Self` into a local first.
 `run_headless(frames=N)` runs `create`'s frame and then N `update`s, so `frames=0` returns
-`create`'s frame alone. Input arrives as `context.input`; there are no event callbacks. The frame
+`create`'s frame alone. Input arrives on the context's devices — `context.keyboard`,
+`context.mouse`, `context.gamepad(player)` — and there are no event callbacks. The frame
 `Canvas` the loop hands over is built fresh each frame; nothing may hold it across frames. An
 offscreen `Canvas(w, h)` (see Reading pixels) is the program's own and may be kept as a field.
 
@@ -127,9 +128,9 @@ signature on every scene, and those must vary. See [examples/scenes/main.mojo](e
 parameter: `Context` is the run's state and outlives the frame, `Canvas` is where this frame is
 drawn. What the program drives on its own schedule (`Image`, `Font`, `Sound`, `Audio`,
 `Animator`, `Camera`, `Tween`, `Noise`, a `Table` or `JSON`, an offscreen `Canvas`) is a field it constructs in `create` — so adding one touches
-neither `Program` nor the run loop. `Time` and `Input` live on `Context`: the loop ticks
-`context.time` and folds events into `context.input` before `update`. Read them, don't write them —
-the loop carries both into the next frame.
+neither `Program` nor the run loop. The readings live on `Context`: the loop ticks
+`context.time` and folds events into `context.keyboard`, `context.mouse` and the gamepads before
+`update`. Read them, don't write them — the loop carries them into the next frame.
 
 **Per-frame obligations**, not enforced by anything:
 - `audio.update()` — otherwise looping streams stall and one-shot voice slots leak.
@@ -197,9 +198,10 @@ A program writes `from create import *`. Otherwise import by name from the ownin
 - **`text`** depends only on `_bytes` and `_library`. `render`→`text` is nominal, like `render`→`image`: `Style`,
   `canvas.font` and text layout name `Font`, and `_raster.blit_glyph` takes `_GlyphInfo` by its
   internal path.
-- **`input`** depends only on `math`; `core` imports it. `Input` is plain state: `core`'s
-  `apply_events` folds each window event in through one `_`-prefixed method per kind (`_key_down`,
-  `_mouse_button_down`, …), so `input` never sees an `Event` and `_window` stays `core`'s alone.
+- **`input`** depends only on `math`; `core` imports it. Its devices are plain state: `core`'s
+  `apply_events` folds each window event in through one `_`-prefixed method per kind
+  (`keyboard._key_down`, `mouse._button_down`, …), so `input` never sees an `Event` and `_window`
+  stays `core`'s alone.
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
 - **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. A
   binding opens its library with `load_library("libname")`, never `_DLHandle("libname.so")`: the
@@ -371,7 +373,7 @@ what is outside it (fog, a spotlight). `region` is any `Region` — a `Rectangle
 frame has drawn **so far**. They are a CPU replay of the commands recorded up to the call, like
 `save_image`, so both backends read the same pixels and the GPU is never stalled. See
 [examples/pixels/main.mojo](examples/pixels/main.mojo).
-- **Screen space**, not world: the transform and camera don't apply. `canvas.color_at(context.input.mouse)`
+- **Screen space**, not world: the transform and camera don't apply. `canvas.color_at(context.mouse.position)`
   picks under the mouse as it is, and a snapshot region is always upright. Off the screen reads
   transparent.
 - **Design size × `scale`**, without the letterbox. `snapshot()` drawn back with
@@ -454,8 +456,8 @@ render call. **All shapes are centre-positioned**, including `Rectangle.position
 
 **Camera:** `canvas.camera(camera)` maps world space onto screen space for every later render call and
 nested transform, reset every frame. `canvas.overlay()` suspends it for HUD content.
-`context.input.mouse` is in screen space; `canvas.to_local(context.input.mouse)` picks in the frame a
-shape is drawn in, camera and transform included, and `camera.to_world(context.input.mouse)` gives
+`context.mouse.position` is in screen space; `canvas.to_local(context.mouse.position)` picks in the frame a
+shape is drawn in, camera and transform included, and `camera.to_world(context.mouse.position)` gives
 the world position.
 
 ```mojo
@@ -476,7 +478,8 @@ scale by `canvas.scale()`. See [examples/window/main.mojo](examples/window/main.
 `Context` dials are the run's, not the drawing's: `design_size`, `autoscale`, `title`,
 `window_mode`, `resizable`, `cursor`, `quit_on_escape`, `max_frame_rate`. They are methods
 (`context.autoscale(Autoscale.EXTEND)`, like the canvas setters), each read back with no arguments;
-`Context`'s only fields are the readings `time` and `input`. Every `run` argument but `backend`
+`Context`'s only fields are the readings: `time`, `keyboard` and `mouse` (the gamepads are
+`context.gamepad(player)`, a copy, since there can be several). Every `run` argument but `backend`
 has a setter — a dial here, or `canvas.antialiasing` — and the argument is only the starting value.
 Not every dial is a `run` argument: `cursor`, `quit_on_escape` and `max_frame_rate` are set in
 `create`.
@@ -512,7 +515,7 @@ frame body returns. Headless runs ignore the window dials, like `rumble`.
 
 | Term | Meaning |
 |---|---|
-| Screen space | Origin-centred, y-up, camera-independent. `canvas.left()`…`top()`, `context.input.mouse` and `canvas.color_at` live here, and it is what `canvas.to_local` takes and `to_screen` gives |
+| Screen space | Origin-centred, y-up, camera-independent. `canvas.left()`…`top()`, `context.mouse.position` and `canvas.color_at` live here, and it is what `canvas.to_local` takes and `to_screen` gives |
 | World space | What render calls use once a `Camera` is set; identical to screen space without one. Only the camera converts into it: `camera.to_world`/`to_screen` |
 | Local space | The current transform's frame, where a render call's coordinates are read. `canvas.to_local(screen)`/`to_screen(local)` convert through the transform and the camera together |
 | Asset vs. playhead | `Image`/`Font`/`Animation`/`Sound` are shared immutable assets; `Animator`/a `Voice` (what `audio.play` and `audio.loop` return) are one entity's position in one. `fps` belongs to the asset |
@@ -522,10 +525,10 @@ frame body returns. Headless runs ignore the window dials, like `rumble`.
 | `Gradient` | Stops (0..1 positions, each a `Color`) across a fill or the background. **Placed by the shape's local bounding box**, before the transform, so it moves and turns with the shape and one `Style` suits every entity. `linear` runs along `direction` (a `Vector2D`, default `DOWN`, any length; its extreme corners land on 0 and 1, as in CSS); `radial` runs from `center` in the box's unit space (-1..1, y up) out to its edges, an ellipse on a long box. A sector's box is its whole circle. A zero `direction` or a zero-size box paints the first stop. Blends premultiplied (a fade to `TRANSPARENT` stays clean) and is dithered on both backends |
 | `Table` | Rows of text cells from CSV/TSV, like Processing's: `Table.load(path)` (first line names the columns unless `header=False`; separator a tab for `.tsv`/`.tab`, a comma otherwise, unless `separator=` names one), `Table.parse(text)`, `Table(columns)` to build. **Rows by reference**: `t.row(i)` and `for ref row in t.rows()` edit in place; `ref row = t.add_row()` returns the new one. Cells stay text until read: `row.string`/`float`/`int`/`bool` by column name or index parse on each call and raise naming the column and cell. `sort(column, descending=)` is stable and numeric only when every cell in the column is a number, so one blank sorts the column as text. `save` quotes a field only when it must |
 | `JSON` | One type for every JSON value, read with `[]` by key or index and `float`/`int`/`string`/`bool`; `kind()` is a `JSONKind`. `values()` is an array's items or an object's values, `keys()` an object's keys and `items()` its `(key, value)` pairs, as in Python. A value is a **handle into a shared document**: `[]`, `values()` and `items()` copy nothing, edits land in the document (`config["player"]["speed"] = 3.0`, or `enemy["hp"] = ...` in a loop over `values()`), and so **`var p = config["player"]` aliases `config`**, as in Processing, JavaScript and Python — `.copy()` is a deep, independent one. Assigning copies a value in, so one value set under two keys is two values. `int()` is exact to 64 bits for a number written whole and raises on a fraction. Replacing a value leaves the old node behind until `copy()` or `save` drops it, so a document rewritten every frame for long is kept small with `doc = doc.copy()`. `save(path, indent=2)`; `indent=0` is the printed form. Infinite and NaN numbers raise from `save`, print as `null` |
-| `Point2D` / `Vector2D` | Chosen by role. A location is a `Point2D` (`canvas.circle(position, r)`, `context.input.mouse`); a displacement is a `Vector2D` (`translate(delta)`, velocities); an extent is a scalar (`w`, `h`, `r`). Crossing between them is an explicit constructor — `Vector2D(p)`, `Point2D(v)` — never an implicit one. `Point2D` deliberately lacks `magnitude`, `normalize`, `dot`, scalar `*`, unary `-` and `Point2D + Point2D`. Only `Point2D` takes a bare tuple implicitly; a vector literal names its type (`p + Vector2D(1, 2)`), and `p - (1, 2)` is the displacement from `(1, 2)`, not a move. Named vectors are `comptime` constants: `Vector2D.ZERO`, `ONE`, `UP`, `DOWN`, `LEFT`, `RIGHT` (y up, so `DOWN` is `(0, -1)`). Angles are radians counter-clockwise from +x: `Vector2D.from_angle(a, length)`, `v.angle()`, `v.rotate(a)`, with `v.with_length(l)` and `v.limit(max)` for speeds; each returns a new vector, like `normalize` |
-| Down / pressed / released | Input state for keys, mouse and gamepad buttons alike. *Down* is held right now, true every frame (`key_down`, `mouse_down`, `pad.button_down`); *pressed*/*released* are edges, true only in the frame it went down or came up (`key_pressed`, `mouse_released`). Unlike Processing's `mousePressed`, *pressed* never means held. The most recent press is `input.key`, `input.mouse_button` and `pad.button`, each `Key`/`MouseButton`/`GamepadButton.NONE` before any — typed, like every enum, so a bare number never passes for a key, button or `FontWeight` |
-| `Gamepad` | `context.input.gamepad(i)`, a copy of player `i`'s pad (default 0). A pad takes the lowest free slot as it connects and keeps it until it disconnects; an empty slot reads `connected` False and all zero, so no check is needed first. Sticks are `Vector2D`s, **y up**, inside the unit circle, with a rescaled radial dead zone (`Gamepad.STICK_DEAD_ZONE`, 0.2) so a resting stick reads exactly zero; triggers 0..1. Face buttons are positional (`GamepadButton.SOUTH` is Xbox A and PlayStation Cross). `connected_this_frame`/`disconnected_this_frame` are the edges of `connected`, and `name` survives the frame a pad leaves in. `context.rumble(seconds, low_frequency=, high_frequency=, player=)` shakes a pad (both motors full by default; a new rumble replaces the running one); it is an output, so it lives on `Context`, not on the `Gamepad` copy. See [examples/gamepad/main.mojo](examples/gamepad/main.mojo) |
-| Typed / `text` | Text entry. `key_typed` is pressed or auto-repeated while held, for editing keys (Backspace, arrows); `context.input.text` is this frame's typed characters, UTF-8, with shift, layout and IME applied — append it, don't rebuild it from keycodes. Both reset every frame. `EditableText` does the editing: fed `context.input` each frame, it keeps `text` and a caret, whole characters at a time; `canvas.text_width(field.before_caret())` places the caret. See [examples/typing/main.mojo](examples/typing/main.mojo) |
+| `Point2D` / `Vector2D` | Chosen by role. A location is a `Point2D` (`canvas.circle(position, r)`, `context.mouse.position`); a displacement is a `Vector2D` (`translate(delta)`, velocities); an extent is a scalar (`w`, `h`, `r`). Crossing between them is an explicit constructor — `Vector2D(p)`, `Point2D(v)` — never an implicit one. `Point2D` deliberately lacks `magnitude`, `normalize`, `dot`, scalar `*`, unary `-` and `Point2D + Point2D`. Only `Point2D` takes a bare tuple implicitly; a vector literal names its type (`p + Vector2D(1, 2)`), and `p - (1, 2)` is the displacement from `(1, 2)`, not a move. Named vectors are `comptime` constants: `Vector2D.ZERO`, `ONE`, `UP`, `DOWN`, `LEFT`, `RIGHT` (y up, so `DOWN` is `(0, -1)`). Angles are radians counter-clockwise from +x: `Vector2D.from_angle(a, length)`, `v.angle()`, `v.rotate(a)`, with `v.with_length(l)` and `v.limit(max)` for speeds; each returns a new vector, like `normalize` |
+| Down / pressed / released | One vocabulary for every device: `context.keyboard`, `context.mouse` and `context.gamepad(i)` each answer `down(button)`, `pressed(button)` and `released(button)` (the mouse's default to `LEFT`). *Down* is held right now, true every frame; *pressed*/*released* are edges, true only in the frame it went down or came up. Unlike Processing's `mousePressed`, *pressed* never means held. The most recent press is `keyboard.key`, `mouse.button` and `pad.button`, each `Key`/`MouseButton`/`GamepadButton.NONE` before any — typed, like every enum, so a bare number never passes for a key, button or `FontWeight` |
+| `Gamepad` | `context.gamepad(i)`, a copy of player `i`'s pad (default 0). A pad takes the lowest free slot as it connects and keeps it until it disconnects; an empty slot reads `connected` False and all zero, so no check is needed first. Sticks are `Vector2D`s, **y up**, inside the unit circle, with a rescaled radial dead zone (`Gamepad.STICK_DEAD_ZONE`, 0.2) so a resting stick reads exactly zero; triggers 0..1. Face buttons are positional (`GamepadButton.SOUTH` is Xbox A and PlayStation Cross). `connected_this_frame`/`disconnected_this_frame` are the edges of `connected`, and `name` survives the frame a pad leaves in. `context.rumble(seconds, low_frequency=, high_frequency=, player=)` shakes a pad (both motors full by default; a new rumble replaces the running one); it is an output, so it lives on `Context`, not on the `Gamepad` copy. See [examples/gamepad/main.mojo](examples/gamepad/main.mojo) |
+| Typed / `text` | Text entry. `keyboard.typed(key)` is pressed or auto-repeated while held, for editing keys (Backspace, arrows); `context.keyboard.text` is this frame's typed characters, UTF-8, with shift, layout and IME applied — append it, don't rebuild it from keycodes. Both reset every frame. `EditableText` does the editing: fed `context.keyboard` each frame, it keeps `text` and a caret, whole characters at a time; `canvas.text_width(field.before_caret())` places the caret. See [examples/typing/main.mojo](examples/typing/main.mojo) |
 | `overlaps` / `intersects` / `contains` | `overlaps(a, b)`: free, symmetric, regions only (`Rectangle`/`Circle`/`Ellipse`/`Capsule`/`Triangle`/`Sector`/`Polygon`). `curve.intersects(x)`: every curve (`Line`, `Arc`, `Bezier`, `Spline`) against every shape and `Point2D`, both ways round, since a curve has no interior. `region.contains(x)`: asymmetric, every region against every region and every curve. A curve is never a region. All three see a shape's `corner_radius`. `Line` and `Arc` are exact (to `_RADIUS_EPSILON` with an arc); `Bezier` and `Spline` flatten themselves to within 1e-4 of their size, so a crossing is always found but a graze or near miss is decided only that closely; a region's `contains` follows `Arc`, `Bezier` and `Spline` the same way |
 | `Drawable` / `DrawTarget` | `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts (`draw_to[T: DrawTarget](self, mut target: T)`). `DrawTarget` is where it draws: `Canvas`, through one `_`-named primitive per kind and the provided `draw` |
 | `Shape` / `Region` / `Curve` | The geometry's traits, so every shape of a kind answers the same methods and generic code takes any (`def f[C: Curve](c: C)`). `Shape(Drawable)`, every one of the eleven, `Copyable` and `Deinitable`: `bounds`, `closest_point`, `translate`. `Region(Shape)`, the seven with an inside (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`), which `canvas.clip` takes: `center`, `area`, `contains(Point2D)`, `move_to`. `Curve(Shape)`, the four without (`Line`, `Arc`, `Bezier`, `Spline` — a straight line is a curve, as in mathematics): `at`, `tangent` (the derivative, not unit), `length`, `at_distance`, `flatten`, `beziers`. Tests between two shapes (`overlaps`, `contains(shape)`, `intersects`) stay overloads per pair, so they are not trait methods; nor is a curve's `move_to`, which only `Line` (its midpoint) and `Arc` (its centre) have, or `split(t)`, which `Line`, `Arc` and `Bezier` have — a piece of a `Spline` is not a `Spline` |

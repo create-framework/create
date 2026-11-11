@@ -43,7 +43,7 @@ struct Pixels(Program):
         # Kept before the swatch, so the trail never shows it.
         self.last = canvas.snapshot()
 
-        var under = canvas.color_at(context.input.mouse)
+        var under = canvas.color_at(context.mouse.position)
         canvas.fill(under)
         canvas.stroke(Color(240, 236, 222))
         canvas.rectangle((0, canvas.bottom() + 40), 60, 40)

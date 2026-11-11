@@ -1,4 +1,4 @@
-from .input import Input
+from .keyboard import Keyboard
 from .key import Key
 
 
@@ -11,14 +11,14 @@ struct EditableText(Copyable, Movable, Writable):
     caret after the right character:
 
     ```mojo
-    self.name.update(context.input)                 # in update
+    self.name.update(context.keyboard)              # in update
     canvas.text_alignment(Align.LEFT)
     canvas.text(self.name.text, (left, 0))
     var caret_x = left + canvas.text_width(self.name.before_caret())
     canvas.line((caret_x, -20), (caret_x, 20))
     ```
 
-    `update` inserts `input.text` at the caret, and handles Backspace and
+    `update` inserts the keyboard's `text` at the caret, and handles Backspace and
     Delete either side of it, Left and Right to move it by one character, and
     Home and End. All of them repeat while held. Enter is left to the program,
     which decides what submitting means.
@@ -40,22 +40,22 @@ struct EditableText(Copyable, Movable, Writable):
         self.text = text
         self._caret = text.byte_length()
 
-    def update(mut self, input: Input):
+    def update(mut self, keyboard: Keyboard):
         """Apply one frame's typing: the typed text first, then the editing
         keys, as within a frame typing mostly comes before a correction."""
-        if input.text:
-            self.insert(input.text)
-        if input.key_typed(Key.BACKSPACE):
+        if keyboard.text:
+            self.insert(keyboard.text)
+        if keyboard.typed(Key.BACKSPACE):
             self.delete_backward()
-        if input.key_typed(Key.DELETE):
+        if keyboard.typed(Key.DELETE):
             self.delete_forward()
-        if input.key_typed(Key.LEFT):
+        if keyboard.typed(Key.LEFT):
             self.move_left()
-        if input.key_typed(Key.RIGHT):
+        if keyboard.typed(Key.RIGHT):
             self.move_right()
-        if input.key_typed(Key.HOME):
+        if keyboard.typed(Key.HOME):
             self._caret = 0
-        if input.key_typed(Key.END):
+        if keyboard.typed(Key.END):
             self._caret = self.text.byte_length()
 
     def before_caret(self) -> String:

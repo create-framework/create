@@ -300,7 +300,7 @@ struct Canvas(DrawTarget, Movable):
     # `_user` is the composition of the matrices the program pushed, mapping
     # local coordinates to world. `_base` maps screen to pixels, `_camera`
     # world to screen. Rendering uses the full product; `to_local`/`to_screen`
-    # stop at screen space, the space of `input.mouse` and `color_at`, so a
+    # stop at screen space, the space of `context.mouse.position` and `color_at`, so a
     # program never sees the window's pixel mapping it did not ask for.
     var _user: Matrix[3, 3]
     var _user_inv: Matrix[3, 3]
@@ -664,9 +664,9 @@ struct Canvas(DrawTarget, Movable):
         )
 
     def to_local(self, screen: Point2D) -> Point2D:
-        """A screen-space point — `context.input.mouse`, say — in the current
+        """A screen-space point — `context.mouse.position`, say — in the current
         transform's frame: back through the camera (none inside `overlay`),
-        then the transform. So `canvas.to_local(context.input.mouse)` picks
+        then the transform. So `canvas.to_local(context.mouse.position)` picks
         in the frame a shape is drawn in, with or without a camera.
         """
         return apply(self._user_inv, self._camera.to_world(screen))
@@ -901,7 +901,7 @@ struct Canvas(DrawTarget, Movable):
 
         `position` is in screen space, whatever the camera or transform —
         a read is of the screen, not the scene — so
-        `canvas.color_at(context.input.mouse)` picks under the mouse as it is.
+        `canvas.color_at(context.mouse.position)` picks under the mouse as it is.
         Outside the screen it is `Color.TRANSPARENT`.
 
         Reads what is drawn *so far*: a render call after this one does not

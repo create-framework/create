@@ -27,21 +27,21 @@ def _frame(mut context: Context, var events: List[Event]):
 
 def test_no_gamepad_reads_disconnected_and_idle() raises -> None:
     var context = Context()
-    var pad = context.input.gamepad()
+    var pad = context.gamepad()
     assert_false(pad.connected)
-    assert_false(pad.button_down(GamepadButton.SOUTH))
+    assert_false(pad.down(GamepadButton.SOUTH))
     assert_equal(pad.left_stick, Vector2D.ZERO)
     assert_equal(pad.button, GamepadButton.NONE)
-    assert_false(pad.button_down(GamepadButton.NONE))
-    assert_false(context.input.gamepad(3).connected)
-    assert_false(context.input.gamepad(-1).connected)
+    assert_false(pad.down(GamepadButton.NONE))
+    assert_false(context.gamepad(3).connected)
+    assert_false(context.gamepad(-1).connected)
 
 
 def test_added_gamepad_takes_slot_zero() raises -> None:
     var context = Context()
     _frame(context, [Event(GamepadAdded(42, "Pad 42"))])
-    assert_true(context.input.gamepad().connected)
-    assert_false(context.input.gamepad(1).connected)
+    assert_true(context.gamepad().connected)
+    assert_false(context.gamepad(1).connected)
 
 
 def test_button_down_pressed_released_lifecycle() raises -> None:
@@ -53,24 +53,24 @@ def test_button_down_pressed_released_lifecycle() raises -> None:
             Event(GamepadButtonDown(1, GamepadButton.START.value)),
         ],
     )
-    var pad = context.input.gamepad()
-    assert_true(pad.button_down(GamepadButton.START))
-    assert_true(pad.button_pressed(GamepadButton.START))
+    var pad = context.gamepad()
+    assert_true(pad.down(GamepadButton.START))
+    assert_true(pad.pressed(GamepadButton.START))
     assert_equal(pad.button, GamepadButton.START)
 
     _frame(context, [])
-    pad = context.input.gamepad()
-    assert_true(pad.button_down(GamepadButton.START))
-    assert_false(pad.button_pressed(GamepadButton.START))
+    pad = context.gamepad()
+    assert_true(pad.down(GamepadButton.START))
+    assert_false(pad.pressed(GamepadButton.START))
 
     _frame(context, [Event(GamepadButtonUp(1, GamepadButton.START.value))])
-    pad = context.input.gamepad()
-    assert_false(pad.button_down(GamepadButton.START))
-    assert_true(pad.button_released(GamepadButton.START))
+    pad = context.gamepad()
+    assert_false(pad.down(GamepadButton.START))
+    assert_true(pad.released(GamepadButton.START))
     assert_equal(pad.button, GamepadButton.START)
 
     _frame(context, [])
-    assert_false(context.input.gamepad().button_released(GamepadButton.START))
+    assert_false(context.gamepad().released(GamepadButton.START))
 
 
 def test_events_reach_the_pad_they_name() raises -> None:
@@ -84,10 +84,10 @@ def test_events_reach_the_pad_they_name() raises -> None:
             Event(GamepadButtonDown(99, GamepadButton.EAST.value)),
         ],
     )
-    assert_false(context.input.gamepad(0).button_down(GamepadButton.SOUTH))
-    assert_true(context.input.gamepad(1).button_down(GamepadButton.SOUTH))
-    assert_false(context.input.gamepad(0).button_down(GamepadButton.EAST))
-    assert_false(context.input.gamepad(1).button_down(GamepadButton.EAST))
+    assert_false(context.gamepad(0).down(GamepadButton.SOUTH))
+    assert_true(context.gamepad(1).down(GamepadButton.SOUTH))
+    assert_false(context.gamepad(0).down(GamepadButton.EAST))
+    assert_false(context.gamepad(1).down(GamepadButton.EAST))
 
 
 def test_stick_is_y_up() raises -> None:
@@ -97,7 +97,7 @@ def test_stick_is_y_up() raises -> None:
         context,
         [Event(GamepadAdded(1, "Pad 1")), Event(GamepadAxisMoved(1, 1, -1.0))],
     )
-    var stick = context.input.gamepad().left_stick
+    var stick = context.gamepad().left_stick
     assert_almost_equal(stick.x, 0.0)
     assert_almost_equal(stick.y, 1.0)
 
@@ -112,7 +112,7 @@ def test_stick_inside_dead_zone_reads_zero() raises -> None:
             Event(GamepadAxisMoved(1, 3, 0.1)),
         ],
     )
-    assert_equal(context.input.gamepad().right_stick, Vector2D.ZERO)
+    assert_equal(context.gamepad().right_stick, Vector2D.ZERO)
 
 
 def test_stick_rescales_past_dead_zone() raises -> None:
@@ -122,7 +122,7 @@ def test_stick_rescales_past_dead_zone() raises -> None:
         context,
         [Event(GamepadAdded(1, "Pad 1")), Event(GamepadAxisMoved(1, 0, half))],
     )
-    assert_almost_equal(context.input.gamepad().left_stick.x, 0.5)
+    assert_almost_equal(context.gamepad().left_stick.x, 0.5)
 
 
 def test_diagonal_stick_capped_at_unit_length() raises -> None:
@@ -135,7 +135,7 @@ def test_diagonal_stick_capped_at_unit_length() raises -> None:
             Event(GamepadAxisMoved(1, 1, 1.0)),
         ],
     )
-    var stick = context.input.gamepad().left_stick
+    var stick = context.gamepad().left_stick
     assert_almost_equal(stick.magnitude(), 1.0)
     assert_true(stick.x > 0 and stick.y < 0)
 
@@ -150,8 +150,8 @@ def test_triggers() raises -> None:
             Event(GamepadAxisMoved(1, 5, 1.0)),
         ],
     )
-    assert_equal(context.input.gamepad().left_trigger, 0.25)
-    assert_equal(context.input.gamepad().right_trigger, 1.0)
+    assert_equal(context.gamepad().left_trigger, 0.25)
+    assert_equal(context.gamepad().right_trigger, 1.0)
 
 
 def test_removed_pad_frees_its_slot_and_others_stay() raises -> None:
@@ -167,9 +167,9 @@ def test_removed_pad_frees_its_slot_and_others_stay() raises -> None:
             Event(GamepadRemoved(1)),
         ],
     )
-    assert_false(context.input.gamepad(0).connected)
-    assert_false(context.input.gamepad(0).button_down(GamepadButton.SOUTH))
-    assert_true(context.input.gamepad(1).connected)
+    assert_false(context.gamepad(0).connected)
+    assert_false(context.gamepad(0).down(GamepadButton.SOUTH))
+    assert_true(context.gamepad(1).connected)
 
     _frame(
         context,
@@ -178,9 +178,9 @@ def test_removed_pad_frees_its_slot_and_others_stay() raises -> None:
             Event(GamepadButtonDown(3, GamepadButton.EAST.value)),
         ],
     )
-    assert_true(context.input.gamepad(0).connected)
-    assert_true(context.input.gamepad(0).button_down(GamepadButton.EAST))
-    assert_false(context.input.gamepad(2).connected)
+    assert_true(context.gamepad(0).connected)
+    assert_true(context.gamepad(0).down(GamepadButton.EAST))
+    assert_false(context.gamepad(2).connected)
 
 
 def test_duplicate_add_keeps_one_slot() raises -> None:
@@ -189,18 +189,18 @@ def test_duplicate_add_keeps_one_slot() raises -> None:
         context,
         [Event(GamepadAdded(5, "Pad 5")), Event(GamepadAdded(5, "Pad 5"))],
     )
-    assert_false(context.input.gamepad(1).connected)
+    assert_false(context.gamepad(1).connected)
 
 
 def test_connect_edge_lasts_one_frame_and_carries_the_name() raises -> None:
     var context = Context()
     _frame(context, [Event(GamepadAdded(4, "Pad 4"))])
-    var pad = context.input.gamepad()
+    var pad = context.gamepad()
     assert_true(pad.connected_this_frame)
     assert_false(pad.disconnected_this_frame)
     assert_equal(pad.name, "Pad 4")
     _frame(context, [])
-    pad = context.input.gamepad()
+    pad = context.gamepad()
     assert_false(pad.connected_this_frame)
     assert_equal(pad.name, "Pad 4")
 
@@ -209,12 +209,12 @@ def test_disconnect_edge_keeps_the_name_for_its_frame() raises -> None:
     var context = Context()
     _frame(context, [Event(GamepadAdded(4, "Pad 4"))])
     _frame(context, [Event(GamepadRemoved(4))])
-    var pad = context.input.gamepad()
+    var pad = context.gamepad()
     assert_false(pad.connected)
     assert_true(pad.disconnected_this_frame)
     assert_equal(pad.name, "Pad 4")
     _frame(context, [])
-    pad = context.input.gamepad()
+    pad = context.gamepad()
     assert_false(pad.disconnected_this_frame)
     assert_equal(pad.name, "")
 
@@ -225,7 +225,7 @@ def test_pad_replacing_one_that_left_this_frame_keeps_both_edges() raises -> (
     var context = Context()
     _frame(context, [Event(GamepadAdded(1, "Old"))])
     _frame(context, [Event(GamepadRemoved(1)), Event(GamepadAdded(2, "New"))])
-    var pad = context.input.gamepad()
+    var pad = context.gamepad()
     assert_true(pad.connected)
     assert_true(pad.connected_this_frame)
     assert_true(pad.disconnected_this_frame)

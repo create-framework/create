@@ -110,7 +110,7 @@ def run[
 
     `width`/`height` are the design size: the space the program is
     **authored** in, and the one `canvas.width()`/`height()`, the canvas edges and
-    `context.input.mouse` are reported in. They are not a window size that happens to double as one: a
+    `context.mouse.position` are reported in. They are not a window size that happens to double as one: a
     `WINDOWED` or `BORDERLESS` launch opens a window of that size because the
     two coincide there, while `FULLSCREEN` and `MAXIMIZED` take the display or
     its work area and the design is scaled onto it. `mode=FULLSCREEN` with a

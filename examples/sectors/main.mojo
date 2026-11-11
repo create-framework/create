@@ -63,7 +63,7 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # No camera, so the mouse is already in the space the shapes are in.
-        var mouse = context.input.mouse
+        var mouse = context.mouse.position
 
         # A pac-man wider than a half turn: its mouth is the missing wedge,
         # outside it, so the mouse there touches nothing. The mouth is a
@@ -81,9 +81,9 @@ struct App(Program):
         var eaten = self.respawn_in > 0.0
 
         if not eaten:
-            if context.input.mouse_pressed() and self.ball.contains(mouse):
+            if context.mouse.pressed() and self.ball.contains(mouse):
                 self.dragging = True
-            if context.input.mouse_released():
+            if context.mouse.released():
                 self.dragging = False
             if self.dragging:
                 self.ball = self.ball.move_to(mouse)

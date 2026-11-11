@@ -44,7 +44,7 @@ struct App(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var hovered = -1
         for i in range(len(self.curves)):
-            if abs(context.input.mouse.y - _row_y(i)) < _ROW_SPACING / 2.0:
+            if abs(context.mouse.position.y - _row_y(i)) < _ROW_SPACING / 2.0:
                 hovered = i
         if hovered != self.hovered:
             # ping_pong rather than loop: progress runs back down on the

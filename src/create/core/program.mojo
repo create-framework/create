@@ -14,7 +14,8 @@ trait Program(Deinitable, Movable):
     work, so they are the same method's.
 
     There are no event callbacks. Input arrives on the context, as
-    `context.input`, and nowhere else — so there is one place a frame's
+    `context.keyboard`, `context.mouse` and `context.gamepad(player)`, and
+    nowhere else — so there is one place a frame's
     decisions are made and no ordering question between a callback and the
     frame body.
     """
@@ -33,7 +34,7 @@ trait Program(Deinitable, Movable):
         Gotcha 3). The design size and autoscale mode are `run`'s arguments,
         already in place; `context.design_size` or `context.autoscale`
         called here applies from the next frame, like any dial. `context.time`
-        is zero and `context.input` is empty; `context.frame_count()` is 1.
+        is zero and no key or button is down; `context.frame_count()` is 1.
 
         Drawing that needs the program's own fields builds `Self` into a
         local first, draws, then returns it.
@@ -45,7 +46,7 @@ trait Program(Deinitable, Movable):
 
         Two parameters, two lifetimes. `context` is the run's state: it
         outlives the frame, carries what the loop measured for this one —
-        `context.time`, `context.input` — and takes the dials for the *next*
+        `context.time` and the devices — and takes the dials for the *next*
         one — the autoscale mode, the clear, `quit()`. `canvas` is where this
         frame is drawn: it is built fresh, rendered on, and dropped before
         presentation, so it must not be stored anywhere. The first `update`

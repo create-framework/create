@@ -36,7 +36,7 @@ struct App(Program):
         return App(BlendMode.NORMAL)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        if context.input.key_pressed(Key.SPACE):
+        if context.keyboard.pressed(Key.SPACE):
             self.mode = _next_mode(self.mode)
 
         # Gray bars, black on the left to white on the right. Measured from

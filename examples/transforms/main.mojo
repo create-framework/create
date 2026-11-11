@@ -25,9 +25,9 @@ struct Transforms(Program):
         # Solar system: the sun sits at the origin, so it needs no transform of
         # its own — the nesting below is what the demo is about.
         # Hit-test the sun in the frame it is rendered in. `to_local` maps a
-        # screen position, which is what `context.input.mouse` is, into it.
+        # screen position, which is what `context.mouse.position` is, into it.
         var sun = Circle((0.0, 0.0), 40.0)
-        var sun_hovered = sun.contains(canvas.to_local(context.input.mouse))
+        var sun_hovered = sun.contains(canvas.to_local(context.mouse.position))
 
         canvas.stroke_enabled(False)
         canvas.fill(Color(226, 46, 56) if sun_hovered else Color(230, 180, 20))

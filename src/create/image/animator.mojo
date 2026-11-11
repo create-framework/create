@@ -26,7 +26,7 @@ struct Animator(Copyable, Movable, Writable):
       nothing, so it never rewinds a running loop or undoes a `pause`.
 
     ```mojo
-    if context.input.key_pressed(Key.SPACE):
+    if context.keyboard.pressed(Key.SPACE):
         self.animator.play(self.spin)    # a command: starts every time
     elif not self.spinning:
         self.animator.use(self.run if moving else self.idle)   # a state

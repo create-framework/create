@@ -38,17 +38,17 @@ struct Player(Copyable, Drawable, Movable):
         var dt = context.time.delta
 
         var run = 0.0
-        if context.input.key_down(Key.A):
+        if context.keyboard.down(Key.A):
             run -= Self.SPEED
-        if context.input.key_down(Key.D):
+        if context.keyboard.down(Key.D):
             run += Self.SPEED
 
         var rise = self.velocity.y
-        if context.input.key_pressed(Key.W) and self.jumps_left > 0:
+        if context.keyboard.pressed(Key.W) and self.jumps_left > 0:
             rise = Self.JUMP_SPEED
             self.jumps_left -= 1
         var gravity = Self.GRAVITY
-        if context.input.key_down(Key.W) and rise > 0:
+        if context.keyboard.down(Key.W) and rise > 0:
             gravity += Self.JUMP_HOLD
         self.velocity = Vector2D(run, rise + gravity * dt)
 

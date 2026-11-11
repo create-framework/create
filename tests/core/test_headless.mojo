@@ -176,10 +176,12 @@ struct PressesOnce(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if context.frame_count() == 2:
-            context.input._key_down(Key.A)
-            context.input._type_text("a")
-        var held = context.input.key_down(Key.A)
-        var edge = context.input.key_pressed(Key.A) or context.input.text != ""
+            context.keyboard._key_down(Key.A)
+            context.keyboard._type_text("a")
+        var held = context.keyboard.down(Key.A)
+        var edge = (
+            context.keyboard.pressed(Key.A) or context.keyboard.text != ""
+        )
         canvas.background(Color.GREEN if held and not edge else Color.RED)
 
 

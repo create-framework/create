@@ -4,7 +4,9 @@ from create.render.canvas import Canvas, _PersistentCanvasState
 from .time import Time
 from .window_mode import WindowMode
 from .cursor import Cursor
-from create.input.input import Input
+from create.input.keyboard import Keyboard
+from create.input.mouse import Mouse
+from create.input.gamepad import Gamepad, _Gamepads
 
 
 @fieldwise_init
@@ -21,8 +23,9 @@ struct _Rumble(ImplicitlyCopyable, Movable):
 struct Context(Copyable, Movable):
     """The run's state: everything that outlives a frame.
 
-    Two directions share it. The loop writes `time` and `input` before each
-    `update`, for the program to read; the program sets the dials, for the
+    Two directions share it. The loop writes the readings — `time`,
+    `keyboard`, `mouse` and the gamepads — before each `update`, for the
+    program to read; the program sets the dials, for the
     loop to read. Every dial is a method, like the `Canvas` style setters:
     `context.autoscale(Autoscale.EXTEND)`, `context.max_frame_rate(30)`.
     Called with no arguments, each reads back the value as set, for a debug
@@ -51,10 +54,14 @@ struct Context(Copyable, Movable):
     """The frame clock. The run loop ticks it before each `update`; read
     `delta` and `elapsed` here, and don't write it — the loop derives the
     next delta from it."""
-    var input: Input
-    """Keyboard, mouse and gamepad state. The run loop folds each frame's events into
-    it before `update`, so it is settled for the whole frame. Read it, don't
-    write it: the loop carries it into the next frame."""
+    var keyboard: Keyboard
+    """The keyboard: keys and typed text. The run loop folds each frame's
+    events into it before `update`, so it is settled for the whole frame.
+    Read it, don't write it: the loop carries it into the next frame."""
+    var mouse: Mouse
+    """The mouse: position, buttons and wheel, in screen space. Settled
+    before `update` and carried between frames, like `keyboard`."""
+    var _gamepads: _Gamepads
     var _autoscale: Autoscale
     var _quit_on_escape: Bool
     var _title: String
@@ -72,7 +79,9 @@ struct Context(Copyable, Movable):
 
     def __init__(out self):
         self.time = Time()
-        self.input = Input()
+        self.keyboard = Keyboard()
+        self.mouse = Mouse()
+        self._gamepads = _Gamepads()
         self._autoscale = Autoscale.FIT
         self._quit_on_escape = True
         self._title = ""
@@ -232,6 +241,13 @@ struct Context(Copyable, Movable):
         """Build this frame's `Canvas` from the carried-over state."""
         return Canvas(_state=state^)
 
+    def _new_input_frame(mut self):
+        """Clear every device's edges, keeping what is held, before a frame's
+        events are folded in."""
+        self.keyboard._new_frame()
+        self.mouse._new_frame()
+        self._gamepads._new_frame()
+
     def _advance_frame(mut self, now: Int):
         """Tick the clock and count the frame, before each `update`."""
         self._count_frame()
@@ -255,6 +271,18 @@ struct Context(Copyable, Movable):
         """
         self._quit = True
 
+    def gamepad(self, player: Int = 0) -> Gamepad:
+        """Player `player`'s gamepad, a copy of its state this frame —
+        player one is 0, the default, so a one-player program needs no
+        argument.
+
+        Each pad takes the lowest free slot as it connects and keeps it until
+        it disconnects. A slot no pad holds reads as a disconnected
+        `Gamepad()`, all zero and nothing down, so this never fails and needs
+        no check first.
+        """
+        return self._gamepads.get(player)
+
     def rumble(
         mut self,
         seconds: Float64,
@@ -272,7 +300,7 @@ struct Context(Copyable, Movable):
         returns, like `quit`; a pad without motors, an empty slot and a
         headless run ignore it.
         """
-        var pad = self.input.gamepad(player)
+        var pad = self.gamepad(player)
         if pad.connected:
             self._rumbles.append(
                 _Rumble(pad._id, low_frequency, high_frequency, seconds)

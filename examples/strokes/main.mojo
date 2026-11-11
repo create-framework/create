@@ -45,17 +45,18 @@ struct App(Program):
         return App(drawing=List[List[Point2D]]())
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        ref input = context.input
-        if input.key_pressed(Key.SPACE):
+        if context.keyboard.pressed(Key.SPACE):
             self.drawing.clear()
-        if input.mouse_pressed():
+        if context.mouse.pressed():
             self.drawing.append(List[Point2D]())
-        if input.mouse_down() and len(self.drawing) > 0:
+        if context.mouse.down() and len(self.drawing) > 0:
             var points = 0
             for stroke in self.drawing:
                 points += len(stroke)
             if points < _MAX_POINTS:
-                self.drawing[len(self.drawing) - 1].append(input.mouse)
+                self.drawing[len(self.drawing) - 1].append(
+                    context.mouse.position
+                )
 
         canvas.background(_BACKGROUND)
         canvas.text_color(_INK)

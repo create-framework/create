@@ -44,7 +44,7 @@ struct App(Program):
         canvas.stroke(Color(40, 40, 44), thickness=3)
 
         for b in self.buttons:
-            var hovered = b.plate.contains(context.input.mouse)
+            var hovered = b.plate.contains(context.mouse.position)
             canvas.fill(Color(201, 140, 150) if hovered else Color.WHITE)
             canvas.draw(b)
 

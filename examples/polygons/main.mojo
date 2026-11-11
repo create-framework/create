@@ -60,20 +60,20 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # No camera, so the mouse is already in the space the shapes are in.
-        var mouse = context.input.mouse
+        var mouse = context.mouse.position
 
-        if context.input.key_down(Key.UP):
+        if context.keyboard.down(Key.UP):
             self.inner_ratio = min(self.inner_ratio + context.time.delta, 1.0)
-        if context.input.key_down(Key.DOWN):
+        if context.keyboard.down(Key.DOWN):
             self.inner_ratio = max(self.inner_ratio - context.time.delta, 0.1)
 
         # Held where it was grabbed, so the pentagram doesn't jump to put
         # its middle under the cursor.
         var first = self.pentagram.vertices[0]
-        if context.input.mouse_pressed() and self.pentagram.contains(mouse):
+        if context.mouse.pressed() and self.pentagram.contains(mouse):
             self.dragging = True
             self.grab = first - mouse
-        if context.input.mouse_released():
+        if context.mouse.released():
             self.dragging = False
         if self.dragging:
             self.pentagram = self.pentagram.translate(mouse + self.grab - first)

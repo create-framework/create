@@ -75,7 +75,7 @@ struct Poster(Program):
         return Poster(mono=mono, seed=1)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        if context.input.key_pressed(Key.SPACE):
+        if context.keyboard.pressed(Key.SPACE):
             self.seed += 1
 
         var random = Random(UInt64(self.seed))

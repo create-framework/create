@@ -11,8 +11,8 @@ layering rules; the render side is in [../render/AGENTS.md](../render/AGENTS.md)
 | `headless.mojo`, `_headless_gl.mojo` | `run_headless` over an owned buffer, CPU and GPU |
 | `_step.mojo` | `first_step` — frame 1, drawn by `create` — and `step`, every later frame's body |
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor — before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |
-| `_events.mojo` | `apply_events` — the one `Event`-to-`Input` fold, into `context.input`, through `Input`'s per-event methods |
-| `context.mojo`, `time.mojo` | The run state the loop owns and the program reads: `Context` and its `time` reading. Its `input` is `create.input`'s `Input` |
+| `_events.mojo` | `apply_events` — the one `Event` fold, into `context.keyboard`, `context.mouse` and the gamepads, through each device's per-event methods |
+| `context.mojo`, `time.mojo` | The run state the loop owns and the program reads: `Context` and its `time` reading. Its devices (`keyboard`, `mouse`, `_gamepads`) are `create.input`'s |
 | `date_time.mojo` | `DateTime`, the wall clock via libc `clock_gettime` + `localtime_r`. Not run state: nothing in the loop touches it |
 
 ## Rules
@@ -44,15 +44,16 @@ without cursors (dummy, offscreen) refuses them, which never raises. SDL's curso
 not a window's: one window a run, so the same thing.
 
 The loop owns one `Context` for the whole run and writes the frame's readings into it:
-`context._advance_frame` (clock tick and frame count) before each `step`, `apply_events` into `context.input`. There is no separate
-`Input` or clock in a loop, and `step` takes only `(program, context, state)`. Every frame's
+`context._advance_frame` (clock tick and frame count) before each `step`, `apply_events` into the devices. There is no separate
+input state or clock in a loop, and `step` takes only `(program, context, state)`. Every frame's
 `Canvas` comes from `context._new_canvas(state^)` and every remap from `context._set_viewport`, so
 the mapping dials reach `render` in one place.
 
 `apply_events` keeps only what needs the loop: mapping pointer positions into screen space and the
-Escape quit. Every write to `Input` goes through one of its `_`-prefixed methods (`_key_down`,
-`_mouse_button_down`, `_gamepad_axis_moved`, …), which own the bookkeeping — auto-repeat, edges,
-slots. `Input._set_mouse(x, y)` is the only writer of `mouse`.
+Escape quit. Every write to a device goes through one of its `_`-prefixed methods
+(`keyboard._key_down`, `mouse._button_down`, `_gamepads._axis_moved`, …), which own the bookkeeping
+— auto-repeat, edges, slots — and `context._new_input_frame()` clears every device's edges at the top
+of a frame, windowed and headless alike.
 
 **Gamepads are opened in `_window`, read in `input`.** SDL sends no axis or button events for a pad
 until it is opened, so `_SDLWindow.events()` — the one event pump both windows own — tries

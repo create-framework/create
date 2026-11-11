@@ -1,5 +1,5 @@
 struct Key(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
-    """A key, what the `Input` queries take: `input.key_down(Key.UP)`.
+    """A key, what the `Keyboard` queries take: `context.keyboard.down(Key.UP)`.
 
     `from_name` maps a key's name (`"up"`, `"page_up"`, `"a"`) to it, for a
     binding read from a file; a misspelled constant fails to compile, where
@@ -9,12 +9,12 @@ struct Key(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     be passed where a key is expected. `Key(keycode)` names any key SDL can
     send, the ones without a constant included.
 
-    `NONE` is no key (SDL's unknown keycode), what `Input.key` reads before
+    `NONE` is no key (SDL's unknown keycode), what `Keyboard.key` reads before
     any press; it is never down.
 
     `CTRL`, `SHIFT`, `ALT` and `SUPER` are either side of a modifier: down
     while the left or the right one is. They are queries only, never a key
-    SDL sends, so `Input.key` is always the side that was pressed.
+    SDL sends, so `Keyboard.key` is always the side that was pressed.
     """
 
     var value: Int

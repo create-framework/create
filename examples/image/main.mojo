@@ -83,17 +83,16 @@ struct Images(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        ref input = context.input
         var step = _SPEED * context.time.delta
         var x = self.position.x
         var y = self.position.y
-        if input.key_down(Key.W):
+        if context.keyboard.down(Key.W):
             y += step
-        if input.key_down(Key.S):
+        if context.keyboard.down(Key.S):
             y -= step
-        if input.key_down(Key.A):
+        if context.keyboard.down(Key.A):
             x -= step
-        if input.key_down(Key.D):
+        if context.keyboard.down(Key.D):
             x += step
         # Kept on screen, measured from the edges since the origin is the
         # middle of the screen.
@@ -102,7 +101,7 @@ struct Images(Program):
             clamp(x, canvas.left() + half, canvas.right() - half),
             clamp(y, canvas.bottom() + half, canvas.top() - half),
         )
-        if input.key_pressed(Key.T):
+        if context.keyboard.pressed(Key.T):
             self.tint = (self.tint + 1) % len(_tints())
 
         canvas.background(_BACKGROUND)
@@ -123,10 +122,14 @@ struct Images(Program):
             var left = center.x - _SIZE / 2.0
             var top = center.y + _SIZE / 2.0
             var column = Int(
-                (input.mouse.x - left) / _SIZE * Float64(picture.width())
+                (context.mouse.position.x - left)
+                / _SIZE
+                * Float64(picture.width())
             )
             var row = Int(
-                (top - input.mouse.y) / _SIZE * Float64(picture.height())
+                (top - context.mouse.position.y)
+                / _SIZE
+                * Float64(picture.height())
             )
             if (
                 column >= 0
@@ -146,7 +149,9 @@ struct Images(Program):
                     color,
                 )
                 with canvas.style(fill=color, stroke=_TEXT, stroke_thickness=2):
-                    canvas.rectangle(input.mouse + Vector2D(30, 30), 36, 36)
+                    canvas.rectangle(
+                        context.mouse.position + Vector2D(30, 30), 36, 36
+                    )
 
         with canvas.style(text_color=_TEXT, font_size=18):
             canvas.text(reading, (0.0, _ROW_Y + _SIZE / 2 + 30))

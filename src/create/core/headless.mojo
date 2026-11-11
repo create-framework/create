@@ -40,8 +40,8 @@ def run_headless[
     window maps 1:1 and leaves no bars. The returned image is that size.
 
     Time is synthetic and the input is empty, so the result depends only on
-    the program. A program that feeds `context.input` itself (a test
-    pressing keys) gets the windowed loops' frame boundaries: a press,
+    the program. A program that feeds `context.keyboard` or `context.mouse`
+    itself (a test pressing keys) gets the windowed loops' frame boundaries: a press,
     release or typed text lasts the frame it was fed in, while a key held
     down stays down.
 
@@ -89,8 +89,8 @@ def run_headless[
         context._set_viewport(state, pw, ph)
         # This frame's presses, releases and typed text start empty, as
         # apply_events starts them in the windowed loops: there are no events
-        # here, but a program may feed context.input itself.
-        context.input._new_frame()
+        # here, but a program may feed the context's devices itself.
+        context._new_input_frame()
         now += _FRAME_MILLIS
         context._advance_frame(now)
         state = step(program, context, state^)

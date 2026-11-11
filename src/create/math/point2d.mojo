@@ -6,7 +6,7 @@ struct Point2D(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     an explicit constructor from a `Vector2D` for crossing between the two.
 
     Every position in the library is one of these —
-    `canvas.circle(position, r)`, `Rectangle.center()`, `input.mouse` — and no
+    `canvas.circle(position, r)`, `Rectangle.center()`, `context.mouse.position` — and no
     signature takes a location as a loose x/y pair instead. The tuple constructors are `@implicit`, so
     `canvas.circle((0, 0), 20)` works without naming the type and a program
     only spells `Point2D` when it is storing one. It is the only type here
