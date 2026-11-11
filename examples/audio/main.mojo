@@ -68,35 +68,37 @@ struct AudioDemo(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.audio.update()
-        ref input = context.input
         var step = _VOLUME_STEP * context.time.delta
 
-        if input.key_pressed(Key.SPACE):
+        if context.keyboard.pressed(Key.SPACE):
             _ = self.audio.play(self.chime)
             self.chimed_at = context.time.elapsed
 
-        if input.key_pressed(Key.L):
+        if context.keyboard.pressed(Key.L):
             if self.ambience_voice == Voice.NONE:
                 self.ambience_voice = self.audio.loop(self.ambience)
                 self.audio.volume(self.ambience_voice, self.ambience_volume)
             else:
                 self.audio.stop(self.ambience_voice)
                 self.ambience_voice = Voice.NONE
-        if input.key_pressed(Key.P) and self.ambience_voice != Voice.NONE:
+        if (
+            context.keyboard.pressed(Key.P)
+            and self.ambience_voice != Voice.NONE
+        ):
             if self.audio.is_playing(self.ambience_voice):
                 self.audio.pause(self.ambience_voice)
             else:
                 self.audio.resume(self.ambience_voice)
 
-        if input.key_down(Key.UP) or input.key_down(Key.DOWN):
-            var change = step if input.key_down(Key.UP) else -step
+        if context.keyboard.down(Key.UP) or context.keyboard.down(Key.DOWN):
+            var change = step if context.keyboard.down(Key.UP) else -step
             self.ambience_volume = clamp(
                 self.ambience_volume + change, 0.0, 1.0
             )
             self.audio.volume(self.ambience_voice, self.ambience_volume)
-        if input.key_down(Key.RIGHT):
+        if context.keyboard.down(Key.RIGHT):
             self.audio.volume(clamp(self.audio.volume() + step, 0.0, 1.0))
-        if input.key_down(Key.LEFT):
+        if context.keyboard.down(Key.LEFT):
             self.audio.volume(clamp(self.audio.volume() - step, 0.0, 1.0))
 
         canvas.background(_BACKGROUND)

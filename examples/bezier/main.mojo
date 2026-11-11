@@ -42,12 +42,12 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # No camera, so the mouse is already in the space the handles are in.
-        var mouse = context.input.mouse
-        if context.input.mouse_pressed():
+        var mouse = context.mouse.position
+        if context.mouse.pressed():
             for i in range(len(self.handles)):
                 if (mouse - self.handles[i]).magnitude() <= _GRAB_RADIUS:
                     self.dragging = i
-        if context.input.mouse_released():
+        if context.mouse.released():
             self.dragging = -1
         if self.dragging >= 0:
             self.handles[self.dragging] = mouse

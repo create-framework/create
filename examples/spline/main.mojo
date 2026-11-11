@@ -57,27 +57,27 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # No camera, so the mouse is already in the space the points are in.
-        var mouse = context.input.mouse
-        if context.input.mouse_pressed():
+        var mouse = context.mouse.position
+        if context.mouse.pressed():
             self.dragging = self._point_under(mouse)
             if self.dragging < 0:
                 self.points.append(mouse)
                 self.dragging = len(self.points) - 1
-        if context.input.mouse_released():
+        if context.mouse.released():
             self.dragging = -1
         if self.dragging >= 0:
             self.points[self.dragging] = mouse
-        if context.input.mouse_pressed(MouseButton.RIGHT):
+        if context.mouse.pressed(MouseButton.RIGHT):
             var i = self._point_under(mouse)
             if i >= 0:
                 _ = self.points.pop(i)
-        if context.input.key_pressed(Key.C):
+        if context.keyboard.pressed(Key.C):
             self.closed = not self.closed
-        if context.input.key_pressed(Key.ONE):
+        if context.keyboard.pressed(Key.ONE):
             self.alpha = 0.0
-        if context.input.key_pressed(Key.TWO):
+        if context.keyboard.pressed(Key.TWO):
             self.alpha = 0.5
-        if context.input.key_pressed(Key.THREE):
+        if context.keyboard.pressed(Key.THREE):
             self.alpha = 1.0
 
         var spline = Spline(self.points.copy(), self.alpha, self.closed)

@@ -19,7 +19,7 @@ namespace any scratch path under `/tmp` per file.
 **Rendering is tested for real.** `run_headless` returns the last frame as an `Image`, and
 `image.pixel(x, y)` reads it back — assert on pixels, don't eyeball. It antialiases at
 `MEDIUM` like `run`: a test pinning an edge pixel's exact colour passes `antialiasing=Antialiasing.OFF`.
-`core/test_step.mojo` scripts `context.input` and calls `step` directly for input-driven behaviour.
+`core/test_step.mojo` scripts `context.mouse` and calls `step` directly for input-driven behaviour.
 
 **GPU coverage, three tiers:**
 - `render/test_gl_parity.mojo` renders one shape kind per frame through both backends and compares

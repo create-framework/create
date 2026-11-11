@@ -1,8 +1,7 @@
 struct GamepadButton(
     Copyable, Equatable, ImplicitlyCopyable, Movable, Writable
 ):
-    """A gamepad button, for `Gamepad.button_down`/`button_pressed`/
-    `button_released`.
+    """A gamepad button, for `Gamepad.down`/`pressed`/`released`.
 
     Matches SDL's own button numbering. The face buttons are named by
     position, not label, because the labels disagree: `SOUTH` is Xbox A,

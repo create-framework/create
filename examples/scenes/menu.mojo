@@ -12,7 +12,7 @@ struct Menu:
     var start_pressed: Bool
 
     def update(mut self, context: Context, mut canvas: Canvas) raises:
-        self.start_pressed = context.input.mouse_pressed()
+        self.start_pressed = context.mouse.pressed()
 
         canvas.background(Color(40, 40, 44))
         with canvas.style(

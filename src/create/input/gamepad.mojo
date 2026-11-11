@@ -11,9 +11,9 @@ comptime _RIGHT_TRIGGER = 5
 
 
 struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """One gamepad's state for one frame, read as `context.input.gamepad(i)`.
+    """One gamepad's state for one frame, read as `context.gamepad(player)`.
 
-    Buttons follow the key and mouse vocabulary: *down* is held right now,
+    Buttons follow the vocabulary every device shares: *down* is held right now,
     *pressed*/*released* are the edges, true only in the frame the button
     went down or came up. Name buttons through `GamepadButton`.
 
@@ -103,16 +103,16 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
             ")",
         )
 
-    def button_down(self, button: GamepadButton) -> Bool:
-        """Whether this button is held right now."""
+    def down(self, button: GamepadButton) -> Bool:
+        """Whether `button` is held right now."""
         return (self._held_buttons & button._bit()) != 0
 
-    def button_pressed(self, button: GamepadButton) -> Bool:
-        """Whether this button went down this frame — true once per press."""
+    def pressed(self, button: GamepadButton) -> Bool:
+        """Whether `button` went down this frame: true once per press."""
         return (self._pressed_buttons & button._bit()) != 0
 
-    def button_released(self, button: GamepadButton) -> Bool:
-        """Whether this button came up this frame — true once per release."""
+    def released(self, button: GamepadButton) -> Bool:
+        """Whether `button` came up this frame: true once per release."""
         return (self._released_buttons & button._bit()) != 0
 
     def _new_frame(mut self):
@@ -125,7 +125,7 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
             self.name = ""
 
     def _press(mut self, button: GamepadButton):
-        if not self.button_down(button):
+        if not self.down(button):
             self.button = button
             self._held_buttons |= button._bit()
             self._pressed_buttons |= button._bit()
@@ -165,3 +165,75 @@ def _dead_zone(raw: Vector2D) -> Vector2D:
         1.0,
     )
     return raw * (scaled / length)
+
+
+struct _Gamepads(Copyable, Movable):
+    """Every player's pad, by slot: what `context.gamepad(player)` reads.
+
+    Each pad takes the lowest free slot as it connects and keeps it until it
+    disconnects, so unplugging player one leaves player two where they were.
+    A disconnected pad leaves a `Gamepad()` behind for the next one.
+    """
+
+    var _slots: List[Gamepad]
+
+    def __init__(out self):
+        self._slots = []
+
+    def get(self, player: Int) -> Gamepad:
+        """The pad in slot `player`, or a disconnected `Gamepad()`."""
+        if 0 <= player < len(self._slots):
+            return self._slots[player]
+        return Gamepad()
+
+    def _new_frame(mut self):
+        for i in range(len(self._slots)):
+            self._slots[i]._new_frame()
+
+    def _slot(self, id: Int) -> Int:
+        """The slot of the connected pad SDL calls `id`, or -1."""
+        for i in range(len(self._slots)):
+            if self._slots[i].connected and self._slots[i]._id == id:
+                return i
+        return -1
+
+    def _connect(mut self, id: Int, name: String):
+        if self._slot(id) != -1:
+            return
+        var pad = Gamepad()
+        pad.connected = True
+        pad.connected_this_frame = True
+        pad.name = name
+        pad._id = id
+        for i in range(len(self._slots)):
+            if not self._slots[i].connected:
+                # A pad that left this same frame still gets its edge.
+                pad.disconnected_this_frame = self._slots[
+                    i
+                ].disconnected_this_frame
+                self._slots[i] = pad^
+                return
+        self._slots.append(pad^)
+
+    def _disconnect(mut self, id: Int):
+        var slot = self._slot(id)
+        if slot != -1:
+            var pad = Gamepad()
+            pad.disconnected_this_frame = True
+            pad.name = self._slots[slot].name
+            self._slots[slot] = pad^
+
+    def _axis_moved(mut self, id: Int, axis: Int, value: Float64):
+        var slot = self._slot(id)
+        if slot != -1:
+            self._slots[slot]._set_axis(axis, value)
+
+    def _button_down(mut self, id: Int, button: GamepadButton):
+        var slot = self._slot(id)
+        if slot != -1:
+            self._slots[slot]._press(button)
+
+    def _button_up(mut self, id: Int, button: GamepadButton):
+        var slot = self._slot(id)
+        if slot != -1:
+            self._slots[slot]._release(button)

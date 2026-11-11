@@ -54,7 +54,7 @@ struct Collisions(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        var mouse = context.input.mouse
+        var mouse = context.mouse.position
         self.probe = self.probe.move_to(mouse)
 
         canvas.background(_BACKGROUND)

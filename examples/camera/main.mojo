@@ -31,27 +31,28 @@ struct CameraDemo(Program):
         return CameraDemo(Camera(), [])
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        ref input = context.input
         var pan = _PAN_SPEED * context.time.delta / self.camera.zoom
-        if input.key_down(Key.RIGHT):
+        if context.keyboard.down(Key.RIGHT):
             self.camera.position += Vector2D(pan, 0.0)
-        if input.key_down(Key.LEFT):
+        if context.keyboard.down(Key.LEFT):
             self.camera.position -= Vector2D(pan, 0.0)
 
         # Zoom about the cursor: note the world point under it, zoom, then
         # move the camera so that point is back under the cursor.
-        if input.mouse_wheel.y != 0.0:
-            var before = self.camera.to_world(input.mouse)
+        if context.mouse.wheel.y != 0.0:
+            var before = self.camera.to_world(context.mouse.position)
             self.camera.zoom = clamp(
-                self.camera.zoom * pow(_ZOOM_STEP, input.mouse_wheel.y),
+                self.camera.zoom * pow(_ZOOM_STEP, context.mouse.wheel.y),
                 0.3,
                 4.0,
             )
-            self.camera.position += before - self.camera.to_world(input.mouse)
+            self.camera.position += before - self.camera.to_world(
+                context.mouse.position
+            )
 
-        if input.mouse_pressed():
-            self.markers.append(self.camera.to_world(input.mouse))
-        if input.key_pressed(Key.C):
+        if context.mouse.pressed():
+            self.markers.append(self.camera.to_world(context.mouse.position))
+        if context.keyboard.pressed(Key.C):
             self.markers.clear()
 
         canvas.background(_BACKGROUND)
@@ -85,7 +86,7 @@ struct CameraDemo(Program):
                     + " clears",
                     (0.0, canvas.top() - 16.0),
                 )
-                var world = self.camera.to_world(input.mouse)
+                var world = self.camera.to_world(context.mouse.position)
                 canvas.text(
                     String(
                         "Zoom ",

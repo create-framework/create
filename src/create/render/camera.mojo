@@ -37,7 +37,7 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
         )
 
     def to_world(self, screen: Point2D) -> Point2D:
-        """A screen-space point — `input.mouse`, say — into world space.
+        """A screen-space point — `context.mouse.position`, say — into world space.
 
         The inverse of `matrix()`, done in arithmetic rather than through a
         general matrix inverse.

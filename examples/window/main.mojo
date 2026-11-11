@@ -68,13 +68,12 @@ struct App(Program):
         return App(x=100.0, dir=1.0, cap=0, cursor=1)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        ref input = context.input
-        if input.key_pressed(Key.F11):
+        if context.keyboard.pressed(Key.F11):
             if context.window_mode() == WindowMode.FULLSCREEN:
                 context.window_mode(WindowMode.WINDOWED)
             else:
                 context.window_mode(WindowMode.FULLSCREEN)
-        if input.key_pressed(Key.SPACE):
+        if context.keyboard.pressed(Key.SPACE):
             var mode = context.autoscale()
             if mode == Autoscale.FIT:
                 context.autoscale(Autoscale.EXTEND)
@@ -82,12 +81,12 @@ struct App(Program):
                 context.autoscale(Autoscale.OFF)
             else:
                 context.autoscale(Autoscale.FIT)
-        if input.key_pressed(Key.R):
+        if context.keyboard.pressed(Key.R):
             context.resizable(not context.resizable())
-        if input.key_pressed(Key.F):
+        if context.keyboard.pressed(Key.F):
             self.cap = (self.cap + 1) % len(_frame_caps())
             context.max_frame_rate(_frame_caps()[self.cap])
-        if input.key_pressed(Key.C):
+        if context.keyboard.pressed(Key.C):
             self.cursor = (self.cursor + 1) % len(_cursors())
             context.cursor(_cursors()[self.cursor])
 

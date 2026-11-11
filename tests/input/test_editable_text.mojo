@@ -12,7 +12,7 @@ def _type(mut field: EditableText, var events: List[Event]) raises:
     """Fold `events` as one frame and feed it to `field`."""
     var context = Context()
     _ = apply_events(events, Viewport(), context)
-    field.update(context.input)
+    field.update(context.keyboard)
 
 
 def test_starts_with_the_caret_after_its_text() raises -> None:
@@ -78,7 +78,7 @@ def test_held_backspace_keeps_deleting() raises -> None:
     for _ in range(2):
         var events: List[Event] = [KeyDown(Key.BACKSPACE.value)]
         _ = apply_events(events, Viewport(), context)
-        field.update(context.input)
+        field.update(context.keyboard)
     assert_equal(field.text, "a")
 
 

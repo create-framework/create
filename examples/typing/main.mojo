@@ -1,4 +1,4 @@
-"""A typing test: `context.input.text` and `EditableText` take what is typed,
+"""A typing test: `context.keyboard.text` and `EditableText` take what is typed,
 accented letters included, and the result is scored in words per minute.
 
 Type the phrase shown; Enter moves on once it is right.
@@ -55,14 +55,14 @@ struct TypingTest(Program):
         var finished = self.typed.text == self.phrases[self.phrase]
 
         if finished:
-            if context.input.key_pressed(Key.ENTER):
+            if context.keyboard.pressed(Key.ENTER):
                 self.phrase = (self.phrase + 1) % len(self.phrases)
                 self.typed.text = ""
                 self.result = ""
         else:
             self.count_keystrokes(context, target)
             # Typed text, Backspace, Delete and the arrow keys, all in one.
-            self.typed.update(context.input)
+            self.typed.update(context.keyboard)
             if self.typed.text == self.phrases[self.phrase]:
                 self.result = self.score(len(target), context.time.elapsed)
 
@@ -101,7 +101,7 @@ struct TypingTest(Program):
     def count_keystrokes(mut self, context: Context, target: List[String]):
         """Count this frame's typed characters, and those that went in wrong
         for where the caret put them. The clock starts on the first."""
-        var typed = characters(context.input.text)
+        var typed = characters(context.keyboard.text)
         if not typed:
             return
         if not self.typed.text:

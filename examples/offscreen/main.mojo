@@ -45,14 +45,13 @@ struct Offscreen(Program):
         return Offscreen(_badge(), layer^, strokes^, Point2D(0, 0))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        ref input = context.input
-        if input.key_pressed(Key.C):
+        if context.keyboard.pressed(Key.C):
             self.layer.clear()
             self.strokes = self.layer.snapshot()
-        if input.mouse_down():
+        if context.mouse.down():
             # From where the mouse was, so a fast drag paints a line, not dots.
             var start = (
-                input.mouse if input.mouse_pressed() else self.last_mouse
+                context.mouse.position if context.mouse.pressed() else self.last_mouse
             )
             with self.layer.style(
                 stroke=Color(98, 104, 168).lerp(
@@ -63,10 +62,10 @@ struct Offscreen(Program):
                 stroke_cap=StrokeCap.ROUND,
             ):
                 # Round caps join each segment to the next without a notch.
-                self.layer.line(start, input.mouse)
+                self.layer.line(start, context.mouse.position)
             # Read only when something was painted: a read copies the layer.
             self.strokes = self.layer.snapshot()
-        self.last_mouse = input.mouse
+        self.last_mouse = context.mouse.position
 
         # The frame under the layer, redrawn and cleared every frame.
         canvas.background(Color(40, 40, 44))
@@ -75,7 +74,9 @@ struct Offscreen(Program):
             canvas.circle((cos(t) * 200, sin(t * 1.3) * 120), 40)
 
         canvas.image(self.strokes, (0, 0), canvas.width(), canvas.height())
-        canvas.image(self.badge, input.mouse, _BADGE_SIZE, _BADGE_SIZE)
+        canvas.image(
+            self.badge, context.mouse.position, _BADGE_SIZE, _BADGE_SIZE
+        )
 
         with canvas.style(text_color=Color(176, 172, 162), font_size=18):
             canvas.text("Drag to paint, C to clear", (0, canvas.bottom() + 30))

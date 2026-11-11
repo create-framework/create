@@ -1,5 +1,5 @@
 struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
-    """A mouse button, for `mouse_down`/`mouse_pressed`/`mouse_released`.
+    """A mouse button, for `Mouse.down`/`pressed`/`released`.
 
     Matches SDL's own button numbering, not named after it: `BACK`/`FORWARD`
     are the side thumb buttons (SDL's X1/X2) — named for what a mouse driver
@@ -11,7 +11,7 @@ struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     what anyone guesses (`RIGHT` is 3, not 2). `MouseButton(n)` names a
     button past `FORWARD` on a mouse that has one.
 
-    `NONE` is no button, what `Input.mouse_button` reads before any press;
+    `NONE` is no button, what `Mouse.button` reads before any press;
     it is never down.
     """
 
@@ -50,7 +50,7 @@ struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             writer.write("MouseButton(", self.value, ")")
 
     def _bit(self) -> Int:
-        """This button's bit in `Input`'s button masks; 0, never set, for
+        """This button's bit in `Mouse`'s button masks; 0, never set, for
         `NONE` and for a number no mask can hold."""
         if 1 <= self.value < 64:
             return 1 << self.value

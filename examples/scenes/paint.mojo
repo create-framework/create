@@ -20,15 +20,15 @@ struct Paint:
         self._entering = True
 
     def update(mut self, context: Context, mut canvas: Canvas) raises:
-        self.back_pressed = context.input.mouse_pressed(MouseButton.RIGHT)
+        self.back_pressed = context.mouse.pressed(MouseButton.RIGHT)
 
         if self._entering:
             canvas.background(Color(40, 40, 44))
             self._entering = False
 
-        if context.input.mouse_down(MouseButton.LEFT):
+        if context.mouse.down(MouseButton.LEFT):
             with canvas.style(fill=Color(201, 140, 150), stroke_enabled=False):
-                canvas.circle(context.input.mouse, 14.0)
+                canvas.circle(context.mouse.position, 14.0)
 
         # Align.BOTTOM anchors the text box's bottom edge at y, so it grows
         # upward from the margin instead of straddling it — the default

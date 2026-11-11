@@ -37,7 +37,7 @@ struct Gamepads(Program):
         ]
 
         for i in range(_PLAYERS):
-            var pad = context.input.gamepad(i)
+            var pad = context.gamepad(i)
             var player = "Player " + String(i + 1)
             if pad.connected_this_frame:
                 self.say(context, player + " joined: " + pad.name)
@@ -50,10 +50,10 @@ struct Gamepads(Program):
             self.positions[i] = (
                 self.positions[i] + pad.left_stick * speed * context.time.delta
             )
-            if pad.button_pressed(GamepadButton.SOUTH):
+            if pad.pressed(GamepadButton.SOUTH):
                 self.colors[i] = (self.colors[i] + 1) % len(palette)
                 context.rumble(0.1, low_frequency=0, high_frequency=1, player=i)
-            if pad.button_pressed(GamepadButton.START):
+            if pad.pressed(GamepadButton.START):
                 self.positions[i] = Point2D(Float64(i) * 120 - 180, 0)
 
             canvas.fill(palette[self.colors[i]])
@@ -65,7 +65,7 @@ struct Gamepads(Program):
         canvas.text_alignment(Align.LEFT)
         var connected = 0
         for i in range(_PLAYERS):
-            if context.input.gamepad(i).connected:
+            if context.gamepad(i).connected:
                 connected += 1
         canvas.text(
             String(connected) + " of " + String(_PLAYERS) + " gamepads",

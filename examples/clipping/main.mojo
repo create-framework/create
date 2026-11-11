@@ -49,7 +49,7 @@ struct Clipping(Program):
                     canvas.rectangle((Float64(i) * 24, 0), 24, 500)
 
         # Fog with a hole in it, wherever the mouse is.
-        with canvas.clip(Circle(context.input.mouse, 120), invert=True):
+        with canvas.clip(Circle(context.mouse.position, 120), invert=True):
             canvas.background(Color(0, 0, 0, 140))
 
 

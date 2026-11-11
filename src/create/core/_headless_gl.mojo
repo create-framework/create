@@ -87,8 +87,8 @@ def _run_headless_gl[
         context._set_viewport(state, pw, ph)
         # This frame's presses, releases and typed text start empty, as
         # apply_events starts them in the windowed loops: there are no events
-        # here, but a program may feed context.input itself.
-        context.input._new_frame()
+        # here, but a program may feed the context's devices itself.
+        context._new_input_frame()
         now += _FRAME_MILLIS
         context._advance_frame(now)
         state = step(program, context, state^)

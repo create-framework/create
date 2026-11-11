@@ -72,7 +72,7 @@ def test_geometry_comes_from_the_viewport() raises -> None:
 struct ClickPainter(Program):
     """Paints red the frame the mouse is pressed, blue otherwise.
 
-    Nothing here is fed by SDL — `Input` is a plain struct a test can fill in
+    Nothing here is fed by SDL — `Mouse` is a plain struct a test can fill in
     and hand straight to `step`, unlike the removed per-event callbacks,
     which only the run loop could ever fire. This is what makes click-driven
     behaviour assertable the same way the pixel tests already assert on
@@ -86,7 +86,7 @@ struct ClickPainter(Program):
         return ClickPainter(False)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.clicked = context.input.mouse_pressed()
+        self.clicked = context.mouse.pressed()
 
         canvas.background(Color.RED if self.clicked else Color.BLUE)
 
@@ -109,7 +109,7 @@ def test_scripted_click_drives_rendering() raises -> None:
     var clicked_start = _PersistentCanvasState()
     clicked_context._set_viewport(clicked_start, 32, 32)
     var clicked_program = ClickPainter(False)
-    clicked_context.input._pressed_buttons |= 1 << 1
+    clicked_context.mouse._pressed |= 1 << 1
     var clicked_state = step(clicked_program, clicked_context, clicked_start^)
     clicked_state._backend.present(mem.surface(), clicked_state._view.scale)
     assert_equal(mem.pixel(16, 16), Color.RED)
