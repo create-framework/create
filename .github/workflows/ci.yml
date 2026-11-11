@@ -1,6 +1,6 @@
 # The checks too slow for a commit hook. pre-commit covers formatting and the
 # smoke build locally; everything else runs here, on every pull request and
-# on main.
+# on main. Linux only: the macOS jobs are in macos.yml, run by hand.
 #
 # A change touching only inert paths (.githooks/_inert.sh, the list the hook
 # skips on too) skips the checks. Not through `paths-ignore`: a required
@@ -53,7 +53,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     name: ${{ matrix.name }}
-    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     env:
       MOJO_CACHE: .pixi/envs/default/share/max/cache/.mojo_cache
     strategy:
@@ -70,16 +70,6 @@ jobs:
           - name: linux-tests
             # GL tests skip without a context; here a skip means the Mesa
             # setup broke, so it fails the job rather than passing silently.
-            run: pixi run test | tee test.log && ! grep -q SKIP test.log
-          # Apple silicon. Format and precompile are platform-independent
-          # enough that Linux covers them (and `pixi run test` precompiles
-          # anyway). Headless GL runs in a hidden Cocoa window, which the
-          # runner's desktop session supports, so a SKIP fails here too.
-          - name: macos-examples
-            runner: macos-15
-            run: pixi run build-examples && pixi run check-standalone
-          - name: macos-tests
-            runner: macos-15
             run: pixi run test | tee test.log && ! grep -q SKIP test.log
     steps:
       - uses: actions/checkout@v7

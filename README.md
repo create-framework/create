@@ -79,7 +79,7 @@ pixi run benchmark raster        # CPU rasterisation per primitive, headless
 |----------|--------|
 | Linux (x86-64) | Supported, used day to day |
 | Windows through WSL2 | Supported, used day to day |
-| macOS on Apple silicon | Built and tested in CI on every change; little use on a real desktop yet |
+| macOS on Apple silicon | Built and tested by a CI workflow run on demand, not on every change; little use on a real desktop yet |
 
 Intel Macs and native Windows are not supported: Mojo doesn't run on either. Every dependency, Mojo included,
 comes from [pixi](https://pixi.sh), so `pixi run` is all a supported machine needs. A program built with
