@@ -46,9 +46,9 @@ from std.testing import TestSuite, assert_true
 from create import *
 from create.render._surface import MemorySurface
 from create.core._step import step
-from create.render.render_backend import RenderBackend
 from create.render._gl import GL
 from create.render._gl_target import _GLTarget
+from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
 from create._window import GLWindow
 from create.math.matrix import rotate
@@ -1376,21 +1376,23 @@ def _gpu_frame(mut win: GLWindow, shape: Int) raises -> List[UInt8]:
     """
     var target = _GLTarget(GL(), _PIXEL_W, _PIXEL_H)
 
-    var state = _PersistentCanvasState(RenderBackend.GPU)
+    var gl = GLRenderer()
+    var state = _PersistentCanvasState()
     var context = Context()
     var program = _create(context, state, shape)
     context.time._start(0)
     context.time._tick(16)
     state = step(program, context, state^)
-    state._backend.present_gpu(_PIXEL_W, _PIXEL_H, state._view.scale)
+    state._backend.present_gpu(gl, _PIXEL_W, _PIXEL_H, state._view.scale)
 
     # The same readback `save_screenshot` uses, so the parity test and the
     # library cannot drift in how a GL frame is read or which way up it is.
-    var out = state._backend.gl.value().read_frame(_PIXEL_W, _PIXEL_H)
+    var out = gl.read_frame(_PIXEL_W, _PIXEL_H)
 
     # Rule 3: both renderers' GL objects are freed while the context — still
     # owned by `win`, in the caller — is current.
     _ = state^
+    _ = gl^
     _ = target^
     return out^
 

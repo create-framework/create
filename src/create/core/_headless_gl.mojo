@@ -17,7 +17,7 @@ from create.render._gl import GL
 from create.render._gl_target import _GLTarget
 from create.render.antialiasing import Antialiasing
 from create.render.autoscale import Autoscale
-from create.render.render_backend import RenderBackend
+from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
 from create.core.context import Context
 from create.render._surface import MemorySurface
@@ -68,7 +68,8 @@ def _run_headless_gl[
     var target = _GLTarget(GL(), pw, ph)
 
     # After the window: its GL resources need a current context.
-    var state = _PersistentCanvasState(RenderBackend.GPU)
+    var gl = GLRenderer()
+    var state = _PersistentCanvasState()
     state._backend.antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
@@ -76,7 +77,7 @@ def _run_headless_gl[
     # Before create(), from the arguments, as in the windowed loops.
     context._set_viewport(state, pw, ph)
     var program = first_step[P](context, state)
-    state._backend.present_gpu(pw, ph, state._view.scale)
+    state._backend.present_gpu(gl, pw, ph, state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
@@ -92,17 +93,16 @@ def _run_headless_gl[
         now += _FRAME_MILLIS
         context._advance_frame(now)
         state = step(program, context, state^)
-        state._backend.present_gpu(pw, ph, state._view.scale)
+        state._backend.present_gpu(gl, pw, ph, state._view.scale)
     state._backend.finish_recording()
 
-    var pixels = state._backend.gl.value().read_frame(pw, ph)
+    var pixels = gl.read_frame(pw, ph)
     var mem = MemorySurface(pw, ph)
     mem.data = pixels^
 
     # Rule 3 from `_gl.mojo`: the context owner must outlive the last GL
-    # call, and both `state`'s renderer and `target` make them when torn
-    # down.
-    _ = state^
+    # call, and both the renderer and `target` make them when torn down.
+    _ = gl^
     _ = target^
     _ = win^
     return mem^

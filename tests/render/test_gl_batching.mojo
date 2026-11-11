@@ -15,8 +15,8 @@ from create.core._step import first_step, step
 from create.render._gl import GL
 from create.render._gl_target import _GLTarget
 from create.render.autoscale import Autoscale
+from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
-from create.render.render_backend import RenderBackend
 from create.image.image import Image
 from std.testing import TestSuite, assert_equal, assert_true
 
@@ -326,9 +326,9 @@ struct BlurredBezier[shadows: Bool](Program):
         canvas.rectangle((30.0, 0.0), 20.0, 20.0)
 
 
-def _live_textures(mut state: _PersistentCanvasState) raises -> Int:
+def _live_textures(mut renderer: GLRenderer) raises -> Int:
     """How many of the first 4096 texture names are live textures."""
-    ref gl = state._backend.gl.value().gl
+    ref gl = renderer.gl
     var live = 0
     for name in range(1, 4097):
         if gl.is_texture(UInt32(name)) != 0:
@@ -340,12 +340,13 @@ def _texture_growth[P: Program](mut win: GLWindow, frames: Int) raises -> Int:
     """How many more live textures there are after `frames` frames of `P`
     than after its first."""
     var target = _GLTarget(GL(), 100, 100)
-    var state = _PersistentCanvasState(RenderBackend.GPU)
+    var gl = GLRenderer()
+    var state = _PersistentCanvasState()
     var context = Context()
     context.design_size(100, 100)
     context._set_viewport(state, 100, 100)
     var program = first_step[P](context, state)
-    state._backend.present_gpu(100, 100, state._view.scale)
+    state._backend.present_gpu(gl, 100, 100, state._view.scale)
     var now = 0
     context.time._start(now)
     var first = 0
@@ -353,11 +354,12 @@ def _texture_growth[P: Program](mut win: GLWindow, frames: Int) raises -> Int:
         now += 16
         context._advance_frame(now)
         state = step(program, context, state^)
-        state._backend.present_gpu(100, 100, state._view.scale)
+        state._backend.present_gpu(gl, 100, 100, state._view.scale)
         if i == 0:
-            first = _live_textures(state)
-    var growth = _live_textures(state) - first
+            first = _live_textures(gl)
+    var growth = _live_textures(gl) - first
     _ = state^
+    _ = gl^
     _ = target^
     return growth
 
@@ -376,27 +378,29 @@ def _gpu_frame[
     """
     var target = _GLTarget(GL(), width, height)
 
-    var state = _PersistentCanvasState(RenderBackend.GPU)
+    var gl = GLRenderer()
+    var state = _PersistentCanvasState()
     var context = Context()
     context.design_size(width, height)
     context._set_viewport(state, width, height)
     var program = first_step[P](context, state)
-    state._backend.present_gpu(width, height, state._view.scale)
+    state._backend.present_gpu(gl, width, height, state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
         now += 16
         context._advance_frame(now)
         state = step(program, context, state^)
-        state._backend.present_gpu(width, height, state._view.scale)
+        state._backend.present_gpu(gl, width, height, state._view.scale)
 
-    var pixels = state._backend.gl.value().read_frame(width, height)
+    var pixels = gl.read_frame(width, height)
     var mem = MemorySurface(width, height)
     mem.data = pixels^
 
     # Rule 3 from `_gl.mojo`: the context owner (`win`, in the caller) must
     # outlive the last GL call, which tearing down `state` and `target` make.
     _ = state^
+    _ = gl^
     _ = target^
     return mem^
 
@@ -404,18 +408,20 @@ def _gpu_frame[
 def _gpu_draw_calls[P: Program](mut win: GLWindow) raises -> Int:
     """How many draw calls one frame of `P` takes through the GL backend."""
     var target = _GLTarget(GL(), 100, 100)
-    var state = _PersistentCanvasState(RenderBackend.GPU)
+    var gl = GLRenderer()
+    var state = _PersistentCanvasState()
     var context = Context()
     context.design_size(100, 100)
     context._set_viewport(state, 100, 100)
     var program = first_step[P](context, state)
-    state._backend.present_gpu(100, 100, state._view.scale)
+    state._backend.present_gpu(gl, 100, 100, state._view.scale)
     context.time._start(0)
     context.time._tick(16)
     state = step(program, context, state^)
-    state._backend.present_gpu(100, 100, state._view.scale)
-    var calls = state._backend.gl.value().draw_calls
+    state._backend.present_gpu(gl, 100, 100, state._view.scale)
+    var calls = gl.draw_calls
     _ = state^
+    _ = gl^
     _ = target^
     return calls
 

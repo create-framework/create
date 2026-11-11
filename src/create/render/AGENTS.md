@@ -104,8 +104,13 @@ replays at the new level.
 
 The camera is folded into `RenderCommand.transform`; nothing below `Canvas` knows it exists.
 
-`Backend.kind` selects the replay (`RenderBackend.CPU` onto a `Surface`, `GPU` through `GLRenderer`);
-a field rather than a trait because Mojo has no dynamic dispatch.
+**The loop picks the replay, not the backend.** `run` branches on its `backend` argument once, into
+the CPU loop or the GL one, and only the GL loops (`_run_gl`, `_headless_gl`) own a `GLRenderer`:
+built after their window, since its GL resources need a current context, and dropped before it.
+They pass it to `Backend.present_gpu(gl, …)`; the CPU loops call `present(surface, …)`. So a
+`Backend` never holds GPU state, and there is no backend kind to get wrong. Everything a canvas
+needs whichever loop presents — recording, text measurement, images, reads, captures — is on the
+`Backend`, and reads and captures replay on the CPU either way.
 
 The autoclear is a recorded `ClearPayload`, so every path handles it: the GPU turns it into `glClear`,
 an opaque `canvas.background()` replaces it via `Backend.record_clear` (`_clear_is_opaque`), and a
@@ -380,8 +385,8 @@ that the next bake paints in.
 reuses the entry whenever the identity matches. The entry holds the image's own
 `ArcPointer[List[UInt8]]`, not a copy: interning costs no pixel copy, and the share keeps the
 pixels alive for a command replayed after the `Image` is gone. `_expire_images`, after each present
-(or offscreen bake), drops entries unused for `IMAGE_KEEP_FRAMES` frames and tells
-`GLRenderer.forget_images` to delete their textures.
+(or offscreen bake), drops entries unused for `IMAGE_KEEP_FRAMES` frames and returns their ids,
+which `present_gpu` passes to `GLRenderer.forget_images` to delete their textures.
 
 ## Captures
 

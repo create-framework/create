@@ -19,7 +19,7 @@ from create._window import GLWindow
 
 from create.render.antialiasing import Antialiasing
 from create.render.autoscale import Autoscale
-from create.render.render_backend import RenderBackend
+from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
 from create.core.context import Context
 
@@ -82,9 +82,11 @@ def _wait_for_dimensions(
         _ = _update_dimensions(win, state, context)
 
 
-def _present(mut win: GLWindow, mut state: _PersistentCanvasState) raises:
+def _present(
+    mut win: GLWindow, mut gl: GLRenderer, mut state: _PersistentCanvasState
+) raises:
     var drawable = win.drawable_size()
-    state._backend.present_gpu(drawable[0], drawable[1], state._view.scale)
+    state._backend.present_gpu(gl, drawable[0], drawable[1], state._view.scale)
     win.swap_buffers()
 
 
@@ -93,6 +95,7 @@ def _run_loop[
 ](
     mut program: P,
     mut win: GLWindow,
+    var gl: GLRenderer,
     var state: _PersistentCanvasState,
     mut context: Context,
     var applied: _AppliedWindow,
@@ -112,13 +115,13 @@ def _run_loop[
         context._advance_frame(frame_start)
         state = step(program, context, state^)
         _apply_window_dials(win, applied, context)
-        _present(win, state)
+        _present(win, gl, state)
         _apply_window_mode(win, applied, context)
         _finish_frame(win, context, frame_start)
     state._backend.finish_recording()
     # Rule 3 from `_gl.mojo`: the context owner must outlive the last GL call,
-    # and the renderer inside `state` makes them when it is destroyed.
-    _ = state^
+    # and the renderer makes them when it is destroyed.
+    _ = gl^
     _ = win
 
 
@@ -158,10 +161,11 @@ def run_gl[
     # may be none: frames then run as fast as they draw unless
     # `context.max_frame_rate` caps them. Nothing else depends on vsync.
     _ = win.set_swap_interval(1 if vsync else 0)
-    # Built after the window because its GL resources need a current context;
-    # the state now carries the viewport too, so it has to exist before
+    # Built after the window because its GL resources need a current context.
+    # The state carries the viewport, so it has to exist before
     # `_wait_for_dimensions` rather than inside the loop.
-    var state = _PersistentCanvasState(RenderBackend.GPU)
+    var gl = GLRenderer()
+    var state = _PersistentCanvasState()
     state._backend.antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
@@ -175,6 +179,6 @@ def run_gl[
     var applied = _AppliedWindow(context)
     var program = first_step[P](context, state)
     _apply_window_dials(win, applied, context)
-    _present(win, state)
+    _present(win, gl, state)
     _apply_window_mode(win, applied, context)
-    _run_loop(program, win, state^, context, applied^)
+    _run_loop(program, win, gl^, state^, context, applied^)
