@@ -13,7 +13,8 @@ and the layering rules.
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
 | `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
-| `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_backend.mojo` |
+| `_cpu_replay.mojo` | `CpuReplay` — commands rasterised onto a `Surface`: the CPU backend's presents and every capture and read; shadows, clips and antialiasing around the rasterisers. Handed the images, clips and antialiasing by `Backend.replay`, as `GLRenderer.render` is |
+| `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_cpu_replay.mojo` |
 | `_surface.mojo` | `Surface`, the borrowed RGBA view the rasteriser writes, and `MemorySurface`, an owned buffer (headless runs, pixel reads, offscreen canvases); `run_headless` hands its pixels over as an `Image` |
 | `_gif.mojo` | The GIF writer behind `canvas.start_recording`: per-frame quantising (exact up to 256 colours, else median cut, optional Floyd-Steinberg), LZW, and `GifWriter`, which streams frames to the file |
 | `_gl.mojo` | GL entry points resolved at runtime; the only file that talks to the driver |
@@ -57,7 +58,7 @@ holding only what the paint shows. The CPU fills them with `fill_pieces` (`fill_
 with `emit_pieces`, and a blurred shadow is the shadow command's pieces masked
 (`shape_shadow_mask`). So both draw the same pieces, and a new lowered kind is one branch there and
 a tiler returning `Pieces` — no backend learns it. Rectangles and circles are not lowered: each
-replay rasterises them from their equations (`Backend._rect`/`_circle`, `emit_rect`/`emit_circle`),
+replay rasterises them from their equations (`CpuReplay._rect`/`_circle`, `emit_rect`/`emit_circle`),
 which is where they are fast, and their shadows blur analytically. Nor is a plain triangle's fill —
 no rounding, no visible stroke (`is_plain_triangle`) — one `fill_triangle` pass or one GPU
 triangle.
@@ -283,7 +284,7 @@ it.
 
 Each replay rasterises the region **with the code that draws that shape**, so a clip and a fill of
 the same shape cover the same pixels:
-- **CPU:** before any command, `Backend._clip_rows` replays each region through `_one` onto a
+- **CPU:** before any command, `CpuReplay._clip_rows` replays each region through `_one` onto a
   *recording* surface (`Surface._recording_into`) `grid` times finer, as `_shape` antialiases a
   shape. There `fill_span` appends `(row, lo, hi, key)` and writes nothing; `key` names the run's
   paint, which a clip ignores. `_ClipRows` merges those per sub-row, then counts each pixel's
@@ -327,7 +328,7 @@ single-sampled, so the level can change without recreating the GL context.
 
 **CPU:** `Backend.antialiasing` (an `Antialiasing`, seeded by the run loops and set by
 `canvas.antialiasing`) applies to the CPU replay of the
-shape kinds — rect, circle, line, Bézier, sector, polygon, triangle — through `Backend._shape`.
+shape kinds — rect, circle, line, Bézier, sector, polygon, triangle — through `CpuReplay._shape`.
 Clear, text, images, letterbox and blurred or inset shadows are untouched; a hard shadow is a
 shape command, so it is antialiased like one. An image that isn't upright has its edge
 antialiased on the same grid inside `blit_image_mapped` (see Images).
@@ -458,7 +459,7 @@ shadow's spread grows it.
 units) before anything draws it — rectangle `w`/`h` by `2o`, circle `r` by `o`, triangle through
 `_grow_triangle`, sector and polygon `grow` — so the inset ring of the grown shape lands
 inside, centred or outside. A rounded corner's radius grows by `o` too; a sharp one stays sharp.
-It is applied once per backend, at its choke point (the CPU's `Backend._one`, the GPU's
+It is applied once per backend, at its choke point (the CPU's `CpuReplay._one`, the GPU's
 `GLRenderer._command`), so the shape, its hard, blurred and inset shadows, pixel reads and
 captures all see the same geometry, and no rasteriser takes a new parameter. A clip's region has
 its stroke off and is never grown. The grow is kept in `RenderCommand.stroke_grow`, and `_fill_box`
@@ -495,7 +496,7 @@ Both replays handle a command's shadow around the command itself, in the command
   `BlurredSilhouette` coverage analytically (CPU per pixel over the reach; GPU one quad in
   `MODE_SHADOW_BOX`/`MODE_SHADOW_EDGES`), and text and images blur a mask (`_blur.mojo`): glyph
   masks are keyed by blur in the glyph cache and packed into the atlas; image masks are cached per
-  `shadow_mask_key` in `Backend.shadow_masks` (CPU) and `GLRenderer.shadow_textures` (GPU), both
+  `shadow_mask_key` in `CpuReplay.shadow_masks` (CPU) and `GLRenderer.shadow_textures` (GPU), both
   dropped whole at `SHADOW_MASK_LIMIT` — while the image is upright. Under a rotation, shear or
   mirror the mask depends on the whole transform, so `image_shadow_mask` builds it each frame,
   uncached like a Bézier's (below).
@@ -544,7 +545,7 @@ Compute each row's covered run analytically and hand `(start, count)` to `fill_s
 test every pixel in a bounding box. `fill_span` owns the opaque-store and vectorised compositing.
 `blend` is only for genuinely per-pixel alpha (glyph coverage, image texels).
 
-The command's `BlendMode` rides on the `Surface` (`_with_blend_mode`, set once in `Backend._one`), as
+The command's `BlendMode` rides on the `Surface` (`_with_blend_mode`, set once in `CpuReplay._one`), as
 does its clip (see Clips), so no raster loop threads either; `blend` and `fill_span` read it and share `_blend_lanes` for every mode but
 `NORMAL`. A new mode goes there and in `GLRenderer._blend_mode` — it must be one fixed-function GL
 blend equation, which is why there is no `DIFFERENCE`.

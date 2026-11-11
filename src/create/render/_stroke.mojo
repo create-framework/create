@@ -5,7 +5,7 @@ edge. `CENTER` and `OUTSIDE` reuse that: the shape is grown by how far the
 stroke moves out (`stroke_offset`), and the inset ring of the grown shape is
 the aligned stroke, its fill the grown shape eroded by the thickness. Both
 replays align a command once, before its shadows and the shape itself
-(`Backend._one`, `GLRenderer._command`), so the shape, its hard, blurred and
+(`CpuReplay._one`, `GLRenderer._command`), so the shape, its hard, blurred and
 inset shadows, pixel reads and captures all see the same geometry, and no
 rasteriser knows about alignment.
 """
