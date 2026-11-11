@@ -171,6 +171,7 @@ def run_gl[
     context.window_mode(mode)
     # Before create(), from `run`'s arguments, as in the CPU loop.
     _wait_for_dimensions(win, state, context)
+    context._clipboard = win.clipboard()
     var applied = _AppliedWindow(context)
     var program = first_step[P](context, state)
     _apply_window_dials(win, applied, context)

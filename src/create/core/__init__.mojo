@@ -7,3 +7,4 @@ from .window_mode import WindowMode
 from .cursor import Cursor
 from .run import run
 from .headless import run_headless
+from .editable_text import EditableText

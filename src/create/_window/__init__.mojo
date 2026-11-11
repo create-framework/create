@@ -35,6 +35,7 @@ from .event import (
     Quit,
     Resized,
     FocusLost,
+    ClipboardChanged,
     KeyDown,
     KeyUp,
     TextInput,

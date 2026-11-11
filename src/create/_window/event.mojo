@@ -19,6 +19,7 @@ from ._sdl import (
     SDL_EVENT_MOUSE_WHEEL,
     SDL_EVENT_WINDOW_FOCUS_LOST,
     key_scancode,
+    key_keycode,
     text_input_text,
     mouse_x,
     mouse_y,
@@ -56,17 +57,31 @@ struct FocusLost(ImplicitlyCopyable, Movable):
     pass
 
 
-@fieldwise_init
 struct KeyDown(ImplicitlyCopyable, Movable):
     """A key went down, or auto-repeated. `scancode` is SDL's: the key's
-    position, whatever the layout prints on it."""
+    position, whatever the layout prints on it. `keycode` is what the layout
+    prints there, for the shortcuts that follow the label (Ctrl+C copies on
+    any layout); 0 where nothing says."""
 
     var scancode: Int
+    var keycode: Int
+
+    def __init__(out self, scancode: Int, keycode: Int = 0):
+        self.scancode = scancode
+        self.keycode = keycode
 
 
 @fieldwise_init
 struct KeyUp(ImplicitlyCopyable, Movable):
     var scancode: Int
+
+
+@fieldwise_init
+struct ClipboardChanged(ImplicitlyCopyable, Movable):
+    """The clipboard changed — copied to here or from another program —
+    and now holds `text` (empty for none, or for something not text)."""
+
+    var text: String
 
 
 @fieldwise_init
@@ -170,6 +185,7 @@ comptime Event = Variant[
     Quit,
     Resized,
     FocusLost,
+    ClipboardChanged,
     KeyDown,
     KeyUp,
     TextInput,
@@ -199,7 +215,7 @@ def translate_event(kind: UInt32, ptr: Pointer[UInt8, _]) -> Optional[Event]:
     event kind, same as the inline loop's `continue` used to do.
     """
     if kind == SDL_EVENT_KEY_DOWN:
-        return Event(KeyDown(Int(key_scancode(ptr))))
+        return Event(KeyDown(Int(key_scancode(ptr)), Int(key_keycode(ptr))))
     elif kind == SDL_EVENT_KEY_UP:
         return Event(KeyUp(Int(key_scancode(ptr))))
     elif kind == SDL_EVENT_TEXT_INPUT:

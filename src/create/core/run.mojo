@@ -191,6 +191,8 @@ def run[
     # create(), so a dial create() turns applies from the next frame, as it
     # does from `update`.
     _wait_for_dimensions(win, state, context)
+    # Later changes arrive as events; this is what was copied before.
+    context._clipboard = win.clipboard()
     var applied = _AppliedWindow(context)
     var program = first_step[P](context, state)
     _apply_window_dials(win, applied, context)

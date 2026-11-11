@@ -107,6 +107,12 @@ struct Window(NativeWindow):
     def set_text_input(mut self, enabled: Bool) raises:
         self._native.set_text_input(enabled)
 
+    def clipboard(self) raises -> String:
+        return self._native.clipboard()
+
+    def set_clipboard(mut self, text: String) raises:
+        self._native.set_clipboard(text)
+
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:

@@ -61,8 +61,9 @@ struct TypingTest(Program):
                 self.result = ""
         else:
             self.count_keystrokes(context, target)
-            # Typed text, Backspace, Delete and the arrow keys, all in one.
-            self.typed.update(context.keyboard)
+            # Typed text, Backspace, Delete, the arrows, Shift to select,
+            # word moves and copy/paste, all in one.
+            self.typed.update(context)
             if self.typed.text == self.phrases[self.phrase]:
                 self.result = self.score(len(target), context.time.elapsed)
 
@@ -73,6 +74,14 @@ struct TypingTest(Program):
         var left = -canvas.text_width(self.phrases[self.phrase]) / 2
         canvas.text_color(Color(176, 172, 162))
         canvas.text(self.phrases[self.phrase], (left, 60))
+
+        # The selection's highlight goes behind the letters it covers.
+        var selected = self.typed.selected_text()
+        if selected:
+            var start = left + canvas.text_width(self.typed.before_selection())
+            var width = canvas.text_width(selected)
+            with canvas.style(fill=Color(70, 90, 140), stroke_enabled=False):
+                canvas.rectangle((start + width / 2, 0), width, 36)
 
         var x = left
         var typed = characters(self.typed.text)
@@ -108,7 +117,8 @@ struct TypingTest(Program):
             self.started_at = context.time.elapsed
             self.keystrokes = 0
             self.mistakes = 0
-        var position = len(characters(self.typed.before_caret()))
+        # Typing replaces a selection, so it lands where the selection starts.
+        var position = len(characters(self.typed.before_selection()))
         for i in range(len(typed)):
             self.keystrokes += 1
             var at = position + i

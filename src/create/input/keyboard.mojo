@@ -1,6 +1,25 @@
 from .key import Key, _KeySet
 
 
+@fieldwise_init
+struct _Stroke(Copyable, Movable):
+    """One thing typed this frame, in the order it came: a key going down or
+    repeating (`text` empty), or text (`key` `NONE`). What `EditableText`
+    replays, so "type, Left, type" in one frame lands where it was typed.
+
+    `label` is the layout's keycode for the key — what is printed on it,
+    lowercase for a letter — so a shortcut follows the label as the system's
+    do; 0 where nothing said. The modifiers are as they were held then."""
+
+    var key: Key
+    var label: Int
+    var text: String
+    var ctrl: Bool
+    var shift: Bool
+    var alt: Bool
+    var super_key: Bool
+
+
 struct Keyboard(Copyable, Movable, Writable):
     """The keyboard's state for one frame, read as `context.keyboard`.
 
@@ -31,6 +50,7 @@ struct Keyboard(Copyable, Movable, Writable):
     var _pressed: _KeySet
     var _released: _KeySet
     var _typed: _KeySet
+    var _strokes: List[_Stroke]
 
     def __init__(out self):
         self.key = Key.NONE
@@ -39,6 +59,7 @@ struct Keyboard(Copyable, Movable, Writable):
         self._pressed = _KeySet()
         self._released = _KeySet()
         self._typed = _KeySet()
+        self._strokes = []
 
     def down(self, key: Key) -> Bool:
         """Whether `key` is held right now: true every frame it stays down."""
@@ -66,9 +87,10 @@ struct Keyboard(Copyable, Movable, Writable):
         self._pressed.clear_all()
         self._released.clear_all()
         self._typed.clear_all()
+        self._strokes.clear()
         self.text = ""
 
-    def _key_down(mut self, key: Key):
+    def _key_down(mut self, key: Key, label: Int = 0):
         # A KeyDown for a key already held is SDL's auto-repeat: typed, but
         # not a new press.
         self._typed.set(key)
@@ -76,6 +98,7 @@ struct Keyboard(Copyable, Movable, Writable):
             self.key = key
             self._held.set(key)
             self._pressed.set(key)
+        self._strokes.append(self._stroke(key, label, ""))
 
     def _key_up(mut self, key: Key):
         self._held.clear(key)
@@ -90,3 +113,15 @@ struct Keyboard(Copyable, Movable, Writable):
 
     def _type_text(mut self, text: String):
         self.text += text
+        self._strokes.append(self._stroke(Key.NONE, 0, text))
+
+    def _stroke(self, key: Key, label: Int, text: String) -> _Stroke:
+        return _Stroke(
+            key,
+            label,
+            text,
+            ctrl=self.down(Key.CTRL),
+            shift=self.down(Key.SHIFT),
+            alt=self.down(Key.ALT),
+            super_key=self.down(Key.SUPER),
+        )
