@@ -196,5 +196,11 @@ def test_movement_counts_where_the_position_stops() raises -> None:
     assert_equal(context.mouse.movement, Vector2D(5.0, 0.0))
 
 
+def test_mouse_button_from_name() raises -> None:
+    assert_equal(MouseButton.from_name("left").value(), MouseButton.LEFT)
+    assert_equal(MouseButton.from_name("Forward").value(), MouseButton.FORWARD)
+    assert_false(MouseButton.from_name("x1"))
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

@@ -72,6 +72,19 @@ struct GamepadButton(
                 return
         writer.write("GamepadButton(", self.value, ")")
 
+    @staticmethod
+    def from_name(name: String) -> Optional[GamepadButton]:
+        """The button whose constant is `name`, case folded: `"south"`, `"start"`, `"right_trigger"`. `None`
+        for an unknown name — for a binding read from a file, where a
+        misspelled constant would have failed to compile.
+        """
+        var upper = name.upper()
+        comptime for i in range(len(_NAMED_BUTTONS)):
+            comptime entry = _NAMED_BUTTONS[i]
+            if upper == entry[1]:
+                return entry[0]
+        return None
+
     def _bit(self) -> Int:
         """This button's bit in `Gamepad`'s button masks; 0, never set, for
         `NONE` and for a number no mask can hold."""
@@ -80,7 +93,7 @@ struct GamepadButton(
         return 0
 
 
-# Every `GamepadButton` constant with its name, for printing.
+# Every `GamepadButton` constant with its name, for printing and `from_name`.
 comptime _NAMED_BUTTONS = [
     (GamepadButton.NONE, StaticString("NONE")),
     (GamepadButton.SOUTH, StaticString("SOUTH")),

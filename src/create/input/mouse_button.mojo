@@ -34,20 +34,25 @@ struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return self.value != other.value
 
     def write_to[W: Writer](self, mut writer: W):
-        if self == MouseButton.NONE:
-            writer.write("MouseButton.NONE")
-        elif self == MouseButton.LEFT:
-            writer.write("MouseButton.LEFT")
-        elif self == MouseButton.MIDDLE:
-            writer.write("MouseButton.MIDDLE")
-        elif self == MouseButton.RIGHT:
-            writer.write("MouseButton.RIGHT")
-        elif self == MouseButton.BACK:
-            writer.write("MouseButton.BACK")
-        elif self == MouseButton.FORWARD:
-            writer.write("MouseButton.FORWARD")
-        else:
-            writer.write("MouseButton(", self.value, ")")
+        comptime for i in range(len(_NAMED_MOUSE_BUTTONS)):
+            comptime entry = _NAMED_MOUSE_BUTTONS[i]
+            if self == entry[0]:
+                writer.write("MouseButton.", entry[1])
+                return
+        writer.write("MouseButton(", self.value, ")")
+
+    @staticmethod
+    def from_name(name: String) -> Optional[MouseButton]:
+        """The button whose constant is `name`, case folded: `"left"`, `"right"`, `"back"`. `None`
+        for an unknown name — for a binding read from a file, where a
+        misspelled constant would have failed to compile.
+        """
+        var upper = name.upper()
+        comptime for i in range(len(_NAMED_MOUSE_BUTTONS)):
+            comptime entry = _NAMED_MOUSE_BUTTONS[i]
+            if upper == entry[1]:
+                return entry[0]
+        return None
 
     def _bit(self) -> Int:
         """This button's bit in `Mouse`'s button masks; 0, never set, for
@@ -55,3 +60,14 @@ struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         if 1 <= self.value < 64:
             return 1 << self.value
         return 0
+
+
+# Every `MouseButton` constant with its name, for printing and `from_name`.
+comptime _NAMED_MOUSE_BUTTONS = [
+    (MouseButton.NONE, StaticString("NONE")),
+    (MouseButton.LEFT, StaticString("LEFT")),
+    (MouseButton.MIDDLE, StaticString("MIDDLE")),
+    (MouseButton.RIGHT, StaticString("RIGHT")),
+    (MouseButton.BACK, StaticString("BACK")),
+    (MouseButton.FORWARD, StaticString("FORWARD")),
+]

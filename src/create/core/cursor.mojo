@@ -48,22 +48,40 @@ struct Cursor(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return self.value != other.value
 
     def write_to[W: Writer](self, mut writer: W):
-        var names: List[String] = [
-            "ARROW",
-            "CROSSHAIR",
-            "HAND",
-            "TEXT",
-            "WAIT",
-            "PROGRESS",
-            "MOVE",
-            "NOT_ALLOWED",
-            "RESIZE_HORIZONTAL",
-            "RESIZE_VERTICAL",
-            "RESIZE_DIAGONAL_RISING",
-            "RESIZE_DIAGONAL_FALLING",
-            "HIDDEN",
-        ]
-        if self.value >= 0 and self.value < len(names):
-            writer.write("Cursor.", names[self.value])
-        else:
-            writer.write("Cursor(", self.value, ")")
+        comptime for i in range(len(_NAMED_CURSORS)):
+            comptime entry = _NAMED_CURSORS[i]
+            if self == entry[0]:
+                writer.write("Cursor.", entry[1])
+                return
+        writer.write("Cursor(", self.value, ")")
+
+    @staticmethod
+    def from_name(name: String) -> Optional[Cursor]:
+        """The cursor whose constant is `name`, case folded: `"hand"`, `"crosshair"`, `"hidden"`. `None`
+        for an unknown name — for a binding read from a file, where a
+        misspelled constant would have failed to compile.
+        """
+        var upper = name.upper()
+        comptime for i in range(len(_NAMED_CURSORS)):
+            comptime entry = _NAMED_CURSORS[i]
+            if upper == entry[1]:
+                return entry[0]
+        return None
+
+
+# Every `Cursor` constant with its name, for printing and `from_name`.
+comptime _NAMED_CURSORS = [
+    (Cursor.ARROW, StaticString("ARROW")),
+    (Cursor.CROSSHAIR, StaticString("CROSSHAIR")),
+    (Cursor.HAND, StaticString("HAND")),
+    (Cursor.TEXT, StaticString("TEXT")),
+    (Cursor.WAIT, StaticString("WAIT")),
+    (Cursor.PROGRESS, StaticString("PROGRESS")),
+    (Cursor.MOVE, StaticString("MOVE")),
+    (Cursor.NOT_ALLOWED, StaticString("NOT_ALLOWED")),
+    (Cursor.RESIZE_HORIZONTAL, StaticString("RESIZE_HORIZONTAL")),
+    (Cursor.RESIZE_VERTICAL, StaticString("RESIZE_VERTICAL")),
+    (Cursor.RESIZE_DIAGONAL_RISING, StaticString("RESIZE_DIAGONAL_RISING")),
+    (Cursor.RESIZE_DIAGONAL_FALLING, StaticString("RESIZE_DIAGONAL_FALLING")),
+    (Cursor.HIDDEN, StaticString("HIDDEN")),
+]

@@ -6,6 +6,7 @@ from std.testing import (
     TestSuite,
     assert_equal,
     assert_almost_equal,
+    assert_false,
     assert_raises,
     assert_true,
 )
@@ -112,6 +113,13 @@ def test_window_dials_read_back_what_was_set() raises -> None:
     assert_true(context.window_mode() == WindowMode.WINDOWED)
     context.window_mode(WindowMode.BORDERLESS)
     assert_true(context.window_mode() == WindowMode.BORDERLESS)
+
+
+def test_cursor_from_name() raises -> None:
+    assert_equal(Cursor.from_name("hand").value(), Cursor.HAND)
+    assert_equal(Cursor.from_name("Not_Allowed").value(), Cursor.NOT_ALLOWED)
+    assert_equal(Cursor.from_name("HIDDEN").value(), Cursor.HIDDEN)
+    assert_false(Cursor.from_name("pointer"))
 
 
 def main() raises:
