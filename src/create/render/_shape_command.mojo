@@ -15,7 +15,7 @@ from create.math import TAU
 
 from create.geometry.bezier import Bezier
 from create.geometry.drawable import DrawTarget
-from create.geometry.geometry import (
+from create.geometry import (
     Capsule,
     Circle,
     Ellipse,

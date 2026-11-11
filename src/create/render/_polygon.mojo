@@ -48,7 +48,7 @@ so its seams' band grows by the spread as well.
 from std.math import atan2, ceil, cos, max, min, nan, sin, sqrt
 from create.math import PI, TAU
 
-from create.geometry.geometry import Line, Polygon
+from create.geometry import Line, Polygon
 from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D

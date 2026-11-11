@@ -6,7 +6,7 @@ from std.testing import (
 )
 from std.math import cos, sin
 from create.math import PI, TAU
-from create.geometry.geometry import (
+from create.geometry import (
     Arc,
     Circle,
     Line,

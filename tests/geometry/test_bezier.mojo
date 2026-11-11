@@ -8,7 +8,7 @@ from std.testing import (
 from std.math import abs
 from create.math import PI
 from create.geometry.bezier import Bezier
-from create.geometry.geometry import (
+from create.geometry import (
     Arc,
     Circle,
     Line,
