@@ -1,7 +1,7 @@
 """The one translation from SDL events to the devices on `Context`.
 
 Both run loops pump events and both have to fold them into the same place,
-so the arms live here rather than once per loop — a keycode handled in
+so the arms live here rather than once per loop — a key handled in
 one and not the other would be a silent divergence between the CPU and GPU
 paths.
 
@@ -64,12 +64,12 @@ def apply_events(
         if event.isa[Quit]():
             quit = True
         elif event.isa[KeyDown]():
-            var key = Key(event[KeyDown].keycode)
+            var key = Key(event[KeyDown].scancode)
             if key == Key.ESCAPE and context._quit_on_escape:
                 quit = True
             context.keyboard._key_down(key)
         elif event.isa[KeyUp]():
-            context.keyboard._key_up(Key(event[KeyUp].keycode))
+            context.keyboard._key_up(Key(event[KeyUp].scancode))
         elif event.isa[TextInput]():
             context.keyboard._type_text(event[TextInput].text)
         elif event.isa[MouseMoved]():

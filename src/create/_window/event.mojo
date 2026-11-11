@@ -18,7 +18,7 @@ from ._sdl import (
     SDL_EVENT_MOUSE_BUTTON_UP,
     SDL_EVENT_MOUSE_WHEEL,
     SDL_EVENT_WINDOW_FOCUS_LOST,
-    key_keycode,
+    key_scancode,
     text_input_text,
     mouse_x,
     mouse_y,
@@ -56,12 +56,15 @@ struct FocusLost(ImplicitlyCopyable, Movable):
 
 @fieldwise_init
 struct KeyDown(ImplicitlyCopyable, Movable):
-    var keycode: Int
+    """A key went down, or auto-repeated. `scancode` is SDL's: the key's
+    position, whatever the layout prints on it."""
+
+    var scancode: Int
 
 
 @fieldwise_init
 struct KeyUp(ImplicitlyCopyable, Movable):
-    var keycode: Int
+    var scancode: Int
 
 
 @fieldwise_init
@@ -162,7 +165,7 @@ comptime Event = Variant[
     GamepadButtonUp,
 ]
 """A window/input event. Check the concrete kind with `.isa[T]()`, then
-read fields with `[T]`, e.g. `if e.isa[KeyDown](): print(e[KeyDown].keycode)`.
+read fields with `[T]`, e.g. `if e.isa[KeyDown](): print(e[KeyDown].scancode)`.
 """
 
 
@@ -177,9 +180,9 @@ def translate_event(kind: UInt32, ptr: Pointer[UInt8, _]) -> Optional[Event]:
     event kind, same as the inline loop's `continue` used to do.
     """
     if kind == SDL_EVENT_KEY_DOWN:
-        return Event(KeyDown(Int(key_keycode(ptr))))
+        return Event(KeyDown(Int(key_scancode(ptr))))
     elif kind == SDL_EVENT_KEY_UP:
-        return Event(KeyUp(Int(key_keycode(ptr))))
+        return Event(KeyUp(Int(key_scancode(ptr))))
     elif kind == SDL_EVENT_TEXT_INPUT:
         return Event(TextInput(text_input_text(ptr)))
     elif kind == SDL_EVENT_WINDOW_FOCUS_LOST:

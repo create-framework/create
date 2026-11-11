@@ -38,7 +38,7 @@ from create._window._sdl import (
     SDL_EVENT_MOUSE_BUTTON_UP,
     SDL_EVENT_MOUSE_WHEEL,
     SDL_EVENT_WINDOW_FOCUS_LOST,
-    _OFF_KEY_KEYCODE,
+    _OFF_KEY_SCANCODE,
     _OFF_TEXT_TEXT,
     _OFF_MOTION_X,
     _OFF_MOTION_Y,
@@ -67,20 +67,20 @@ def test_unhandled_kind_returns_none() raises -> None:
 
 def test_keydown_translates() raises -> None:
     var buf = new_event_buffer(SDL_EVENT_KEY_DOWN)
-    write_u32(buf, _OFF_KEY_KEYCODE, 97)
+    write_u32(buf, _OFF_KEY_SCANCODE, 97)
     var translated = translate_event(SDL_EVENT_KEY_DOWN, buf.unsafe_ptr())
     assert_true(Bool(translated))
     var e = translated.value()
     assert_true(e.isa[KeyDown]())
-    assert_equal(e[KeyDown].keycode, 97)
+    assert_equal(e[KeyDown].scancode, 97)
 
 
 def test_keyup_translates() raises -> None:
     var buf = new_event_buffer(SDL_EVENT_KEY_UP)
-    write_u32(buf, _OFF_KEY_KEYCODE, 42)
+    write_u32(buf, _OFF_KEY_SCANCODE, 42)
     var translated = translate_event(SDL_EVENT_KEY_UP, buf.unsafe_ptr())
     assert_true(Bool(translated))
-    assert_equal(translated.value()[KeyUp].keycode, 42)
+    assert_equal(translated.value()[KeyUp].scancode, 42)
 
 
 def test_text_input_translates() raises -> None:

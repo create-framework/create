@@ -30,13 +30,13 @@ def test_resized_fields() raises -> None:
 def test_keydown_fields() raises -> None:
     var e: Event = KeyDown(42)
     assert_true(e.isa[KeyDown]())
-    assert_equal(e[KeyDown].keycode, 42)
+    assert_equal(e[KeyDown].scancode, 42)
 
 
 def test_keyup_fields() raises -> None:
     var e: Event = KeyUp(7)
     assert_true(e.isa[KeyUp]())
-    assert_equal(e[KeyUp].keycode, 7)
+    assert_equal(e[KeyUp].scancode, 7)
 
 
 def test_mousemoved_fields() raises -> None:
