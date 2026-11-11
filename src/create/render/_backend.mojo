@@ -1,5 +1,5 @@
 from std.collections import Dict, Optional
-from std.memory import ArcPointer, unsafe_memcpy
+from std.memory import unsafe_memcpy
 from std.math import max, min, abs, sqrt, ceil, floor, cos, sin
 
 from create.math.matrix import (
@@ -57,7 +57,6 @@ from ._raster import (
 )
 from ._gl_backend import GLRenderer
 from ._image_mapping import image_mapping, upright, upright_rect
-from ._interned_image import IMAGE_KEEP_FRAMES, _InternedImage
 from ._clip import _Clip, _ClipRows
 from ._transform import (
     glyph_transform,
@@ -84,7 +83,7 @@ from ._tessellate import _arc_segments
 from ._gif import GifWriter, encode_frame
 from ._png import write_png
 from ._surface import MemorySurface, Surface, _force_opaque
-from ._text import TextRenderer
+from ._resources import Resources
 from .antialiasing import Antialiasing
 from ._coverage import CoverageScratch, composite_coverage
 from create.color.color import Color
@@ -822,18 +821,9 @@ struct Backend(Movable):
     var _coverage: CoverageScratch
     """`_shape`'s working memory, kept so a frame of antialiased shapes
     allocates once."""
-    var text: ArcPointer[TextRenderer]
-    """The glyph cache and layout, behind a shared pointer so a measurement
-    (`canvas.text_width`) can fill the cache through a read-only canvas."""
-    var images: Dict[Int, _InternedImage]
-    """Interned image copies by backend image id, the id a command
-    carries. One per image version rendered, dropped by `_expire_images`."""
-    var interned_ids: Dict[Int, Int]
-    """`Image._id` to the backend id of its most recently interned copy."""
-    var next_image: Int
-    var frame: Int
-    """Frames presented so far: the clock `_InternedImage.last_used` is read
-    against."""
+    var resources: Resources
+    """The fonts' glyph cache and the interned images, which every replay
+    reads: the CPU's here, the GPU's through `present_gpu`."""
     var shadow_masks: Dict[Int, BlurredMask]
     """Blurred image silhouettes, keyed by `shadow_mask_key`: an image's
     shadow is blurred once per image, device size and blur, not per frame."""
@@ -915,11 +905,7 @@ struct Backend(Movable):
         self.antialiasing = Antialiasing.OFF
         self._coverage_runs = List[Int]()
         self._coverage = CoverageScratch()
-        self.text = ArcPointer(TextRenderer())
-        self.images = Dict[Int, _InternedImage]()
-        self.interned_ids = Dict[Int, Int]()
-        self.next_image = 1
-        self.frame = 0
+        self.resources = Resources()
         self.shadow_masks = Dict[Int, BlurredMask]()
         self.commands = List[RenderCommand]()
         self.clips = List[_Clip]()
@@ -1272,7 +1258,7 @@ struct Backend(Movable):
         self.clips.clear()
         self.clip = 0
         self.frame_read = None
-        _ = self._expire_images()
+        _ = self.resources.expire_images()
 
     def discard(mut self):
         """Drop everything recorded so far, and an offscreen canvas's
@@ -1310,7 +1296,7 @@ struct Backend(Movable):
         if self.clip == 0:
             self.clips.clear()
         self.recorded += 1
-        _ = self._expire_images()
+        _ = self.resources.expire_images()
 
     def present_gpu(
         mut self, mut gl: GLRenderer, width: Int, height: Int, scale: Float64
@@ -1329,8 +1315,8 @@ struct Backend(Movable):
         gl.render(
             cmds,
             self.clips,
-            self.images,
-            self.text[],
+            self.resources.images,
+            self.resources.text[],
             width,
             height,
             scale,
@@ -1344,62 +1330,7 @@ struct Backend(Movable):
         self.clips.clear()
         self.clip = 0
         self.frame_read = None
-        gl.forget_images(self._expire_images())
-
-    def intern_image(
-        mut self,
-        source: Int,
-        pixels: ArcPointer[List[UInt8]],
-        width: Int,
-        height: Int,
-    ) -> Int:
-        """Return a backend id for `pixels`, the `width` x `height` RGBA
-        pixels of image `source`.
-
-        Keeps a share of the pixels on first sight of an image and returns
-        the cached id thereafter. Nothing is copied: an image never changes,
-        so its identity alone says the share is current, and the share keeps
-        the pixels alive for a command replayed after the image itself is
-        gone. `source` must be stable for the life of the image — an
-        `Image`'s identity, not its pixel address, which could be reused
-        after a free.
-
-        Called while recording rather than at replay, which is what keeps a
-        borrow of caller-owned memory out of the command buffer.
-        """
-        try:
-            if source in self.interned_ids:
-                var id = self.interned_ids[source]
-                self.images[id].last_used = self.frame
-                return id
-        except:
-            pass  # unreachable: `interned_ids` names only interned ids
-        var id = self.next_image
-        self.next_image += 1
-        self.images[id] = _InternedImage(
-            pixels, width, height, source, self.frame
-        )
-        self.interned_ids[source] = id
-        return id
-
-    def _expire_images(mut self) raises -> List[Int]:
-        """Advance the frame clock and drop every image no render has used
-        for `IMAGE_KEEP_FRAMES` frames, returning their ids so a GPU present
-        can delete their textures. Runs after the frame has been replayed
-        and captured, so nothing still refers to what it drops."""
-        self.frame += 1
-        var expired = List[Int]()
-        for id in self.images:
-            if self.frame - self.images[id].last_used > IMAGE_KEEP_FRAMES:
-                expired.append(id)
-        for id in expired:
-            var image = self.images.pop(id)
-            if (
-                image.source in self.interned_ids
-                and self.interned_ids[image.source] == id
-            ):
-                _ = self.interned_ids.pop(image.source)
-        return expired^
+        gl.forget_images(self.resources.expire_images())
 
     def replay[
         o: Origin[mut=True]
@@ -2126,11 +2057,11 @@ struct Backend(Movable):
         m: Matrix[3, 3],
     ) raises:
         ref image = c.payload[ImagePayload]
-        if image.image not in self.images:
+        if image.image not in self.resources.images:
             return
         # Bound by reference so the pixels stay in the cache rather than being
         # copied out of it once per render.
-        ref img = self.images[image.image]
+        ref img = self.resources.images[image.image]
         var silhouette = Optional(
             c.paint.fill_color
         ) if image.silhouette else None
@@ -2184,11 +2115,14 @@ struct Backend(Movable):
         a cached mask laid over the same destination rect `_image` uses —
         or, under a transform that turns the image, a mask built for it."""
         ref image = c.payload[ImagePayload]
-        if image.image not in self.images:
+        if image.image not in self.resources.images:
             return
         if not upright(m):
             var placed = image_shadow_mask(
-                c, m, self.images[image.image].pixels[].unsafe_ptr(), blur
+                c,
+                m,
+                self.resources.images[image.image].pixels[].unsafe_ptr(),
+                blur,
             )
             blit_alpha(
                 s,
@@ -2207,7 +2141,7 @@ struct Backend(Movable):
         if key not in self.shadow_masks:
             if len(self.shadow_masks) >= SHADOW_MASK_LIMIT:
                 self.shadow_masks.clear()
-            ref img = self.images[image.image]
+            ref img = self.resources.images[image.image]
             self.shadow_masks[key] = blur_image_alpha(
                 img.pixels[].unsafe_ptr(),
                 img.width,
@@ -2245,9 +2179,11 @@ struct Backend(Movable):
         ref text = c.payload[TextPayload]
         if text_upright(m):
             var p = mat_apply(m, text.position.x, text.position.y)
-            self.text[].render(s, text.text, p[0], p[1], text.style[], sf, blur)
+            self.resources.text[].render(
+                s, text.text, p[0], p[1], text.style[], sf, blur
+            )
         else:
-            self.text[].render_mapped(
+            self.resources.text[].render_mapped(
                 s,
                 text.text,
                 glyph_transform(m, text.position.x, text.position.y, sf),

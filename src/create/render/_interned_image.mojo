@@ -27,7 +27,7 @@ struct _InternedImage(Copyable, Movable):
     var source: Int
     """The `Image._id` this is a copy of."""
     var last_used: Int
-    """The frame it was last rendered in, counted by `Backend.frame`."""
+    """The frame it was last rendered in, counted by `Resources.frame`."""
 
     def __init__(
         out self,
