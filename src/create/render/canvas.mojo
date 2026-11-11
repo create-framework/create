@@ -1495,7 +1495,7 @@ struct Canvas(DrawTarget, Movable):
         # The image is interned *now*, not at replay: the command then carries
         # an id rather than a borrow of the program's pixels, which is what
         # keeps caller-owned memory out of a buffer that outlives the call.
-        var id = self._state._backend.intern_image(
+        var id = self._state._backend.resources.intern_image(
             image._id, image._pixels, image.width(), image.height()
         )
         self._state._backend.record(
@@ -1749,7 +1749,7 @@ struct Canvas(DrawTarget, Movable):
         Raises only if the default font has to be loaded and cannot be.
         """
         var scale = pixel_scale(self._transform, self._scale)
-        var pixels = self._state._backend.text[].width(
+        var pixels = self._state._backend.resources.text[].width(
             text, self._style._text_style(), scale
         )
         return Float64(pixels) / scale

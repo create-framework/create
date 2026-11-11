@@ -474,7 +474,7 @@ def test_image_replays_from_an_interned_image() raises -> None:
     src[7] = 255
     var mem = MemorySurface(_W, _H)
     var backend = Backend()
-    var id = backend.intern_image(7, ArcPointer(src.copy()), 2, 1)
+    var id = backend.resources.intern_image(7, ArcPointer(src.copy()), 2, 1)
 
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
@@ -487,20 +487,20 @@ def test_image_replays_from_an_interned_image() raises -> None:
 def test_interning_the_same_key_twice_reuses_the_copy() raises -> None:
     var src = List[UInt8](length=4, fill=255)
     var backend = Backend()
-    var a = backend.intern_image(3, ArcPointer(src.copy()), 1, 1)
-    var b = backend.intern_image(3, ArcPointer(src.copy()), 1, 1)
+    var a = backend.resources.intern_image(3, ArcPointer(src.copy()), 1, 1)
+    var b = backend.resources.intern_image(3, ArcPointer(src.copy()), 1, 1)
     assert_equal(a, b)
-    assert_equal(len(backend.images), 1)
+    assert_equal(len(backend.resources.images), 1)
 
 
 def test_interning_shares_the_pixels_rather_than_copying_them() raises -> None:
     var image = Image.solid(4, 4, Color(255, 0, 0))
     var backend = Backend()
-    var id = backend.intern_image(
+    var id = backend.resources.intern_image(
         image._id, image._pixels, image.width(), image.height()
     )
     assert_equal(
-        Int(backend.images[id].pixels[].unsafe_ptr()),
+        Int(backend.resources.images[id].pixels[].unsafe_ptr()),
         Int(image._pixels[].unsafe_ptr()),
     )
 
@@ -508,7 +508,7 @@ def test_interning_shares_the_pixels_rather_than_copying_them() raises -> None:
 def _intern_a_red_image(mut backend: Backend) raises -> Int:
     """Intern an image that is dropped as this returns."""
     var image = Image.solid(2, 1, Color(255, 0, 0))
-    return backend.intern_image(
+    return backend.resources.intern_image(
         image._id, image._pixels, image.width(), image.height()
     )
 
@@ -527,17 +527,20 @@ def test_an_interned_image_outlives_the_image() raises -> None:
 def test_an_image_unused_for_long_enough_is_dropped() raises -> None:
     var src = List[UInt8](length=4, fill=255)
     var backend = Backend()
-    var kept = backend.intern_image(1, ArcPointer(src.copy()), 1, 1)
-    var dropped = backend.intern_image(2, ArcPointer(src.copy()), 1, 1)
+    var kept = backend.resources.intern_image(1, ArcPointer(src.copy()), 1, 1)
+    var dropped = backend.resources.intern_image(
+        2, ArcPointer(src.copy()), 1, 1
+    )
     var mem = MemorySurface(1, 1)
     for _ in range(IMAGE_KEEP_FRAMES + 1):
-        _ = backend.intern_image(1, ArcPointer(src.copy()), 1, 1)
+        _ = backend.resources.intern_image(1, ArcPointer(src.copy()), 1, 1)
         backend.present(mem.surface(), 1.0)
-    assert_true(kept in backend.images)
-    assert_true(dropped not in backend.images)
+    assert_true(kept in backend.resources.images)
+    assert_true(dropped not in backend.resources.images)
     # Seen again, it is copied afresh rather than resurrected.
     assert_true(
-        backend.intern_image(2, ArcPointer(src.copy()), 1, 1) != dropped
+        backend.resources.intern_image(2, ArcPointer(src.copy()), 1, 1)
+        != dropped
     )
 
 
@@ -918,7 +921,7 @@ def _blurred_image_frame(
 def test_a_blurred_image_shadow_softens_past_its_silhouette() raises -> None:
     var src = List[UInt8](length=16, fill=255)
     var backend = Backend()
-    var image = backend.intern_image(3, ArcPointer(src.copy()), 2, 2)
+    var image = backend.resources.intern_image(3, ArcPointer(src.copy()), 2, 2)
     var mem = MemorySurface(_W, _H)
     _blurred_image_frame(backend, mem, image)
     # The silhouette spans columns 70..89 on row 50 (image at 30..49).
@@ -939,7 +942,7 @@ def test_a_blurred_shadow_turns_with_its_image() raises -> None:
     # shadow, thrown 40 right, is that diamond blurred.
     var src = List[UInt8](length=16, fill=255)
     var backend = Backend()
-    var image = backend.intern_image(3, ArcPointer(src.copy()), 2, 2)
+    var image = backend.resources.intern_image(3, ArcPointer(src.copy()), 2, 2)
     var mem = MemorySurface(_W, _H)
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))

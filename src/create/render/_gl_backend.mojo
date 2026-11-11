@@ -600,7 +600,7 @@ struct GLRenderer(Movable):
     """The `TextRenderer.atlas_generation` these rects were packed against."""
     var textures: Dict[Int, UInt32]
     """Backend image id to GL texture name. The id is already the interning
-    key on `Backend.images`, so an image rendered a thousand times is one entry
+    key on `Resources.images`, so an image rendered a thousand times is one entry
     and one upload; the pixels are read from the `_InternedImage` only the first
     time."""
     var shadow_textures: Dict[Int, UInt32]

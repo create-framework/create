@@ -11,7 +11,8 @@ and the layering rules.
 | `_command.mojo` | `RenderCommand`, its `RenderPayload` variant (one struct per kind) and their builders; `_fill_box`, the box a fill gradient spans |
 | `_paint.mojo` | `Paint`, what a command paints with (fill, stroke, shadow, blend mode), and `TextStyle`, what text is set in |
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
-| `_backend.mojo` | `Backend` — the text renderer, interned images; replays commands via `present` (CPU) or `present_gpu` |
+| `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
+| `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_backend.mojo` |
 | `_surface.mojo` | `Surface`, the borrowed RGBA view the rasteriser writes, and `MemorySurface`, an owned buffer (headless runs, pixel reads, offscreen canvases); `run_headless` hands its pixels over as an `Image` |
 | `_gif.mojo` | The GIF writer behind `canvas.start_recording`: per-frame quantising (exact up to 256 colours, else median cut, optional Floyd-Steinberg), LZW, and `GifWriter`, which streams frames to the file |
@@ -372,7 +373,7 @@ the screen are made transparent afterwards, since a clear fills the whole target
 **Offscreen canvas.** `Canvas(width, height, …)` builds its own CPU `Backend` with `target`, a
 `MemorySurface` of `width*scale` × `height*scale`, set; `_offscreen()` is whether it is. It never
 presents: `color_at`, `snapshot`, `save_image` and `save_screenshot` call `bake(scale)`, which replays
-the pending commands onto `target` (letterbox skipped), drops them and runs `_expire_images` — its
+the pending commands onto `target` (letterbox skipped), drops them and runs `expire_images` — its
 `present`. Reads then come from `target`: `_read_offscreen` copies it for the whole canvas at its own
 density and otherwise resamples through `_seed`, which takes the source's screen-to-pixel mapping
 (`_base` here, `_design_pixels` for `last_frame`). `bake` and `discard` (`canvas.clear`) clear
@@ -380,11 +381,12 @@ density and otherwise resamples through `_seed`, which takes the source's screen
 index, which must stay valid. `autoclear` stays off on it — `set_autoclear` would insert a gray clear
 that the next bake paints in.
 
-**The image cache** (`Backend.images`) holds one entry per image, keyed by a backend id;
+**The image cache** (`Resources.images`, `_resources.mojo`, beside the `TextRenderer`: what every
+replay reads besides the commands) holds one entry per image, keyed by a backend id;
 `interned_ids` maps `Image._id` to it. An image never changes, so `intern_image(source, pixels, …)`
 reuses the entry whenever the identity matches. The entry holds the image's own
 `ArcPointer[List[UInt8]]`, not a copy: interning costs no pixel copy, and the share keeps the
-pixels alive for a command replayed after the `Image` is gone. `_expire_images`, after each present
+pixels alive for a command replayed after the `Image` is gone. `expire_images`, after each present
 (or offscreen bake), drops entries unused for `IMAGE_KEEP_FRAMES` frames and returns their ids,
 which `present_gpu` passes to `GLRenderer.forget_images` to delete their textures.
 
