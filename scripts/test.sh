@@ -8,6 +8,7 @@
 #   pixi run test tests/math/test_tween.mojo
 #   pixi run test --jobs 4 render  -> pin the worker count (default nproc, max 8)
 #   pixi run test -j 4 render      -> the same
+#   pixi run test --shard 2/4      -> the second quarter of the files
 #
 # A target is resolved as a path that exists as given, then as a subpackage
 # directory under tests/, then as a test file name without its test_ prefix.
@@ -24,13 +25,25 @@
 set -u
 
 jobs=
-case "${1:-}" in
-    -j|--jobs)
-        [ -n "${2:-}" ] || { echo "$1 needs a worker count" >&2; exit 1; }
-        jobs=$2
-        shift 2
-        ;;
-esac
+shard=
+while :; do
+    case "${1:-}" in
+        -j|--jobs)
+            [ -n "${2:-}" ] || { echo "$1 needs a worker count" >&2; exit 1; }
+            jobs=$2
+            shift 2
+            ;;
+        --shard)
+            case "${2:-}" in
+                *[!0-9/]* | */*/* | 0* | */0*) ;;
+                [1-9]*/[1-9]*) shard=$2 ;;
+            esac
+            [ -n "$shard" ] || { echo "$1 needs i/n, e.g. 2/4" >&2; exit 1; }
+            shift 2
+            ;;
+        *) break ;;
+    esac
+done
 if [ -z "$jobs" ]; then
     jobs=$(nproc 2>/dev/null || echo 4)
     [ "$jobs" -gt 8 ] && jobs=8
@@ -62,6 +75,22 @@ for target in "$@"; do
 $found"
 done
 files=$(echo "$files" | sed '/^$/d' | sort -u)
+
+# A shard takes every n-th file of the sorted list, starting at the i-th, so
+# each gets its share of the costly render tests rather than a run of them.
+# CI runs the shards on separate runners: a cold build of the whole suite is
+# more CPU than one runner gets through quickly.
+if [ -n "$shard" ]; then
+    index=${shard%/*}
+    count=${shard#*/}
+    if [ "$index" -gt "$count" ]; then
+        echo "--shard $shard: the index is past the count" >&2
+        exit 1
+    fi
+    files=$(echo "$files" | awk -v i="$index" -v n="$count" \
+        '(NR - 1) % n == i - 1')
+    [ -n "$files" ] || { echo "--shard $shard: no files" >&2; exit 1; }
+fi
 
 # The library is compiled once, here, and every test file imports the
 # result. Against src each file would parse and elaborate the whole package
