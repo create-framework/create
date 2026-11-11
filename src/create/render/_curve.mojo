@@ -26,7 +26,7 @@ from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 
 from ._blur import BlurredMask, blur_alpha
-from ._command import RenderCommand
+from ._command import CurvesPayload, RenderCommand
 from ._raster import fill_quad
 from ._transform import stroke_thickness_px
 from create.color.color import Color
@@ -62,7 +62,7 @@ cusp, where the unclamped miter would shoot off towards infinity."""
 
 
 def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point2D]:
-    """`c`'s chain of curves (`c` a `CMD_BEZIER`) mapped by `m` and flattened
+    """`c`'s chain of curves (`c` a `CurvesPayload`) mapped by `m` and flattened
     to one polyline of device-space points, the point where one curve meets
     the next appearing once.
 
@@ -70,8 +70,9 @@ def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point2D]:
     Bézier's shape survives an affine map, so each curve is flattened at the
     size it will actually be drawn.
     """
-    var mapped = List[Point2D](capacity=len(c.points))
-    for p in c.points:
+    ref controls = c.payload[CurvesPayload].points
+    var mapped = List[Point2D](capacity=len(controls))
+    for p in controls:
         mapped.append(mat_apply(m, p.x, p.y))
     var points = List[Point2D]()
     for i in range(0, len(mapped) - 3, 3):
@@ -304,7 +305,7 @@ struct PlacedMask(Movable):
 def bezier_shadow_mask(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
 ) -> PlacedMask:
-    """The stroke of `c` (a `CMD_BEZIER` shadow command) mapped by `m`,
+    """The stroke of `c` (a `CurvesPayload` shadow command) mapped by `m`,
     rasterised into an alpha mask and blurred by `blur` device pixels.
 
     The quads are the ones the stroke itself fills, and each cap is fanned

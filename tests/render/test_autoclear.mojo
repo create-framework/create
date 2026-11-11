@@ -1,6 +1,6 @@
 """The per-frame clear: its default, its opt-out, and its coalescing.
 
-`autoclear` records a `CMD_CLEAR` at the head of every frame, so an unstyled
+`autoclear` records a clear at the head of every frame, so an unstyled
 sketch renders onto a light surface rather than onto whatever the framebuffer
 happened to hold. Turning it off is what a program that accumulates ink across
 frames does, and an opaque `background()` replaces the clear rather than
@@ -10,7 +10,7 @@ stacking a second full-framebuffer paint on it.
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
-from create.render._command import CMD_CLEAR
+from create.render._command import ClearPayload
 from create.render.canvas import Canvas, _PersistentCanvasState
 
 
@@ -151,7 +151,7 @@ def test_switching_off_keeps_an_opaque_background() raises -> None:
     canvas.autoclear(False)
     var out = canvas^._release()
     assert_equal(len(out._backend.commands), 1)
-    assert_equal(out._backend.commands[0].kind, CMD_CLEAR)
+    assert_true(out._backend.commands[0].payload.isa[ClearPayload]())
 
 
 def test_switching_off_then_on_again_clears_once() raises -> None:
@@ -162,7 +162,7 @@ def test_switching_off_then_on_again_clears_once() raises -> None:
     canvas.autoclear(True)
     var out = canvas^._release()
     assert_equal(len(out._backend.commands), 1)
-    assert_equal(out._backend.commands[0].kind, CMD_CLEAR)
+    assert_true(out._backend.commands[0].payload.isa[ClearPayload]())
 
 
 def test_switching_on_mid_frame_clears_under_what_is_drawn() raises -> None:

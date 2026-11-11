@@ -34,7 +34,7 @@ from create.math import TAU
 from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 
-from ._command import RenderCommand
+from ._command import RenderCommand, TrianglePayload
 from ._curve import stroke_quads
 from create.geometry._fillet import triangle_corner_radius
 from ._tessellate import _arc_segments
@@ -59,16 +59,17 @@ struct TrianglePieces(Movable):
 def triangle_pieces(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> TrianglePieces:
-    """`c`'s fill and stroke (`c` a `CMD_TRIANGLE`) as device pieces,
+    """`c`'s fill and stroke (`c` a `TrianglePayload`) as device pieces,
     whichever of the two its style shows; the caller draws what is visible.
     Without a stroke the fill is the whole (rounded) triangle."""
     var out = TrianglePieces()
     # Fixed-size and on the stack: this runs once per triangle drawn.
     var xs = Array[Float64, 3](fill=0.0)
     var ys = Array[Float64, 3](fill=0.0)
+    ref triangle = c.payload[TrianglePayload]
     for i in range(3):
-        xs[i] = c.geom[2 * i]
-        ys[i] = c.geom[2 * i + 1]
+        xs[i] = triangle.corners[2 * i]
+        ys[i] = triangle.corners[2 * i + 1]
     var cross = (xs[1] - xs[0]) * (ys[2] - ys[0]) - (ys[1] - ys[0]) * (
         xs[2] - xs[0]
     )
@@ -113,7 +114,7 @@ def triangle_pieces(
     ) / perimeter
     var r = min(
         triangle_corner_radius(
-            c.corner_radius,
+            triangle.corner_radius,
             xs[0],
             ys[0],
             xs[1],

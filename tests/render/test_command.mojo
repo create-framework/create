@@ -4,16 +4,16 @@ from create.color.color import Color
 from create.color.gradient import Gradient
 from create.render.style import Style
 from create.render._command import (
-    CMD_CLEAR,
-    CMD_RECT,
-    CMD_CIRCLE,
-    CMD_LINE,
-    CMD_TRIANGLE,
-    CMD_IMAGE,
-    CMD_TEXT,
-    CMD_LETTERBOX,
-    CMD_BEZIER,
+    CirclePayload,
+    ClearPayload,
+    CurvesPayload,
+    ImagePayload,
+    LetterboxPayload,
+    LinePayload,
+    RectPayload,
     RenderCommand,
+    TextPayload,
+    TrianglePayload,
     clear_command,
     rect_command,
     circle_command,
@@ -41,46 +41,47 @@ def _styled() -> Style:
 
 def test_rect_packs_centre_and_extent() raises -> None:
     var c = rect_command(identity[3](), Style(), 1.0, 2.0, 3.0, 4.0)
-    assert_equal(c.kind, CMD_RECT)
-    assert_equal(c.geom[0], 1.0)
-    assert_equal(c.geom[1], 2.0)
-    assert_equal(c.geom[2], 3.0)
-    assert_equal(c.geom[3], 4.0)
+    assert_true(c.payload.isa[RectPayload]())
+    ref rect = c.payload[RectPayload]
+    assert_equal(rect.center, Point2D(1.0, 2.0))
+    assert_equal(rect.w, 3.0)
+    assert_equal(rect.h, 4.0)
+    assert_equal(rect.corner_radius, 0.0)
 
 
 def test_circle_packs_centre_and_radius() raises -> None:
     var c = circle_command(identity[3](), Style(), -5.0, 6.0, 7.0)
-    assert_equal(c.kind, CMD_CIRCLE)
-    assert_equal(c.geom[0], -5.0)
-    assert_equal(c.geom[1], 6.0)
-    assert_equal(c.geom[2], 7.0)
+    assert_true(c.payload.isa[CirclePayload]())
+    assert_equal(c.payload[CirclePayload].center, Point2D(-5.0, 6.0))
+    assert_equal(c.payload[CirclePayload].r, 7.0)
 
 
 def test_line_packs_both_endpoints() raises -> None:
     var c = line_command(identity[3](), Style(), 1.0, 2.0, 3.0, 4.0)
-    assert_equal(c.kind, CMD_LINE)
-    assert_equal(c.geom[0], 1.0)
-    assert_equal(c.geom[3], 4.0)
+    assert_true(c.payload.isa[LinePayload]())
+    assert_equal(c.payload[LinePayload].start, Point2D(1.0, 2.0))
+    assert_equal(c.payload[LinePayload].end, Point2D(3.0, 4.0))
 
 
 def test_triangle_packs_all_three_vertices() raises -> None:
     var c = triangle_command(
         identity[3](), Style(), 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
     )
-    assert_equal(c.kind, CMD_TRIANGLE)
+    assert_true(c.payload.isa[TrianglePayload]())
     for i in range(6):
-        assert_equal(c.geom[i], Float64(i + 1))
+        assert_equal(c.payload[TrianglePayload].corners[i], Float64(i + 1))
 
 
 def test_bezier_is_a_chain_of_one() raises -> None:
     var curve = Bezier((1.0, 2.0), (3.0, 4.0), (5.0, 6.0), (7.0, 8.0))
     var c = bezier_command(identity[3](), Style(), curve)
-    assert_equal(c.kind, CMD_BEZIER)
-    assert_equal(len(c.points), 4)
-    assert_equal(c.points[0], curve.start)
-    assert_equal(c.points[1], curve.control1)
-    assert_equal(c.points[2], curve.control2)
-    assert_equal(c.points[3], curve.end)
+    assert_true(c.payload.isa[CurvesPayload]())
+    ref controls = c.payload[CurvesPayload].points
+    assert_equal(len(controls), 4)
+    assert_equal(controls[0], curve.start)
+    assert_equal(controls[1], curve.control1)
+    assert_equal(controls[2], curve.control2)
+    assert_equal(controls[3], curve.end)
 
 
 def test_bezier_chain_keeps_its_points() raises -> None:
@@ -94,42 +95,37 @@ def test_bezier_chain_keeps_its_points() raises -> None:
         (6.0, 0.0),
     ]
     var c = bezier_chain_command(identity[3](), Style(), points.copy())
-    assert_equal(c.kind, CMD_BEZIER)
-    assert_equal(len(c.points), 7)
+    assert_true(c.payload.isa[CurvesPayload]())
+    ref controls = c.payload[CurvesPayload].points
+    assert_equal(len(controls), 7)
     for i in range(7):
-        assert_equal(c.points[i], points[i])
-
-
-def test_other_kinds_carry_no_points() raises -> None:
-    assert_equal(
-        len(line_command(identity[3](), Style(), 0.0, 0.0, 1.0, 1.0).points),
-        0,
-    )
+        assert_equal(controls[i], points[i])
 
 
 def test_image_carries_an_image_id_not_a_pointer() raises -> None:
     var c = image_command(
         identity[3](), Style(), 1.0, 2.0, 30.0, 40.0, 77, 16, 24
     )
-    assert_equal(c.kind, CMD_IMAGE)
-    assert_equal(c.geom[2], 30.0)
-    assert_equal(c.image, 77)
-    assert_equal(c.image_w, 16)
-    assert_equal(c.image_h, 24)
+    assert_true(c.payload.isa[ImagePayload]())
+    ref image = c.payload[ImagePayload]
+    assert_equal(image.w, 30.0)
+    assert_equal(image.image, 77)
+    assert_equal(image.image_w, 16)
+    assert_equal(image.image_h, 24)
+    assert_false(image.silhouette)
 
 
 def test_text_owns_its_string() raises -> None:
     var s = String("hello")
     var c = text_command(identity[3](), Style(), 8.0, 9.0, s^)
-    assert_equal(c.kind, CMD_TEXT)
-    assert_equal(c.text, "hello")
-    assert_equal(c.geom[0], 8.0)
-    assert_equal(c.geom[1], 9.0)
+    assert_true(c.payload.isa[TextPayload]())
+    assert_equal(c.payload[TextPayload].text, "hello")
+    assert_equal(c.payload[TextPayload].position, Point2D(8.0, 9.0))
 
 
 def test_clear_carries_its_colour_in_the_fill() raises -> None:
     var c = clear_command(Color(1, 2, 3, 4))
-    assert_equal(c.kind, CMD_CLEAR)
+    assert_true(c.payload.isa[ClearPayload]())
     assert_equal(c.style.fill_color.r, 1)
     assert_equal(c.style.fill_color.a, 4)
     assert_true(c.style.fill_enabled)
@@ -137,9 +133,9 @@ def test_clear_carries_its_colour_in_the_fill() raises -> None:
 
 def test_letterbox_carries_the_device_content_rect() raises -> None:
     var c = letterbox_command(Color(9, 9, 9), 10.0, 20.0, 110.0, 220.0)
-    assert_equal(c.kind, CMD_LETTERBOX)
-    assert_equal(c.geom[0], 10.0)
-    assert_equal(c.geom[3], 220.0)
+    assert_true(c.payload.isa[LetterboxPayload]())
+    assert_equal(c.payload[LetterboxPayload].x0, 10.0)
+    assert_equal(c.payload[LetterboxPayload].y1, 220.0)
     assert_equal(c.style.fill_color.g, 9)
 
 
@@ -148,8 +144,7 @@ def test_the_transform_is_kept_whole_not_applied() raises -> None:
     # rotated rectangle, which is the whole reason the matrix travels along.
     var m = rotate(0.5) @ translate(100.0, 200.0)
     var c = rect_command(m, Style(), 0.0, 0.0, 10.0, 10.0)
-    assert_equal(c.geom[0], 0.0)
-    assert_equal(c.geom[1], 0.0)
+    assert_equal(c.payload[RectPayload].center, Point2D(0.0, 0.0))
     for r in range(3):
         for col in range(3):
             assert_equal(c.transform[r, col], m[r, col])
@@ -166,13 +161,6 @@ def test_the_style_is_resolved_at_record_time() raises -> None:
     assert_equal(c.style.font_size, 21)
 
 
-def test_unused_slots_are_zero() raises -> None:
-    var c = circle_command(identity[3](), Style(), 1.0, 2.0, 3.0)
-    assert_equal(c.geom[3], 0.0)
-    assert_equal(c.geom[4], 0.0)
-    assert_equal(c.geom[5], 0.0)
-
-
 def test_commands_collect_into_a_buffer() raises -> None:
     # The recording shape Canvas will use: one heterogeneous list, in order.
     var cmds = List[RenderCommand]()
@@ -180,10 +168,10 @@ def test_commands_collect_into_a_buffer() raises -> None:
     cmds.append(rect_command(identity[3](), Style(), 0.0, 0.0, 4.0, 4.0))
     cmds.append(text_command(identity[3](), Style(), 0.0, 0.0, String("hi")))
     assert_equal(len(cmds), 3)
-    assert_equal(cmds[0].kind, CMD_CLEAR)
-    assert_equal(cmds[1].kind, CMD_RECT)
-    assert_equal(cmds[2].kind, CMD_TEXT)
-    assert_equal(cmds[2].text, "hi")
+    assert_true(cmds[0].payload.isa[ClearPayload]())
+    assert_true(cmds[1].payload.isa[RectPayload]())
+    assert_true(cmds[2].payload.isa[TextPayload]())
+    assert_equal(cmds[2].payload[TextPayload].text, "hi")
 
 
 def test_opacity_folds_into_the_shadow_color() raises -> None:
@@ -220,7 +208,10 @@ def test_tint_folds_into_every_colour() raises -> None:
     assert_equal(c.style.stroke_color, Color(255, 128, 0, 64))
     assert_equal(c.style.text_color, Color(255, 128, 0, 64))
     assert_equal(c.style.tint, Color.WHITE)
-    assert_equal(c.image_tint, Color(255, 128, 0, 64))
+    # An image takes none of the style's colours: its tint carries both.
+    var image = image_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0, 1, 1, 1)
+    assert_equal(image.payload[ImagePayload].tint, Color(255, 128, 0, 64))
+    assert_equal(image.style.tint, Color.WHITE)
 
 
 def main() raises:

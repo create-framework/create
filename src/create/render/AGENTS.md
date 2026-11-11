@@ -8,7 +8,7 @@ and the layering rules.
 | File | Role |
 |---|---|
 | `canvas.mojo` | `Canvas` (records commands, touches no pixels), `_PersistentCanvasState`, the guards |
-| `_command.mojo` | `RenderCommand` and its kind constants; `_fill_box`, the box a fill gradient spans |
+| `_command.mojo` | `RenderCommand`, its `RenderPayload` variant (one struct per kind) and their builders; `_fill_box`, the box a fill gradient spans |
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the text renderer, interned images; replays commands via `present` (CPU) or `present_gpu` |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_backend.mojo` |
@@ -42,8 +42,9 @@ A `Canvas` render call **records, never paints**: it appends a `RenderCommand` (
 transform at record time, style resolved now) to the `Backend`. Nothing rasterises until
 `present`/`present_gpu` replays the frame, so later style calls can't reach back. Images are interned
 into the backend at record time (the command carries an id); text is recorded as an owned `String`
-and laid out at replay. Add a shape by extending `_command.mojo`'s kinds and `_backend.mojo`'s replay
-(plus `_tessellate.mojo`), never by calling `_raster.mojo` from `Canvas`.
+and laid out at replay. Add a shape by adding a payload to `_command.mojo`'s `RenderPayload` and
+its replay to `_backend.mojo` (plus `_tessellate.mojo`), never by calling `_raster.mojo` from
+`Canvas`.
 
 **Shapes reach the canvas through `DrawTarget`** (in `create.geometry`). `canvas.draw(shape)` is
 `shape.draw_to(canvas)`, which calls the primitive for the shape's kind (`_rectangle`, `_circle`,
@@ -51,11 +52,16 @@ and laid out at replay. Add a shape by extending `_command.mojo`'s kinds and `_b
 `shape_command(shape, transform, style, scale)`. The named methods (`rectangle(p, w, h)`, …) only
 build the shape, resolving `corner_radius` against the style, and call `draw`. A new shape kind
 needs a geometry type with `draw_to`, a primitive on `DrawTarget` and `Canvas`, a `shape_command`
-overload, and the command kind above.
+overload, and the payload above.
 
-`RenderCommand.geom` has 6 slots, sized for a triangle's three points; the geometry table in
-`_command.mojo` gives each kind's layout. `CMD_BEZIER` (control points) and `CMD_POLYGON` (vertices)
-use `RenderCommand.points` instead, a `List` that stays empty (and unallocated) for every other kind.
+**A command is a header and a payload.** The header — `transform`, `style`, `clip`, `stroke_grow` —
+is every kind's; `payload` is a `Variant` of one struct per kind (`ClearPayload`, `RectPayload`,
+`CirclePayload`, `LinePayload`, `TrianglePayload`, `ImagePayload`, `TextPayload`,
+`LetterboxPayload`, `CurvesPayload`, `SectorPayload`, `PolygonPayload`), each naming its own
+fields. Test the kind with `c.payload.isa[RectPayload]()` and read or change it through
+`c.payload[RectPayload]` (bind it once with `ref rect = c.payload[RectPayload]`); `c.is_region()`
+and `c.is_shape()` name the groups the replays dispatch on. Reading the wrong payload aborts rather
+than reading another kind's numbers.
 
 `Canvas` holds no `Surface` and takes its geometry from the `Viewport` alone — don't add a `Surface`
 field or parameter, and don't import `_window` from `canvas.mojo`. What survives the frame boundary:
@@ -75,7 +81,7 @@ The camera is folded into `RenderCommand.transform`; nothing below `Canvas` know
 `Backend.kind` selects the replay (`RenderBackend.CPU` onto a `Surface`, `GPU` through `GLRenderer`);
 a field rather than a trait because Mojo has no dynamic dispatch.
 
-The autoclear is a recorded `CMD_CLEAR`, so every path handles it: the GPU turns it into `glClear`,
+The autoclear is a recorded `ClearPayload`, so every path handles it: the GPU turns it into `glClear`,
 an opaque `canvas.background()` replaces it via `Backend.record_clear` (`_clear_is_opaque`), and a
 transparent `save_image` masks it out. `Canvas`'s constructor records it through
 `Backend.open_with_clear`, which sets `autoclear_head`: the frame's first command is still that
@@ -111,9 +117,8 @@ fan, then its ring). The ramp texture (256x256 RGBA, unit 2) holds one ramp per 
 the row is the CPU's read between entries; the shader indexes `BAYER` by device pixel counted from
 the top, as the CPU does.
 
-**Background:** `background(gradient)` records a `CMD_CLEAR` with the rectangle's geometry (the
-design area) and the canvas's base matrix, so `_fill_box` and the mapping work as for a rect, and a
-capture's `pre` maps it like any command. The CPU shades every row; the GPU draws a framebuffer quad
+**Background:** `background(gradient)` records a `ClearPayload` sized to the design area, with the
+canvas's base matrix, so `_fill_box` and the mapping work as for a rect, and a capture's `pre` maps it like any command. The CPU shades every row; the GPU draws a framebuffer quad
 (never `glClear`, which takes one colour).
 
 Parity is checked per pixel, not just structurally: `test_gradient_fill.mojo` renders each scene on
@@ -121,7 +126,7 @@ both backends and compares away from edges within one level.
 
 ## Curves
 
-A `CMD_BEZIER` records a **chain** of cubic Béziers as control points in `points`: 3n+1 for n
+A `CurvesPayload` records a **chain** of cubic Béziers as control points in `points`: 3n+1 for n
 curves, each ending where the next starts (`bezier_command` records a chain of one,
 `bezier_chain_command` any). Each replay maps them through the command's transform (a Bézier is
 affine-invariant), flattens each curve in device pixels (`FLATTEN_TOLERANCE_PX`) so it stays smooth
@@ -137,7 +142,7 @@ pushes both end points out by half the width along the end tangent, so it is qua
 adds a half disc per open end whose first and last vertices are exactly the end quad's corners, so
 the shared edge composites once: the CPU fills it with `fill_convex` (edges walked as `fill_quad`
 walks them), the GPU fans it. A ring gets no caps. A zero-length path gives one disc (`ROUND`), one
-square lined up with the local x axis (`SQUARE`) or nothing. `CMD_LINE` strokes through the same
+square lined up with the local x axis (`SQUARE`) or nothing. A `LinePayload` strokes through the same
 function, a two-point path, so lines and curves cap alike.
 
 `canvas.spline` converts its `Spline` (Catmull-Rom) to Béziers **at record time, in local space**,
@@ -149,7 +154,7 @@ chain doesn't.
 
 ## Sectors
 
-A `CMD_SECTOR` (`cx, cy, r, start, sweep`, and a grow in `geom[5]`) is tiled at replay by
+A `SectorPayload` (`center`, `r`, `start_angle`, `sweep_angle` and a `grow`) is tiled at replay by
 `sector_quads` into convex device quads — the same quads for both backends, so they agree the way
 curves do: the CPU fills them with `fill_quad`, whose half-open rule composites shared edges once,
 and the GPU pushes them as vertices. The tiling walks the sweep in thin wedges about the tip, and
@@ -158,21 +163,21 @@ stroke is an inset ring, as a circle's is: the fill is the sector eroded by the 
 (alignment grows the sector first; see Strokes). Built in
 local space and mapped per corner, so a non-uniform transform gives an elliptical sector.
 
-`geom[5]` is 0 for a render call. A shadow sets it to its spread, and the tiling grows (or shrinks)
+`grow` is 0 for a render call. A shadow adds its spread, and the tiling grows (or shrinks)
 the sector by exactly that first — round the tip and the arc's ends, into the missing wedge — rather
-than leaning on a corner radius, which a `CMD_SECTOR` has none of. A stroke-only sector's shadow ring
+than leaning on a corner radius, which a `SectorPayload` has none of. A stroke-only sector's shadow ring
 is the grown sector's stroke band, thickened by twice the spread.
 
 A **rounded** sector never reaches `sector_quads`: its `shape_command` records it as a
-`CMD_POLYGON` through its outline (`rounded_sector_vertices`, each curve flattened as finely as a
+`PolygonPayload` through its outline (`rounded_sector_vertices`, each curve flattened as finely as a
 circle of its radius is drawn), via `rounded_sector_command`, which keeps the sector's circle in
-`geom[1..4]` with `geom[5]` set so `_fill_box` spans the circle as for a sharp sector.
+its `gradient_box` so `_fill_box` spans the circle as for a sharp sector.
 
-`canvas.arc` needs none of this: it records a `CMD_BEZIER` chain.
+`canvas.arc` needs none of this: it records a `CurvesPayload` chain.
 
 ## Polygons
 
-A `CMD_POLYGON` (vertices in `points`, a grow in `geom[0]`) is tiled at replay by `polygon_quads`
+A `PolygonPayload` (`vertices` and a `grow`) is tiled at replay by `polygon_quads`
 into the same kind of shared convex device quads as a sector, in local space and mapped per corner.
 The cut is into **horizontal slabs**: every y where an edge ends or two edges cross, so within a
 slab no edges cross, the edges sort by x, and a walk from the left keeps a winding count per
@@ -202,7 +207,7 @@ just inside each corner's narrower wedge; a corner that is not two pieces meetin
 disc. A half rectangle's base lies on the rim's own line, so the walk across a slab skips the
 stretches of no width between them rather than starting a run there.
 
-`geom[0]` is 0 for a render call and the spread for a shadow; a stroke-only shadow's thickness
+`grow` is 0 for a render call and the spread for a shadow; a stroke-only shadow's thickness
 `t + 2·spread` grows the seam band by the spread too, so the ring is the stroke grown. Cost is
 slabs × the edges spanning them, bands included: every slab runs the polygon's whole width, so
 a crossing in one corner cuts quads everywhere. Stroked, at `MEDIUM` on the CPU: ~160 µs per
@@ -216,19 +221,19 @@ vertices and so slabs: stroked, ~360 µs per rounded 5-tip star, ~460 µs per ro
 bands would be far cheaper, but the inset folds wherever a fillet is tighter than the stroke or
 a tip or neck is thin, which a band never does; that needs a fold check and a band fallback.
 
-An **ellipse** has no command of its own: its `shape_command` records a `CMD_POLYGON` through
+An **ellipse** has no command of its own: its `shape_command` records a `PolygonPayload` through
 `Ellipse._vertices`, as many as `circle_segments` gives its larger radius at the current transform,
 rounded up to a multiple of four so a vertex lands on each end of both axes and `_fill_box` (the
 vertices' bounds) is the ellipse's. Its stroke, alignment, shadows and clip are a polygon's, so it
 is as thick all round, which a ring between two concentric ellipses is not. A flat one records the
-zero-size `CMD_RECT` it is. Stroked, at `MEDIUM` on the CPU, 2000 small ones cost ~3x as many
+zero-size `RectPayload` it is. Stroked, at `MEDIUM` on the CPU, 2000 small ones cost ~3x as many
 circles (~93 against ~33 ms) and 20 of radius 200 by 100 ~5x (~44 against ~9 ms); filled only,
 the same as circles. A dedicated kind with its inset ring tiled like `triangle_pieces` would close
 that, at the cost of every replay, shadow and clip path learning it.
 
 A **capsule** is recorded the same way, through `Capsule._vertices`: each half circle in half the
 `circle_segments` of `r`. Its chords fall short of its bounds, so it records through
-`framed_polygon_command`, which sets `geom[1..5]` as a rounded sector does and `_fill_box` spans the
+`framed_polygon_command`, which sets `gradient_box` as a rounded sector does and `_fill_box` spans the
 capsule's true bounds. A zero `r` records a polygon of no vertices, which draws nothing. Stroked,
 2000 small ones cost ~2.3x as many circles (~80 against ~34 ms); filled, the same.
 
@@ -377,7 +382,7 @@ See [examples/capture/main.mojo](../../../examples/capture/main.mojo).
 
 ## Text
 
-A `CMD_TEXT` carries its string and its `Style`, and the style carries the face (`style.font`,
+A `TextPayload` carries its string, the command its `Style`, and the style carries the face (`style.font`,
 `None` for the packaged default): the `Font`'s `ArcPointer` keeps the face open until replay, so
 nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and caches.
 - **One layout, two backends:** `layout` returns `PlacedGlyph`s (cache key and device position);
@@ -411,14 +416,14 @@ nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and ca
 ## Strokes
 
 A rectangle's or triangle's rounding is its shape's `corner_radius`, carried on
-`RenderCommand.corner_radius` (a triangle fills every `geom` slot) and clamped at replay; a
+`RectPayload.corner_radius`/`TrianglePayload.corner_radius` and clamped at replay; a
 shadow's spread grows it.
 
 **Every region draws its stroke as an inset ring** inside its edge, the fill inside that.
 `stroke_alignment` is then one grow: `aligned_stroke` (`_stroke.mojo`) grows the command by
 `o = fraction × t` (0, ½ or 1 of `local_stroke_thickness`, the stroke as rasterised, in local
 units) before anything draws it — rectangle `w`/`h` by `2o`, circle `r` by `o`, triangle through
-`_grow_triangle`, sector `geom[5]`, polygon `geom[0]` — so the inset ring of the grown shape lands
+`_grow_triangle`, sector and polygon `grow` — so the inset ring of the grown shape lands
 inside, centred or outside. A rounded corner's radius grows by `o` too; a sharp one stays sharp.
 It is applied once per backend, at its choke point (the CPU's `Backend._one`, the GPU's
 `GLRenderer._command`), so the shape, its hard, blurred and inset shadows, pixel reads and
@@ -531,7 +536,7 @@ only ever hold quantities affine across a triangle, so interpolation evaluates t
 | `MODE_GRADIENT` | 8 | Gradient fill: `uv` the device mapping, `s0` radial, `s1` ramp row; samples unit 2, dithers |
 | `MODE_SHADOW_CAPSULE` | 9 | Blurred round-capped line shadow: `s0` the core's half-length, `s1` the radius |
 
-A batch breaks only on an opaque `CMD_CLEAR`, a second distinct unit-1 texture, a `BlendMode`
+A batch breaks only on an opaque clear, a second distinct unit-1 texture, a `BlendMode`
 change, a clip change (see Clips), or frame end — glyph atlas on texture unit 0, images on unit 1, gradient ramps on unit 2
 (never rebound, so gradients batch with anything; a ramp texture refill flushes once). A blurred image shadow's
 mask is its own unit-1 texture, so a shadowed image costs one extra draw call, and interleaving

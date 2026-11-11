@@ -22,7 +22,15 @@ from create.geometry.bezier import Bezier
 from create.color.color import Color
 from create.render.style import Style
 from create.render._command import (
+    CirclePayload,
+    CurvesPayload,
+    ImagePayload,
+    PolygonPayload,
+    RectPayload,
     RenderCommand,
+    SectorPayload,
+    TextPayload,
+    TrianglePayload,
     bezier_chain_command,
     bezier_command,
     circle_command,
@@ -119,8 +127,8 @@ def test_filled_shape_casts_one_filled_layer() raises -> None:
     assert_false(sh.style.stroke_enabled)
     assert_false(sh.style.shadow_enabled)
     # A rectangle's stroke is inset, so the silhouette is the rectangle.
-    assert_equal(sh.geom[2], 10.0)
-    assert_equal(sh.geom[3], 6.0)
+    assert_equal(sh.payload[RectPayload].w, 10.0)
+    assert_equal(sh.payload[RectPayload].h, 6.0)
 
 
 def test_stroke_only_shape_casts_its_ring() raises -> None:
@@ -131,7 +139,7 @@ def test_stroke_only_shape_casts_its_ring() raises -> None:
     assert_true(sh.style.stroke_enabled)
     assert_equal(sh.style.stroke_color, s.shadow_color)
     assert_equal(sh.style.stroke_thickness, 3)
-    assert_equal(sh.geom[2], 10.0)
+    assert_equal(sh.payload[CirclePayload].r, 10.0)
 
 
 def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
@@ -149,9 +157,11 @@ def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
     assert_true(sh.style.stroke_enabled)
     assert_equal(sh.style.stroke_color, s.shadow_color)
     assert_equal(sh.style.stroke_thickness, 5)
-    assert_equal(len(sh.points), len(c.points))
-    for i in range(len(c.points)):
-        assert_equal(sh.points[i], c.points[i])
+    ref cast = sh.payload[CurvesPayload].points
+    ref controls = c.payload[CurvesPayload].points
+    assert_equal(len(cast), len(controls))
+    for i in range(len(controls)):
+        assert_equal(cast[i], controls[i])
     s.stroke_enabled = False
     assert_false(casts_outer_shadow(bezier_command(identity[3](), s, curve)))
 
@@ -171,9 +181,10 @@ def test_a_bezier_chain_casts_every_curve() raises -> None:
     var c = bezier_chain_command(identity[3](), s, chain.copy())
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
-    assert_equal(len(sh.points), len(chain))
+    ref cast = sh.payload[CurvesPayload].points
+    assert_equal(len(cast), len(chain))
     for i in range(len(chain)):
-        assert_equal(sh.points[i], chain[i])
+        assert_equal(cast[i], chain[i])
 
 
 def test_spread_grows_each_kind() raises -> None:
@@ -181,11 +192,11 @@ def test_spread_grows_each_kind() raises -> None:
     s.stroke_enabled = False
     s.shadow_spread = 2.0
     var r = shadow_command(rect_command(identity[3](), s, 0, 0, 10, 6), 1.0)
-    assert_equal(r.geom[2], 14.0)
-    assert_equal(r.geom[3], 10.0)
-    assert_equal(r.corner_radius, 2.0)
+    assert_equal(r.payload[RectPayload].w, 14.0)
+    assert_equal(r.payload[RectPayload].h, 10.0)
+    assert_equal(r.payload[RectPayload].corner_radius, 2.0)
     var c = shadow_command(circle_command(identity[3](), s, 0, 0, 5), 1.0)
-    assert_equal(c.geom[2], 7.0)
+    assert_equal(c.payload[CirclePayload].r, 7.0)
     var l = shadow_command(line_command(identity[3](), s, 0, 0, 5, 0), 1.0)
     assert_equal(l.style.stroke_thickness, 5)
 
@@ -194,8 +205,8 @@ def test_negative_spread_never_inverts_a_shape() raises -> None:
     var s = _shadowed()
     s.shadow_spread = -20.0
     var r = shadow_command(rect_command(identity[3](), s, 0, 0, 10, 6), 1.0)
-    assert_equal(r.geom[2], 0.0)
-    assert_equal(r.geom[3], 0.0)
+    assert_equal(r.payload[RectPayload].w, 0.0)
+    assert_equal(r.payload[RectPayload].h, 0.0)
 
 
 def test_triangle_grows_every_edge_by_the_spread() raises -> None:
@@ -206,9 +217,10 @@ def test_triangle_grows_every_edge_by_the_spread() raises -> None:
     var c = triangle_command(identity[3](), s, 0, 0, 10, 0, 0, 10)
     var sh = shadow_command(c, 1.0)
     # The right-angle vertex moves out one unit along both axes.
-    assert_almost_equal(sh.geom[0], -1.0)
-    assert_almost_equal(sh.geom[1], -1.0)
-    assert_equal(sh.corner_radius, 1.0)
+    ref triangle = sh.payload[TrianglePayload]
+    assert_almost_equal(triangle.corners[0], -1.0)
+    assert_almost_equal(triangle.corners[1], -1.0)
+    assert_equal(triangle.corner_radius, 1.0)
 
 
 def test_triangle_silhouette_is_the_shape_its_stroke_is_inset_in() raises -> (
@@ -221,7 +233,10 @@ def test_triangle_silhouette_is_the_shape_its_stroke_is_inset_in() raises -> (
     var sh = shadow_command(c, 1.0)
     # The stroke is an inset ring, so its outer edge is the triangle's.
     for i in range(6):
-        assert_almost_equal(sh.geom[i], c.geom[i])
+        assert_almost_equal(
+            sh.payload[TrianglePayload].corners[i],
+            c.payload[TrianglePayload].corners[i],
+        )
 
 
 def test_a_sector_casts_its_grown_silhouette() raises -> None:
@@ -235,9 +250,13 @@ def test_a_sector_casts_its_grown_silhouette() raises -> None:
     assert_true(sh.style.fill_enabled)
     assert_equal(sh.style.fill_color, s.shadow_color)
     assert_false(sh.style.stroke_enabled)
-    for i in range(5):
-        assert_equal(sh.geom[i], c.geom[i])
-    assert_equal(sh.geom[5], 2.0)
+    ref cast = sh.payload[SectorPayload]
+    ref sector = c.payload[SectorPayload]
+    assert_equal(cast.center, sector.center)
+    assert_equal(cast.r, sector.r)
+    assert_equal(cast.start_angle, sector.start_angle)
+    assert_equal(cast.sweep_angle, sector.sweep_angle)
+    assert_equal(cast.grow, 2.0)
 
 
 def test_an_stroke_only_sector_casts_its_ring() raises -> None:
@@ -248,7 +267,7 @@ def test_an_stroke_only_sector_casts_its_ring() raises -> None:
     assert_false(sh.style.fill_enabled)
     assert_equal(sh.style.stroke_color, s.shadow_color)
     assert_equal(sh.style.stroke_thickness, 5)
-    assert_equal(sh.geom[5], 1.0)
+    assert_equal(sh.payload[SectorPayload].grow, 1.0)
     s.stroke_enabled = False
     assert_false(
         casts_outer_shadow(sector_command(identity[3](), s, 0, 0, 10, 0, 1))
@@ -278,10 +297,11 @@ def test_a_polygon_casts_its_grown_silhouette() raises -> None:
     assert_true(sh.style.fill_enabled)
     assert_equal(sh.style.fill_color, s.shadow_color)
     assert_false(sh.style.stroke_enabled)
-    assert_equal(len(sh.points), 4)
+    ref cast = sh.payload[PolygonPayload]
+    assert_equal(len(cast.vertices), 4)
     for i in range(4):
-        assert_true(sh.points[i] == c.points[i])
-    assert_equal(sh.geom[0], 2.0)
+        assert_true(cast.vertices[i] == c.payload[PolygonPayload].vertices[i])
+    assert_equal(cast.grow, 2.0)
 
 
 def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
@@ -292,7 +312,7 @@ def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
     assert_false(sh.style.fill_enabled)
     assert_equal(sh.style.stroke_color, s.shadow_color)
     assert_equal(sh.style.stroke_thickness, 5)
-    assert_equal(sh.geom[0], 1.0)
+    assert_equal(sh.payload[PolygonPayload].grow, 1.0)
     s.stroke_enabled = False
     assert_false(
         casts_outer_shadow(polygon_command(identity[3](), s, _square()))
@@ -312,17 +332,17 @@ def test_text_shadow_recolours_the_glyphs() raises -> None:
     var c = text_command(identity[3](), s, 0.0, 0.0, "hi")
     var sh = shadow_command(c, 1.0)
     assert_equal(sh.style.text_color, s.shadow_color)
-    assert_equal(sh.text, "hi")
+    assert_equal(sh.payload[TextPayload].text, "hi")
 
 
 def test_image_shadow_is_a_silhouette() raises -> None:
     var s = _shadowed()
     var c = image_command(identity[3](), s, 0, 0, 4, 4, 7, 4, 4)
-    assert_false(c.silhouette)
+    assert_false(c.payload[ImagePayload].silhouette)
     var sh = shadow_command(c, 1.0)
-    assert_true(sh.silhouette)
+    assert_true(sh.payload[ImagePayload].silhouette)
     assert_equal(sh.style.fill_color, s.shadow_color)
-    assert_equal(sh.image, 7)
+    assert_equal(sh.payload[ImagePayload].image, 7)
 
 
 def test_gaussian_cdf_matches_erf() raises -> None:

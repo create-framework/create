@@ -7,7 +7,7 @@ here decides geometry.
 
 **One batch spans as many commands as it can.** The vertex buffer accumulates
 across commands and is flushed only when something makes a shared draw call
-impossible — an opaque `CMD_CLEAR` (which resets the framebuffer, so earlier
+impossible — an opaque `ClearPayload` (which resets the framebuffer, so earlier
 vertices must already have landed), a *second* image texture (a blurred
 image shadow's mask counts: it is a texture of its own), a change of
 `BlendMode` (blend state is per draw call), and the end of the frame. Solids, glyphs and one image share a batch because they sample
@@ -39,17 +39,17 @@ from std.memory import unsafe_memcpy
 from create.math.matrix import _apply as mat_apply
 
 from ._command import (
-    CMD_BEZIER,
-    CMD_SECTOR,
-    CMD_POLYGON,
-    CMD_CIRCLE,
-    CMD_CLEAR,
-    CMD_LETTERBOX,
-    CMD_LINE,
-    CMD_RECT,
-    CMD_IMAGE,
-    CMD_TEXT,
-    CMD_TRIANGLE,
+    CirclePayload,
+    ClearPayload,
+    CurvesPayload,
+    ImagePayload,
+    LetterboxPayload,
+    LinePayload,
+    PolygonPayload,
+    RectPayload,
+    SectorPayload,
+    TextPayload,
+    TrianglePayload,
     RenderCommand,
 )
 from ._gl import (
@@ -945,7 +945,7 @@ struct GLRenderer(Movable):
                 )
             # An opaque clear draws nothing, so its mode (always `NORMAL`)
             # must not force a flush; a translucent one sets it in `_clear`.
-            if c.kind != CMD_CLEAR:
+            if not c.payload.isa[ClearPayload]():
                 self._blend_mode(c.style.blend_mode)
             # Aligned once, before its shadows, so they see the same shape.
             var offset = stroke_offset(c, c.transform, scale)
@@ -985,29 +985,29 @@ struct GLRenderer(Movable):
             var sh = shadow_command(c, scale)
             # Quantised as the CPU replay does, so both agree on when a
             # shadow is hard and which cached mask a soft one uses.
-            var sf = text_pixel_scale(
-                sh.transform, scale
-            ) if c.kind == CMD_TEXT else pixel_scale(sh.transform, scale)
+            var sf = text_pixel_scale(sh.transform, scale) if c.payload.isa[
+                TextPayload
+            ]() else pixel_scale(sh.transform, scale)
             var blur = Int(c.style.shadow_blur * sf + 0.5)
             if blur == 0:
                 self._one(sh, images, text, width, height, scale)
             elif blurs_analytically(c):
                 emit_blurred_shadow(self.vertices, sh, scale)
-            elif c.kind == CMD_TEXT:
+            elif c.payload.isa[TextPayload]():
                 self._text(sh, text, scale, blur)
-            elif c.kind == CMD_IMAGE:
+            elif c.payload.isa[ImagePayload]():
                 self._image_shadow(sh, images, scale, blur)
-            elif c.kind == CMD_BEZIER:
+            elif c.payload.isa[CurvesPayload]():
                 self._mask_shadow(
                     bezier_shadow_mask(sh, sh.transform, scale, blur),
                     c.style.shadow_color,
                 )
-            elif c.kind == CMD_SECTOR:
+            elif c.payload.isa[SectorPayload]():
                 self._mask_shadow(
                     sector_shadow_mask(sh, sh.transform, scale, blur),
                     c.style.shadow_color,
                 )
-            elif c.kind == CMD_POLYGON:
+            elif c.payload.isa[PolygonPayload]():
                 self._mask_shadow(
                     polygon_shadow_mask(sh, sh.transform, scale, blur),
                     c.style.shadow_color,
@@ -1030,36 +1030,36 @@ struct GLRenderer(Movable):
         """Emit one command's geometry. The blend state is already set."""
         # A fill gradient's ramp row is looked up before its command emits
         # anything: claiming a row can flush the batch.
-        if c.kind == CMD_CLEAR:
+        if c.payload.isa[ClearPayload]():
             if c.style.fill_gradient:
                 var row = self._ramp_row(c)
                 self._clear_gradient(c, row, width, height)
             else:
                 self._clear(c.style.fill_color, width, height, c.clip != 0)
-        elif c.kind == CMD_RECT:
+        elif c.payload.isa[RectPayload]():
             var row = self._ramp_row(c)
             emit_rect(self.vertices, c, scale, row)
-        elif c.kind == CMD_CIRCLE:
+        elif c.payload.isa[CirclePayload]():
             var row = self._ramp_row(c)
             emit_circle(self.vertices, c, scale, row)
-        elif c.kind == CMD_LINE:
+        elif c.payload.isa[LinePayload]():
             emit_line(self.vertices, c, scale)
-        elif c.kind == CMD_BEZIER:
+        elif c.payload.isa[CurvesPayload]():
             emit_bezier(self.vertices, c, scale)
-        elif c.kind == CMD_SECTOR:
+        elif c.payload.isa[SectorPayload]():
             var row = self._ramp_row(c)
             emit_sector(self.vertices, c, scale, row)
-        elif c.kind == CMD_POLYGON:
+        elif c.payload.isa[PolygonPayload]():
             var row = self._ramp_row(c)
             emit_polygon(self.vertices, c, scale, row)
-        elif c.kind == CMD_TRIANGLE:
+        elif c.payload.isa[TrianglePayload]():
             var row = self._ramp_row(c)
             emit_triangle(self.vertices, c, scale, row)
-        elif c.kind == CMD_IMAGE:
+        elif c.payload.isa[ImagePayload]():
             self._image(c, images, scale)
-        elif c.kind == CMD_TEXT:
+        elif c.payload.isa[TextPayload]():
             self._text(c, text, scale)
-        elif c.kind == CMD_LETTERBOX:
+        elif c.payload.isa[LetterboxPayload]():
             # Bars are solid, but they must land over whatever texture is
             # bound, so no rebind here — `MODE_SOLID` never samples.
             emit_letterbox(self.vertices, c, width, height)
@@ -1108,7 +1108,7 @@ struct GLRenderer(Movable):
         scale: Float64,
         blur: Int = 0,
     ) raises:
-        """`CMD_TEXT`, laid out by the same function the CPU replay uses.
+        """A `TextPayload`, laid out by the same function the CPU replay uses.
 
         A blurred shadow's glyphs are just other keys to `layout`, packed into
         the same atlas beside the sharp ones — so they cost no draw call.
@@ -1129,11 +1129,14 @@ struct GLRenderer(Movable):
         # space; otherwise the upright layout around the origin is mapped
         # corner by corner, as the CPU replay maps it.
         var upright = text_upright(m)
-        var glyphs = glyph_transform(m, c.geom[0], c.geom[1], sf)
-        var p = mat_apply(m, c.geom[0], c.geom[1])
+        ref anchor = c.payload[TextPayload].position
+        var glyphs = glyph_transform(m, anchor.x, anchor.y, sf)
+        var p = mat_apply(m, anchor.x, anchor.y)
         if not upright:
             p = (0.0, 0.0)
-        var placed = text.layout(c.text, p[0], p[1], c.style, sf, blur)
+        var placed = text.layout(
+            c.payload[TextPayload].text, p[0], p[1], c.style, sf, blur
+        )
         if len(placed) == 0:
             return
         comptime inv = 1.0 / Float64(ATLAS_SIZE)
@@ -1232,9 +1235,10 @@ struct GLRenderer(Movable):
         images: Dict[Int, _InternedImage],
         scale: Float64,
     ) raises:
-        if c.image not in images:
+        var id = c.payload[ImagePayload].image
+        if id not in images:
             return
-        self._bind(self._texture(c.image, images))
+        self._bind(self._texture(id, images))
         emit_image(self.vertices, c, scale)
 
     def _texture(
@@ -1279,23 +1283,27 @@ struct GLRenderer(Movable):
         CPU replay's mask, uploaded once and drawn over `_image`'s rect
         grown by the blur's reach — or, under a transform that turns the
         image, built for it this frame, as a Bézier's is."""
-        if c.image not in images:
+        ref image = c.payload[ImagePayload]
+        if image.image not in images:
             return
         if not upright(c.transform):
             self._mask_shadow(
                 image_shadow_mask(
-                    c, c.transform, images[c.image].pixels[].unsafe_ptr(), blur
+                    c,
+                    c.transform,
+                    images[image.image].pixels[].unsafe_ptr(),
+                    blur,
                 ),
                 c.style.fill_color,
             )
             return
         var r = upright_rect(
-            c.transform, c.geom[0], c.geom[1], c.geom[2], c.geom[3]
+            c.transform, image.center.x, image.center.y, image.w, image.h
         )
         var dw = r.width
         var dh = r.height
         var sigma = Float64(blur) / 2.0
-        var key = shadow_mask_key(c.image, dw, dh, blur)
+        var key = shadow_mask_key(image.image, dw, dh, blur)
         if key in self.shadow_textures:
             self._bind(self.shadow_textures[key])
         else:
@@ -1306,7 +1314,7 @@ struct GLRenderer(Movable):
                 for ref entry in self.shadow_textures.items():
                     _delete_object(self.gl.delete_textures, entry.value)
                 self.shadow_textures.clear()
-            ref img = images[c.image]
+            ref img = images[image.image]
             var mask = blur_image_alpha(
                 img.pixels[].unsafe_ptr(), img.width, img.height, dw, dh, sigma
             )
@@ -1387,7 +1395,7 @@ struct GLRenderer(Movable):
     def _clear(
         mut self, color: Color, width: Int, height: Int, clipped: Bool
     ) raises:
-        """`CMD_CLEAR`, composited the way the CPU replay composites it.
+        """A `ClearPayload`, composited the way the CPU replay composites it.
 
         `glClear` ignores the stencil test, so a clipped clear is always a
         quad, opaque or not."""
@@ -1413,7 +1421,7 @@ struct GLRenderer(Movable):
     def _clear_gradient(
         mut self, c: RenderCommand, row: Int, width: Int, height: Int
     ) raises:
-        """A gradient `CMD_CLEAR`: one framebuffer-sized quad, shaded like a
+        """A gradient `ClearPayload`: one framebuffer-sized quad, shaded like a
         gradient fill. Never a `glClear`, which takes one colour, but an
         opaque gradient composited over the frame replaces it all the same,
         and it batches with what is around it."""

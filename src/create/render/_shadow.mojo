@@ -17,7 +17,7 @@ corner rounds by `d` more, centred on the original vertex. That is exactly
 what a larger `corner_radius` on the grown rectangle or triangle renders, so
 no new shape kind is needed, and the growth is exact.
 A sector or polygon has no corner radius, so it carries the growth itself
-(a sector's `geom[5]`, a polygon's `geom[0]`) and `sector_quads` or
+(a sector's or a polygon's `grow`) and `sector_quads` or
 `polygon_quads` tiles the Minkowski sum exactly.
 
 **Blur** is a Gaussian of standard deviation `sigma = shadow_blur / 2`, as in
@@ -30,18 +30,19 @@ spelled out again in the GL shader, so keep the two in step.
 from std.math import abs, asin, cos, exp, max, min, sin, sqrt
 
 from create.math.matrix import Matrix, translate
+from create.math.point2d import Point2D
 
 from ._command import (
-    CMD_BEZIER,
-    CMD_CIRCLE,
-    CMD_LINE,
-    CMD_POLYGON,
-    CMD_RECT,
-    CMD_SECTOR,
-    CMD_IMAGE,
-    CMD_TEXT,
-    CMD_TRIANGLE,
+    CirclePayload,
+    CurvesPayload,
+    ImagePayload,
+    LinePayload,
+    PolygonPayload,
+    RectPayload,
     RenderCommand,
+    SectorPayload,
+    TextPayload,
+    TrianglePayload,
     _GEOM_SLOTS,
     _grow_triangle,
 )
@@ -65,23 +66,19 @@ def casts_outer_shadow(c: RenderCommand) -> Bool:
     """
     if not c.style._shadow_visible() or c.style.shadow_inset:
         return False
-    if (
-        c.kind == CMD_RECT
-        or c.kind == CMD_CIRCLE
-        or c.kind == CMD_TRIANGLE
-        or c.kind == CMD_SECTOR
-        or c.kind == CMD_POLYGON
-    ):
+    if c.is_region():
         return c.style._fill_visible() or c.style._stroke_visible()
-    if c.kind == CMD_LINE and c.style.stroke_cap == StrokeCap.BUTT:
+    if c.payload.isa[LinePayload]():
+        ref line = c.payload[LinePayload]
         # A butt line of no length paints nothing, so casts nothing.
-        if c.geom[0] == c.geom[2] and c.geom[1] == c.geom[3]:
+        if c.style.stroke_cap == StrokeCap.BUTT and line.start == line.end:
             return False
-    if c.kind == CMD_LINE or c.kind == CMD_BEZIER:
         return c.style._stroke_visible()
-    if c.kind == CMD_TEXT:
+    if c.payload.isa[CurvesPayload]():
+        return c.style._stroke_visible()
+    if c.payload.isa[TextPayload]():
         return c.style.text_color.a > 0
-    return c.kind == CMD_IMAGE
+    return c.payload.isa[ImagePayload]()
 
 
 def casts_inset_shadow(c: RenderCommand) -> Bool:
@@ -95,7 +92,11 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
         return False
     # A sector or polygon ignores `shadow_inset` too: the inset regions are
     # these three.
-    return c.kind == CMD_RECT or c.kind == CMD_CIRCLE or c.kind == CMD_TRIANGLE
+    return (
+        c.payload.isa[RectPayload]()
+        or c.payload.isa[CirclePayload]()
+        or c.payload.isa[TrianglePayload]()
+    )
 
 
 def shadow_transform(c: RenderCommand, scale: Float64) -> Matrix[3, 3]:
@@ -133,18 +134,18 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     var color = c.style.shadow_color
     var spread = c.style.shadow_spread
 
-    if c.kind == CMD_TEXT:
+    if c.payload.isa[TextPayload]():
         s.style.text_color = color
         return s^
-    if c.kind == CMD_IMAGE:
+    if c.payload.isa[ImagePayload]():
         s.style.fill_color = color
-        s.silhouette = True
+        s.payload[ImagePayload].silhouette = True
         return s^
 
     var ring = (
         not c.style._fill_visible()
-        or c.kind == CMD_LINE
-        or c.kind == CMD_BEZIER
+        or c.payload.isa[LinePayload]()
+        or c.payload.isa[CurvesPayload]()
     )
     if ring:
         # The stroke alone, dilated by `spread` on both sides.
@@ -154,16 +155,8 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
         s.style.stroke_thickness = max(
             c.style.stroke_thickness + 2.0 * spread, 0.0
         )
-        if c.kind == CMD_RECT:
-            s.geom[2] = max(s.geom[2] + 2.0 * spread, 0.0)
-            s.geom[3] = max(s.geom[3] + 2.0 * spread, 0.0)
-            s.corner_radius = max(c.corner_radius + spread, 0.0)
-        elif c.kind == CMD_CIRCLE:
-            s.geom[2] = max(s.geom[2] + spread, 0.0)
-        elif c.kind == CMD_SECTOR:
-            s.geom[5] = c.geom[5] + spread
-        elif c.kind == CMD_POLYGON:
-            s.geom[0] = c.geom[0] + spread
+        # A triangle's ring is its stroke thickened, in place.
+        _spread(s, spread, grow_triangle=False)
         return s^
 
     s.style.fill_color = color
@@ -171,22 +164,30 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     s.style.stroke_enabled = False
     # Every region's stroke is an inset ring (an aligned one of the grown
     # shape), so the fill's edge is already the outer edge.
-    var d = spread
-    if c.kind == CMD_RECT:
-        s.geom[2] = max(s.geom[2] + 2.0 * d, 0.0)
-        s.geom[3] = max(s.geom[3] + 2.0 * d, 0.0)
-        s.corner_radius = max(c.corner_radius + d, 0.0)
-    elif c.kind == CMD_CIRCLE:
-        s.geom[2] = max(s.geom[2] + d, 0.0)
-    elif c.kind == CMD_TRIANGLE:
-        _grow_triangle(s.geom, d)
-        s.corner_radius = max(c.corner_radius + d, 0.0)
-    elif c.kind == CMD_SECTOR:
-        # Grown exactly, by `sector_quads`: no corner radius to lean on.
-        s.geom[5] = c.geom[5] + d
-    elif c.kind == CMD_POLYGON:
-        s.geom[0] = c.geom[0] + d
+    _spread(s, spread, grow_triangle=True)
     return s^
+
+
+def _spread(mut s: RenderCommand, d: Float64, grow_triangle: Bool):
+    """Grow the region `s` by `d` local units all round, never below
+    nothing. A sector and a polygon are grown exactly when tiled, through
+    their `grow`: no corner radius to lean on."""
+    if s.payload.isa[RectPayload]():
+        ref rect = s.payload[RectPayload]
+        rect.w = max(rect.w + 2.0 * d, 0.0)
+        rect.h = max(rect.h + 2.0 * d, 0.0)
+        rect.corner_radius = max(rect.corner_radius + d, 0.0)
+    elif s.payload.isa[CirclePayload]():
+        ref circle = s.payload[CirclePayload]
+        circle.r = max(circle.r + d, 0.0)
+    elif s.payload.isa[TrianglePayload]() and grow_triangle:
+        ref triangle = s.payload[TrianglePayload]
+        _grow_triangle(triangle.corners, d)
+        triangle.corner_radius = max(triangle.corner_radius + d, 0.0)
+    elif s.payload.isa[SectorPayload]():
+        s.payload[SectorPayload].grow += d
+    elif s.payload.isa[PolygonPayload]():
+        s.payload[PolygonPayload].grow += d
 
 
 def image_shadow_mask[
@@ -206,8 +207,15 @@ def image_shadow_mask[
     each frame. The mask is the pixels `blit_image_mapped` covers on the
     device, so a hard and a blurred shadow line up.
     """
+    ref image = c.payload[ImagePayload]
     var mapping = image_mapping(
-        m, c.geom[0], c.geom[1], c.geom[2], c.geom[3], c.image_w, c.image_h
+        m,
+        image.center.x,
+        image.center.y,
+        image.w,
+        image.h,
+        image.image_w,
+        image.image_h,
     )
     var width = mapping.x1 - mapping.x0
     var height = mapping.y1 - mapping.y0
@@ -217,8 +225,8 @@ def image_shadow_mask[
     blit_image_mapped(
         scratch.surface(),
         src,
-        c.image_w,
-        c.image_h,
+        image.image_w,
+        image.image_h,
         mapping.translated(-mapping.x0, -mapping.y0),
         Optional(Color.WHITE),
     )
@@ -428,10 +436,10 @@ def blurs_analytically(c: RenderCommand) -> Bool:
     """Whether `c`'s shadow blurs through `BlurredSilhouette` rather than
     as an image: the shapes and lines, whose edges are known exactly."""
     return (
-        c.kind == CMD_RECT
-        or c.kind == CMD_CIRCLE
-        or c.kind == CMD_TRIANGLE
-        or c.kind == CMD_LINE
+        c.payload.isa[RectPayload]()
+        or c.payload.isa[CirclePayload]()
+        or c.payload.isa[TrianglePayload]()
+        or c.payload.isa[LinePayload]()
     )
 
 
@@ -508,38 +516,47 @@ struct BlurredSilhouette(Copyable, Movable):
         self.outer = Array[Float64, 9](fill=0.0)
         self.ring = 0.0
         var ring = not sh.style._fill_visible()
-        if sh.kind == CMD_RECT or sh.kind == CMD_CIRCLE:
+        if sh.payload.isa[RectPayload]() or sh.payload.isa[CirclePayload]():
             self.kind = SIL_RECT
-            var hw = sh.geom[2] / 2.0
-            var hh = sh.geom[3] / 2.0
-            var r = rect_corner_radius(sh.corner_radius, sh.geom[2], sh.geom[3])
-            if sh.kind == CMD_CIRCLE:
-                hw = sh.geom[2]
+            var center: Point2D
+            var hw: Float64
+            var hh: Float64
+            var r: Float64
+            if sh.payload.isa[CirclePayload]():
+                ref circle = sh.payload[CirclePayload]
+                center = circle.center
+                hw = circle.r
                 hh = hw
                 r = hw
-            self.outer[0] = sh.geom[0]
-            self.outer[1] = sh.geom[1]
+            else:
+                ref rect = sh.payload[RectPayload]
+                center = rect.center
+                hw = rect.w / 2.0
+                hh = rect.h / 2.0
+                r = rect_corner_radius(rect.corner_radius, rect.w, rect.h)
+            self.outer[0] = center.x
+            self.outer[1] = center.y
             self.outer[2] = hw
             self.outer[3] = hh
             self.outer[4] = r
-            self.x0 = sh.geom[0] - hw
-            self.x1 = sh.geom[0] + hw
-            self.y0 = sh.geom[1] - hh
-            self.y1 = sh.geom[1] + hh
+            self.x0 = center.x - hw
+            self.x1 = center.x + hw
+            self.y0 = center.y - hh
+            self.y1 = center.y + hh
             # Both strokes are inset rings.
             if ring and hw - thickness > 0.0 and hh - thickness > 0.0:
                 self.ring = thickness
-        elif sh.kind == CMD_TRIANGLE:
+        elif sh.payload.isa[TrianglePayload]():
             self.kind = SIL_TRIANGLE
-            var o = sh.copy()
+            ref corners = sh.payload[TrianglePayload].corners
             # An inset ring, as a rectangle's.
-            if ring and _inradius(sh.geom) > thickness:
+            if ring and _inradius(corners) > thickness:
                 self.ring = thickness
             var xs = Array[Float64, 3](fill=0.0)
             var ys = Array[Float64, 3](fill=0.0)
             for k in range(3):
-                xs[k] = o.geom[2 * k]
-                ys[k] = o.geom[2 * k + 1]
+                xs[k] = corners[2 * k]
+                ys[k] = corners[2 * k + 1]
             self.outer = _triangle_edges(xs, ys)
             self.x0 = min(xs[0], min(xs[1], xs[2]))
             self.x1 = max(xs[0], max(xs[1], xs[2]))
@@ -547,10 +564,11 @@ struct BlurredSilhouette(Copyable, Movable):
             self.y1 = max(ys[0], max(ys[1], ys[2]))
         else:
             self.kind = SIL_LINE
-            var ax = sh.geom[0]
-            var ay = sh.geom[1]
-            var ex = sh.geom[2] - ax
-            var ey = sh.geom[3] - ay
+            ref line = sh.payload[LinePayload]
+            var ax = line.start.x
+            var ay = line.start.y
+            var ex = line.end.x - ax
+            var ey = line.end.y - ay
             var l = sqrt(ex * ex + ey * ey)
             var h = thickness / 2.0
             var ux = ex / l if l > 0.0 else 1.0
@@ -722,29 +740,32 @@ struct InsetRegion(Copyable, Movable):
     def __init__(out self, c: RenderCommand, inset: Float64):
         """`c`'s filled shape (`c` a rect, circle or triangle), every edge
         moved in by `inset` local units."""
-        self.geom = c.geom.copy()
+        self.geom = Array[Float64, _GEOM_SLOTS](fill=0.0)
         self.empty = False
-        var requested = c.corner_radius
-        if c.kind == CMD_TRIANGLE:
+        if c.payload.isa[TrianglePayload]():
+            ref triangle = c.payload[TrianglePayload]
+            ref g = triangle.corners
             self.kind = SIL_TRIANGLE
+            self.geom = g.copy()
             self.radius = triangle_corner_radius(
-                requested,
-                c.geom[0],
-                c.geom[1],
-                c.geom[2],
-                c.geom[3],
-                c.geom[4],
-                c.geom[5],
+                triangle.corner_radius, g[0], g[1], g[2], g[3], g[4], g[5]
             )
-        elif c.kind == CMD_CIRCLE:
+        elif c.payload.isa[CirclePayload]():
+            ref circle = c.payload[CirclePayload]
             self.kind = SIL_RECT
-            self.geom[3] = c.geom[2]
-            self.radius = c.geom[2]
+            self.geom[0] = circle.center.x
+            self.geom[1] = circle.center.y
+            self.geom[2] = circle.r
+            self.geom[3] = circle.r
+            self.radius = circle.r
         else:
+            ref rect = c.payload[RectPayload]
             self.kind = SIL_RECT
-            self.radius = rect_corner_radius(requested, c.geom[2], c.geom[3])
-            self.geom[2] = c.geom[2] / 2.0
-            self.geom[3] = c.geom[3] / 2.0
+            self.radius = rect_corner_radius(rect.corner_radius, rect.w, rect.h)
+            self.geom[0] = rect.center.x
+            self.geom[1] = rect.center.y
+            self.geom[2] = rect.w / 2.0
+            self.geom[3] = rect.h / 2.0
         self._shrink(inset)
 
     def shrunk(self, d: Float64) -> InsetRegion:

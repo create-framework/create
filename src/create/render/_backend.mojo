@@ -13,17 +13,17 @@ from create.math.matrix import (
 from create.math.point2d import Point2D
 
 from ._command import (
-    CMD_CLEAR,
-    CMD_RECT,
-    CMD_CIRCLE,
-    CMD_LINE,
-    CMD_TRIANGLE,
-    CMD_IMAGE,
-    CMD_TEXT,
-    CMD_LETTERBOX,
-    CMD_BEZIER,
-    CMD_SECTOR,
-    CMD_POLYGON,
+    CirclePayload,
+    ClearPayload,
+    CurvesPayload,
+    ImagePayload,
+    LetterboxPayload,
+    LinePayload,
+    PolygonPayload,
+    RectPayload,
+    SectorPayload,
+    TextPayload,
+    TrianglePayload,
     RenderCommand,
     _clear_is_opaque,
     _fill_box,
@@ -1029,7 +1029,9 @@ struct Backend(Movable):
             c.clip == 0
             and _clear_is_opaque(c)
             and len(self.commands) > 0
-            and self.commands[len(self.commands) - 1].kind == CMD_CLEAR
+            and self.commands[len(self.commands) - 1].payload.isa[
+                ClearPayload
+            ]()
         ):
             if len(self.commands) == 1:
                 self.autoclear_head = False
@@ -1061,7 +1063,7 @@ struct Backend(Movable):
             return
         if (
             len(self.commands) > 0
-            and self.commands[0].kind == CMD_CLEAR
+            and self.commands[0].payload.isa[ClearPayload]()
             and self.commands[0].clip == 0
             and _clear_is_opaque(self.commands[0])
         ):
@@ -1134,12 +1136,8 @@ struct Backend(Movable):
             cmds,
             request.scale,
             pre=request.rebase,
-            skip_kinds=(
-                (1 << CMD_LETTERBOX)
-                | (1 << CMD_CLEAR) if request.transparent else (
-                    1 << CMD_LETTERBOX
-                )
-            ),
+            skip_letterbox=True,
+            skip_clear=request.transparent,
         )
         mem.save(request.path, opaque=not request.transparent)
 
@@ -1195,7 +1193,7 @@ struct Backend(Movable):
             cmds,
             recording.scale,
             pre=recording.capture_base @ self.screen_inv,
-            skip_kinds=1 << CMD_LETTERBOX,
+            skip_letterbox=True,
         )
         var frame = encode_frame(
             mem.data, recording.width, recording.height, recording.dither
@@ -1262,7 +1260,7 @@ struct Backend(Movable):
             cmds,
             scale,
             pre=to_target @ self.screen_inv,
-            skip_kinds=1 << CMD_LETTERBOX,
+            skip_letterbox=True,
         )
         self.commands = cmds^
         _clear_off_screen(mem, to_target, self.screen_w, self.screen_h)
@@ -1359,7 +1357,7 @@ struct Backend(Movable):
         var cmds = self.commands^
         self.commands = List[RenderCommand]()
         var mem = self.target.take()
-        self.replay(mem.surface(), cmds, scale, skip_kinds=1 << CMD_LETTERBOX)
+        self.replay(mem.surface(), cmds, scale, skip_letterbox=True)
         self.target = mem^
         cmds.clear()
         self.commands = cmds^
@@ -1467,7 +1465,8 @@ struct Backend(Movable):
         cmds: List[RenderCommand],
         scale: Float64,
         pre: Matrix[3, 3] = identity[3](),
-        skip_kinds: Int = 0,
+        skip_letterbox: Bool = False,
+        skip_clear: Bool = False,
     ) raises:
         """Render `cmds` onto `s`, in order.
 
@@ -1482,17 +1481,19 @@ struct Backend(Movable):
         `capture_base @ window_base_inverse` in front of it. Identity on the
         live path, which is therefore unchanged.
 
-        `skip_kinds` is a bit per command kind — `1 << CMD_LETTERBOX` for a
-        capture that is bar-free by contract, plus `1 << CMD_CLEAR` for one
-        with a transparent background. A mask rather than a single kind
-        because a transparent capture drops both, and `0` drops nothing.
+        `skip_letterbox` drops the bars, for a capture that is bar-free by
+        contract; `skip_clear` drops every clear too, for one with a
+        transparent background.
 
         Each of the frame's clips becomes rows first, all of them before any
         command, so no row table moves while a surface points into it.
         """
         var rows = self._clip_rows(s, scale, pre)
         for ref c in cmds:
-            if skip_kinds & (1 << c.kind) == 0:
+            var skipped = (
+                skip_letterbox and c.payload.isa[LetterboxPayload]()
+            ) or (skip_clear and c.payload.isa[ClearPayload]())
+            if not skipped:
                 if c.clip == 0:
                     self._one(s, c, scale, pre)
                 else:
@@ -1582,27 +1583,27 @@ struct Backend(Movable):
             var sm = pre @ sh.transform
             # The blur in whole device pixels; see `_ensure_glyph`. Text is
             # blurred where it is laid out, at its own scale.
-            var sf = text_pixel_scale(
-                sm, scale
-            ) if c.kind == CMD_TEXT else pixel_scale(sm, scale)
+            var sf = text_pixel_scale(sm, scale) if c.payload.isa[
+                TextPayload
+            ]() else pixel_scale(sm, scale)
             var blur = Int(c.style.shadow_blur * sf + 0.5)
             if blur == 0:
                 self._one(s, sh, scale, pre)
             elif blurs_analytically(c):
                 _blurred_shadow(t, sh, scale, sm)
-            elif c.kind == CMD_TEXT:
+            elif c.payload.isa[TextPayload]():
                 self._text(t, sh, scale, sm, blur)
-            elif c.kind == CMD_IMAGE:
+            elif c.payload.isa[ImagePayload]():
                 self._image_shadow(t, sh, scale, sm, blur)
             elif (
-                c.kind == CMD_BEZIER
-                or c.kind == CMD_SECTOR
-                or c.kind == CMD_POLYGON
+                c.payload.isa[CurvesPayload]()
+                or c.payload.isa[SectorPayload]()
+                or c.payload.isa[PolygonPayload]()
             ):
                 var placed: PlacedMask
-                if c.kind == CMD_BEZIER:
+                if c.payload.isa[CurvesPayload]():
                     placed = bezier_shadow_mask(sh, sm, scale, blur)
-                elif c.kind == CMD_SECTOR:
+                elif c.payload.isa[SectorPayload]():
                     placed = sector_shadow_mask(sh, sm, scale, blur)
                 else:
                     placed = polygon_shadow_mask(sh, sm, scale, blur)
@@ -1615,28 +1616,20 @@ struct Backend(Movable):
                     placed.y,
                     c.style.shadow_color,
                 )
-        if c.kind == CMD_CLEAR:
+        if c.payload.isa[ClearPayload]():
             if c.style.fill_gradient:
                 var paint = _fill_paint(c, m)
                 for row in range(t.height):
                     fill_span(t, row * t.width * 4, t.width, paint)
             else:
                 fill_all(t, c.style.fill_color)
-        elif (
-            c.kind == CMD_RECT
-            or c.kind == CMD_CIRCLE
-            or c.kind == CMD_LINE
-            or c.kind == CMD_BEZIER
-            or c.kind == CMD_SECTOR
-            or c.kind == CMD_POLYGON
-            or c.kind == CMD_TRIANGLE
-        ):
+        elif c.is_shape():
             self._shape(t, c, scale, m)
-        elif c.kind == CMD_IMAGE:
+        elif c.payload.isa[ImagePayload]():
             self._image(t, c, scale, m)
-        elif c.kind == CMD_TEXT:
+        elif c.payload.isa[TextPayload]():
             self._text(t, c, scale, m)
-        elif c.kind == CMD_LETTERBOX:
+        elif c.payload.isa[LetterboxPayload]():
             self._letterbox(t, c)
         # An inset shadow lies over the command, inside its stroke.
         if casts_inset_shadow(c):
@@ -1691,19 +1684,19 @@ struct Backend(Movable):
         m: Matrix[3, 3],
     ) raises:
         """Draw the shape `c` by pixel centres, its kind's own rasteriser."""
-        if c.kind == CMD_RECT:
+        if c.payload.isa[RectPayload]():
             self._rect(s, c, scale, m)
-        elif c.kind == CMD_CIRCLE:
+        elif c.payload.isa[CirclePayload]():
             self._circle(s, c, scale, m)
-        elif c.kind == CMD_LINE:
+        elif c.payload.isa[LinePayload]():
             self._line(s, c, scale, m)
-        elif c.kind == CMD_BEZIER:
+        elif c.payload.isa[CurvesPayload]():
             self._bezier(s, c, scale, m)
-        elif c.kind == CMD_SECTOR:
+        elif c.payload.isa[SectorPayload]():
             self._sector(s, c, scale, m)
-        elif c.kind == CMD_POLYGON:
+        elif c.payload.isa[PolygonPayload]():
             self._polygon(s, c, scale, m)
-        elif c.kind == CMD_TRIANGLE:
+        elif c.payload.isa[TrianglePayload]():
             self._triangle(s, c, scale, m)
 
     def _rect[
@@ -1716,14 +1709,15 @@ struct Backend(Movable):
         m: Matrix[3, 3],
     ):
         var W = s.width
-        var x = c.geom[0]
-        var y = c.geom[1]
-        var lx0 = x - c.geom[2] / 2.0
-        var ly0 = y - c.geom[3] / 2.0
-        var lx1 = x + c.geom[2] / 2.0
-        var ly1 = y + c.geom[3] / 2.0
+        ref rect = c.payload[RectPayload]
+        var x = rect.center.x
+        var y = rect.center.y
+        var lx0 = x - rect.w / 2.0
+        var ly0 = y - rect.h / 2.0
+        var lx1 = x + rect.w / 2.0
+        var ly1 = y + rect.h / 2.0
 
-        var r_local = rect_corner_radius(c.corner_radius, c.geom[2], c.geom[3])
+        var r_local = rect_corner_radius(rect.corner_radius, rect.w, rect.h)
 
         if uniform(m) and r_local <= 0.0:
             # Axis-aligned and sharp: map the two opposite corners and order
@@ -2052,9 +2046,10 @@ struct Backend(Movable):
     ):
         var W = s.width
         var H = s.height
-        var cx = c.geom[0]
-        var cy = c.geom[1]
-        var r = c.geom[2]
+        ref circle = c.payload[CirclePayload]
+        var cx = circle.center.x
+        var cy = circle.center.y
+        var r = circle.r
         var r2 = r * r
         var r_inner = r - c.style.stroke_thickness
         var r_inner2 = r_inner * r_inner
@@ -2177,8 +2172,9 @@ struct Backend(Movable):
         has no length, takes `stroke_pieces`."""
         if not c.style._stroke_visible():
             return
-        var p0 = mat_apply(m, c.geom[0], c.geom[1])
-        var p1 = mat_apply(m, c.geom[2], c.geom[3])
+        ref line = c.payload[LinePayload]
+        var p0 = mat_apply(m, line.start.x, line.start.y)
+        var p1 = mat_apply(m, line.end.x, line.end.y)
         var a = Point2D(p0[0], p0[1])
         var b = Point2D(p1[0], p1[1])
         var width = Float64(stroke_thickness_px(c.style, m, scale))
@@ -2263,18 +2259,19 @@ struct Backend(Movable):
         scale: Float64,
         m: Matrix[3, 3],
     ):
-        var lx1 = c.geom[0]
-        var ly1 = c.geom[1]
-        var lx2 = c.geom[2]
-        var ly2 = c.geom[3]
-        var lx3 = c.geom[4]
-        var ly3 = c.geom[5]
+        ref triangle = c.payload[TrianglePayload]
+        var lx1 = triangle.corners[0]
+        var ly1 = triangle.corners[1]
+        var lx2 = triangle.corners[2]
+        var ly2 = triangle.corners[3]
+        var lx3 = triangle.corners[4]
+        var ly3 = triangle.corners[5]
         var p1 = mat_apply(m, lx1, ly1)
         var p2 = mat_apply(m, lx2, ly2)
         var p3 = mat_apply(m, lx3, ly3)
 
         var r_local = triangle_corner_radius(
-            c.corner_radius, lx1, ly1, lx2, ly2, lx3, ly3
+            triangle.corner_radius, lx1, ly1, lx2, ly2, lx3, ly3
         )
 
         var fill_visible = c.style._fill_visible()
@@ -2310,12 +2307,15 @@ struct Backend(Movable):
         scale: Float64,
         m: Matrix[3, 3],
     ) raises:
-        if c.image not in self.images:
+        ref image = c.payload[ImagePayload]
+        if image.image not in self.images:
             return
         # Bound by reference so the pixels stay in the cache rather than being
         # copied out of it once per render.
-        ref img = self.images[c.image]
-        var silhouette = Optional(c.style.fill_color) if c.silhouette else None
+        ref img = self.images[image.image]
+        var silhouette = Optional(
+            c.style.fill_color
+        ) if image.silhouette else None
         if not upright(m):
             blit_image_mapped(
                 s,
@@ -2324,19 +2324,21 @@ struct Backend(Movable):
                 img.height,
                 image_mapping(
                     m,
-                    c.geom[0],
-                    c.geom[1],
-                    c.geom[2],
-                    c.geom[3],
+                    image.center.x,
+                    image.center.y,
+                    image.w,
+                    image.h,
                     img.width,
                     img.height,
                 ),
                 silhouette,
-                c.image_tint,
+                image.tint,
                 self.antialiasing._cpu_grid(),
             )
             return
-        var r = upright_rect(m, c.geom[0], c.geom[1], c.geom[2], c.geom[3])
+        var r = upright_rect(
+            m, image.center.x, image.center.y, image.w, image.h
+        )
         blit_image(
             s,
             img.pixels[].unsafe_ptr(),
@@ -2347,7 +2349,7 @@ struct Backend(Movable):
             r.width,
             r.height,
             silhouette,
-            c.image_tint,
+            image.tint,
         )
 
     def _image_shadow[
@@ -2363,11 +2365,12 @@ struct Backend(Movable):
         """The silhouette command `c` blurred by `blur` device pixels, from
         a cached mask laid over the same destination rect `_image` uses —
         or, under a transform that turns the image, a mask built for it."""
-        if c.image not in self.images:
+        ref image = c.payload[ImagePayload]
+        if image.image not in self.images:
             return
         if not upright(m):
             var placed = image_shadow_mask(
-                c, m, self.images[c.image].pixels[].unsafe_ptr(), blur
+                c, m, self.images[image.image].pixels[].unsafe_ptr(), blur
             )
             blit_alpha(
                 s,
@@ -2379,12 +2382,14 @@ struct Backend(Movable):
                 c.style.fill_color,
             )
             return
-        var r = upright_rect(m, c.geom[0], c.geom[1], c.geom[2], c.geom[3])
-        var key = shadow_mask_key(c.image, r.width, r.height, blur)
+        var r = upright_rect(
+            m, image.center.x, image.center.y, image.w, image.h
+        )
+        var key = shadow_mask_key(image.image, r.width, r.height, blur)
         if key not in self.shadow_masks:
             if len(self.shadow_masks) >= SHADOW_MASK_LIMIT:
                 self.shadow_masks.clear()
-            ref img = self.images[c.image]
+            ref img = self.images[image.image]
             self.shadow_masks[key] = blur_image_alpha(
                 img.pixels[].unsafe_ptr(),
                 img.width,
@@ -2419,14 +2424,15 @@ struct Backend(Movable):
         # `canvas.text` already skips recording when `text_color` is fully
         # transparent; text has no other visibility gate (fill is unrelated).
         var sf = text_pixel_scale(m, scale)
+        ref text = c.payload[TextPayload]
         if text_upright(m):
-            var p = mat_apply(m, c.geom[0], c.geom[1])
-            self.text[].render(s, c.text, p[0], p[1], c.style, sf, blur)
+            var p = mat_apply(m, text.position.x, text.position.y)
+            self.text[].render(s, text.text, p[0], p[1], c.style, sf, blur)
         else:
             self.text[].render_mapped(
                 s,
-                c.text,
-                glyph_transform(m, c.geom[0], c.geom[1], sf),
+                text.text,
+                glyph_transform(m, text.position.x, text.position.y, sf),
                 c.style,
                 sf,
                 blur,
@@ -2437,10 +2443,11 @@ struct Backend(Movable):
     ](mut self, s: Surface[o], c: RenderCommand):
         var W = s.width
         var H = s.height
-        var cx0 = Int(c.geom[0])
-        var cy0 = Int(c.geom[1])
-        var cx1 = Int(c.geom[2])
-        var cy1 = Int(c.geom[3])
+        ref bars = c.payload[LetterboxPayload]
+        var cx0 = Int(bars.x0)
+        var cy0 = Int(bars.y0)
+        var cx1 = Int(bars.x1)
+        var cy1 = Int(bars.y1)
         var col = c.style.fill_color
         if cy0 > 0:
             fill_pixels(s, 0, 0, W, cy0, col)
