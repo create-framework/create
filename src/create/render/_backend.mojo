@@ -64,7 +64,6 @@ from ._gl_backend import GLRenderer
 from ._image_mapping import image_mapping, upright, upright_rect
 from ._interned_image import IMAGE_KEEP_FRAMES, _InternedImage
 from ._clip import _Clip, _ClipRows
-from .style import Style
 from ._transform import (
     glyph_transform,
     stroke_thickness_px,
@@ -160,9 +159,9 @@ def _fill_stroke_pieces[
 def _fill_paint(c: RenderCommand, m: Matrix[3, 3]) -> FillPaint:
     """What `c`'s fill paints, for a command mapped to device pixels by `m`:
     its colour, or its gradient placed over its `_fill_box`."""
-    if not c.style.fill_gradient:
-        return c.style.fill_color
-    ref gradient = c.style.fill_gradient.value()
+    if not c.paint.fill_gradient:
+        return c.paint.fill_color
+    ref gradient = c.paint.fill_gradient.value()
     var box = _fill_box(c)
     return FillPaint(
         gradient, gradient._device_mapping(inverse(m), box[0], box[1])
@@ -191,7 +190,7 @@ def _blurred_shadow[
         s.height,
     )
     var minv = inverse(m)
-    var color = sh.style.shadow_color
+    var color = sh.paint.shadow_color
     var full = Float64(color.a)
     for py in range(b[1], b[3]):
         var row = py * s.width * 4
@@ -235,13 +234,13 @@ def _inset_shadow[
     var interior = inset_interior(c, local_stroke_thickness(c, m, scale))
     if interior.empty:
         return
-    var cut = interior.shrunk(c.style.shadow_spread)
-    var soft = BlurredSilhouette(cut, c.style.shadow_blur)
+    var cut = interior.shrunk(c.paint.shadow_spread)
+    var soft = BlurredSilhouette(cut, c.paint.shadow_blur)
     var lb = interior.bounds()
     var b = device_bounds(m, lb[0], lb[1], lb[2], lb[3], s.width, s.height)
     var minv = inverse(m)
     var sminv = inverse(sm)
-    var color = c.style.shadow_color
+    var color = c.paint.shadow_color
     var full = Float64(color.a)
     for py in range(b[1], b[3]):
         var row = py * s.width * 4
@@ -1575,7 +1574,7 @@ struct Backend(Movable):
         # to remember to do it.
         var m = pre @ c.transform
         # Likewise the blend mode: every raster loop reads it off the surface.
-        var t = s._with_blend_mode(c.style.blend_mode)
+        var t = s._with_blend_mode(c.paint.blend_mode)
         # An outer shadow is the command's silhouette, replayed under it
         # through this same dispatch.
         if casts_outer_shadow(c):
@@ -1586,7 +1585,7 @@ struct Backend(Movable):
             var sf = text_pixel_scale(sm, scale) if c.payload.isa[
                 TextPayload
             ]() else pixel_scale(sm, scale)
-            var blur = Int(c.style.shadow_blur * sf + 0.5)
+            var blur = Int(c.paint.shadow_blur * sf + 0.5)
             if blur == 0:
                 self._one(s, sh, scale, pre)
             elif blurs_analytically(c):
@@ -1614,15 +1613,15 @@ struct Backend(Movable):
                     placed.mask.height,
                     placed.x,
                     placed.y,
-                    c.style.shadow_color,
+                    c.paint.shadow_color,
                 )
         if c.payload.isa[ClearPayload]():
-            if c.style.fill_gradient:
+            if c.paint.fill_gradient:
                 var paint = _fill_paint(c, m)
                 for row in range(t.height):
                     fill_span(t, row * t.width * 4, t.width, paint)
             else:
-                fill_all(t, c.style.fill_color)
+                fill_all(t, c.paint.fill_color)
         elif c.is_shape():
             self._shape(t, c, scale, m)
         elif c.payload.isa[ImagePayload]():
@@ -1634,7 +1633,7 @@ struct Backend(Movable):
         # An inset shadow lies over the command, inside its stroke.
         if casts_inset_shadow(c):
             var sm = pre @ shadow_transform(c, scale)
-            var blur = Int(c.style.shadow_blur * pixel_scale(sm, scale) + 0.5)
+            var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
             _inset_shadow(t, c, scale, m, sm, blur)
 
     def _shape[
@@ -1733,9 +1732,9 @@ struct Backend(Movable):
             var ih = Int(abs(p1[1] - p0[1]))
             # The stroke is an inset ring, so the fill stops where it starts.
             var sw = 0
-            if c.style._stroke_visible():
-                sw = stroke_thickness_px(c.style, m, scale)
-            if c.style._fill_visible():
+            if c.paint._stroke_visible():
+                sw = stroke_thickness_px(c.paint, m, scale)
+            if c.paint._fill_visible():
                 fill_pixels(
                     s,
                     x0 + sw,
@@ -1745,7 +1744,7 @@ struct Backend(Movable):
                     _fill_paint(c, m),
                 )
             if sw > 0:
-                var sc = c.style.stroke_color
+                var sc = c.paint.stroke_color
                 fill_pixels(s, x0, y0, x0 + iw, y0 + sw, sc)
                 fill_pixels(s, x0, y0 + ih - sw, x0 + iw, y0 + ih, sc)
                 fill_pixels(s, x0, y0 + sw, x0 + sw, y0 + ih - sw, sc)
@@ -1763,12 +1762,12 @@ struct Backend(Movable):
             var iw = Float64(Int(abs(p1[0] - p0[0])))
             var ih = Float64(Int(abs(p1[1] - p0[1])))
             var pr = r_local * pixel_scale(m, scale)
-            var fill_visible = c.style._fill_visible()
+            var fill_visible = c.paint._fill_visible()
             var sw = 0.0
-            if c.style._stroke_visible():
-                sw = Float64(stroke_thickness_px(c.style, m, scale))
+            if c.paint._stroke_visible():
+                sw = Float64(stroke_thickness_px(c.paint, m, scale))
             var fill_col = _fill_paint(c, m)
-            var stroke_col = c.style.stroke_color
+            var stroke_col = c.paint.stroke_color
             for row in range(max(Int(y0), 0), min(Int(y0 + ih), s.height)):
                 var yc = Float64(row) + 0.5
                 var outer = _rounded_box_row(x0, y0, iw, ih, pr, yc, W)
@@ -1839,16 +1838,16 @@ struct Backend(Movable):
             # gates.
             var minv = inverse(m)
             var b = device_bounds(m, lx0, ly0, lx1, ly1, s.width, s.height)
-            var sw_f = c.style.stroke_thickness
+            var sw_f = c.paint.stroke_thickness
             var step_x = minv[0, 0]
             var step_y = minv[1, 0]
             var inv_step_x = 1.0 / step_x if step_x != 0.0 else 0.0
             var inv_step_y = 1.0 / step_y if step_y != 0.0 else 0.0
             if r_local <= 0.0:
-                var fill_enabled = c.style._fill_visible()
-                var stroke_enabled = c.style._stroke_visible()
+                var fill_enabled = c.paint._fill_visible()
+                var stroke_enabled = c.paint._stroke_visible()
                 var fill_col = _fill_paint(c, m)
-                var stroke_col = c.style.stroke_color
+                var stroke_col = c.paint.stroke_color
                 for row in range(b[1], b[3]):
                     var local0 = mat_apply(
                         minv, Float64(b[0]) + 0.5, Float64(row) + 0.5
@@ -1936,10 +1935,10 @@ struct Backend(Movable):
                 # to the sharp two-axis test, so a corner too thick for its
                 # stroke gets a sharp inner silhouette rather than a
                 # negative radius.
-                var fill_enabled = c.style._fill_visible()
-                var stroke_enabled = c.style._stroke_visible()
+                var fill_enabled = c.paint._fill_visible()
+                var stroke_enabled = c.paint._stroke_visible()
                 var fill_col = _fill_paint(c, m)
-                var stroke_col = c.style.stroke_color
+                var stroke_col = c.paint.stroke_color
                 var r2 = r_local * r_local
                 var a = step_x * step_x + step_y * step_y
                 var inv_2a = 1.0 / (2.0 * a) if abs(a) >= 1e-18 else 0.0
@@ -2051,7 +2050,7 @@ struct Backend(Movable):
         var cy = circle.center.y
         var r = circle.r
         var r2 = r * r
-        var r_inner = r - c.style.stroke_thickness
+        var r_inner = r - c.paint.stroke_thickness
         var r_inner2 = r_inner * r_inner
 
         if uniform(m):
@@ -2064,7 +2063,7 @@ struct Backend(Movable):
             var pcy = p[1] - 0.5
             var pr = r * pixel_scale(m, scale)
             var pr2 = pr * pr
-            var pr_inner = pr - Float64(stroke_thickness_px(c.style, m, scale))
+            var pr_inner = pr - Float64(stroke_thickness_px(c.paint, m, scale))
             var pr_inner2 = pr_inner * pr_inner
             var x0 = max(Int(pcx - pr), 0)
             var y0 = max(Int(pcy - pr), 0)
@@ -2074,13 +2073,13 @@ struct Backend(Movable):
             # rendered — matches the per-pixel `if`'s "or pr_inner <= 0.0" arm,
             # which shortcuts to true regardless of `d2` and so never leaves
             # the `elif` reachable.
-            var full_fill = c.style._fill_visible() and (
-                not c.style._stroke_visible() or pr_inner <= 0.0
+            var full_fill = c.paint._fill_visible() and (
+                not c.paint._stroke_visible() or pr_inner <= 0.0
             )
-            var fill_enabled = c.style._fill_visible()
-            var stroke_enabled = c.style._stroke_visible()
+            var fill_enabled = c.paint._fill_visible()
+            var stroke_enabled = c.paint._stroke_visible()
             var fill_col = _fill_paint(c, m)
-            var stroke_col = c.style.stroke_color
+            var stroke_col = c.paint.stroke_color
             for row in range(y0, y1):
                 var dy = Float64(row) - pcy
                 _circle_arc_row(
@@ -2113,10 +2112,10 @@ struct Backend(Movable):
             var b = device_bounds(m, cx - r, cy - r, cx + r, cy + r, W, H)
             var step_x = minv[0, 0]
             var step_y = minv[1, 0]
-            var fill_enabled = c.style._fill_visible()
-            var stroke_enabled = c.style._stroke_visible()
+            var fill_enabled = c.paint._fill_visible()
+            var stroke_enabled = c.paint._stroke_visible()
             var fill_col = _fill_paint(c, m)
-            var stroke_col = c.style.stroke_color
+            var stroke_col = c.paint.stroke_color
             var full_fill = not stroke_enabled or r_inner <= 0.0
             var a = step_x * step_x + step_y * step_y
             var inv_2a = 1.0 / (2.0 * a)
@@ -2170,20 +2169,20 @@ struct Backend(Movable):
         """Stroke the segment as `stroke_segment`'s quad, the band curves
         are built from, by `fill_quad`; a round cap, or a dot where the line
         has no length, takes `stroke_pieces`."""
-        if not c.style._stroke_visible():
+        if not c.paint._stroke_visible():
             return
         ref line = c.payload[LinePayload]
         var p0 = mat_apply(m, line.start.x, line.start.y)
         var p1 = mat_apply(m, line.end.x, line.end.y)
         var a = Point2D(p0[0], p0[1])
         var b = Point2D(p1[0], p1[1])
-        var width = Float64(stroke_thickness_px(c.style, m, scale))
-        var cap = c.style.stroke_cap
+        var width = Float64(stroke_thickness_px(c.paint, m, scale))
+        var cap = c.paint.stroke_cap
         if cap == StrokeCap.ROUND or a == b:
             _fill_stroke_pieces(
                 s,
                 stroke_pieces([a, b], width, cap, device_x_axis(m)),
-                c.style.stroke_color,
+                c.paint.stroke_color,
             )
             return
         var quad = stroke_segment(a, b, width, cap)
@@ -2192,7 +2191,7 @@ struct Backend(Movable):
         ref q = quad.value()
         var qx: Array[Float64, 4] = [q[0].x, q[1].x, q[2].x, q[3].x]
         var qy: Array[Float64, 4] = [q[0].y, q[1].y, q[2].y, q[3].y]
-        fill_quad(s, qx, qy, c.style.stroke_color)
+        fill_quad(s, qx, qy, c.paint.stroke_color)
 
     def _bezier[
         o: Origin[mut=True]
@@ -2206,15 +2205,15 @@ struct Backend(Movable):
         """Stroke the curve as `stroke_pieces`' mitred strip, one
         `fill_quad` each, and its caps: neighbours share an edge and the fill
         is half-open, so every pixel is composited once."""
-        if not c.style._stroke_visible():
+        if not c.paint._stroke_visible():
             return
         var pieces = stroke_pieces(
             bezier_device_points(c, m),
-            Float64(stroke_thickness_px(c.style, m, scale)),
-            c.style.stroke_cap,
+            Float64(stroke_thickness_px(c.paint, m, scale)),
+            c.paint.stroke_cap,
             device_x_axis(m),
         )
-        _fill_stroke_pieces(s, pieces, c.style.stroke_color)
+        _fill_stroke_pieces(s, pieces, c.paint.stroke_color)
 
     def _sector[
         o: Origin[mut=True]
@@ -2228,10 +2227,10 @@ struct Backend(Movable):
         """Fill `sector_quads`' tiling, fill then stroke, one `fill_quad`
         each: the two share their edges, so every pixel is composited once."""
         var quads = sector_quads(c, m, scale)
-        if c.style._fill_visible():
+        if c.paint._fill_visible():
             _fill_quads(s, quads.fill, _fill_paint(c, m))
-        if c.style._stroke_visible():
-            _fill_quads(s, quads.stroke, c.style.stroke_color)
+        if c.paint._stroke_visible():
+            _fill_quads(s, quads.stroke, c.paint.stroke_color)
 
     def _polygon[
         o: Origin[mut=True]
@@ -2245,10 +2244,10 @@ struct Backend(Movable):
         """Fill `polygon_quads`' tiling, fill then stroke, as `_sector`
         does."""
         var quads = polygon_quads(c, m, scale)
-        if c.style._fill_visible():
+        if c.paint._fill_visible():
             _fill_quads(s, quads.fill, _fill_paint(c, m))
-        if c.style._stroke_visible():
-            _fill_quads(s, quads.stroke, c.style.stroke_color)
+        if c.paint._stroke_visible():
+            _fill_quads(s, quads.stroke, c.paint.stroke_color)
 
     def _triangle[
         o: Origin[mut=True]
@@ -2274,8 +2273,8 @@ struct Backend(Movable):
             triangle.corner_radius, lx1, ly1, lx2, ly2, lx3, ly3
         )
 
-        var fill_visible = c.style._fill_visible()
-        var stroke_visible = c.style._stroke_visible()
+        var fill_visible = c.paint._fill_visible()
+        var stroke_visible = c.paint._stroke_visible()
         if r_local <= 0.0 and not stroke_visible:
             # The common case, a plain fill, in one pass.
             if fill_visible:
@@ -2296,7 +2295,7 @@ struct Backend(Movable):
         if fill_visible:
             fill_convex(s, pieces.fill, _fill_paint(c, m))
         if stroke_visible:
-            _fill_quads(s, pieces.ring, c.style.stroke_color)
+            _fill_quads(s, pieces.ring, c.paint.stroke_color)
 
     def _image[
         o: Origin[mut=True]
@@ -2314,7 +2313,7 @@ struct Backend(Movable):
         # copied out of it once per render.
         ref img = self.images[image.image]
         var silhouette = Optional(
-            c.style.fill_color
+            c.paint.fill_color
         ) if image.silhouette else None
         if not upright(m):
             blit_image_mapped(
@@ -2379,7 +2378,7 @@ struct Backend(Movable):
                 placed.mask.height,
                 placed.x,
                 placed.y,
-                c.style.fill_color,
+                c.paint.fill_color,
             )
             return
         var r = upright_rect(
@@ -2406,7 +2405,7 @@ struct Backend(Movable):
             mask.height,
             r.x - mask.pad,
             r.y - mask.pad,
-            c.style.fill_color,
+            c.paint.fill_color,
         )
 
     def _text[
@@ -2427,13 +2426,13 @@ struct Backend(Movable):
         ref text = c.payload[TextPayload]
         if text_upright(m):
             var p = mat_apply(m, text.position.x, text.position.y)
-            self.text[].render(s, text.text, p[0], p[1], c.style, sf, blur)
+            self.text[].render(s, text.text, p[0], p[1], text.style[], sf, blur)
         else:
             self.text[].render_mapped(
                 s,
                 text.text,
                 glyph_transform(m, text.position.x, text.position.y, sf),
-                c.style,
+                text.style[],
                 sf,
                 blur,
             )
@@ -2448,7 +2447,7 @@ struct Backend(Movable):
         var cy0 = Int(bars.y0)
         var cx1 = Int(bars.x1)
         var cy1 = Int(bars.y1)
-        var col = c.style.fill_color
+        var col = c.paint.fill_color
         if cy0 > 0:
             fill_pixels(s, 0, 0, W, cy0, col)
         if cy1 < H:

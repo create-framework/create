@@ -85,8 +85,8 @@ def triangle_pieces(
         cross = -cross
     var sf = pixel_scale(m, scale)
     var t = 0.0
-    if c.style._stroke_visible():
-        t = Float64(stroke_thickness_px(c.style, m, scale)) / sf
+    if c.paint._stroke_visible():
+        t = Float64(stroke_thickness_px(c.paint, m, scale)) / sf
 
     var lengths = Array[Float64, 3](fill=0.0)
     for i in range(3):

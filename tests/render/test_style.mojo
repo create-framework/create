@@ -153,10 +153,12 @@ def test_stroke_cap_prints_its_name() raises -> None:
 
 
 def test_shadow_is_visible_only_when_enabled_and_opaque_enough() raises -> None:
-    assert_false(Style()._shadow_visible())
-    assert_true(Style(shadow_enabled=True)._shadow_visible())
+    assert_false(Style()._paint()._shadow_visible())
+    assert_true(Style(shadow_enabled=True)._paint()._shadow_visible())
     assert_false(
-        Style(shadow=Color.TRANSPARENT, shadow_enabled=True)._shadow_visible()
+        Style(shadow=Color.TRANSPARENT, shadow_enabled=True)
+        ._paint()
+        ._shadow_visible()
     )
 
 
@@ -178,12 +180,14 @@ def test_fill_gradient_beside_fill_keeps_both() raises -> None:
 
 def test_fill_visibility_follows_the_gradient() raises -> None:
     assert_true(
-        Style(
-            fill_gradient=Gradient.linear(Color.TRANSPARENT, Color.RED)
-        )._fill_visible()
+        Style(fill_gradient=Gradient.linear(Color.TRANSPARENT, Color.RED))
+        ._paint()
+        ._fill_visible()
     )
     var clear = Gradient.linear(Color.TRANSPARENT, Color.TRANSPARENT)
-    assert_false(Style(fill=Color.RED, fill_gradient=clear)._fill_visible())
+    assert_false(
+        Style(fill=Color.RED, fill_gradient=clear)._paint()._fill_visible()
+    )
 
 
 def test_fractional_sizes_are_kept_as_given() raises -> None:
@@ -205,9 +209,9 @@ def test_fractional_sizes_round_once_scaled() raises -> None:
     """World-unit sizes become whole pixels only at the device: 1.5 units
     at 2 pixels a unit is exactly 3 pixels."""
     var s = Style(stroke_thickness=1.5, font_size=13.5)
-    assert_equal(stroke_thickness_px(s, scale(2.0), 2.0), 3)
-    assert_equal(stroke_thickness_px(s, scale(1.0), 1.0), 2)
-    assert_equal(_pixel_size(s, 2.0), 27)
+    assert_equal(stroke_thickness_px(s._paint(), scale(2.0), 2.0), 3)
+    assert_equal(stroke_thickness_px(s._paint(), scale(1.0), 1.0), 2)
+    assert_equal(_pixel_size(s._text_style(), 2.0), 27)
 
 
 def test_unset_number_keywords_take_none_or_any_number() raises -> None:

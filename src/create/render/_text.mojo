@@ -13,7 +13,7 @@ from ._blur import blur_alpha
 from ._raster import blit_alpha_mapped, blit_glyph
 from ._image_mapping import mask_mapping
 from create.math.matrix import Matrix
-from .style import Style
+from ._paint import TextStyle
 from ._surface import Surface
 
 comptime _MAX_SIZE = 4095
@@ -35,13 +35,13 @@ fills costs one repopulating frame and needs no recency bookkeeping.
 """
 
 
-def _pixel_size(style: Style, pixel_scale: Float64) -> Int:
+def _pixel_size(style: TextStyle, pixel_scale: Float64) -> Int:
     """The font size in pixels: world units scaled, at least one and at most
     `_MAX_SIZE`."""
     return min(max(Int(style.font_size * pixel_scale + 0.5), 1), _MAX_SIZE)
 
 
-def _key_weight(style: Style) -> Int:
+def _key_weight(style: TextStyle) -> Int:
     """The style's weight, clamped into the glyph key's 10 bits."""
     return min(max(style.font_weight.value, 0), _MAX_WEIGHT)
 
@@ -129,7 +129,7 @@ struct TextRenderer(Movable):
             except:
                 pass
 
-    def _face(mut self, style: Style) raises -> Font:
+    def _face(mut self, style: TextStyle) raises -> Font:
         """The face `style` draws text in: its own, or the packaged
         default, and its italic if the style asks for one. The italic has an
         identity of its own, so it takes a slot of its own."""
@@ -263,7 +263,7 @@ struct TextRenderer(Movable):
         return advance
 
     def width(
-        mut self, s: String, style: Style, pixel_scale: Float64
+        mut self, s: String, style: TextStyle, pixel_scale: Float64
     ) raises -> Int:
         """How wide `layout` makes `s`, in pixels, without placing it."""
         var size = _pixel_size(style, pixel_scale)
@@ -275,7 +275,7 @@ struct TextRenderer(Movable):
         s: String,
         tx: Float64,
         ty: Float64,
-        style: Style,
+        style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,
     ) raises -> List[PlacedGlyph]:
@@ -347,7 +347,7 @@ struct TextRenderer(Movable):
         s: String,
         tx: Float64,
         ty: Float64,
-        style: Style,
+        style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,
     ) raises:
@@ -365,7 +365,7 @@ struct TextRenderer(Movable):
         surf: Surface[o],
         s: String,
         glyphs: Matrix[3, 3],
-        style: Style,
+        style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,
     ) raises:

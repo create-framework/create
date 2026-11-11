@@ -360,9 +360,9 @@ def _shade_fill(
     value at its own position and interpolation does the rest exactly —
     the same pass `emit_inset_shadow` makes for its silhouette.
     """
-    if ramp_row < 0 or not c.style.fill_gradient:
+    if ramp_row < 0 or not c.paint.fill_gradient:
         return
-    ref gradient = c.style.fill_gradient.value()
+    ref gradient = c.paint.fill_gradient.value()
     var box = _fill_box(c)
     var mapping = gradient._device_mapping(inverse(c.transform), box[0], box[1])
     for i in range(first, vb.count()):
@@ -403,16 +403,16 @@ def emit_rect(
     var r = rect_corner_radius(rect.corner_radius, rect.w, rect.h)
 
     if r <= 0.0:
-        if not c.style._stroke_visible():
-            if c.style._fill_visible():
-                _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.style.fill_color)
+        if not c.paint._stroke_visible():
+            if c.paint._fill_visible():
+                _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.paint.fill_color)
                 _shade_fill(vb, first, c, ramp_row)
             return
 
         # The ring is built in local units so it follows a rotated edge, but
         # its thickness is decided in pixels so the CPU path's one-pixel
         # floor holds.
-        var sw = Float64(stroke_thickness_px(c.style, m, scale)) / pixel_scale(
+        var sw = Float64(stroke_thickness_px(c.paint, m, scale)) / pixel_scale(
             m, scale
         )
         var ix0 = lx0 + sw
@@ -421,15 +421,15 @@ def emit_rect(
         var iy1 = ly1 - sw
         if ix0 >= ix1 or iy0 >= iy1:
             # Thicker than the rectangle: all stroke, nothing left to fill.
-            _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.style.stroke_color)
+            _mapped_quad(vb, m, lx0, ly0, lx1, ly1, c.paint.stroke_color)
             return
 
-        if c.style._fill_visible():
+        if c.paint._fill_visible():
             # Inset, not full-size: see the module docstring on double
             # blending.
-            _mapped_quad(vb, m, ix0, iy0, ix1, iy1, c.style.fill_color)
+            _mapped_quad(vb, m, ix0, iy0, ix1, iy1, c.paint.fill_color)
             _shade_fill(vb, first, c, ramp_row)
-        var sc = c.style.stroke_color
+        var sc = c.paint.stroke_color
         _mapped_quad(vb, m, lx0, ly0, lx1, iy0, sc)
         _mapped_quad(vb, m, lx0, iy1, lx1, ly1, sc)
         _mapped_quad(vb, m, lx0, iy0, ix0, iy1, sc)
@@ -439,15 +439,15 @@ def emit_rect(
     var sf = pixel_scale(m, scale)
     # One count for the fill's corners and the ring's, as `emit_circle`.
     var n = _arc_segments(r * sf, PI / 2.0)
-    if not c.style._stroke_visible():
-        if c.style._fill_visible():
+    if not c.paint._stroke_visible():
+        if c.paint._fill_visible():
             _rounded_rect_fill(
-                vb, m, lx0, ly0, lx1, ly1, r, n, c.style.fill_color
+                vb, m, lx0, ly0, lx1, ly1, r, n, c.paint.fill_color
             )
             _shade_fill(vb, first, c, ramp_row)
         return
 
-    var sw = Float64(stroke_thickness_px(c.style, m, scale)) / sf
+    var sw = Float64(stroke_thickness_px(c.paint, m, scale)) / sf
     var ix0 = lx0 + sw
     var iy0 = ly0 + sw
     var ix1 = lx1 - sw
@@ -455,20 +455,20 @@ def emit_rect(
     if ix0 >= ix1 or iy0 >= iy1:
         # Thicker than the rectangle: all stroke, nothing left to fill.
         _rounded_rect_fill(
-            vb, m, lx0, ly0, lx1, ly1, r, n, c.style.stroke_color
+            vb, m, lx0, ly0, lx1, ly1, r, n, c.paint.stroke_color
         )
         return
 
     var inner_r = r - sw
-    if c.style._fill_visible():
+    if c.paint._fill_visible():
         if inner_r > 0.0:
             _rounded_rect_fill(
-                vb, m, ix0, iy0, ix1, iy1, inner_r, n, c.style.fill_color
+                vb, m, ix0, iy0, ix1, iy1, inner_r, n, c.paint.fill_color
             )
         else:
             # The inset silhouette has collapsed: a sharp inner rect, same
             # fallback `emit_rect`'s own sharp path takes at `ix0 >= ix1`.
-            _mapped_quad(vb, m, ix0, iy0, ix1, iy1, c.style.fill_color)
+            _mapped_quad(vb, m, ix0, iy0, ix1, iy1, c.paint.fill_color)
         _shade_fill(vb, first, c, ramp_row)
     _rounded_rect_ring(
         vb,
@@ -484,7 +484,7 @@ def emit_rect(
         r,
         inner_r,
         n,
-        c.style.stroke_color,
+        c.paint.stroke_color,
     )
 
 
@@ -507,17 +507,17 @@ def emit_circle(
     var n = circle_segments(r * sf)
     var step = 2.0 * PI / Float64(n)
 
-    var inner = r - Float64(stroke_thickness_px(c.style, m, scale)) / sf
-    var stroked = c.style._stroke_visible() and inner > 0.0
+    var inner = r - Float64(stroke_thickness_px(c.paint, m, scale)) / sf
+    var stroked = c.paint._stroke_visible() and inner > 0.0
     # Matching the CPU replay: with a stroke at least as wide as the radius,
     # a fill wins the whole disc and no ring is rendered at all.
-    var solid_all = c.style._stroke_visible() and inner <= 0.0
+    var solid_all = c.paint._stroke_visible() and inner <= 0.0
     var fill_r = inner if stroked else r
-    var fill_c = c.style.fill_color
-    var fill_on = c.style._fill_visible()
+    var fill_c = c.paint.fill_color
+    var fill_on = c.paint._fill_visible()
     if solid_all and not fill_on:
         fill_on = True
-        fill_c = c.style.stroke_color
+        fill_c = c.paint.stroke_color
         fill_r = r
 
     var centre = mat_apply(m, cx, cy)
@@ -533,7 +533,7 @@ def emit_circle(
             vb.triangle(
                 centre[0], centre[1], p0[0], p0[1], p1[0], p1[1], fill_c
             )
-        if c.style._fill_visible():
+        if c.paint._fill_visible():
             _shade_fill(vb, first, c, ramp_row)
     if stroked:
         for i in range(n):
@@ -556,7 +556,7 @@ def emit_circle(
                 o1[1],
                 i1[0],
                 i1[1],
-                c.style.stroke_color,
+                c.paint.stroke_color,
             )
 
 
@@ -564,7 +564,7 @@ def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     """`stroke_segment`'s quad, the same one the CPU fills, or
     `stroke_pieces` for a round cap or a line of no length. A line has no
     interior, so `fill` never applies."""
-    if not c.style._stroke_visible():
+    if not c.paint._stroke_visible():
         return
     var m = c.transform
     ref line = c.payload[LinePayload]
@@ -572,13 +572,13 @@ def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     var p1 = mat_apply(m, line.end.x, line.end.y)
     var a = Point2D(p0[0], p0[1])
     var b = Point2D(p1[0], p1[1])
-    var width = Float64(stroke_thickness_px(c.style, m, scale))
-    var cap = c.style.stroke_cap
+    var width = Float64(stroke_thickness_px(c.paint, m, scale))
+    var cap = c.paint.stroke_cap
     if cap == StrokeCap.ROUND or a == b:
         _emit_stroke_pieces(
             vb,
             stroke_pieces([a, b], width, cap, device_x_axis(m)),
-            c.style.stroke_color,
+            c.paint.stroke_color,
         )
         return
     var quad = stroke_segment(a, b, width, cap)
@@ -594,23 +594,23 @@ def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
         q[2].y,
         q[3].x,
         q[3].y,
-        c.style.stroke_color,
+        c.paint.stroke_color,
     )
 
 
 def emit_bezier(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     """`stroke_pieces`' mitred strip and caps, the same pieces the CPU
     fills. Like a line, a curve has no interior, so `fill` never applies."""
-    if not c.style._stroke_visible():
+    if not c.paint._stroke_visible():
         return
     var m = c.transform
     var pieces = stroke_pieces(
         bezier_device_points(c, m),
-        Float64(stroke_thickness_px(c.style, m, scale)),
-        c.style.stroke_cap,
+        Float64(stroke_thickness_px(c.paint, m, scale)),
+        c.paint.stroke_cap,
         device_x_axis(m),
     )
-    _emit_stroke_pieces(vb, pieces, c.style.stroke_color)
+    _emit_stroke_pieces(vb, pieces, c.paint.stroke_color)
 
 
 def emit_sector(
@@ -619,12 +619,12 @@ def emit_sector(
     """`sector_quads`' tiling, the same quads the CPU fills: fill, then
     stroke."""
     var quads = sector_quads(c, c.transform, scale)
-    if c.style._fill_visible():
+    if c.paint._fill_visible():
         var first = vb.count()
-        _emit_quads(vb, quads.fill, c.style.fill_color)
+        _emit_quads(vb, quads.fill, c.paint.fill_color)
         _shade_fill(vb, first, c, ramp_row)
-    if c.style._stroke_visible():
-        _emit_quads(vb, quads.stroke, c.style.stroke_color)
+    if c.paint._stroke_visible():
+        _emit_quads(vb, quads.stroke, c.paint.stroke_color)
 
 
 def emit_polygon(
@@ -633,12 +633,12 @@ def emit_polygon(
     """`polygon_quads`' tiling, the same quads the CPU fills: fill, then
     stroke."""
     var quads = polygon_quads(c, c.transform, scale)
-    if c.style._fill_visible():
+    if c.paint._fill_visible():
         var first = vb.count()
-        _emit_quads(vb, quads.fill, c.style.fill_color)
+        _emit_quads(vb, quads.fill, c.paint.fill_color)
         _shade_fill(vb, first, c, ramp_row)
-    if c.style._stroke_visible():
-        _emit_quads(vb, quads.stroke, c.style.stroke_color)
+    if c.paint._stroke_visible():
+        _emit_quads(vb, quads.stroke, c.paint.stroke_color)
 
 
 def _emit_stroke_pieces(
@@ -797,8 +797,8 @@ def emit_triangle(
     """The mapped triangle; rounded or stroked, `triangle_pieces`' tiling,
     the same pieces the CPU fills: fill, then stroke."""
     var m = c.transform
-    var fill_visible = c.style._fill_visible()
-    var stroke_visible = c.style._stroke_visible()
+    var fill_visible = c.paint._fill_visible()
+    var stroke_visible = c.paint._stroke_visible()
     ref triangle = c.payload[TrianglePayload]
     if triangle.corner_radius <= 0.0 and not stroke_visible:
         if fill_visible:
@@ -808,7 +808,7 @@ def emit_triangle(
             var p3 = mat_apply(m, g[4], g[5])
             var first = vb.count()
             vb.triangle(
-                p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], c.style.fill_color
+                p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], c.paint.fill_color
             )
             _shade_fill(vb, first, c, ramp_row)
         return
@@ -825,11 +825,11 @@ def emit_triangle(
                 f[i].y,
                 f[i + 1].x,
                 f[i + 1].y,
-                c.style.fill_color,
+                c.paint.fill_color,
             )
         _shade_fill(vb, first, c, ramp_row)
     if stroke_visible:
-        _emit_quads(vb, pieces.ring, c.style.stroke_color)
+        _emit_quads(vb, pieces.ring, c.paint.stroke_color)
 
 
 def emit_letterbox(
@@ -849,7 +849,7 @@ def emit_letterbox(
     var cy1 = bars.y1
     var w = Float64(width)
     var h = Float64(height)
-    var col = c.style.fill_color
+    var col = c.paint.fill_color
     if cy0 > 0.0:
         vb.quad(0.0, 0.0, w, 0.0, w, cy0, 0.0, cy0, col)
     if cy1 < h:
@@ -879,7 +879,7 @@ def emit_image(
     # passes them through); a silhouette paints its own colour through the
     # sampled alpha instead.
     ref image = c.payload[ImagePayload]
-    var tint = c.style.fill_color if image.silhouette else image.tint
+    var tint = c.paint.fill_color if image.silhouette else image.tint
     var mode = MODE_SILHOUETTE if image.silhouette else MODE_TEXTURE
     if not upright(m):
         var p = image_corners(
@@ -1047,15 +1047,15 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     var sm = shadow_transform(c, scale)
     var sf = pixel_scale(m, scale)
     var shape = BlurredSilhouette(
-        interior.shrunk(c.style.shadow_spread), c.style.shadow_blur
+        interior.shrunk(c.paint.shadow_spread), c.paint.shadow_blur
     )
-    var blur = Int(c.style.shadow_blur * pixel_scale(sm, scale) + 0.5)
+    var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
     var k = shape.inv_sigma
     if blur == 0:
         k = _HARD_SHADOW_SHARPNESS * pixel_scale(sm, scale)
     var first = vb.count()
-    var stroke_inset = thickness if c.style._stroke_visible() else 0.0
-    _emit_region(vb, interior, m, sf, stroke_inset, c.style.shadow_color)
+    var stroke_inset = thickness if c.paint._stroke_visible() else 0.0
+    _emit_region(vb, interior, m, sf, stroke_inset, c.paint.shadow_color)
     var sminv = inverse(sm)
     ref g = shape.outer
     for i in range(first, vb.count()):
@@ -1094,7 +1094,7 @@ def emit_blurred_shadow(
     var k = shape.inv_sigma
     var reach = shape.reach()
     var ring = shape.ring * k
-    var color = sh.style.shadow_color
+    var color = sh.paint.shadow_color
     ref g = shape.outer
     # Local corners, in order around the quad.
     var xs = Array[Float64, 4](fill=0.0)

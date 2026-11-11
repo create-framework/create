@@ -160,10 +160,14 @@ def _assert_tiles(
     var near = 1.5 * pixel_units
     var pieces = s._pieces()
     var t = 0.0
-    if style._stroke_visible() and len(q.fill) > 0 and len(q.stroke) > 0:
-        t = Float64(stroke_thickness_px(style, device, 1.0)) / pixel_scale(
-            device, 1.0
-        )
+    if (
+        style._paint()._stroke_visible()
+        and len(q.fill) > 0
+        and len(q.stroke) > 0
+    ):
+        t = Float64(
+            stroke_thickness_px(style._paint(), device, 1.0)
+        ) / pixel_scale(device, 1.0)
     for y in range(_SIZE):
         for x in range(_SIZE):
             var color = surface.pixel(x, y)

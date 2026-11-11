@@ -73,8 +73,8 @@ def sector_quads(
     var full = theta >= TAU
     var sf = pixel_scale(m, scale)
     var t = 0.0
-    if c.style._stroke_visible():
-        t = min(Float64(stroke_thickness_px(c.style, m, scale)) / sf, r + grow)
+    if c.paint._stroke_visible():
+        t = min(Float64(stroke_thickness_px(c.paint, m, scale)) / sf, r + grow)
 
     # Sample angles into the sweep: an even split fine enough for the arc,
     # plus every angle where either boundary changes shape, so each wedge
@@ -130,7 +130,7 @@ def sector_quads(
         if lengths[i][2] > 0.0 or lengths[j][2] > 0.0:
             _append_quad(out.stroke, middle[i], outer[i], outer[j], middle[j])
 
-    if t > 0.0 and len(out.fill) == 0 and c.style._fill_visible():
+    if t > 0.0 and len(out.fill) == 0 and c.paint._fill_visible():
         out.fill = out.stroke^
         out.stroke = List[Point2D]()
     return out^
@@ -144,10 +144,10 @@ def sector_shadow_mask(
     var q = sector_quads(c, m, scale)
     # Only what the command paints: a stroke-only ring leaves its middle.
     var corners = List[Point2D]()
-    if c.style._fill_visible():
+    if c.paint._fill_visible():
         for p in q.fill:
             corners.append(p)
-    if c.style._stroke_visible():
+    if c.paint._stroke_visible():
         for p in q.stroke:
             corners.append(p)
     return quads_shadow_mask(corners, blur)

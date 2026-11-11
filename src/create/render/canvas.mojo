@@ -1752,7 +1752,9 @@ struct Canvas(DrawTarget, Movable):
         Raises only if the default font has to be loaded and cannot be.
         """
         var scale = pixel_scale(self._transform, self._scale)
-        var pixels = self._state._backend.text[].width(text, self._style, scale)
+        var pixels = self._state._backend.text[].width(
+            text, self._style._text_style(), scale
+        )
         return Float64(pixels) / scale
 
     def text(mut self, text: String, position: Point2D):

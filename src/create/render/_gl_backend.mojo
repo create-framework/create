@@ -804,9 +804,9 @@ struct GLRenderer(Movable):
     def _ramp_row(mut self, c: RenderCommand) raises -> Int:
         """The ramp texture row holding `c`'s fill gradient's ramp, uploading
         it on first sight; -1 when `c` fills with no gradient."""
-        if not c.style.fill_gradient or not c.style._fill_visible():
+        if not c.paint.fill_gradient or not c.paint._fill_visible():
             return -1
-        ref gradient = c.style.fill_gradient.value()
+        ref gradient = c.paint.fill_gradient.value()
         var key = gradient._stops_key()
         if key in self.ramp_rows:
             for row in self.ramp_rows[key]:
@@ -946,7 +946,7 @@ struct GLRenderer(Movable):
             # An opaque clear draws nothing, so its mode (always `NORMAL`)
             # must not force a flush; a translucent one sets it in `_clear`.
             if not c.payload.isa[ClearPayload]():
-                self._blend_mode(c.style.blend_mode)
+                self._blend_mode(c.paint.blend_mode)
             # Aligned once, before its shadows, so they see the same shape.
             var offset = stroke_offset(c, c.transform, scale)
             if offset > 0.0:
@@ -988,7 +988,7 @@ struct GLRenderer(Movable):
             var sf = text_pixel_scale(sh.transform, scale) if c.payload.isa[
                 TextPayload
             ]() else pixel_scale(sh.transform, scale)
-            var blur = Int(c.style.shadow_blur * sf + 0.5)
+            var blur = Int(c.paint.shadow_blur * sf + 0.5)
             if blur == 0:
                 self._one(sh, images, text, width, height, scale)
             elif blurs_analytically(c):
@@ -1000,17 +1000,17 @@ struct GLRenderer(Movable):
             elif c.payload.isa[CurvesPayload]():
                 self._mask_shadow(
                     bezier_shadow_mask(sh, sh.transform, scale, blur),
-                    c.style.shadow_color,
+                    c.paint.shadow_color,
                 )
             elif c.payload.isa[SectorPayload]():
                 self._mask_shadow(
                     sector_shadow_mask(sh, sh.transform, scale, blur),
-                    c.style.shadow_color,
+                    c.paint.shadow_color,
                 )
             elif c.payload.isa[PolygonPayload]():
                 self._mask_shadow(
                     polygon_shadow_mask(sh, sh.transform, scale, blur),
-                    c.style.shadow_color,
+                    c.paint.shadow_color,
                 )
         self._one(c, images, text, width, height, scale)
         # Over the command, clipped to its interior; solid-mode
@@ -1031,11 +1031,11 @@ struct GLRenderer(Movable):
         # A fill gradient's ramp row is looked up before its command emits
         # anything: claiming a row can flush the batch.
         if c.payload.isa[ClearPayload]():
-            if c.style.fill_gradient:
+            if c.paint.fill_gradient:
                 var row = self._ramp_row(c)
                 self._clear_gradient(c, row, width, height)
             else:
-                self._clear(c.style.fill_color, width, height, c.clip != 0)
+                self._clear(c.paint.fill_color, width, height, c.clip != 0)
         elif c.payload.isa[RectPayload]():
             var row = self._ramp_row(c)
             emit_rect(self.vertices, c, scale, row)
@@ -1113,7 +1113,8 @@ struct GLRenderer(Movable):
         A blurred shadow's glyphs are just other keys to `layout`, packed into
         the same atlas beside the sharp ones — so they cost no draw call.
         """
-        if c.style.text_color.a == 0:
+        ref text_style = c.payload[TextPayload].style[]
+        if text_style.text_color.a == 0:
             return
         if text.atlas_generation != self.atlas_generation:
             # The renderer handed its font slots out afresh, so the packed
@@ -1135,7 +1136,7 @@ struct GLRenderer(Movable):
         if not upright:
             p = (0.0, 0.0)
         var placed = text.layout(
-            c.payload[TextPayload].text, p[0], p[1], c.style, sf, blur
+            c.payload[TextPayload].text, p[0], p[1], text_style, sf, blur
         )
         if len(placed) == 0:
             return
@@ -1157,7 +1158,7 @@ struct GLRenderer(Movable):
                     v0,
                     u1,
                     v1,
-                    c.style.text_color,
+                    text_style.text_color,
                 )
             else:
                 # Half a texel into the gutter all round: the CPU's bilinear
@@ -1174,7 +1175,7 @@ struct GLRenderer(Movable):
                     v0 - half,
                     u1 + half,
                     v1 + half,
-                    c.style.text_color,
+                    text_style.text_color,
                 )
 
     def _pack(
@@ -1294,7 +1295,7 @@ struct GLRenderer(Movable):
                     images[image.image].pixels[].unsafe_ptr(),
                     blur,
                 ),
-                c.style.fill_color,
+                c.paint.fill_color,
             )
             return
         var r = upright_rect(

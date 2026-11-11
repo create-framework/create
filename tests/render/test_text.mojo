@@ -15,6 +15,7 @@ from create.text.font import (
     _GlyphInfo,
 )
 from create.render.style import Style
+from create.render._paint import TextStyle
 from create.render._surface import MemorySurface
 from create.render._text import (
     TextRenderer,
@@ -49,12 +50,12 @@ def _ink_box(m: MemorySurface) -> Tuple[Int, Int, Int, Int]:
     return (x0, y0, x1, y1)
 
 
-def _style(align: Align) -> Style:
+def _style(align: Align) -> TextStyle:
     var s = Style()
     s.text_color = Color.WHITE
     s.font_size = 24
     s.text_alignment = align
-    return s^
+    return s._text_style()
 
 
 def _render(align: Align, x: Float64, y: Float64) raises -> MemorySurface:
@@ -64,7 +65,9 @@ def _render(align: Align, x: Float64, y: Float64) raises -> MemorySurface:
     return m^
 
 
-def _render_with(mut t: TextRenderer, var style: Style) raises -> MemorySurface:
+def _render_with(
+    mut t: TextRenderer, var style: TextStyle
+) raises -> MemorySurface:
     """Render "Hi" through an existing renderer, so its cache carries over."""
     var m = MemorySurface(200, 120)
     t.render(m.surface(), "Hi", 40.0, 30.0, style^, 1.0)
@@ -219,13 +222,13 @@ def test_size_and_weight_are_part_of_the_key() raises -> None:
     )
 
 
-def _in(font: Font) raises -> Style:
+def _in(font: Font) raises -> TextStyle:
     var style = _style(Align.TOP_LEFT)
     style.font = font
     return style^
 
 
-def _italic(var style: Style) -> Style:
+def _italic(var style: TextStyle) -> TextStyle:
     style.font_italic = True
     return style^
 
@@ -340,7 +343,7 @@ def test_the_cache_is_bounded() raises -> None:
     # is the guard, and rasterising four thousand real glyphs to reach it
     # would cost the suite a minute and prove nothing extra.
     var t = TextRenderer()
-    var slot = t._slot(t._face(Style()))
+    var slot = t._slot(t._face(Style()._text_style()))
     for i in range(_GLYPH_CACHE_LIMIT):
         var key = t._glyph_key(slot, 0xE000 + i, 16, FontWeight.REGULAR.value)
         t._glyphs[key] = _GlyphInfo(0, 0, 0, 0, 4)
