@@ -122,29 +122,30 @@ from ._blur import (
     shadow_mask_key,
 )
 from ._clip import _Clip
-from ._curve import PlacedMask, bezier_shadow_mask
-from ._sector import sector_shadow_mask
-from ._polygon import polygon_shadow_mask
+from ._lower import (
+    is_lowered,
+    is_plain_triangle,
+    shape_pieces,
+    shape_shadow_mask,
+)
+from ._pieces import PlacedMask
 from ._image_mapping import upright, upright_rect
 from ._interned_image import _InternedImage
 from ._tessellate import (
     MODE_SOLID,
     VertexBuffer,
     _shade_fill,
-    emit_bezier,
     emit_blurred_shadow,
     emit_circle,
     emit_glyph,
     emit_inset_shadow,
     emit_letterbox,
-    emit_line,
+    emit_pieces,
+    emit_plain_triangle,
     emit_rect,
-    emit_polygon,
-    emit_sector,
     emit_silhouette_mask,
     emit_image,
     emit_mapped_glyph,
-    emit_triangle,
 )
 from ._stroke import aligned_stroke, stroke_offset
 from ._shadow import (
@@ -997,19 +998,9 @@ struct GLRenderer(Movable):
                 self._text(sh, text, scale, blur)
             elif c.payload.isa[ImagePayload]():
                 self._image_shadow(sh, images, scale, blur)
-            elif c.payload.isa[CurvesPayload]():
+            elif is_lowered(c):
                 self._mask_shadow(
-                    bezier_shadow_mask(sh, sh.transform, scale, blur),
-                    c.paint.shadow_color,
-                )
-            elif c.payload.isa[SectorPayload]():
-                self._mask_shadow(
-                    sector_shadow_mask(sh, sh.transform, scale, blur),
-                    c.paint.shadow_color,
-                )
-            elif c.payload.isa[PolygonPayload]():
-                self._mask_shadow(
-                    polygon_shadow_mask(sh, sh.transform, scale, blur),
+                    shape_shadow_mask(sh, sh.transform, scale, blur),
                     c.paint.shadow_color,
                 )
         self._one(c, images, text, width, height, scale)
@@ -1042,19 +1033,15 @@ struct GLRenderer(Movable):
         elif c.payload.isa[CirclePayload]():
             var row = self._ramp_row(c)
             emit_circle(self.vertices, c, scale, row)
-        elif c.payload.isa[LinePayload]():
-            emit_line(self.vertices, c, scale)
-        elif c.payload.isa[CurvesPayload]():
-            emit_bezier(self.vertices, c, scale)
-        elif c.payload.isa[SectorPayload]():
+        elif is_plain_triangle(c):
             var row = self._ramp_row(c)
-            emit_sector(self.vertices, c, scale, row)
-        elif c.payload.isa[PolygonPayload]():
-            var row = self._ramp_row(c)
-            emit_polygon(self.vertices, c, scale, row)
-        elif c.payload.isa[TrianglePayload]():
-            var row = self._ramp_row(c)
-            emit_triangle(self.vertices, c, scale, row)
+            emit_plain_triangle(self.vertices, c, row)
+        elif is_lowered(c):
+            # Lowered before the ramp row is claimed, which can flush, and
+            # claimed only for a fill there is.
+            var pieces = shape_pieces(c, c.transform, scale)
+            var row = self._ramp_row(c) if pieces.has_fill() else -1
+            emit_pieces(self.vertices, c, pieces, row)
         elif c.payload.isa[ImagePayload]():
             self._image(c, images, scale)
         elif c.payload.isa[TextPayload]():

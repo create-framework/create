@@ -22,10 +22,12 @@ and the layering rules.
 | `_stroke.mojo` | Stroke alignment for both replays: `stroke_offset` (how far a command grows) and `aligned_stroke` (the command grown so its inset ring lands where `stroke_alignment` says) |
 | `stroke_cap.mojo` / `stroke_align.mojo` | The public `StrokeCap` and `StrokeAlign` enums |
 | `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (an inset shadow's interior and cut) |
-| `_curve.mojo` | Bézier stroke geometry for both replays: flattening in device pixels, the mitred quad strip and its caps (`stroke_pieces`); the blurred shadow mask of any device quads (`quads_shadow_mask`) |
-| `_sector.mojo` | Sector fill and stroke tiled into device quads for both replays (`sector_quads`), and its blurred shadow mask |
-| `_polygon.mojo` | Polygon fill and stroke tiled into device quads for both replays (`polygon_quads`), and its blurred shadow mask |
-| `_triangle.mojo` | A rounded or stroked triangle as a convex fill and ring quads for both replays (`triangle_pieces`) |
+| `_pieces.mojo` | `Pieces`, a shape as convex device pieces (fill and stroke, quads and polygons); `fill_pieces`, the CPU's one way to fill them; `pieces_shadow_mask`, their blurred mask; `PlacedMask` |
+| `_lower.mojo` | `shape_pieces`, the one lowering of every kind but rectangles and circles (lines, curves, sectors, polygons, triangles) to `Pieces`; `shape_shadow_mask`; `is_lowered`, `is_plain_triangle` |
+| `_curve.mojo` | Bézier stroke geometry: flattening in device pixels, the mitred quad strip and its caps (`stroke_pieces`) |
+| `_sector.mojo` | Sector fill and stroke tiled into device quads (`sector_quads`, returning `Pieces`) |
+| `_polygon.mojo` | Polygon fill and stroke tiled into device quads (`polygon_quads`, returning `Pieces`) |
+| `_triangle.mojo` | A rounded or stroked triangle as a convex fill and ring quads (`triangle_pieces`, returning `Pieces`) |
 | `_coverage.mojo` | CPU antialiasing: `composite_coverage` turns a shape's runs recorded on a finer grid into per-pixel coverage, composited once |
 | `_clip.mojo` | `_Clip` (one `canvas.clip` level: region command, invert, parent) and `_ClipRows`, the CPU replay's per-row runs of a clip, each with its coverage |
 | `_blur.mojo` | Three-box-blur approximation of a Gaussian over an alpha mask, for text and image shadows; the blurred-mask cache limit and key |
@@ -44,8 +46,20 @@ transform at record time, style resolved now) to the `Backend`. Nothing rasteris
 `present`/`present_gpu` replays the frame, so later style calls can't reach back. Images are interned
 into the backend at record time (the command carries an id); text is recorded as an owned `String`
 and laid out at replay. Add a shape by adding a payload to `_command.mojo`'s `RenderPayload` and
-its replay to `_backend.mojo` (plus `_tessellate.mojo`), never by calling `_raster.mojo` from
+lowering it in `_lower.mojo`'s `shape_pieces` (below), never by calling `_raster.mojo` from
 `Canvas`.
+
+**Every kind but two is lowered to pieces.** A line, a curve, a sector, a polygon or a triangle
+reaches both replays through `shape_pieces(c, m, scale)`: convex device pieces, fill and stroke,
+holding only what the paint shows. The CPU fills them with `fill_pieces` (`fill_quad` per quad,
+`fill_convex` per polygon, whose half-open rule composites a shared edge once), the GPU pushes them
+with `emit_pieces`, and a blurred shadow is the shadow command's pieces masked
+(`shape_shadow_mask`). So both draw the same pieces, and a new lowered kind is one branch there and
+a tiler returning `Pieces` — no backend learns it. Rectangles and circles are not lowered: each
+replay rasterises them from their equations (`Backend._rect`/`_circle`, `emit_rect`/`emit_circle`),
+which is where they are fast, and their shadows blur analytically. Nor is a plain triangle's fill —
+no rounding, no visible stroke (`is_plain_triangle`) — one `fill_triangle` pass or one GPU
+triangle.
 
 **Shapes reach the canvas through `DrawTarget`** (in `create.geometry`). `canvas.draw(shape)` is
 `shape.draw_to(canvas)`, which calls the primitive for the shape's kind (`_rectangle`, `_circle`,
@@ -485,9 +499,8 @@ Both replays handle a command's shadow around the command itself, in the command
   shape wide against sigma, but a thin stroke's whole width is within a sigma or two of both edges,
   so it came out several times too dark. Circles and rounded rectangles keep that step: their
   shadows are large, and the integral costs a dozen-odd `exp` a pixel.
-  A Bézier's stroke (its quads, each round cap fanned into more) and a sector's or polygon's quads
-  are rasterised into a mask and blurred too
-  (`quads_shadow_mask`, via `bezier_shadow_mask`/`sector_shadow_mask`/`polygon_shadow_mask`), but
+  A Bézier's, sector's or polygon's pieces are rasterised into a mask and blurred too
+  (`shape_shadow_mask`, through `pieces_shadow_mask`), but
   **uncached**: they have no stable id to key by, so each blurred Bézier, sector or polygon shadow
   costs one blur per frame, and on
   the GPU one texture upload plus one draw call; the textures are deleted after the frame's final

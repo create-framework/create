@@ -29,18 +29,13 @@ from ._command import (
     _fill_box,
 )
 from .stroke_cap import StrokeCap
-from ._curve import (
-    PlacedMask,
-    bezier_device_points,
-    device_x_axis,
-    bezier_shadow_mask,
-    StrokePieces,
-    stroke_pieces,
-    stroke_quads,
-    stroke_segment,
+from ._lower import (
+    is_lowered,
+    is_plain_triangle,
+    shape_pieces,
+    shape_shadow_mask,
 )
-from ._sector import sector_quads, sector_shadow_mask
-from ._polygon import polygon_quads, polygon_shadow_mask
+from ._pieces import PlacedMask, fill_pieces
 from ._blur import (
     SHADOW_MASK_LIMIT,
     BlurredMask,
@@ -86,7 +81,6 @@ from ._shadow import (
 )
 from create.geometry._fillet import rect_corner_radius, triangle_corner_radius
 from ._tessellate import _arc_segments
-from ._triangle import triangle_pieces
 from ._gif import GifWriter, encode_frame
 from ._png import write_png
 from ._surface import MemorySurface, Surface, _force_opaque
@@ -122,38 +116,6 @@ def device_bounds(
     var y_min = max(Int(min(min(p0[1], p1[1]), min(p2[1], p3[1]))), 0)
     var y_max = min(Int(max(max(p0[1], p1[1]), max(p2[1], p3[1]))) + 1, height)
     return (x_min, y_min, x_max, y_max)
-
-
-def _fill_quads[
-    o: Origin[mut=True]
-](s: Surface[o], corners: List[Point2D], color: FillPaint):
-    """Fill each quad of `corners`, four corners apiece, with `fill_quad`.
-    Quads sharing an edge composite once, by its half-open rule."""
-    for q in range(0, len(corners), 4):
-        var qx: Array[Float64, 4] = [
-            corners[q].x,
-            corners[q + 1].x,
-            corners[q + 2].x,
-            corners[q + 3].x,
-        ]
-        var qy: Array[Float64, 4] = [
-            corners[q].y,
-            corners[q + 1].y,
-            corners[q + 2].y,
-            corners[q + 3].y,
-        ]
-        fill_quad(s, qx, qy, color)
-
-
-def _fill_stroke_pieces[
-    o: Origin[mut=True]
-](s: Surface[o], pieces: StrokePieces, color: FillPaint):
-    """Fill a stroke's quads with `fill_quad` and its caps with
-    `fill_convex`, which walks edges as `fill_quad` does: a cap and the quad
-    it meets share that edge exactly, so it composites once."""
-    _fill_quads(s, pieces.quads, color)
-    for cap in pieces.caps:
-        fill_convex(s, cap, color)
 
 
 def _fill_paint(c: RenderCommand, m: Matrix[3, 3]) -> FillPaint:
@@ -1594,18 +1556,8 @@ struct Backend(Movable):
                 self._text(t, sh, scale, sm, blur)
             elif c.payload.isa[ImagePayload]():
                 self._image_shadow(t, sh, scale, sm, blur)
-            elif (
-                c.payload.isa[CurvesPayload]()
-                or c.payload.isa[SectorPayload]()
-                or c.payload.isa[PolygonPayload]()
-            ):
-                var placed: PlacedMask
-                if c.payload.isa[CurvesPayload]():
-                    placed = bezier_shadow_mask(sh, sm, scale, blur)
-                elif c.payload.isa[SectorPayload]():
-                    placed = sector_shadow_mask(sh, sm, scale, blur)
-                else:
-                    placed = polygon_shadow_mask(sh, sm, scale, blur)
+            elif is_lowered(c):
+                var placed = shape_shadow_mask(sh, sm, scale, blur)
                 blit_alpha(
                     t,
                     placed.mask.pixels.unsafe_ptr(),
@@ -1682,21 +1634,45 @@ struct Backend(Movable):
         scale: Float64,
         m: Matrix[3, 3],
     ) raises:
-        """Draw the shape `c` by pixel centres, its kind's own rasteriser."""
+        """Draw the shape `c` by pixel centres: a rectangle or a circle by
+        its own rasteriser, a plain triangle in one pass, every other kind
+        as the pieces `shape_pieces` cuts it into."""
         if c.payload.isa[RectPayload]():
             self._rect(s, c, scale, m)
         elif c.payload.isa[CirclePayload]():
             self._circle(s, c, scale, m)
-        elif c.payload.isa[LinePayload]():
-            self._line(s, c, scale, m)
-        elif c.payload.isa[CurvesPayload]():
-            self._bezier(s, c, scale, m)
-        elif c.payload.isa[SectorPayload]():
-            self._sector(s, c, scale, m)
-        elif c.payload.isa[PolygonPayload]():
-            self._polygon(s, c, scale, m)
-        elif c.payload.isa[TrianglePayload]():
-            self._triangle(s, c, scale, m)
+        elif is_plain_triangle(c):
+            if c.paint._fill_visible():
+                ref g = c.payload[TrianglePayload].corners
+                var p1 = mat_apply(m, g[0], g[1])
+                var p2 = mat_apply(m, g[2], g[3])
+                var p3 = mat_apply(m, g[4], g[5])
+                fill_triangle(
+                    s,
+                    p1[0],
+                    p1[1],
+                    p2[0],
+                    p2[1],
+                    p3[0],
+                    p3[1],
+                    _fill_paint(c, m),
+                )
+        else:
+            var pieces = shape_pieces(c, m, scale)
+            if pieces.has_fill():
+                fill_pieces(
+                    s,
+                    pieces.fill_quads,
+                    pieces.fill_polygons,
+                    _fill_paint(c, m),
+                )
+            if pieces.has_stroke():
+                fill_pieces(
+                    s,
+                    pieces.stroke_quads,
+                    pieces.stroke_polygons,
+                    c.paint.stroke_color,
+                )
 
     def _rect[
         o: Origin[mut=True]
@@ -2156,146 +2132,6 @@ struct Backend(Movable):
                         )
                 else:
                     fill_span(s, (row_off + ol) * 4, oh - ol + 1, stroke_col)
-
-    def _line[
-        o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
-        """Stroke the segment as `stroke_segment`'s quad, the band curves
-        are built from, by `fill_quad`; a round cap, or a dot where the line
-        has no length, takes `stroke_pieces`."""
-        if not c.paint._stroke_visible():
-            return
-        ref line = c.payload[LinePayload]
-        var p0 = mat_apply(m, line.start.x, line.start.y)
-        var p1 = mat_apply(m, line.end.x, line.end.y)
-        var a = Point2D(p0[0], p0[1])
-        var b = Point2D(p1[0], p1[1])
-        var width = Float64(stroke_thickness_px(c.paint, m, scale))
-        var cap = c.paint.stroke_cap
-        if cap == StrokeCap.ROUND or a == b:
-            _fill_stroke_pieces(
-                s,
-                stroke_pieces([a, b], width, cap, device_x_axis(m)),
-                c.paint.stroke_color,
-            )
-            return
-        var quad = stroke_segment(a, b, width, cap)
-        if not quad:
-            return
-        ref q = quad.value()
-        var qx: Array[Float64, 4] = [q[0].x, q[1].x, q[2].x, q[3].x]
-        var qy: Array[Float64, 4] = [q[0].y, q[1].y, q[2].y, q[3].y]
-        fill_quad(s, qx, qy, c.paint.stroke_color)
-
-    def _bezier[
-        o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
-        """Stroke the curve as `stroke_pieces`' mitred strip, one
-        `fill_quad` each, and its caps: neighbours share an edge and the fill
-        is half-open, so every pixel is composited once."""
-        if not c.paint._stroke_visible():
-            return
-        var pieces = stroke_pieces(
-            bezier_device_points(c, m),
-            Float64(stroke_thickness_px(c.paint, m, scale)),
-            c.paint.stroke_cap,
-            device_x_axis(m),
-        )
-        _fill_stroke_pieces(s, pieces, c.paint.stroke_color)
-
-    def _sector[
-        o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
-        """Fill `sector_quads`' tiling, fill then stroke, one `fill_quad`
-        each: the two share their edges, so every pixel is composited once."""
-        var quads = sector_quads(c, m, scale)
-        if c.paint._fill_visible():
-            _fill_quads(s, quads.fill, _fill_paint(c, m))
-        if c.paint._stroke_visible():
-            _fill_quads(s, quads.stroke, c.paint.stroke_color)
-
-    def _polygon[
-        o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
-        """Fill `polygon_quads`' tiling, fill then stroke, as `_sector`
-        does."""
-        var quads = polygon_quads(c, m, scale)
-        if c.paint._fill_visible():
-            _fill_quads(s, quads.fill, _fill_paint(c, m))
-        if c.paint._stroke_visible():
-            _fill_quads(s, quads.stroke, c.paint.stroke_color)
-
-    def _triangle[
-        o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
-        ref triangle = c.payload[TrianglePayload]
-        var lx1 = triangle.corners[0]
-        var ly1 = triangle.corners[1]
-        var lx2 = triangle.corners[2]
-        var ly2 = triangle.corners[3]
-        var lx3 = triangle.corners[4]
-        var ly3 = triangle.corners[5]
-        var p1 = mat_apply(m, lx1, ly1)
-        var p2 = mat_apply(m, lx2, ly2)
-        var p3 = mat_apply(m, lx3, ly3)
-
-        var r_local = triangle_corner_radius(
-            triangle.corner_radius, lx1, ly1, lx2, ly2, lx3, ly3
-        )
-
-        var fill_visible = c.paint._fill_visible()
-        var stroke_visible = c.paint._stroke_visible()
-        if r_local <= 0.0 and not stroke_visible:
-            # The common case, a plain fill, in one pass.
-            if fill_visible:
-                fill_triangle(
-                    s,
-                    p1[0],
-                    p1[1],
-                    p2[0],
-                    p2[1],
-                    p3[0],
-                    p3[1],
-                    _fill_paint(c, m),
-                )
-            return
-        # Rounded or stroked: the pieces of `triangle_pieces`, which meet
-        # without overlapping, so a translucent triangle composites once.
-        var pieces = triangle_pieces(c, m, scale)
-        if fill_visible:
-            fill_convex(s, pieces.fill, _fill_paint(c, m))
-        if stroke_visible:
-            _fill_quads(s, pieces.ring, c.paint.stroke_color)
 
     def _image[
         o: Origin[mut=True]

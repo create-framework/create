@@ -34,25 +34,13 @@ from ._command import (
     CirclePayload,
     ImagePayload,
     LetterboxPayload,
-    LinePayload,
     RectPayload,
     RenderCommand,
     TrianglePayload,
     _fill_box,
 )
-from ._curve import (
-    _MIN_CIRCLE_SEGMENTS,
-    bezier_device_points,
-    device_x_axis,
-    circle_segments,
-    StrokePieces,
-    stroke_pieces,
-    stroke_segment,
-)
-from .stroke_cap import StrokeCap
-from ._sector import sector_quads
-from ._polygon import polygon_quads
-from ._triangle import triangle_pieces
+from ._curve import _MIN_CIRCLE_SEGMENTS, circle_segments
+from ._pieces import Pieces
 from ._image_mapping import image_corners, upright, upright_rect
 from create.geometry._fillet import (
     corner_fillet,
@@ -560,94 +548,38 @@ def emit_circle(
             )
 
 
-def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
-    """`stroke_segment`'s quad, the same one the CPU fills, or
-    `stroke_pieces` for a round cap or a line of no length. A line has no
-    interior, so `fill` never applies."""
-    if not c.paint._stroke_visible():
+def emit_pieces(
+    mut vb: VertexBuffer, c: RenderCommand, pieces: Pieces, ramp_row: Int = -1
+):
+    """`c`'s pieces from `shape_pieces`, the same ones the CPU fills: the
+    fill, shaded by its gradient as one run of vertices, then the stroke."""
+    if pieces.has_fill():
+        var first = vb.count()
+        _emit_quads(vb, pieces.fill_quads, c.paint.fill_color)
+        for polygon in pieces.fill_polygons:
+            _emit_convex(vb, polygon, c.paint.fill_color)
+        _shade_fill(vb, first, c, ramp_row)
+    if pieces.has_stroke():
+        _emit_quads(vb, pieces.stroke_quads, c.paint.stroke_color)
+        for polygon in pieces.stroke_polygons:
+            _emit_convex(vb, polygon, c.paint.stroke_color)
+
+
+def emit_plain_triangle(
+    mut vb: VertexBuffer, c: RenderCommand, ramp_row: Int = -1
+):
+    """A triangle with no rounding and no stroke (`is_plain_triangle`):
+    its mapped corners, one triangle."""
+    if not c.paint._fill_visible():
         return
     var m = c.transform
-    ref line = c.payload[LinePayload]
-    var p0 = mat_apply(m, line.start.x, line.start.y)
-    var p1 = mat_apply(m, line.end.x, line.end.y)
-    var a = Point2D(p0[0], p0[1])
-    var b = Point2D(p1[0], p1[1])
-    var width = Float64(stroke_thickness_px(c.paint, m, scale))
-    var cap = c.paint.stroke_cap
-    if cap == StrokeCap.ROUND or a == b:
-        _emit_stroke_pieces(
-            vb,
-            stroke_pieces([a, b], width, cap, device_x_axis(m)),
-            c.paint.stroke_color,
-        )
-        return
-    var quad = stroke_segment(a, b, width, cap)
-    if not quad:
-        return
-    ref q = quad.value()
-    vb.quad(
-        q[0].x,
-        q[0].y,
-        q[1].x,
-        q[1].y,
-        q[2].x,
-        q[2].y,
-        q[3].x,
-        q[3].y,
-        c.paint.stroke_color,
-    )
-
-
-def emit_bezier(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
-    """`stroke_pieces`' mitred strip and caps, the same pieces the CPU
-    fills. Like a line, a curve has no interior, so `fill` never applies."""
-    if not c.paint._stroke_visible():
-        return
-    var m = c.transform
-    var pieces = stroke_pieces(
-        bezier_device_points(c, m),
-        Float64(stroke_thickness_px(c.paint, m, scale)),
-        c.paint.stroke_cap,
-        device_x_axis(m),
-    )
-    _emit_stroke_pieces(vb, pieces, c.paint.stroke_color)
-
-
-def emit_sector(
-    mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
-):
-    """`sector_quads`' tiling, the same quads the CPU fills: fill, then
-    stroke."""
-    var quads = sector_quads(c, c.transform, scale)
-    if c.paint._fill_visible():
-        var first = vb.count()
-        _emit_quads(vb, quads.fill, c.paint.fill_color)
-        _shade_fill(vb, first, c, ramp_row)
-    if c.paint._stroke_visible():
-        _emit_quads(vb, quads.stroke, c.paint.stroke_color)
-
-
-def emit_polygon(
-    mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
-):
-    """`polygon_quads`' tiling, the same quads the CPU fills: fill, then
-    stroke."""
-    var quads = polygon_quads(c, c.transform, scale)
-    if c.paint._fill_visible():
-        var first = vb.count()
-        _emit_quads(vb, quads.fill, c.paint.fill_color)
-        _shade_fill(vb, first, c, ramp_row)
-    if c.paint._stroke_visible():
-        _emit_quads(vb, quads.stroke, c.paint.stroke_color)
-
-
-def _emit_stroke_pieces(
-    mut vb: VertexBuffer, pieces: StrokePieces, color: Color
-):
-    """A stroke's quads, then each cap fanned from its first corner."""
-    _emit_quads(vb, pieces.quads, color)
-    for cap in pieces.caps:
-        _emit_convex(vb, cap, color)
+    ref g = c.payload[TrianglePayload].corners
+    var p1 = mat_apply(m, g[0], g[1])
+    var p2 = mat_apply(m, g[2], g[3])
+    var p3 = mat_apply(m, g[4], g[5])
+    var first = vb.count()
+    vb.triangle(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], c.paint.fill_color)
+    _shade_fill(vb, first, c, ramp_row)
 
 
 def _emit_convex(mut vb: VertexBuffer, corners: List[Point2D], color: Color):
@@ -789,47 +721,6 @@ def _rounded_triangle_fill(
         _arc_segments(r * sf, span2),
         color,
     )
-
-
-def emit_triangle(
-    mut vb: VertexBuffer, c: RenderCommand, scale: Float64, ramp_row: Int = -1
-):
-    """The mapped triangle; rounded or stroked, `triangle_pieces`' tiling,
-    the same pieces the CPU fills: fill, then stroke."""
-    var m = c.transform
-    var fill_visible = c.paint._fill_visible()
-    var stroke_visible = c.paint._stroke_visible()
-    ref triangle = c.payload[TrianglePayload]
-    if triangle.corner_radius <= 0.0 and not stroke_visible:
-        if fill_visible:
-            ref g = triangle.corners
-            var p1 = mat_apply(m, g[0], g[1])
-            var p2 = mat_apply(m, g[2], g[3])
-            var p3 = mat_apply(m, g[4], g[5])
-            var first = vb.count()
-            vb.triangle(
-                p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], c.paint.fill_color
-            )
-            _shade_fill(vb, first, c, ramp_row)
-        return
-    var pieces = triangle_pieces(c, m, scale)
-    if fill_visible and len(pieces.fill) >= 3:
-        # Convex, so a fan from its first corner.
-        var first = vb.count()
-        ref f = pieces.fill
-        for i in range(1, len(f) - 1):
-            vb.triangle(
-                f[0].x,
-                f[0].y,
-                f[i].x,
-                f[i].y,
-                f[i + 1].x,
-                f[i + 1].y,
-                c.paint.fill_color,
-            )
-        _shade_fill(vb, first, c, ramp_row)
-    if stroke_visible:
-        _emit_quads(vb, pieces.ring, c.paint.stroke_color)
 
 
 def emit_letterbox(

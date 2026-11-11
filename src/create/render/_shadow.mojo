@@ -49,7 +49,7 @@ from ._command import (
 from create.geometry._fillet import rect_corner_radius, triangle_corner_radius
 from create.color.color import Color
 from ._blur import BlurredMask, blur_alpha
-from ._curve import PlacedMask
+from ._pieces import PlacedMask
 from ._image_mapping import image_mapping
 from ._raster import blit_image_mapped
 from ._surface import MemorySurface

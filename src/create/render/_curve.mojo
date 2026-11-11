@@ -9,14 +9,12 @@ the end quads, a round cap is a convex half disc whose base is exactly the end
 quad's edge, which the CPU fills with `fill_convex` (walking edges as
 `fill_quad` does, so the shared edge composites once) and the GPU fans.
 
-A blurred curve shadow is a mask rasterised from those same quads and blurred
-(`bezier_shadow_mask`), which both backends composite; `quads_shadow_mask`
-builds one from any device quads, which is how sectors and polygons cast theirs too.
-Unlike an image's, it is not cached: a curve has no stable id to key it by,
-so every blurred curve shadow costs one blur per frame.
+The strip and caps reach the replays as `Pieces` (`_pieces.mojo`), through
+`shape_pieces`, so a curve is drawn and casts a blurred shadow as every
+other lowered shape does.
 """
 
-from std.math import ceil, cos, floor, sin, sqrt
+from std.math import ceil, cos, sin, sqrt
 
 from create.math import PI
 
@@ -25,12 +23,7 @@ from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 
-from ._blur import BlurredMask, blur_alpha
 from ._command import CurvesPayload, RenderCommand
-from ._raster import fill_quad
-from ._transform import stroke_thickness_px
-from create.color.color import Color
-from ._surface import MemorySurface
 from .stroke_cap import StrokeCap
 
 comptime _MIN_CIRCLE_SEGMENTS = 12
@@ -287,91 +280,3 @@ def _miter(before: Vector2D, after: Vector2D, half: Float64) -> Vector2D:
     bisector /= length
     var reach = half / bisector.dot(after)
     return bisector * min(reach, MITER_LIMIT * half)
-
-
-struct PlacedMask(Movable):
-    """A blurred mask and where its top-left pixel lands on the device."""
-
-    var mask: BlurredMask
-    var x: Int
-    var y: Int
-
-    def __init__(out self, var mask: BlurredMask, x: Int, y: Int):
-        self.mask = mask^
-        self.x = x
-        self.y = y
-
-
-def bezier_shadow_mask(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
-) -> PlacedMask:
-    """The stroke of `c` (a `CurvesPayload` shadow command) mapped by `m`,
-    rasterised into an alpha mask and blurred by `blur` device pixels.
-
-    The quads are the ones the stroke itself fills, and each cap is fanned
-    into quads of its own, three corners each with the last repeated: the
-    mask is one opaque colour, so where they overlap does not matter. A
-    curve with no visible stroke gives an empty mask.
-    """
-    var corners = List[Point2D]()
-    if c.paint._stroke_visible():
-        var pieces = stroke_pieces(
-            bezier_device_points(c, m),
-            Float64(stroke_thickness_px(c.paint, m, scale)),
-            c.paint.stroke_cap,
-            device_x_axis(m),
-        )
-        corners = pieces.quads.copy()
-        for cap in pieces.caps:
-            for i in range(1, len(cap) - 1):
-                corners.append(cap[0])
-                corners.append(cap[i])
-                corners.append(cap[i + 1])
-                corners.append(cap[i + 1])
-    return quads_shadow_mask(corners, blur)
-
-
-def quads_shadow_mask(corners: List[Point2D], blur: Int) -> PlacedMask:
-    """Device quads (four corners each, as `fill_quad` takes them)
-    rasterised into an alpha mask and blurred by `blur` device pixels.
-
-    The quads are shifted by a whole number of pixels onto the mask, so
-    every pixel centre falls where it would on the device and the mask holds
-    the same pixels the quads paint there. No quads give an empty mask.
-    """
-    if len(corners) == 0:
-        return PlacedMask(BlurredMask(List[UInt8](), 0, 0, 0), 0, 0)
-    var lo = corners[0]
-    var hi = corners[0]
-    for p in corners:
-        lo = Point2D(min(lo.x, p.x), min(lo.y, p.y))
-        hi = Point2D(max(hi.x, p.x), max(hi.y, p.y))
-    var x0 = Int(floor(lo.x))
-    var y0 = Int(floor(lo.y))
-    var width = Int(ceil(hi.x)) - x0 + 1
-    var height = Int(ceil(hi.y)) - y0 + 1
-
-    # Filled white on a scratch surface, so the mask is the same pixels the
-    # hard quads paint; only its alpha is kept.
-    var scratch = MemorySurface(width, height)
-    var s = scratch.surface()
-    for q in range(0, len(corners), 4):
-        var qx: Array[Float64, 4] = [
-            corners[q].x - Float64(x0),
-            corners[q + 1].x - Float64(x0),
-            corners[q + 2].x - Float64(x0),
-            corners[q + 3].x - Float64(x0),
-        ]
-        var qy: Array[Float64, 4] = [
-            corners[q].y - Float64(y0),
-            corners[q + 1].y - Float64(y0),
-            corners[q + 2].y - Float64(y0),
-            corners[q + 3].y - Float64(y0),
-        ]
-        fill_quad(s, qx, qy, Color.WHITE)
-    var alpha = List[UInt8](length=width * height, fill=0)
-    for i in range(width * height):
-        alpha[i] = scratch.data[i * 4 + 3]
-    var mask = blur_alpha(alpha, width, height, Float64(blur) / 2.0)
-    var pad = mask.pad
-    return PlacedMask(mask^, x0 - pad, y0 - pad)

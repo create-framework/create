@@ -28,27 +28,12 @@ from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 
 from ._command import RenderCommand, SectorPayload
-from ._curve import PlacedMask, quads_shadow_mask
+from ._pieces import Pieces
 from ._tessellate import _arc_segments
 from ._transform import stroke_thickness_px, pixel_scale
 
 
-struct SectorQuads(Movable):
-    """A sector's device-space tiling: four corners per quad, in order
-    around the quad's edge, quad after quad. `fill` is painted in the fill
-    colour, `stroke` in the stroke colour; the two never overlap."""
-
-    var fill: List[Point2D]
-    var stroke: List[Point2D]
-
-    def __init__(out self):
-        self.fill = List[Point2D]()
-        self.stroke = List[Point2D]()
-
-
-def sector_quads(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64
-) -> SectorQuads:
+def sector_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
     """`c` (a `SectorPayload`) mapped by `m` and tiled into fill and stroke
     quads.
 
@@ -59,7 +44,7 @@ def sector_quads(
     if the fill is visible, else the stroke's. Its `grow` offsets the sector
     by that many local units first, outwards if positive.
     """
-    var out = SectorQuads()
+    var out = Pieces()
     ref sector = c.payload[SectorPayload]
     var cx = sector.center.x
     var cy = sector.center.y
@@ -124,33 +109,20 @@ def sector_quads(
     for i in range(len(inner) - 1):
         var j = i + 1
         if lengths[i][1] > 0.0 or lengths[j][1] > 0.0:
-            _append_quad(out.fill, inner[i], middle[i], middle[j], inner[j])
+            _append_quad(
+                out.fill_quads, inner[i], middle[i], middle[j], inner[j]
+            )
         if lengths[i][0] > 0.0 or lengths[j][0] > 0.0:
-            _append_quad(out.stroke, tip[i], inner[i], inner[j], tip[j])
+            _append_quad(out.stroke_quads, tip[i], inner[i], inner[j], tip[j])
         if lengths[i][2] > 0.0 or lengths[j][2] > 0.0:
-            _append_quad(out.stroke, middle[i], outer[i], outer[j], middle[j])
+            _append_quad(
+                out.stroke_quads, middle[i], outer[i], outer[j], middle[j]
+            )
 
-    if t > 0.0 and len(out.fill) == 0 and c.paint._fill_visible():
-        out.fill = out.stroke^
-        out.stroke = List[Point2D]()
+    if t > 0.0 and len(out.fill_quads) == 0 and c.paint._fill_visible():
+        out.fill_quads = out.stroke_quads^
+        out.stroke_quads = List[Point2D]()
     return out^
-
-
-def sector_shadow_mask(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
-) -> PlacedMask:
-    """The shadow command `c` (a `SectorPayload`, one colour) mapped by `m`,
-    rasterised into an alpha mask and blurred by `blur` device pixels."""
-    var q = sector_quads(c, m, scale)
-    # Only what the command paints: a stroke-only ring leaves its middle.
-    var corners = List[Point2D]()
-    if c.paint._fill_visible():
-        for p in q.fill:
-            corners.append(p)
-    if c.paint._stroke_visible():
-        for p in q.stroke:
-            corners.append(p)
-    return quads_shadow_mask(corners, blur)
 
 
 def _offset_extent(

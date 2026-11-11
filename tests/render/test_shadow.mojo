@@ -54,7 +54,7 @@ from create.render._shadow import (
     shadow_transform,
     BlurredSilhouette,
 )
-from create.render._curve import bezier_shadow_mask
+from create.render._lower import shape_shadow_mask
 from create.render.stroke_cap import StrokeCap
 
 
@@ -521,7 +521,7 @@ def _mask_mass(cap: StrokeCap) -> Int:
             Point2D(10, 10), Point2D(20, 30), Point2D(40, 30), Point2D(50, 10)
         ),
     )
-    var mask = bezier_shadow_mask(c, identity[3](), 1.0, 0)
+    var mask = shape_shadow_mask(c, identity[3](), 1.0, 0)
     var total = 0
     for a in mask.mask.pixels:
         total += Int(a)

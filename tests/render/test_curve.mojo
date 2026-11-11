@@ -11,13 +11,13 @@ from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 from create.color.color import Color
 from create.render.style import Style
+from create.render._lower import shape_shadow_mask
 from create.render._surface import MemorySurface
 from create.render._blur import blur_reach
 from create.render._command import bezier_chain_command, bezier_command
 from create.render._curve import (
     MITER_LIMIT,
     bezier_device_points,
-    bezier_shadow_mask,
     stroke_pieces,
     stroke_quads,
     stroke_segment,
@@ -185,7 +185,7 @@ def _mass(pixels: List[UInt8]) -> Int:
 def test_an_unblurred_mask_is_the_stroke_itself() raises -> None:
     # Moved in from the edges, so the whole stroke lands on the surface.
     var c = bezier_command(translate(10.0, 10.0), _stroked(5), _s_curve())
-    var placed = bezier_shadow_mask(c, c.transform, 1.0, 0)
+    var placed = shape_shadow_mask(c, c.transform, 1.0, 0)
     assert_equal(placed.mask.pad, 0)
     # The same quads filled straight onto a device-sized surface.
     var device = MemorySurface(120, 120)
@@ -226,8 +226,8 @@ def test_an_unblurred_mask_is_the_stroke_itself() raises -> None:
 
 def test_a_blurred_mask_grows_by_the_reach_and_keeps_its_mass() raises -> None:
     var c = bezier_command(identity[3](), _stroked(5), _s_curve())
-    var hard = bezier_shadow_mask(c, c.transform, 1.0, 0)
-    var soft = bezier_shadow_mask(c, c.transform, 1.0, 8)
+    var hard = shape_shadow_mask(c, c.transform, 1.0, 0)
+    var soft = shape_shadow_mask(c, c.transform, 1.0, 8)
     var pad = blur_reach(4.0)
     assert_equal(soft.mask.pad, pad)
     assert_equal(soft.x, hard.x - pad)
@@ -242,7 +242,7 @@ def test_an_invisible_stroke_gives_an_empty_mask() raises -> None:
     var s = _stroked(5)
     s.stroke_enabled = False
     var c = bezier_command(identity[3](), s, _s_curve())
-    var placed = bezier_shadow_mask(c, c.transform, 1.0, 8)
+    var placed = shape_shadow_mask(c, c.transform, 1.0, 8)
     assert_equal(placed.mask.width, 0)
     assert_equal(len(placed.mask.pixels), 0)
 
