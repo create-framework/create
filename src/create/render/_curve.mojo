@@ -314,11 +314,11 @@ def bezier_shadow_mask(
     curve with no visible stroke gives an empty mask.
     """
     var corners = List[Point2D]()
-    if c.style._stroke_visible():
+    if c.paint._stroke_visible():
         var pieces = stroke_pieces(
             bezier_device_points(c, m),
-            Float64(stroke_thickness_px(c.style, m, scale)),
-            c.style.stroke_cap,
+            Float64(stroke_thickness_px(c.paint, m, scale)),
+            c.paint.stroke_cap,
             device_x_axis(m),
         )
         corners = pieces.quads.copy()

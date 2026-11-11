@@ -2,11 +2,13 @@ from std.math import sqrt
 
 from create.color.color import Color, _tinted
 from create.color.gradient import Gradient
+from ._paint import Paint, TextStyle
 from .style import Style
 from create.geometry.bezier import Bezier
 from create.math.matrix import Matrix, identity
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
+from std.memory import ArcPointer
 from std.utils import Variant
 
 comptime _GEOM_SLOTS = 6
@@ -15,7 +17,7 @@ comptime _GEOM_SLOTS = 6
 
 @fieldwise_init
 struct ClearPayload(Copyable, Movable):
-    """Paint the whole framebuffer in `style.fill_color`, or its gradient.
+    """Paint the whole framebuffer in `paint.fill_color`, or its gradient.
 
     A gradient spans the `w` x `h` area centred on the origin (the design
     area) that the command's transform maps to pixels; a colour clear has a
@@ -75,7 +77,7 @@ struct ImagePayload(Copyable, Movable):
     var image_w: Int
     var image_h: Int
     var silhouette: Bool
-    """Paint `style.fill_color` wherever the image is opaque, scaled by its
+    """Paint `paint.fill_color` wherever the image is opaque, scaled by its
     alpha, instead of the image. An image's shadow."""
     var tint: Color
     """The style's tint with its alpha scaled by opacity, which multiplies
@@ -92,6 +94,19 @@ struct TextPayload(Copyable, Movable):
 
     var position: Point2D
     var text: String
+    var style: ArcPointer[TextStyle]
+    """Its face, size, weight, slant, alignment and colour, the colour
+    tinted by `RenderCommand.__init__`. Shared rather than inline: a
+    `Font` is 80 bytes, and a `Variant` is as large as its largest arm, so
+    inline it would make every command's payload text-sized. Copying a
+    command shares it, so change it only through `recolor`."""
+
+    def recolor(mut self, color: Color):
+        """Draw this text in `color`, without touching a command it was
+        copied from."""
+        var style = self.style[]
+        style.text_color = color
+        self.style = ArcPointer(style^)
 
 
 @fieldwise_init
@@ -184,9 +199,10 @@ struct RenderCommand(Copyable, Movable):
 
     var payload: RenderPayload
     var transform: Matrix[3, 3]
-    var style: Style
-    """Resolved at record time. A later `canvas.fill()` cannot reach back and
-    change what an already-recorded command paints."""
+    var paint: Paint
+    """The style's fill, stroke, shadow and blend mode, resolved at record
+    time with its tint and opacity folded in. A later `canvas.fill()` cannot
+    reach back and change what an already-recorded command paints."""
     var clip: Int
     """The id of the innermost `canvas.clip` this was rendered under — an
     index into `Backend.clips`, one past — or 0 for none. Stamped by
@@ -204,32 +220,30 @@ struct RenderCommand(Copyable, Movable):
     ):
         self.payload = payload^
         self.transform = transform
-        self.style = style
-        if self.style.tint != Color.WHITE or self.style.opacity != 1.0:
-            var tint = self.style.tint
-            var opacity = self.style.opacity
-            self.style.fill_color = _tinted(
-                self.style.fill_color, tint, opacity
+        self.paint = style._paint()
+        if style.tint != Color.WHITE or style.opacity != 1.0:
+            var tint = style.tint
+            var opacity = style.opacity
+            self.paint.fill_color = _tinted(
+                self.paint.fill_color, tint, opacity
             )
-            if self.style.fill_gradient:
-                self.style.fill_gradient = (
-                    self.style.fill_gradient.value()._tinted(tint, opacity)
+            if self.paint.fill_gradient:
+                self.paint.fill_gradient = (
+                    self.paint.fill_gradient.value()._tinted(tint, opacity)
                 )
-            self.style.stroke_color = _tinted(
-                self.style.stroke_color, tint, opacity
+            self.paint.stroke_color = _tinted(
+                self.paint.stroke_color, tint, opacity
             )
-            self.style.text_color = _tinted(
-                self.style.text_color, tint, opacity
+            self.paint.shadow_color = _tinted(
+                self.paint.shadow_color, tint, opacity
             )
-            self.style.shadow_color = _tinted(
-                self.style.shadow_color, tint, opacity
-            )
-            if self.payload.isa[ImagePayload]():
+            if self.payload.isa[TextPayload]():
+                ref text = self.payload[TextPayload]
+                text.recolor(_tinted(text.style[].text_color, tint, opacity))
+            elif self.payload.isa[ImagePayload]():
                 self.payload[ImagePayload].tint = _tinted(
                     Color.WHITE, tint, opacity
                 )
-            self.style.tint = Color.WHITE
-            self.style.opacity = 1.0
         self.clip = 0
         self.stroke_grow = 0.0
 
@@ -376,9 +390,9 @@ def clear_command(
 
 def _clear_is_opaque(c: RenderCommand) -> Bool:
     """Whether the clear `c` hides everything under it."""
-    if c.style.fill_gradient:
-        return c.style.fill_gradient.value()._opaque()
-    return c.style.fill_color.a == 255
+    if c.paint.fill_gradient:
+        return c.paint.fill_gradient.value()._opaque()
+    return c.paint.fill_color.a == 255
 
 
 def rect_command(
@@ -558,7 +572,11 @@ def text_command(
     `style` and the backend's font at replay time, so nothing about the layout
     is decided here.
     """
-    return RenderCommand(TextPayload(Point2D(x, y), s^), transform, style)
+    return RenderCommand(
+        TextPayload(Point2D(x, y), s^, ArcPointer(style._text_style())),
+        transform,
+        style,
+    )
 
 
 def letterbox_command(

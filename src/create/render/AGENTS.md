@@ -9,6 +9,7 @@ and the layering rules.
 |---|---|
 | `canvas.mojo` | `Canvas` (records commands, touches no pixels), `_PersistentCanvasState`, the guards |
 | `_command.mojo` | `RenderCommand`, its `RenderPayload` variant (one struct per kind) and their builders; `_fill_box`, the box a fill gradient spans |
+| `_paint.mojo` | `Paint`, what a command paints with (fill, stroke, shadow, blend mode), and `TextStyle`, what text is set in |
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the text renderer, interned images; replays commands via `present` (CPU) or `present_gpu` |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_backend.mojo` |
@@ -54,7 +55,7 @@ build the shape, resolving `corner_radius` against the style, and call `draw`. A
 needs a geometry type with `draw_to`, a primitive on `DrawTarget` and `Canvas`, a `shape_command`
 overload, and the payload above.
 
-**A command is a header and a payload.** The header — `transform`, `style`, `clip`, `stroke_grow` —
+**A command is a header and a payload.** The header — `transform`, `paint`, `clip`, `stroke_grow` —
 is every kind's; `payload` is a `Variant` of one struct per kind (`ClearPayload`, `RectPayload`,
 `CirclePayload`, `LinePayload`, `TrianglePayload`, `ImagePayload`, `TextPayload`,
 `LetterboxPayload`, `CurvesPayload`, `SectorPayload`, `PolygonPayload`), each naming its own
@@ -62,6 +63,17 @@ fields. Test the kind with `c.payload.isa[RectPayload]()` and read or change it 
 `c.payload[RectPayload]` (bind it once with `ref rect = c.payload[RectPayload]`); `c.is_region()`
 and `c.is_shape()` name the groups the replays dispatch on. Reading the wrong payload aborts rather
 than reading another kind's numbers.
+
+**A command keeps what it paints with, not the `Style`.** `paint` is a `Paint` (`_paint.mojo`):
+the style's fill, stroke, shadow and blend mode, field for field, from `style._paint()`, with tint
+and opacity folded into its colours by `RenderCommand.__init__`. What only one kind reads rides on
+its payload: a text command's face, size, weight, slant, alignment and colour are a `TextStyle`
+(`style._text_style()`), an image's tint is `ImagePayload.tint`. The `TextStyle` is behind an
+`ArcPointer`, since a `Font` alone is 80 bytes and a `Variant` is as large as its largest arm:
+inline, it made every command's payload text-sized and replay measurably slower. Copies share it,
+so change it through `TextPayload.recolor`, which copies first. The builders still take a `Style`.
+The visibility checks the replays gate on (`_fill_visible`, `_stroke_visible`, `_shadow_visible`)
+are `Paint`'s.
 
 `Canvas` holds no `Surface` and takes its geometry from the `Viewport` alone — don't add a `Surface`
 field or parameter, and don't import `_window` from `canvas.mojo`. What survives the frame boundary:
@@ -91,11 +103,11 @@ bumps `recorded` either way.
 
 ## Gradients
 
-A fill gradient rides on the command's `Style` (`fill_gradient`); tint and opacity multiply its stops at
+A fill gradient rides on the command's `Paint` (`fill_gradient`); tint and opacity multiply its stops at
 record time. Everything a replay needs comes from three pieces in `create/color/gradient.mojo`, shared so the
 backends agree:
 - **The ramp:** `_RAMP_SIZE` (256) colours sampled from the stops at construction, behind an
-  `ArcPointer` with the stops, so copying a `Gradient` (and the `Style` holding one) is a refcount.
+  `ArcPointer` with the stops, so copying a `Gradient` (and the `Style` or `Paint` holding one) is a refcount.
 - **The device mapping:** `_device_mapping(inverse(m), center, half)`, with the box from
   `_fill_box(c)`. The parameter (linear) or the position whose length it is (radial) is **affine
   in device pixels** — the whole design rests on that.
@@ -382,7 +394,7 @@ See [examples/capture/main.mojo](../../../examples/capture/main.mojo).
 
 ## Text
 
-A `TextPayload` carries its string, the command its `Style`, and the style carries the face (`style.font`,
+A `TextPayload` carries its string and its `TextStyle`, which carries the face (`style[].font`,
 `None` for the packaged default): the `Font`'s `ArcPointer` keeps the face open until replay, so
 nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and caches.
 - **One layout, two backends:** `layout` returns `PlacedGlyph`s (cache key and device position);

@@ -140,8 +140,8 @@ def polygon_quads(
     var grow = polygon.grow
     var sf = pixel_scale(m, scale)
     var t = 0.0
-    if c.style._stroke_visible():
-        t = Float64(stroke_thickness_px(c.style, m, scale)) / sf
+    if c.paint._stroke_visible():
+        t = Float64(stroke_thickness_px(c.paint, m, scale)) / sf
 
     # The polygon's outer edge is offset by `grow`, the fill's by `grow - t`;
     # each needs the rim's band of that radius, unless the offset is zero.
@@ -283,7 +283,7 @@ def polygon_quads(
             run_start = i
         y_lo = y_hi
 
-    if t > 0.0 and len(out.fill) == 0 and c.style._fill_visible():
+    if t > 0.0 and len(out.fill) == 0 and c.paint._fill_visible():
         out.fill = out.stroke^
         out.stroke = List[Point2D]()
     return out^
@@ -297,10 +297,10 @@ def polygon_shadow_mask(
     var q = polygon_quads(c, m, scale)
     # Only what the command paints: a stroke-only ring leaves its middle.
     var corners = List[Point2D]()
-    if c.style._fill_visible():
+    if c.paint._fill_visible():
         for p in q.fill:
             corners.append(p)
-    if c.style._stroke_visible():
+    if c.paint._stroke_visible():
         for p in q.stroke:
             corners.append(p)
     return quads_shadow_mask(corners, blur)

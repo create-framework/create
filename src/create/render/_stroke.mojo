@@ -33,8 +33,8 @@ def stroke_offset(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Float64:
     the shape's exactly."""
     if not c.is_region():
         return 0.0
-    var fraction = c.style.stroke_alignment._offset_fraction()
-    if fraction == 0.0 or not c.style._stroke_visible():
+    var fraction = c.paint.stroke_alignment._offset_fraction()
+    if fraction == 0.0 or not c.paint._stroke_visible():
         return 0.0
     return fraction * local_stroke_thickness(c, m, scale)
 
@@ -50,7 +50,7 @@ def aligned_stroke(c: RenderCommand, offset: Float64) -> RenderCommand:
     their own `grow`, which a shadow's spread adds to.
     """
     var a = c.copy()
-    a.style.stroke_alignment = StrokeAlign.INSIDE
+    a.paint.stroke_alignment = StrokeAlign.INSIDE
     a.stroke_grow = offset
     if a.payload.isa[RectPayload]():
         ref rect = a.payload[RectPayload]

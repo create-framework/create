@@ -122,10 +122,10 @@ def test_filled_shape_casts_one_filled_layer() raises -> None:
     s.shadow_color = Color(0, 0, 0, 100)
     var c = rect_command(identity[3](), s, 0.0, 0.0, 10.0, 6.0)
     var sh = shadow_command(c, 1.0)
-    assert_true(sh.style.fill_enabled)
-    assert_equal(sh.style.fill_color, Color(0, 0, 0, 100))
-    assert_false(sh.style.stroke_enabled)
-    assert_false(sh.style.shadow_enabled)
+    assert_true(sh.paint.fill_enabled)
+    assert_equal(sh.paint.fill_color, Color(0, 0, 0, 100))
+    assert_false(sh.paint.stroke_enabled)
+    assert_false(sh.paint.shadow_enabled)
     # A rectangle's stroke is inset, so the silhouette is the rectangle.
     assert_equal(sh.payload[RectPayload].w, 10.0)
     assert_equal(sh.payload[RectPayload].h, 6.0)
@@ -135,10 +135,10 @@ def test_stroke_only_shape_casts_its_ring() raises -> None:
     var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
     var c = circle_command(identity[3](), s, 0.0, 0.0, 10.0)
     var sh = shadow_command(c, 1.0)
-    assert_false(sh.style.fill_enabled)
-    assert_true(sh.style.stroke_enabled)
-    assert_equal(sh.style.stroke_color, s.shadow_color)
-    assert_equal(sh.style.stroke_thickness, 3)
+    assert_false(sh.paint.fill_enabled)
+    assert_true(sh.paint.stroke_enabled)
+    assert_equal(sh.paint.stroke_color, s.shadow_color)
+    assert_equal(sh.paint.stroke_thickness, 3)
     assert_equal(sh.payload[CirclePayload].r, 10.0)
 
 
@@ -153,10 +153,10 @@ def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
     var c = bezier_command(identity[3](), s, curve)
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
-    assert_false(sh.style.fill_enabled)
-    assert_true(sh.style.stroke_enabled)
-    assert_equal(sh.style.stroke_color, s.shadow_color)
-    assert_equal(sh.style.stroke_thickness, 5)
+    assert_false(sh.paint.fill_enabled)
+    assert_true(sh.paint.stroke_enabled)
+    assert_equal(sh.paint.stroke_color, s.shadow_color)
+    assert_equal(sh.paint.stroke_thickness, 5)
     ref cast = sh.payload[CurvesPayload].points
     ref controls = c.payload[CurvesPayload].points
     assert_equal(len(cast), len(controls))
@@ -198,7 +198,7 @@ def test_spread_grows_each_kind() raises -> None:
     var c = shadow_command(circle_command(identity[3](), s, 0, 0, 5), 1.0)
     assert_equal(c.payload[CirclePayload].r, 7.0)
     var l = shadow_command(line_command(identity[3](), s, 0, 0, 5, 0), 1.0)
-    assert_equal(l.style.stroke_thickness, 5)
+    assert_equal(l.paint.stroke_thickness, 5)
 
 
 def test_negative_spread_never_inverts_a_shape() raises -> None:
@@ -247,9 +247,9 @@ def test_a_sector_casts_its_grown_silhouette() raises -> None:
     var c = sector_command(identity[3](), s, 0.0, 0.0, 10.0, 0.5, -4.0)
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
-    assert_true(sh.style.fill_enabled)
-    assert_equal(sh.style.fill_color, s.shadow_color)
-    assert_false(sh.style.stroke_enabled)
+    assert_true(sh.paint.fill_enabled)
+    assert_equal(sh.paint.fill_color, s.shadow_color)
+    assert_false(sh.paint.stroke_enabled)
     ref cast = sh.payload[SectorPayload]
     ref sector = c.payload[SectorPayload]
     assert_equal(cast.center, sector.center)
@@ -264,9 +264,9 @@ def test_an_stroke_only_sector_casts_its_ring() raises -> None:
     s.shadow_spread = 1.0
     var c = sector_command(identity[3](), s, 0.0, 0.0, 10.0, 0.0, 1.0)
     var sh = shadow_command(c, 1.0)
-    assert_false(sh.style.fill_enabled)
-    assert_equal(sh.style.stroke_color, s.shadow_color)
-    assert_equal(sh.style.stroke_thickness, 5)
+    assert_false(sh.paint.fill_enabled)
+    assert_equal(sh.paint.stroke_color, s.shadow_color)
+    assert_equal(sh.paint.stroke_thickness, 5)
     assert_equal(sh.payload[SectorPayload].grow, 1.0)
     s.stroke_enabled = False
     assert_false(
@@ -294,9 +294,9 @@ def test_a_polygon_casts_its_grown_silhouette() raises -> None:
     var c = polygon_command(identity[3](), s, _square())
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
-    assert_true(sh.style.fill_enabled)
-    assert_equal(sh.style.fill_color, s.shadow_color)
-    assert_false(sh.style.stroke_enabled)
+    assert_true(sh.paint.fill_enabled)
+    assert_equal(sh.paint.fill_color, s.shadow_color)
+    assert_false(sh.paint.stroke_enabled)
     ref cast = sh.payload[PolygonPayload]
     assert_equal(len(cast.vertices), 4)
     for i in range(4):
@@ -309,9 +309,9 @@ def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
     s.shadow_spread = 1.0
     var c = polygon_command(identity[3](), s, _square())
     var sh = shadow_command(c, 1.0)
-    assert_false(sh.style.fill_enabled)
-    assert_equal(sh.style.stroke_color, s.shadow_color)
-    assert_equal(sh.style.stroke_thickness, 5)
+    assert_false(sh.paint.fill_enabled)
+    assert_equal(sh.paint.stroke_color, s.shadow_color)
+    assert_equal(sh.paint.stroke_thickness, 5)
     assert_equal(sh.payload[PolygonPayload].grow, 1.0)
     s.stroke_enabled = False
     assert_false(
@@ -331,8 +331,11 @@ def test_text_shadow_recolours_the_glyphs() raises -> None:
     var s = _shadowed()
     var c = text_command(identity[3](), s, 0.0, 0.0, "hi")
     var sh = shadow_command(c, 1.0)
-    assert_equal(sh.style.text_color, s.shadow_color)
+    assert_equal(sh.payload[TextPayload].style[].text_color, s.shadow_color)
     assert_equal(sh.payload[TextPayload].text, "hi")
+    # The style is shared between copies; recolouring the shadow's must
+    # leave the text it was cast from as it was.
+    assert_equal(c.payload[TextPayload].style[].text_color, s.text_color)
 
 
 def test_image_shadow_is_a_silhouette() raises -> None:
@@ -341,7 +344,7 @@ def test_image_shadow_is_a_silhouette() raises -> None:
     assert_false(c.payload[ImagePayload].silhouette)
     var sh = shadow_command(c, 1.0)
     assert_true(sh.payload[ImagePayload].silhouette)
-    assert_equal(sh.style.fill_color, s.shadow_color)
+    assert_equal(sh.paint.fill_color, s.shadow_color)
     assert_equal(sh.payload[ImagePayload].image, 7)
 
 

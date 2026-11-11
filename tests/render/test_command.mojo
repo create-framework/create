@@ -126,9 +126,9 @@ def test_text_owns_its_string() raises -> None:
 def test_clear_carries_its_colour_in_the_fill() raises -> None:
     var c = clear_command(Color(1, 2, 3, 4))
     assert_true(c.payload.isa[ClearPayload]())
-    assert_equal(c.style.fill_color.r, 1)
-    assert_equal(c.style.fill_color.a, 4)
-    assert_true(c.style.fill_enabled)
+    assert_equal(c.paint.fill_color.r, 1)
+    assert_equal(c.paint.fill_color.a, 4)
+    assert_true(c.paint.fill_enabled)
 
 
 def test_letterbox_carries_the_device_content_rect() raises -> None:
@@ -136,7 +136,7 @@ def test_letterbox_carries_the_device_content_rect() raises -> None:
     assert_true(c.payload.isa[LetterboxPayload]())
     assert_equal(c.payload[LetterboxPayload].x0, 10.0)
     assert_equal(c.payload[LetterboxPayload].y1, 220.0)
-    assert_equal(c.style.fill_color.g, 9)
+    assert_equal(c.paint.fill_color.g, 9)
 
 
 def test_the_transform_is_kept_whole_not_applied() raises -> None:
@@ -156,9 +156,22 @@ def test_the_style_is_resolved_at_record_time() raises -> None:
     # Mutating the style afterwards must not reach the recorded command.
     s.fill_color = Color(200, 200, 200)
     s.stroke_thickness = 99
-    assert_equal(c.style.fill_color.r, 10)
-    assert_equal(c.style.stroke_thickness, 3)
-    assert_equal(c.style.font_size, 21)
+    s.font_size = 99
+    assert_equal(c.paint.fill_color.r, 10)
+    assert_equal(c.paint.stroke_thickness, 3)
+    var t = text_command(identity[3](), _styled(), 0.0, 0.0, String("hi"))
+    assert_equal(t.payload[TextPayload].style[].font_size, 21)
+
+
+def test_only_text_carries_how_text_is_set() raises -> None:
+    # A shape's command keeps what it paints with; the font, its size and
+    # the text colour ride on a text command's payload alone.
+    var s = Style(text_color=Color.RED, font_size=30, font_italic=True)
+    var t = text_command(identity[3](), s, 0.0, 0.0, String("hi"))
+    ref text = t.payload[TextPayload].style[]
+    assert_equal(text.text_color, Color.RED)
+    assert_equal(text.font_size, 30.0)
+    assert_true(text.font_italic)
 
 
 def test_commands_collect_into_a_buffer() raises -> None:
@@ -178,8 +191,7 @@ def test_opacity_folds_into_the_shadow_color() raises -> None:
     var s = Style(opacity=0.5)
     s.shadow_color = Color(0, 0, 0, 200)
     var c = rect_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0)
-    assert_equal(c.style.shadow_color.a, 100)
-    assert_equal(c.style.opacity, 1.0)
+    assert_equal(c.paint.shadow_color.a, 100)
 
 
 def test_opacity_folds_into_the_fill_gradient() raises -> None:
@@ -188,7 +200,7 @@ def test_opacity_folds_into_the_fill_gradient() raises -> None:
         opacity=0.5,
     )
     var c = rect_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0)
-    ref stops = c.style.fill_gradient.value()._stops[]
+    ref stops = c.paint.fill_gradient.value()._stops[]
     assert_equal(stops[0][1].a, 127)
     assert_equal(stops[1][1].a, 100)
     # The style it was recorded from still holds the full-alpha stops.
@@ -204,14 +216,15 @@ def test_tint_folds_into_every_colour() raises -> None:
         opacity=0.5,
     )
     var c = rect_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0)
-    assert_equal(c.style.fill_color, Color(200, 50, 0, 64))
-    assert_equal(c.style.stroke_color, Color(255, 128, 0, 64))
-    assert_equal(c.style.text_color, Color(255, 128, 0, 64))
-    assert_equal(c.style.tint, Color.WHITE)
+    assert_equal(c.paint.fill_color, Color(200, 50, 0, 64))
+    assert_equal(c.paint.stroke_color, Color(255, 128, 0, 64))
+    var t = text_command(identity[3](), s, 0.0, 0.0, String("hi"))
+    assert_equal(
+        t.payload[TextPayload].style[].text_color, Color(255, 128, 0, 64)
+    )
     # An image takes none of the style's colours: its tint carries both.
     var image = image_command(identity[3](), s, 0.0, 0.0, 1.0, 1.0, 1, 1, 1)
     assert_equal(image.payload[ImagePayload].tint, Color(255, 128, 0, 64))
-    assert_equal(image.style.tint, Color.WHITE)
 
 
 def main() raises:

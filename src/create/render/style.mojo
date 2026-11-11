@@ -9,6 +9,7 @@ from create.color.gradient import Gradient
 from create.text.font import Font, FontWeight
 from create.math.vector2d import Vector2D
 from create.math._optional_float64 import _OptionalFloat64
+from ._paint import Paint, TextStyle
 
 
 struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -220,37 +221,34 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             ")",
         )
 
-    def _fill_visible(self) -> Bool:
-        """Whether the fill actually paints anything.
-
-        `fill_enabled` alone isn't enough — a fully transparent color, or a
-        gradient whose every stop is, paints nothing either, and every rasteriser gate should skip that work
-        rather than render an invisible fill.
-        """
-        if not self.fill_enabled:
-            return False
-        if self.fill_gradient:
-            return self.fill_gradient.value()._visible()
-        return self.fill_color.a > 0
-
-    def _stroke_visible(self) -> Bool:
-        """Whether the stroke actually paints anything.
-
-        `stroke_enabled` alone isn't enough — a fully transparent color or a
-        zero thickness paints nothing either, and every rasteriser gate
-        should skip that work rather than render an invisible stroke.
-        """
-        return (
-            self.stroke_enabled
-            and self.stroke_color.a > 0
-            and self.stroke_thickness > 0
+    def _paint(self) -> Paint:
+        """What a command recorded in this style paints with."""
+        return Paint(
+            fill_color=self.fill_color,
+            fill_gradient=self.fill_gradient,
+            fill_enabled=self.fill_enabled,
+            stroke_color=self.stroke_color,
+            stroke_thickness=self.stroke_thickness,
+            stroke_enabled=self.stroke_enabled,
+            stroke_alignment=self.stroke_alignment,
+            stroke_cap=self.stroke_cap,
+            blend_mode=self.blend_mode,
+            shadow_color=self.shadow_color,
+            shadow_offset=self.shadow_offset,
+            shadow_blur=self.shadow_blur,
+            shadow_spread=self.shadow_spread,
+            shadow_inset=self.shadow_inset,
+            shadow_follows_transform=self.shadow_follows_transform,
+            shadow_enabled=self.shadow_enabled,
         )
 
-    def _shadow_visible(self) -> Bool:
-        """Whether the shadow actually paints anything.
-
-        Like `_fill_visible`: switched on and not fully transparent. Which
-        kinds cast one (and which ignore `shadow_inset`) is the backends'
-        call, not the style's.
-        """
-        return self.shadow_enabled and self.shadow_color.a > 0
+    def _text_style(self) -> TextStyle:
+        """How text recorded or measured in this style is set."""
+        return TextStyle(
+            font=self.font,
+            font_size=self.font_size,
+            font_weight=self.font_weight,
+            font_italic=self.font_italic,
+            text_alignment=self.text_alignment,
+            text_color=self.text_color,
+        )

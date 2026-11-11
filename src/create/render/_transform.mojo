@@ -15,7 +15,7 @@ from std.math import abs, max, sqrt
 
 from create.math.matrix import Matrix, scale as mat_scale, translate
 
-from .style import Style
+from ._paint import Paint
 
 
 def uniform(m: Matrix[3, 3]) -> Bool:
@@ -84,10 +84,10 @@ def glyph_transform(
 
 
 def stroke_thickness_px(
-    style: Style, m: Matrix[3, 3], fallback: Float64
+    paint: Paint, m: Matrix[3, 3], fallback: Float64
 ) -> Int:
     """Stroke thickness in framebuffer pixels, never thinner than one."""
     return max(
-        Int(style.stroke_thickness * pixel_scale(m, fallback) + 0.5),
+        Int(paint.stroke_thickness * pixel_scale(m, fallback) + 0.5),
         1,
     )

@@ -64,20 +64,20 @@ def casts_outer_shadow(c: RenderCommand) -> Bool:
     Only render calls cast one — never a clear or the letterbox — and only
     when they paint something a silhouette could be taken from.
     """
-    if not c.style._shadow_visible() or c.style.shadow_inset:
+    if not c.paint._shadow_visible() or c.paint.shadow_inset:
         return False
     if c.is_region():
-        return c.style._fill_visible() or c.style._stroke_visible()
+        return c.paint._fill_visible() or c.paint._stroke_visible()
     if c.payload.isa[LinePayload]():
         ref line = c.payload[LinePayload]
         # A butt line of no length paints nothing, so casts nothing.
-        if c.style.stroke_cap == StrokeCap.BUTT and line.start == line.end:
+        if c.paint.stroke_cap == StrokeCap.BUTT and line.start == line.end:
             return False
-        return c.style._stroke_visible()
+        return c.paint._stroke_visible()
     if c.payload.isa[CurvesPayload]():
-        return c.style._stroke_visible()
+        return c.paint._stroke_visible()
     if c.payload.isa[TextPayload]():
-        return c.style.text_color.a > 0
+        return c.payload[TextPayload].style[].text_color.a > 0
     return c.payload.isa[ImagePayload]()
 
 
@@ -88,7 +88,7 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
     image ignores `shadow_inset` and casts nothing. Painted whether or not the
     fill is visible, as in CSS: the shadow is inside the shape, not on it.
     """
-    if not c.style._shadow_visible() or not c.style.shadow_inset:
+    if not c.paint._shadow_visible() or not c.paint.shadow_inset:
         return False
     # A sector or polygon ignores `shadow_inset` too: the inset regions are
     # these three.
@@ -109,8 +109,8 @@ def shadow_transform(c: RenderCommand, scale: Float64) -> Matrix[3, 3]:
     `shadow_follows_transform` the offset is local, composed *before* the
     transform, and turns with the shape.
     """
-    var o = c.style.shadow_offset
-    if c.style.shadow_follows_transform:
+    var o = c.paint.shadow_offset
+    if c.paint.shadow_follows_transform:
         return c.transform @ translate(o.x, o.y)
     var sf = pixel_scale(c.transform, scale)
     return translate(o.x * sf, -o.y * sf) @ c.transform
@@ -126,42 +126,42 @@ def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
     """
     var s = c.copy()
     s.transform = shadow_transform(c, scale)
-    s.style.shadow_enabled = False
+    s.paint.shadow_enabled = False
     # `c` is already aligned; its silhouette must not move out again.
-    s.style.stroke_alignment = StrokeAlign.INSIDE
+    s.paint.stroke_alignment = StrokeAlign.INSIDE
     # A shadow is one colour: the fill's gradient stays with the shape.
-    s.style.fill_gradient = None
-    var color = c.style.shadow_color
-    var spread = c.style.shadow_spread
+    s.paint.fill_gradient = None
+    var color = c.paint.shadow_color
+    var spread = c.paint.shadow_spread
 
     if c.payload.isa[TextPayload]():
-        s.style.text_color = color
+        s.payload[TextPayload].recolor(color)
         return s^
     if c.payload.isa[ImagePayload]():
-        s.style.fill_color = color
+        s.paint.fill_color = color
         s.payload[ImagePayload].silhouette = True
         return s^
 
     var ring = (
-        not c.style._fill_visible()
+        not c.paint._fill_visible()
         or c.payload.isa[LinePayload]()
         or c.payload.isa[CurvesPayload]()
     )
     if ring:
         # The stroke alone, dilated by `spread` on both sides.
-        s.style.fill_enabled = False
-        s.style.stroke_color = color
-        s.style.stroke_enabled = True
-        s.style.stroke_thickness = max(
-            c.style.stroke_thickness + 2.0 * spread, 0.0
+        s.paint.fill_enabled = False
+        s.paint.stroke_color = color
+        s.paint.stroke_enabled = True
+        s.paint.stroke_thickness = max(
+            c.paint.stroke_thickness + 2.0 * spread, 0.0
         )
         # A triangle's ring is its stroke thickened, in place.
         _spread(s, spread, grow_triangle=False)
         return s^
 
-    s.style.fill_color = color
-    s.style.fill_enabled = True
-    s.style.stroke_enabled = False
+    s.paint.fill_color = color
+    s.paint.fill_enabled = True
+    s.paint.stroke_enabled = False
     # Every region's stroke is an inset ring (an aligned one of the grown
     # shape), so the fill's edge is already the outer edge.
     _spread(s, spread, grow_triangle=True)
@@ -448,7 +448,7 @@ def local_stroke_thickness(
 ) -> Float64:
     """`c`'s stroke as the rasterisers draw it — rounded to whole pixels,
     never under one — back in local units."""
-    return Float64(stroke_thickness_px(c.style, m, scale)) / pixel_scale(
+    return Float64(stroke_thickness_px(c.paint, m, scale)) / pixel_scale(
         m, scale
     )
 
@@ -511,11 +511,11 @@ struct BlurredSilhouette(Copyable, Movable):
         """`sh` is a shadow command; `thickness` its stroke in local units
         (see `local_stroke_thickness`)."""
         self.inv_sigma = (
-            2.0 / sh.style.shadow_blur if sh.style.shadow_blur > 0.0 else 0.0
+            2.0 / sh.paint.shadow_blur if sh.paint.shadow_blur > 0.0 else 0.0
         )
         self.outer = Array[Float64, 9](fill=0.0)
         self.ring = 0.0
-        var ring = not sh.style._fill_visible()
+        var ring = not sh.paint._fill_visible()
         if sh.payload.isa[RectPayload]() or sh.payload.isa[CirclePayload]():
             self.kind = SIL_RECT
             var center: Point2D
@@ -573,7 +573,7 @@ struct BlurredSilhouette(Copyable, Movable):
             var h = thickness / 2.0
             var ux = ex / l if l > 0.0 else 1.0
             var uy = ey / l if l > 0.0 else 0.0
-            var cap = sh.style.stroke_cap
+            var cap = sh.paint.stroke_cap
             if cap != StrokeCap.BUTT:
                 # Both caps reach half the thickness past the ends; a
                 # round one is the capsule that rounds them by as much.
@@ -849,5 +849,5 @@ def inset_interior(c: RenderCommand, thickness: Float64) -> InsetRegion:
     (`local_stroke_thickness`), and ignored when the stroke is off. A
     region's stroke is an inset ring, all of it inside.
     """
-    var inset = thickness if c.style._stroke_visible() else 0.0
+    var inset = thickness if c.paint._stroke_visible() else 0.0
     return InsetRegion(c, inset)

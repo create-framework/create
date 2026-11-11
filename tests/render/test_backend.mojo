@@ -196,7 +196,7 @@ def _brute_circle(
     var pcy = p[1] - 0.5
     var pr = r * pixel_scale(m, scale)
     var pr2 = pr * pr
-    var pr_inner = pr - Float64(stroke_thickness_px(style, m, scale))
+    var pr_inner = pr - Float64(stroke_thickness_px(style._paint(), m, scale))
     var pr_inner2 = pr_inner * pr_inner
     var x0 = max(Int(pcx - pr), 0)
     var y0 = max(Int(pcy - pr), 0)
