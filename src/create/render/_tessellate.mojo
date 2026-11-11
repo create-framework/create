@@ -30,7 +30,16 @@ from create.math import PI
 from create.math.matrix import Matrix, inverse, _apply as mat_apply
 from create.math.point2d import Point2D
 
-from ._command import RenderCommand, _fill_box
+from ._command import (
+    CirclePayload,
+    ImagePayload,
+    LetterboxPayload,
+    LinePayload,
+    RectPayload,
+    RenderCommand,
+    TrianglePayload,
+    _fill_box,
+)
 from ._curve import (
     _MIN_CIRCLE_SEGMENTS,
     bezier_device_points,
@@ -386,11 +395,12 @@ def emit_rect(
     """
     var m = c.transform
     var first = vb.count()
-    var lx0 = c.geom[0] - c.geom[2] / 2.0
-    var ly0 = c.geom[1] - c.geom[3] / 2.0
-    var lx1 = c.geom[0] + c.geom[2] / 2.0
-    var ly1 = c.geom[1] + c.geom[3] / 2.0
-    var r = rect_corner_radius(c.corner_radius, c.geom[2], c.geom[3])
+    ref rect = c.payload[RectPayload]
+    var lx0 = rect.center.x - rect.w / 2.0
+    var ly0 = rect.center.y - rect.h / 2.0
+    var lx1 = rect.center.x + rect.w / 2.0
+    var ly1 = rect.center.y + rect.h / 2.0
+    var r = rect_corner_radius(rect.corner_radius, rect.w, rect.h)
 
     if r <= 0.0:
         if not c.style._stroke_visible():
@@ -487,9 +497,10 @@ def emit_circle(
     transform turns the circle into the ellipse it should be.
     """
     var m = c.transform
-    var cx = c.geom[0]
-    var cy = c.geom[1]
-    var r = c.geom[2]
+    ref circle = c.payload[CirclePayload]
+    var cx = circle.center.x
+    var cy = circle.center.y
+    var r = circle.r
     if r <= 0.0:
         return
     var sf = pixel_scale(m, scale)
@@ -556,8 +567,9 @@ def emit_line(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     if not c.style._stroke_visible():
         return
     var m = c.transform
-    var p0 = mat_apply(m, c.geom[0], c.geom[1])
-    var p1 = mat_apply(m, c.geom[2], c.geom[3])
+    ref line = c.payload[LinePayload]
+    var p0 = mat_apply(m, line.start.x, line.start.y)
+    var p1 = mat_apply(m, line.end.x, line.end.y)
     var a = Point2D(p0[0], p0[1])
     var b = Point2D(p1[0], p1[1])
     var width = Float64(stroke_thickness_px(c.style, m, scale))
@@ -787,11 +799,13 @@ def emit_triangle(
     var m = c.transform
     var fill_visible = c.style._fill_visible()
     var stroke_visible = c.style._stroke_visible()
-    if c.corner_radius <= 0.0 and not stroke_visible:
+    ref triangle = c.payload[TrianglePayload]
+    if triangle.corner_radius <= 0.0 and not stroke_visible:
         if fill_visible:
-            var p1 = mat_apply(m, c.geom[0], c.geom[1])
-            var p2 = mat_apply(m, c.geom[2], c.geom[3])
-            var p3 = mat_apply(m, c.geom[4], c.geom[5])
+            ref g = triangle.corners
+            var p1 = mat_apply(m, g[0], g[1])
+            var p2 = mat_apply(m, g[2], g[3])
+            var p3 = mat_apply(m, g[4], g[5])
             var first = vb.count()
             vb.triangle(
                 p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], c.style.fill_color
@@ -823,15 +837,16 @@ def emit_letterbox(
 ):
     """The bars outside the device content rect — the one untransformed kind.
 
-    `geom` is already in framebuffer pixels (see `letterbox_command`), so the
+    Its payload is already in framebuffer pixels (see `letterbox_command`), so the
     command's matrix is the identity and applying it would be meaningless
     rather than merely redundant. `width` and `height` are the drawable's, not
     the viewport's: the bars have to reach the real edge of the frame.
     """
-    var cx0 = c.geom[0]
-    var cy0 = c.geom[1]
-    var cx1 = c.geom[2]
-    var cy1 = c.geom[3]
+    ref bars = c.payload[LetterboxPayload]
+    var cx0 = bars.x0
+    var cy0 = bars.y0
+    var cx1 = bars.x1
+    var cy1 = bars.y1
     var w = Float64(width)
     var h = Float64(height)
     var col = c.style.fill_color
@@ -863,10 +878,13 @@ def emit_image(
     # `MODE_TEXTURE` multiplies the sampled pixels by the image's tint (white
     # passes them through); a silhouette paints its own colour through the
     # sampled alpha instead.
-    var tint = c.style.fill_color if c.silhouette else c.image_tint
-    var mode = MODE_SILHOUETTE if c.silhouette else MODE_TEXTURE
+    ref image = c.payload[ImagePayload]
+    var tint = c.style.fill_color if image.silhouette else image.tint
+    var mode = MODE_SILHOUETTE if image.silhouette else MODE_TEXTURE
     if not upright(m):
-        var p = image_corners(m, c.geom[0], c.geom[1], c.geom[2], c.geom[3])
+        var p = image_corners(
+            m, image.center.x, image.center.y, image.w, image.h
+        )
         vb.push(p[0].x, p[0].y, 0.0, 0.0, tint, mode)
         vb.push(p[1].x, p[1].y, 1.0, 0.0, tint, mode)
         vb.push(p[2].x, p[2].y, 1.0, 1.0, tint, mode)
@@ -874,7 +892,7 @@ def emit_image(
         vb.push(p[2].x, p[2].y, 1.0, 1.0, tint, mode)
         vb.push(p[3].x, p[3].y, 0.0, 1.0, tint, mode)
         return
-    var r = upright_rect(m, c.geom[0], c.geom[1], c.geom[2], c.geom[3])
+    var r = upright_rect(m, image.center.x, image.center.y, image.w, image.h)
     var x0 = Float64(r.x - pad)
     var y0 = Float64(r.y - pad)
     var x1 = Float64(r.x + r.width + pad)

@@ -17,8 +17,6 @@ from create.render._raster import blend
 from create.render._transform import pixel_scale, stroke_thickness_px
 from create.render._shadow import box_coverage
 from create.render._command import (
-    CMD_CLEAR,
-    CMD_LETTERBOX,
     RenderCommand,
     clear_command,
     rect_command,
@@ -603,7 +601,7 @@ def test_skipping_the_letterbox_leaves_its_region_untouched() raises -> None:
     cmds.append(letterbox_command(Color.BLUE, 10.0, 20.0, 90.0, 80.0))
     var mem = MemorySurface(_W, _H)
     var backend = Backend()
-    backend.replay(mem.surface(), cmds, 1.0, skip_kinds=1 << CMD_LETTERBOX)
+    backend.replay(mem.surface(), cmds, 1.0, skip_letterbox=True)
     assert_equal(mem.pixel(50, 50), Color.RED)
     assert_equal(mem.pixel(50, 10), Color.RED)
     assert_equal(mem.pixel(5, 50), Color.RED)
@@ -615,7 +613,7 @@ def test_skipping_the_clear_leaves_the_background_transparent() raises -> None:
     cmds.append(rect_command(_base(), _solid(Color.RED), 0.0, 0.0, 20.0, 20.0))
     var mem = MemorySurface(_W, _H)
     var backend = Backend()
-    backend.replay(mem.surface(), cmds, 1.0, skip_kinds=1 << CMD_CLEAR)
+    backend.replay(mem.surface(), cmds, 1.0, skip_clear=True)
     assert_equal(mem.pixel(50, 50), Color.RED)
     assert_equal(mem.pixel(10, 10), Color(0, 0, 0, 0))
 

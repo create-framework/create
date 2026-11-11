@@ -13,7 +13,7 @@ sweep in thin wedges around the tip, and along each wedge's rays the sector
 is one stretch of distances from the tip: the fill is the stretch of the
 sector eroded by the stroke, the stroke what lies either side of it.
 
-A shadow's spread offsets the whole sector first (`geom[5]`, zero for a
+A shadow's spread offsets the whole sector first (its `grow`, zero for a
 render call). Growing it keeps it one stretch per ray — a sector grown by a
 disc is still star-shaped about its tip — but reaches into the missing
 wedge too, round the tip and the arc's ends, so the walk goes all the way
@@ -27,7 +27,7 @@ from create.geometry.geometry import _normalized_sweep
 from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 
-from ._command import RenderCommand
+from ._command import RenderCommand, SectorPayload
 from ._curve import PlacedMask, quads_shadow_mask
 from ._tessellate import _arc_segments
 from ._transform import stroke_thickness_px, pixel_scale
@@ -49,22 +49,23 @@ struct SectorQuads(Movable):
 def sector_quads(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> SectorQuads:
-    """`c` (a `CMD_SECTOR`) mapped by `m` and tiled into fill and stroke
+    """`c` (a `SectorPayload`) mapped by `m` and tiled into fill and stroke
     quads.
 
     The tiling is built in local space and mapped per corner, so a
     non-uniform transform gives the elliptical sector it should. With no
     visible stroke everything is fill. With a stroke too wide to leave
     any fill, the whole sector is one colour, as a circle's is: the fill's
-    if the fill is visible, else the stroke's. `geom[5]` offsets the sector
+    if the fill is visible, else the stroke's. Its `grow` offsets the sector
     by that many local units first, outwards if positive.
     """
     var out = SectorQuads()
-    var cx = c.geom[0]
-    var cy = c.geom[1]
-    var r = c.geom[2]
-    var grow = c.geom[5]
-    var sweep = _normalized_sweep(c.geom[3], c.geom[4])
+    ref sector = c.payload[SectorPayload]
+    var cx = sector.center.x
+    var cy = sector.center.y
+    var r = sector.r
+    var grow = sector.grow
+    var sweep = _normalized_sweep(sector.start_angle, sector.sweep_angle)
     var start = sweep[0]
     var theta = sweep[1]
     if r <= 0.0 or theta <= 0.0 or r + grow <= 0.0:
@@ -138,7 +139,7 @@ def sector_quads(
 def sector_shadow_mask(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
 ) -> PlacedMask:
-    """The shadow command `c` (a `CMD_SECTOR`, one colour) mapped by `m`,
+    """The shadow command `c` (a `SectorPayload`, one colour) mapped by `m`,
     rasterised into an alpha mask and blurred by `blur` device pixels."""
     var q = sector_quads(c, m, scale)
     # Only what the command paints: a stroke-only ring leaves its middle.

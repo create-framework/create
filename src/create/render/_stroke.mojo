@@ -13,12 +13,12 @@ rasteriser knows about alignment.
 from create.math.matrix import Matrix
 
 from ._command import (
-    CMD_CIRCLE,
-    CMD_POLYGON,
-    CMD_RECT,
-    CMD_SECTOR,
-    CMD_TRIANGLE,
+    CirclePayload,
+    PolygonPayload,
+    RectPayload,
     RenderCommand,
+    SectorPayload,
+    TrianglePayload,
     _grow_triangle,
 )
 from ._shadow import local_stroke_thickness
@@ -31,13 +31,7 @@ def stroke_offset(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Float64:
     inside. A fraction of the stroke as the rasterisers draw it under the
     device matrix `m`, whole pixels, so `OUTSIDE` puts its inner edge on
     the shape's exactly."""
-    if not (
-        c.kind == CMD_RECT
-        or c.kind == CMD_CIRCLE
-        or c.kind == CMD_SECTOR
-        or c.kind == CMD_POLYGON
-        or c.kind == CMD_TRIANGLE
-    ):
+    if not c.is_region():
         return 0.0
     var fraction = c.style.stroke_alignment._offset_fraction()
     if fraction == 0.0 or not c.style._stroke_visible():
@@ -53,24 +47,26 @@ def aligned_stroke(c: RenderCommand, offset: Float64) -> RenderCommand:
     stays parallel to the shape's; a sharp one stays sharp, as a mitred
     stroke's corner is. `stroke_grow` records the grow, so `_fill_box` keeps
     a gradient where the shape is. A sector and a polygon grow through
-    their own slot, which a shadow's spread adds to.
+    their own `grow`, which a shadow's spread adds to.
     """
     var a = c.copy()
     a.style.stroke_alignment = StrokeAlign.INSIDE
     a.stroke_grow = offset
-    if c.kind == CMD_RECT:
-        a.geom[2] += 2.0 * offset
-        a.geom[3] += 2.0 * offset
-        if c.corner_radius > 0.0:
-            a.corner_radius += offset
-    elif c.kind == CMD_CIRCLE:
-        a.geom[2] += offset
-    elif c.kind == CMD_SECTOR:
-        a.geom[5] += offset
-    elif c.kind == CMD_POLYGON:
-        a.geom[0] += offset
-    elif c.kind == CMD_TRIANGLE:
-        _grow_triangle(a.geom, offset)
-        if c.corner_radius > 0.0:
-            a.corner_radius += offset
+    if a.payload.isa[RectPayload]():
+        ref rect = a.payload[RectPayload]
+        rect.w += 2.0 * offset
+        rect.h += 2.0 * offset
+        if rect.corner_radius > 0.0:
+            rect.corner_radius += offset
+    elif a.payload.isa[CirclePayload]():
+        a.payload[CirclePayload].r += offset
+    elif a.payload.isa[SectorPayload]():
+        a.payload[SectorPayload].grow += offset
+    elif a.payload.isa[PolygonPayload]():
+        a.payload[PolygonPayload].grow += offset
+    elif a.payload.isa[TrianglePayload]():
+        ref triangle = a.payload[TrianglePayload]
+        _grow_triangle(triangle.corners, offset)
+        if triangle.corner_radius > 0.0:
+            triangle.corner_radius += offset
     return a^

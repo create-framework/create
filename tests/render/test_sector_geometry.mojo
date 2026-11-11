@@ -16,7 +16,7 @@ from create.math.point2d import Point2D
 from create.color.color import Color
 from create.render.style import Style
 from create.render._surface import MemorySurface
-from create.render._command import CMD_SECTOR, sector_command
+from create.render._command import SectorPayload, sector_command
 from create.render._raster import fill_quad
 from create.render._sector import (
     SectorQuads,
@@ -57,7 +57,7 @@ def _quads(
         s.start_angle,
         s.sweep_angle,
     )
-    c.geom[5] = grow
+    c.payload[SectorPayload].grow = grow
     return sector_quads(c, c.transform, 1.0)
 
 
@@ -162,12 +162,13 @@ def _stroked(thickness: Float64) -> Style:
 
 def test_sector_command_records_its_geometry() raises -> None:
     var c = sector_command(identity[3](), Style(), 1.0, 2.0, 3.0, 0.5, -1.0)
-    assert_equal(c.kind, CMD_SECTOR)
-    assert_equal(c.geom[0], 1.0)
-    assert_equal(c.geom[1], 2.0)
-    assert_equal(c.geom[2], 3.0)
-    assert_equal(c.geom[3], 0.5)
-    assert_equal(c.geom[4], -1.0)
+    assert_true(c.payload.isa[SectorPayload]())
+    ref sector = c.payload[SectorPayload]
+    assert_equal(sector.center, Point2D(1.0, 2.0))
+    assert_equal(sector.r, 3.0)
+    assert_equal(sector.start_angle, 0.5)
+    assert_equal(sector.sweep_angle, -1.0)
+    assert_equal(sector.grow, 0.0)
 
 
 def test_fill_only_tiles_the_sector() raises -> None:

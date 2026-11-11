@@ -37,7 +37,7 @@ corners -- a rounded one -- adds a few edges per corner rather than a
 whole disc. A half rectangle's base lies on the rim's own line, so the
 walk across a slab passes over the stretches of no width between them.
 
-A shadow's spread offsets the whole polygon first (`geom[0]`, zero for a
+A shadow's spread offsets the whole polygon first (its `grow`, zero for a
 render call): outwards it is the polygon or its rim's band, inwards the
 polygon without it. The fill is the polygon offset by the stroke's width
 less, off the seams' band, so the stroke is an inset band of the offset
@@ -53,7 +53,7 @@ from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 
-from ._command import RenderCommand
+from ._command import PolygonPayload, RenderCommand
 from ._curve import PlacedMask, quads_shadow_mask
 from ._curve import circle_segments
 from ._transform import stroke_thickness_px, pixel_scale
@@ -121,22 +121,23 @@ struct _Edge(Copyable, ImplicitlyCopyable, Movable):
 def polygon_quads(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
 ) -> PolygonQuads:
-    """`c` (a `CMD_POLYGON`) mapped by `m` and tiled into fill and stroke
+    """`c` (a `PolygonPayload`) mapped by `m` and tiled into fill and stroke
     quads.
 
     The tiling is built in local space and mapped per corner, so a
     non-uniform transform gives the sheared polygon it should. With no
     visible stroke everything is fill. With a stroke too wide to leave
     any fill, the whole polygon is one colour, as a sector's is: the fill's
-    if the fill is visible, else the stroke's. `geom[0]` offsets the
+    if the fill is visible, else the stroke's. Its `grow` offsets the
     polygon by that many local units first, outwards if positive.
     """
     var out = PolygonQuads()
-    var vertices = c.points.copy()
+    ref polygon = c.payload[PolygonPayload]
+    var vertices = polygon.vertices.copy()
     # Fewer than three encloses nothing; not even a shadow grows from it.
     if len(vertices) < 3:
         return out^
-    var grow = c.geom[0]
+    var grow = polygon.grow
     var sf = pixel_scale(m, scale)
     var t = 0.0
     if c.style._stroke_visible():
@@ -155,7 +156,7 @@ def polygon_quads(
         pieces = Polygon(vertices^)._pieces()
     ref rim = pieces[0]
     ref seams = pieces[1]
-    var shape = Polygon(c.points.copy())
+    var shape = Polygon(polygon.vertices.copy())
     var rim_corners = _rim_corners(rim, shape)
     # Corners that get a whole disc in a rim band, whichever side it is on.
     var discs = List[Point2D]()
@@ -291,7 +292,7 @@ def polygon_quads(
 def polygon_shadow_mask(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
 ) -> PlacedMask:
-    """The shadow command `c` (a `CMD_POLYGON`, one colour) mapped by `m`,
+    """The shadow command `c` (a `PolygonPayload`, one colour) mapped by `m`,
     rasterised into an alpha mask and blurred by `blur` device pixels."""
     var q = polygon_quads(c, m, scale)
     # Only what the command paints: a stroke-only ring leaves its middle.

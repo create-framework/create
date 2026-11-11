@@ -1,6 +1,6 @@
 from std.math import sqrt
 from create.math import PI
-from std.testing import TestSuite, assert_equal, assert_true
+from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create.geometry.geometry import Line, Polygon
 from create.math.matrix import (
@@ -16,7 +16,7 @@ from create.math.point2d import Point2D
 from create.color.color import Color
 from create.render.style import Style
 from create.render._surface import MemorySurface
-from create.render._command import CMD_POLYGON, polygon_command
+from create.render._command import PolygonPayload, polygon_command
 from create.render._polygon import (
     PolygonQuads,
     polygon_quads,
@@ -69,7 +69,7 @@ def _quads(
     p: Polygon, m: Matrix[3, 3], style: Style = Style(), grow: Float64 = 0.0
 ) -> PolygonQuads:
     var c = polygon_command(m, style, p.vertices.copy())
-    c.geom[0] = grow
+    c.payload[PolygonPayload].grow = grow
     return polygon_quads(c, c.transform, 1.0)
 
 
@@ -192,10 +192,12 @@ def _stroked(thickness: Float64) -> Style:
 def test_polygon_command_records_its_vertices() raises -> None:
     var p = _l_shape()
     var c = polygon_command(identity[3](), Style(), p.vertices.copy())
-    assert_equal(c.kind, CMD_POLYGON)
-    assert_equal(len(c.points), 6)
-    assert_true(c.points[3] == Point2D(-4.0, -4.0))
-    assert_equal(c.geom[0], 0.0)
+    assert_true(c.payload.isa[PolygonPayload]())
+    ref polygon = c.payload[PolygonPayload]
+    assert_equal(len(polygon.vertices), 6)
+    assert_true(polygon.vertices[3] == Point2D(-4.0, -4.0))
+    assert_equal(polygon.grow, 0.0)
+    assert_false(Bool(polygon.gradient_box))
 
 
 def test_fill_only_tiles_the_polygon() raises -> None:
