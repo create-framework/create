@@ -120,6 +120,8 @@ comptime _OFF_TEXT_TEXT = 24
 
 comptime _OFF_MOTION_X = 28
 comptime _OFF_MOTION_Y = 32
+comptime _OFF_MOTION_XREL = 36
+comptime _OFF_MOTION_YREL = 40
 
 comptime _OFF_BUTTON_INDEX = 24
 comptime _OFF_BUTTON_X = 28
@@ -480,6 +482,15 @@ struct SDL:
         """A request, like `set_cursor`."""
         return self.lib.call["SDL_HideCursor", Bool]()
 
+    def set_window_relative_mouse_mode(
+        self, window: Int, enabled: Bool
+    ) -> Bool:
+        """Lock the pointer to `window`, hidden, reporting only motion, or
+        release it. A request: a driver without a pointer refuses it."""
+        return self.lib.call["SDL_SetWindowRelativeMouseMode", Bool](
+            window, enabled
+        )
+
     def gl_set_attribute(self, attr: Int32, value: Int32) raises:
         if not self.lib.call["SDL_GL_SetAttribute", Bool](attr, value):
             raise Error("SDL_GL_SetAttribute failed: " + self.get_error())
@@ -569,6 +580,14 @@ def mouse_x(buf: Pointer[UInt8, _]) -> Float32:
 
 def mouse_y(buf: Pointer[UInt8, _]) -> Float32:
     return buf.unsafe_offset(_OFF_MOTION_Y).unsafe_bitcast[Float32]()[]
+
+
+def mouse_xrel(buf: Pointer[UInt8, _]) -> Float32:
+    return buf.unsafe_offset(_OFF_MOTION_XREL).unsafe_bitcast[Float32]()[]
+
+
+def mouse_yrel(buf: Pointer[UInt8, _]) -> Float32:
+    return buf.unsafe_offset(_OFF_MOTION_YREL).unsafe_bitcast[Float32]()[]
 
 
 def button_index(buf: Pointer[UInt8, _]) -> UInt8:

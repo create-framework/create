@@ -96,6 +96,11 @@ trait NativeWindow:
         `set_system_cursor`."""
         ...
 
+    def lock_mouse(mut self, enabled: Bool) raises:
+        """Hide the pointer and hold it in the window, reporting motion only,
+        or let it go; a request, like `set_system_cursor`."""
+        ...
+
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:
@@ -210,6 +215,9 @@ struct _SDLWindow:
             _ = self.sdl.show_cursor()
         else:
             _ = self.sdl.hide_cursor()
+
+    def lock_mouse(mut self, enabled: Bool) raises:
+        _ = self.sdl.set_window_relative_mouse_mode(self.handle, enabled)
 
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool

@@ -67,6 +67,7 @@ struct Context(Copyable, Movable):
     var _title: String
     var _resizable: Bool
     var _cursor: Cursor
+    var _lock_mouse: Bool
     var _window_mode: WindowMode
     var _design_w: Int
     var _design_h: Int
@@ -87,6 +88,7 @@ struct Context(Copyable, Movable):
         self._title = ""
         self._resizable = True
         self._cursor = Cursor.ARROW
+        self._lock_mouse = False
         self._window_mode = WindowMode.WINDOWED
         self._design_w = 0
         self._design_h = 0
@@ -173,6 +175,22 @@ struct Context(Copyable, Movable):
         ignores it, and so does a video driver without cursors.
         """
         self._cursor = cursor
+
+    def lock_mouse(self) -> Bool:
+        """Whether the pointer is locked to the window: `False` unless set."""
+        return self._lock_mouse
+
+    def lock_mouse(mut self, enabled: Bool):
+        """Lock the pointer to the window, for a first-person camera or an
+        endless drag: it is hidden and held in place, and the mouse reports
+        only `context.mouse.movement`, which keeps counting where a free
+        pointer would stop at the screen's edge. `False` lets it go.
+
+        Applied with the frame it is set in, like `title`. Unlock it for a
+        pause menu, where the pointer is needed again. A headless run, and a
+        video driver without a pointer, ignore it.
+        """
+        self._lock_mouse = enabled
 
     def window_mode(self) -> WindowMode:
         """How the window presents itself: `run`'s `mode` unless set."""

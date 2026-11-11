@@ -76,7 +76,13 @@ def apply_events(
             var e = event[MouseMoved]
             # Pointer positions reach the program in screen space — the same
             # camera-independent space `canvas.left`/`right`/`bottom`/`top` use.
-            context.mouse._move(_to_screen(view, e.x, e.y, px_per_point))
+            var position = _to_screen(view, e.x, e.y, px_per_point)
+            # The motion mapped as the position is (scaled, y flipped), by
+            # mapping where the pointer came from.
+            var origin = _to_screen(
+                view, e.x - e.x_motion, e.y - e.y_motion, px_per_point
+            )
+            context.mouse._move(position, position - origin)
         elif event.isa[MouseButtonDown]():
             var e = event[MouseButtonDown]
             context.mouse._button_down(

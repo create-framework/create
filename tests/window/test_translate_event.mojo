@@ -42,6 +42,8 @@ from create._window._sdl import (
     _OFF_TEXT_TEXT,
     _OFF_MOTION_X,
     _OFF_MOTION_Y,
+    _OFF_MOTION_XREL,
+    _OFF_MOTION_YREL,
     _OFF_BUTTON_INDEX,
     _OFF_BUTTON_X,
     _OFF_BUTTON_Y,
@@ -199,9 +201,13 @@ def test_mouse_position_and_wheel_keep_their_fractions() raises -> None:
     var motion = new_event_buffer(SDL_EVENT_MOUSE_MOTION)
     write_f32(motion, _OFF_MOTION_X, 12.5)
     write_f32(motion, _OFF_MOTION_Y, 0.25)
+    write_f32(motion, _OFF_MOTION_XREL, -1.5)
+    write_f32(motion, _OFF_MOTION_YREL, 2.0)
     var moved = translate_event(SDL_EVENT_MOUSE_MOTION, motion.unsafe_ptr())
     assert_equal(moved.value()[MouseMoved].x, 12.5)
     assert_equal(moved.value()[MouseMoved].y, 0.25)
+    assert_equal(moved.value()[MouseMoved].x_motion, -1.5)
+    assert_equal(moved.value()[MouseMoved].y_motion, 2.0)
 
     var wheel = new_event_buffer(SDL_EVENT_MOUSE_WHEEL)
     write_f32(wheel, _OFF_WHEEL_X, 0.0)

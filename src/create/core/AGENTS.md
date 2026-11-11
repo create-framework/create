@@ -28,10 +28,10 @@ under that mapping, with `context._count_frame()` and no clock tick — present 
 enter the loop. Headless loops re-derive the viewport at the top of every frame, as the windowed
 ones do.
 
-**Window dials** (`title`, `resizable`, `cursor`, `window_mode`) are sent only when they changed:
+**Window dials** (`title`, `resizable`, `cursor`, `lock_mouse`, `window_mode`) are sent only when they changed:
 `_AppliedWindow` remembers what the window was last told, seeded from `run`'s arguments (the cursor
-from its default, the arrow a new window shows) before `create` runs, so a dial `create` sets is
-sent with frame 1. Title, resizability and cursor go before presenting, so they show with their
+from its default, the arrow a new window shows, and the pointer free) before `create` runs, so a dial `create` sets is
+sent with frame 1. Title, resizability, cursor and pointer lock go before presenting, so they show with their
 frame; the mode goes after, since the frame just presented was laid out for the old size. `set_mode`
 in `_window` leaves the current mode before entering the next; restore and maximize are requests a
 window manager may refuse, so they never raise.
@@ -56,7 +56,10 @@ Escape quit. Every write to a device goes through one of its `_`-prefixed method
 of a frame, windowed and headless alike. `FocusLost` releases everything held (`context._release_held()`):
 SDL sends a window nothing for keys and buttons let go while it is unfocused. Pointer positions and
 the wheel stay `Float64` from SDL to the `Mouse`: a HiDPI display reports fractional logical
-positions, a trackpad fractional notches, and a frame's wheel events add up.
+positions, a trackpad fractional notches, and a frame's wheel events add up. `mouse.movement` is
+SDL's relative motion mapped like a position (scaled, y flipped) by mapping both ends of it, and
+adds up the same way; it keeps counting under `SDL_SetWindowRelativeMouseMode`, which `lock_mouse`
+turns on.
 
 SDL's dummy driver (the window tests') hides, shows and refocuses every window a process opens on
 its own, so window tests read events through `events_without_focus` in `tests/window/_raw_event.mojo`.

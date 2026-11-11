@@ -31,6 +31,7 @@ struct _AppliedWindow(Movable):
     var title: String
     var resizable: Bool
     var cursor: Cursor
+    var mouse_locked: Bool
     var mode: WindowMode
 
     def __init__(out self, context: Context):
@@ -41,14 +42,16 @@ struct _AppliedWindow(Movable):
         # Seeded before `create` runs, from the default: the arrow a new
         # window shows.
         self.cursor = context._cursor
+        # A new window leaves the pointer free.
+        self.mouse_locked = False
         self.mode = context._window_mode
 
 
 def _apply_window_dials[
     W: NativeWindow
 ](mut win: W, mut applied: _AppliedWindow, context: Context) raises:
-    """Send the window the title, resizability and cursor the program set,
-    if they changed. Called before presenting, so the change shows with the
+    """Send the window the title, resizability, cursor and pointer lock the
+    program set, if they changed. Called before presenting, so the change shows with the
     frame it was made in."""
     if context._title != applied.title:
         win.set_title(context._title)
@@ -65,6 +68,9 @@ def _apply_window_dials[
                 win.show_cursor(True)
             win.set_system_cursor(_system_cursor(cursor))
         applied.cursor = cursor
+    if context._lock_mouse != applied.mouse_locked:
+        win.lock_mouse(context._lock_mouse)
+        applied.mouse_locked = context._lock_mouse
 
 
 def _system_cursor(cursor: Cursor) -> Int:

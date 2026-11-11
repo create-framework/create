@@ -27,6 +27,8 @@ struct CountingWindow(NativeWindow):
     var cursor: Int
     var visibility_changes: Int
     var cursor_visible: Bool
+    var locks: Int
+    var mouse_locked: Bool
 
     def __init__(out self):
         self.titles = 0
@@ -39,6 +41,8 @@ struct CountingWindow(NativeWindow):
         self.cursor = SYSTEM_CURSOR_ARROW
         self.visibility_changes = 0
         self.cursor_visible = True
+        self.locks = 0
+        self.mouse_locked = False
 
     def is_open(self) -> Bool:
         return True
@@ -82,6 +86,10 @@ struct CountingWindow(NativeWindow):
     def show_cursor(mut self, visible: Bool) raises:
         self.visibility_changes += 1
         self.cursor_visible = visible
+
+    def lock_mouse(mut self, enabled: Bool) raises:
+        self.locks += 1
+        self.mouse_locked = enabled
 
 
 def test_an_unchanged_dial_is_not_sent() raises -> None:
@@ -166,6 +174,23 @@ def test_a_mode_change_is_sent_once_and_only_by_the_mode_step() raises -> None:
     _apply_window_mode(win, applied, context)
     assert_equal(win.modes, 1)
     assert_equal(win.fullscreen, True)
+
+
+def test_a_mouse_lock_is_sent_once_and_released() raises -> None:
+    var context = Context()
+    var applied = _AppliedWindow(context)
+    var win = CountingWindow()
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.locks, 0, "a new window's pointer is already free")
+    for _ in range(3):
+        context.lock_mouse(True)
+        _apply_window_dials(win, applied, context)
+    assert_equal(win.locks, 1)
+    assert_equal(win.mouse_locked, True)
+    context.lock_mouse(False)
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.locks, 2)
+    assert_equal(win.mouse_locked, False)
 
 
 def main() raises:

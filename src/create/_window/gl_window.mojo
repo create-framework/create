@@ -169,6 +169,9 @@ struct GLWindow(NativeWindow):
     def show_cursor(mut self, visible: Bool) raises:
         self._native.show_cursor(visible)
 
+    def lock_mouse(mut self, enabled: Bool) raises:
+        self._native.lock_mouse(enabled)
+
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:
