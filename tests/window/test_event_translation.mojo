@@ -47,6 +47,7 @@ from create._window._sdl import (
     _OFF_WHEEL_Y,
 )
 from _raw_event import (
+    events_without_focus,
     new_event_buffer,
     write_u8,
     write_u32,
@@ -62,7 +63,7 @@ def test_quit_delivers_and_closes_window() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[Quit]())
     assert_false(w.is_open())
@@ -76,7 +77,7 @@ def test_resized_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[Resized]())
     assert_equal(events[0][Resized].width, 1024)
@@ -90,7 +91,7 @@ def test_keydown_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[KeyDown]())
     assert_equal(events[0][KeyDown].keycode, 97)
@@ -103,7 +104,7 @@ def test_keyup_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[KeyUp]())
     assert_equal(events[0][KeyUp].keycode, 42)
@@ -117,7 +118,7 @@ def test_text_input_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[TextInput]())
     assert_equal(events[0][TextInput].text, "Zoë")
@@ -131,7 +132,7 @@ def test_mouse_motion_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[MouseMoved]())
     assert_equal(events[0][MouseMoved].x, 12)
@@ -147,7 +148,7 @@ def test_mouse_button_down_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[MouseButtonDown]())
     assert_equal(events[0][MouseButtonDown].button, 1)
@@ -164,7 +165,7 @@ def test_mouse_button_up_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[MouseButtonUp]())
     assert_equal(events[0][MouseButtonUp].button, 2)
@@ -180,7 +181,7 @@ def test_mouse_wheel_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[MouseWheel]())
     assert_equal(events[0][MouseWheel].x, 0)
@@ -193,7 +194,7 @@ def test_gamepad_that_cannot_be_opened_is_not_announced() raises -> None:
     write_u32(buf, _OFF_GAMEPAD_ID, 123456)
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
-    for event in w.events():
+    for event in events_without_focus(w):
         assert_false(event.isa[GamepadAdded]())
 
 
@@ -204,7 +205,7 @@ def test_gamepad_removed_delivers() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
     var found = False
-    for event in w.events():
+    for event in events_without_focus(w):
         if event.isa[GamepadRemoved]():
             assert_equal(event[GamepadRemoved].id, 123456)
             found = True

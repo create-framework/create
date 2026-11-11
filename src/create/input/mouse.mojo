@@ -101,4 +101,11 @@ struct Mouse(Copyable, Movable, Writable):
         self._released |= button._bit()
 
     def _scroll(mut self, delta: Vector2D):
-        self.wheel = delta
+        # Added up: a fast flick or a trackpad sends several in a frame.
+        self.wheel += delta
+
+    def _release_all(mut self):
+        """Let go of every held button, each with its released edge, as
+        `Keyboard._release_all` does."""
+        self._released |= self._held
+        self._held = 0

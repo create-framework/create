@@ -11,7 +11,7 @@ from create._window._sdl import (
     _OFF_WINDOW_DATA2,
 )
 from create._window._sdl import SDL
-from _raw_event import new_event_buffer, write_i32
+from _raw_event import new_event_buffer, write_i32, events_without_focus
 
 
 def test_pixels_sized_to_dimensions() raises -> None:
@@ -50,7 +50,7 @@ def test_resize_reallocates_pixel_buffer_and_dimensions() raises -> None:
     var sdl = SDL()
     assert_true(sdl.push_event(event_buf.unsafe_ptr()))
 
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[Resized]())
     assert_equal(w.width(), 16)

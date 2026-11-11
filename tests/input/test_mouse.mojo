@@ -3,6 +3,16 @@ from create.input.mouse import Mouse
 from create.input.mouse_button import MouseButton
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
+from create.core.context import Context
+from create.core._events import apply_events
+from create.render._viewport import Viewport
+from create._window.event import (
+    Event,
+    FocusLost,
+    MouseButtonDown,
+    MouseMoved,
+    MouseWheel,
+)
 
 
 def test_initial_mouse_position() raises -> None:
@@ -128,6 +138,39 @@ def test_mouse_is_a_position_and_the_wheel_a_displacement() raises -> None:
     assert_equal(mouse.press_position + drag, mouse.position)
     mouse.wheel = Vector2D(0.0, -1.0)
     assert_equal(mouse.wheel.magnitude(), 1.0)
+
+
+def test_wheel_adds_up_a_frames_scrolls() raises -> None:
+    var context = Context()
+    var events: List[Event] = [
+        MouseWheel(0.0, 0.25),
+        MouseWheel(0.0, 0.5),
+        MouseWheel(1.0, 0.0),
+    ]
+    _ = apply_events(events, Viewport(), context)
+    assert_equal(context.mouse.wheel, Vector2D(1.0, 0.75))
+
+    _ = apply_events([], Viewport(), context)
+    assert_equal(context.mouse.wheel, Vector2D(0.0, 0.0))
+
+
+def test_position_keeps_its_fraction() raises -> None:
+    var context = Context()
+    var events: List[Event] = [MouseMoved(10.5, 20.25)]
+    _ = apply_events(events, Viewport(), context)
+    assert_equal(context.mouse.position, Point2D(10.5, -20.25))
+
+
+def test_focus_lost_releases_held_buttons() raises -> None:
+    var context = Context()
+    var events: List[Event] = [MouseButtonDown(MouseButton.LEFT.value, 0, 0)]
+    _ = apply_events(events, Viewport(), context)
+    assert_true(context.mouse.down())
+
+    events = [FocusLost()]
+    _ = apply_events(events, Viewport(), context)
+    assert_false(context.mouse.down())
+    assert_true(context.mouse.released())
 
 
 def main() raises:

@@ -19,6 +19,7 @@ from create._window import (
     SYSTEM_CURSOR_TEXT,
     SYSTEM_CURSOR_WAIT,
 )
+from _raw_event import events_without_focus
 
 
 def test_open_then_close() raises -> None:
@@ -95,7 +96,7 @@ def test_ticks_monotonic() raises -> None:
 
 def test_events_empty_when_none_pending() raises -> None:
     var w = Window("t", 64, 64)
-    var events = w.events()
+    var events = events_without_focus(w)
     assert_true(len(events) == 0)
 
 

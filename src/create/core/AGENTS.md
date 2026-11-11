@@ -53,7 +53,13 @@ the mapping dials reach `render` in one place.
 Escape quit. Every write to a device goes through one of its `_`-prefixed methods
 (`keyboard._key_down`, `mouse._button_down`, `_gamepads._axis_moved`, …), which own the bookkeeping
 — auto-repeat, edges, slots — and `context._new_input_frame()` clears every device's edges at the top
-of a frame, windowed and headless alike.
+of a frame, windowed and headless alike. `FocusLost` releases everything held (`context._release_held()`):
+SDL sends a window nothing for keys and buttons let go while it is unfocused. Pointer positions and
+the wheel stay `Float64` from SDL to the `Mouse`: a HiDPI display reports fractional logical
+positions, a trackpad fractional notches, and a frame's wheel events add up.
+
+SDL's dummy driver (the window tests') hides, shows and refocuses every window a process opens on
+its own, so window tests read events through `events_without_focus` in `tests/window/_raw_event.mojo`.
 
 **Gamepads are opened in `_window`, read in `input`.** SDL sends no axis or button events for a pad
 until it is opened, so `_SDLWindow.events()` — the one event pump both windows own — tries

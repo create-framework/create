@@ -9,6 +9,7 @@ from std.os import setenv
 from std.testing import TestSuite, assert_true, assert_false
 
 from create._window import Window
+from _raw_event import events_without_focus
 
 
 def test_two_windows_live_at_once() raises -> None:
@@ -21,8 +22,8 @@ def test_two_windows_live_at_once() raises -> None:
     var ticks_b = b.ticks()
     assert_true(ticks_b >= ticks_a)
 
-    var events_a = a.events()
-    var events_b = b.events()
+    var events_a = events_without_focus(a)
+    var events_b = events_without_focus(b)
     assert_true(len(events_a) == 0)
     assert_true(len(events_b) == 0)
 
@@ -36,7 +37,7 @@ def test_closing_one_window_does_not_affect_the_other() raises -> None:
     a.close()
     assert_false(a.is_open())
     assert_true(b.is_open())
-    assert_true(len(b.events()) == 0)
+    assert_true(len(events_without_focus(b)) == 0)
 
 
 def main() raises:

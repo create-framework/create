@@ -14,6 +14,7 @@ from create._window import (
     MouseButtonDown,
     MouseButtonUp,
     MouseWheel,
+    FocusLost,
     GamepadAxisMoved,
     GamepadButtonDown,
     GamepadButtonUp,
@@ -36,6 +37,7 @@ from create._window._sdl import (
     SDL_EVENT_MOUSE_BUTTON_DOWN,
     SDL_EVENT_MOUSE_BUTTON_UP,
     SDL_EVENT_MOUSE_WHEEL,
+    SDL_EVENT_WINDOW_FOCUS_LOST,
     _OFF_KEY_KEYCODE,
     _OFF_TEXT_TEXT,
     _OFF_MOTION_X,
@@ -189,6 +191,31 @@ def test_gamepad_buttons_translate() raises -> None:
     assert_equal(e[GamepadButtonDown].button, 6)
     e = translate_event(SDL_EVENT_GAMEPAD_BUTTON_UP, buf.unsafe_ptr()).value()
     assert_equal(e[GamepadButtonUp].button, 6)
+
+
+def test_mouse_position_and_wheel_keep_their_fractions() raises -> None:
+    # A HiDPI display reports logical positions in fractions, and a trackpad
+    # scrolls in fractions of a notch; truncating either loses real input.
+    var motion = new_event_buffer(SDL_EVENT_MOUSE_MOTION)
+    write_f32(motion, _OFF_MOTION_X, 12.5)
+    write_f32(motion, _OFF_MOTION_Y, 0.25)
+    var moved = translate_event(SDL_EVENT_MOUSE_MOTION, motion.unsafe_ptr())
+    assert_equal(moved.value()[MouseMoved].x, 12.5)
+    assert_equal(moved.value()[MouseMoved].y, 0.25)
+
+    var wheel = new_event_buffer(SDL_EVENT_MOUSE_WHEEL)
+    write_f32(wheel, _OFF_WHEEL_X, 0.0)
+    write_f32(wheel, _OFF_WHEEL_Y, 0.125)
+    var scrolled = translate_event(SDL_EVENT_MOUSE_WHEEL, wheel.unsafe_ptr())
+    assert_equal(scrolled.value()[MouseWheel].y, 0.125)
+
+
+def test_focus_lost_translates() raises -> None:
+    var buf = new_event_buffer(SDL_EVENT_WINDOW_FOCUS_LOST)
+    var translated = translate_event(
+        SDL_EVENT_WINDOW_FOCUS_LOST, buf.unsafe_ptr()
+    )
+    assert_true(translated.value().isa[FocusLost]())
 
 
 def main() raises:
