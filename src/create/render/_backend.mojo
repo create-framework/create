@@ -85,7 +85,6 @@ from ._gif import GifWriter, encode_frame
 from ._png import write_png
 from ._surface import MemorySurface, Surface, _force_opaque
 from ._text import TextRenderer
-from .render_backend import RenderBackend
 from .antialiasing import Antialiasing
 from ._coverage import CoverageScratch, composite_coverage
 from create.color.color import Color
@@ -816,7 +815,6 @@ struct Backend(Movable):
     of both.
     """
 
-    var kind: RenderBackend
     var antialiasing: Antialiasing
     """How the CPU replay smooths shapes' edges, live or for a read; the GPU
     multisamples its own framebuffer, chosen with its window."""
@@ -839,14 +837,6 @@ struct Backend(Movable):
     var shadow_masks: Dict[Int, BlurredMask]
     """Blurred image silhouettes, keyed by `shadow_mask_key`: an image's
     shadow is blurred once per image, device size and blur, not per frame."""
-    var gl: Optional[GLRenderer]
-    """The GPU resources, present exactly when `kind == RenderBackend.GPU`.
-
-    They live on `Backend` rather than beside it so that the fonts, the image
-    cache and the command buffer stay in one place whichever path presents
-    them — `kind` then means what it says, and an image interned for the CPU
-    replay is the same entry the GL path will key a texture from.
-    """
     var recording: Optional[_Recording]
     """A `canvas.start_recording` in progress; see `_record_frame`."""
     var clock: Float64
@@ -921,11 +911,7 @@ struct Backend(Movable):
     allocation is reused frame to frame instead of being rebuilt per frame.
     """
 
-    def __init__(out self, kind: RenderBackend = RenderBackend.CPU) raises:
-        """A GPU backend builds its GL resources here, so a current context
-        is a precondition of `RenderBackend.GPU` — the GL run loop opens its window
-        first for exactly that reason."""
-        self.kind = kind
+    def __init__(out self) raises:
         self.antialiasing = Antialiasing.OFF
         self._coverage_runs = List[Int]()
         self._coverage = CoverageScratch()
@@ -954,9 +940,6 @@ struct Backend(Movable):
         self.pending_screenshot = Optional[String]()
         self.recording = None
         self.clock = 0.0
-        self.gl = Optional[GLRenderer]()
-        if kind == RenderBackend.GPU:
-            self.gl = Optional(GLRenderer())
 
     def record(mut self, var c: RenderCommand):
         """Append one render to the frame being recorded, under the current
@@ -1060,7 +1043,9 @@ struct Backend(Movable):
         )
         mem.save(path)
 
-    def _flush_screenshot_gpu(mut self, width: Int, height: Int) raises:
+    def _flush_screenshot_gpu(
+        mut self, mut gl: GLRenderer, width: Int, height: Int
+    ) raises:
         """The GPU counterpart: read the real framebuffer back off the driver.
 
         There is no host buffer to copy from here, so this is the one capture
@@ -1071,7 +1056,7 @@ struct Backend(Movable):
         if not self.pending_screenshot:
             return
         var path = self.pending_screenshot.take()
-        var frame = self.gl.value().read_frame(width, height)
+        var frame = gl.read_frame(width, height)
         _force_opaque(frame)
         write_png(frame, width, height, path)
 
@@ -1287,7 +1272,7 @@ struct Backend(Movable):
         self.clips.clear()
         self.clip = 0
         self.frame_read = None
-        self._expire_images()
+        _ = self._expire_images()
 
     def discard(mut self):
         """Drop everything recorded so far, and an offscreen canvas's
@@ -1325,24 +1310,23 @@ struct Backend(Movable):
         if self.clip == 0:
             self.clips.clear()
         self.recorded += 1
-        self._expire_images()
+        _ = self._expire_images()
 
-    def present_gpu(mut self, width: Int, height: Int, scale: Float64) raises:
-        """The GPU counterpart of `present`, onto the current drawable.
+    def present_gpu(
+        mut self, mut gl: GLRenderer, width: Int, height: Int, scale: Float64
+    ) raises:
+        """The GPU counterpart of `present`, onto the current drawable
+        through `gl`, which the GL loop owns: it holds the context's
+        resources, so it is built after the window and dies before it.
 
         Same contract: the frame is consumed and the recording left empty with
         its capacity intact. There is no `Surface` because there is no host
         pixel buffer — `width` and `height` are the drawable's, which is what
         the letterbox bars and `glViewport` are sized from.
         """
-        if not self.gl:
-            raise Error(
-                "present_gpu called on a backend that has no GL renderer —"
-                " construct it with kind=RenderBackend.GPU"
-            )
         var cmds = self.commands^
         self.commands = List[RenderCommand]()
-        self.gl.value().render(
+        gl.render(
             cmds,
             self.clips,
             self.images,
@@ -1352,7 +1336,7 @@ struct Backend(Movable):
             scale,
             self.antialiasing._gpu_samples(),
         )
-        self._flush_screenshot_gpu(width, height)
+        self._flush_screenshot_gpu(gl, width, height)
         self._flush_image(cmds)
         self._record_frame(cmds)
         cmds.clear()
@@ -1360,7 +1344,7 @@ struct Backend(Movable):
         self.clips.clear()
         self.clip = 0
         self.frame_read = None
-        self._expire_images()
+        gl.forget_images(self._expire_images())
 
     def intern_image(
         mut self,
@@ -1398,11 +1382,11 @@ struct Backend(Movable):
         self.interned_ids[source] = id
         return id
 
-    def _expire_images(mut self) raises:
+    def _expire_images(mut self) raises -> List[Int]:
         """Advance the frame clock and drop every image no render has used
-        for `IMAGE_KEEP_FRAMES` frames, with its GL texture. Runs after the
-        frame has been replayed and captured, so nothing still refers to
-        what it drops."""
+        for `IMAGE_KEEP_FRAMES` frames, returning their ids so a GPU present
+        can delete their textures. Runs after the frame has been replayed
+        and captured, so nothing still refers to what it drops."""
         self.frame += 1
         var expired = List[Int]()
         for id in self.images:
@@ -1415,8 +1399,7 @@ struct Backend(Movable):
                 and self.interned_ids[image.source] == id
             ):
                 _ = self.interned_ids.pop(image.source)
-        if self.gl and len(expired) > 0:
-            self.gl.value().forget_images(expired)
+        return expired^
 
     def replay[
         o: Origin[mut=True]

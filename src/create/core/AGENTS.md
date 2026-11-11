@@ -99,7 +99,9 @@ and differ under HiDPI. Re-read after event processing, for the same reason.
 which `_wait_for_dimensions` pumps past; on Wayland frame 1 reports the requested size and frame 2
 the display's. The loop re-reads dimensions every frame.
 
-`run_gl` creates its `GLWindow` before constructing `GL()`, which needs a current context.
+`run_gl` and `_run_headless_gl` create their `GLWindow` before their `GLRenderer`, which needs a
+current context, and keep the window alive until the renderer is dropped. The renderer is the
+loop's own, passed to `Backend.present_gpu`; the persistent canvas state holds no GPU resources.
 
 **Antialiasing is a `Backend` field the loops seed** from `run`'s argument
 (`state._backend.antialiasing`) and `canvas.antialiasing` changes; the CPU replay, every pixel read

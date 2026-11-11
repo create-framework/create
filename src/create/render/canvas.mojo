@@ -42,7 +42,6 @@ from create.image.image import Image
 from create.image.animator import Animator
 from ._backend import Backend, _ImageRequest, _Recording, _seed
 from ._gif import GifWriter
-from .render_backend import RenderBackend
 from ._command import (
     clear_command,
     letterbox_command,
@@ -92,10 +91,8 @@ struct _PersistentCanvasState(Movable):
     """Whether each frame opens with a clear, set through
     `canvas.autoclear`."""
 
-    def __init__(out self, kind: RenderBackend = RenderBackend.CPU) raises:
-        """`kind` picks the backend that will present the frames — a GPU one
-        builds its GL resources now, so a context must already be current."""
-        self._backend = Backend(kind)
+    def __init__(out self) raises:
+        self._backend = Backend()
         self._view = Viewport()
         self.letterbox_color = Color.BLACK
         self.autoclear = True
@@ -366,7 +363,7 @@ struct Canvas(DrawTarget, Movable):
             )
         var pixel_w = Int(width * scale + 0.5)
         var pixel_h = Int(height * scale + 0.5)
-        var state = _PersistentCanvasState(RenderBackend.CPU)
+        var state = _PersistentCanvasState()
         state.autoclear = False
         state._backend.antialiasing = antialiasing
         state._set_viewport(Autoscale.FIT, width, height, pixel_w, pixel_h)
