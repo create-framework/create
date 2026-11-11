@@ -29,6 +29,8 @@ struct CountingWindow(NativeWindow):
     var cursor_visible: Bool
     var locks: Int
     var mouse_locked: Bool
+    var text_input_changes: Int
+    var text_input: Bool
 
     def __init__(out self):
         self.titles = 0
@@ -43,6 +45,8 @@ struct CountingWindow(NativeWindow):
         self.cursor_visible = True
         self.locks = 0
         self.mouse_locked = False
+        self.text_input_changes = 0
+        self.text_input = True
 
     def is_open(self) -> Bool:
         return True
@@ -90,6 +94,10 @@ struct CountingWindow(NativeWindow):
     def lock_mouse(mut self, enabled: Bool) raises:
         self.locks += 1
         self.mouse_locked = enabled
+
+    def set_text_input(mut self, enabled: Bool) raises:
+        self.text_input_changes += 1
+        self.text_input = enabled
 
 
 def test_an_unchanged_dial_is_not_sent() raises -> None:
@@ -191,6 +199,23 @@ def test_a_mouse_lock_is_sent_once_and_released() raises -> None:
     _apply_window_dials(win, applied, context)
     assert_equal(win.locks, 2)
     assert_equal(win.mouse_locked, False)
+
+
+def test_text_input_is_switched_only_when_changed() raises -> None:
+    var context = Context()
+    var applied = _AppliedWindow(context)
+    var win = CountingWindow()
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.text_input_changes, 0, "a new window already takes text")
+    for _ in range(3):
+        context.text_input(False)
+        _apply_window_dials(win, applied, context)
+    assert_equal(win.text_input_changes, 1)
+    assert_equal(win.text_input, False)
+    context.text_input(True)
+    _apply_window_dials(win, applied, context)
+    assert_equal(win.text_input_changes, 2)
+    assert_equal(win.text_input, True)
 
 
 def main() raises:

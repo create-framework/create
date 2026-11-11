@@ -87,6 +87,8 @@ def test_cursors_change_hide_and_free_with_the_window() raises -> None:
         # The dummy driver has no pointer to lock: refused, never raised.
         w.lock_mouse(True)
         w.lock_mouse(False)
+        w.set_text_input(False)
+        w.set_text_input(True)
         assert_true(w.is_open())
 
 

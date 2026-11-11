@@ -68,6 +68,7 @@ struct Context(Copyable, Movable):
     var _resizable: Bool
     var _cursor: Cursor
     var _lock_mouse: Bool
+    var _text_input: Bool
     var _window_mode: WindowMode
     var _design_w: Int
     var _design_h: Int
@@ -89,6 +90,7 @@ struct Context(Copyable, Movable):
         self._resizable = True
         self._cursor = Cursor.ARROW
         self._lock_mouse = False
+        self._text_input = True
         self._window_mode = WindowMode.WINDOWED
         self._design_w = 0
         self._design_h = 0
@@ -191,6 +193,26 @@ struct Context(Copyable, Movable):
         video driver without a pointer, ignore it.
         """
         self._lock_mouse = enabled
+
+    def text_input(self) -> Bool:
+        """Whether typing reaches `context.keyboard.text`: `True` unless
+        set."""
+        return self._text_input
+
+    def text_input(mut self, enabled: Bool):
+        """Take typed text, or stop.
+
+        On by default, so `context.keyboard.text` and an `EditableText` work
+        with no setup. Taking text is also what opens an input method's
+        composition window as the user types, and an on-screen keyboard on a
+        handheld or tablet — so a game played on letter keys switches it off,
+        and back on while a text field is in use. Keys are read the same
+        either way; only `text` goes quiet.
+
+        Applied with the frame it is set in, like `title`. A headless run
+        ignores it: there, text is whatever the program feeds in.
+        """
+        self._text_input = enabled
 
     def window_mode(self) -> WindowMode:
         """How the window presents itself: `run`'s `mode` unless set."""

@@ -104,6 +104,9 @@ struct Window(NativeWindow):
     def lock_mouse(mut self, enabled: Bool) raises:
         self._native.lock_mouse(enabled)
 
+    def set_text_input(mut self, enabled: Bool) raises:
+        self._native.set_text_input(enabled)
+
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:

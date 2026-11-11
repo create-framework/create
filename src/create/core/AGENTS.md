@@ -28,10 +28,11 @@ under that mapping, with `context._count_frame()` and no clock tick — present 
 enter the loop. Headless loops re-derive the viewport at the top of every frame, as the windowed
 ones do.
 
-**Window dials** (`title`, `resizable`, `cursor`, `lock_mouse`, `window_mode`) are sent only when they changed:
+**Window dials** (`title`, `resizable`, `cursor`, `lock_mouse`, `text_input`, `window_mode`) are sent only when they changed:
 `_AppliedWindow` remembers what the window was last told, seeded from `run`'s arguments (the cursor
-from its default, the arrow a new window shows, and the pointer free) before `create` runs, so a dial `create` sets is
-sent with frame 1. Title, resizability, cursor and pointer lock go before presenting, so they show with their
+from its default, the arrow a new window shows, the pointer free and text input on, as `_SDLWindow` opens it)
+before `create` runs, so a dial `create` sets is
+sent with frame 1. Title, resizability, cursor, pointer lock and text input go before presenting, so they show with their
 frame; the mode goes after, since the frame just presented was laid out for the old size. `set_mode`
 in `_window` leaves the current mode before entering the next; restore and maximize are requests a
 window manager may refuse, so they never raise.
