@@ -17,6 +17,7 @@ from create._window.event import (
     GamepadButtonDown,
     GamepadButtonUp,
     GamepadRemoved,
+    FocusLost,
 )
 from create.math.vector2d import Vector2D
 
@@ -271,6 +272,38 @@ def test_gamepad_button_prints_as_source() raises -> None:
     assert_equal(String(GamepadButton.SOUTH), "GamepadButton.SOUTH")
     assert_equal(String(GamepadButton.NONE), "GamepadButton.NONE")
     assert_equal(String(GamepadButton(40)), "GamepadButton(40)")
+
+
+def test_disconnecting_releases_what_the_pad_held() raises -> None:
+    var context = Context()
+    _frame(
+        context,
+        [
+            Event(GamepadAdded(1, "Pad 1")),
+            Event(GamepadButtonDown(1, GamepadButton.SOUTH.value)),
+        ],
+    )
+    _frame(context, [Event(GamepadRemoved(1))])
+    var pad = context.gamepad()
+    assert_false(pad.down(GamepadButton.SOUTH))
+    assert_true(pad.released(GamepadButton.SOUTH))
+
+    _frame(context, [])
+    assert_false(context.gamepad().released(GamepadButton.SOUTH))
+
+
+def test_focus_lost_releases_pad_buttons() raises -> None:
+    var context = Context()
+    _frame(
+        context,
+        [
+            Event(GamepadAdded(1, "Pad 1")),
+            Event(GamepadButtonDown(1, GamepadButton.SOUTH.value)),
+        ],
+    )
+    _frame(context, [Event(FocusLost())])
+    assert_false(context.gamepad().down(GamepadButton.SOUTH))
+    assert_true(context.gamepad().released(GamepadButton.SOUTH))
 
 
 def main() raises:

@@ -4,7 +4,7 @@ from create.input.key import Key
 from create.core.context import Context
 from create.render._viewport import Viewport
 from create.core._events import apply_events
-from create._window.event import Event, KeyDown, KeyUp, TextInput
+from create._window.event import Event, FocusLost, KeyDown, KeyUp, TextInput
 
 
 def test_key_prints_as_its_constant() raises -> None:
@@ -327,6 +327,23 @@ def test_new_frame_leaves_held_keys_alone() raises -> None:
     keyboard._held.set(Key(65))
     keyboard._new_frame()
     assert_true(keyboard.down(Key(65)))
+
+
+def test_focus_lost_releases_held_keys() raises -> None:
+    # Alt-tabbing away while holding a key: its release goes to another
+    # window, so without this it would stay down until pressed again.
+    var context = Context()
+    var events: List[Event] = [KeyDown(Key.D.value), KeyDown(Key.SHIFT.value)]
+    _ = apply_events(events, Viewport(), context)
+    assert_true(context.keyboard.down(Key.D))
+
+    events = [FocusLost()]
+    _ = apply_events(events, Viewport(), context)
+    assert_false(context.keyboard.down(Key.D))
+    assert_true(context.keyboard.released(Key.D))
+
+    _ = apply_events([], Viewport(), context)
+    assert_false(context.keyboard.released(Key.D))
 
 
 def main() raises:

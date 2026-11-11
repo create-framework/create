@@ -130,6 +130,11 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
             self._held_buttons |= button._bit()
             self._pressed_buttons |= button._bit()
 
+    def _release_all(mut self):
+        """Let go of every held button, each with its released edge."""
+        self._released_buttons |= self._held_buttons
+        self._held_buttons = 0
+
     def _release(mut self, button: GamepadButton):
         self._held_buttons &= ~button._bit()
         self._released_buttons |= button._bit()
@@ -221,7 +226,14 @@ struct _Gamepads(Copyable, Movable):
             var pad = Gamepad()
             pad.disconnected_this_frame = True
             pad.name = self._slots[slot].name
+            # What it held comes up with it, so a "fire on release" sees the
+            # release rather than a button that silently stopped being down.
+            pad._released_buttons = self._slots[slot]._held_buttons
             self._slots[slot] = pad^
+
+    def _release_all(mut self):
+        for i in range(len(self._slots)):
+            self._slots[i]._release_all()
 
     def _axis_moved(mut self, id: Int, axis: Int, value: Float64):
         var slot = self._slot(id)

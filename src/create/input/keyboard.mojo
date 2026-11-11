@@ -81,5 +81,12 @@ struct Keyboard(Copyable, Movable, Writable):
         self._held.clear(key)
         self._released.set(key)
 
+    def _release_all(mut self):
+        """Let go of every held key, each with its released edge: the window
+        lost focus, and keys let go while it is away send it nothing."""
+        for key in self._held._keys:
+            self._released.set(key)
+        self._held.clear_all()
+
     def _type_text(mut self, text: String):
         self.text += text

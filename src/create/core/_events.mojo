@@ -12,6 +12,7 @@ The window itself is deliberately absent: the arms only ever need to say
 
 from create._window.event import (
     Event,
+    FocusLost,
     GamepadAdded,
     GamepadAxisMoved,
     GamepadButtonDown,
@@ -88,7 +89,7 @@ def apply_events(
             )
         elif event.isa[MouseWheel]():
             var e = event[MouseWheel]
-            context.mouse._scroll(Vector2D(Float64(e.x), Float64(e.y)))
+            context.mouse._scroll(Vector2D(e.x, e.y))
         elif event.isa[GamepadAdded]():
             ref added = event[GamepadAdded]
             context._gamepads._connect(added.id, added.name)
@@ -103,15 +104,15 @@ def apply_events(
         elif event.isa[GamepadButtonUp]():
             var e = event[GamepadButtonUp]
             context._gamepads._button_up(e.id, GamepadButton(e.button))
+        elif event.isa[FocusLost]():
+            context._release_held()
         elif event.isa[Resized]():
             pass  # The viewport is re-derived every frame regardless.
     return quit
 
 
 def _to_screen(
-    view: Viewport, x: Int, y: Int, px_per_point: Float64
+    view: Viewport, x: Float64, y: Float64, px_per_point: Float64
 ) -> Point2D:
     """A pointer position from SDL's window coordinates into screen space."""
-    return view.pixel_to_screen(
-        Point2D(Float64(x) * px_per_point, Float64(y) * px_per_point)
-    )
+    return view.pixel_to_screen(Point2D(x * px_per_point, y * px_per_point))

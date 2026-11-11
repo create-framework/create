@@ -17,6 +17,7 @@ from ._sdl import (
     SDL_EVENT_MOUSE_BUTTON_DOWN,
     SDL_EVENT_MOUSE_BUTTON_UP,
     SDL_EVENT_MOUSE_WHEEL,
+    SDL_EVENT_WINDOW_FOCUS_LOST,
     key_keycode,
     text_input_text,
     mouse_x,
@@ -45,6 +46,15 @@ struct Resized(ImplicitlyCopyable, Movable):
 
 
 @fieldwise_init
+struct FocusLost(ImplicitlyCopyable, Movable):
+    """The window lost keyboard focus — another window was raised, or the
+    user switched away. Keys and buttons released while it is away send no
+    event to it, so whatever is held has to be let go here."""
+
+    pass
+
+
+@fieldwise_init
 struct KeyDown(ImplicitlyCopyable, Movable):
     var keycode: Int
 
@@ -65,28 +75,35 @@ struct TextInput(ImplicitlyCopyable, Movable):
 
 @fieldwise_init
 struct MouseMoved(ImplicitlyCopyable, Movable):
-    var x: Int
-    var y: Int
+    """Pointer positions are SDL's logical window coordinates, fractional on
+    a scaled display and kept so: rounding here would quantise the pointer to
+    whole logical units, several pixels apart on a HiDPI screen."""
+
+    var x: Float64
+    var y: Float64
 
 
 @fieldwise_init
 struct MouseButtonDown(ImplicitlyCopyable, Movable):
     var button: Int
-    var x: Int
-    var y: Int
+    var x: Float64
+    var y: Float64
 
 
 @fieldwise_init
 struct MouseButtonUp(ImplicitlyCopyable, Movable):
     var button: Int
-    var x: Int
-    var y: Int
+    var x: Float64
+    var y: Float64
 
 
 @fieldwise_init
 struct MouseWheel(ImplicitlyCopyable, Movable):
-    var x: Int
-    var y: Int
+    """A scroll, in notches of a wheel: fractional from a trackpad or a
+    smooth-scrolling mouse, which send many small ones."""
+
+    var x: Float64
+    var y: Float64
 
 
 @fieldwise_init
@@ -130,6 +147,7 @@ struct GamepadButtonUp(ImplicitlyCopyable, Movable):
 comptime Event = Variant[
     Quit,
     Resized,
+    FocusLost,
     KeyDown,
     KeyUp,
     TextInput,
@@ -164,22 +182,28 @@ def translate_event(kind: UInt32, ptr: Pointer[UInt8, _]) -> Optional[Event]:
         return Event(KeyUp(Int(key_keycode(ptr))))
     elif kind == SDL_EVENT_TEXT_INPUT:
         return Event(TextInput(text_input_text(ptr)))
+    elif kind == SDL_EVENT_WINDOW_FOCUS_LOST:
+        return Event(FocusLost())
     elif kind == SDL_EVENT_MOUSE_MOTION:
-        return Event(MouseMoved(Int(mouse_x(ptr)), Int(mouse_y(ptr))))
+        return Event(MouseMoved(Float64(mouse_x(ptr)), Float64(mouse_y(ptr))))
     elif kind == SDL_EVENT_MOUSE_BUTTON_DOWN:
         return Event(
             MouseButtonDown(
-                Int(button_index(ptr)), Int(button_x(ptr)), Int(button_y(ptr))
+                Int(button_index(ptr)),
+                Float64(button_x(ptr)),
+                Float64(button_y(ptr)),
             )
         )
     elif kind == SDL_EVENT_MOUSE_BUTTON_UP:
         return Event(
             MouseButtonUp(
-                Int(button_index(ptr)), Int(button_x(ptr)), Int(button_y(ptr))
+                Int(button_index(ptr)),
+                Float64(button_x(ptr)),
+                Float64(button_y(ptr)),
             )
         )
     elif kind == SDL_EVENT_MOUSE_WHEEL:
-        return Event(MouseWheel(Int(wheel_x(ptr)), Int(wheel_y(ptr))))
+        return Event(MouseWheel(Float64(wheel_x(ptr)), Float64(wheel_y(ptr))))
     elif kind == SDL_EVENT_GAMEPAD_AXIS_MOTION:
         var value = Float64(gamepad_axis_value(ptr)) / Float64(
             SDL_JOYSTICK_AXIS_MAX

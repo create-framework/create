@@ -248,6 +248,14 @@ struct Context(Copyable, Movable):
         self.mouse._new_frame()
         self._gamepads._new_frame()
 
+    def _release_held(mut self):
+        """Let go of every key and button on every device, each with its
+        released edge: the window lost focus, and what is released while it
+        is away is never reported to it."""
+        self.keyboard._release_all()
+        self.mouse._release_all()
+        self._gamepads._release_all()
+
     def _advance_frame(mut self, now: Int):
         """Tick the clock and count the frame, before each `update`."""
         self._count_frame()
