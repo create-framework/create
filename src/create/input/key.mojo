@@ -1,16 +1,24 @@
 struct Key(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
-    """A key, what the `Keyboard` queries take: `context.keyboard.down(Key.UP)`.
+    """A key by its position on the keyboard, what the `Keyboard` queries
+    take: `context.keyboard.down(Key.UP)`.
+
+    **Positional.** Each constant names a key by where it sits on a US
+    layout, whatever the layout prints on it: `Key.W` is the key above `S`,
+    which an AZERTY keyboard labels Z, so WASD movement lands under the same
+    fingers on every keyboard. Characters are what the layout makes of those
+    keys, and come from `context.keyboard.text`, never from a `Key`. So read
+    keys for controls, and text for what the user typed.
 
     `from_name` maps a key's name (`"up"`, `"page_up"`, `"a"`) to it, for a
     binding read from a file; a misspelled constant fails to compile, where
     a name could only fail to match.
 
-    A wrapped SDL keycode rather than a bare `Int`, so a stray number cannot
-    be passed where a key is expected. `Key(keycode)` names any key SDL can
+    A wrapped SDL scancode rather than a bare `Int`, so a stray number cannot
+    be passed where a key is expected. `Key(scancode)` names any key SDL can
     send, the ones without a constant included.
 
-    `NONE` is no key (SDL's unknown keycode), what `Keyboard.key` reads before
-    any press; it is never down.
+    `NONE` is no key (SDL's unknown scancode), what `Keyboard.key` reads
+    before any press; it is never down.
 
     `CTRL`, `SHIFT`, `ALT` and `SUPER` are either side of a modifier: down
     while the left or the right one is. They are queries only, never a key
@@ -22,110 +30,110 @@ struct Key(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     comptime NONE = Key(0)
 
     # Modifier keys
-    comptime LEFT_CTRL = Key(1073742048)
-    comptime RIGHT_CTRL = Key(1073742052)
-    comptime LEFT_SHIFT = Key(1073742049)
-    comptime RIGHT_SHIFT = Key(1073742053)
-    comptime LEFT_ALT = Key(1073742050)
-    comptime RIGHT_ALT = Key(1073742054)
-    comptime LEFT_SUPER = Key(1073742051)
-    comptime RIGHT_SUPER = Key(1073742055)
+    comptime LEFT_CTRL = Key(224)
+    comptime RIGHT_CTRL = Key(228)
+    comptime LEFT_SHIFT = Key(225)
+    comptime RIGHT_SHIFT = Key(229)
+    comptime LEFT_ALT = Key(226)
+    comptime RIGHT_ALT = Key(230)
+    comptime LEFT_SUPER = Key(227)
+    comptime RIGHT_SUPER = Key(231)
 
-    # Either side of a modifier. Negative, so no SDL keycode collides.
+    # Either side of a modifier. Negative, so no SDL scancode collides.
     comptime CTRL = Key(-1)
     comptime SHIFT = Key(-2)
     comptime ALT = Key(-3)
     comptime SUPER = Key(-4)
 
     # Arrow keys
-    comptime UP = Key(1073741906)
-    comptime DOWN = Key(1073741905)
-    comptime LEFT = Key(1073741904)
-    comptime RIGHT = Key(1073741903)
+    comptime UP = Key(82)
+    comptime DOWN = Key(81)
+    comptime LEFT = Key(80)
+    comptime RIGHT = Key(79)
 
     # Navigation
-    comptime INSERT = Key(1073741897)
-    comptime HOME = Key(1073741898)
-    comptime PAGE_UP = Key(1073741899)
-    comptime PAGE_DOWN = Key(1073741902)
-    comptime END = Key(1073741901)
+    comptime INSERT = Key(73)
+    comptime HOME = Key(74)
+    comptime PAGE_UP = Key(75)
+    comptime PAGE_DOWN = Key(78)
+    comptime END = Key(77)
 
     # Common keys
-    comptime ENTER = Key(13)
-    comptime ESCAPE = Key(27)
-    comptime BACKSPACE = Key(8)
-    comptime TAB = Key(9)
-    comptime SPACE = Key(32)
-    comptime DELETE = Key(127)
-    comptime CAPS_LOCK = Key(1073741881)
+    comptime ENTER = Key(40)
+    comptime ESCAPE = Key(41)
+    comptime BACKSPACE = Key(42)
+    comptime TAB = Key(43)
+    comptime SPACE = Key(44)
+    comptime DELETE = Key(76)
+    comptime CAPS_LOCK = Key(57)
 
     # Function keys
-    comptime F1 = Key(1073741882)
-    comptime F2 = Key(1073741883)
-    comptime F3 = Key(1073741884)
-    comptime F4 = Key(1073741885)
-    comptime F5 = Key(1073741886)
-    comptime F6 = Key(1073741887)
-    comptime F7 = Key(1073741888)
-    comptime F8 = Key(1073741889)
-    comptime F9 = Key(1073741890)
-    comptime F10 = Key(1073741891)
-    comptime F11 = Key(1073741892)
-    comptime F12 = Key(1073741893)
+    comptime F1 = Key(58)
+    comptime F2 = Key(59)
+    comptime F3 = Key(60)
+    comptime F4 = Key(61)
+    comptime F5 = Key(62)
+    comptime F6 = Key(63)
+    comptime F7 = Key(64)
+    comptime F8 = Key(65)
+    comptime F9 = Key(66)
+    comptime F10 = Key(67)
+    comptime F11 = Key(68)
+    comptime F12 = Key(69)
 
-    # Letter keys (SDL keycodes match lowercase ASCII)
-    comptime A = Key(97)
-    comptime B = Key(98)
-    comptime C = Key(99)
-    comptime D = Key(100)
-    comptime E = Key(101)
-    comptime F = Key(102)
-    comptime G = Key(103)
-    comptime H = Key(104)
-    comptime I = Key(105)
-    comptime J = Key(106)
-    comptime K = Key(107)
-    comptime L = Key(108)
-    comptime M = Key(109)
-    comptime N = Key(110)
-    comptime O = Key(111)
-    comptime P = Key(112)
-    comptime Q = Key(113)
-    comptime R = Key(114)
-    comptime S = Key(115)
-    comptime T = Key(116)
-    comptime U = Key(117)
-    comptime V = Key(118)
-    comptime W = Key(119)
-    comptime X = Key(120)
-    comptime Y = Key(121)
-    comptime Z = Key(122)
+    # Letter keys, by their place on a US layout
+    comptime A = Key(4)
+    comptime B = Key(5)
+    comptime C = Key(6)
+    comptime D = Key(7)
+    comptime E = Key(8)
+    comptime F = Key(9)
+    comptime G = Key(10)
+    comptime H = Key(11)
+    comptime I = Key(12)
+    comptime J = Key(13)
+    comptime K = Key(14)
+    comptime L = Key(15)
+    comptime M = Key(16)
+    comptime N = Key(17)
+    comptime O = Key(18)
+    comptime P = Key(19)
+    comptime Q = Key(20)
+    comptime R = Key(21)
+    comptime S = Key(22)
+    comptime T = Key(23)
+    comptime U = Key(24)
+    comptime V = Key(25)
+    comptime W = Key(26)
+    comptime X = Key(27)
+    comptime Y = Key(28)
+    comptime Z = Key(29)
 
     # Digits on the main row, named in words as the punctuation keys are.
-    comptime ZERO = Key(48)
-    comptime ONE = Key(49)
-    comptime TWO = Key(50)
-    comptime THREE = Key(51)
-    comptime FOUR = Key(52)
-    comptime FIVE = Key(53)
-    comptime SIX = Key(54)
-    comptime SEVEN = Key(55)
-    comptime EIGHT = Key(56)
-    comptime NINE = Key(57)
+    comptime ONE = Key(30)
+    comptime TWO = Key(31)
+    comptime THREE = Key(32)
+    comptime FOUR = Key(33)
+    comptime FIVE = Key(34)
+    comptime SIX = Key(35)
+    comptime SEVEN = Key(36)
+    comptime EIGHT = Key(37)
+    comptime NINE = Key(38)
+    comptime ZERO = Key(39)
 
-    # Punctuation: the unshifted character, so `MINUS` is also `_` with
-    # shift held. Positions follow the keyboard layout, as letters do.
+    # Punctuation, named for what a US layout types unshifted there, so
+    # `MINUS` is also `_` with shift held.
     comptime MINUS = Key(45)
-    comptime EQUALS = Key(61)
-    comptime LEFT_BRACKET = Key(91)
-    comptime RIGHT_BRACKET = Key(93)
-    comptime BACKSLASH = Key(92)
-    comptime SEMICOLON = Key(59)
-    comptime APOSTROPHE = Key(39)
-    comptime GRAVE = Key(96)
-    comptime COMMA = Key(44)
-    comptime PERIOD = Key(46)
-    comptime SLASH = Key(47)
+    comptime EQUALS = Key(46)
+    comptime LEFT_BRACKET = Key(47)
+    comptime RIGHT_BRACKET = Key(48)
+    comptime BACKSLASH = Key(49)
+    comptime SEMICOLON = Key(51)
+    comptime APOSTROPHE = Key(52)
+    comptime GRAVE = Key(53)
+    comptime COMMA = Key(54)
+    comptime PERIOD = Key(55)
+    comptime SLASH = Key(56)
 
     def __init__(out self, value: Int):
         self.value = value
@@ -148,8 +156,9 @@ struct Key(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     def from_name(name: String) -> Optional[Key]:
         """The key whose constant is `name`, case folded: `"up"`,
         `"page_up"`, `"f1"`, `"left_ctrl"`, `"a"`, `"zero"`, `"slash"`.
-        A single character is the key that types it unshifted, so `"/"`,
-        `"7"` and `"A"` work too. `None` for an unknown name.
+        A single character is the key that types it unshifted on a US
+        layout, so `"/"`, `"7"` and `"A"` work too. `None` for an unknown
+        name.
         """
         var upper = name.upper()
         comptime for i in range(len(_NAMED_KEYS)):
@@ -157,7 +166,13 @@ struct Key(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             if upper == entry[1]:
                 return entry[0]
         if name.byte_length() == 1:
-            return Key(ord(name.lower()))
+            var character = ord(name.lower())
+            if ord("1") <= character <= ord("9"):
+                return Key(Key.ONE.value + character - ord("1"))
+            comptime for i in range(len(_CHARACTER_KEYS)):
+                comptime entry = _CHARACTER_KEYS[i]
+                if character == entry[0]:
+                    return entry[1]
         return None
 
 
@@ -254,16 +269,33 @@ comptime _NAMED_KEYS = [
 ]
 
 
+# The keys `from_name` reads from a single character: what a US layout
+# types on each unshifted. Letters match their constants' names, and `1`-`9`
+# are a run, so neither needs listing.
+comptime _CHARACTER_KEYS = [
+    (ord(" "), Key.SPACE),
+    (ord("-"), Key.MINUS),
+    (ord("="), Key.EQUALS),
+    (ord("["), Key.LEFT_BRACKET),
+    (ord("]"), Key.RIGHT_BRACKET),
+    (ord("\\"), Key.BACKSLASH),
+    (ord(";"), Key.SEMICOLON),
+    (ord("'"), Key.APOSTROPHE),
+    (ord("`"), Key.GRAVE),
+    (ord(","), Key.COMMA),
+    (ord("."), Key.PERIOD),
+    (ord("/"), Key.SLASH),
+    (ord("0"), Key.ZERO),
+]
+
+
 struct _KeySet(Copyable, Movable):
     """A set of keys, held as a short list.
 
-    SDL3 keycodes are sparse 32-bit values: a character key is its Unicode
-    codepoint (anything up to 0x10FFFF on a non-Latin layout), a
-    non-character key is its scancode with bit 30 set (scancodes run to
-    511, AltGr's `MODE` among them), and a few extended keys carry bit 29.
-    No fixed-width bitmask covers that without being huge, while only a
-    handful of keys are ever down at once — so a linear scan over a list
-    stays cheap and accepts every keycode SDL can send.
+    SDL3 scancodes run to 511, AltGr's `MODE` among them, while only a
+    handful of keys are ever down at once — so a linear scan over a short
+    list is cheaper than clearing a 512-bit mask every frame, and accepts
+    every scancode SDL can send.
     """
 
     var _keys: List[Key]

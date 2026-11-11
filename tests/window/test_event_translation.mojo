@@ -36,7 +36,7 @@ from create._window._sdl import (
     SDL_EVENT_MOUSE_WHEEL,
     _OFF_WINDOW_DATA1,
     _OFF_WINDOW_DATA2,
-    _OFF_KEY_KEYCODE,
+    _OFF_KEY_SCANCODE,
     _OFF_TEXT_TEXT,
     _OFF_MOTION_X,
     _OFF_MOTION_Y,
@@ -87,27 +87,27 @@ def test_resized_delivers() raises -> None:
 def test_keydown_delivers() raises -> None:
     var w = Window("t", 64, 64)
     var buf = new_event_buffer(SDL_EVENT_KEY_DOWN)
-    write_u32(buf, _OFF_KEY_KEYCODE, 97)
+    write_u32(buf, _OFF_KEY_SCANCODE, 97)
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
     var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[KeyDown]())
-    assert_equal(events[0][KeyDown].keycode, 97)
+    assert_equal(events[0][KeyDown].scancode, 97)
 
 
 def test_keyup_delivers() raises -> None:
     var w = Window("t", 64, 64)
     var buf = new_event_buffer(SDL_EVENT_KEY_UP)
-    write_u32(buf, _OFF_KEY_KEYCODE, 42)
+    write_u32(buf, _OFF_KEY_SCANCODE, 42)
     var sdl = SDL()
     assert_true(sdl.push_event(buf.unsafe_ptr()))
 
     var events = events_without_focus(w)
     assert_equal(len(events), 1)
     assert_true(events[0].isa[KeyUp]())
-    assert_equal(events[0][KeyUp].keycode, 42)
+    assert_equal(events[0][KeyUp].scancode, 42)
 
 
 def test_text_input_delivers() raises -> None:

@@ -11,8 +11,8 @@ def test_key_prints_as_its_constant() raises -> None:
     assert_equal(String(Key.PAGE_UP), "Key.PAGE_UP")
     assert_equal(String(Key.ZERO), "Key.ZERO")
     assert_equal(String(Key.SHIFT), "Key.SHIFT")
-    assert_equal(String(Key(ord("/"))), "Key.SLASH")
-    assert_equal(String(Key(0x0444)), "Key(1092)")
+    assert_equal(String(Key(56)), "Key.SLASH")
+    assert_equal(String(Key(300)), "Key(300)")
     assert_equal(String(Key.NONE), "Key.NONE")
 
 
@@ -25,6 +25,9 @@ def test_key_from_name() raises -> None:
     assert_equal(Key.from_name("/").value(), Key.SLASH)
     assert_equal(Key.from_name("7").value(), Key.SEVEN)
     assert_equal(Key.from_name("seven").value(), Key.SEVEN)
+    assert_equal(Key.from_name("1").value(), Key.ONE)
+    assert_equal(Key.from_name("0").value(), Key.ZERO)
+    assert_equal(Key.from_name("\\").value(), Key.BACKSLASH)
     assert_equal(Key.from_name("A").value(), Key.A)
     assert_false(Key.from_name(""))
 
@@ -35,21 +38,21 @@ def test_no_keys_down_initially() raises -> None:
     assert_equal(keyboard.down(Key.A), False)
 
 
-def test_key_down_by_keycode() raises -> None:
+def test_key_down_by_scancode() raises -> None:
     var keyboard = Keyboard()
     keyboard._held.set(Key(65))
     assert_true(keyboard.down(Key(65)))
     assert_equal(keyboard.down(Key(66)), False)
 
 
-def test_key_pressed_keycode() raises -> None:
+def test_key_pressed_scancode() raises -> None:
     var keyboard = Keyboard()
     keyboard._pressed.set(Key(65))
     assert_true(keyboard.pressed(Key(65)))
     assert_equal(keyboard.pressed(Key(66)), False)
 
 
-def test_key_released_keycode() raises -> None:
+def test_key_released_scancode() raises -> None:
     var keyboard = Keyboard()
     keyboard._released.set(Key(65))
     assert_true(keyboard.released(Key(65)))
@@ -58,8 +61,8 @@ def test_key_released_keycode() raises -> None:
 
 def test_multiple_keys_held() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(ord("a")))
-    keyboard._held.set(Key(ord("d")))
+    keyboard._held.set(Key(4))  # a
+    keyboard._held.set(Key(7))  # d
     assert_true(keyboard.down(Key.A))
     assert_true(keyboard.down(Key.D))
     assert_equal(keyboard.down(Key.W), False)
@@ -154,124 +157,138 @@ def test_text_joins_a_frames_input_and_clears_the_next() raises -> None:
     assert_equal(context.keyboard.text, "")
 
 
-def test_keycodes_outside_ascii_and_named_keys() raises -> None:
-    # AltGr's `MODE` (scancode 257 | 1 << 30), a Cyrillic letter's codepoint
-    # and an extended key (1 << 29): all valid SDL keycodes a fixed-width
-    # bitmask would index out of range.
+def test_scancodes_past_the_named_keys() raises -> None:
+    # AltGr's `MODE` (257) and the last scancode SDL has room for (511):
+    # keys without a constant are still keys.
     var context = Context()
     var events = List[Event]()
-    for keycode in [(1 << 30) | 257, 0x0444, (1 << 29) | 1]:
-        events.append(KeyDown(keycode))
+    for scancode in [257, 511]:
+        events.append(KeyDown(scancode))
     _ = apply_events(events, Viewport(), context)
-    for keycode in [(1 << 30) | 257, 0x0444, (1 << 29) | 1]:
-        assert_true(context.keyboard.down(Key(keycode)))
-        assert_true(context.keyboard.pressed(Key(keycode)))
+    for scancode in [257, 511]:
+        assert_true(context.keyboard.down(Key(scancode)))
+        assert_true(context.keyboard.pressed(Key(scancode)))
 
     events.clear()
-    events.append(KeyUp((1 << 30) | 257))
+    events.append(KeyUp(257))
     _ = apply_events(events, Viewport(), context)
-    assert_false(context.keyboard.down(Key((1 << 30) | 257)))
-    assert_true(context.keyboard.released(Key((1 << 30) | 257)))
-    assert_true(context.keyboard.down(Key(0x0444)))
+    assert_false(context.keyboard.down(Key(257)))
+    assert_true(context.keyboard.released(Key(257)))
+    assert_true(context.keyboard.down(Key(511)))
+
+
+def test_keys_are_positions_on_a_us_layout() raises -> None:
+    # SDL's scancodes, which name a key by where it sits whatever the layout
+    # prints on it: W is the key AZERTY labels Z.
+    assert_equal(Key.A.value, 4)
+    assert_equal(Key.W.value, 26)
+    assert_equal(Key.Z.value, 29)
+    assert_equal(Key.ONE.value, 30)
+    assert_equal(Key.ZERO.value, 39)
+    assert_equal(Key.ESCAPE.value, 41)
+    assert_equal(Key.SPACE.value, 44)
+    assert_equal(Key.UP.value, 82)
+    assert_equal(Key.LEFT_CTRL.value, 224)
+    assert_equal(Key.RIGHT_SUPER.value, 231)
 
 
 def test_named_key_shift_both_sides() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073742049))  # left shift
+    keyboard._held.set(Key(225))  # left shift
     assert_true(keyboard.down(Key.SHIFT))
     keyboard._held.clear_all()
-    keyboard._held.set(Key(1073742053))  # right shift
+    keyboard._held.set(Key(229))  # right shift
     assert_true(keyboard.down(Key.SHIFT))
 
 
 def test_named_key_left_shift_specific() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073742049))
+    keyboard._held.set(Key(225))
     assert_true(keyboard.down(Key.LEFT_SHIFT))
     assert_equal(keyboard.down(Key.RIGHT_SHIFT), False)
 
 
 def test_named_key_alt_both_sides() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073742050))  # left alt
+    keyboard._held.set(Key(226))  # left alt
     assert_true(keyboard.down(Key.ALT))
     keyboard._held.clear_all()
-    keyboard._held.set(Key(1073742054))  # right alt
+    keyboard._held.set(Key(230))  # right alt
     assert_true(keyboard.down(Key.ALT))
 
 
 def test_named_key_super_both_sides() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073742051))  # left super
+    keyboard._held.set(Key(227))  # left super
     assert_true(keyboard.down(Key.SUPER))
     keyboard._held.clear_all()
-    keyboard._held.set(Key(1073742055))  # right super
+    keyboard._held.set(Key(231))  # right super
     assert_true(keyboard.down(Key.SUPER))
 
 
 def test_named_key_arrow_down() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741905))
+    keyboard._held.set(Key(81))
     assert_true(keyboard.down(Key.DOWN))
 
 
 def test_named_key_arrow_left() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741904))
+    keyboard._held.set(Key(80))
     assert_true(keyboard.down(Key.LEFT))
 
 
 def test_named_key_arrow_right() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741903))
+    keyboard._held.set(Key(79))
     assert_true(keyboard.down(Key.RIGHT))
 
 
 def test_named_key_home() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741898))
+    keyboard._held.set(Key(74))
     assert_true(keyboard.down(Key.HOME))
 
 
 def test_named_key_end() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741901))
+    keyboard._held.set(Key(77))
     assert_true(keyboard.down(Key.END))
 
 
 def test_named_key_page_up() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741899))
+    keyboard._held.set(Key(75))
     assert_true(keyboard.down(Key.PAGE_UP))
 
 
 def test_named_key_page_down() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741902))
+    keyboard._held.set(Key(78))
     assert_true(keyboard.down(Key.PAGE_DOWN))
 
 
 def test_named_key_insert() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(1073741897))
+    keyboard._held.set(Key(73))
     assert_true(keyboard.down(Key.INSERT))
 
 
 def test_named_key_backspace() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(8))
+    keyboard._held.set(Key(42))
     assert_true(keyboard.down(Key.BACKSPACE))
 
 
 def test_named_key_tab() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(9))
+    keyboard._held.set(Key(43))
     assert_true(keyboard.down(Key.TAB))
 
 
 def test_named_key_delete() raises -> None:
     var keyboard = Keyboard()
-    keyboard._held.set(Key(127))
+    keyboard._held.set(Key(76))
     assert_true(keyboard.down(Key.DELETE))
 
 
