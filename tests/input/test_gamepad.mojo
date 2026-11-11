@@ -356,5 +356,14 @@ def test_trigger_buttons_print_as_their_constants() raises -> None:
     )
 
 
+def test_gamepad_button_from_name() raises -> None:
+    assert_equal(GamepadButton.from_name("south").value(), GamepadButton.SOUTH)
+    assert_equal(
+        GamepadButton.from_name("Right_Trigger").value(),
+        GamepadButton.RIGHT_TRIGGER,
+    )
+    assert_false(GamepadButton.from_name("a"))
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
