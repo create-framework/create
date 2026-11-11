@@ -348,12 +348,18 @@ struct SDL:
     def start_text_input(self, window: Int) raises:
         """Turns on `SDL_EVENT_TEXT_INPUT` delivery for `window`.
 
-        SDL3 sends no text events until this is called, unlike SDL2. On a
-        desktop it only enables the IME, so each window turns it on for its
-        whole life rather than per text field.
+        SDL3 sends no text events until this is called, unlike SDL2. Each
+        window turns it on as it opens, and `context.text_input(False)`
+        turns it off: on a desktop it enables the IME, on a handheld it can
+        raise an on-screen keyboard.
         """
         if not self.lib.call["SDL_StartTextInput", Bool](window):
             raise Error("SDL_StartTextInput failed: " + self.get_error())
+
+    def stop_text_input(self, window: Int) -> Bool:
+        """Turns `SDL_EVENT_TEXT_INPUT` delivery for `window` back off,
+        closing any IME composition and on-screen keyboard. A request."""
+        return self.lib.call["SDL_StopTextInput", Bool](window)
 
     def get_ticks(self) raises -> UInt64:
         return self.lib.call["SDL_GetTicks", UInt64]()

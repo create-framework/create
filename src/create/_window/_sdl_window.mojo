@@ -96,6 +96,11 @@ trait NativeWindow:
         `set_system_cursor`."""
         ...
 
+    def set_text_input(mut self, enabled: Bool) raises:
+        """Deliver typed text (and with it the IME, or an on-screen keyboard
+        on a handheld), or stop. On as the window opens."""
+        ...
+
     def lock_mouse(mut self, enabled: Bool) raises:
         """Hide the pointer and hold it in the window, reporting motion only,
         or let it go; a request, like `set_system_cursor`."""
@@ -218,6 +223,12 @@ struct _SDLWindow:
 
     def lock_mouse(mut self, enabled: Bool) raises:
         _ = self.sdl.set_window_relative_mouse_mode(self.handle, enabled)
+
+    def set_text_input(mut self, enabled: Bool) raises:
+        if enabled:
+            self.sdl.start_text_input(self.handle)
+        else:
+            _ = self.sdl.stop_text_input(self.handle)
 
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
