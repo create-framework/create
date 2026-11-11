@@ -62,21 +62,22 @@ nothing in the environment has changed. So a run with the library unchanged star
 rather than 8; the first one after a library edit pays the ~10 s rebuild. Tests and the CI
 builds still compile from `src`.
 
-Two tiers of automated checks:
+Two tiers of automated checks, and a third run by hand:
 
 | Where | Runs |
 |---|---|
 | `pre-commit` hook (after `pixi run setup`) | Formatting check on staged `.mojo` files, then builds `tests/core/test_smoke.mojo`. Constant cost |
-| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the test suite — a GL test that skips fails the job. All but formatting and `precompile` run again on Apple silicon (`macos-examples`, `macos-tests`), in parallel with the Linux jobs |
+| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the test suite — a GL test that skips fails the job. Linux only |
+| macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI — a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet — so run it before relying on a change that could differ there (windowing, GL, library search) |
 
-Both skip their checks when every changed path is inert (`*.md`, `LICENSE`, agent/editor config) —
+The hook and CI skip their checks when every changed path is inert (`*.md`, `LICENSE`, agent/editor config) —
 the allowlist is in `.githooks/_inert.sh`, read by the hook and the workflow alike.
 
 **Workflow.** `main` is protected by a ruleset: no direct pushes, no force pushes, no deletion,
 and a linear history. Every change lands as a pull request, merged once the required check `ci`
-passes — it passes when `linux-format`, `linux-precompile`, `linux-examples`, `linux-tests`,
-`macos-examples` and `macos-tests` all passed, or were skipped for an inert change; no approval is
-required. **Rebase and merge** is the only merge method enabled: squash and merge commits are off.
+passes — it passes when `linux-format`, `linux-precompile`, `linux-examples` and `linux-tests` all
+passed, or were skipped for an inert change; no approval is required. **Rebase and merge** is the
+only merge method enabled: squash and merge commits are off.
 
 ```bash
 git switch -c some-change                 # from an up-to-date main
