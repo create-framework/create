@@ -23,7 +23,7 @@ round.
 from std.math import asin, atan, atan2, cos, max, min, sin, sqrt
 from create.math import PI, TAU
 
-from create.geometry.geometry import _normalized_sweep
+from create.geometry._shared import _normalized_sweep
 from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 

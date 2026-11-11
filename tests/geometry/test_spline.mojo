@@ -7,7 +7,7 @@ from std.testing import (
 )
 from std.math import pow
 from create.geometry.bezier import Bezier
-from create.geometry.geometry import Arc, Circle, Line, Rectangle
+from create.geometry import Arc, Circle, Line, Rectangle
 from create.geometry.spline import Spline
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D

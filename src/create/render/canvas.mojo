@@ -16,7 +16,7 @@ from .camera import Camera
 from create.geometry.bezier import Bezier
 from create.geometry.spline import Spline
 from create.geometry.drawable import DrawTarget, Region
-from create.geometry.geometry import (
+from create.geometry import (
     Arc,
     Capsule,
     Circle,

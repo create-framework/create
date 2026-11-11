@@ -53,7 +53,7 @@ from create.render._sector import sector_quads
 from create.render._polygon import polygon_quads
 from create.render._lower import is_plain_triangle, shape_pieces
 from create.geometry.bezier import Bezier
-from create.geometry.geometry import Polygon
+from create.geometry import Polygon
 
 
 def _emit(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):

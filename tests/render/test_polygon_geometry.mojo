@@ -2,7 +2,7 @@ from std.math import sqrt
 from create.math import PI
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
-from create.geometry.geometry import Line, Polygon
+from create.geometry import Line, Polygon
 from create.math.matrix import (
     Matrix,
     _apply as mat_apply,

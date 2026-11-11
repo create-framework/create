@@ -14,7 +14,7 @@ from std.testing import (
 from create import *
 from create.core.headless import run_headless
 from create.image.image import Image
-from create.geometry.geometry import (
+from create.geometry import (
     Circle,
     Line,
     Polygon,

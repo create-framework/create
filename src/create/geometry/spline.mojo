@@ -1,16 +1,14 @@
 from std.math import max, min, pow
 from .bezier import Bezier
-from .geometry import (
-    Arc,
-    Capsule,
-    Circle,
-    Ellipse,
-    Line,
-    Polygon,
-    Rectangle,
-    Sector,
-    Triangle,
-)
+from .arc import Arc
+from .capsule import Capsule
+from .circle import Circle
+from .ellipse import Ellipse
+from .line import Line
+from .polygon import Polygon
+from .rectangle import Rectangle
+from .sector import Sector
+from .triangle import Triangle
 from create.math import Point2D
 from .drawable import Curve, DrawTarget
 from create.math import Vector2D

@@ -6,7 +6,7 @@ from std.testing import (
 )
 from std.math import abs, ceil
 from create.math import PI, TAU
-from create.geometry.geometry import Arc, Circle, Line, Rectangle, Triangle
+from create.geometry import Arc, Circle, Line, Rectangle, Triangle
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 

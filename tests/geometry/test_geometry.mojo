@@ -6,7 +6,7 @@ from std.testing import (
     assert_almost_equal,
 )
 from create.math import PI
-from create.geometry.geometry import Rectangle, Circle, Line, Triangle, overlaps
+from create.geometry import Rectangle, Circle, Line, Triangle, overlaps
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 

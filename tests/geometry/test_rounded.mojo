@@ -8,7 +8,7 @@ from std.testing import (
 from std.math import cos, sin, sqrt
 from create.math import PI, TAU
 from create.geometry._fillet import corner_fillet
-from create.geometry.geometry import (
+from create.geometry import (
     Rectangle,
     Circle,
     Line,
