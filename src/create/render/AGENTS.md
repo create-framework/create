@@ -13,6 +13,7 @@ and the layering rules.
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
 | `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
+| `_captures.mojo` | `Captures` — the `save_image`, `save_screenshot` and recording requests and the recording's state (GIF writer, slot timing); the backend does their replays |
 | `_cpu_replay.mojo` | `CpuReplay` — commands rasterised onto a `Surface`: the CPU backend's presents and every capture and read; shadows, clips and antialiasing around the rasterisers. Handed the images, clips and antialiasing by `Backend.replay`, as `GLRenderer.render` is |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_cpu_replay.mojo` |
 | `_surface.mojo` | `Surface`, the borrowed RGBA view the rasteriser writes, and `MemorySurface`, an owned buffer (headless runs, pixel reads, offscreen canvases); `run_headless` hands its pixels over as an `Image` |
@@ -393,17 +394,20 @@ which `present_gpu` passes to `GLRenderer.forget_images` to delete their texture
 
 ## Captures
 
-Requests filed on the `Backend` and serviced inside `present`/`present_gpu`, the only place holding
+Requests filed on `Backend.captures` (`Captures`, `_captures.mojo`) and serviced inside
+`present`/`present_gpu`, the only place holding
 both the finished framebuffer and the unconsumed command buffer; a failed write raises from there.
 - `canvas.save_image(path, scale, transparent)` — what the program drew: design size × `scale`,
   no letterbox, CPU-replayed from the commands under **both** backends (glyph cache and images live
   on `Backend`, not `GLRenderer`). Reproducible across machines.
 - `canvas.save_screenshot(path)` — what the user saw: drawable resolution, bars included. On GPU this
   is a `glReadPixels` stall — fine on a keypress, not per frame.
-- `canvas.start_recording(path, …)` — a `_Recording` on the `Backend` that lasts across frames, serviced by
-  `_record_frame` in both presents as `_flush_image` is serviced, through the CPU replay. It keeps the
+- `canvas.start_recording(path, …)` — a `_Recording` on `Captures` that lasts across frames, serviced by
+  `Backend._record_frame` in both presents as `_flush_image` is serviced, through the CPU replay:
+  `Captures.frame_due` says whether this frame's slot is due, the backend replays it, and
+  `Captures.add_frame` encodes it. It keeps the
   capture's own base matrix and composes it with each frame's `screen_inv`, so a resize mid-recording
-  is undone like any frame's. Timing: `Backend.clock` is set from `context.time.elapsed` by
+  is undone like any frame's. Timing: `Captures.clock` is set from `context.time.elapsed` by
   `first_step`/`step` (render never sees `Context`); the clock is cut into `1/fps` slots from the first
   present, a frame is captured in each slot it enters, and the capture waits in `pending` until the
   next says how many slots it covered, since a GIF frame's delay precedes its pixels. Delays are
