@@ -4,6 +4,7 @@ from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rect_corner_radius
 from .bezier import _curve_segments
 from .drawable import Curve, DrawTarget, Region
+from ._collider import _Collider, _Core, _contains
 from ._shared import _distance_squared, _rounded_closest, _rounded_outline
 from .capsule import Capsule
 from .circle import Circle
@@ -15,7 +16,13 @@ from .triangle import Triangle
 
 
 struct Rectangle(
-    Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
+    Copyable,
+    Equatable,
+    ImplicitlyCopyable,
+    Movable,
+    Region,
+    Writable,
+    _Collider,
 ):
     """An axis-aligned rectangle: `center`, `area`, `left`/`right`/`bottom`/
     `top`, `closest_point`, `contains`, `move_to`, `translate`.
@@ -141,45 +148,23 @@ struct Rectangle(
             and self.bottom() <= p.y <= self.top()
         )
 
-    # A rounded rectangle tests a shape as its outline polygon, and a
-    # rounded shape is tested as its own, so each overload below takes the
-    # sharp path only when neither is rounded.
+    # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
+    # a `Line`, is a convex core grown by a radius, and is held exactly when
+    # a disc of its radius round every corner of its core is (`_contains`).
     def contains(self, other: Rectangle) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(other)
-        if other._radius() > 0.0:
-            return self.contains(other._outline())
-        return (
-            self.left() <= other.left()
-            and other.right() <= self.right()
-            and self.bottom() <= other.bottom()
-            and other.top() <= self.top()
-        )
+        return _contains(self, other)
 
     def contains(self, c: Circle) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(c)
-        return (
-            self.left() <= c.position.x - c.r
-            and c.position.x + c.r <= self.right()
-            and self.bottom() <= c.position.y - c.r
-            and c.position.y + c.r <= self.top()
-        )
+        return _contains(self, c)
 
     def contains(self, t: Triangle) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(t)
-        if t._radius() > 0.0:
-            return self.contains(t._outline())
-        for p in t._points():
-            if not self.contains(p):
-                return False
-        return True
+        return _contains(self, t)
 
     def contains(self, l: Line) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(l)
-        return self.contains(l.start) and self.contains(l.end)
+        return _contains(self, l)
+
+    def contains(self, c: Capsule) -> Bool:
+        return _contains(self, c)
 
     def contains[C: Curve](self, curve: C) -> Bool:
         """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
@@ -191,6 +176,8 @@ struct Rectangle(
                 return False
         return True
 
+    # A rounded rectangle holds the rest as its outline polygon, and a
+    # rounded shape is tested as its own.
     def contains(self, s: Sector) -> Bool:
         if self._radius() > 0.0:
             return self._outline().contains(s)
@@ -211,16 +198,6 @@ struct Rectangle(
             return self._outline().contains(e)
         return self.contains(e.bounds())
 
-    def contains(self, c: Capsule) -> Bool:
-        # Convex, so it holds the capsule when it holds the discs at both
-        # ends, whose hull the capsule is; sharp, that is its bounds.
-        if self._radius() <= 0.0:
-            return self.contains(c.bounds())
-        for end in c._ends():
-            if not self.contains(end):
-                return False
-        return True
-
     def draw_to[T: DrawTarget](self, mut target: T):
         target._rectangle(self)
 
@@ -233,6 +210,15 @@ struct Rectangle(
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^
+
+    comptime _corner_count = 4
+
+    def _core(self) -> _Core[Self._corner_count]:
+        """The inner rectangle, grown by the corner radius."""
+        var r = self._radius()
+        if r > 0.0:
+            return _Core[Self._corner_count](self._inner()._points(), r)
+        return _Core[Self._corner_count](self._points(), 0.0)
 
     def _radius(self) -> Float64:
         """The corner radius as drawn: clamped to half the shorter side."""

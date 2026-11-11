@@ -1,6 +1,5 @@
-from std.math import max
 from create.math import Point2D
-from ._shared import _distance_squared, _polygons_overlap
+from ._collider import _overlaps
 from .capsule import Capsule, _spine_distance
 from .circle import Circle
 from .ellipse import Ellipse, _UNIT_CIRCLE
@@ -12,100 +11,94 @@ from .triangle import Triangle
 
 
 # `overlaps(a, b)` is the whole overlap-testing surface for regions: one
-# specialized, exact overload per unordered shape pair (`Rectangle`,
-# `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon` -- `Line`
-# and `Arc`
-# have no
-# interior and are
-# deliberately excluded, see the taxonomy comment above `Line.intersects`),
-# so a symmetric relation reads as a symmetric call -- `overlaps(a, b)` and
-# `overlaps(b, a)` always agree, and the reverse-order overload is a
-# one-line delegation to the other. Each pair picks the cheapest exact
-# test for that combination rather than routing through a single generic
-# algorithm -- `Circle` vs. anything else is a `closest_point`-then-
-# `contains` check (exact only because a circle's containment is radial
-# from its centre), and any pair of straight-edged shapes is SAT over
-# `_polygons_overlap`. A `Sector` is curved, and past a half turn not even
-# convex, so against a polygon or another sector it is not SAT but the
-# test any two regions share: one holds a point of the other (the tip, a
-# vertex), or their boundaries cross (`_polygon_overlaps_sector`). The
-# arc's boundary is found through `cos` and `sin`, so a sector touches
+# exact overload per ordered pair of `Rectangle`, `Circle`, `Ellipse`,
+# `Capsule`, `Triangle`, `Sector` and `Polygon`, so a symmetric relation
+# reads as a symmetric call and `overlaps(a, b)` and `overlaps(b, a)`
+# always agree. `Line` and `Arc` have no interior and are deliberately
+# excluded; see the comment above `Line.intersects`.
+#
+# A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, is a
+# convex core grown by a radius, so any two of them overlap exactly when
+# their cores come within the two radii (`_overlaps`): one test for all
+# sixteen pairs. The rest need their own. A `Sector` is curved, and past a
+# half turn not even convex, so against a polygon or another sector it
+# takes the test any two regions share: one holds a point of the other (the
+# tip, a vertex), or their boundaries cross (`_polygon_overlaps_sector`).
+# The arc's boundary is found through `cos` and `sin`, so a sector touches
 # within the slack `Arc.intersects` allows rather than exactly. A `Polygon`
 # may be concave or cross itself, so it takes the same shared test, save
 # that one vertex stands for a whole polygon: while no edges cross, the
 # other shape's inside/outside cannot change along the polygon's boundary.
-#
-# A rounded rectangle or triangle is tested as rounded. Against a circle
-# that comes free with its `closest_point`; two rectangles overlap when
-# their inner rectangles come within the two radii; otherwise the rounded
-# shape stands in as its outline polygon.
+# Against these, a rounded rectangle or triangle stands in as its outline
+# polygon; against a circle, `closest_point` sees its rounding already.
 #
 # Every overload is boundary-inclusive: shapes that only touch (shared
 # edge, shared corner, tangent circles) count as overlapping. Degenerate
 # inputs -- a zero-size rectangle, a zero-radius circle, a collinear or
 # fully degenerate triangle -- remain exact rather than reporting a false
-# overlap; `_polygons_overlap`'s own comment covers how SAT stays sound
-# when a polygon collapses to a segment or a point.
-def overlaps(a: Rectangle, b: Rectangle) -> Bool:
-    var ra = a._radius()
-    var rb = b._radius()
-    if ra > 0.0 or rb > 0.0:
-        var ia = a._inner()
-        var ib = b._inner()
-        var dx = max(
-            abs(ia.position.x - ib.position.x) - (ia.w + ib.w) / 2, 0.0
-        )
-        var dy = max(
-            abs(ia.position.y - ib.position.y) - (ia.h + ib.h) / 2, 0.0
-        )
-        return dx * dx + dy * dy <= (ra + rb) * (ra + rb)
-    return (
-        a.left() <= b.right()
-        and a.right() >= b.left()
-        and a.bottom() <= b.top()
-        and a.top() >= b.bottom()
-    )
-
-
+# overlap.
 def overlaps(a: Circle, b: Circle) -> Bool:
-    var rsum = a.r + b.r
-    return _distance_squared(a.position, b.position) <= rsum * rsum
+    return _overlaps(a, b)
+
+
+def overlaps(a: Circle, b: Capsule) -> Bool:
+    return _overlaps(a, b)
 
 
 def overlaps(a: Circle, b: Rectangle) -> Bool:
-    return a.contains(b.closest_point(a.position))
-
-
-def overlaps(a: Rectangle, b: Circle) -> Bool:
-    return overlaps(b, a)
+    return _overlaps(a, b)
 
 
 def overlaps(a: Circle, b: Triangle) -> Bool:
-    return a.contains(b.closest_point(a.position))
+    return _overlaps(a, b)
 
 
-def overlaps(a: Triangle, b: Circle) -> Bool:
-    return overlaps(b, a)
+def overlaps(a: Capsule, b: Circle) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Capsule, b: Capsule) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Capsule, b: Rectangle) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Capsule, b: Triangle) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Rectangle, b: Circle) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Rectangle, b: Capsule) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Rectangle, b: Rectangle) -> Bool:
+    return _overlaps(a, b)
 
 
 def overlaps(a: Rectangle, b: Triangle) -> Bool:
-    if a._radius() > 0.0:
-        return overlaps(a._outline(), b)
-    if b._radius() > 0.0:
-        return overlaps(a, b._outline())
-    return _polygons_overlap(a._points(), b._points())
+    return _overlaps(a, b)
+
+
+def overlaps(a: Triangle, b: Circle) -> Bool:
+    return _overlaps(a, b)
+
+
+def overlaps(a: Triangle, b: Capsule) -> Bool:
+    return _overlaps(a, b)
 
 
 def overlaps(a: Triangle, b: Rectangle) -> Bool:
-    return overlaps(b, a)
+    return _overlaps(a, b)
 
 
 def overlaps(a: Triangle, b: Triangle) -> Bool:
-    if a._radius() > 0.0:
-        return overlaps(a._outline(), b)
-    if b._radius() > 0.0:
-        return overlaps(a, b._outline())
-    return _polygons_overlap(a._points(), b._points())
+    return _overlaps(a, b)
 
 
 def _polygon_overlaps_sector[N: Int](pts: Array[Point2D, N], s: Sector) -> Bool:
@@ -315,37 +308,13 @@ def overlaps(a: Ellipse, b: Ellipse) -> Bool:
     return overlaps(a._to_unit(b), _UNIT_CIRCLE)
 
 
-# A capsule overlaps a region exactly when its spine comes within its
+# A capsule against a curved or concave region: its spine comes within its
 # radius of it (`_spine_distance`).
-def overlaps(a: Capsule, b: Rectangle) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r
-
-
-def overlaps(a: Rectangle, b: Capsule) -> Bool:
-    return overlaps(b, a)
-
-
-def overlaps(a: Capsule, b: Circle) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r
-
-
-def overlaps(a: Circle, b: Capsule) -> Bool:
-    return overlaps(b, a)
-
-
 def overlaps(a: Capsule, b: Ellipse) -> Bool:
     return _spine_distance(a._spine(), b) <= a.r
 
 
 def overlaps(a: Ellipse, b: Capsule) -> Bool:
-    return overlaps(b, a)
-
-
-def overlaps(a: Capsule, b: Triangle) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r
-
-
-def overlaps(a: Triangle, b: Capsule) -> Bool:
     return overlaps(b, a)
 
 
@@ -363,7 +332,3 @@ def overlaps(a: Capsule, b: Polygon) -> Bool:
 
 def overlaps(a: Polygon, b: Capsule) -> Bool:
     return overlaps(b, a)
-
-
-def overlaps(a: Capsule, b: Capsule) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r

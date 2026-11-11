@@ -1,7 +1,8 @@
-from std.math import atan2, min, max, sqrt
+from std.math import atan2, min, sqrt
 from create.math import PI, Point2D, Vector2D
 from .bezier import _curve_segments
 from .drawable import Curve, DrawTarget, Region
+from ._collider import _Collider, _Core, _contains
 from ._shared import _distance_squared, _unit
 from .arc import Arc
 from .circle import Circle
@@ -14,7 +15,13 @@ from .triangle import Triangle
 
 
 struct Capsule(
-    Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
+    Copyable,
+    Equatable,
+    ImplicitlyCopyable,
+    Movable,
+    Region,
+    Writable,
+    _Collider,
 ):
     """A capsule: every point within `r` of the segment from `start` to
     `end` -- a rectangle along the segment, capped by a half disc at each
@@ -96,14 +103,27 @@ struct Capsule(
         return q + d * (self.r / sqrt(distance_squared))
 
     def contains(self, p: Point2D) -> Bool:
-        return self._holds_disc(p, 0.0)
+        return _distance_squared(self._spine().closest_point(p), p) <= (
+            self.r * self.r
+        )
 
-    # A capsule is convex, so it holds a shape when it holds its corners,
-    # and a rounded rectangle or triangle -- the points within its radius
-    # of its inner one -- when it holds a disc of that radius at each of
-    # the inner one's corners.
+    # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
+    # a `Line`, is a convex core grown by a radius, and is held exactly when
+    # a disc of its radius round every corner of its core is (`_contains`).
     def contains(self, l: Line) -> Bool:
-        return self.contains(l.start) and self.contains(l.end)
+        return _contains(self, l)
+
+    def contains(self, r: Rectangle) -> Bool:
+        return _contains(self, r)
+
+    def contains(self, c: Circle) -> Bool:
+        return _contains(self, c)
+
+    def contains(self, t: Triangle) -> Bool:
+        return _contains(self, t)
+
+    def contains(self, other: Capsule) -> Bool:
+        return _contains(self, other)
 
     def contains[C: Curve](self, curve: C) -> Bool:
         """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
@@ -112,23 +132,6 @@ struct Capsule(
         is decided only that closely."""
         for segment in _curve_segments(curve):
             if not self.contains(segment):
-                return False
-        return True
-
-    def contains(self, r: Rectangle) -> Bool:
-        var radius = r._radius()
-        for p in r._inner()._points():
-            if not self._holds_disc(p, radius):
-                return False
-        return True
-
-    def contains(self, c: Circle) -> Bool:
-        return self._holds_disc(c.position, c.r)
-
-    def contains(self, t: Triangle) -> Bool:
-        var radius = t._radius()
-        for p in t._inner()._points():
-            if not self._holds_disc(p, radius):
                 return False
         return True
 
@@ -154,13 +157,6 @@ struct Capsule(
             return self.contains(e.bounds())
         return self.contains(e._outline())
 
-    def contains(self, other: Capsule) -> Bool:
-        """Whether `other` is inside: the discs at its two ends are, and it
-        is their hull."""
-        return self._holds_disc(other.start, other.r) and self._holds_disc(
-            other.end, other.r
-        )
-
     def draw_to[T: DrawTarget](self, mut target: T):
         target._capsule(self)
 
@@ -173,18 +169,15 @@ struct Capsule(
         moved.end = moved.end + delta
         return moved^
 
+    comptime _corner_count = 2
+
+    def _core(self) -> _Core[Self._corner_count]:
+        """The spine, grown by the radius."""
+        return _Core[2]([self.start, self.end], self.r)
+
     def _spine(self) -> Line:
         """The segment the capsule is the points within `r` of."""
         return Line(self.start, self.end)
-
-    def _holds_disc(self, p: Point2D, radius: Float64) -> Bool:
-        """Whether the disc of `radius` about `p` is inside."""
-        var reach = self.r - radius
-        if reach < 0.0:
-            return False
-        return _distance_squared(self._spine().closest_point(p), p) <= (
-            reach * reach
-        )
 
     def _ends(self) -> Array[Circle, 2]:
         """The discs at either end, whose hull the capsule is: a convex
@@ -263,14 +256,6 @@ def _spine_distance(l: Line, other: Line) -> Float64:
     )
 
 
-def _spine_distance(l: Line, c: Circle) -> Float64:
-    return max(_spine_distance(l, c.position) - c.r, 0.0)
-
-
-def _spine_distance(l: Line, c: Capsule) -> Float64:
-    return max(_spine_distance(l, c._spine()) - c.r, 0.0)
-
-
 def _across(l: Line, p: Point2D) -> Float64:
     """The distance from `p` straight across to the segment, or the
     largest `Float64` when the perpendicular foot falls off it."""
@@ -330,33 +315,6 @@ def _spine_distance(l: Line, e: Ellipse) -> Float64:
                 best, _across(l, e.position + (offset if k == 0 else -offset))
             )
     return best
-
-
-def _spine_distance[
-    N: Int
-](l: Line, pts: Array[Point2D, N], inside: Bool) -> Float64:
-    """To the straight-edged region with corners `pts`; `inside` is whether
-    the segment meets it."""
-    if inside:
-        return 0.0
-    var best = Float64.MAX
-    for i in range(N):
-        best = min(best, _spine_distance(l, Line(pts[i], pts[(i + 1) % N])))
-    return best
-
-
-def _spine_distance(l: Line, r: Rectangle) -> Float64:
-    var radius = r._radius()
-    if radius > 0.0:
-        return max(_spine_distance(l, r._inner()) - radius, 0.0)
-    return _spine_distance(l, r._points(), l.intersects(r))
-
-
-def _spine_distance(l: Line, t: Triangle) -> Float64:
-    var radius = t._radius()
-    if radius > 0.0:
-        return max(_spine_distance(l, t._inner()) - radius, 0.0)
-    return _spine_distance(l, t._points(), l.intersects(t))
 
 
 def _spine_distance(l: Line, p: Polygon) -> Float64:

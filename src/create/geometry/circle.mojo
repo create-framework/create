@@ -2,6 +2,7 @@ from std.math import sqrt
 from create.math import PI, Point2D, Vector2D
 from .bezier import _curve_segments
 from .drawable import Curve, DrawTarget, Region
+from ._collider import _Collider, _Core, _contains
 from ._shared import _RADIUS_EPSILON, _distance_squared
 from .capsule import Capsule
 from .ellipse import Ellipse
@@ -13,7 +14,13 @@ from .triangle import Triangle
 
 
 struct Circle(
-    Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
+    Copyable,
+    Equatable,
+    ImplicitlyCopyable,
+    Movable,
+    Region,
+    Writable,
+    _Collider,
 ):
     """A circle: `center`, `area`, `diameter`, `closest_point`, `contains`,
     `move_to`, `translate`.
@@ -72,28 +79,23 @@ struct Circle(
     def contains(self, p: Point2D) -> Bool:
         return _distance_squared(p, self.position) <= self.r * self.r
 
+    # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
+    # a `Line`, is a convex core grown by a radius, and is held exactly when
+    # a disc of its radius round every corner of its core is (`_contains`).
     def contains(self, other: Circle) -> Bool:
-        var distance = sqrt(_distance_squared(other.position, self.position))
-        return distance + other.r <= self.r
+        return _contains(self, other)
 
     def contains(self, r: Rectangle) -> Bool:
-        if r._radius() > 0.0:
-            return self.contains(r._outline())
-        for p in r._points():
-            if not self.contains(p):
-                return False
-        return True
+        return _contains(self, r)
 
     def contains(self, t: Triangle) -> Bool:
-        if t._radius() > 0.0:
-            return self.contains(t._outline())
-        for p in t._points():
-            if not self.contains(p):
-                return False
-        return True
+        return _contains(self, t)
 
     def contains(self, l: Line) -> Bool:
-        return self.contains(l.start) and self.contains(l.end)
+        return _contains(self, l)
+
+    def contains(self, c: Capsule) -> Bool:
+        return _contains(self, c)
 
     def contains[C: Curve](self, curve: C) -> Bool:
         """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
@@ -132,14 +134,6 @@ struct Circle(
             self.position, self.diameter(), self.diameter()
         ).contains(e)
 
-    def contains(self, c: Capsule) -> Bool:
-        # Convex, so it holds the capsule when it holds the discs at both
-        # ends, whose hull the capsule is.
-        for end in c._ends():
-            if not self.contains(end):
-                return False
-        return True
-
     def draw_to[T: DrawTarget](self, mut target: T):
         target._circle(self)
 
@@ -152,3 +146,9 @@ struct Circle(
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^
+
+    comptime _corner_count = 1
+
+    def _core(self) -> _Core[Self._corner_count]:
+        """The centre, grown by the radius."""
+        return _Core[1]([self.position], self.r)

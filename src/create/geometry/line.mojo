@@ -3,14 +3,15 @@ from create.math import Point2D, Vector2D
 from .bezier import Bezier
 from .spline import Spline
 from .drawable import Curve, DrawTarget
+from ._collider import _Collider, _Core, _overlaps
 from ._shared import (
     _closest_on_segment,
     _distance_squared,
-    _orientation,
     _point_on_segment,
+    _segments_meet,
 )
 from .arc import Arc
-from .capsule import Capsule, _spine_distance
+from .capsule import Capsule
 from .circle import Circle
 from .ellipse import Ellipse, _UNIT_CIRCLE
 from .polygon import Polygon
@@ -19,7 +20,9 @@ from .sector import Sector
 from .triangle import Triangle
 
 
-struct Line(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
+struct Line(
+    Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable, _Collider
+):
     """A line segment from `start` to `end`: `length`, `at`, `tangent`,
     `at_distance`, `split`, `midpoint`, `bounds`, `flatten`,
     `beziers`, `closest_point`, `intersects`, `move_to`, `translate`.
@@ -114,30 +117,7 @@ struct Line(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         ]
 
     def intersects(self, other: Line) -> Bool:
-        var o1 = _orientation(self.start, self.end, other.start)
-        var o2 = _orientation(self.start, self.end, other.end)
-        var o3 = _orientation(other.start, other.end, self.start)
-        var o4 = _orientation(other.start, other.end, self.end)
-
-        if (
-            o1 != 0
-            and o2 != 0
-            and o1 != o2
-            and o3 != 0
-            and o4 != 0
-            and o3 != o4
-        ):
-            return True
-        # Collinear arms -- inclusive: touching or overlapping counts.
-        if o1 == 0 and _point_on_segment(other.start, self.start, self.end):
-            return True
-        if o2 == 0 and _point_on_segment(other.end, self.start, self.end):
-            return True
-        if o3 == 0 and _point_on_segment(self.start, other.start, other.end):
-            return True
-        if o4 == 0 and _point_on_segment(self.end, other.start, other.end):
-            return True
-        return False
+        return _segments_meet(self.start, self.end, other.start, other.end)
 
     # `x.intersects(y)` is the curve-as-subject relation, for every
     # `Curve` -- asymmetric, unlike `overlaps`, because a curve has no interior
@@ -181,10 +161,10 @@ struct Line(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return p._boundary_meets(self)
 
     def intersects(self, c: Circle) -> Bool:
-        return c.contains(self.closest_point(c.position))
+        return _overlaps(self, c)
 
     def intersects(self, c: Capsule) -> Bool:
-        return _spine_distance(c._spine(), self) <= c.r
+        return _overlaps(self, c)
 
     def intersects(self, e: Ellipse) -> Bool:
         # Mapped onto the unit circle with `e`, the line is still one.
@@ -193,28 +173,10 @@ struct Line(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return e._to_unit(self).intersects(_UNIT_CIRCLE)
 
     def intersects(self, r: Rectangle) -> Bool:
-        if r._radius() > 0.0:
-            return self.intersects(r._outline())
-        if r.contains(self.start) or r.contains(self.end):
-            return True
-        var pts = r._points()
-        for i in range(4):
-            var edge = Line(pts[i], pts[(i + 1) % 4])
-            if self.intersects(edge):
-                return True
-        return False
+        return _overlaps(self, r)
 
     def intersects(self, t: Triangle) -> Bool:
-        if t._radius() > 0.0:
-            return self.intersects(t._outline())
-        if t.contains(self.start) or t.contains(self.end):
-            return True
-        var pts = t._points()
-        for i in range(3):
-            var edge = Line(pts[i], pts[(i + 1) % 3])
-            if self.intersects(edge):
-                return True
-        return False
+        return _overlaps(self, t)
 
     def closest_point(self, p: Point2D) -> Point2D:
         return _closest_on_segment(p, self.start, self.end)
@@ -233,3 +195,9 @@ struct Line(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         moved.start = moved.start + delta
         moved.end = moved.end + delta
         return moved^
+
+    comptime _corner_count = 2
+
+    def _core(self) -> _Core[Self._corner_count]:
+        """The segment itself, grown by nothing."""
+        return _Core[2]([self.start, self.end], 0.0)
