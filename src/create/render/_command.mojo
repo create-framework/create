@@ -205,8 +205,8 @@ struct RenderCommand(Copyable, Movable):
     reach back and change what an already-recorded command paints."""
     var clip: Int
     """The id of the innermost `canvas.clip` this was rendered under — an
-    index into `Backend.clips`, one past — or 0 for none. Stamped by
-    `Backend.record`, so no builder below has to know about clips."""
+    index into `CommandBuffer.clips`, one past — or 0 for none. Stamped by
+    `CommandBuffer.record`, so no builder below has to know about clips."""
     var stroke_grow: Float64
     """How far `aligned_stroke` grew the shape to move its stroke out, in
     local units; 0 for a command as recorded. `_fill_box` takes it back off

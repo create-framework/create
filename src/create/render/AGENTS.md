@@ -13,6 +13,7 @@ and the layering rules.
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
 | `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
+| `_command_buffer.mojo` | `CommandBuffer` — the frame being recorded: its commands, its `canvas.clip` levels, the record count reads are cached against, and the opening clear `autoclear` switches |
 | `_captures.mojo` | `Captures` — the `save_image`, `save_screenshot` and recording requests and the recording's state (GIF writer, slot timing); the backend does their replays |
 | `_cpu_replay.mojo` | `CpuReplay` — commands rasterised onto a `Surface`: the CPU backend's presents and every capture and read; shadows, clips and antialiasing around the rasterisers. Handed the images, clips and antialiasing by `Backend.replay`, as `GLRenderer.render` is |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_cpu_replay.mojo` |
@@ -102,7 +103,7 @@ transform stack, style and camera deliberately don't.
 
 A frame-wide setting applies to the whole frame it is set in, because nothing is rasterised until
 present: `_render_letterbox` reads `letterbox_color` at the end of the frame, and both replays read
-`antialiasing` when they run. `canvas.antialiasing` bumps `Backend.recorded` so a cached read
+`antialiasing` when they run. `canvas.antialiasing` bumps `CommandBuffer.recorded` so a cached read
 replays at the new level.
 
 The camera is folded into `RenderCommand.transform`; nothing below `Canvas` knows it exists.
@@ -116,10 +117,10 @@ needs whichever loop presents — recording, text measurement, images, reads, ca
 `Backend`, and reads and captures replay on the CPU either way.
 
 The autoclear is a recorded `ClearPayload`, so every path handles it: the GPU turns it into `glClear`,
-an opaque `canvas.background()` replaces it via `Backend.record_clear` (`_clear_is_opaque`), and a
+an opaque `canvas.background()` replaces it via `CommandBuffer.record_clear` (`_clear_is_opaque`), and a
 transparent `save_image` masks it out. `Canvas`'s constructor records it through
-`Backend.open_with_clear`, which sets `autoclear_head`: the frame's first command is still that
-clear. `canvas.autoclear(...)` calls `Backend.set_autoclear`, which takes it back out (only while
+`CommandBuffer.open_with_clear`, which sets `autoclear_head`: the frame's first command is still that
+clear. `canvas.autoclear(...)` calls `CommandBuffer.set_autoclear`, which takes it back out (only while
 `autoclear_head` holds — a `background()` that replaced it stays) or inserts it at index 0, and
 bumps `recorded` either way.
 
@@ -275,10 +276,10 @@ capsule's true bounds. A zero `r` records a polygon of no vertices, which draws 
 
 `canvas.clip(region, invert)` records no command. It draws the `Region` into a `RegionCapture`,
 a `DrawTarget` that keeps the region's `shape_command` in `clip_style()` instead of recording it,
-so a clip and a fill of a shape are built by the same code. `ClipGuard` calls `Backend.push_clip`, which
-appends a `_Clip` to `Backend.clips` and makes it current (`Backend.clip`). The clip holds the
+so a clip and a fill of a shape are built by the same code. `ClipGuard` calls `CommandBuffer.push_clip`, which
+appends a `_Clip` to `CommandBuffer.clips` and makes it current (`CommandBuffer.clip`). The clip holds the
 region as an ordinary `RenderCommand` in `clip_style()` (an opaque white fill and nothing else),
-its parent and `invert`. `Backend.record`/`record_clear` stamp the current id on every command
+its parent and `invert`. `CommandBuffer.record`/`record_clear` stamp the current id on every command
 (`RenderCommand.clip`, 0 for none), so no command builder knows about clips. The guard restores the
 previous id; `clips` resets with the command buffer. A clipped clear never replaces the clear before
 it.

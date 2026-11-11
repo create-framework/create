@@ -61,8 +61,8 @@ def test_a_read_drops_the_commands_it_replayed() raises -> None:
     for i in range(5):
         _square(canvas, (Float64(i * 10 - 20), 0), Color.BLUE)
         _ = canvas.color_at((0, 0))
-        assert_equal(len(canvas._state._backend.commands), 0)
-    assert_equal(len(canvas._state._backend.clips), 0)
+        assert_equal(len(canvas._state._backend.buffer.commands), 0)
+    assert_equal(len(canvas._state._backend.buffer.clips), 0)
 
 
 def test_drawing_after_a_read_inside_a_clip_stays_clipped() raises -> None:
