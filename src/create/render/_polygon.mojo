@@ -54,26 +54,13 @@ from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
 
 from ._command import PolygonPayload, RenderCommand
-from ._curve import PlacedMask, quads_shadow_mask
+from ._pieces import Pieces
 from ._curve import circle_segments
 from ._transform import stroke_thickness_px, pixel_scale
 
 comptime _NOTHING = 0
 comptime _FILL = 1
 comptime _STROKE = 2
-
-
-struct PolygonQuads(Movable):
-    """A polygon's device-space tiling: four corners per quad, in order
-    around the quad's edge, quad after quad. `fill` is painted in the fill
-    colour, `stroke` in the stroke colour; the two never overlap."""
-
-    var fill: List[Point2D]
-    var stroke: List[Point2D]
-
-    def __init__(out self):
-        self.fill = List[Point2D]()
-        self.stroke = List[Point2D]()
 
 
 struct _Edge(Copyable, ImplicitlyCopyable, Movable):
@@ -118,9 +105,7 @@ struct _Edge(Copyable, ImplicitlyCopyable, Movable):
         return self.x0 + self.slope * (y - self.y0)
 
 
-def polygon_quads(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64
-) -> PolygonQuads:
+def polygon_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
     """`c` (a `PolygonPayload`) mapped by `m` and tiled into fill and stroke
     quads.
 
@@ -131,7 +116,7 @@ def polygon_quads(
     if the fill is visible, else the stroke's. Its `grow` offsets the
     polygon by that many local units first, outwards if positive.
     """
-    var out = PolygonQuads()
+    var out = Pieces()
     ref polygon = c.payload[PolygonPayload]
     var vertices = polygon.vertices.copy()
     # Fewer than three encloses nothing; not even a shadow grows from it.
@@ -283,27 +268,10 @@ def polygon_quads(
             run_start = i
         y_lo = y_hi
 
-    if t > 0.0 and len(out.fill) == 0 and c.paint._fill_visible():
-        out.fill = out.stroke^
-        out.stroke = List[Point2D]()
+    if t > 0.0 and len(out.fill_quads) == 0 and c.paint._fill_visible():
+        out.fill_quads = out.stroke_quads^
+        out.stroke_quads = List[Point2D]()
     return out^
-
-
-def polygon_shadow_mask(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
-) -> PlacedMask:
-    """The shadow command `c` (a `PolygonPayload`, one colour) mapped by `m`,
-    rasterised into an alpha mask and blurred by `blur` device pixels."""
-    var q = polygon_quads(c, m, scale)
-    # Only what the command paints: a stroke-only ring leaves its middle.
-    var corners = List[Point2D]()
-    if c.paint._fill_visible():
-        for p in q.fill:
-            corners.append(p)
-    if c.paint._stroke_visible():
-        for p in q.stroke:
-            corners.append(p)
-    return quads_shadow_mask(corners, blur)
 
 
 @fieldwise_init
@@ -357,7 +325,7 @@ def _offset_holds(inside: Bool, banded: Bool, offset: Float64) -> Bool:
 
 
 def _emit(
-    mut out: PolygonQuads,
+    mut out: Pieces,
     cls: Int,
     left: _Edge,
     right: _Edge,
@@ -372,9 +340,9 @@ def _emit(
     var c = Point2D(mat_apply(m, right.x_at(y_hi), y_hi))
     var d = Point2D(mat_apply(m, left.x_at(y_hi), y_hi))
     if cls == _FILL:
-        _append_quad(out.fill, a, b, c, d)
+        _append_quad(out.fill_quads, a, b, c, d)
     else:
-        _append_quad(out.stroke, a, b, c, d)
+        _append_quad(out.stroke_quads, a, b, c, d)
 
 
 def _add_loop(mut edges: List[_Edge], points: List[Point2D], layer: Int):

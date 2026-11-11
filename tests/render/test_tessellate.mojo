@@ -36,16 +36,13 @@ from create.render._tessellate import (
     MODE_TEXTURE,
     VertexBuffer,
     circle_segments,
-    emit_bezier,
     emit_blurred_shadow,
     emit_circle,
     emit_letterbox,
-    emit_line,
     emit_rect,
-    emit_polygon,
-    emit_sector,
     emit_image,
-    emit_triangle,
+    emit_pieces,
+    emit_plain_triangle,
 )
 from create.math.matrix import rotate, scale
 from create.render.autoscale import Autoscale
@@ -54,8 +51,18 @@ from create.render._viewport import Viewport
 from create.render._curve import bezier_device_points, stroke_quads
 from create.render._sector import sector_quads
 from create.render._polygon import polygon_quads
+from create.render._lower import is_plain_triangle, shape_pieces
 from create.geometry.bezier import Bezier
 from create.geometry.geometry import Polygon
+
+
+def _emit(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
+    """A lowered kind as `GLRenderer._one` emits it."""
+    if is_plain_triangle(c):
+        emit_plain_triangle(vb, c)
+    else:
+        emit_pieces(vb, c, shape_pieces(c, c.transform, scale))
+
 
 comptime _FLOATS = 13
 """Mirrors `_tessellate._VERTEX_FLOATS`; spelled out so a change to the vertex
@@ -242,9 +249,7 @@ def test_a_line_is_one_quad_of_the_stroke_thickness() raises -> None:
     s.stroke_enabled = True
     s.stroke_thickness = 4
     s.stroke_color = Color.BLUE
-    emit_line(
-        vb, line_command(v.base_matrix(), s, -10.0, 0.0, 10.0, 0.0), v.scale
-    )
+    _emit(vb, line_command(v.base_matrix(), s, -10.0, 0.0, 10.0, 0.0), v.scale)
     assert_equal(vb.count(), 6)
     var min_y = _y(vb, 0)
     var max_y = _y(vb, 0)
@@ -258,7 +263,7 @@ def test_an_unstroked_line_emits_nothing() raises -> None:
     # A line has no interior, so a fill-only style has nothing to render.
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
-    emit_line(
+    _emit(
         vb,
         line_command(v.base_matrix(), _plain(), -10.0, 0.0, 10.0, 0.0),
         v.scale,
@@ -277,7 +282,7 @@ def test_a_bezier_is_two_triangles_per_stroke_quad() raises -> None:
         s,
         Bezier((-40.0, -30.0), (-40.0, 60.0), (40.0, -60.0), (40.0, 30.0)),
     )
-    emit_bezier(vb, c, v.scale)
+    _emit(vb, c, v.scale)
     var corners = stroke_quads(bezier_device_points(c, c.transform), 3.0)
     assert_true(len(corners) > 4)
     assert_equal(vb.count(), 6 * (len(corners) // 4))
@@ -293,14 +298,16 @@ def test_a_sector_is_two_triangles_per_quad() raises -> None:
     s.stroke_enabled = True
     s.stroke_thickness = 3
     var c = sector_command(v.base_matrix(), s, 0.0, 0.0, 40.0, 0.5, 4.0)
-    emit_sector(vb, c, v.scale)
+    _emit(vb, c, v.scale)
     var quads = sector_quads(c, c.transform, v.scale)
-    assert_true(len(quads.fill) > 0)
-    assert_true(len(quads.stroke) > 0)
-    assert_equal(vb.count(), 6 * ((len(quads.fill) + len(quads.stroke)) // 4))
+    assert_true(len(quads.fill_quads) > 0)
+    assert_true(len(quads.stroke_quads) > 0)
+    assert_equal(
+        vb.count(), 6 * ((len(quads.fill_quads) + len(quads.stroke_quads)) // 4)
+    )
     # Fill first, its corners the CPU's, vertex for vertex.
-    assert_equal(_x(vb, 0), Float64(Float32(quads.fill[0].x)))
-    assert_equal(_y(vb, 1), Float64(Float32(quads.fill[1].y)))
+    assert_equal(_x(vb, 0), Float64(Float32(quads.fill_quads[0].x)))
+    assert_equal(_y(vb, 1), Float64(Float32(quads.fill_quads[1].y)))
 
 
 def test_a_sector_emits_only_its_visible_parts() raises -> None:
@@ -308,10 +315,10 @@ def test_a_sector_emits_only_its_visible_parts() raises -> None:
     var v = _viewport(100, 100)
     # `_plain` fills only.
     var c = sector_command(v.base_matrix(), _plain(), 0.0, 0.0, 40.0, 0.5, 4.0)
-    emit_sector(vb, c, v.scale)
+    _emit(vb, c, v.scale)
     var quads = sector_quads(c, c.transform, v.scale)
-    assert_equal(len(quads.stroke), 0)
-    assert_equal(vb.count(), 6 * (len(quads.fill) // 4))
+    assert_equal(len(quads.stroke_quads), 0)
+    assert_equal(vb.count(), 6 * (len(quads.fill_quads) // 4))
 
 
 def _star_command(v: Viewport, style: Style) -> RenderCommand:
@@ -326,14 +333,16 @@ def test_a_polygon_is_two_triangles_per_quad() raises -> None:
     s.stroke_enabled = True
     s.stroke_thickness = 3
     var c = _star_command(v, s)
-    emit_polygon(vb, c, v.scale)
+    _emit(vb, c, v.scale)
     var quads = polygon_quads(c, c.transform, v.scale)
-    assert_true(len(quads.fill) > 0)
-    assert_true(len(quads.stroke) > 0)
-    assert_equal(vb.count(), 6 * ((len(quads.fill) + len(quads.stroke)) // 4))
+    assert_true(len(quads.fill_quads) > 0)
+    assert_true(len(quads.stroke_quads) > 0)
+    assert_equal(
+        vb.count(), 6 * ((len(quads.fill_quads) + len(quads.stroke_quads)) // 4)
+    )
     # Fill first, its corners the CPU's, vertex for vertex.
-    assert_equal(_x(vb, 0), Float64(Float32(quads.fill[0].x)))
-    assert_equal(_y(vb, 1), Float64(Float32(quads.fill[1].y)))
+    assert_equal(_x(vb, 0), Float64(Float32(quads.fill_quads[0].x)))
+    assert_equal(_y(vb, 1), Float64(Float32(quads.fill_quads[1].y)))
 
 
 def test_a_polygon_emits_only_its_visible_parts() raises -> None:
@@ -341,16 +350,16 @@ def test_a_polygon_emits_only_its_visible_parts() raises -> None:
     var v = _viewport(100, 100)
     # `_plain` fills only.
     var c = _star_command(v, _plain())
-    emit_polygon(vb, c, v.scale)
+    _emit(vb, c, v.scale)
     var quads = polygon_quads(c, c.transform, v.scale)
-    assert_equal(len(quads.stroke), 0)
-    assert_equal(vb.count(), 6 * (len(quads.fill) // 4))
+    assert_equal(len(quads.stroke_quads), 0)
+    assert_equal(vb.count(), 6 * (len(quads.fill_quads) // 4))
 
 
 def test_an_unstroked_bezier_emits_nothing() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
-    emit_bezier(
+    _emit(
         vb,
         bezier_command(
             v.base_matrix(),
@@ -371,7 +380,7 @@ def test_an_stroked_triangle_is_a_shrunk_triangle_in_a_ring_of_quads() raises ->
     var v = _viewport(100, 100)
     var s = _plain()
     s.stroke_enabled = True
-    emit_triangle(
+    _emit(
         vb,
         triangle_command(
             v.base_matrix(), s, 0.0, 10.0, -10.0, -10.0, 10.0, -10.0

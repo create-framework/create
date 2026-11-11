@@ -35,34 +35,37 @@ from create.math.matrix import Matrix, _apply as mat_apply
 from create.math.point2d import Point2D
 
 from ._command import RenderCommand, TrianglePayload
+from ._pieces import Pieces
 from ._curve import stroke_quads
 from create.geometry._fillet import triangle_corner_radius
 from ._tessellate import _arc_segments
 from ._transform import stroke_thickness_px, pixel_scale
 
 
-struct TrianglePieces(Movable):
-    """A triangle's fill and stroke in device space, ready to rasterise."""
-
-    var fill: List[Point2D]
-    """The fill as one convex polygon, in order round its edge; empty when
-    the stroke leaves no room for it."""
-    var ring: List[Point2D]
-    """The stroke as convex quads, four corners each, in order around the
-    quad's edge; a corner repeats where a piece is a triangle."""
-
-    def __init__(out self):
-        self.fill = List[Point2D]()
-        self.ring = List[Point2D]()
-
-
 def triangle_pieces(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
-) -> TrianglePieces:
-    """`c`'s fill and stroke (`c` a `TrianglePayload`) as device pieces,
-    whichever of the two its style shows; the caller draws what is visible.
-    Without a stroke the fill is the whole (rounded) triangle."""
-    var out = TrianglePieces()
+) -> Pieces:
+    """`c`'s fill and stroke (`c` a `TrianglePayload`) as device pieces:
+    the fill one convex polygon (none when the stroke leaves no room for
+    it), the stroke a ring of quads."""
+    var out = Pieces()
+    var fill = List[Point2D]()
+    _tile_triangle(c, m, scale, fill, out.stroke_quads)
+    if len(fill) >= 3:
+        out.fill_polygons.append(fill^)
+    return out^
+
+
+def _tile_triangle(
+    c: RenderCommand,
+    m: Matrix[3, 3],
+    scale: Float64,
+    mut fill: List[Point2D],
+    mut ring: List[Point2D],
+):
+    """Append `c`'s fill outline to `fill` and its stroke's quads to
+    `ring`, whichever of the two its style shows; the caller keeps what is
+    visible. Without a stroke the fill is the whole (rounded) triangle."""
     # Fixed-size and on the stack: this runs once per triangle drawn.
     var xs = Array[Float64, 3](fill=0.0)
     var ys = Array[Float64, 3](fill=0.0)
@@ -100,8 +103,8 @@ def triangle_pieces(
             var path = List[Point2D](capacity=4)
             for i in range(4):
                 path.append(mat_apply(m, xs[i % 3], ys[i % 3]))
-            out.ring = stroke_quads(path, t * sf)
-        return out^
+            ring = stroke_quads(path, t * sf)
+        return
 
     # Edge `i` runs from corner `i` to `i + 1`, so corner `i` faces edge
     # `i + 1`, whose length weights it in the incentre.
@@ -173,22 +176,22 @@ def triangle_pieces(
         if t == 0.0:
             for i in range(3):
                 for p in outer[i]:
-                    out.fill.append(p)
-            return out^
+                    fill.append(p)
+            return
         for i in range(3):
             var j = (i + 1) % 3
             var last = len(outer[i]) - 1
             if t < r:
                 for step in range(last):
                     _quad(
-                        out.ring,
+                        ring,
                         outer[i][step],
                         outer[i][step + 1],
                         inner[i][step + 1],
                         inner[i][step],
                     )
                 _quad(
-                    out.ring,
+                    ring,
                     outer[i][last],
                     outer[j][0],
                     inner[j][0],
@@ -197,14 +200,14 @@ def triangle_pieces(
             else:
                 for step in range(last):
                     _quad(
-                        out.ring,
+                        ring,
                         outer[i][step],
                         outer[i][step + 1],
                         sharp_inner[i],
                         sharp_inner[i],
                     )
                 _quad(
-                    out.ring,
+                    ring,
                     outer[i][last],
                     outer[j][0],
                     sharp_inner[j],
@@ -213,27 +216,27 @@ def triangle_pieces(
         if t < r:
             for i in range(3):
                 for p in inner[i]:
-                    out.fill.append(p)
+                    fill.append(p)
         elif k > 0.0:
             for p in sharp_inner:
-                out.fill.append(p)
-        return out^
+                fill.append(p)
+        return
 
     if t == 0.0:
         for i in range(3):
-            out.fill.append(mat_apply(m, xs[i], ys[i]))
-        return out^
+            fill.append(mat_apply(m, xs[i], ys[i]))
+        return
     # Sharp: the outer edge is the triangle's own corners.
     var corners = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
     for i in range(3):
         corners[i] = mat_apply(m, xs[i], ys[i])
     for i in range(3):
         var j = (i + 1) % 3
-        _quad(out.ring, corners[i], corners[j], sharp_inner[j], sharp_inner[i])
+        _quad(ring, corners[i], corners[j], sharp_inner[j], sharp_inner[i])
     if k > 0.0:
         for p in sharp_inner:
-            out.fill.append(p)
-    return out^
+            fill.append(p)
+    return
 
 
 def _quad(
