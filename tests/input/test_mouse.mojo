@@ -173,5 +173,28 @@ def test_focus_lost_releases_held_buttons() raises -> None:
     assert_true(context.mouse.released())
 
 
+def test_movement_adds_up_a_frames_motion_y_up() raises -> None:
+    var context = Context()
+    var events: List[Event] = [
+        MouseMoved(13.0, 16.0, 3.0, -4.0),
+        MouseMoved(14.0, 16.0, 1.0, 0.0),
+    ]
+    _ = apply_events(events, Viewport(), context)
+    assert_equal(context.mouse.movement, Vector2D(4.0, 4.0))
+
+    _ = apply_events([], Viewport(), context)
+    assert_equal(context.mouse.movement, Vector2D(0.0, 0.0))
+
+
+def test_movement_counts_where_the_position_stops() raises -> None:
+    # Locked, or pinned at the window's edge: SDL holds the position but
+    # still reports the motion, which is what a mouse-look camera turns by.
+    var context = Context()
+    var events: List[Event] = [MouseMoved(0.0, 0.0, 5.0, 0.0)]
+    _ = apply_events(events, Viewport(), context)
+    assert_equal(context.mouse.position, Point2D(0.0, 0.0))
+    assert_equal(context.mouse.movement, Vector2D(5.0, 0.0))
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

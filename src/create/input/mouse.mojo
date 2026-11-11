@@ -30,6 +30,12 @@ struct Mouse(Copyable, Movable, Writable):
     var button: MouseButton
     """The most recent button pressed (`MouseButton.NONE` before any). Kept
     until the next press."""
+    var movement: Vector2D
+    """How far the pointer moved this frame, in screen units, y up: zero on
+    a frame it stayed still. It keeps counting where `position` stops — at
+    the screen's edge, and while `context.lock_mouse(True)` holds the
+    pointer — so it is what a first-person camera or an endless drag
+    turns by."""
     var wheel: Vector2D
     """This frame's scroll, zero on a frame without any."""
     var press_position: Point2D
@@ -46,6 +52,7 @@ struct Mouse(Copyable, Movable, Writable):
     def __init__(out self):
         self.position = Point2D(0, 0)
         self.button = MouseButton.NONE
+        self.movement = Vector2D(0, 0)
         self.wheel = Vector2D(0, 0)
         self.press_position = Point2D(0, 0)
         self._held = 0
@@ -71,6 +78,8 @@ struct Mouse(Copyable, Movable, Writable):
             self.position,
             ", button=",
             self.button,
+            ", movement=",
+            self.movement,
             ", wheel=",
             self.wheel,
             ", press_position=",
@@ -83,10 +92,12 @@ struct Mouse(Copyable, Movable, Writable):
         a frame, before that frame's events."""
         self._pressed = 0
         self._released = 0
+        self.movement = Vector2D(0, 0)
         self.wheel = Vector2D(0, 0)
 
-    def _move(mut self, position: Point2D):
+    def _move(mut self, position: Point2D, movement: Vector2D = Vector2D.ZERO):
         self.position = position
+        self.movement += movement
 
     def _button_down(mut self, button: MouseButton, position: Point2D):
         self.button = button

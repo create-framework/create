@@ -22,6 +22,8 @@ from ._sdl import (
     text_input_text,
     mouse_x,
     mouse_y,
+    mouse_xrel,
+    mouse_yrel,
     button_index,
     button_x,
     button_y,
@@ -76,14 +78,31 @@ struct TextInput(ImplicitlyCopyable, Movable):
     var text: String
 
 
-@fieldwise_init
 struct MouseMoved(ImplicitlyCopyable, Movable):
     """Pointer positions are SDL's logical window coordinates, fractional on
     a scaled display and kept so: rounding here would quantise the pointer to
-    whole logical units, several pixels apart on a HiDPI screen."""
+    whole logical units, several pixels apart on a HiDPI screen.
+
+    `x_motion`/`y_motion` are how far it moved, in the same units, y down.
+    They keep counting at the window's edge and while the pointer is locked,
+    where the position stops."""
 
     var x: Float64
     var y: Float64
+    var x_motion: Float64
+    var y_motion: Float64
+
+    def __init__(
+        out self,
+        x: Float64,
+        y: Float64,
+        x_motion: Float64 = 0.0,
+        y_motion: Float64 = 0.0,
+    ):
+        self.x = x
+        self.y = y
+        self.x_motion = x_motion
+        self.y_motion = y_motion
 
 
 @fieldwise_init
@@ -188,7 +207,14 @@ def translate_event(kind: UInt32, ptr: Pointer[UInt8, _]) -> Optional[Event]:
     elif kind == SDL_EVENT_WINDOW_FOCUS_LOST:
         return Event(FocusLost())
     elif kind == SDL_EVENT_MOUSE_MOTION:
-        return Event(MouseMoved(Float64(mouse_x(ptr)), Float64(mouse_y(ptr))))
+        return Event(
+            MouseMoved(
+                Float64(mouse_x(ptr)),
+                Float64(mouse_y(ptr)),
+                Float64(mouse_xrel(ptr)),
+                Float64(mouse_yrel(ptr)),
+            )
+        )
     elif kind == SDL_EVENT_MOUSE_BUTTON_DOWN:
         return Event(
             MouseButtonDown(
