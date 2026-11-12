@@ -8,8 +8,7 @@
 
 ---
 
-**Create** is a creative coding library for rapid prototyping and interactive graphics, inspired by Processing but built to scale —
-from sketch to game, prototype to full application. It provides a clean, modular API while taking full advantage of Mojo's performance and language features.
+**Create** is a creative coding library for Mojo, inspired by Processing. It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations, visualizations and more complex interactive art.
 
 ## Example Programs
 
@@ -34,15 +33,19 @@ from create import *
 
 @fieldwise_init
 struct MyApp(Program):
+    var greeting: String
+    var position: Point2D
+
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> MyApp:
         # Called once: set initial application state and draw the first frame
-        return MyApp()
+        return MyApp("Hello, world!", (0, 0))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # Called once per frame: handle input, modify state, and draw to the screen
+        self.position = context.mouse.position
         canvas.font_size(48)
-        canvas.text("Hello, world!", (0, 0))
+        canvas.text(self.greeting, self.position)
 
 
 def main() raises:
