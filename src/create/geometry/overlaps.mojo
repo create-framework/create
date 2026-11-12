@@ -20,7 +20,7 @@ from .triangle import Triangle
 # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, is a
 # convex core grown by a radius, so any two of them overlap exactly when
 # their cores come within the two radii (`_overlaps`): one test for all
-# sixteen pairs. The rest need their own. A `Sector` is curved, and past a
+# sixteen pairs, save the shortcut for two sharp rectangles. The rest need their own. A `Sector` is curved, and past a
 # half turn not even convex, so against a polygon or another sector it
 # takes the test any two regions share: one holds a point of the other (the
 # tip, a vertex), or their boundaries cross (`_polygon_overlaps_sector`).
@@ -78,6 +78,15 @@ def overlaps(a: Rectangle, b: Capsule) -> Bool:
 
 
 def overlaps(a: Rectangle, b: Rectangle) -> Bool:
+    # The commonest test in a game: two sharp rectangles overlap when their
+    # spans do along both axes, four comparisons and no polygon test.
+    if a._radius() == 0.0 and b._radius() == 0.0:
+        return (
+            a.left() <= b.right()
+            and b.left() <= a.right()
+            and a.bottom() <= b.top()
+            and b.bottom() <= a.top()
+        )
     return _overlaps(a, b)
 
 
