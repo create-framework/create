@@ -23,6 +23,20 @@ Then coloured triangles grow into place on top of it, forming the **Create** log
 
 You can run the program yourself from the root of this repo using `pixi run example logo` (`logo` being the name of this specific example). The other programs under [examples/](examples/) can be run the same way. Run `pixi run example` with no name to list them all.
 
+## Features
+
+- **Shapes and curves**: rectangles, circles, ellipses, capsules, triangles, sectors and polygons (rounded corners optional), plus lines, arcs, Béziers and splines ([polygons](examples/polygons/main.mojo), [spline](examples/spline/main.mojo))
+- **Styling**: fills, strokes, gradients, drop and inset shadows, tint, opacity and blend modes ([gradients](examples/gradients/main.mojo), [shadows](examples/shadows/main.mojo), [blending](examples/blending/main.mojo))
+- **Text**: any font, with weights and italics; Noto Sans built in ([poster](examples/poster/main.mojo))
+- **Images and animation**: PNG, JPEG and BMP images, sprite animation, tweens and easing curves ([image](examples/image/main.mojo), [animation](examples/animation/main.mojo), [tween](examples/tween/main.mojo))
+- **Input**: keyboard, mouse and gamepads, plus text entry ([gamepad](examples/gamepad/main.mojo), [typing](examples/typing/main.mojo))
+- **Collisions**: overlap, containment and intersection tests between every shape ([collisions](examples/collisions/main.mojo))
+- **Camera and transforms**: a world camera, a fixed overlay for the HUD, and clipping ([camera](examples/camera/main.mojo), [transforms](examples/transforms/main.mojo), [clipping](examples/clipping/main.mojo))
+- **Audio**: WAV, OGG, FLAC and MP3 playback ([audio](examples/audio/main.mojo))
+- **Pixels and capture**: read back what has been drawn, draw offscreen, and record GIFs ([pixels](examples/pixels/main.mojo), [offscreen](examples/offscreen/main.mojo), [capture](examples/capture/main.mojo))
+- **Data**: CSV/TSV tables and JSON ([data](examples/data/main.mojo))
+- **Randomness and noise**: seeded random numbers and smooth noise ([noise](examples/noise/main.mojo))
+
 ## How a Program Works
 
 Below is a small "Hello, world!" program, which can be run from the repo root using `pixi run example hello`:
