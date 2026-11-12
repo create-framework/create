@@ -3,7 +3,7 @@ authors = ["Karl Theodor Ruby <karl.ruby@tuta.com>"]
 channels = ["conda-forge", "https://conda.modular.com/max"]
 name = "create"
 platforms = ["linux-64", "osx-arm64"]
-version = "0.1.0"
+version = "0.1.1"
 
 [activation]
 scripts = ["scripts/activate.sh"]
