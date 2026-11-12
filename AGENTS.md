@@ -53,6 +53,7 @@ pixi run test --shard 2/4                 # every 4th file from the 2nd; CI runs
 pixi run precompile                       # type-check the library into build/create.mojoc
 pixi run build-examples                   # type-check every example and benchmark; a warning fails it
 pixi run check-standalone                 # a `mojo build` program, run outside the environment
+pixi run check-package                    # the conda package from recipe/, built and tested as installed
 pixi run format                           # 80 columns, enforced by pre-commit
 pixi run setup                            # once per clone: git hooks + blame ignore-revs
 ```
@@ -69,7 +70,7 @@ Two tiers of automated checks, and a third run by hand:
 | Where | Runs |
 |---|---|
 | `pre-commit` hook (after `pixi run setup`) | Formatting check on staged `.mojo` files, then builds `tests/core/test_smoke.mojo`. Constant cost |
-| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the test suite — a GL test that skips fails the job. Linux only |
+| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job. Linux only |
 | macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI — a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet — so run it before relying on a change that could differ there (windowing, GL, library search) |
 
 The hook and CI skip their checks when every changed path is inert (`*.md`, `LICENSE`, agent/editor config) —
@@ -77,7 +78,7 @@ the allowlist is in `.githooks/_inert.sh`, read by the hook and the workflow ali
 
 **Workflow.** `main` is protected by a ruleset: no direct pushes, no force pushes, no deletion,
 and a linear history. Every change lands as a pull request, merged once the required check `ci`
-passes — it passes when `linux-format`, `linux-precompile`, `linux-examples` and the four test
+passes — it passes when `linux-format`, `linux-precompile`, `linux-examples`, `linux-package` and the four test
 shards `linux-tests-1`…`linux-tests-4` all passed, or were skipped for an inert change; no approval
 is required. **Rebase and merge** is the only merge method enabled: squash and merge commits are
 off.
@@ -101,6 +102,49 @@ reaches (catches API drift, not an uncalled broken function); `mojo precompile` 
 
 `mojo format`'s grammar is narrower than the compiler's and will abort a commit: `where` is
 reserved (not usable as a name), and `;` statement separators don't parse.
+
+## Releasing
+
+A release is an annotated tag `vX.Y.Z` on a commit of `main` with a GitHub release, then the
+package on the [modular-community](https://github.com/modular/modular-community) conda channel,
+which is what the README's `pixi add mojo create` installs.
+
+**The package recipe.** [recipe/recipe.yaml](recipe/recipe.yaml) builds the package from the
+checkout; `pixi run check-package` (CI's `linux-package`) builds it with rattler-build, in its own
+`package` environment at the version modular-community's CI uses, and runs
+[recipe/test.mojo](recipe/test.mojo) against the installed package. It is the only check that sees
+Create as installed rather than as source. The published recipe, `recipes/create/` in
+modular-community, is the same file with `context` and `source` pointing at the release tarball:
+change the build script, requirements and test here first, then carry them over at the next
+release.
+- **One Mojo minor version.** A `.mojoc` loads only on the compiler that built it, so the recipe
+  builds against `mojo-compiler` at the minor version `pixi.toml` pins and the run requirement
+  allows that minor only (`upper_bound='x.x'`). Moving Mojo moves `pixi.toml`, `recipe/` and the
+  published recipe together.
+- **Fonts live in `share/create/fonts`** of the installed environment, where
+  `_find_packaged_font` looks when they aren't beside the source: a package's baked path names its
+  build machine. Keep the two in step.
+
+**Steps:**
+
+1. Bump `version` in `pixi.toml` in a PR and merge it.
+2. Tag what merged, by the remote's `main` rather than whatever is checked out:
+   ```bash
+   git fetch origin
+   git tag -a vX.Y.Z -m "Create X.Y.Z" origin/main
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --title "Create X.Y.Z" --verify-tag --notes-file NOTES.md
+   ```
+3. In a fork of modular-community, branched from upstream's `main`, update
+   `recipes/create/recipe.yaml`: `version`, the tarball's `sha256`
+   (`curl -sL https://github.com/create-framework/create/archive/refs/tags/vX.Y.Z.tar.gz | sha256sum`),
+   build `number: 0`, and any change from `recipe/`. Copy `recipe/test.mojo` over too.
+4. Check it on the fork first. Upstream's build job runs only on a pull request labelled
+   `OK to test`, which its maintainers add, so a manual run skips it. Instead, push upstream's `main` to
+   the fork as a branch, open a pull request into that branch, and give it the label. Delete
+   that branch once the build passes on all three platforms.
+5. Open the pull request to `modular/modular-community`, titled `Update create to X.Y.Z` (it is
+   squash-merged under its title), with the checklist from its template filled in.
 
 ## Code Conventions
 
