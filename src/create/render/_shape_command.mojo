@@ -30,8 +30,9 @@ from create.geometry._fillet import (
     rounded_vertices,
     sector_corner_radii,
 )
-from create.math.matrix import Matrix
+from create.math.matrix import Matrix, rotate, translate
 from create.math.point2d import Point2D
+from create.math.vector2d import Vector2D
 
 from ._clip import clip_style
 from ._command import (
@@ -54,6 +55,18 @@ from ._transform import pixel_scale
 def shape_command(
     r: Rectangle, transform: Matrix[3, 3], style: Style, scale: Float64
 ) -> RenderCommand:
+    """A turned rectangle is the upright one turned about its centre, so its
+    gradient, rounding and stroke turn with it, as under `canvas.transform`."""
+    if r.rotation != 0.0:
+        return rect_command(
+            transform @ translate(Vector2D(r.position)) @ rotate(r.rotation),
+            style,
+            0.0,
+            0.0,
+            r.w,
+            r.h,
+            r.corner_radius,
+        )
     return rect_command(
         transform,
         style,
