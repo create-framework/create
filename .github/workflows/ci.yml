@@ -62,11 +62,17 @@ jobs:
         include:
           - name: linux-format
             run: pixi run format && git diff --exit-code
+            no-compile-cache: true
           - name: linux-precompile
             run: pixi run precompile
           # Examples, then a built program run outside the environment.
           - name: linux-examples
             run: pixi run build-examples && pixi run check-standalone
+          # The conda package built and tested as installed. rattler-build
+          # compiles in environments of its own, so no compile cache.
+          - name: linux-package
+            run: pixi run check-package
+            no-compile-cache: true
           # The suite in four shards on four runners: built cold, after a
           # library change, it is about an hour of CPU, three times what one
           # runner gets through in the time the other checks take. GL tests
@@ -97,7 +103,7 @@ jobs:
       # content-keyed, so the latest cache for this toolchain serves any
       # commit; pull requests read main's.
       - name: Restore the Mojo compile cache
-        if: matrix.name != 'linux-format'
+        if: ${{ !matrix.no-compile-cache }}
         uses: actions/cache/restore@v6
         with:
           path: ${{ env.MOJO_CACHE }}
@@ -106,17 +112,17 @@ jobs:
       # Every entry is marked unread, so those this run doesn't read can be
       # dropped before saving and the cache doesn't grow with each commit.
       - name: Mark the cache entries unread
-        if: matrix.name != 'linux-format'
+        if: ${{ !matrix.no-compile-cache }}
         run: |
           mkdir -p "$MOJO_CACHE"
           find "$MOJO_CACHE" -type f -exec touch -a -t 200001010000 {} +
           touch "$RUNNER_TEMP/cache-marker"
       - run: ${{ matrix.run }}
       - name: Drop the entries this run didn't read
-        if: matrix.name != 'linux-format'
+        if: ${{ !matrix.no-compile-cache }}
         run: find "$MOJO_CACHE" -type f ! -anewer "$RUNNER_TEMP/cache-marker" -delete
       - name: Save the Mojo compile cache
-        if: matrix.name != 'linux-format'
+        if: ${{ !matrix.no-compile-cache }}
         uses: actions/cache/save@v6
         with:
           path: ${{ env.MOJO_CACHE }}
