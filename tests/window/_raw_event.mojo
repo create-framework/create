@@ -5,6 +5,8 @@ Field offsets are imported from `create._window._sdl` rather than duplicated her
 so these helpers stay pinned to the same ABI layout `Window.events()` reads.
 """
 
+from std.ffi import c_char
+
 from create._window import Event, FocusLost, NativeWindow
 from create._window._sdl import SDL_EVENT_SIZE
 
@@ -42,7 +44,7 @@ def write_f32(
 def write_pointer(
     mut buf: Array[UInt8, SDL_EVENT_SIZE],
     offset: Int,
-    value: Pointer[Int8, _],
+    value: Pointer[c_char, _],
 ):
     buf.unsafe_ptr().unsafe_offset(offset).unsafe_bitcast[
         type_of(value)

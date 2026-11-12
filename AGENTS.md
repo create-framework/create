@@ -167,7 +167,7 @@ offscreen `Canvas(w, h)` (see Reading pixels) is the program's own and may be ke
 (`context` to read input or time, `canvas` to draw); a one-shot reset is a plain `enter(...)` method the parent calls before
 switching, taking whatever that transition carries. No trait: it would force one `update`/`enter`
 signature on every scene, and those must vary. See [examples/scenes/main.mojo](examples/scenes/main.mojo).
-(Mojo 1.1 has no dynamic trait dispatch; heterogeneous storage is `Variant` from `std.utils`, with
+(Mojo 1.2 has no dynamic trait dispatch; heterogeneous storage is `Variant` from `std.utils`, with
 `isa[T]()` to dispatch.)
 
 **Parameter vs. field:** what the loop hands `create` and every `update` (`Context`, `Canvas`) is a

@@ -1,6 +1,6 @@
 from std.collections import Optional
 from std.math import max, min, abs, ceil, floor, sqrt
-from std.sys import is_big_endian
+from std.sys import Endian
 
 from create.color.blend_mode import BlendMode
 from create.color.color import Color, _multiplied
@@ -134,7 +134,7 @@ def _packed(c: Color) -> UInt32:
     a big-endian one, while the framebuffer is r, g, b, a ascending either way.
     """
 
-    comptime if is_big_endian():
+    comptime if Endian.native() == .big:
         return (
             (UInt32(c.r) << 24)
             | (UInt32(c.g) << 16)
