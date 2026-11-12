@@ -77,7 +77,7 @@ struct GLWindow(NativeWindow):
             borderless,
             maximized,
             opengl=True,
-            gl_attributes=attributes^,
+            gl_attributes=attributes,
             offscreen=offscreen,
         )
         self._context = self._native.sdl.gl_create_context(self._native.handle)
