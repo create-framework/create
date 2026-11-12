@@ -1,7 +1,7 @@
 # Renders text headlessly through the installed package. Text needs the
-# packaged Noto fonts and FreeType, so this fails if either can't be found
-# after install. The windowed and GPU entry points are only type-checked:
-# a CI runner has no display.
+# Noto fonts compiled into the package and FreeType, so this fails if either
+# is missing after install. The windowed and GPU entry points are only
+# type-checked: a CI runner has no display.
 
 from create import *
 

@@ -1,4 +1,5 @@
-"""Little-endian integer decoding, shared by the file and FFI readers.
+"""Byte decoding shared by the file and FFI readers: little-endian integers,
+C strings and base64.
 
 A leaf module: it imports nothing and nothing re-exports it. Both the image
 decoders in `image` and the freetype struct readers in `render` need to
@@ -43,4 +44,46 @@ def cstr(s: String) -> List[UInt8]:
     for b in s.as_bytes():
         bytes.append(b)
     bytes.append(0)
+    return bytes^
+
+
+def decode_base64(text: StringSlice) -> List[UInt8]:
+    """The bytes `text` encodes in standard base64, padded to a whole number
+    of four-character groups, with no line breaks: how the library carries
+    the files it is compiled with (the packaged fonts).
+
+    Not validated, since its only input is the library's own: a character
+    outside the alphabet decodes as zero bits. Writes through raw pointers,
+    since appending byte by byte costs five times as long, and the packaged
+    fonts are four megabytes.
+    """
+    var table = Array[UInt8, 256](fill=0)
+    var alphabet = (
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    ).as_bytes()
+    for i in range(64):
+        table[Int(alphabet[i])] = UInt8(i)
+    var source = text.as_bytes()
+    var length = len(source)
+    var padding = 0
+    if length >= 1 and source[length - 1] == UInt8(ord("=")):
+        padding += 1
+    if length >= 2 and source[length - 2] == UInt8(ord("=")):
+        padding += 1
+    var bytes = List[UInt8](length=length // 4 * 3, fill=0)
+    var input = source.unsafe_ptr()
+    var output = bytes.unsafe_ptr()
+    var o = 0
+    for i in range(0, length - length % 4, 4):
+        var group = (
+            (UInt32(table.unsafe_get(Int(input[unsafe_offset=i]))) << 18)
+            | (UInt32(table.unsafe_get(Int(input[unsafe_offset=i + 1]))) << 12)
+            | (UInt32(table.unsafe_get(Int(input[unsafe_offset=i + 2]))) << 6)
+            | UInt32(table.unsafe_get(Int(input[unsafe_offset=i + 3])))
+        )
+        output[unsafe_offset=o] = UInt8(group >> 16)
+        output[unsafe_offset=o + 1] = UInt8((group >> 8) & 0xFF)
+        output[unsafe_offset=o + 2] = UInt8(group & 0xFF)
+        o += 3
+    bytes.resize(len(bytes) - padding, 0)
     return bytes^

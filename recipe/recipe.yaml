@@ -22,11 +22,8 @@ build:
     content:
       - |
         set -euo pipefail
-        mkdir -p "${PREFIX}/lib/mojo" "${PREFIX}/share/create"
+        mkdir -p "${PREFIX}/lib/mojo"
         mojo precompile src/create -o "${PREFIX}/lib/mojo/create.mojoc"
-        # Create looks for its packaged fonts in the environment's
-        # share/create/fonts when they aren't beside its source.
-        cp -R src/create/text/fonts "${PREFIX}/share/create/fonts"
 
 requirements:
   build:

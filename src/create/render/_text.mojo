@@ -5,9 +5,8 @@ from create.color.color import Color
 from create.text.font import (
     Font,
     _GlyphInfo,
-    _default_font_path,
-    _default_italic_font_path,
-    _fallback_font_path,
+    _default_font,
+    _fallback_font,
 )
 from ._blur import blur_alpha
 from ._raster import blit_alpha_mapped, blit_glyph
@@ -113,19 +112,17 @@ struct TextRenderer(Movable):
     def _ensure_font(mut self) raises:
         """Lazily load the packaged default/fallback fonts on first use.
 
-        Construction never touches disk — a program that renders no text pays no
-        freetype cost and can't fail on a missing default. The fallback load is
-        attempted at most once; a missing fallback file just means no fallback
-        glyphs, not a render failure.
+        Construction opens nothing — a program that renders no text pays no
+        freetype or decoding cost. The fallback load is attempted at most
+        once; a fallback that fails to open just means no fallback glyphs,
+        not a render failure.
         """
         if not self._default:
-            self._default = Font.load(
-                _default_font_path(), italic_path=_default_italic_font_path()
-            )
+            self._default = _default_font()
         if not self._fallback_attempted:
             self._fallback_attempted = True
             try:
-                self._fallback_font.append(Font.load(_fallback_font_path()))
+                self._fallback_font.append(_fallback_font())
             except:
                 pass
 

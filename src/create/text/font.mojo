@@ -3,66 +3,93 @@ from std.collections import Optional
 from std.ffi import _DLHandle, _Global
 from std.memory import ArcPointer, unsafe_memcpy
 from std.math import abs
-from std.os import getenv
-from std.os.path import exists
-from std.reflection import source_location
 
-from create._bytes import cstr, le_uint, sign_extend_32
+from create._bytes import cstr, decode_base64, le_uint, sign_extend_32
 from create._library import load_library
+from ._noto import _NOTO_SANS, _NOTO_SANS_ITALIC, _NOTO_SANS_SYMBOLS
 
-# The packaged faces, loaded lazily on the first text render: Noto Sans for
-# text, Noto Sans Italic for its italic, and Noto Sans Symbols for codepoints
-# the first face has no glyph for. All three are under the OFL in `fonts/`.
+# The packaged faces: Noto Sans for text, Noto Sans Italic for its italic,
+# and Noto Sans Symbols for codepoints the first face has no glyph for. All
+# three are under the OFL in `fonts/`.
 #
-# They ship in `fonts/` beside this file and are located from this file's own
-# source path rather than the process CWD, so text works from any directory.
-# That path is baked in at compile time and spelled the way `-I` was, so a
-# `mojo build` binary finds the faces from elsewhere only if it was built with
-# an absolute `-I`, and only while that source still exists.
-#
-# An installed conda package was compiled on another machine, so its baked path
-# names a build directory that is gone. The package ships the faces in its
-# environment's `share/create/fonts/` instead, found from `CONDA_PREFIX` (set by
-# `pixi run` and `pixi shell`), the same variable `load_library` reads.
+# They are compiled into the library (`_noto.mojo`, generated from `fonts/` by
+# `scripts/embed_fonts.sh`) rather than read from disk, so text works from any
+# directory and a built program needs no files beside it. Each is decoded
+# once per process, on the first text render, into a global FreeType reads
+# straight from: memory a face is opened on must outlive it, and a global
+# outlives every face.
 
 
-def _packaged_font(name: String) -> String:
-    """A packaged face, located from this source file rather than the CWD."""
-    var here = String(source_location().file_name())
-    return _find_packaged_font(
-        name,
-        here[byte = : here.rfind("/") + 1] + "fonts/",
-        getenv("CONDA_PREFIX"),
+def _decode_noto_sans() -> List[UInt8]:
+    return decode_base64(_NOTO_SANS)
+
+
+def _decode_noto_sans_italic() -> List[UInt8]:
+    return decode_base64(_NOTO_SANS_ITALIC)
+
+
+def _decode_noto_sans_symbols() -> List[UInt8]:
+    return decode_base64(_NOTO_SANS_SYMBOLS)
+
+
+comptime _NOTO_SANS_BYTES = _Global["create_noto_sans", _decode_noto_sans]
+comptime _NOTO_SANS_ITALIC_BYTES = _Global[
+    "create_noto_sans_italic", _decode_noto_sans_italic
+]
+comptime _NOTO_SANS_SYMBOLS_BYTES = _Global[
+    "create_noto_sans_symbols", _decode_noto_sans_symbols
+]
+
+
+@fieldwise_init
+struct _FontSource(ImplicitlyCopyable, Movable):
+    """Where a face is read from: the file at `name`, or, with an `address`,
+    the `length` bytes there, a packaged face that `name` only labels."""
+
+    var name: String
+    var address: Int
+    var length: Int
+
+    @staticmethod
+    def file(path: String) -> _FontSource:
+        return _FontSource(path, 0, 0)
+
+    @staticmethod
+    def packaged(name: String, ref bytes: List[UInt8]) -> _FontSource:
+        return _FontSource(name, Int(bytes.unsafe_ptr()), len(bytes))
+
+
+def _noto_sans() raises -> _FontSource:
+    """Noto Sans, the face every text render uses unless `canvas.font` swaps
+    it."""
+    return _FontSource.packaged(
+        "NotoSans.ttf", _NOTO_SANS_BYTES.get_or_create_ptr()[]
     )
 
 
-def _find_packaged_font(
-    name: String, source_fonts: String, environment: String
-) -> String:
-    """`name` in `source_fonts` if it is there, else in the environment's
-    `share/create/fonts/`; the source path when there is no environment, so
-    a missing face is reported where it was expected."""
-    var beside_source = source_fonts + name
-    if exists(beside_source) or not environment:
-        return beside_source
-    return environment + "/share/create/fonts/" + name
-
-
-def _default_font_path() -> String:
-    """Noto Sans, the face every text render uses unless `canvas.font` swaps
-    it."""
-    return _packaged_font("NotoSans.ttf")
-
-
-def _default_italic_font_path() -> String:
+def _noto_sans_italic() raises -> _FontSource:
     """Noto Sans Italic, the default face's italic: variable on the same
     axes, so `font_weight` reaches it too."""
-    return _packaged_font("NotoSans-Italic.ttf")
+    return _FontSource.packaged(
+        "NotoSans-Italic.ttf", _NOTO_SANS_ITALIC_BYTES.get_or_create_ptr()[]
+    )
 
 
-def _fallback_font_path() -> String:
+def _noto_sans_symbols() raises -> _FontSource:
     """Noto Sans Symbols, consulted for codepoints the default face lacks."""
-    return _packaged_font("NotoSansSymbols.ttf")
+    return _FontSource.packaged(
+        "NotoSansSymbols.ttf", _NOTO_SANS_SYMBOLS_BYTES.get_or_create_ptr()[]
+    )
+
+
+def _default_font() raises -> Font:
+    """Noto Sans with its italic: what text is drawn in without a font."""
+    return Font._open(_noto_sans(), _noto_sans_italic())
+
+
+def _fallback_font() raises -> Font:
+    """Noto Sans Symbols: where a glyph the drawing face lacks comes from."""
+    return Font._open(_noto_sans_symbols())
 
 
 struct FontWeight(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
@@ -261,7 +288,11 @@ struct _Face(Movable):
     var descender: Int  # pixels below baseline (negative)
 
     def __init__(
-        out self, path: String, size: Int, weight: Int, slanted: Bool = False
+        out self,
+        source: _FontSource,
+        size: Int,
+        weight: Int,
+        slanted: Bool = False,
     ) raises:
         var ft = load_library("libfreetype", 6)
 
@@ -271,17 +302,25 @@ struct _Face(Movable):
         self._lib = _read_ptr(Int(lib_buf.unsafe_ptr()))
 
         var face_buf = Array[UInt8, 8](fill=0)
-        var cpath = cstr(path)
-        if (
-            ft.call["FT_New_Face", Int32](
+        var error: Int32
+        if source.address:
+            error = ft.call["FT_New_Memory_Face", Int32](
+                self._lib,
+                source.address,
+                source.length,
+                Int(0),
+                face_buf.unsafe_ptr(),
+            )
+        else:
+            var cpath = cstr(source.name)
+            error = ft.call["FT_New_Face", Int32](
                 self._lib, cpath.unsafe_ptr(), Int(0), face_buf.unsafe_ptr()
             )
-            != 0
-        ):
+            # FFI rule 1: the path buffer must outlive the call that read it.
+            _ = cpath^
+        if error != 0:
             _ = ft.call["FT_Done_FreeType", Int32](self._lib)
-            raise Error("FT_New_Face failed — font not found: " + path)
-        # FFI rule 1: the path buffer must outlive the call that read it.
-        _ = cpath^
+            raise Error("FT_New_Face failed — font not found: " + source.name)
         self._face = _read_ptr(Int(face_buf.unsafe_ptr()))
         self._size = 0
         self._weight = 0
@@ -460,22 +499,21 @@ struct _FontFaces(Movable):
     file opened slanted, on first use."""
     var upright_id: Int
     var italic_id: Int
-    var path: String
-    var italic_path: Optional[String]
+    var source: _FontSource
+    """Where the upright was read from, read again slanted for an italic."""
 
     def __init__(
-        out self, var path: String, var italic_path: Optional[String]
+        out self, source: _FontSource, italic_source: Optional[_FontSource]
     ) raises:
-        self.upright = _Face(path, 16, FontWeight.REGULAR.value)
+        self.upright = _Face(source, 16, FontWeight.REGULAR.value)
         self.italic = None
-        if italic_path:
+        if italic_source:
             self.italic = _Face(
-                italic_path.value(), 16, FontWeight.REGULAR.value
+                italic_source.value(), 16, FontWeight.REGULAR.value
             )
         self.upright_id = _next_font_id()
         self.italic_id = _next_font_id()
-        self.path = path^
-        self.italic_path = italic_path^
+        self.source = source
 
     def face(
         mut self, italic: Bool
@@ -486,7 +524,7 @@ struct _FontFaces(Movable):
             return self.upright
         if not self.italic:
             self.italic = _Face(
-                self.path, 16, FontWeight.REGULAR.value, slanted=True
+                self.source, 16, FontWeight.REGULAR.value, slanted=True
             )
         return self.italic.value()
 
@@ -522,14 +560,29 @@ struct Font(Copyable, ImplicitlyCopyable, Movable, Writable):
         Resolve a path next to the program's source with `source_path`, as
         for images and sounds.
         """
-        var faces = ArcPointer(_FontFaces(path, italic_path))
+        var italic_source: Optional[_FontSource] = None
+        if italic_path:
+            italic_source = _FontSource.file(italic_path.value())
+        return Font._open(_FontSource.file(path), italic_source)
+
+    @staticmethod
+    def _open(
+        source: _FontSource, italic_source: Optional[_FontSource] = None
+    ) raises -> Font:
+        """Open the face at `source`, and the italic at `italic_source` if
+        given: `load`, from a file or a packaged face. A packaged face's path
+        is its file's name."""
+        var faces = ArcPointer(_FontFaces(source, italic_source))
         var id = faces[].upright_id
+        var italic_path: Optional[String] = None
+        if italic_source:
+            italic_path = italic_source.value().name
         return Font(
             _faces=faces^,
             _draws_italic=False,
             _id=id,
-            _path=path,
-            _italic_path=italic_path,
+            _path=source.name,
+            _italic_path=italic_path^,
         )
 
     def __init__(

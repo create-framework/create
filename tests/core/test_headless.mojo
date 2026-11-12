@@ -4,7 +4,7 @@
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
-from create.text.font import _fallback_font_path
+from create.text.font import _fallback_font
 
 
 @fieldwise_init
@@ -129,7 +129,7 @@ struct Labelled[in_create: Bool, every_frame: Bool](Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Self:
         # The symbols face's Latin letters are hinted a little differently,
         # so the label renders differently under it.
-        var symbols = Font.load(_fallback_font_path())
+        var symbols = _fallback_font()
         comptime if Self.in_create:
             canvas.font(symbols)
         return Self(symbols)

@@ -16,8 +16,8 @@ build-examples = "bash scripts/build_examples.sh"
 check-standalone = "bash scripts/check_standalone.sh"
 # Skipped while every input is unchanged since the last run (pixi's task cache,
 # which also tracks the environment), so example and benchmark start from it.
-# The absolute path is what the package bakes in for its packaged fonts.
 precompile = { cmd = "mkdir -p build && mojo precompile \"$PIXI_PROJECT_ROOT/src/create\" -o build/create.mojoc", inputs = ["src/create/**/*.mojo"], outputs = ["build/create.mojoc"] }
+embed-fonts = "sh scripts/embed_fonts.sh"
 format = "mojo format src examples benchmarks tests"
 setup = "git config core.hooksPath .githooks && git config blame.ignoreRevsFile .git-blame-ignore-revs"
 
