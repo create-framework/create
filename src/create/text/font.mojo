@@ -3,6 +3,8 @@ from std.collections import Optional
 from std.ffi import _DLHandle, _Global
 from std.memory import ArcPointer, unsafe_memcpy
 from std.math import abs
+from std.os import getenv
+from std.os.path import exists
 from std.reflection import source_location
 
 from create._bytes import cstr, le_uint, sign_extend_32
@@ -12,17 +14,38 @@ from create._library import load_library
 # text, Noto Sans Italic for its italic, and Noto Sans Symbols for codepoints
 # the first face has no glyph for. All three are under the OFL in `fonts/`.
 #
-# They ship inside the package, in `fonts/` beside this file, and are located
-# from this file's own source path rather than the process CWD — so text works
-# from any directory. That path is baked in at compile time and spelled the way
-# `-I` was, so a `mojo build` binary finds the faces from elsewhere only if it
-# was built with an absolute `-I`, and only while that source still exists.
+# They ship in `fonts/` beside this file and are located from this file's own
+# source path rather than the process CWD, so text works from any directory.
+# That path is baked in at compile time and spelled the way `-I` was, so a
+# `mojo build` binary finds the faces from elsewhere only if it was built with
+# an absolute `-I`, and only while that source still exists.
+#
+# An installed conda package was compiled on another machine, so its baked path
+# names a build directory that is gone. The package ships the faces in its
+# environment's `share/create/fonts/` instead, found from `CONDA_PREFIX` (set by
+# `pixi run` and `pixi shell`), the same variable `load_library` reads.
 
 
 def _packaged_font(name: String) -> String:
     """A packaged face, located from this source file rather than the CWD."""
     var here = String(source_location().file_name())
-    return here[byte = : here.rfind("/") + 1] + "fonts/" + name
+    return _find_packaged_font(
+        name,
+        here[byte = : here.rfind("/") + 1] + "fonts/",
+        getenv("CONDA_PREFIX"),
+    )
+
+
+def _find_packaged_font(
+    name: String, source_fonts: String, environment: String
+) -> String:
+    """`name` in `source_fonts` if it is there, else in the environment's
+    `share/create/fonts/`; the source path when there is no environment, so
+    a missing face is reported where it was expected."""
+    var beside_source = source_fonts + name
+    if exists(beside_source) or not environment:
+        return beside_source
+    return environment + "/share/create/fonts/" + name
 
 
 def _default_font_path() -> String:
