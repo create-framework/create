@@ -11,15 +11,18 @@
 **Create** is a creative coding library for rapid prototyping and interactive graphics, inspired by Processing but built to scale — 
 from sketch to game, prototype to full application. It provides a clean, modular API while taking full advantage of Mojo's performance and language features.
 
-## Example Program
+## Example Programs
 
 The GIF below shows the example program <a href="examples/logo/main.mojo">logo</a>, which can be run from the repo root using `pixi run example logo`. The program first generates a <a href="https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle">Sierpiński triangle</a> using the random midpoint method (also known as the <a href="https://en.wikipedia.org/wiki/Chaos_game">chaos game</a>). Then coloured triangles grow into place on top of it, forming the Create logo.
 
 <p align="center">
-    <img src="assets/gifs/logo-animation.gif" alt="The Create logo assembling: a Sierpinski triangle drawn in points, then the logo's triangles grow in over it">
+    <img src="assets/gifs/logo-animation.gif" alt="The Create logo assembling: a Sierpiński triangle drawn in points, then the logo's triangles growing in over it"
+>
     <br>
     <sub>The logo drawn, animated and recorded to a GIF using the Create library itself. See <a href="examples/logo/main.mojo">examples/logo</a> for the source code.</sub>
 </p>
+
+The other programs under <a href="examples/">examples/</a> can be run the same way. `pixi run example` with no name lists them all.
 
 ## How a Program Works
 
@@ -63,25 +66,6 @@ run[MyApp]("Hello", backend=RenderBackend.GPU)
 
 ```mojo
 run[MyApp]("Hello", backend=RenderBackend.from_arguments())
-```
-
-## Running examples and benchmarks
-
-The example programs in this repository can be run with the `example` pixi task, which takes a name rather than a path. 
-The name is a folder under `examples/`, and the task runs its `main.mojo`.
-
-```bash
-pixi run example sketch          # examples/sketch/main.mojo
-pixi run example sidescroller    # examples/sidescroller/main.mojo
-pixi run example                 # lists every example
-```
-
-Benchmarks live under `benchmarks/` and run the same way with the `benchmark` task:
-
-```bash
-pixi run benchmark frame         # a heavy frame through the window loop, GPU
-pixi run benchmark frame cpu     # the same frame on the CPU backend
-pixi run benchmark raster        # CPU rasterisation per primitive, headless
 ```
 
 ## Supported Platforms
