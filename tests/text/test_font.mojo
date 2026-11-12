@@ -10,6 +10,7 @@ from create.text.font import (
     _GlyphInfo,
     _default_font_path,
     _fallback_font_path,
+    _find_packaged_font,
 )
 
 comptime _SLNT_FIXTURE = "tests/fixtures/fonts/RobotoFlex-slnt.ttf"
@@ -39,6 +40,29 @@ def test_the_packaged_faces_load_from_the_text_package() raises -> None:
     assert_true(f.has_glyph(ord("A")))
     # Loading raises if the file is not where the path says.
     _ = Font.load(_fallback_font_path())
+
+
+def test_a_packaged_face_beside_the_source_wins() raises -> None:
+    # A source checkout: the faces are where the baked path says.
+    assert_equal(
+        _find_packaged_font(
+            "NotoSans.ttf", "src/create/text/fonts/", "/environment"
+        ),
+        "src/create/text/fonts/NotoSans.ttf",
+    )
+
+
+def test_a_packaged_face_falls_back_to_the_environment() raises -> None:
+    # An installed package: the baked path names a build directory long gone.
+    assert_equal(
+        _find_packaged_font("NotoSans.ttf", "/gone/fonts/", "/environment"),
+        "/environment/share/create/fonts/NotoSans.ttf",
+    )
+    # Outside any environment the expected path is kept, for the error.
+    assert_equal(
+        _find_packaged_font("NotoSans.ttf", "/gone/fonts/", ""),
+        "/gone/fonts/NotoSans.ttf",
+    )
 
 
 def test_a_glyph_renders() raises -> None:
