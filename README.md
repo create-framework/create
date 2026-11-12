@@ -8,21 +8,20 @@
 
 ---
 
-**Create** is a creative coding library for rapid prototyping and interactive graphics, inspired by Processing but built to scale — 
+**Create** is a creative coding library for rapid prototyping and interactive graphics, inspired by Processing but built to scale —
 from sketch to game, prototype to full application. It provides a clean, modular API while taking full advantage of Mojo's performance and language features.
 
 ## Example Programs
 
-The GIF below shows the example program <a href="examples/logo/main.mojo">logo</a>, which can be run from the repo root using `pixi run example logo`. The program first generates a <a href="https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle">Sierpiński triangle</a> using the random midpoint method (also known as the <a href="https://en.wikipedia.org/wiki/Chaos_game">chaos game</a>). Then coloured triangles grow into place on top of it, forming the Create logo.
+The GIF below shows the example program [logo](examples/logo/main.mojo), which can be run from the root of a clone of this repo using `pixi run example logo`. The program first generates a [Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method (also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). Then coloured triangles grow into place on top of it, forming the **Create** logo.
 
 <p align="center">
-    <img src="assets/gifs/logo-animation.gif" alt="The Create logo assembling: a Sierpiński triangle drawn in points, then the logo's triangles growing in over it"
->
+    <img src="assets/gifs/logo-animation.gif" alt="The Create logo assembling: a Sierpiński triangle drawn in points, then the logo's triangles growing in over it">
     <br>
-    <sub>The logo drawn, animated and recorded to a GIF using the Create library itself. See <a href="examples/logo/main.mojo">examples/logo</a> for the source code.</sub>
+    <sub>The logo drawn, animated and recorded to a GIF using the <b>Create</b> library itself. See <a href="examples/logo/main.mojo">examples/logo</a> for the source code.</sub>
 </p>
 
-The other programs under <a href="examples/">examples/</a> can be run the same way. `pixi run example` with no name lists them all.
+The other programs under [examples/](examples/) can be run the same way. `pixi run example` with no name lists them all.
 
 ## How a Program Works
 
@@ -49,7 +48,7 @@ def main() raises:
     run[MyApp]("Hello")
 ```
 
-When writing a Create program, you write a struct implementing the `Program` trait, then pass it to `run` in `main`, which starts the run loop. The `Program` trait requires you to implement two methods:
+When writing a **Create** program, you write a struct implementing the `Program` trait, then pass it to `run` in `main`, which starts the run loop. The `Program` trait requires you to implement two methods:
 
 - `create`: a static factory, which is called only once when the run loop starts. This is where initial state is set and the first frame is drawn.
 - `update`: an instance method, which is called once per frame after the first. This is where you handle input, modify state, and draw frames 2..N.
@@ -62,7 +61,7 @@ Rendering runs on the CPU by default. `backend=RenderBackend.GPU` runs the same 
 run[MyApp]("Hello", backend=RenderBackend.GPU)
 ```
 
-`RenderBackend.from_arguments()` lets the command line choose instead: `GPU` when the program is run with a `gpu` argument, the CPU otherwise.
+`RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run with a `gpu` argument, the CPU otherwise.
 
 ```mojo
 run[MyApp]("Hello", backend=RenderBackend.from_arguments())
