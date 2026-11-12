@@ -8,7 +8,7 @@
 
 ---
 
-**Create** is a creative coding library for Mojo, inspired by Processing. It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations, visualizations and more complex interactive art.
+**Create** is a creative coding library for Mojo, inspired by Processing. It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
 
 ## Example Programs
 
@@ -33,7 +33,7 @@ You can run the program yourself from the root of this repo using `pixi run exam
 - **Collisions**: overlap, containment and intersection tests between every shape ([collisions](examples/collisions/main.mojo))
 - **Camera and transforms**: a world camera, a fixed overlay for the HUD, and clipping ([camera](examples/camera/main.mojo), [transforms](examples/transforms/main.mojo), [clipping](examples/clipping/main.mojo))
 - **Audio**: WAV, OGG, FLAC and MP3 playback ([audio](examples/audio/main.mojo))
-- **Pixels and capture**: read back what has been drawn, draw offscreen, and record GIFs ([pixels](examples/pixels/main.mojo), [offscreen](examples/offscreen/main.mojo), [capture](examples/capture/main.mojo))
+- **Pixels and capture**: read back what has been drawn, draw offscreen and record GIFs ([pixels](examples/pixels/main.mojo), [offscreen](examples/offscreen/main.mojo), [capture](examples/capture/main.mojo))
 - **Data**: CSV/TSV tables and JSON ([data](examples/data/main.mojo))
 - **Randomness and noise**: seeded random numbers and smooth noise ([noise](examples/noise/main.mojo))
 
@@ -56,7 +56,7 @@ struct MyApp(Program):
         return MyApp("Hello, world!", (0, 0))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        # Called once per frame: handle input, modify state, and draw to the screen
+        # Called once per frame: handle input, modify state and draw to the screen
         self.position = context.mouse.position
         canvas.font_size(48)
         canvas.text(self.greeting, self.position)
@@ -69,7 +69,7 @@ def main() raises:
 When writing a **Create** program, you write a struct implementing the `Program` trait, then pass it to `run` in `main`, which starts the run loop. The `Program` trait requires you to implement two methods:
 
 - `create`: a static factory, which is called only once when the run loop starts. This is where initial state is set and the first frame is drawn.
-- `update`: an instance method, which is called once per frame after the first. This is where you handle input, modify state, and draw frames 2..N.
+- `update`: an instance method, which is called once for each following frame. This is where you handle input, modify state and draw to the screen.
 
 `@fieldwise_init` saves boilerplate by generating the struct's constructor from its fields.
 
