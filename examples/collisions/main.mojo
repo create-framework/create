@@ -42,7 +42,9 @@ struct Collisions(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Collisions:
         return Collisions(
             probe=Circle((0, 0), 45),
-            rectangle=Rectangle((-420, 110), 200, 140, corner_radius=16),
+            rectangle=Rectangle(
+                (-420, 110), 200, 140, corner_radius=16, rotation=0.2
+            ),
             circle=Circle((-140, 110), 80),
             triangle=Triangle((80, 40), (240, 40), (160, 190)),
             star=Polygon.star((440, 110), 95, 42, 5),
