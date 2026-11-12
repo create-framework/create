@@ -149,7 +149,7 @@ struct SDL:
 
     def __init__(out self) raises:
         self._gamepad = False
-        self.lib = load_library("libSDL3")
+        self.lib = load_library("libSDL3", 0)
         var major = self.get_version() // 1000000
         if major != _SDL_ABI_MAJOR_VERSION:
             raise Error(

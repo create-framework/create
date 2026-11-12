@@ -5,9 +5,12 @@ Every FFI binding (`image`, `text`, `render`, `audio`, `_window`) opens its
 library through `load_library`, so the platform's file naming and search
 rules are decided in one place.
 
-The name is the file's stem, `libpng16`, and the platform adds its suffix:
-`.so` on Linux, `.dylib` on macOS. Both are the unversioned names the
-conda-forge packages ship as symlinks to the versioned file.
+A library is named by its stem and the version in its soname, `libpng16`
+and 16, and the platform spells the file: `libpng16.so.16` on Linux,
+`libpng16.16.dylib` on macOS. That is the name a program linked against the
+library would ask for, so it pins the ABI the bindings were written for, and
+it is what the runtime package installs. The unversioned `libpng16.so` is a
+development symlink, missing from a system without the `-devel` packages.
 
 Where the library is found differs by platform. On Linux an executable's
 run path covers `dlopen` as well: `mojo`'s (`$ORIGIN/../lib`) and a `mojo
@@ -29,17 +32,18 @@ from std.os.path import exists
 from std.sys.info import CompilationTarget
 
 
-def load_library(stem: String) raises -> _DLHandle:
-    """Open the shared library `stem` (`libSDL3`, `libfreetype`, ...).
+def load_library(stem: String, version: Int) raises -> _DLHandle:
+    """Open the shared library `stem` at soname `version` (`libSDL3` 0,
+    `libfreetype` 6, ...).
 
     Refcounted by the platform loader, so opening one already open is cheap
     and returns the same library.
     """
     var name: String
     comptime if CompilationTarget.is_macos():
-        name = stem + ".dylib"
+        name = String(stem, ".", version, ".dylib")
     else:
-        name = stem + ".so"
+        name = String(stem, ".so.", version)
     var prefix = getenv("CONDA_PREFIX")
     if prefix:
         var path = prefix + "/lib/" + name

@@ -34,7 +34,7 @@ it makes the library better.
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` playback, `Voice` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integer decoding |
-| `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (`.so`/`.dylib`, the pixi environment first) |
+| `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
 Package internals are documented in scoped files: [src/create/render/AGENTS.md](src/create/render/AGENTS.md),
@@ -252,8 +252,9 @@ A program writes `from create import *`. Otherwise import by name from the ownin
   stays `core`'s alone.
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
 - **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. A
-  binding opens its library with `load_library("libname")`, never `_DLHandle("libname.so")`: the
-  platform suffix and search path are decided there.
+  binding opens its library with `load_library("libname", version)`, the soname's version, never
+  `_DLHandle("libname.so")`: the platform's file name and search path are decided there. The
+  versioned name is the runtime package's, so a system without `-devel` packages has it.
 - **`_window`** imports nothing from `create` but `_library`; `core` is its only consumer; nothing
   re-exports it.
 - **`render`→`image` is nominal:** only `canvas.image`'s overloads and `canvas.snapshot` name
