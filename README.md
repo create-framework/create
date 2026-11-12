@@ -67,6 +67,40 @@ run[MyApp]("Hello", backend=RenderBackend.GPU)
 run[MyApp]("Hello", backend=RenderBackend.from_arguments())
 ```
 
+## Installation and Setup
+
+If you don't already have it, install [pixi](https://pixi.sh):
+
+```sh
+curl -fsSL https://pixi.sh/install.sh | sh
+```
+
+Create a project with the MAX and Modular community conda channels enabled:
+
+```sh
+pixi init my-project \
+  -c https://conda.modular.com/max \
+  -c https://repo.prefix.dev/modular-community \
+  -c conda-forge
+```
+
+Then `cd` into the project and add the `mojo` and `create` packages:
+
+```sh
+cd my-project
+pixi add mojo create
+```
+
+You are now ready to add a `main.mojo` file and write your first **Create** program. To get started, you can copy the structure of the "Hello, world!" program from [How a Program Works](#how-a-program-works) or any of the other programs in [examples/](examples/).
+
+Run your project with:
+
+```sh
+pixi run mojo run main.mojo
+```
+
+A CLI tool to streamline this setup is coming soon, along with an API reference, tutorials and more.
+
 ## Supported Platforms
 
 | Platform | Status |
