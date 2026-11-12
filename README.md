@@ -8,7 +8,7 @@
 
 ---
 
-**Create** is a creative coding library for Mojo, inspired by Processing. It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
+**Create** is a creative coding library for [Mojo](https://mojolang.org/), inspired by [Processing](https://processing.org/). It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
 
 ## Example Programs
 
