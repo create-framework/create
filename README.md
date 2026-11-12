@@ -13,7 +13,8 @@ from sketch to game, prototype to full application. It provides a clean, modular
 
 ## Example Programs
 
-The GIF below shows the example program [logo](examples/logo/main.mojo), which can be run from the root of a clone of this repo using `pixi run example logo`. The program first generates a [Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method (also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). Then coloured triangles grow into place on top of it, forming the **Create** logo.
+The GIF below shows an example program running. First it generates a [Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method (also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). 
+Then coloured triangles grow into place on top of it, forming the **Create** logo.
 
 <p align="center">
     <img src="assets/gifs/logo-animation.gif" alt="The Create logo assembling: a Sierpiński triangle drawn in points, then the logo's triangles growing in over it">
@@ -21,7 +22,7 @@ The GIF below shows the example program [logo](examples/logo/main.mojo), which c
     <sub>The logo drawn, animated and recorded to a GIF using the <b>Create</b> library itself. See <a href="examples/logo/main.mojo">examples/logo</a> for the source code.</sub>
 </p>
 
-The other programs under [examples/](examples/) can be run the same way. `pixi run example` with no name lists them all.
+You can run the program yourself from the root of this repo using `pixi run example logo` (`logo` being the name of this specific example). The other programs under [examples/](examples/) can be run the same way. Run `pixi run example` with no name to list them all.
 
 ## How a Program Works
 
