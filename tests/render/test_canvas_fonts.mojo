@@ -12,7 +12,7 @@ On an offscreen 100 x 40 canvas: the left half is x < 50, the right x >= 50.
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
-from create.text.font import _default_font_path, _fallback_font_path
+from create.text.font import _default_font, _fallback_font
 
 
 def _canvas() raises -> Canvas:
@@ -23,7 +23,7 @@ def _canvas() raises -> Canvas:
 
 
 def _symbols() raises -> Font:
-    return Font.load(_fallback_font_path())
+    return _fallback_font()
 
 
 def _alone(font: Optional[Font], x: Float64) raises -> Image:
@@ -57,7 +57,7 @@ def test_two_fonts_share_a_frame() raises -> None:
     var canvas = _canvas()
     canvas.font(_symbols())
     canvas.text("H", (-25, 0))
-    canvas.font(Font.load(_default_font_path()))
+    canvas.font(_default_font())
     canvas.text("H", (25, 0))
     var both = canvas.snapshot()
     assert_equal(

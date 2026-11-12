@@ -30,10 +30,10 @@ it makes the library better.
 | `math` | `src/create/math/` | `Point2D`, `Vector2D`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease` and `Tween`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Shape`/`Region`/`Curve` and `Drawable`/`DrawTarget` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
 | `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer`, `Animation`, `Animator` |
-| `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces |
+| `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` playback, `Voice` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integer decoding |
+| `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
@@ -55,6 +55,7 @@ pixi run build-examples                   # type-check every example and benchma
 pixi run check-standalone                 # a `mojo build` program, run outside the environment
 pixi run check-package                    # the conda package from recipe/, built and tested as installed
 pixi run format                           # 80 columns, enforced by pre-commit
+pixi run embed-fonts                      # regenerate text/_noto.mojo after changing a face in text/fonts/
 pixi run setup                            # once per clone: git hooks + blame ignore-revs
 ```
 
@@ -121,9 +122,6 @@ release.
   builds against `mojo-compiler` at the minor version `pixi.toml` pins and the run requirement
   allows that minor only (`upper_bound='x.x'`). Moving Mojo moves `pixi.toml`, `recipe/` and the
   published recipe together.
-- **Fonts live in `share/create/fonts`** of the installed environment, where
-  `_find_packaged_font` looks when they aren't beside the source: a package's baked path names its
-  build machine. Keep the two in step.
 
 **Steps:**
 
