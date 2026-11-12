@@ -24,6 +24,7 @@ from create.geometry import (
 )
 from create.math.matrix import identity, rotate, scale, translate
 from create.math.point2d import Point2D
+from create.math.vector2d import Vector2D
 from create.render.canvas import _PersistentCanvasState
 
 
@@ -2890,6 +2891,86 @@ def test_image_still_takes_whole_unit_sizes() raises -> None:
     var dot = Image.solid(1, 1, Color.RED)
     canvas.image(dot, (0, 0), canvas.width(), canvas.height())
     assert_equal(canvas.color_at((4.0, -4.0)), Color.RED)
+
+
+# A turned `Rectangle` draws as the upright one under `canvas.transform`
+# turning about its centre: rounding and stroke turn with it.
+@fieldwise_init
+struct TurnedRectangle[how: Int](Program):
+    var _unused: Int
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> TurnedRectangle[Self.how]:
+        return TurnedRectangle[Self.how](0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.BLACK)
+        canvas.fill(Color.YELLOW)
+        canvas.stroke(Color.RED, thickness=3)
+        var at = Point2D(10.0, -5.0)
+        comptime if Self.how == 0:
+            with canvas.transform(
+                translate(Vector2D(at)) @ rotate(0.6) @ translate(-Vector2D(at))
+            ):
+                canvas.rectangle(at, 50.0, 20.0, corner_radius=6)
+        elif Self.how == 1:
+            canvas.draw(
+                Rectangle(at, 50.0, 20.0, corner_radius=6, rotation=0.6)
+            )
+        else:
+            canvas.rectangle(at, 50.0, 20.0, corner_radius=6, rotation=0.6)
+
+
+def _assert_same_pixels(a: Image, b: Image) raises:
+    for y in range(a.height()):
+        for x in range(a.width()):
+            assert_equal(
+                a.pixel(x, y), b.pixel(x, y), String(x) + ", " + String(y)
+            )
+
+
+def test_turned_rectangle_draws_as_the_upright_one_turned() raises -> None:
+    var expected = run_headless[TurnedRectangle[0]](100, 100)
+    _assert_same_pixels(run_headless[TurnedRectangle[1]](100, 100), expected)
+    _assert_same_pixels(run_headless[TurnedRectangle[2]](100, 100), expected)
+    assert_equal(expected.pixel(60, 55), Color.YELLOW)
+
+
+@fieldwise_init
+struct TurnedClip(Program):
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> TurnedClip:
+        return TurnedClip(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.BLACK)
+        canvas.stroke_enabled(False)
+        canvas.fill(Color.GREEN)
+        # A 60 by 10 bar stood on end: only a 10 wide, 60 tall strip shows.
+        with canvas.clip(Rectangle((0.0, 0.0), 60.0, 10.0, rotation=PI / 2.0)):
+            canvas.rectangle((0.0, 0.0), 100.0, 100.0)
+
+
+def test_turned_rectangle_clips_as_turned() raises -> None:
+    var m = run_headless[TurnedClip](100, 100, antialiasing=Antialiasing.OFF)
+    assert_equal(m.pixel(50, 25), Color.GREEN)
+    assert_equal(m.pixel(50, 75), Color.GREEN)
+    assert_equal(m.pixel(30, 50), Color.BLACK)
+    assert_equal(m.pixel(70, 50), Color.BLACK)
+
+
+def test_snapshot_refuses_a_turned_region() raises -> None:
+    var canvas = Canvas(20, 20)
+    var raised = False
+    try:
+        _ = canvas.snapshot(Rectangle((0.0, 0.0), 10.0, 10.0, rotation=0.3))
+    except:
+        raised = True
+    assert_true(raised)
 
 
 def main() raises:

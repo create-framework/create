@@ -29,10 +29,10 @@ struct Capsule(
     `move_to`, `translate`.
 
     Like a `Line`, it lies along any direction and is placed by its ends,
-    so `center()` is the segment's midpoint and `move_to` moves that. An
-    axis-aligned stadium is also `Rectangle(position, w, h,
-    corner_radius=h / 2)`; a capsule is the one that turns, the usual round
-    collider for a moving body. With `start == end` it is the `Circle` of
+    so `center()` is the segment's midpoint and `move_to` moves that. A
+    stadium is also `Rectangle(position, w, h, corner_radius=h / 2,
+    rotation=angle)`; a capsule is the one placed by its ends, the usual
+    round collider for a moving body. With `start == end` it is the `Circle` of
     radius `r` there, and a zero `r` collapses it to the segment.
 
     `contains` treats the boundary as inside, and `closest_point` returns

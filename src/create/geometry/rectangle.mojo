@@ -1,11 +1,16 @@
-from std.math import min, max
+from std.math import cos, min, max, sin
 from create.math import PI, Point2D, Vector2D
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rect_corner_radius
 from .bezier import _curve_segments
 from .drawable import Curve, DrawTarget, Region
 from ._collider import _Collider, _Core, _contains
-from ._shared import _distance_squared, _rounded_closest, _rounded_outline
+from ._shared import (
+    _distance_squared,
+    _rounded_closest,
+    _rounded_outline,
+    _unit,
+)
 from .capsule import Capsule
 from .circle import Circle
 from .ellipse import Ellipse
@@ -24,8 +29,9 @@ struct Rectangle(
     Writable,
     _Collider,
 ):
-    """An axis-aligned rectangle: `center`, `area`, `left`/`right`/`bottom`/
-    `top`, `closest_point`, `contains`, `move_to`, `translate`.
+    """A rectangle, upright unless turned by `rotation`: `center`, `area`,
+    `bounds`, `left`/`right`/`bottom`/`top`, `closest_point`, `contains`,
+    `move_to`, `translate`.
 
     Locations are `Point2D` and displacements `Vector2D`, throughout this
     module; extents are plain scalars, like `Circle`'s radius. Width and
@@ -49,6 +55,15 @@ struct Rectangle(
     them, and every test here sees the rounded shape: a point in a sharp
     corner's cut-away is outside. It is clamped to half the shorter side.
     `left()`/`right()`/`bottom()`/`top()` stay the bounding box's.
+
+    `rotation` turns the rectangle about `position`, in radians
+    counter-clockwise (y is up), as `canvas.transform(rotate(...))` turns
+    what it draws; `w` and `h` stay its own width and height. Every test
+    sees the turned shape, exactly, and `left()`/`right()`/`bottom()`/
+    `top()` and `bounds()` are its upright bounding box's. Drawn, it is the
+    upright rectangle turned, so a gradient fill, the rounding and the
+    stroke turn with it, while a shadow's offset stays screen-fixed unless
+    `shadow_follows_transform` is set, as for any turned shape.
     """
 
     var position: Point2D
@@ -56,6 +71,9 @@ struct Rectangle(
     var h: Float64
     var corner_radius: Float64
     """How far each corner is rounded, in the units of `w`/`h`; 0 is sharp."""
+    var rotation: Float64
+    """How far the rectangle is turned about `position`, in radians
+    counter-clockwise; 0 is upright."""
 
     def __init__(
         out self,
@@ -64,11 +82,13 @@ struct Rectangle(
         h: Float64,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
+        rotation: _OptionalFloat64 = 0.0,
     ):
         self.position = position
         self.w = w
         self.h = h
         self.corner_radius = corner_radius.or_else(0.0)
+        self.rotation = rotation.or_else(0.0)
 
     def __init__(
         out self,
@@ -77,9 +97,14 @@ struct Rectangle(
         h: Int,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
+        rotation: _OptionalFloat64 = 0.0,
     ):
         self = Rectangle(
-            position, Float64(w), Float64(h), corner_radius=corner_radius
+            position,
+            Float64(w),
+            Float64(h),
+            corner_radius=corner_radius,
+            rotation=rotation,
         )
 
     def __eq__(self, other: Rectangle) -> Bool:
@@ -88,6 +113,7 @@ struct Rectangle(
             and self.w == other.w
             and self.h == other.h
             and self.corner_radius == other.corner_radius
+            and self.rotation == other.rotation
         )
 
     def __ne__(self, other: Rectangle) -> Bool:
@@ -104,6 +130,8 @@ struct Rectangle(
         )
         if self.corner_radius != 0.0:
             writer.write(", corner_radius=", self.corner_radius)
+        if self.rotation != 0.0:
+            writer.write(", rotation=", self.rotation)
         writer.write(")")
 
     def center(self) -> Point2D:
@@ -114,35 +142,52 @@ struct Rectangle(
         return self.w * self.h - (4.0 - PI) * r * r
 
     def bounds(self) -> Rectangle:
-        """The tightest axis-aligned rectangle around this one: itself,
-        sharp, since rounding never pulls in an edge's middle."""
-        return Rectangle(self.position, self.w, self.h)
+        """The tightest axis-aligned rectangle around this one: upright,
+        itself, sharp, since rounding never pulls in an edge's middle;
+        turned, as far as its rounded corners reach along each axis."""
+        var half = self._half_extents()
+        return Rectangle(self.position, 2.0 * half[0], 2.0 * half[1])
 
     def closest_point(self, p: Point2D) -> Point2D:
         var r = self._radius()
         if r > 0.0:
             return _rounded_closest(self._inner().closest_point(p), p, r)
+        if self.rotation != 0.0:
+            var q = self._to_local(p)
+            var half_w = self.w / 2.0
+            var half_h = self.h / 2.0
+            if abs(q.x) <= half_w and abs(q.y) <= half_h:
+                return p
+            return self._from_local(
+                Vector2D(
+                    max(-half_w, min(q.x, half_w)),
+                    max(-half_h, min(q.y, half_h)),
+                )
+            )
         return Point2D(
             max(self.left(), min(p.x, self.right())),
             max(self.bottom(), min(p.y, self.top())),
         )
 
     def left(self) -> Float64:
-        return self.position.x - self.w / 2.0
+        return self.position.x - self._half_extents()[0]
 
     def right(self) -> Float64:
-        return self.position.x + self.w / 2.0
+        return self.position.x + self._half_extents()[0]
 
     def bottom(self) -> Float64:
-        return self.position.y - self.h / 2.0
+        return self.position.y - self._half_extents()[1]
 
     def top(self) -> Float64:
-        return self.position.y + self.h / 2.0
+        return self.position.y + self._half_extents()[1]
 
     def contains(self, p: Point2D) -> Bool:
         var r = self._radius()
         if r > 0.0:
             return _distance_squared(self._inner().closest_point(p), p) <= r * r
+        if self.rotation != 0.0:
+            var q = self._to_local(p)
+            return abs(q.x) <= self.w / 2.0 and abs(q.y) <= self.h / 2.0
         return (
             self.left() <= p.x <= self.right()
             and self.bottom() <= p.y <= self.top()
@@ -176,10 +221,10 @@ struct Rectangle(
                 return False
         return True
 
-    # A rounded rectangle holds the rest as its outline polygon, and a
-    # rounded shape is tested as its own.
+    # A rounded or turned rectangle holds the rest as its outline polygon,
+    # and a rounded shape is tested as its own.
     def contains(self, s: Sector) -> Bool:
-        if self._radius() > 0.0:
+        if not self._is_plain():
             return self._outline().contains(s)
         return self.contains(s.bounds())
 
@@ -194,7 +239,7 @@ struct Rectangle(
         return True
 
     def contains(self, e: Ellipse) -> Bool:
-        if self._radius() > 0.0:
+        if not self._is_plain():
             return self._outline().contains(e)
         return self.contains(e.bounds())
 
@@ -224,18 +269,64 @@ struct Rectangle(
         """The corner radius as drawn: clamped to half the shorter side."""
         return rect_corner_radius(self.corner_radius, self.w, self.h)
 
+    def _is_plain(self) -> Bool:
+        """Whether the rectangle is sharp and upright: its own bounds."""
+        return self._radius() <= 0.0 and self.rotation == 0.0
+
     def _inner(self) -> Rectangle:
         """The sharp rectangle every edge moves in to by the radius: the
         rounded one is the points within the radius of it."""
         var r = self._radius()
-        return Rectangle(self.position, self.w - 2.0 * r, self.h - 2.0 * r)
-
-    def _outline(self) -> Polygon:
-        return _rounded_outline(
-            self._inner()._points(), self._points(), self._radius()
+        return Rectangle(
+            self.position,
+            self.w - 2.0 * r,
+            self.h - 2.0 * r,
+            rotation=self.rotation,
         )
 
+    def _outline(self) -> Polygon:
+        """The rectangle as a polygon: its corners, or rounded, each fillet
+        flattened."""
+        var r = self._radius()
+        if r <= 0.0:
+            var corners = List[Point2D](capacity=4)
+            for p in self._points():
+                corners.append(p)
+            return Polygon(corners^)
+        return _rounded_outline(self._inner()._points(), self._points(), r)
+
+    def _half_extents(self) -> Tuple[Float64, Float64]:
+        """Half the width and height of the bounding box: the inner
+        rectangle's, turned, grown by the corner radius."""
+        if self.rotation == 0.0:
+            return (self.w / 2.0, self.h / 2.0)
+        var r = self._radius()
+        var c = abs(cos(self.rotation))
+        var s = abs(sin(self.rotation))
+        var half_w = self.w / 2.0 - r
+        var half_h = self.h / 2.0 - r
+        return (half_w * c + half_h * s + r, half_w * s + half_h * c + r)
+
+    def _to_local(self, p: Point2D) -> Vector2D:
+        """`p` from the centre, in the rectangle's own upright frame."""
+        return (p - self.position).rotate(-self.rotation)
+
+    def _from_local(self, v: Vector2D) -> Point2D:
+        """Back from the rectangle's own frame: `_to_local` undone."""
+        return self.position + v.rotate(self.rotation)
+
     def _points(self) -> Array[Point2D, 4]:
+        """The corners, counter-clockwise from the upright rectangle's
+        bottom left."""
+        if self.rotation != 0.0:
+            var u = _unit(self.rotation) * (self.w / 2.0)
+            var v = _unit(self.rotation + PI / 2.0) * (self.h / 2.0)
+            return [
+                self.position - u - v,
+                self.position + u - v,
+                self.position + u + v,
+                self.position - u + v,
+            ]
         return [
             Point2D(self.left(), self.bottom()),
             Point2D(self.right(), self.bottom()),
@@ -246,6 +337,9 @@ struct Rectangle(
     def _holds_strictly(self, p: Point2D) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary."""
+        if self.rotation != 0.0:
+            var q = self._to_local(p)
+            return abs(q.x) < self.w / 2.0 and abs(q.y) < self.h / 2.0
         return (
             self.left() < p.x < self.right()
             and self.bottom() < p.y < self.top()

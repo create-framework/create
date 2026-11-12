@@ -955,13 +955,18 @@ struct Canvas(DrawTarget, Movable):
         of `region.w * scale` by `region.h * scale` pixels.
 
         `region` is in screen space, like `color_at`'s position, so it is always
-        upright; outside the screen the image is transparent.
+        upright, and a turned one raises; outside the screen the image is
+        transparent.
 
         On an offscreen canvas `scale=canvas.scale()` reads its pixels as they
         are; any other scale resamples them, nearest pixel.
         """
         if scale <= 0.0:
             raise Error("snapshot needs a positive scale, got " + String(scale))
+        if region.rotation != 0.0:
+            raise Error(
+                "snapshot needs an upright region, got " + String(region)
+            )
         var pw = Int(region.w * scale + 0.5)
         var ph = Int(region.h * scale + 0.5)
         if pw <= 0 or ph <= 0:
@@ -1161,16 +1166,19 @@ struct Canvas(DrawTarget, Movable):
         h: Float64,
         *,
         corner_radius: _OptionalFloat64 = None,
+        rotation: _OptionalFloat64 = 0.0,
     ):
         """Draw the `w` by `h` rectangle centred on `position`, its corners
         rounded by `corner_radius`, or by the style's when not given (clamped
-        to half the shorter side), as `Rectangle` describes it."""
+        to half the shorter side), and turned about its centre by `rotation`
+        radians counter-clockwise, as `Rectangle` describes it."""
         self.draw(
             Rectangle(
                 position,
                 w,
                 h,
                 corner_radius=corner_radius.or_else(self._style.corner_radius),
+                rotation=rotation,
             )
         )
 
@@ -1181,9 +1189,14 @@ struct Canvas(DrawTarget, Movable):
         h: Int,
         *,
         corner_radius: _OptionalFloat64 = None,
+        rotation: _OptionalFloat64 = 0.0,
     ):
         self.rectangle(
-            position, Float64(w), Float64(h), corner_radius=corner_radius
+            position,
+            Float64(w),
+            Float64(h),
+            corner_radius=corner_radius,
+            rotation=rotation,
         )
 
     def circle(mut self, position: Point2D, r: Float64):
