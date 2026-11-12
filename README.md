@@ -57,7 +57,6 @@ struct MyApp(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # Called once per frame: handle input, modify state and draw to the screen
-        self.position = context.mouse.position
         canvas.font_size(48)
         canvas.text(self.greeting, self.position)
 
