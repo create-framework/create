@@ -27,7 +27,7 @@ struct SndFile:
     var lib: _DLHandle
 
     def __init__(out self) raises:
-        self.lib = load_library("libsndfile")
+        self.lib = load_library("libsndfile", 1)
 
     def load(self, path: String) raises -> Tuple[List[Int16], Int32, Int32]:
         """Decode an audio file to interleaved S16 PCM. Returns (samples, channels, sample_rate).

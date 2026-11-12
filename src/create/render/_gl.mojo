@@ -227,7 +227,7 @@ comptime _ReadPixels = def(
 
 def _sdl() raises -> _DLHandle:
     """SDL3, for its GL loader alone. Refcounted, so this handle is additive."""
-    return load_library("libSDL3")
+    return load_library("libSDL3", 0)
 
 
 def _proc_address(lib: _DLHandle, name: String) raises -> Int:

@@ -263,7 +263,7 @@ struct _Face(Movable):
     def __init__(
         out self, path: String, size: Int, weight: Int, slanted: Bool = False
     ) raises:
-        var ft = load_library("libfreetype")
+        var ft = load_library("libfreetype", 6)
 
         var lib_buf = Array[UInt8, 8](fill=0)
         if ft.call["FT_Init_FreeType", Int32](lib_buf.unsafe_ptr()) != 0:
@@ -299,7 +299,7 @@ struct _Face(Movable):
         """Close the face, then the library it belongs to. Nothing can be
         done about a failure this late, so none is raised."""
         try:
-            var ft = load_library("libfreetype")
+            var ft = load_library("libfreetype", 6)
             _ = ft.call["FT_Done_Face", Int32](self._face)
             _ = ft.call["FT_Done_FreeType", Int32](self._lib)
         except:
@@ -358,7 +358,7 @@ struct _Face(Movable):
     def _set_weight(mut self, weight: Int) raises:
         if weight == self._weight:
             return
-        var ft = load_library("libfreetype")
+        var ft = load_library("libfreetype", 6)
         var master_buf = Array[UInt8, 8](fill=0)
         if (
             ft.call["FT_Get_MM_Var", Int32](self._face, master_buf.unsafe_ptr())
@@ -393,7 +393,7 @@ struct _Face(Movable):
     def has_glyph(self, codepoint: Int) raises -> Bool:
         """Whether this face can render this codepoint — how `TextRenderer`
         decides to fall back to the symbols face."""
-        var ft = load_library("libfreetype")
+        var ft = load_library("libfreetype", 6)
         return (
             ft.call["FT_Get_Char_Index", UInt32](self._face, Int(codepoint))
             != 0
@@ -406,7 +406,7 @@ struct _Face(Movable):
         still advances the pen, so a missing character leaves a gap rather than
         collapsing the line or raising mid-string.
         """
-        var ft = load_library("libfreetype")
+        var ft = load_library("libfreetype", 6)
         self._set_size(ft, size)
 
         if (
@@ -582,7 +582,7 @@ struct Font(Copyable, ImplicitlyCopyable, Movable, Writable):
         """Pixels above and below the baseline at `size`, the second
         negative. Scales the face to `size` first, free when it already is."""
         ref face = self._faces[].face(self._draws_italic)
-        face._set_size(load_library("libfreetype"), size)
+        face._set_size(load_library("libfreetype", 6), size)
         return (face.ascender, face.descender)
 
     def _render(mut self, codepoint: Int, size: Int) raises -> _GlyphInfo:

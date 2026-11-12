@@ -3,7 +3,7 @@
 Internal only — nothing here is re-exported from the package `__init__`.
 Mirrors the FFI idiom of `create/_window/_sdl.mojo`: opaque `Int` handles
 for everything SDL returns a pointer for, `get_error()` on every failure, and
-its own `load_library("libSDL3")` rather than importing the window's, since
+its own `load_library("libSDL3", 0)` rather than importing the window's, since
 `audio` has no business depending on the platform window. A second `dlopen`
 of the same shared object returns the same handle, and SDL ref-counts
 `SDL_InitSubSystem`/`SDL_QuitSubSystem` per subsystem, so `SDL_INIT_AUDIO`
@@ -37,7 +37,7 @@ struct SDLAudio:
     var lib: _DLHandle
 
     def __init__(out self) raises:
-        self.lib = load_library("libSDL3")
+        self.lib = load_library("libSDL3", 0)
 
     def get_error(self) raises -> String:
         var ptr = self.lib.call[

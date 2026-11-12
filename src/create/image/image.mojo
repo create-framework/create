@@ -236,7 +236,7 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
 
     @staticmethod
     def _load_png(data: List[UInt8]) raises -> Image:
-        var lib = load_library("libpng16")
+        var lib = load_library("libpng16", 16)
         var img = Array[UInt8, 104](fill=0)
         img[8] = 1  # PNG_IMAGE_VERSION
 
@@ -266,7 +266,7 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
         var w = dims[0]
         var h = dims[1]
 
-        var lib = load_library("libturbojpeg")
+        var lib = load_library("libturbojpeg", 0)
         var handle = lib.call["tjInitDecompress", Int]()
         if handle == 0:
             raise Error("Failed to init JPEG decompressor")
