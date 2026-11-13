@@ -1,3 +1,5 @@
+from std.math import clamp
+
 from ._sdl_audio import SDLAudio, SDL_AUDIO_S16
 from .sound import Sound
 
@@ -5,7 +7,11 @@ comptime _GEN_SHIFT = 32
 comptime _INDEX_MASK: Int = 0xFFFFFFFF
 comptime _LOOP_LEAD = 0.5
 """Seconds of a looping voice kept queued ahead of the device, so a loop
-shorter than a frame, or a slow frame, never runs it dry."""
+shorter than a frame, or a slow frame, never runs it dry. Counted in played
+time: a voice at twice the speed has twice the samples queued."""
+comptime _MIN_SPEED = 0.01
+comptime _MAX_SPEED = 100.0
+"""The speeds SDL can resample at."""
 
 
 struct _Voice(Movable):
@@ -22,6 +28,8 @@ struct _Voice(Movable):
     # This voice's own volume, from `volume(id, ...)`; it plays at this times
     # `Audio`'s volume.
     var gain: Float64
+    # This voice's playback speed, from `speed(id, ...)`.
+    var speed: Float64
     var paused: Bool
     var looping: Bool
     var loop_sound: Optional[Sound]
@@ -35,6 +43,7 @@ struct _Voice(Movable):
         # this only needs to hold for the append path.
         self.generation = 1
         self.gain = 1.0
+        self.speed = 1.0
         self.paused = False
         self.looping = False
         self.loop_sound = None
@@ -46,6 +55,7 @@ struct _Voice(Movable):
         self.stream = 0
         self.generation += 1
         self.gain = 1.0
+        self.speed = 1.0
         self.paused = False
         self.looping = False
         self.loop_sound = None
@@ -54,8 +64,8 @@ struct _Voice(Movable):
 
 struct Voice(Copyable, Equatable, ImplicitlyCopyable, Movable):
     """One playback of a `Sound`, as `audio.play` and `audio.loop` return it:
-    the handle `stop`, `pause`, `resume`, `volume`, `is_playing` and
-    `is_paused` take.
+    the handle `stop`, `pause`, `resume`, `volume`, `speed`, `is_playing`
+    and `is_paused` take.
 
     A `Sound` can play as several voices at once. A voice that has ended or
     been stopped is stale: every call on it does nothing, even after its slot
@@ -162,20 +172,25 @@ struct Audio(Movable):
             if self._voices[i].stream != 0 and self._finished(i):
                 self._free_slot(i)
 
-    def play(mut self, sound: Sound, volume: Float64 = 1.0) raises -> Voice:
-        """Play `sound` once, as a new `Voice` at its own `volume`; it is
-        stale once the sound ends."""
-        return self._start(sound, volume, loop=False)
+    def play(
+        mut self, sound: Sound, volume: Float64 = 1.0, speed: Float64 = 1.0
+    ) raises -> Voice:
+        """Play `sound` once, as a new `Voice` at its own `volume` and
+        `speed`; it is stale once the sound ends."""
+        return self._start(sound, volume, speed, loop=False)
 
-    def loop(mut self, sound: Sound, volume: Float64 = 1.0) raises -> Voice:
+    def loop(
+        mut self, sound: Sound, volume: Float64 = 1.0, speed: Float64 = 1.0
+    ) raises -> Voice:
         """Play `sound` over and over until stopped, as a new `Voice` at its
-        own `volume`, as `Animator.loop` and `Tween.loop` repeat. The voice
-        is fed by `update`, from a copy of `sound` that shares its samples.
+        own `volume` and `speed`, as `Animator.loop` and `Tween.loop` repeat.
+        The voice is fed by `update`, from a copy of `sound` that shares its
+        samples.
         """
-        return self._start(sound, volume, loop=True)
+        return self._start(sound, volume, speed, loop=True)
 
     def _start(
-        mut self, sound: Sound, volume: Float64, loop: Bool
+        mut self, sound: Sound, volume: Float64, speed: Float64, loop: Bool
     ) raises -> Voice:
         # Without this, a program that skips `update` would never free a
         # slot, and the list would grow by one voice per `play`.
@@ -194,10 +209,15 @@ struct Audio(Movable):
         )
         self._voices[index].stream = stream
         self._voices[index].gain = max(volume, 0.0)
+        self._voices[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
         self._voices[index].paused = False
         self._voices[index].looping = loop
-        # The gain is set before binding, so not one sample plays louder.
+        # Gain and speed are set before binding, so not one sample plays
+        # otherwise.
         self._apply_gain(index)
+        self._sdl.set_frequency_ratio(
+            stream, Float32(self._voices[index].speed)
+        )
         # Bound before any data: a stream takes none until binding gives its
         # output side the device's format.
         self._sdl.bind_stream(self._device, stream)
@@ -224,9 +244,8 @@ struct Audio(Movable):
         var total = len(sound._samples[])
         if total == 0:
             return
-        var lead = (
-            Int(_LOOP_LEAD * Float64(sound._sample_rate)) * sound._channels
-        )
+        var seconds = _LOOP_LEAD * self._voices[index].speed
+        var lead = Int(seconds * Float64(sound._sample_rate)) * sound._channels
         var queued = Int(self._sdl.queued(stream)) // 2
         var offset = self._voices[index].loop_offset
         while queued < lead:
@@ -307,6 +326,27 @@ struct Audio(Movable):
         var index = Self._decode(id)[0]
         self._voices[index].gain = max(volume, 0.0)
         self._apply_gain(index)
+
+    def speed(self, voice: Voice) -> Float64:
+        """`voice`'s playback speed, `1.0` unless set; `0.0` once it is
+        stale."""
+        if not self._valid(voice._id):
+            return 0.0
+        return self._voices[Self._decode(voice._id)[0]].speed
+
+    def speed(mut self, voice: Voice, speed: Float64) raises:
+        """Set `voice`'s playback speed: `2.0` plays it twice as fast and an
+        octave higher, `0.5` half as fast and an octave lower, as a record
+        sped up or slowed down. Clamped to `0.01` to `100.0`. No-op if stale.
+        """
+        var id = voice._id
+        if not self._valid(id):
+            return
+        var index = Self._decode(id)[0]
+        self._voices[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
+        self._sdl.set_frequency_ratio(
+            self._voices[index].stream, Float32(self._voices[index].speed)
+        )
 
     def resume(mut self, voice: Voice) raises:
         """Continue a paused `voice` from where it was held."""

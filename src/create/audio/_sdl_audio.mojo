@@ -157,6 +157,24 @@ struct SDLAudio:
         if not self.lib.call["SDL_SetAudioStreamGain", Bool](stream, gain):
             raise Error("SDL_SetAudioStreamGain failed: " + self.get_error())
 
+    def set_frequency_ratio(self, stream: Int, ratio: Float32) raises:
+        if not self.lib.call["SDL_SetAudioStreamFrequencyRatio", Bool](
+            stream, ratio
+        ):
+            raise Error(
+                "SDL_SetAudioStreamFrequencyRatio failed: " + self.get_error()
+            )
+
+    def frequency_ratio(self, stream: Int) raises -> Float32:
+        var ratio = self.lib.call["SDL_GetAudioStreamFrequencyRatio", Float32](
+            stream
+        )
+        if ratio == 0:
+            raise Error(
+                "SDL_GetAudioStreamFrequencyRatio failed: " + self.get_error()
+            )
+        return ratio
+
     def gain(self, stream: Int) raises -> Float32:
         var gain = self.lib.call["SDL_GetAudioStreamGain", Float32](stream)
         if gain < 0:
