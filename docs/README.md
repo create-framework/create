@@ -18,3 +18,5 @@ How to use Create, topic by topic. New to it? Start with the [README](../README.
 - [Math, time and randomness](math.md): points and vectors, random numbers and noise, easing
   and tweens, and the clocks.
 - [Data](data.md): CSV/TSV tables and JSON.
+- [Audio](audio.md): loading and synthesizing sounds, playing them, and controlling each
+  playback.

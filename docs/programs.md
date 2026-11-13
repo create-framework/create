@@ -128,7 +128,8 @@ program's own. So adding one touches neither `Program` nor the run loop.
 
 A few objects only move forward when the program calls them every frame. Nothing enforces this:
 
-- `audio.update()`, or looping voices stall once the half second queued ahead of them drains.
+- `audio.update()`, or looping voices stall once the half second queued ahead of them drains
+  (see [Audio](audio.md#playing)).
 - `animator.update(context.time.delta)` and `tween.update(context.time.delta)`, or the playhead
   never moves.
 

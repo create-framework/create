@@ -36,6 +36,7 @@ must keep. Before changing, using or answering questions about one of these area
 | [geometry](docs/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
 | [math](docs/math.md) | `Point2D`/`Vector2D`, `Random`, `Noise`, `Easing`/`Tween`, `Time`/`DateTime` |
 | [data](docs/data.md) | `Table` (CSV/TSV) or `JSON` |
+| [audio](docs/audio.md) | `Sound`, `Audio` and `Voice`: loading, synthesizing and playing sounds |
 
 A task often spans several (a shadow on a clipped shape is style and drawing); read each it
 touches, and when unsure whether one applies, read it.
