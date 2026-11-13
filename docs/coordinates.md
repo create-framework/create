@@ -132,7 +132,7 @@ is free. Image cursors are not supported.
 ## When a change applies
 
 A frame-wide setting applies to the frame it is set in: the canvas ones (see
-[Drawing](drawing.md#style-and-clear)), and `title`, `resizable`, `cursor`, `lock_mouse` and
+[Drawing](drawing.md#settings-that-outlive-the-frame)), and `title`, `resizable`, `cursor`, `lock_mouse` and
 `text_input`, which the windowed loops send before presenting.
 
 What decides the frame's geometry waits for the next frame: `design_size`, `autoscale` and

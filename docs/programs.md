@@ -44,7 +44,7 @@ def main() raises:
 
 `@fieldwise_init` writes the struct's constructor from its fields, so use it on program structs.
 Make `canvas.background(...)` the first render call in `update`; with the autoclear off (see
-[Drawing](drawing.md#style-and-clear)), call `canvas.autoclear(False)` and `canvas.background(...)`
+[Drawing](drawing.md#the-background)), call `canvas.autoclear(False)` and `canvas.background(...)`
 once, in `create`, instead. A complete, bigger program is
 [examples/sidescroller](../examples/sidescroller/main.mojo); the smallest that builds is
 [tests/core/test_smoke.mojo](../tests/core/test_smoke.mojo).
