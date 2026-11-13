@@ -322,6 +322,24 @@ def test_play_and_loop_start_at_the_volume_given() raises -> None:
     assert_equal(_gain(audio, looping), Float32(0.3))
 
 
+def test_a_negative_volume_is_silent_not_an_error() raises -> None:
+    var audio = Audio()
+    audio.volume(-0.5)
+    assert_equal(audio.volume(), 0.0)
+    audio.volume(1.0)
+    var voice = audio.play(_tone(), volume=-1.0)
+    assert_equal(audio.volume(voice), 0.0)
+    audio.volume(voice, -2.0)
+    assert_equal(audio.volume(voice), 0.0)
+    assert_equal(_gain(audio, voice), Float32(0.0))
+
+
+def test_a_volume_above_one_amplifies() raises -> None:
+    var audio = Audio()
+    var voice = audio.play(_tone(), volume=2.0)
+    assert_equal(_gain(audio, voice), Float32(2.0))
+
+
 def test_volume_reads_back_its_default_and_what_was_set() raises -> None:
     var audio = Audio()
     assert_equal(audio.volume(), 1.0)
