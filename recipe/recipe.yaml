@@ -3,7 +3,7 @@
 # The conda package, built from this checkout by `pixi run check-package`.
 # The published recipe is recipes/create/ in modular/modular-community: this
 # file with `context` and `source` swapped for the release tarball (see
-# "Releasing" in AGENTS.md). Change the build, requirements and test here
+# RELEASING.md). Change the build, requirements and test here
 # first, then carry them over.
 context:
   version: ${{ env.get("CREATE_VERSION") }}
