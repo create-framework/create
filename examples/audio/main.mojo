@@ -3,8 +3,7 @@ and turn up or down.
 
 Each `play` or `loop` returns a `Voice`, the handle that playback of that one
 sound is controlled by; the `Audio` itself holds the overall volume, which
-scales every voice's own. `audio.update()` runs every frame, or looping
-voices stall.
+scales every voice's own.
 
 Space plays the chime. L starts or stops the ambience, P pauses and resumes
 it, Up and Down set its volume, Left and Right the overall volume.
@@ -67,7 +66,6 @@ struct AudioDemo(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.audio.update()
         var step = _VOLUME_STEP * context.time.delta
 
         if context.keyboard.pressed(Key.SPACE):

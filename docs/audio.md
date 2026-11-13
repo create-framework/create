@@ -48,7 +48,6 @@ an animation. A sound can play as many voices at once:
 ```mojo
 # A fragment of `update`: the program has `audio: Audio`, `music: Sound`, `jump: Sound` and
 # `music_voice: Voice` fields.
-self.audio.update()
 if context.keyboard.pressed(Key.SPACE):
     _ = self.audio.play(self.jump, volume=0.6)
 if context.keyboard.pressed(Key.M):
@@ -58,9 +57,9 @@ if context.keyboard.pressed(Key.M):
         self.music_voice = self.audio.loop(self.music)
 ```
 
-**Call `audio.update()` every frame.** It keeps looping voices fed, half a second ahead of the
-device; nothing else does, so without it a loop stops once that half second has played. One-shot
-voices need no `update`.
+An `Audio` needs nothing each frame. A looping voice is fed on SDL's audio thread whenever the
+device wants more, so it plays on through a slow frame or a long load; a one-shot voice is stale
+once it has played to its end.
 
 ## Voices
 
