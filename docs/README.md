@@ -7,8 +7,9 @@ How to use Create, topic by topic. New to it? Start with the [README](../README.
   and what a parameter, and the calls each frame needs.
 - [Coordinates, camera and autoscale](coordinates.md): where things are on screen, the camera,
   the design size, and the run's settings on `Context`.
-- [Drawing](drawing.md): shapes, style (fills, strokes, fonts, gradients, shadows, tint),
+- [Drawing](drawing.md): shapes and your own drawable types, the background, transforms,
   antialiasing and clipping.
+- [Style](style.md): colours, strokes, gradients, shadows, tint and blend modes, and text.
 - [Pixels and recording](pixels.md): reading back what was drawn, offscreen canvases, images,
   and recording GIFs.
 - [Input](input.md): the keyboard, mouse and gamepads, and text entry.
