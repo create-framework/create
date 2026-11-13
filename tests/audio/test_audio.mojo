@@ -7,6 +7,14 @@ from create.audio import Audio, Sound, Voice
 
 
 def _tone() -> Sound:
+    """Half a second: long enough not to end while a test checks it."""
+    var data = List[Int16](length=22050, fill=0)
+    return Sound.from_pcm(data)
+
+
+def _blip() -> Sound:
+    """256 samples, under 6 ms: for a test that waits for a voice to end, or
+    a loop shorter than a frame."""
     var data = List[Int16](length=256, fill=0)
     return Sound.from_pcm(data)
 
@@ -98,7 +106,7 @@ def test_a_loop_shorter_than_a_frame_is_queued_half_a_second_ahead() raises -> (
     # 256 samples at 44.1 kHz is under 6 ms, less than a frame at 60 fps:
     # one copy per `update` would run the device dry between frames.
     var audio = Audio()
-    var voice = audio.loop(_tone())
+    var voice = audio.loop(_blip())
     var lead = 22050 * 2
     assert_true(_queued(audio, voice) >= lead)
     sleep(0.05)
@@ -117,7 +125,7 @@ def test_a_long_loop_is_queued_in_chunks_not_whole() raises -> None:
 
 def test_loop_offset_wraps_round_the_sound() raises -> None:
     var audio = Audio()
-    var voice = audio.loop(_tone())
+    var voice = audio.loop(_blip())
     var offset = audio._voices[Audio._decode(voice._id)[0]].loop_offset
     assert_true(offset >= 0 and offset < 512)
     assert_equal(offset % 2, 0)
@@ -182,35 +190,50 @@ def test_out_of_range_id_is_invalid() raises -> None:
     assert_true(audio.is_playing(id))
 
 
-def test_update_reaps_finished_one_shot_but_keeps_looping_voice() raises -> (
-    None
-):
-    """The suite's only wall-clock-dependent test. Under the dummy driver a
-    256-sample buffer drains in real time, so the leak `update()` is meant to
-    fix can only be observed by actually waiting for it."""
-    var audio = Audio()
-    var one_shot = audio.play(_tone())
-    var looping = audio.loop(_tone())
-
-    # Point 1: with no `update()` call, a finished one-shot leaks. There is no
-    # public symptom to poll for while `update()` is absent, so this can only
-    # be a fixed sleep past the drain, not a condition-gated wait.
-    sleep(0.2)
-    assert_true(audio.is_playing(one_shot))
-
-    # Point 2: `update()` reaps it once the drain has happened. Poll rather
-    # than assume one call suffices, so this stays robust on a slow machine.
-    var reaped = False
+def _wait_until_stale(audio: Audio, voice: Voice) raises -> Bool:
+    """Poll for a one-shot to play out: under the dummy driver a 256-sample
+    buffer drains in real time, so only waiting can show it."""
     for _ in range(200):
-        audio.update()
-        if not audio.is_playing(one_shot):
-            reaped = True
-            break
+        if not audio.is_playing(voice):
+            return True
         sleep(0.01)
-    assert_true(reaped)
+    return False
 
-    # Point 3: the looping voice survives the same `update()` calls.
+
+def test_a_finished_one_shot_is_stale_without_update() raises -> None:
+    var audio = Audio()
+    var one_shot = audio.play(_blip())
+    var looping = audio.loop(_blip())
+    assert_true(_wait_until_stale(audio, one_shot))
     assert_true(audio.is_playing(looping))
+
+
+def test_play_reuses_a_finished_voice_slot_without_update() raises -> None:
+    var audio = Audio()
+    var first = audio.play(_blip())
+    assert_true(_wait_until_stale(audio, first))
+    var second = audio.play(_blip())
+    assert_equal(len(audio._voices), 1)
+    assert_true(second != first)
+
+
+def test_update_frees_a_finished_one_shot_slot() raises -> None:
+    var audio = Audio()
+    var one_shot = audio.play(_blip())
+    assert_true(_wait_until_stale(audio, one_shot))
+    audio.update()
+    assert_equal(audio._voices[0].stream, 0)
+
+
+def test_a_paused_one_shot_is_never_freed() raises -> None:
+    var audio = Audio()
+    var voice = audio.play(_tone())
+    audio.pause(voice)
+    sleep(0.1)
+    audio.update()
+    assert_false(audio.is_playing(voice))
+    audio.resume(voice)
+    assert_true(audio.is_playing(voice))
 
 
 def test_many_concurrent_voices() raises -> None:

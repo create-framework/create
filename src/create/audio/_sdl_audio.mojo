@@ -151,6 +151,20 @@ struct SDLAudio:
             raise Error("SDL_GetAudioStreamQueued failed: " + self.get_error())
         return queued
 
+    def flush(self, stream: Int) raises:
+        """Mark the end of `stream`'s input, so the samples a resampler holds
+        back for what follows are converted and played too."""
+        if not self.lib.call["SDL_FlushAudioStream", Bool](stream):
+            raise Error("SDL_FlushAudioStream failed: " + self.get_error())
+
+    def drained(self, stream: Int) -> Bool:
+        """Whether `stream` has nothing left to give the device: no input
+        waiting and no converted output. A failed query counts as drained."""
+        return (
+            self.lib.call["SDL_GetAudioStreamQueued", Int32](stream) <= 0
+            and self.lib.call["SDL_GetAudioStreamAvailable", Int32](stream) <= 0
+        )
+
     def clear_stream(self, stream: Int) raises:
         if not self.lib.call["SDL_ClearAudioStream", Bool](stream):
             raise Error("SDL_ClearAudioStream failed: " + self.get_error())
