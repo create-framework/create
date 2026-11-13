@@ -1,3 +1,4 @@
+from std.math import clamp
 from std.memory import ArcPointer
 
 from ._sdl_audio import SDLAudio
@@ -74,11 +75,40 @@ struct Sound(Copyable, ImplicitlyCopyable, Movable):
         )
 
     @staticmethod
-    def from_pcm(
-        data: List[Int16], channels: Int = 1, sample_rate: Int = 44100
-    ) -> Sound:
-        """Build a Sound from raw 16-bit samples, e.g. a synthesized waveform.
+    def from_samples(
+        samples: List[Float64], channels: Int = 1, sample_rate: Int = 44100
+    ) raises -> Sound:
+        """A sound of `samples`, from `-1.0` to `1.0`, such as a synthesized
+        waveform. With more than one channel they interleave, a sample of each
+        channel to a frame: left, right, left, right for stereo. A sample
+        outside the range is clipped to it.
+
+        Raises unless `channels` and `sample_rate` are positive and `samples`
+        is whole frames.
         """
+        if channels < 1:
+            raise Error(
+                "Sound.from_samples: channels must be positive, got ",
+                channels,
+            )
+        if sample_rate < 1:
+            raise Error(
+                "Sound.from_samples: sample_rate must be positive, got ",
+                sample_rate,
+            )
+        if len(samples) % channels != 0:
+            raise Error(
+                "Sound.from_samples: ",
+                len(samples),
+                " samples are not whole frames of ",
+                channels,
+                " channels",
+            )
+        var converted = List[Int16](capacity=len(samples))
+        for sample in samples:
+            converted.append(Int16(round(clamp(sample, -1.0, 1.0) * 32767.0)))
         return Sound(
-            _samples=data.copy(), _channels=channels, _sample_rate=sample_rate
+            _samples=converted^,
+            _channels=channels,
+            _sample_rate=sample_rate,
         )

@@ -7,20 +7,40 @@ def _fixture(name: String) -> String:
     return source_path("../fixtures/" + name)
 
 
-def test_from_pcm_keeps_the_samples_and_format() raises -> None:
-    var data: List[Int16] = [0, 100, -100, Int16.MIN]
-    var s = Sound.from_pcm(data, channels=2, sample_rate=48000)
+def test_from_samples_scales_to_16_bit() raises -> None:
+    var data: List[Float64] = [0.0, 1.0, -1.0, 0.5]
+    var s = Sound.from_samples(data, channels=2, sample_rate=48000)
     assert_equal(len(s._samples[]), 4)
-    assert_equal(s._samples[][3], Int16.MIN)
+    assert_equal(s._samples[][0], 0)
+    assert_equal(s._samples[][1], 32767)
+    assert_equal(s._samples[][2], -32767)
+    assert_equal(s._samples[][3], 16384)
     assert_equal(s.channels(), 2)
     assert_equal(s.sample_rate(), 48000)
 
 
-def test_from_pcm_defaults() raises -> None:
-    var data: List[Int16] = [0, 0]
-    var s = Sound.from_pcm(data)
+def test_from_samples_clips_out_of_range() raises -> None:
+    var data: List[Float64] = [2.0, -3.0]
+    var s = Sound.from_samples(data)
+    assert_equal(s._samples[][0], 32767)
+    assert_equal(s._samples[][1], -32767)
+
+
+def test_from_samples_defaults() raises -> None:
+    var data: List[Float64] = [0.0, 0.0]
+    var s = Sound.from_samples(data)
     assert_equal(s.channels(), 1)
     assert_equal(s.sample_rate(), 44100)
+
+
+def test_from_samples_rejects_a_bad_format() raises -> None:
+    var data: List[Float64] = [0.0, 0.0, 0.0]
+    with assert_raises(contains="channels"):
+        _ = Sound.from_samples(data, channels=0)
+    with assert_raises(contains="sample_rate"):
+        _ = Sound.from_samples(data, sample_rate=0)
+    with assert_raises(contains="whole frames"):
+        _ = Sound.from_samples(data, channels=2)
 
 
 def test_load_wav() raises -> None:
