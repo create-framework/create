@@ -3,43 +3,49 @@
 Create's docs are written for every contributor, human or agent. Read them before working here;
 this file adds only what is specific to agents.
 
-## Read first
+## Always
 
-- [docs/](docs/README.md), the user guide: [programs](docs/programs.md),
-  [coordinates](docs/coordinates.md), [drawing](docs/drawing.md), [style](docs/style.md),
-  [pixels](docs/pixels.md), [input](docs/input.md), [geometry](docs/geometry.md),
-  [math](docs/math.md) and [data](docs/data.md). How the library behaves, which every change must
-  keep.
+These apply to every task and are imported below:
+
 - [CONTRIBUTING.md](CONTRIBUTING.md): the design ethos, building and testing, the workflow and
   commit messages, and the code conventions.
-- [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, imports and public surface, and the
-  layering rules.
-- A package's README before changing it: [render](src/create/render/README.md),
-  [core](src/create/core/README.md), [tests](tests/README.md). The `AGENTS.md` beside each
-  imports it.
-- [RELEASING.md](RELEASING.md), only when asked to cut a release.
+- [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules,
+  and imports and public surface.
+- From the user guide, [programs](docs/programs.md) and [coordinates](docs/coordinates.md): the
+  shape of a program and the centred, y-up coordinates every other page assumes.
+
+@CONTRIBUTING.md
+
+@ARCHITECTURE.md
 
 @docs/programs.md
 
 @docs/coordinates.md
 
-@docs/drawing.md
+## When the task touches it
 
-@docs/style.md
+The rest of the [user guide](docs/README.md) describes how the library behaves, which every change
+must keep. Before changing, using or answering questions about one of these areas, read its page:
 
-@docs/pixels.md
+| Read | When the task involves |
+|---|---|
+| [drawing](docs/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, transforms and guards, antialiasing, clipping |
+| [style](docs/style.md) | `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
+| [pixels](docs/pixels.md) | `color_at`, `snapshot`, offscreen canvases, `Image` and `PixelBuffer`, saving images, recording GIFs |
+| [input](docs/input.md) | the keyboard, mouse or gamepads, text entry, `EditableText` |
+| [geometry](docs/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
+| [math](docs/math.md) | `Point2D`/`Vector2D`, `Random`, `Noise`, `Easing`/`Tween`, `Time`/`DateTime` |
+| [data](docs/data.md) | `Table` (CSV/TSV) or `JSON` |
 
-@docs/input.md
+A task often spans several (a shadow on a clipped shape is style and drawing); read each it
+touches, and when unsure whether one applies, read it.
 
-@docs/geometry.md
+Also:
 
-@docs/math.md
-
-@docs/data.md
-
-@CONTRIBUTING.md
-
-@ARCHITECTURE.md
+- A package's README before changing that package: [render](src/create/render/README.md),
+  [core](src/create/core/README.md), [tests](tests/README.md). The `AGENTS.md` beside each imports
+  it, so it loads when you work there.
+- [RELEASING.md](RELEASING.md), only when asked to cut a release.
 
 ## As an agent
 
