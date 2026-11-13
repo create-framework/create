@@ -41,6 +41,26 @@ def test_stop_all() raises -> None:
     assert_false(audio.is_playing(b))
 
 
+def test_pause_all_holds_every_voice_and_resume_all_continues_them() raises -> (
+    None
+):
+    var audio = Audio()
+    var one_shot = audio.play(_tone())
+    var looping = audio.loop(_tone())
+    var held = audio.loop(_tone())
+    audio.pause(held)
+    audio.pause_all()
+    assert_true(audio.is_paused(one_shot))
+    assert_true(audio.is_paused(looping))
+    assert_true(audio.is_paused(held))
+    var menu = audio.play(_tone())
+    assert_true(audio.is_playing(menu))
+    audio.resume_all()
+    assert_true(audio.is_playing(one_shot))
+    assert_true(audio.is_playing(looping))
+    assert_true(audio.is_playing(held))
+
+
 def test_pause_resume() raises -> None:
     var audio = Audio()
     var id = audio.play(_tone())
