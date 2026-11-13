@@ -52,6 +52,26 @@ def test_stale_id_after_slot_recycle() raises -> None:
     assert_true(audio.is_playing(second))
 
 
+def test_pausing_one_voice_leaves_the_others_playing() raises -> None:
+    # Every voice shares one device, so a pause must hold only its own stream.
+    var audio = Audio()
+    var held = audio.loop(_tone())
+    var other = audio.loop(_tone())
+    audio.pause(held)
+    assert_false(audio.is_playing(held))
+    assert_true(audio.is_playing(other))
+
+
+def test_pause_twice_then_resume() raises -> None:
+    var audio = Audio()
+    var id = audio.loop(_tone())
+    audio.pause(id)
+    audio.pause(id)
+    audio.resume(id)
+    audio.resume(id)
+    assert_true(audio.is_playing(id))
+
+
 def test_play_loop_returns_valid_id() raises -> None:
     var audio = Audio()
     var id = audio.loop(_tone())
