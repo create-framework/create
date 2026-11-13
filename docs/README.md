@@ -11,4 +11,8 @@ How to use Create, topic by topic. New to it? Start with the [README](../README.
   antialiasing and clipping.
 - [Pixels and recording](pixels.md): reading back what was drawn, offscreen canvases, images,
   and recording GIFs.
-- [Glossary](glossary.md): the library's terms and types, from `Point2D` to `JSON`.
+- [Input](input.md): the keyboard, mouse and gamepads, and text entry.
+- [Geometry](geometry.md): the shapes and curves, and collision tests between them.
+- [Math, time and randomness](math.md): points and vectors, random numbers and noise, easing
+  and tweens, and the clocks.
+- [Data](data.md): CSV/TSV tables and JSON.

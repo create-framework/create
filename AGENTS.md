@@ -6,8 +6,9 @@ this file adds only what is specific to agents.
 ## Read first
 
 - [docs/](docs/README.md), the user guide: [programs](docs/programs.md),
-  [coordinates](docs/coordinates.md), [drawing](docs/drawing.md), [pixels](docs/pixels.md) and the
-  [glossary](docs/glossary.md). How the library behaves, which every change must keep.
+  [coordinates](docs/coordinates.md), [drawing](docs/drawing.md), [pixels](docs/pixels.md),
+  [input](docs/input.md), [geometry](docs/geometry.md), [math](docs/math.md) and
+  [data](docs/data.md). How the library behaves, which every change must keep.
 - [CONTRIBUTING.md](CONTRIBUTING.md): the design ethos, building and testing, the workflow and
   commit messages, and the code conventions.
 - [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, imports and public surface, and the
@@ -25,7 +26,13 @@ this file adds only what is specific to agents.
 
 @docs/pixels.md
 
-@docs/glossary.md
+@docs/input.md
+
+@docs/geometry.md
+
+@docs/math.md
+
+@docs/data.md
 
 @CONTRIBUTING.md
 

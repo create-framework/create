@@ -57,3 +57,9 @@ the per-frame selector (the animation already held is left as it is, paused or f
 - Use `@fieldwise_init` on program structs.
 - Make `canvas.background(...)` the first render call in `update`. With the autoclear off, call
   `canvas.autoclear(False)` and `canvas.background(...)` once, in `create`.
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| Asset vs. playhead | `Image`/`Font`/`Animation`/`Sound` are shared immutable assets; `Animator`/a `Voice` (what `audio.play` and `audio.loop` return) are one entity's position in one. `fps` belongs to the asset |
