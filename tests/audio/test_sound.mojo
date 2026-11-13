@@ -100,5 +100,21 @@ def test_load_too_short_file_raises() raises -> None:
         _ = Sound.load(_fixture("too_short.bin"))
 
 
+def test_load_error_names_the_path() raises -> None:
+    var path = _fixture("does_not_exist.wav")
+    try:
+        _ = Sound.load(path)
+    except e:
+        assert_true(String(e).endswith(path))
+        return
+    raise Error("expected Sound.load to raise")
+
+
+def test_load_a_file_with_no_samples_raises() raises -> None:
+    # A valid WAV header around zero bytes of data.
+    with assert_raises(contains="no samples"):
+        _ = Sound.load(_fixture("empty.wav"))
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
