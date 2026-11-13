@@ -81,11 +81,11 @@ struct Audio(Movable):
     """Program-owned playback device. Construct once, hold as a Program field,
     call `play` from `update`.
 
-    Call `update` once per frame (e.g. from `Program.update`) -- it reaps
-    finished one-shot voices and refills looping ones. SDL keeps playing
-    whatever was last queued and never tells this struct a stream finished on
-    its own, so skipping `update` silently stalls a loop after its first
-    buffer drains, and leaks one-shot voice slots forever.
+    Call `update` once per frame (e.g. from `Program.update`): it keeps
+    looping voices fed, which nothing else does, so skipping it stalls a loop
+    once the half second queued ahead drains. A one-shot voice needs no
+    `update`: it reads as stale once it has played to its end, and its slot
+    is freed by the next `update` or `play`.
     """
 
     var _sdl: SDLAudio
@@ -140,7 +140,25 @@ struct Audio(Movable):
             and index < len(self._voices)
             and self._voices[index].generation == generation
             and self._voices[index].stream != 0
+            and not self._finished(index)
         )
+
+    def _finished(self, index: Int) -> Bool:
+        """Whether the voice in a live slot has played to its end: a one-shot
+        that is not paused, with nothing left to play. Its slot is freed by
+        the next `update` or `play`, but it is stale from now on."""
+        ref voice = self._voices[index]
+        return (
+            not voice.looping
+            and not voice.paused
+            and self._sdl.drained(voice.stream)
+        )
+
+    def _reap(mut self) raises:
+        """Free the slot of every voice that has played to its end."""
+        for i in range(len(self._voices)):
+            if self._voices[i].stream != 0 and self._finished(i):
+                self._free_slot(i)
 
     def play(mut self, sound: Sound) raises -> Voice:
         """Play `sound` once, as a new `Voice`; it frees itself when the
@@ -163,6 +181,9 @@ struct Audio(Movable):
         # side the device's format.
         self._sdl.bind_stream(self._device, stream)
 
+        # Without this, a program that skips `update` would never free a
+        # slot, and the list would grow by one voice per `play`.
+        self._reap()
         var index = -1
         for i in range(len(self._voices)):
             if self._voices[i].stream == 0:
@@ -183,6 +204,7 @@ struct Audio(Movable):
             self._sdl.put_data(
                 stream, sound._pcm[].unsafe_ptr(), Int32(len(sound._pcm[]))
             )
+            self._sdl.flush(stream)
         return Voice(_id=Self._encode(index, self._voices[index].generation))
 
     def _feed(mut self, index: Int) raises:
@@ -271,19 +293,16 @@ struct Audio(Movable):
         return not self._voices[Self._decode(id)[0]].paused
 
     def update(mut self) raises:
-        """Reap finished one-shot voices and top up looping ones.
+        """Free finished one-shot voices and top up looping ones.
 
         A looping voice is kept `_LOOP_LEAD` seconds ahead of the device,
         however short its sound, so the device never drains between frames:
         a refill that lands after it has gone silent clicks at the seam.
         """
+        self._reap()
         for i in range(len(self._voices)):
-            if self._voices[i].stream == 0:
-                continue
-            if self._voices[i].looping:
+            if self._voices[i].stream != 0 and self._voices[i].looping:
                 self._feed(i)
-            elif self._sdl.available(self._voices[i].stream) == 0:
-                self._free_slot(i)
 
     def __deinit__(deinit self):
         try:
