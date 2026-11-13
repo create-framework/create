@@ -3,7 +3,7 @@
 **Create** is a creative coding library for Mojo, inspired by Processing. It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
 
 This guide is for anyone working on Create itself: what it values, how to build and test it, how
-changes land, and the conventions its code follows. Using Create is covered in the [README](README.md),
+changes land, and the conventions its code follows. Using Create is covered in [docs/](docs/README.md),
 how its code is organised in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Early development

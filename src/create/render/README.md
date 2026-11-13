@@ -1,6 +1,6 @@
 # `create.render` internals
 
-Internals of the rendering stack. The root [AGENTS.md](../../../AGENTS.md) covers the consumer API,
+Internals of the rendering stack. The [user guide](../../../docs/README.md) covers the consumer API,
 and [ARCHITECTURE.md](../../../ARCHITECTURE.md) the layering rules.
 
 ## Files
