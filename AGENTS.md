@@ -2,21 +2,27 @@
 
 ## Purpose
 
-Create is a creative coding library for interactive graphics in Mojo: Processing's ergonomics,
-clean separation of concerns, Mojo's performance — scaling from sketch to full application.
+**Create** is a creative coding library for Mojo, inspired by Processing. It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
 
-**Early development, no public release, no external consumers.** Breaking changes are fine. Doc
-churn and rewriting examples or tests are not reasons to reject an idea; judge a change on whether
-it makes the library better.
+## Early development 
+
+At this stage breaking changes are fine. Doc churn and rewriting examples or tests are not reasons to reject an idea; judge a change on whether it makes the library better.
 
 ## Design Ethos
 
-- **API intuitiveness first.** No non-obvious abbreviations; clarity over brevity in names.
-- **Consumer ergonomics over a minimal API surface.**
-- **Keep the common path simple.** A sketch needs minimal ceremony.
-- **Modular architecture.** Separate concerns, minimise coupling.
-- **Consistency.** Similar concepts behave and are named alike.
-- **Good performance by default**, without internals knowledge or specialised APIs.
+The API should embody the following principles:
+
+- **Intuitive:** The API should have a quality of obviousness. Names and behaviours should be easy to understand. Avoid abbreviations; prefer clarity over brevity.
+
+- **Ergonomic:** Optimise for the experience of using the library, not for minimising its API surface. Common operations should be concise and require minimal ceremony.
+
+- **Modular:** Keep the architecture modular, with clear separation of concerns and minimal coupling. Components should be independently understandable and should compose naturally.
+
+- **Consistent:** Similar concepts should be named and behave alike. Establish conventions and apply them uniformly rather than introducing special cases without good reason.
+
+- **Composable:** Design APIs and abstractions that work well together. Prefer building blocks that can be combined in different ways over rigid, narrowly scoped solutions.
+
+- **Performant:** Performance should be an inherent property of the API, not something users must work around. Common operations should be efficient by default, without requiring knowledge of internals or specialised APIs to achieve good performance.
 
 ## Module Layout
 
