@@ -116,7 +116,13 @@ Run your project with:
 pixi run mojo run main.mojo
 ```
 
-A CLI tool to streamline this setup is coming soon, along with an API reference, tutorials and more.
+The [user guide](docs/README.md) covers the library topic by topic. A CLI tool to streamline this setup is coming soon, along with an API reference and tutorials.
+
+## Documentation
+
+- [User guide](docs/README.md): how to use **Create**, topic by topic.
+- [Contributing](CONTRIBUTING.md): how to work on **Create** itself: its design ethos, building and testing, and how changes land.
+- [Architecture](ARCHITECTURE.md): how the source is organised, and which package may import which.
 
 ## Supported Platforms
 

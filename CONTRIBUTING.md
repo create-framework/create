@@ -97,6 +97,8 @@ squash. The branch need not be up to date with `main` to merge, and the head bra
 merge. A repository admin may bypass the checks when merging a pull request (CI itself broken), never
 for a direct push.
 
+Releases are cut by a maintainer, as [RELEASING.md](RELEASING.md) describes.
+
 **Commit messages** follow [Conventional Commits](https://www.conventionalcommits.org/):
 `<type>(<package>): <Summary>`, the summary in the imperative and capitalised. The scope is the
 subpackage the change is confined to (`render`, `geometry`, `core`, …, as in the module table);
