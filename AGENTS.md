@@ -104,6 +104,20 @@ squash. The branch need not be up to date with `main` to merge, and the head bra
 merge. A repository admin may bypass the checks when merging a pull request (CI itself broken), never
 for a direct push. Leave merging to the user unless they ask for it.
 
+**Commit messages** follow [Conventional Commits](https://www.conventionalcommits.org/):
+`<type>(<package>): <Summary>`, the summary in the imperative and capitalised. The scope is the
+subpackage the change is confined to (`render`, `geometry`, `core`, …, as in the module table);
+leave it out when a change spans several packages or touches none, such as the root docs or CI.
+The types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build` (pixi, the recipe,
+dependencies), `ci`, `chore`. A breaking change of the public API adds `!` before the colon.
+
+```text
+feat(geometry): Add Capsule
+fix(render): Clip a rotated image's edge to the frame
+refactor(core)!: Rename Context.window_size to Context.design_size
+docs: Move the release process to RELEASING.md
+```
+
 Neither tier subsumes the other: building a consumer program type-checks only the `def` bodies it
 reaches (catches API drift, not an uncalled broken function); `mojo precompile` is the reverse.
 
