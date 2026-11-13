@@ -90,7 +90,8 @@ struct Voice(Copyable, Equatable, ImplicitlyCopyable, Movable):
 
 struct Audio(Movable):
     """Program-owned playback device. Construct once, hold as a Program field,
-    call `play` from `update`.
+    call `play` from `update`. Where no audio device can be opened, it plays
+    silently rather than raising.
 
     Call `update` once per frame (e.g. from `Program.update`): it keeps
     looping voices fed, which nothing else does, so skipping it stalls a loop
@@ -108,8 +109,15 @@ struct Audio(Movable):
 
     def __init__(out self) raises:
         self._sdl = SDLAudio()
-        self._sdl.init()
-        self._device = self._sdl.open_device()
+        # A program with sound must still run where there is nothing to play
+        # it on: a server, CI, a headless recording. There it plays to SDL's
+        # dummy driver, silently, and every call works as usual.
+        var device: UInt32
+        try:
+            device = self._sdl.start()
+        except:
+            device = self._sdl.start_silent()
+        self._device = device
         self._voices = List[_Voice]()
         self._volume = 1.0
 
