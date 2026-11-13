@@ -161,27 +161,21 @@ struct Audio(Movable):
             if self._voices[i].stream != 0 and self._finished(i):
                 self._free_slot(i)
 
-    def play(mut self, sound: Sound) raises -> Voice:
-        """Play `sound` once, as a new `Voice`; it frees itself when the
-        sound ends."""
-        return self._start(sound, loop=False)
+    def play(mut self, sound: Sound, volume: Float64 = 1.0) raises -> Voice:
+        """Play `sound` once, as a new `Voice` at its own `volume`; it is
+        stale once the sound ends."""
+        return self._start(sound, volume, loop=False)
 
-    def loop(mut self, sound: Sound) raises -> Voice:
-        """Play `sound` over and over until stopped, as a new `Voice`, as
-        `Animator.loop` and `Tween.loop` repeat. The voice is refilled by
-        `update`, from a copy of `sound` that shares its samples.
+    def loop(mut self, sound: Sound, volume: Float64 = 1.0) raises -> Voice:
+        """Play `sound` over and over until stopped, as a new `Voice` at its
+        own `volume`, as `Animator.loop` and `Tween.loop` repeat. The voice
+        is fed by `update`, from a copy of `sound` that shares its samples.
         """
-        return self._start(sound, loop=True)
+        return self._start(sound, volume, loop=True)
 
-    def _start(mut self, sound: Sound, loop: Bool) raises -> Voice:
-        var stream = self._sdl.create_stream(
-            sound._format, Int32(sound._channels), Int32(sound._sample_rate)
-        )
-        self._sdl.set_gain(stream, Float32(self._volume))
-        # Bound first: a stream takes no data until binding gives its output
-        # side the device's format.
-        self._sdl.bind_stream(self._device, stream)
-
+    def _start(
+        mut self, sound: Sound, volume: Float64, loop: Bool
+    ) raises -> Voice:
         # Without this, a program that skips `update` would never free a
         # slot, and the list would grow by one voice per `play`.
         self._reap()
@@ -193,9 +187,19 @@ struct Audio(Movable):
         if index == -1:
             self._voices.append(_Voice())
             index = len(self._voices) - 1
+
+        var stream = self._sdl.create_stream(
+            sound._format, Int32(sound._channels), Int32(sound._sample_rate)
+        )
         self._voices[index].stream = stream
+        self._voices[index].gain = volume
         self._voices[index].paused = False
         self._voices[index].looping = loop
+        # The gain is set before binding, so not one sample plays louder.
+        self._apply_gain(index)
+        # Bound before any data: a stream takes none until binding gives its
+        # output side the device's format.
+        self._sdl.bind_stream(self._device, stream)
 
         if loop:
             self._voices[index].loop_sound = sound

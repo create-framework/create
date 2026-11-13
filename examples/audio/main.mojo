@@ -76,8 +76,9 @@ struct AudioDemo(Program):
 
         if context.keyboard.pressed(Key.L):
             if self.ambience_voice == Voice.NONE:
-                self.ambience_voice = self.audio.loop(self.ambience)
-                self.audio.volume(self.ambience_voice, self.ambience_volume)
+                self.ambience_voice = self.audio.loop(
+                    self.ambience, volume=self.ambience_volume
+                )
             else:
                 self.audio.stop(self.ambience_voice)
                 self.ambience_voice = Voice.NONE

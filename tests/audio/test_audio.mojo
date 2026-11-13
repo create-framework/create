@@ -311,6 +311,17 @@ def test_voice_volume_reads_back() raises -> None:
     assert_equal(audio.volume(voice), 0.0)
 
 
+def test_play_and_loop_start_at_the_volume_given() raises -> None:
+    var audio = Audio()
+    audio.volume(0.5)
+    var one_shot = audio.play(_tone(), volume=0.4)
+    var looping = audio.loop(_tone(), volume=0.6)
+    assert_equal(audio.volume(one_shot), 0.4)
+    assert_equal(audio.volume(looping), 0.6)
+    assert_equal(_gain(audio, one_shot), Float32(0.2))
+    assert_equal(_gain(audio, looping), Float32(0.3))
+
+
 def test_volume_reads_back_its_default_and_what_was_set() raises -> None:
     var audio = Audio()
     assert_equal(audio.volume(), 1.0)
