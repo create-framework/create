@@ -1,5 +1,8 @@
 # Tests
 
+How Create's tests are written and run, and how the GPU backend is covered. Run them with
+`pixi run test` (see [CONTRIBUTING.md](../CONTRIBUTING.md#building-and-testing)).
+
 Tests use `std.testing.TestSuite`; each `tests/**/test_*.mojo` is a program:
 
 ```mojo

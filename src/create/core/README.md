@@ -1,8 +1,10 @@
 # `create.core` internals
 
-Internals of the run loops. The [user guide](../../../docs/README.md) covers the consumer API,
-[ARCHITECTURE.md](../../../ARCHITECTURE.md) the layering rules; the render side is in
-[../render/README.md](../render/README.md).
+`create.core` runs a program: the windowed, GPU and headless loops, the `Context` they own and
+the program reads, and how window events become input readings. This page is for working on the
+package: the [user guide](../../../docs/README.md) covers using it,
+[ARCHITECTURE.md](../../../ARCHITECTURE.md) where it sits and the layering rules, and
+[../render/README.md](../render/README.md) the render side.
 
 ## Files
 
