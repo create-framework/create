@@ -85,10 +85,10 @@ struct AudioDemo(Program):
             context.keyboard.pressed(Key.P)
             and self.ambience_voice != Voice.NONE
         ):
-            if self.audio.is_playing(self.ambience_voice):
-                self.audio.pause(self.ambience_voice)
-            else:
+            if self.audio.is_paused(self.ambience_voice):
                 self.audio.resume(self.ambience_voice)
+            else:
+                self.audio.pause(self.ambience_voice)
 
         if context.keyboard.down(Key.UP) or context.keyboard.down(Key.DOWN):
             var change = step if context.keyboard.down(Key.UP) else -step
@@ -114,12 +114,12 @@ struct AudioDemo(Program):
             canvas.text("Space: chime", (-250.0, -30.0))
 
         var state: String
-        if self.ambience_voice == Voice.NONE:
-            state = "stopped"
-        elif self.audio.is_playing(self.ambience_voice):
+        if self.audio.is_playing(self.ambience_voice):
             state = "playing"
-        else:
+        elif self.audio.is_paused(self.ambience_voice):
             state = "paused"
+        else:
+            state = "stopped"
         with canvas.style(text_color=_TEXT, font_size=26):
             canvas.text("Ambience " + state, (120.0, 60.0))
         with canvas.style(text_color=_HINT, font_size=18):

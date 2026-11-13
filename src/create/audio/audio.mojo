@@ -54,7 +54,8 @@ struct _Voice(Movable):
 
 struct Voice(Copyable, Equatable, ImplicitlyCopyable, Movable):
     """One playback of a `Sound`, as `audio.play` and `audio.loop` return it:
-    the handle `stop`, `pause`, `resume`, `volume` and `is_playing` take.
+    the handle `stop`, `pause`, `resume`, `volume`, `is_playing` and
+    `is_paused` take.
 
     A `Sound` can play as several voices at once. A voice that has ended or
     been stopped is stale: every call on it does nothing, even after its slot
@@ -291,6 +292,14 @@ struct Audio(Movable):
         if not self._valid(id):
             return False
         return not self._voices[Self._decode(id)[0]].paused
+
+    def is_paused(self, voice: Voice) -> Bool:
+        """Whether `voice` is held by `pause`, waiting for `resume`. A voice
+        neither playing nor paused is stale: it has ended or been stopped."""
+        var id = voice._id
+        if not self._valid(id):
+            return False
+        return self._voices[Self._decode(id)[0]].paused
 
     def update(mut self) raises:
         """Free finished one-shot voices and top up looping ones.

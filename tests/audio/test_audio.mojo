@@ -50,6 +50,22 @@ def test_pause_resume() raises -> None:
     assert_true(audio.is_playing(id))
 
 
+def test_is_paused_tells_a_paused_voice_from_a_stale_one() raises -> None:
+    var audio = Audio()
+    var voice = audio.loop(_tone())
+    assert_false(audio.is_paused(voice))
+    audio.pause(voice)
+    assert_true(audio.is_paused(voice))
+    assert_false(audio.is_playing(voice))
+    audio.resume(voice)
+    assert_false(audio.is_paused(voice))
+    audio.pause(voice)
+    audio.stop(voice)
+    assert_false(audio.is_paused(voice))
+    assert_false(audio.is_playing(voice))
+    assert_false(audio.is_paused(Voice.NONE))
+
+
 def test_stale_id_after_slot_recycle() raises -> None:
     var audio = Audio()
     var first = audio.play(_tone())
