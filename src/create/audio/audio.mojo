@@ -109,9 +109,10 @@ struct Audio(Movable):
 
     def volume(mut self, volume: Float64) raises:
         """Set the volume every voice plays at, `0.0` silent and `1.0` as
-        recorded. Applies at once, to the voices already playing as well as
-        later ones; each voice's own `volume(id, ...)` scales it."""
-        self._volume = volume
+        recorded; above `1.0` amplifies, and below `0.0` is silent too.
+        Applies at once, to the voices already playing as well as later ones;
+        each voice's own `volume(voice, ...)` scales it."""
+        self._volume = max(volume, 0.0)
         for i in range(len(self._voices)):
             if self._voices[i].stream != 0:
                 self._apply_gain(i)
@@ -192,7 +193,7 @@ struct Audio(Movable):
             sound._format, Int32(sound._channels), Int32(sound._sample_rate)
         )
         self._voices[index].stream = stream
-        self._voices[index].gain = volume
+        self._voices[index].gain = max(volume, 0.0)
         self._voices[index].paused = False
         self._voices[index].looping = loop
         # The gain is set before binding, so not one sample plays louder.
@@ -271,12 +272,13 @@ struct Audio(Movable):
 
     def volume(mut self, voice: Voice, volume: Float64) raises:
         """Set `voice`'s own volume, which `volume()` scales: a voice at
-        `0.5` under a volume of `0.5` plays at a quarter. No-op if stale."""
+        `0.5` under a volume of `0.5` plays at a quarter. Below `0.0` is
+        silent, as for `volume()`. No-op if stale."""
         var id = voice._id
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._voices[index].gain = volume
+        self._voices[index].gain = max(volume, 0.0)
         self._apply_gain(index)
 
     def resume(mut self, voice: Voice) raises:
