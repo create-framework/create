@@ -1,26 +1,74 @@
 from std.math import clamp
+from std.memory import OwnedPointer
 
-from ._sdl_audio import SDLAudio, SDL_AUDIO_S16
+from ._sdl_audio import (
+    SDLAudio,
+    SDL_AUDIO_S16,
+    AudioStreamCallback,
+    PutAudioStreamData,
+)
 from .sound import Sound
 
 comptime _GEN_SHIFT = 32
 comptime _INDEX_MASK: Int = 0xFFFFFFFF
-comptime _LOOP_LEAD = 0.5
-"""Seconds of a looping voice kept queued ahead of the device, so a loop
-shorter than a frame, or a slow frame, never runs it dry. Counted in played
-time: a voice at twice the speed has twice the samples queued."""
 comptime _MIN_SPEED = 0.01
 comptime _MAX_SPEED = 100.0
 """The speeds SDL can resample at."""
 
 
+struct _LoopFeed(Movable):
+    """What a looping voice's stream callback reads and writes, on SDL's audio
+    thread. It lives on the heap, so its address holds while `_Voice`s move in
+    their list, and only the callback touches it until the stream is
+    destroyed, so it needs no lock but the stream's own."""
+
+    var sound: Sound
+    """The sound looping: a copy, sharing its samples, that keeps them alive
+    while the callback reads them."""
+    var put: PutAudioStreamData
+    var offset: Int
+    """The byte of the sound's samples to queue next."""
+    var fed: Int
+    """Bytes queued so far, all told."""
+
+    def __init__(out self, sound: Sound, put: PutAudioStreamData):
+        self.sound = sound
+        self.put = put
+        self.offset = 0
+        self.fed = 0
+
+
+def _feed_loop(
+    userdata: Int, stream: Int, additional: Int32, total: Int32
+) abi("C"):
+    """The stream callback of a looping voice: queue what the device asked
+    for, `additional` bytes in the sound's format, from where the last call
+    left off and round again. Runs on SDL's audio thread, as often as the
+    device needs, so a loop is fed whatever the program's frame rate, or with
+    no frames at all. It must not raise or allocate."""
+    var feed = Pointer[_LoopFeed, MutUntrackedOrigin](
+        unsafe_from_address=userdata
+    )
+    var samples = Int(feed[].sound._samples[].unsafe_ptr())
+    var length = len(feed[].sound._samples[]) * 2
+    if length == 0:
+        return
+    # Whole frames only, so every put starts on one.
+    var frame = feed[].sound._channels * 2
+    var needed = (Int(additional) + frame - 1) // frame * frame
+    while needed > 0:
+        var count = min(length - feed[].offset, needed)
+        _ = feed[].put(stream, samples + feed[].offset, Int32(count))
+        feed[].offset = (feed[].offset + count) % length
+        feed[].fed += count
+        needed -= count
+
+
 struct _Voice(Movable):
     """One playback slot. `stream == 0` means free.
 
-    `loop_sound` holds a copy of the playing `Sound` -- sharing its samples,
-    not copying them -- and is only populated for looping voices, since a
-    one-shot voice never needs its PCM again after the initial `put_data`.
-    `loop_offset` is the sample of it to queue next.
+    A one-shot voice's samples are all queued when it starts. A looping
+    voice's are queued as the device asks, by `_feed_loop` from `loop_feed`.
     """
 
     var stream: Int
@@ -32,8 +80,7 @@ struct _Voice(Movable):
     var speed: Float64
     var paused: Bool
     var looping: Bool
-    var loop_sound: Optional[Sound]
-    var loop_offset: Int
+    var loop_feed: Optional[OwnedPointer[_LoopFeed]]
 
     def __init__(out self):
         self.stream = 0
@@ -46,8 +93,7 @@ struct _Voice(Movable):
         self.speed = 1.0
         self.paused = False
         self.looping = False
-        self.loop_sound = None
-        self.loop_offset = 0
+        self.loop_feed = None
 
     def reset(mut self):
         """Return this slot to the free state, bumping its generation so
@@ -58,8 +104,7 @@ struct _Voice(Movable):
         self.speed = 1.0
         self.paused = False
         self.looping = False
-        self.loop_sound = None
-        self.loop_offset = 0
+        self.loop_feed = None
 
 
 struct Voice(Copyable, Equatable, ImplicitlyCopyable, Movable):
@@ -93,11 +138,9 @@ struct Audio(Movable):
     call `play` from `update`. Where no audio device can be opened, it plays
     silently rather than raising.
 
-    Call `update` once per frame (e.g. from `Program.update`): it keeps
-    looping voices fed, which nothing else does, so skipping it stalls a loop
-    once the half second queued ahead drains. A one-shot voice needs no
-    `update`: it reads as stale once it has played to its end, and its slot
-    is freed by the next `update` or `play`.
+    A looping voice is fed on SDL's audio thread, as the device asks. A
+    one-shot voice reads as stale once it has played to its end, and its slot
+    is freed by the next `play` or `update`.
     """
 
     var _sdl: SDLAudio
@@ -192,16 +235,16 @@ struct Audio(Movable):
     ) raises -> Voice:
         """Play `sound` over and over until stopped, as a new `Voice` at its
         own `volume` and `speed`, as `Animator.loop` and `Tween.loop` repeat.
-        The voice is fed by `update`, from a copy of `sound` that shares its
-        samples.
+        The voice is fed as the device asks, from a copy of `sound` that
+        shares its samples.
         """
         return self._start(sound, volume, speed, loop=True)
 
     def _start(
         mut self, sound: Sound, volume: Float64, speed: Float64, loop: Bool
     ) raises -> Voice:
-        # Without this, a program that skips `update` would never free a
-        # slot, and the list would grow by one voice per `play`.
+        # Frees what has ended, so the list grows only to the most voices
+        # sounding at once.
         self._reap()
         var index = -1
         for i in range(len(self._voices)):
@@ -226,15 +269,21 @@ struct Audio(Movable):
         self._sdl.set_frequency_ratio(
             stream, Float32(self._voices[index].speed)
         )
-        # Bound before any data: a stream takes none until binding gives its
-        # output side the device's format.
-        self._sdl.bind_stream(self._device, stream)
 
         if loop:
-            self._voices[index].loop_sound = sound
-            self._voices[index].loop_offset = 0
-            self._feed(index)
+            # The callback is set before binding, so the device's first
+            # request finds it.
+            var feed = OwnedPointer(_LoopFeed(sound, self._sdl.put_function()))
+            var callback: AudioStreamCallback = _feed_loop
+            self._sdl.set_get_callback(
+                stream, callback, Int(Pointer(to=feed[]))
+            )
+            self._voices[index].loop_feed = feed^
+            self._sdl.bind_stream(self._device, stream)
         else:
+            # Bound before any data: a stream takes none until binding gives
+            # its output side the device's format.
+            self._sdl.bind_stream(self._device, stream)
             self._sdl.put_data(
                 stream,
                 sound._samples[].unsafe_ptr().unsafe_bitcast[UInt8](),
@@ -243,34 +292,9 @@ struct Audio(Movable):
             self._sdl.flush(stream)
         return Voice(_id=Self._encode(index, self._voices[index].generation))
 
-    def _feed(mut self, index: Int) raises:
-        """Queue a looping voice's sound, from where it left off and round
-        again, until `_LOOP_LEAD` seconds are waiting."""
-        var stream = self._voices[index].stream
-        var sound = self._voices[index].loop_sound.value()
-        # Counted in samples; the stream counts bytes, two to a sample.
-        var total = len(sound._samples[])
-        if total == 0:
-            return
-        var seconds = _LOOP_LEAD * self._voices[index].speed
-        var lead = Int(seconds * Float64(sound._sample_rate)) * sound._channels
-        var queued = Int(self._sdl.queued(stream)) // 2
-        var offset = self._voices[index].loop_offset
-        while queued < lead:
-            var count = min(total - offset, lead - queued)
-            self._sdl.put_data(
-                stream,
-                sound._samples[]
-                .unsafe_ptr()
-                .unsafe_offset(offset)
-                .unsafe_bitcast[UInt8](),
-                Int32(count * 2),
-            )
-            queued += count
-            offset = (offset + count) % total
-        self._voices[index].loop_offset = offset
-
     def _free_slot(mut self, index: Int) raises:
+        # Destroyed first: once SDL_DestroyAudioStream returns, the callback
+        # can't be running, so `reset` may free its feed.
         self._sdl.destroy_stream(self._voices[index].stream)
         self._voices[index].reset()
 
@@ -383,16 +407,8 @@ struct Audio(Movable):
         return self._voices[Self._decode(id)[0]].paused
 
     def update(mut self) raises:
-        """Free finished one-shot voices and top up looping ones.
-
-        A looping voice is kept `_LOOP_LEAD` seconds ahead of the device,
-        however short its sound, so the device never drains between frames:
-        a refill that lands after it has gone silent clicks at the seam.
-        """
+        """Free the slots of finished one-shot voices."""
         self._reap()
-        for i in range(len(self._voices)):
-            if self._voices[i].stream != 0 and self._voices[i].looping:
-                self._feed(i)
 
     def __deinit__(deinit self):
         try:
