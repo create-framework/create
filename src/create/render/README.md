@@ -1,7 +1,10 @@
 # `create.render` internals
 
-Internals of the rendering stack. The [user guide](../../../docs/README.md) covers the consumer API,
-and [ARCHITECTURE.md](../../../ARCHITECTURE.md) the layering rules.
+`create.render` turns drawing into pixels. A `Canvas` render call records a command and touches
+no pixels; when the frame is presented, a `Backend` replays the frame's commands, on the CPU
+rasteriser or through OpenGL 3.3, and pixel reads and captures replay on the CPU either way. This
+page is for working on the package: the [user guide](../../../docs/README.md) covers using it, and
+[ARCHITECTURE.md](../../../ARCHITECTURE.md) where it sits and the layering rules.
 
 ## Files
 
