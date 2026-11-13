@@ -86,6 +86,43 @@ def test_looping_voice_stays_live_across_updates() raises -> None:
     assert_true(audio.is_playing(id))
 
 
+def _queued(audio: Audio, voice: Voice) raises -> Int:
+    return Int(
+        audio._sdl.queued(audio._voices[Audio._decode(voice._id)[0]].stream)
+    )
+
+
+def test_a_loop_shorter_than_a_frame_is_queued_half_a_second_ahead() raises -> (
+    None
+):
+    # 256 samples at 44.1 kHz is under 6 ms, less than a frame at 60 fps:
+    # one copy per `update` would run the device dry between frames.
+    var audio = Audio()
+    var voice = audio.loop(_tone())
+    var lead = 22050 * 2
+    assert_true(_queued(audio, voice) >= lead)
+    sleep(0.05)
+    audio.update()
+    assert_true(_queued(audio, voice) >= lead)
+
+
+def test_a_long_loop_is_queued_in_chunks_not_whole() raises -> None:
+    # Ten seconds of sound: queued half a second at a time, not ten.
+    var data = List[Int16](length=441000, fill=0)
+    var audio = Audio()
+    var voice = audio.loop(Sound.from_pcm(data))
+    assert_true(_queued(audio, voice) < 441000 * 2)
+    assert_true(_queued(audio, voice) >= 22050 * 2)
+
+
+def test_loop_offset_wraps_round_the_sound() raises -> None:
+    var audio = Audio()
+    var voice = audio.loop(_tone())
+    var offset = audio._voices[Audio._decode(voice._id)[0]].loop_offset
+    assert_true(offset >= 0 and offset < 512)
+    assert_equal(offset % 2, 0)
+
+
 def test_stop_releases_looping_voice() raises -> None:
     var audio = Audio()
     var id = audio.loop(_tone())
