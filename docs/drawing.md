@@ -19,7 +19,7 @@ methods build a shape from numbers and draw it: `canvas.rectangle(p, w, h)` is
 `Style()` defaults are not blank: **stroke `BLACK`, on, 1 unit**; fill `WHITE`, off; `BLACK`
 text. Every frame opens with a clear to gray 200 so those defaults are visible;
 `canvas.background()` is the only way to choose the colour. `corner_radius` is style only for
-shapes the canvas builds from numbers; a shape value keeps its own (see [`corner_radius`](glossary.md)), so
+shapes the canvas builds from numbers; a shape value keeps its own (see [`corner_radius`](geometry.md)), so
 `with canvas.style(corner_radius=8): canvas.draw(rect)` does not round `rect`.
 - An opaque `canvas.background()` replaces that clear rather than painting a second time; a
   translucent one blends over it.
@@ -154,3 +154,10 @@ what is outside it (fog, a spotlight). `region` is any `Region` — a `Rectangle
   backends agree inside a clip and may differ slightly along its rim. With `Antialiasing.OFF` a
   clip is hard-edged. Nested clips multiply their edges' coverage.
   Soft masks (a gradient or an image's alpha) are not implemented yet.
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| `Gradient` | Stops (0..1 positions, each a `Color`) across a fill or the background. **Placed by the shape's local bounding box**, before the transform, so it moves and turns with the shape and one `Style` suits every entity. `linear` runs along `direction` (a `Vector2D`, default `DOWN`, any length; its extreme corners land on 0 and 1, as in CSS); `radial` runs from `center` in the box's unit space (-1..1, y up) out to its edges, an ellipse on a long box. A sector's box is its whole circle. A zero `direction` or a zero-size box paints the first stop. Blends premultiplied (a fade to `TRANSPARENT` stays clean) and is dithered on both backends |
+| `Drawable` / `DrawTarget` | `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts (`draw_to[T: DrawTarget](self, mut target: T)`). `DrawTarget` is where it draws: `Canvas`, through one `_`-named primitive per kind and the provided `draw` |

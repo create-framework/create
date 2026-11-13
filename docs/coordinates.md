@@ -53,3 +53,11 @@ decides the frame's geometry waits for the next frame: `design_size`, `autoscale
 `window_mode` (switched after presenting; some compositors report the new size a frame later). A
 getter reports the value as set. `max_frame_rate()`, `quit()` and `rumble()` are read after the
 frame body returns. Headless runs ignore the window dials, like `rumble`.
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| Screen space | Origin-centred, y-up, camera-independent. `canvas.left()`…`top()`, `context.mouse.position` and `canvas.color_at` live here, and it is what `canvas.to_local` takes and `to_screen` gives |
+| World space | What render calls use once a `Camera` is set; identical to screen space without one. Only the camera converts into it: `camera.to_world`/`to_screen` |
+| Local space | The current transform's frame, where a render call's coordinates are read. `canvas.to_local(screen)`/`to_screen(local)` convert through the transform and the camera together |
