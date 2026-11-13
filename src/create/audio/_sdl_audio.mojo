@@ -30,6 +30,7 @@ from create._library import load_library
 comptime SDL_INIT_AUDIO: UInt32 = 0x00000010
 comptime SDL_AUDIO_S16: Int32 = 0x8010
 comptime SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK: UInt32 = 0xFFFFFFFF
+comptime SDL_HINT_OVERRIDE: Int32 = 2
 
 
 struct SDLAudio:
@@ -51,6 +52,38 @@ struct SDLAudio:
             raise Error(
                 "SDL_InitSubSystem(SDL_INIT_AUDIO) failed: " + self.get_error()
             )
+
+    def start(self) raises -> UInt32:
+        """Start the audio subsystem and open a device on the default
+        playback device, or raise with the subsystem left stopped."""
+        self.init()
+        try:
+            return self.open_device()
+        except e:
+            self.quit()
+            raise e^
+
+    def start_silent(self) raises -> UInt32:
+        """`start` on SDL's dummy driver, which plays to nowhere: for a
+        machine with no audio device, or none SDL can open."""
+        var hint = String("SDL_AUDIO_DRIVER")
+        var driver = String("dummy")
+        _ = self.lib.call["SDL_SetHintWithPriority", Bool](
+            hint.as_c_string_span().ptr(),
+            driver.as_c_string_span().ptr(),
+            SDL_HINT_OVERRIDE,
+        )
+        try:
+            var device = self.start()
+            _ = self.lib.call["SDL_ResetHint", Bool](
+                hint.as_c_string_span().ptr()
+            )
+            return device
+        except e:
+            _ = self.lib.call["SDL_ResetHint", Bool](
+                hint.as_c_string_span().ptr()
+            )
+            raise e^
 
     def quit(self) raises:
         self.lib.call["SDL_QuitSubSystem"](SDL_INIT_AUDIO)
