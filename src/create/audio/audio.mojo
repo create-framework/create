@@ -82,12 +82,16 @@ struct Audio(Movable):
     """
 
     var _sdl: SDLAudio
+    # The one logical device every voice's stream is bound to, so SDL mixes
+    # them; a voice is a cheap stream, not a device of its own.
+    var _device: UInt32
     var _voices: List[_Voice]
     var _volume: Float64
 
     def __init__(out self) raises:
         self._sdl = SDLAudio()
         self._sdl.init()
+        self._device = self._sdl.open_device()
         self._voices = List[_Voice]()
         self._volume = 1.0
 
@@ -144,14 +148,16 @@ struct Audio(Movable):
         return self._start(sound, loop=True)
 
     def _start(mut self, sound: Sound, loop: Bool) raises -> Voice:
-        var stream = self._sdl.open_device_stream(
+        var stream = self._sdl.create_stream(
             sound._format, Int32(sound._channels), Int32(sound._sample_rate)
         )
         self._sdl.set_gain(stream, Float32(self._volume))
+        # Bound first: a stream takes no data until binding gives its output
+        # side the device's format.
+        self._sdl.bind_stream(self._device, stream)
         self._sdl.put_data(
             stream, sound._pcm[].unsafe_ptr(), Int32(len(sound._pcm[]))
         )
-        self._sdl.resume_stream(stream)
         var loop_sound = Optional(sound) if loop else None
 
         var index = -1
@@ -197,7 +203,10 @@ struct Audio(Movable):
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._sdl.pause_stream(self._voices[index].stream)
+        if self._voices[index].paused:
+            return
+        # Unbound, the stream keeps its queued samples but nothing pulls them.
+        self._sdl.unbind_stream(self._voices[index].stream)
         self._voices[index].paused = True
 
     def volume(self, voice: Voice) -> Float64:
@@ -222,7 +231,9 @@ struct Audio(Movable):
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._sdl.resume_stream(self._voices[index].stream)
+        if not self._voices[index].paused:
+            return
+        self._sdl.bind_stream(self._device, self._voices[index].stream)
         self._voices[index].paused = False
 
     def is_playing(self, voice: Voice) -> Bool:
@@ -257,6 +268,7 @@ struct Audio(Movable):
     def __deinit__(deinit self):
         try:
             self.stop_all()
+            self._sdl.close_device(self._device)
             self._sdl.quit()
         except:
             pass

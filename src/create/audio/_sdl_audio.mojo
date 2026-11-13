@@ -83,35 +83,53 @@ struct SDLAudio:
 
         return pcm^, spec[0], spec[1], spec[2]
 
-    def open_device_stream(
+    def open_device(self) raises -> UInt32:
+        """Open a logical device on the default playback device, in its own
+        preferred format. It starts unpaused; streams bound to it mix."""
+        var device = self.lib.call["SDL_OpenAudioDevice", UInt32](
+            SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, Int(0)
+        )
+        if device == 0:
+            raise Error("SDL_OpenAudioDevice failed: " + self.get_error())
+        return device
+
+    def close_device(self, device: UInt32):
+        self.lib.call["SDL_CloseAudioDevice"](device)
+
+    def pause_device(self, device: UInt32) raises:
+        if not self.lib.call["SDL_PauseAudioDevice", Bool](device):
+            raise Error("SDL_PauseAudioDevice failed: " + self.get_error())
+
+    def resume_device(self, device: UInt32) raises:
+        if not self.lib.call["SDL_ResumeAudioDevice", Bool](device):
+            raise Error("SDL_ResumeAudioDevice failed: " + self.get_error())
+
+    def create_stream(
         self, format: Int32, channels: Int32, sample_rate: Int32
     ) raises -> Int:
+        """A stream taking samples in this format; binding it to a device
+        sets its output side to the device's format."""
         var spec = List[Int32](length=3, fill=0)
         spec[0] = format
         spec[1] = channels
         spec[2] = sample_rate
-        var stream = self.lib.call["SDL_OpenAudioDeviceStream", Int](
-            SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, spec.unsafe_ptr(), Int(0), Int(0)
+        var stream = self.lib.call["SDL_CreateAudioStream", Int](
+            spec.unsafe_ptr(), Int(0)
         )
         if stream == 0:
-            raise Error("SDL_OpenAudioDeviceStream failed: " + self.get_error())
+            raise Error("SDL_CreateAudioStream failed: " + self.get_error())
         return stream
+
+    def bind_stream(self, device: UInt32, stream: Int) raises:
+        if not self.lib.call["SDL_BindAudioStream", Bool](device, stream):
+            raise Error("SDL_BindAudioStream failed: " + self.get_error())
+
+    def unbind_stream(self, stream: Int):
+        self.lib.call["SDL_UnbindAudioStream"](stream)
 
     def put_data(self, stream: Int, data: Pointer[UInt8, _], len: Int32) raises:
         if not self.lib.call["SDL_PutAudioStreamData", Bool](stream, data, len):
             raise Error("SDL_PutAudioStreamData failed: " + self.get_error())
-
-    def resume_stream(self, stream: Int) raises:
-        if not self.lib.call["SDL_ResumeAudioStreamDevice", Bool](stream):
-            raise Error(
-                "SDL_ResumeAudioStreamDevice failed: " + self.get_error()
-            )
-
-    def pause_stream(self, stream: Int) raises:
-        if not self.lib.call["SDL_PauseAudioStreamDevice", Bool](stream):
-            raise Error(
-                "SDL_PauseAudioStreamDevice failed: " + self.get_error()
-            )
 
     def set_gain(self, stream: Int, gain: Float32) raises:
         if not self.lib.call["SDL_SetAudioStreamGain", Bool](stream, gain):
