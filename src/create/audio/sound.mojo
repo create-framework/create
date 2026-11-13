@@ -39,6 +39,11 @@ struct Sound(Copyable, ImplicitlyCopyable, Movable):
         """Samples per second, per channel."""
         return self._sample_rate
 
+    def _frame_bytes(self) -> Int:
+        """Bytes per frame: one sample for every channel."""
+        # The low byte of an SDL audio format is its sample size in bits.
+        return self._channels * Int((self._format & 0xFF) // 8)
+
     @staticmethod
     def load(path: String) raises -> Sound:
         """Load a WAV, OGG, FLAC, or MP3 file. Dispatches on the file's magic

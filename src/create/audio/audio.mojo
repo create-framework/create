@@ -3,6 +3,9 @@ from .sound import Sound
 
 comptime _GEN_SHIFT = 32
 comptime _INDEX_MASK: Int = 0xFFFFFFFF
+comptime _LOOP_LEAD = 0.5
+"""Seconds of a looping voice kept queued ahead of the device, so a loop
+shorter than a frame, or a slow frame, never runs it dry."""
 
 
 struct _Voice(Movable):
@@ -11,6 +14,7 @@ struct _Voice(Movable):
     `loop_sound` holds a copy of the playing `Sound` -- sharing its samples,
     not copying them -- and is only populated for looping voices, since a
     one-shot voice never needs its PCM again after the initial `put_data`.
+    `loop_offset` is the byte of it to queue next.
     """
 
     var stream: Int
@@ -21,6 +25,7 @@ struct _Voice(Movable):
     var paused: Bool
     var looping: Bool
     var loop_sound: Optional[Sound]
+    var loop_offset: Int
 
     def __init__(out self):
         self.stream = 0
@@ -33,6 +38,7 @@ struct _Voice(Movable):
         self.paused = False
         self.looping = False
         self.loop_sound = None
+        self.loop_offset = 0
 
     def reset(mut self):
         """Return this slot to the free state, bumping its generation so
@@ -43,6 +49,7 @@ struct _Voice(Movable):
         self.paused = False
         self.looping = False
         self.loop_sound = None
+        self.loop_offset = 0
 
 
 struct Voice(Copyable, Equatable, ImplicitlyCopyable, Movable):
@@ -155,31 +162,51 @@ struct Audio(Movable):
         # Bound first: a stream takes no data until binding gives its output
         # side the device's format.
         self._sdl.bind_stream(self._device, stream)
-        self._sdl.put_data(
-            stream, sound._pcm[].unsafe_ptr(), Int32(len(sound._pcm[]))
-        )
-        var loop_sound = Optional(sound) if loop else None
 
         var index = -1
         for i in range(len(self._voices)):
             if self._voices[i].stream == 0:
                 index = i
                 break
-
         if index == -1:
-            var voice = _Voice()
-            voice.stream = stream
-            voice.looping = loop
-            voice.loop_sound = loop_sound
-            self._voices.append(voice^)
+            self._voices.append(_Voice())
             index = len(self._voices) - 1
-        else:
-            self._voices[index].stream = stream
-            self._voices[index].paused = False
-            self._voices[index].looping = loop
-            self._voices[index].loop_sound = loop_sound
+        self._voices[index].stream = stream
+        self._voices[index].paused = False
+        self._voices[index].looping = loop
 
+        if loop:
+            self._voices[index].loop_sound = sound
+            self._voices[index].loop_offset = 0
+            self._feed(index)
+        else:
+            self._sdl.put_data(
+                stream, sound._pcm[].unsafe_ptr(), Int32(len(sound._pcm[]))
+            )
         return Voice(_id=Self._encode(index, self._voices[index].generation))
+
+    def _feed(mut self, index: Int) raises:
+        """Queue a looping voice's sound, from where it left off and round
+        again, until `_LOOP_LEAD` seconds are waiting."""
+        var stream = self._voices[index].stream
+        var sound = self._voices[index].loop_sound.value()
+        var total = len(sound._pcm[])
+        if total == 0:
+            return
+        var frame = sound._frame_bytes()
+        var lead = Int(_LOOP_LEAD * Float64(sound._sample_rate)) * frame
+        var queued = Int(self._sdl.queued(stream))
+        var offset = self._voices[index].loop_offset
+        while queued < lead:
+            var count = min(total - offset, lead - queued)
+            self._sdl.put_data(
+                stream,
+                sound._pcm[].unsafe_ptr().unsafe_offset(offset),
+                Int32(count),
+            )
+            queued += count
+            offset = (offset + count) % total
+        self._voices[index].loop_offset = offset
 
     def _free_slot(mut self, index: Int) raises:
         self._sdl.destroy_stream(self._voices[index].stream)
@@ -246,22 +273,15 @@ struct Audio(Movable):
     def update(mut self) raises:
         """Reap finished one-shot voices and top up looping ones.
 
-        Looping voices are topped up *before* the queue drains (once queued
-        audio drops below one loop's worth), not after `available()` hits 0
-        -- by then the device has already gone silent and the refill lands
-        late, audible as a click/pop at every loop boundary.
+        A looping voice is kept `_LOOP_LEAD` seconds ahead of the device,
+        however short its sound, so the device never drains between frames:
+        a refill that lands after it has gone silent clicks at the seam.
         """
         for i in range(len(self._voices)):
             if self._voices[i].stream == 0:
                 continue
             if self._voices[i].looping:
-                var pcm_len = len(self._voices[i].loop_sound.value()._pcm[])
-                if self._sdl.available(self._voices[i].stream) < Int32(pcm_len):
-                    self._sdl.put_data(
-                        self._voices[i].stream,
-                        self._voices[i].loop_sound.value()._pcm[].unsafe_ptr(),
-                        Int32(pcm_len),
-                    )
+                self._feed(i)
             elif self._sdl.available(self._voices[i].stream) == 0:
                 self._free_slot(i)
 

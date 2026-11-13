@@ -144,6 +144,13 @@ struct SDLAudio:
     def available(self, stream: Int) raises -> Int32:
         return self.lib.call["SDL_GetAudioStreamAvailable", Int32](stream)
 
+    def queued(self, stream: Int) raises -> Int32:
+        """Bytes put into `stream` and not yet consumed, in its input format."""
+        var queued = self.lib.call["SDL_GetAudioStreamQueued", Int32](stream)
+        if queued < 0:
+            raise Error("SDL_GetAudioStreamQueued failed: " + self.get_error())
+        return queued
+
     def clear_stream(self, stream: Int) raises:
         if not self.lib.call["SDL_ClearAudioStream", Bool](stream):
             raise Error("SDL_ClearAudioStream failed: " + self.get_error())
