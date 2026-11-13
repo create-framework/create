@@ -6,17 +6,15 @@ from std.time import sleep
 from create.audio import Audio, Sound, Voice
 
 
-def _tone() -> Sound:
+def _tone() raises -> Sound:
     """Half a second: long enough not to end while a test checks it."""
-    var data = List[Int16](length=22050, fill=0)
-    return Sound.from_pcm(data)
+    return Sound.from_samples(List[Float64](length=22050, fill=0.0))
 
 
-def _blip() -> Sound:
+def _blip() raises -> Sound:
     """256 samples, under 6 ms: for a test that waits for a voice to end, or
     a loop shorter than a frame."""
-    var data = List[Int16](length=256, fill=0)
-    return Sound.from_pcm(data)
+    return Sound.from_samples(List[Float64](length=256, fill=0.0))
 
 
 def test_play_returns_valid_id() raises -> None:
@@ -152,9 +150,9 @@ def test_a_loop_shorter_than_a_frame_is_queued_half_a_second_ahead() raises -> (
 
 def test_a_long_loop_is_queued_in_chunks_not_whole() raises -> None:
     # Ten seconds of sound: queued half a second at a time, not ten.
-    var data = List[Int16](length=441000, fill=0)
+    var data = List[Float64](length=441000, fill=0.0)
     var audio = Audio()
-    var voice = audio.loop(Sound.from_pcm(data))
+    var voice = audio.loop(Sound.from_samples(data))
     assert_true(_queued(audio, voice) < 441000 * 2)
     assert_true(_queued(audio, voice) >= 22050 * 2)
 
