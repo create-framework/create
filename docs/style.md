@@ -68,7 +68,7 @@ is `None`.
 
 **Corner radius** is style only for shapes the canvas builds from numbers: `canvas.corner_radius(r)`
 rounds the next `canvas.rectangle(...)`. A shape value keeps its own (see
-[`corner_radius`](geometry.md)), so `with canvas.style(corner_radius=8): canvas.draw(rect)` does
+[`corner_radius`](geometry.md#corner-radius)), so `with canvas.style(corner_radius=8): canvas.draw(rect)` does
 not round `rect`.
 
 ## Strokes
