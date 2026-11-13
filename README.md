@@ -92,7 +92,27 @@ If you don't already have it, install [pixi](https://pixi.sh):
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-Create a project with the MAX and Modular community conda channels enabled:
+### Option 1: create-cli
+
+Then install [create-cli](https://github.com/create-framework/create-cli), the command line tool for **Create**:
+
+```sh
+pixi global install create-cli --channel https://prefix.dev/create-framework/create
+```
+
+Make a project and run it:
+
+```sh
+create new my-project
+cd my-project
+create run
+```
+
+`create new` makes a pixi project with the `mojo` and `create` packages and a `main.mojo` to start from, and `create run` runs it from anywhere inside the project.
+
+### Option 2: pixi
+
+A project is a plain pixi project, so you can also set one up by hand. Create it with the MAX and Modular community conda channels enabled:
 
 ```sh
 pixi init my-project \
@@ -101,28 +121,21 @@ pixi init my-project \
   -c conda-forge
 ```
 
-Then `cd` into the project and add the `mojo` and `create` packages:
+Then `cd` into the project, add the `mojo` and `create` packages, write a `main.mojo` and run it:
 
 ```sh
 cd my-project
 pixi add mojo create
-```
-
-You are now ready to add a `main.mojo` file and write your first **Create** program. To get started, you can copy the structure of the "Hello, world!" program from [How a Program Works](#how-a-program-works) or any of the other programs in [examples/](examples/).
-
-Run your project with:
-
-```sh
 pixi run mojo run main.mojo
 ```
-
-The [user guide](docs/README.md) covers the library topic by topic. A CLI tool to streamline this setup is coming soon, along with an API reference and tutorials.
 
 ## Documentation
 
 - [User guide](docs/README.md): how to use **Create**, topic by topic.
 - [Contributing](CONTRIBUTING.md): how to work on **Create** itself: its design ethos, building and testing, and how changes land.
 - [Architecture](ARCHITECTURE.md): how the source is organised, and which package may import which.
+
+API reference and tutorials are coming soon.
 
 ## Supported Platforms
 
