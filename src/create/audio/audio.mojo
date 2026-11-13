@@ -1,4 +1,4 @@
-from ._sdl_audio import SDLAudio
+from ._sdl_audio import SDLAudio, SDL_AUDIO_S16
 from .sound import Sound
 
 comptime _GEN_SHIFT = 32
@@ -14,7 +14,7 @@ struct _Voice(Movable):
     `loop_sound` holds a copy of the playing `Sound` -- sharing its samples,
     not copying them -- and is only populated for looping voices, since a
     one-shot voice never needs its PCM again after the initial `put_data`.
-    `loop_offset` is the byte of it to queue next.
+    `loop_offset` is the sample of it to queue next.
     """
 
     var stream: Int
@@ -190,7 +190,7 @@ struct Audio(Movable):
             index = len(self._voices) - 1
 
         var stream = self._sdl.create_stream(
-            sound._format, Int32(sound._channels), Int32(sound._sample_rate)
+            SDL_AUDIO_S16, Int32(sound._channels), Int32(sound._sample_rate)
         )
         self._voices[index].stream = stream
         self._voices[index].gain = max(volume, 0.0)
@@ -208,7 +208,9 @@ struct Audio(Movable):
             self._feed(index)
         else:
             self._sdl.put_data(
-                stream, sound._pcm[].unsafe_ptr(), Int32(len(sound._pcm[]))
+                stream,
+                sound._samples[].unsafe_ptr().unsafe_bitcast[UInt8](),
+                Int32(len(sound._samples[]) * 2),
             )
             self._sdl.flush(stream)
         return Voice(_id=Self._encode(index, self._voices[index].generation))
@@ -218,19 +220,24 @@ struct Audio(Movable):
         again, until `_LOOP_LEAD` seconds are waiting."""
         var stream = self._voices[index].stream
         var sound = self._voices[index].loop_sound.value()
-        var total = len(sound._pcm[])
+        # Counted in samples; the stream counts bytes, two to a sample.
+        var total = len(sound._samples[])
         if total == 0:
             return
-        var frame = sound._frame_bytes()
-        var lead = Int(_LOOP_LEAD * Float64(sound._sample_rate)) * frame
-        var queued = Int(self._sdl.queued(stream))
+        var lead = (
+            Int(_LOOP_LEAD * Float64(sound._sample_rate)) * sound._channels
+        )
+        var queued = Int(self._sdl.queued(stream)) // 2
         var offset = self._voices[index].loop_offset
         while queued < lead:
             var count = min(total - offset, lead - queued)
             self._sdl.put_data(
                 stream,
-                sound._pcm[].unsafe_ptr().unsafe_offset(offset),
-                Int32(count),
+                sound._samples[]
+                .unsafe_ptr()
+                .unsafe_offset(offset)
+                .unsafe_bitcast[UInt8](),
+                Int32(count * 2),
             )
             queued += count
             offset = (offset + count) % total

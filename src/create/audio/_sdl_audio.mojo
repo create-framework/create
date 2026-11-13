@@ -22,6 +22,7 @@ raw-address-to-Pointer idiom `_window/gl_window.mojo` uses for
 """
 
 from std.ffi import _DLHandle
+from std.memory import unsafe_memcpy
 
 from create._bytes import cstr as _cstr
 from create._library import load_library
@@ -54,10 +55,9 @@ struct SDLAudio:
     def quit(self) raises:
         self.lib.call["SDL_QuitSubSystem"](SDL_INIT_AUDIO)
 
-    def load_wav(
-        self, path: String
-    ) raises -> Tuple[List[UInt8], Int32, Int32, Int32]:
-        """Load a WAV file. Returns (pcm, format, channels, sample_rate)."""
+    def load_wav(self, path: String) raises -> Tuple[List[Int16], Int32, Int32]:
+        """Load a WAV file, converted to `SDL_AUDIO_S16` whatever its own
+        sample format. Returns (samples, channels, sample_rate)."""
         var spec = List[Int32](length=3, fill=0)
         var buf_out = List[Int](length=1, fill=0)
         var len_out = List[Int32](length=1, fill=0)
@@ -71,17 +71,39 @@ struct SDLAudio:
         ):
             raise Error("SDL_LoadWAV failed: " + self.get_error())
 
-        var audio_len = Int(len_out[0])
-        var src = Pointer[UInt8, MutUntrackedOrigin](
-            unsafe_from_address=buf_out[0]
-        )
-        var pcm = List[UInt8](length=audio_len, fill=0)
-        var dst = pcm.unsafe_ptr()
-        for i in range(audio_len):
-            dst[unsafe_offset=i] = src[unsafe_offset=i]
-        self.lib.call["SDL_free"](buf_out[0])
+        if spec[0] != SDL_AUDIO_S16:
+            var target = List[Int32](length=3, fill=0)
+            target[0] = SDL_AUDIO_S16
+            target[1] = spec[1]
+            target[2] = spec[2]
+            var converted = List[Int](length=1, fill=0)
+            var converted_len = List[Int32](length=1, fill=0)
+            var ok = self.lib.call["SDL_ConvertAudioSamples", Bool](
+                spec.unsafe_ptr(),
+                buf_out[0],
+                len_out[0],
+                target.unsafe_ptr(),
+                converted.unsafe_ptr(),
+                converted_len.unsafe_ptr(),
+            )
+            self.lib.call["SDL_free"](buf_out[0])
+            if not ok:
+                raise Error(
+                    "SDL_ConvertAudioSamples failed: " + self.get_error()
+                )
+            buf_out[0] = converted[0]
+            len_out[0] = converted_len[0]
 
-        return pcm^, spec[0], spec[1], spec[2]
+        var samples = List[Int16](length=Int(len_out[0]) // 2, fill=0)
+        unsafe_memcpy(
+            dest=samples.unsafe_ptr().unsafe_bitcast[UInt8](),
+            src=Pointer[UInt8, MutUntrackedOrigin](
+                unsafe_from_address=buf_out[0]
+            ),
+            count=len(samples) * 2,
+        )
+        self.lib.call["SDL_free"](buf_out[0])
+        return samples^, spec[1], spec[2]
 
     def open_device(self) raises -> UInt32:
         """Open a logical device on the default playback device, in its own
