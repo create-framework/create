@@ -32,6 +32,13 @@ comptime SDL_AUDIO_S16: Int32 = 0x8010
 comptime SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK: UInt32 = 0xFFFFFFFF
 comptime SDL_HINT_OVERRIDE: Int32 = 2
 
+comptime PutAudioStreamData = def(Int, Int, Int32) thin abi("C") -> Bool
+"""`SDL_PutAudioStreamData(stream, buf, len)`, as a function pointer: what an
+audio stream callback calls, on SDL's audio thread, where no `_DLHandle` is."""
+comptime AudioStreamCallback = def(Int, Int, Int32, Int32) thin abi("C") -> None
+"""`SDL_AudioStreamCallback(userdata, stream, additional_amount,
+total_amount)`."""
+
 
 struct SDLAudio:
     """Thin wrapper over the dynamically-loaded SDL3 library's audio API."""
@@ -214,16 +221,6 @@ struct SDLAudio:
             raise Error("SDL_GetAudioStreamGain failed: " + self.get_error())
         return gain
 
-    def available(self, stream: Int) raises -> Int32:
-        return self.lib.call["SDL_GetAudioStreamAvailable", Int32](stream)
-
-    def queued(self, stream: Int) raises -> Int32:
-        """Bytes put into `stream` and not yet consumed, in its input format."""
-        var queued = self.lib.call["SDL_GetAudioStreamQueued", Int32](stream)
-        if queued < 0:
-            raise Error("SDL_GetAudioStreamQueued failed: " + self.get_error())
-        return queued
-
     def flush(self, stream: Int) raises:
         """Mark the end of `stream`'s input, so the samples a resampler holds
         back for what follows are converted and played too."""
@@ -237,6 +234,33 @@ struct SDLAudio:
             self.lib.call["SDL_GetAudioStreamQueued", Int32](stream) <= 0
             and self.lib.call["SDL_GetAudioStreamAvailable", Int32](stream) <= 0
         )
+
+    def put_function(self) -> PutAudioStreamData:
+        return self.lib.get_function[PutAudioStreamData](
+            "SDL_PutAudioStreamData"
+        )
+
+    def set_get_callback(
+        self, stream: Int, callback: AudioStreamCallback, userdata: Int
+    ) raises:
+        """Call `callback` on SDL's audio thread, with `stream` locked, each
+        time the device wants more of it than is queued."""
+        if not self.lib.call["SDL_SetAudioStreamGetCallback", Bool](
+            stream, callback, userdata
+        ):
+            raise Error(
+                "SDL_SetAudioStreamGetCallback failed: " + self.get_error()
+            )
+
+    def lock(self, stream: Int) raises:
+        """Hold `stream`'s lock, which its callback runs under, so the main
+        thread can read what the callback writes."""
+        if not self.lib.call["SDL_LockAudioStream", Bool](stream):
+            raise Error("SDL_LockAudioStream failed: " + self.get_error())
+
+    def unlock(self, stream: Int) raises:
+        if not self.lib.call["SDL_UnlockAudioStream", Bool](stream):
+            raise Error("SDL_UnlockAudioStream failed: " + self.get_error())
 
     def clear_stream(self, stream: Int) raises:
         if not self.lib.call["SDL_ClearAudioStream", Bool](stream):

@@ -128,46 +128,55 @@ def test_looping_voice_stays_live_across_updates() raises -> None:
     assert_true(audio.is_playing(id))
 
 
-def _queued(audio: Audio, voice: Voice) raises -> Int:
-    return Int(
-        audio._sdl.queued(audio._voices[Audio._decode(voice._id)[0]].stream)
-    )
+def _fed(audio: Audio, voice: Voice) raises -> Int:
+    """Bytes a looping voice's callback has queued, read under the stream's
+    lock, since the callback writes it on SDL's audio thread."""
+    ref slot = audio._voices[Audio._decode(voice._id)[0]]
+    audio._sdl.lock(slot.stream)
+    var fed = slot.loop_feed.value()[].fed
+    audio._sdl.unlock(slot.stream)
+    return fed
 
 
-def test_a_loop_shorter_than_a_frame_is_queued_half_a_second_ahead() raises -> (
-    None
-):
-    # 256 samples at 44.1 kHz is under 6 ms, less than a frame at 60 fps:
-    # one copy per `update` would run the device dry between frames.
+comptime _BYTES_PER_SECOND = 44100 * 2
+"""Mono 16-bit at 44.1 kHz, as `_tone` and `_blip` are."""
+
+
+def test_a_short_loop_keeps_sounding_without_update() raises -> None:
+    # Under 6 ms of sound, and no `update` at all: the device asks for more
+    # on its own thread. The dummy driver plays in real time, so a third of
+    # a second asks for at least a fifth of a second's samples.
     var audio = Audio()
     var voice = audio.loop(_blip())
-    var lead = 22050 * 2
-    assert_true(_queued(audio, voice) >= lead)
-    sleep(0.05)
-    audio.update()
-    assert_true(_queued(audio, voice) >= lead)
+    sleep(0.3)
+    assert_true(_fed(audio, voice) >= _BYTES_PER_SECOND // 5)
+    assert_true(audio.is_playing(voice))
 
 
-def test_a_faster_loop_is_queued_further_ahead() raises -> None:
+def test_a_faster_loop_is_fed_faster() raises -> None:
     var audio = Audio()
     var voice = audio.loop(_blip(), speed=4.0)
-    assert_true(_queued(audio, voice) >= 4 * 22050 * 2)
+    sleep(0.3)
+    assert_true(_fed(audio, voice) >= 4 * _BYTES_PER_SECOND // 5)
 
 
-def test_a_long_loop_is_queued_in_chunks_not_whole() raises -> None:
-    # Ten seconds of sound: queued half a second at a time, not ten.
-    var data = List[Float64](length=441000, fill=0.0)
+def test_a_long_loop_is_fed_as_asked_not_whole() raises -> None:
+    # Ten seconds of sound: not queued whole at the start.
     var audio = Audio()
-    var voice = audio.loop(Sound.from_samples(data))
-    assert_true(_queued(audio, voice) < 441000 * 2)
-    assert_true(_queued(audio, voice) >= 22050 * 2)
+    var voice = audio.loop(
+        Sound.from_samples(List[Float64](length=441000, fill=0.0))
+    )
+    sleep(0.1)
+    assert_true(_fed(audio, voice) < 10 * _BYTES_PER_SECOND)
 
 
-def test_loop_offset_wraps_round_the_sound() raises -> None:
+def test_a_paused_loop_is_not_fed() raises -> None:
     var audio = Audio()
     var voice = audio.loop(_blip())
-    var offset = audio._voices[Audio._decode(voice._id)[0]].loop_offset
-    assert_true(offset >= 0 and offset < 256)
+    audio.pause(voice)
+    var fed = _fed(audio, voice)
+    sleep(0.2)
+    assert_true(_fed(audio, voice) - fed < _BYTES_PER_SECOND // 20)
 
 
 def test_stop_releases_looping_voice() raises -> None:
@@ -191,7 +200,7 @@ def test_looping_voice_shares_sound_via_refcount() raises -> None:
     var sound = _tone()
     assert_equal(sound._samples.count(), 1)
     var id = audio.loop(sound)
-    # `play` copies the sound into _Voice.loop_sound, sharing its samples.
+    # `loop` copies the sound into the voice's feed, sharing its samples.
     assert_equal(sound._samples.count(), 2)
     audio.stop(id)
     assert_equal(sound._samples.count(), 1)
