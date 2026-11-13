@@ -85,7 +85,7 @@ What the loop hands `create` and every `update` is a parameter:
 
 Everything the program drives on its own schedule is a field it constructs in `create`: an
 `Image`, `Font`, `Sound`, `Audio`, `Animator`, `Camera`, `Tween`, `Noise`, a `Table` or `JSON`,
-or an offscreen `Canvas(w, h)` (see [Reading pixels](pixels.md#reading-pixels)), which is the
+or an offscreen `Canvas(w, h)` (see [Drawing into an image](pixels.md#drawing-into-an-image)), which is the
 program's own. So adding one touches neither `Program` nor the run loop.
 
 ## What each frame needs
