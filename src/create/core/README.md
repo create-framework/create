@@ -1,6 +1,6 @@
 # `create.core` internals
 
-Internals of the run loops. The root [AGENTS.md](../../../AGENTS.md) covers the consumer API,
+Internals of the run loops. The [user guide](../../../docs/README.md) covers the consumer API,
 [ARCHITECTURE.md](../../../ARCHITECTURE.md) the layering rules; the render side is in
 [../render/README.md](../render/README.md).
 
