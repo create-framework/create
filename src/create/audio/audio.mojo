@@ -248,9 +248,29 @@ struct Audio(Movable):
         self._free_slot(Self._decode(id)[0])
 
     def stop_all(mut self) raises:
+        """Stop and release every voice, playing or paused."""
         for i in range(len(self._voices)):
             if self._voices[i].stream != 0:
                 self._free_slot(i)
+
+    def pause_all(mut self) raises:
+        """Pause every playing voice, as for a pause screen. Voices played
+        afterwards play as usual, so the screen can have sounds of its own."""
+        for i in range(len(self._voices)):
+            if (
+                self._voices[i].stream != 0
+                and not self._voices[i].paused
+                and not self._finished(i)
+            ):
+                self._sdl.unbind_stream(self._voices[i].stream)
+                self._voices[i].paused = True
+
+    def resume_all(mut self) raises:
+        """Resume every paused voice, whether `pause_all` or `pause` held it."""
+        for i in range(len(self._voices)):
+            if self._voices[i].stream != 0 and self._voices[i].paused:
+                self._sdl.bind_stream(self._device, self._voices[i].stream)
+                self._voices[i].paused = False
 
     def pause(mut self, voice: Voice) raises:
         """Hold `voice` where it is; `resume` continues it."""
