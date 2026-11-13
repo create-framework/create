@@ -67,14 +67,5 @@ struct SndFile:
         if read_frames < 0:
             raise Error("sf_readf_short failed")
 
-        if read_frames < frames:
-            var actual = List[Int16](
-                length=Int(read_frames) * Int(channels), fill=0
-            )
-            var src = samples.unsafe_ptr()
-            var dst = actual.unsafe_ptr()
-            for i in range(len(actual)):
-                dst[unsafe_offset=i] = src[unsafe_offset=i]
-            return actual^, channels, samplerate
-
+        samples.shrink(Int(read_frames) * Int(channels))
         return samples^, channels, samplerate

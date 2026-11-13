@@ -163,8 +163,7 @@ def test_loop_offset_wraps_round_the_sound() raises -> None:
     var audio = Audio()
     var voice = audio.loop(_blip())
     var offset = audio._voices[Audio._decode(voice._id)[0]].loop_offset
-    assert_true(offset >= 0 and offset < 512)
-    assert_equal(offset % 2, 0)
+    assert_true(offset >= 0 and offset < 256)
 
 
 def test_stop_releases_looping_voice() raises -> None:
@@ -186,12 +185,12 @@ def test_stop_all_releases_looping_and_one_shot_together() raises -> None:
 def test_looping_voice_shares_sound_via_refcount() raises -> None:
     var audio = Audio()
     var sound = _tone()
-    assert_equal(sound._pcm.count(), 1)
+    assert_equal(sound._samples.count(), 1)
     var id = audio.loop(sound)
     # `play` copies the sound into _Voice.loop_sound, sharing its samples.
-    assert_equal(sound._pcm.count(), 2)
+    assert_equal(sound._samples.count(), 2)
     audio.stop(id)
-    assert_equal(sound._pcm.count(), 1)
+    assert_equal(sound._samples.count(), 1)
 
 
 def test_voice_none_is_never_valid() raises -> None:
