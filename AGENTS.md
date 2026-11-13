@@ -43,8 +43,8 @@ The API should embody the following principles:
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
-Package internals are documented in scoped files: [src/create/render/AGENTS.md](src/create/render/AGENTS.md),
-[src/create/core/AGENTS.md](src/create/core/AGENTS.md), [tests/AGENTS.md](tests/AGENTS.md).
+Package internals are documented in each package's README: [src/create/render/README.md](src/create/render/README.md),
+[src/create/core/README.md](src/create/core/README.md), [tests/README.md](tests/README.md).
 
 ## Build & Test
 

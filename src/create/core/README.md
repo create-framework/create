@@ -1,7 +1,7 @@
-# AGENTS.md — `create.core`
+# `create.core` internals
 
 Internals of the run loops. The root [AGENTS.md](../../../AGENTS.md) covers the consumer API and the
-layering rules; the render side is in [../render/AGENTS.md](../render/AGENTS.md).
+layering rules; the render side is in [../render/README.md](../render/README.md).
 
 ## Files
 
@@ -106,4 +106,4 @@ loop's own, passed to `Backend.present_gpu`; the persistent canvas state holds n
 **Antialiasing is a `Backend` field the loops seed** from `run`'s argument
 (`state._backend.antialiasing`) and `canvas.antialiasing` changes; the CPU replay, every pixel read
 and the GL renderer read it at present. GL windows open single-sampled: the renderer multisamples
-offscreen (see [../render/AGENTS.md](../render/AGENTS.md)), headless included.
+offscreen (see [../render/README.md](../render/README.md)), headless included.
