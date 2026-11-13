@@ -66,7 +66,7 @@ def main() raises:
     run[MyApp]("Hello")
 ```
 
-A **Create** program is a struct implementing the `Program` trait, passed to `run` in `main`, which starts the run loop. `create` is called once when the run starts, to set the initial state and draw the first frame; `update` is called for every frame after that, to handle input, change the state and draw. For more details, read [programs.md](docs/programs.md) in the user guide which explains the rest.
+A **Create** program is a struct implementing the `Program` trait, passed to `run` in `main`, which starts the run loop. `create` is called once when the run starts, to set the initial state and draw the first frame; `update` is called for every frame after that, to handle input, change the state and draw. For more details, read [programs.md](docs/programs.md) in the user guide.
 
 ## Installation and Setup
 
