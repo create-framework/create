@@ -1,4 +1,4 @@
-# AGENTS.md — tests
+# Tests
 
 Tests use `std.testing.TestSuite`; each `tests/**/test_*.mojo` is a program:
 
