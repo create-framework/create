@@ -94,7 +94,7 @@ curl -fsSL https://pixi.sh/install.sh | sh
 
 ### Option 1: create-cli
 
-Then install [create-cli](https://github.com/create-framework/create-cli), the command line tool for **Create**:
+The [create-cli](https://github.com/create-framework/create-cli) makes creating and running projects very easy. Running this command installs it to `~/.pixi/bin`:
 
 ```sh
 pixi global install create-cli --channel https://prefix.dev/create-framework/create
@@ -112,7 +112,7 @@ create run
 
 ### Option 2: pixi
 
-A project is a plain pixi project, so you can also set one up by hand. Create it with the MAX and Modular community conda channels enabled:
+If you don't want to use the create-cli, you can set up the pixi project by hand. Create it with the MAX and Modular community conda channels enabled:
 
 ```sh
 pixi init my-project \
@@ -121,11 +121,16 @@ pixi init my-project \
   -c conda-forge
 ```
 
-Then `cd` into the project, add the `mojo` and `create` packages, write a `main.mojo` and run it:
+Then `cd` into the project, add the `mojo` and `create` packages:
 
 ```sh
 cd my-project
 pixi add mojo create
+```
+
+Now, you can write your `main.mojo`, and use the following command to run it:
+
+```sh
 pixi run mojo run main.mojo
 ```
 
