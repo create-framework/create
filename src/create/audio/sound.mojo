@@ -48,7 +48,19 @@ struct Sound(Copyable, ImplicitlyCopyable, Movable):
     def load(path: String) raises -> Sound:
         """Load a WAV, OGG, FLAC, or MP3 file. Dispatches on the file's magic
         bytes, not its extension: `RIFF` (WAV) decodes via the zero-dependency
-        `SDL_LoadWAV` path; everything else goes through `libsndfile`."""
+        `SDL_LoadWAV` path; everything else goes through `libsndfile`. Raises,
+        naming `path`, when the file can't be read or holds no samples."""
+        var sound: Sound
+        try:
+            sound = Sound._decode(path)
+        except e:
+            raise Error(String(e), ": ", path)
+        if len(sound._pcm[]) == 0:
+            raise Error("Sound has no samples: ", path)
+        return sound^
+
+    @staticmethod
+    def _decode(path: String) raises -> Sound:
         var header: List[UInt8]
         with open(path, "r") as f:
             header = f.read_bytes(4)

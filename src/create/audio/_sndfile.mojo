@@ -64,6 +64,8 @@ struct SndFile:
             handle, samples.unsafe_ptr(), frames
         )
         _ = self.lib.call["sf_close", Int32](handle)
+        if read_frames < 0:
+            raise Error("sf_readf_short failed")
 
         if read_frames < frames:
             var actual = List[Int16](
