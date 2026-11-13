@@ -49,6 +49,42 @@ once, in `create`, instead. A complete, bigger program is
 [examples/sidescroller](../examples/sidescroller/main.mojo); the smallest that builds is
 [tests/core/test_smoke.mojo](../tests/core/test_smoke.mojo).
 
+## Running a program
+
+`run[P](title)` opens a window and runs `P` in it until it quits. Its other arguments are
+keywords with defaults:
+
+| Argument | Default | What it sets |
+|---|---|---|
+| `mode` | `WindowMode.WINDOWED` | `WINDOWED`, `MAXIMIZED`, `FULLSCREEN` or `BORDERLESS` |
+| `width`, `height` | `1280`, `720` | The design size, see [Coordinates](coordinates.md#design-size-and-autoscale) |
+| `backend` | `RenderBackend.CPU` | Which renderer draws the frames, below |
+| `resizable` | `True` | Whether the user can resize the window |
+| `antialiasing` | `Antialiasing.MEDIUM` | See [Drawing](drawing.md#antialiasing) |
+| `autoscale` | `Autoscale.FIT` | How the design size maps onto the window |
+
+Every argument but `backend` is only a starting value, changed later through a setter (see
+[The run's settings](coordinates.md#the-runs-settings)).
+
+**The backend** is fixed for the run. Rendering runs on the CPU by default;
+`RenderBackend.GPU` runs the same program through an OpenGL 3.3 backend instead. The two draw
+the same frame, apart from the GPU's multisampled edges:
+
+```mojo
+# A fragment, inside `main`.
+run[Ball]("Ball", backend=RenderBackend.GPU)
+```
+
+`RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run
+with a `gpu` argument (`./ball gpu`), the CPU otherwise. Other arguments are left for the
+program. [examples/backends](../examples/backends/main.mojo) reads it this way, so
+`pixi run example backends` and `pixi run example backends gpu` compare the two.
+
+```mojo
+# A fragment, inside `main`.
+run[Ball]("Ball", backend=RenderBackend.from_arguments())
+```
+
 ## The first frame
 
 **`create` draws frame 1**, like Processing's `setup`: its `canvas` is a real frame, presented like

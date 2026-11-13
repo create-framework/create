@@ -36,6 +36,7 @@ You can run the program yourself from the root of this repo using `pixi run exam
 - **Pixels and capture**: read back what has been drawn, draw offscreen and record GIFs ([pixels](examples/pixels/main.mojo), [offscreen](examples/offscreen/main.mojo), [capture](examples/capture/main.mojo))
 - **Data**: CSV/TSV tables and JSON ([data](examples/data/main.mojo))
 - **Randomness and noise**: seeded random numbers and smooth noise ([noise](examples/noise/main.mojo))
+- **CPU or GPU rendering**: every program runs on a CPU rasteriser or through OpenGL 3.3, chosen at startup
 
 ## How a Program Works
 
@@ -65,24 +66,7 @@ def main() raises:
     run[MyApp]("Hello")
 ```
 
-When writing a **Create** program, you write a struct implementing the `Program` trait, then pass it to `run` in `main`, which starts the run loop. The `Program` trait requires you to implement two methods:
-
-- `create`: a static factory, which is called only once when the run loop starts. This is where initial state is set and the first frame is drawn.
-- `update`: an instance method, which is called once for each following frame. This is where you handle input, modify state and draw to the screen.
-
-`@fieldwise_init` saves boilerplate by generating the struct's constructor from its fields.
-
-Rendering runs on the CPU by default. `backend=RenderBackend.GPU` runs the same program through an OpenGL 3.3 backend instead:
-
-```mojo
-run[MyApp]("Hello", backend=RenderBackend.GPU)
-```
-
-`RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run with a `gpu` argument, the CPU otherwise.
-
-```mojo
-run[MyApp]("Hello", backend=RenderBackend.from_arguments())
-```
+A **Create** program is a struct implementing the `Program` trait, passed to `run` in `main`, which starts the run loop. `create` is called once when the run starts, to set the initial state and draw the first frame; `update` is called for every frame after that, to handle input, change the state and draw. [Programs](docs/programs.md) in the user guide explains the rest.
 
 ## Installation and Setup
 
