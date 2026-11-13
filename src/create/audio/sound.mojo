@@ -37,6 +37,27 @@ struct Sound(Copyable, ImplicitlyCopyable, Movable):
         """Samples per second, per channel."""
         return self._sample_rate
 
+    def frame_count(self) -> Int:
+        """How many frames the sound holds: one sample of every channel."""
+        return len(self._samples[]) // self._channels
+
+    def duration(self) -> Float64:
+        """How long the sound plays, in seconds."""
+        return Float64(self.frame_count()) / Float64(self._sample_rate)
+
+    def sample(self, frame: Int, channel: Int = 0) -> Float64:
+        """The sample of `channel` in `frame`, from `-1.0` to `1.0`, as
+        `from_samples` takes them. Outside the sound it is `0.0`, silence."""
+        if (
+            frame < 0
+            or frame >= self.frame_count()
+            or channel < 0
+            or channel >= self._channels
+        ):
+            return 0.0
+        var value = self._samples[][frame * self._channels + channel]
+        return max(Float64(value) / 32767.0, -1.0)
+
     @staticmethod
     def load(path: String) raises -> Sound:
         """Load a WAV, OGG, FLAC, or MP3 file. Dispatches on the file's magic

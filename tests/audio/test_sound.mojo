@@ -43,11 +43,41 @@ def test_from_samples_rejects_a_bad_format() raises -> None:
         _ = Sound.from_samples(data, channels=2)
 
 
+def test_frame_count_and_duration() raises -> None:
+    var data = List[Float64](length=48000, fill=0.0)
+    var s = Sound.from_samples(data, channels=2, sample_rate=24000)
+    assert_equal(s.frame_count(), 24000)
+    assert_equal(s.duration(), 1.0)
+
+
+def test_sample_reads_back_what_from_samples_took() raises -> None:
+    var data: List[Float64] = [0.0, 1.0, -1.0, 0.5]
+    var s = Sound.from_samples(data, channels=2)
+    assert_equal(s.sample(0), 0.0)
+    assert_equal(s.sample(0, channel=1), 1.0)
+    assert_equal(s.sample(1, channel=0), -1.0)
+    assert_true(abs(s.sample(1, channel=1) - 0.5) < 1.0 / 32767.0)
+
+
+def test_sample_outside_the_sound_is_silence() raises -> None:
+    var data: List[Float64] = [1.0, 1.0]
+    var s = Sound.from_samples(data)
+    assert_equal(s.sample(-1), 0.0)
+    assert_equal(s.sample(2), 0.0)
+    assert_equal(s.sample(0, channel=1), 0.0)
+
+
+def test_sample_of_int16_min_is_minus_one() raises -> None:
+    var s = Sound(_samples=[Int16.MIN], _channels=1, _sample_rate=8000)
+    assert_equal(s.sample(0), -1.0)
+
+
 def test_load_wav() raises -> None:
     var s = Sound.load(_fixture("tone.wav"))
     assert_equal(s.channels(), 1)
     assert_equal(s.sample_rate(), 8000)
-    assert_equal(len(s._samples[]), 80)
+    assert_equal(s.frame_count(), 80)
+    assert_equal(s.duration(), 0.01)
     assert_equal(s._samples[][0], 290)
 
 
