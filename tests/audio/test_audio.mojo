@@ -120,14 +120,6 @@ def test_play_loop_returns_valid_id() raises -> None:
     assert_true(audio.is_playing(id))
 
 
-def test_looping_voice_stays_live_across_updates() raises -> None:
-    var audio = Audio()
-    var id = audio.loop(_tone())
-    for _ in range(5):
-        audio.update()
-    assert_true(audio.is_playing(id))
-
-
 def _fed(audio: Audio, voice: Voice) raises -> Int:
     """Bytes a looping voice's callback has queued, read under the stream's
     lock, since the callback writes it on SDL's audio thread."""
@@ -142,9 +134,9 @@ comptime _BYTES_PER_SECOND = 44100 * 2
 """Mono 16-bit at 44.1 kHz, as `_tone` and `_blip` are."""
 
 
-def test_a_short_loop_keeps_sounding_without_update() raises -> None:
-    # Under 6 ms of sound, and no `update` at all: the device asks for more
-    # on its own thread. The dummy driver plays in real time, so a third of
+def test_a_short_loop_keeps_sounding() raises -> None:
+    # Under 6 ms of sound, and nothing done each frame: the device asks for
+    # more on its own thread. The dummy driver plays in real time, so a third of
     # a second asks for at least a fifth of a second's samples.
     var audio = Audio()
     var voice = audio.loop(_blip())
@@ -248,7 +240,7 @@ def _wait_until_stale(audio: Audio, voice: Voice) raises -> Bool:
     return False
 
 
-def test_a_finished_one_shot_is_stale_without_update() raises -> None:
+def test_a_finished_one_shot_is_stale() raises -> None:
     var audio = Audio()
     var one_shot = audio.play(_blip())
     var looping = audio.loop(_blip())
@@ -256,7 +248,7 @@ def test_a_finished_one_shot_is_stale_without_update() raises -> None:
     assert_true(audio.is_playing(looping))
 
 
-def test_play_reuses_a_finished_voice_slot_without_update() raises -> None:
+def test_play_reuses_a_finished_voice_slot() raises -> None:
     var audio = Audio()
     var first = audio.play(_blip())
     assert_true(_wait_until_stale(audio, first))
@@ -265,21 +257,13 @@ def test_play_reuses_a_finished_voice_slot_without_update() raises -> None:
     assert_true(second != first)
 
 
-def test_update_frees_a_finished_one_shot_slot() raises -> None:
-    var audio = Audio()
-    var one_shot = audio.play(_blip())
-    assert_true(_wait_until_stale(audio, one_shot))
-    audio.update()
-    assert_equal(audio._voices[0].stream, 0)
-
-
 def test_a_paused_one_shot_is_never_freed() raises -> None:
     var audio = Audio()
     var voice = audio.play(_tone())
     audio.pause(voice)
     sleep(0.1)
-    audio.update()
-    assert_false(audio.is_playing(voice))
+    _ = audio.play(_tone())  # frees every slot whose voice has ended
+    assert_true(audio.is_paused(voice))
     audio.resume(voice)
     assert_true(audio.is_playing(voice))
 

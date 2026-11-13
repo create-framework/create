@@ -138,9 +138,9 @@ struct Audio(Movable):
     call `play` from `update`. Where no audio device can be opened, it plays
     silently rather than raising.
 
-    A looping voice is fed on SDL's audio thread, as the device asks. A
-    one-shot voice reads as stale once it has played to its end, and its slot
-    is freed by the next `play` or `update`.
+    It needs nothing each frame: a looping voice is fed on SDL's audio
+    thread, as the device asks, and a one-shot voice reads as stale once it
+    has played to its end, its slot freed by the next `play`.
     """
 
     var _sdl: SDLAudio
@@ -209,7 +209,7 @@ struct Audio(Movable):
     def _finished(self, index: Int) -> Bool:
         """Whether the voice in a live slot has played to its end: a one-shot
         that is not paused, with nothing left to play. Its slot is freed by
-        the next `update` or `play`, but it is stale from now on."""
+        the next `play`, but it is stale from now on."""
         ref voice = self._voices[index]
         return (
             not voice.looping
@@ -405,10 +405,6 @@ struct Audio(Movable):
         if not self._valid(id):
             return False
         return self._voices[Self._decode(id)[0]].paused
-
-    def update(mut self) raises:
-        """Free the slots of finished one-shot voices."""
-        self._reap()
 
     def __deinit__(deinit self):
         try:
