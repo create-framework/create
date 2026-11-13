@@ -148,6 +148,12 @@ def test_a_loop_shorter_than_a_frame_is_queued_half_a_second_ahead() raises -> (
     assert_true(_queued(audio, voice) >= lead)
 
 
+def test_a_faster_loop_is_queued_further_ahead() raises -> None:
+    var audio = Audio()
+    var voice = audio.loop(_blip(), speed=4.0)
+    assert_true(_queued(audio, voice) >= 4 * 22050 * 2)
+
+
 def test_a_long_loop_is_queued_in_chunks_not_whole() raises -> None:
     # Ten seconds of sound: queued half a second at a time, not ten.
     var data = List[Float64](length=441000, fill=0.0)
@@ -355,6 +361,34 @@ def test_a_volume_above_one_amplifies() raises -> None:
     var audio = Audio()
     var voice = audio.play(_tone(), volume=2.0)
     assert_equal(_gain(audio, voice), Float32(2.0))
+
+
+def _ratio(audio: Audio, voice: Voice) raises -> Float32:
+    return audio._sdl.frequency_ratio(
+        audio._voices[Audio._decode(voice._id)[0]].stream
+    )
+
+
+def test_speed_reads_back_and_reaches_the_stream() raises -> None:
+    var audio = Audio()
+    var voice = audio.loop(_tone())
+    assert_equal(audio.speed(voice), 1.0)
+    audio.speed(voice, 2.0)
+    assert_equal(audio.speed(voice), 2.0)
+    assert_equal(_ratio(audio, voice), Float32(2.0))
+    audio.stop(voice)
+    assert_equal(audio.speed(voice), 0.0)
+    audio.speed(voice, 3.0)
+
+
+def test_play_starts_at_the_speed_given_and_clamps_it() raises -> None:
+    var audio = Audio()
+    var slow = audio.play(_tone(), speed=0.5)
+    var stopped = audio.loop(_tone(), speed=0.0)
+    var fast = audio.loop(_tone(), speed=1000.0)
+    assert_equal(_ratio(audio, slow), Float32(0.5))
+    assert_equal(audio.speed(stopped), 0.01)
+    assert_equal(audio.speed(fast), 100.0)
 
 
 def test_volume_reads_back_its_default_and_what_was_set() raises -> None:
