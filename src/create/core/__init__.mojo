@@ -1,3 +1,7 @@
+"""The run: the `Program` trait, `run` and `run_headless`, the run's state
+(`Context`, `Time`) and its settings (`WindowMode`, `Cursor`), text entry
+(`EditableText`), `source_path` and `DateTime`.
+"""
 from .context import Context
 from .time import Time
 from .date_time import DateTime

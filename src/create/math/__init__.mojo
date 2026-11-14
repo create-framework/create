@@ -1,3 +1,6 @@
+"""Maths: `Point2D`, `Vector2D` and `Matrix`, `Random` and `Noise`, easing and
+`Tween`, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
+"""
 from .util import (
     lerp,
     map,

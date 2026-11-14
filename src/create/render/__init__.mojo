@@ -1,3 +1,7 @@
+"""Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the
+settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`,
+`StrokeCap`, `StrokeAlign`, `RenderBackend`).
+"""
 from .render_backend import RenderBackend
 from .antialiasing import Antialiasing
 from .align import Align
