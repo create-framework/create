@@ -38,5 +38,16 @@ rattler-build = ">=0.30.0,<0.31"
 [feature.package.tasks]
 check-package = "bash scripts/check_package.sh"
 
+# The documentation site (zensical.toml): Zensical renders it, and the default
+# feature's mojo writes the API reference's JSON (`mojo doc`).
+[feature.docs.dependencies]
+python = ">=3.12"
+zensical = ">=0.1.1,<0.2"
+
+[feature.docs.tasks]
+docs = "python scripts/docs.py && zensical build --strict --clean"
+docs-serve = "python scripts/docs.py && zensical serve"
+
 [environments]
 package = { features = ["package"], no-default-feature = true }
+docs = { features = ["docs"], solve-group = "default" }

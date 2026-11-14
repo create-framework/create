@@ -1,0 +1,85 @@
+# The documentation site, published at site_url by CI on every push to main.
+# Its pages are staged by scripts/docs.py from the README, docs/ and the
+# library's docstrings; `pixi run docs` builds it, `pixi run docs-serve`
+# previews it.
+[project]
+site_name = "Create"
+site_description = "A creative coding library for Mojo, inspired by Processing."
+site_url = "https://create-framework.github.io/create/"
+repo_url = "https://github.com/create-framework/create"
+repo_name = "create-framework/create"
+docs_dir = "build/docs/pages"
+site_dir = "build/docs/site"
+nav = [
+  { "Home" = "index.md" },
+  { "User guide" = [
+    "guide/index.md",
+    "guide/programs.md",
+    "guide/coordinates.md",
+    "guide/drawing.md",
+    "guide/style.md",
+    "guide/pixels.md",
+    "guide/input.md",
+    "guide/geometry.md",
+    "guide/math.md",
+    "guide/data.md",
+    "guide/audio.md",
+  ] },
+  { "API reference" = [
+    "reference/index.md",
+    "reference/core.md",
+    "reference/input.md",
+    "reference/math.md",
+    "reference/geometry.md",
+    "reference/color.md",
+    "reference/render.md",
+    "reference/image.md",
+    "reference/text.md",
+    "reference/audio.md",
+    "reference/data.md",
+  ] },
+]
+
+[project.theme]
+language = "en"
+logo = "assets/logo/png/logo-trim.png"
+favicon = "assets/logo/png/logo-trim.png"
+features = [
+  "content.code.copy",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.tabs",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+toc.toc_depth = 2
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.superfences = {}
