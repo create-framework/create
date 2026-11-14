@@ -82,7 +82,6 @@ struct Game(Program):
 
         var margin = Float64(_SIZE) / 2.0
         self.x = clamp(self.x, canvas.left() + margin, canvas.right() - margin)
-        self.animator.update(context.time.delta)
 
         canvas.background(Color(40, 40, 44))
 
