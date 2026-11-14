@@ -165,7 +165,7 @@ docs: Move the release process to RELEASING.md
 
 ## Documentation
 
-The documentation site, [create-framework.github.io/create](https://create-framework.github.io/create/),
+The documentation site, [create-framework.org](https://create-framework.org/),
 is built from this repo by `pixi run docs` and published by CI on every push to `main`, so a change
 and its documentation land together. [scripts/docs.py](scripts/docs.py) stages its pages:
 
