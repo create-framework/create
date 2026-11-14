@@ -12,6 +12,7 @@ from std.testing import (
 )
 
 from create.core.context import Context
+from create.math._run_clock import _scaled_now, _real_now, _set_run_clock
 from create.core.cursor import Cursor
 from create.core._events import apply_events
 from create.render._viewport import Viewport
@@ -32,6 +33,21 @@ def test_advancing_a_frame_counts_it_and_ticks_the_clock() raises -> None:
     assert_equal(context.time.delta_millis, 16)
     context._advance_frame(1_048)
     assert_equal(context.frame_count(), 2)
+
+
+def test_a_new_context_starts_the_run_clock_at_zero() raises -> None:
+    _set_run_clock(5.0, 5.0)
+    _ = Context()
+    assert_equal(_scaled_now(), 0.0)
+    assert_equal(_real_now(), 0.0)
+
+
+def test_advancing_a_frame_publishes_the_run_clock() raises -> None:
+    var context = Context()
+    context.time._start(1_000)
+    context._advance_frame(1_250)
+    assert_almost_equal(_scaled_now(), 0.25)
+    assert_almost_equal(_real_now(), 0.25)
 
 
 def test_frame_rate_is_zero_before_the_first_tick() raises -> None:
