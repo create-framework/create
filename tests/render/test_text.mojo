@@ -426,5 +426,70 @@ def test_width_of_a_string_is_the_sum_of_its_parts() raises -> None:
     assert_equal(t.width("", style, 1.0), 0)
 
 
+def _line_height() raises -> Int:
+    """The packaged face's baseline-to-baseline distance at `_style`'s size."""
+    var font = _default_font()
+    return font._vertical_metrics(24)[2]
+
+
+def test_a_newline_starts_a_line_below() raises -> None:
+    var t = TextRenderer()
+    var placed = t.layout("H\nH", 40.0, 30.0, _style(Align.TOP_LEFT), 1.0)
+    assert_equal(len(placed), 2)
+    assert_equal(placed[1].x, placed[0].x)
+    assert_true(_line_height() > 0)
+    assert_equal(placed[1].y - placed[0].y, _line_height())
+
+
+def test_a_carriage_return_takes_no_glyph() raises -> None:
+    var t = TextRenderer()
+    var style = _style(Align.TOP_LEFT)
+    var windows = t.layout("H\r\nH", 40.0, 30.0, style, 1.0)
+    var unix = t.layout("H\nH", 40.0, 30.0, style, 1.0)
+    assert_equal(len(windows), len(unix))
+    for i in range(len(unix)):
+        assert_equal(windows[i].x, unix[i].x)
+        assert_equal(windows[i].y, unix[i].y)
+
+
+def test_each_line_is_aligned_on_its_own() raises -> None:
+    var t = TextRenderer()
+    var style = _style(Align.RIGHT)
+    var placed = t.layout("Hi\nH", 40.0, 30.0, style, 1.0)
+    # The second line's "H" ends where the first line's "i" does.
+    assert_equal(placed[2].x - placed[0].x, t.width("i", style, 1.0))
+
+
+def test_alignment_anchors_the_whole_block() raises -> None:
+    var t = TextRenderer()
+    var one = t.layout("H", 40.0, 30.0, _style(Align.CENTER), 1.0)
+    var two = t.layout("H\nH", 40.0, 30.0, _style(Align.CENTER), 1.0)
+    # Centred, two lines rise half a line from one.
+    var font = _default_font()
+    var m = font._vertical_metrics(24)
+    var half_up = (m[0] + m[1]) // 2 - (m[0] + m[1] - m[2]) // 2
+    assert_true(abs(half_up - m[2] // 2) <= 1)
+    assert_equal(one[0].y - two[0].y, half_up)
+    var bottom = t.layout("H\nH", 40.0, 30.0, _style(Align.BOTTOM), 1.0)
+    var last = t.layout("H", 40.0, 30.0, _style(Align.BOTTOM), 1.0)
+    assert_equal(bottom[1].y, last[0].y)
+
+
+def test_width_is_the_widest_line() raises -> None:
+    var t = TextRenderer()
+    var style = _style(Align.LEFT)
+    assert_equal(t.width("H\nHi\nH", style, 1.0), t.width("Hi", style, 1.0))
+
+
+def test_height_grows_by_a_line_per_break() raises -> None:
+    var t = TextRenderer()
+    var style = _style(Align.LEFT)
+    var one = t.height("Hi", style, 1.0)
+    assert_true(one > 0)
+    assert_equal(t.height("", style, 1.0), one)
+    assert_equal(t.height("Hi\n", style, 1.0), one + _line_height())
+    assert_equal(t.height("a\nb\nc", style, 1.0), one + 2 * _line_height())
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

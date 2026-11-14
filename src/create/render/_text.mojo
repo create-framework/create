@@ -75,6 +75,34 @@ struct PlacedGlyph(Copyable, Movable):
         self.height = height
 
 
+comptime _NEWLINE = 10
+comptime _CARRIAGE_RETURN = 13
+
+
+@fieldwise_init
+struct _Line(ImplicitlyCopyable, Movable):
+    """One line of a `_Run`: its glyphs `[start, end)` and their width in
+    pixels."""
+
+    var start: Int
+    var end: Int
+    var width: Int
+
+
+struct _Run(Movable):
+    """A string measured for layout: each glyph's cache key and advance, and
+    the lines they break into. Line breaks take no glyph."""
+
+    var keys: List[Int]
+    var advances: List[Int]
+    var lines: List[_Line]
+
+    def __init__(out self):
+        self.keys = List[Int]()
+        self.advances = List[Int]()
+        self.lines = List[_Line]()
+
+
 struct TextRenderer(Movable):
     """Font ownership and glyph layout, kept out of the rendering surface.
 
@@ -248,24 +276,59 @@ struct TextRenderer(Movable):
         """A cached glyph's coverage mask, row-major, 8-bit, by reference."""
         return self._glyphs[key].pixels
 
-    def _advance(
+    def _measure(
         mut self, slot: Int, s: String, size: Int, weight: Int, blur: Int
-    ) raises -> Int:
-        """The pen advance across `s` in pixels: its width as laid out, since
-        glyphs are placed advance to advance with no kerning."""
-        var advance = 0
+    ) raises -> _Run:
+        """Cache every glyph of `s` and break it into lines at each newline.
+
+        A carriage return is dropped, so a Windows line ending breaks once.
+        Glyphs sit advance to advance with no kerning, so a line's width is
+        the sum of its advances.
+        """
+        var run = _Run()
+        var start = 0
+        var width = 0
         for cp in s.codepoints():
-            var key = self._ensure_glyph(slot, Int(cp), size, weight, blur)
-            advance += self._glyphs[key].advance_x
-        return advance
+            var c = Int(cp)
+            if c == _NEWLINE:
+                run.lines.append(_Line(start, len(run.keys), width))
+                start = len(run.keys)
+                width = 0
+                continue
+            if c == _CARRIAGE_RETURN:
+                continue
+            var key = self._ensure_glyph(slot, c, size, weight, blur)
+            var advance = self._glyphs[key].advance_x
+            run.keys.append(key)
+            run.advances.append(advance)
+            width += advance
+        run.lines.append(_Line(start, len(run.keys), width))
+        return run^
 
     def width(
         mut self, s: String, style: TextStyle, pixel_scale: Float64
     ) raises -> Int:
-        """How wide `layout` makes `s`, in pixels, without placing it."""
+        """How wide `layout` makes `s`, in pixels, without placing it: its
+        widest line."""
         var size = _pixel_size(style, pixel_scale)
         var slot = self._slot(self._face(style))
-        return self._advance(slot, s, size, _key_weight(style), 0)
+        var run = self._measure(slot, s, size, _key_weight(style), 0)
+        var widest = 0
+        for ref line in run.lines:
+            widest = max(widest, line.width)
+        return widest
+
+    def height(
+        mut self, s: String, style: TextStyle, pixel_scale: Float64
+    ) raises -> Int:
+        """How tall `layout` makes `s`, in pixels: the top of its first line
+        to the bottom of its last, the box `Align` anchors."""
+        var size = _pixel_size(style, pixel_scale)
+        var face = self._face(style)
+        var slot = self._slot(face)
+        var run = self._measure(slot, s, size, _key_weight(style), 0)
+        var metrics = face._vertical_metrics(size)
+        return metrics[0] - metrics[1] + (len(run.lines) - 1) * metrics[2]
 
     def layout(
         mut self,
@@ -280,9 +343,11 @@ struct TextRenderer(Movable):
         blurred by `blur` pixels (see `_ensure_glyph`).
 
         Glyphs lay out upright in pixel space, y down, so `Align.TOP`/`BOTTOM`
-        mean the top and bottom of the text box. Under an upright transform
-        the caller maps the anchor and the layout is final; under any other
-        it lays out around the origin and maps each glyph's rect through
+        mean the top and bottom of the text box: the first line's ascent to
+        the last line's descent, lines a face's line height apart. Each line
+        is aligned horizontally on its own. Under an upright transform the
+        caller maps the anchor and the layout is final; under any other it
+        lays out around the origin and maps each glyph's rect through
         `glyph_transform`, so the box turns with the text.
 
         Every glyph is in the cache when this returns, so a caller can read
@@ -294,46 +359,48 @@ struct TextRenderer(Movable):
         var weight = _key_weight(style)
         var blur_px = min(max(blur, 0), _MAX_BLUR)
 
-        # Two passes: measure the total advance for alignment, then place.
-        var tw = self._advance(slot, s, size, weight, blur_px)
-
-        var pen_x = Int(tx)
-        var pen_y = Int(ty)
-        var align = style.text_alignment
-        if align._right():
-            pen_x -= tw
-        elif not align._left():
-            pen_x -= tw // 2
+        # Two passes: measure every line for alignment, then place.
+        var run = self._measure(slot, s, size, weight, blur_px)
 
         var metrics = face._vertical_metrics(size)
         var asc = metrics[0]
         var desc = metrics[1]
-        var baseline_y = pen_y
+        var line_height = metrics[2]
+        # From the first baseline to the last.
+        var block = (len(run.lines) - 1) * line_height
+        var align = style.text_alignment
+        var baseline_y = Int(ty)
         if align._top():
             baseline_y += asc
         elif align._bottom():
-            baseline_y += desc
+            baseline_y += desc - block
         else:
-            baseline_y += (asc + desc) // 2
+            baseline_y += (asc + desc - block) // 2
 
         var placed = List[PlacedGlyph]()
-        var cx = pen_x
-        for cp in s.codepoints():
-            # Bound by reference: the mask stays in the cache rather than
-            # being copied out of it once per character.
-            var key = self._ensure_glyph(slot, Int(cp), size, weight, blur_px)
-            ref g = self._glyphs[key]
-            if g.width > 0 and g.height > 0:
-                placed.append(
-                    PlacedGlyph(
-                        key,
-                        cx + g.bearing_x,
-                        baseline_y - g.bearing_y,
-                        g.width,
-                        g.height,
+        for ref line in run.lines:
+            var cx = Int(tx)
+            if align._right():
+                cx -= line.width
+            elif not align._left():
+                cx -= line.width // 2
+            for i in range(line.start, line.end):
+                # Bound by reference: the mask stays in the cache rather than
+                # being copied out of it once per character.
+                var key = run.keys[i]
+                ref g = self._glyphs[key]
+                if g.width > 0 and g.height > 0:
+                    placed.append(
+                        PlacedGlyph(
+                            key,
+                            cx + g.bearing_x,
+                            baseline_y - g.bearing_y,
+                            g.width,
+                            g.height,
+                        )
                     )
-                )
-            cx += g.advance_x
+                cx += run.advances[i]
+            baseline_y += line_height
         return placed^
 
     def render[

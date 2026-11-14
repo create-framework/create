@@ -133,6 +133,15 @@ def test_text_width_reads_through_an_immutable_canvas() raises -> None:
     assert_true(_label_width(canvas, "H") < before)
 
 
+def test_text_height_counts_the_lines() raises -> None:
+    var canvas = _canvas()
+    var one = canvas.text_height("H")
+    var two = canvas.text_height("H\nH")
+    assert_true(two > one)
+    assert_equal(canvas.text_height("H\nH\nH") - two, two - one)
+    assert_equal(canvas.text_width("H\nHi"), canvas.text_width("Hi"))
+
+
 def test_a_style_prints_its_font() raises -> None:
     var font = _symbols()
     var style = Style(font=font)
