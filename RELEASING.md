@@ -26,7 +26,9 @@ together.
 [.github/workflows/release.yml](.github/workflows/release.yml) runs on a pushed `v*` tag. It
 fails unless the tag names `pixi.toml`'s version. Then it builds and tests the package on each
 platform `pixi.toml` lists (linux-64, osx-arm64) with `pixi run check-package`, and uploads them
-all once every build has passed, so a release reaches every platform or none.
+all once every build has passed, so a release reaches every platform or none. Then it runs
+[docs.yml](.github/workflows/docs.yml) on `main`, so the site's `/latest/` shows the release: the
+documentation follows the newest `vX.Y.Z` tag, not the package channel.
 
 The upload authenticates through trusted publishing: the channel's settings on prefix.dev name
 this repository and `release.yml` as a trusted publisher, so no token is stored. Renaming the
@@ -44,5 +46,5 @@ workflow file breaks that until the setting is updated.
    gh release create vX.Y.Z --title "Create X.Y.Z" --verify-tag --notes-file NOTES.md
    ```
 3. **Watch the release workflow** (Actions → Release). When it passes, the package is on the
-   channel. A failed run publishes nothing: fix the cause on `main`, then move the tag to the
+   channel and the Docs workflow is publishing the release's documentation. A failed run publishes nothing: fix the cause on `main`, then move the tag to the
    fixed commit and push it again (`git push --force origin vX.Y.Z`) to rerun it.

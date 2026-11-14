@@ -68,3 +68,15 @@ jobs:
           path: dist
           merge-multiple: true
       - run: pixi run -e package rattler-build upload prefix --channel "$CHANNEL" dist/*.conda
+
+  # Rebuilds the documentation site, so /latest/ shows this release. Run on
+  # main, whose docs.yml the Pages environment deploys from.
+  docs:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow run docs.yml --repo "$GITHUB_REPOSITORY" --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}

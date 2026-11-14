@@ -1,0 +1,48 @@
+# Publishes the documentation site to GitHub Pages, create-framework.org:
+# main at /main/ and the latest release at /latest/, built side by side by
+# `pixi run docs-site` (scripts/docs_site.py). Runs on every push to main,
+# and from release.yml once a release is published, so /latest/ moves to it.
+# ci.yml's linux-docs checks main's pages on pull requests.
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A deployment is never cancelled midway; a newer run waits and then builds
+# both versions afresh.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # The tags too: the latest release is the newest vX.Y.Z.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: prefix-dev/setup-pixi@v0.11.0
+        with:
+          cache: true
+          locked: true
+          environments: docs
+      - run: pixi run docs-site
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/docs/published
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
