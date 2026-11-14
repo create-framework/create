@@ -5,7 +5,7 @@
 [project]
 site_name = "Create"
 site_description = "A creative coding library for Mojo, inspired by Processing."
-site_url = "https://create-framework.github.io/create/"
+site_url = "https://create-framework.org/"
 repo_url = "https://github.com/create-framework/create"
 repo_name = "create-framework/create"
 docs_dir = "build/docs/pages"

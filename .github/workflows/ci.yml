@@ -148,7 +148,7 @@ jobs:
         with:
           path: build/docs/site
 
-  # Publishes main's site to GitHub Pages, create-framework.github.io/create.
+  # Publishes main's site to GitHub Pages, create-framework.org.
   deploy-docs:
     needs: docs
     if: github.event_name == 'push'

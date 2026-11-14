@@ -121,11 +121,11 @@ pixi run mojo run main.mojo
 ## Documentation
 
 - [User guide](docs/README.md): how to use **Create**, topic by topic.
-- [API reference](https://create-framework.github.io/create/reference/): every public type and function, with its documentation.
+- [API reference](https://create-framework.org/reference/): every public type and function, with its documentation.
 - [Contributing](CONTRIBUTING.md): how to work on **Create** itself: its design ethos, building and testing, and how changes land.
 - [Architecture](ARCHITECTURE.md): how the source is organised, and which package may import which.
 
-The user guide and the API reference are also published together at [create-framework.github.io/create](https://create-framework.github.io/create/), updated with every change to `main`. Tutorials are coming soon.
+The user guide and the API reference are also published together at [create-framework.org](https://create-framework.org/), updated with every change to `main`. Tutorials are coming soon.
 
 ## Supported Platforms
 
