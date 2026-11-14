@@ -224,3 +224,22 @@ canvas.text(caption, corner)
 var under = corner.y - canvas.text_height(caption) - 4
 canvas.line((corner.x, under), (corner.x + canvas.text_width(caption), under))
 ```
+
+**Wrapping.** `canvas.text(string, position, width)` also wraps each line to at most `width`
+units, breaking at the last space that fits and dropping the spaces there; a word wider than
+`width` alone breaks between its letters. Newlines still break, and every line is still aligned
+on its own, so `Align.TOP_LEFT` sets ragged-right text hanging from `position`.
+`canvas.text_width(string, width=w)` and `canvas.text_height(string, width=w)` measure the wrapped
+block:
+
+```mojo
+# A fragment of `update`: a paragraph in a 300-unit column, a panel behind it.
+var story = "The caves run deeper than the old maps show, and nobody who went down came back."
+canvas.text_alignment(Align.TOP_LEFT)
+var corner = Point2D(canvas.left() + 20, canvas.top() - 20)
+var height = canvas.text_height(story, width=300)
+canvas.fill(Color(0, 0, 0, 160))
+canvas.rectangle((corner.x + 150, corner.y - height / 2), 300, height)
+canvas.text_color(Color.WHITE)
+canvas.text(story, corner, 300)
+```

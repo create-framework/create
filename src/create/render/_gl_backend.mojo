@@ -1123,7 +1123,13 @@ struct GLRenderer(Movable):
         if not upright:
             p = (0.0, 0.0)
         var placed = text.layout(
-            c.payload[TextPayload].text, p[0], p[1], text_style, sf, blur
+            c.payload[TextPayload].text,
+            p[0],
+            p[1],
+            text_style,
+            sf,
+            blur,
+            c.payload[TextPayload].wrap_pixels(sf),
         )
         if len(placed) == 0:
             return

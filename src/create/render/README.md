@@ -450,9 +450,15 @@ nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and ca
   cleared and `atlas_generation` is bumped, which the atlas watches. `_GLYPH_CACHE_LIMIT` drops the
   masks (not the slots) whole when full.
 - **Lines:** `_measure` caches a string's glyphs and breaks it into `_Line`s at each newline (a
-  carriage return takes no glyph). `layout` aligns each line on its own and steps the baseline by
-  the face's line height; `Align`'s top and bottom are the whole block's, from the first line's
-  ascent to the last line's descent, which `height` measures. `width` is the widest line.
+  carriage return takes no glyph) and, given a wrap width in pixels, greedily before the last run
+  of spaces that fits, or between glyphs in a word wider than the wrap. `layout` aligns each line
+  on its own and steps the baseline by the face's line height; `Align`'s top and bottom are the
+  whole block's, from the first line's ascent to the last line's descent, which `height`
+  measures. `width` is the widest line.
+- **Wrapping is decided at replay**, like the rest of the layout: `TextPayload.wrap` is in local
+  units (`NO_WRAP` for none), and each replay converts it at the scale it lays the text out at
+  (`wrap_pixels`, `text_pixel_scale`). `canvas.text_width`/`text_height` measure at that same
+  scale, so a measured string breaks where the drawn one does.
 - **Metrics:** the layout reads them through `Font._vertical_metrics(size)` (ascent, descent and
   line height), which scales the face to that size first: with every glyph cached, nothing else
   did.
