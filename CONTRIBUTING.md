@@ -84,6 +84,8 @@ pixi run check-standalone                 # a `mojo build` program, run outside 
 pixi run check-package                    # the conda package from recipe/, built and tested as installed
 pixi run format                           # 80 columns, enforced by pre-commit
 pixi run embed-fonts                      # regenerate text/_noto.mojo after changing a face in text/fonts/
+pixi run docs                             # build the documentation site into build/docs/site
+pixi run docs-serve                       # preview it, rebuilt as you edit (rerun after a docstring change)
 pixi run setup                            # once per clone: git hooks + blame ignore-revs
 ```
 
@@ -106,7 +108,7 @@ Two tiers of automated checks, and a third run by hand:
 | Where | Runs |
 |---|---|
 | `pre-commit` hook (after `pixi run setup`) | Formatting check on staged `.mojo` files, then builds `tests/core/test_smoke.mojo`. Constant cost |
-| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job. Linux only |
+| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job — and the documentation site (`pixi run docs`). Linux only |
 | macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI — a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet — so run it before relying on a change that could differ there (windowing, GL, library search) |
 
 Neither tier subsumes the other: building a consumer program type-checks only the `def` bodies it
@@ -114,15 +116,16 @@ reaches (catches API drift, not an uncalled broken function); `mojo precompile` 
 
 The hook and CI skip their checks when every changed path is inert (`*.md`, `LICENSE`,
 agent/editor config); the allowlist is in `.githooks/_inert.sh`, read by the hook and the workflow
-alike.
+alike. The documentation site is the exception: Markdown alone can break it, so CI builds it for
+every change.
 
 ## Workflow
 
 `main` is protected by a ruleset: no direct pushes, no force pushes, no deletion, and a linear
 history. Every change lands as a pull request, merged once the required check `ci` passes. It
-passes when `linux-format`, `linux-precompile`, `linux-examples`, `linux-package` and the four
-test shards `linux-tests-1`…`linux-tests-4` all passed, or were skipped for an inert change; no
-approval is required. **Rebase and merge** is the only merge method enabled: squash and merge
+passes when `linux-docs` passed and `linux-format`, `linux-precompile`, `linux-examples`,
+`linux-package` and the four test shards `linux-tests-1`…`linux-tests-4` all passed, or were
+skipped for an inert change; no approval is required. **Rebase and merge** is the only merge method enabled: squash and merge
 commits are off.
 
 ```bash
@@ -159,6 +162,21 @@ fix(render): Clip a rotated image's edge to the frame
 refactor(core)!: Rename Context.window_size to Context.design_size
 docs: Move the release process to RELEASING.md
 ```
+
+## Documentation
+
+The documentation site, [create-framework.github.io/create](https://create-framework.github.io/create/),
+is built from this repo by `pixi run docs` and published by CI on every push to `main`, so a change
+and its documentation land together. [scripts/docs.py](scripts/docs.py) stages its pages:
+
+- **Home** is the [README](README.md), and the **user guide** is [docs/](docs/README.md). Write their
+  links for GitHub, relative to the file: the site keeps links between its pages, copies images
+  in, and points everything else (an example, a source file) at GitHub, at the commit built.
+- The **API reference** is rendered from the docstrings by `mojo doc`, one page per subpackage. It
+  lists what the subpackage's `__init__.mojo` imports, in that order, so the public surface and
+  the reference can't disagree; a package's own docstring heads its page.
+
+A new guide page or subpackage also needs an entry in `nav` in [zensical.toml](zensical.toml).
 
 ## Code conventions
 

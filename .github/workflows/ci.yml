@@ -128,16 +128,55 @@ jobs:
           path: ${{ env.MOJO_CACHE }}
           key: mojo-${{ matrix.name }}-${{ hashFiles('pixi.lock') }}-${{ github.sha }}
 
+  # The documentation site (zensical.toml), built strict: a broken link or
+  # anchor, or a public name `mojo doc` can't find, fails it. Not gated on
+  # `changes`, since a change to Markdown alone can break the site. On main
+  # the built site is kept for `deploy-docs`.
+  docs:
+    name: linux-docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: prefix-dev/setup-pixi@v0.11.0
+        with:
+          cache: true
+          locked: true
+          environments: docs
+      - run: pixi run docs
+      - if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/docs/site
+
+  # Publishes main's site to GitHub Pages, create-framework.github.io/create.
+  deploy-docs:
+    needs: docs
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
   # The required check. A skipped matrix job reports under its unexpanded
   # name, not as linux-format/linux-precompile/..., so those can't be
   # required directly.
   ci:
-    needs: [changes, check]
+    needs: [changes, check, docs]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Checks passed or were skipped
         run: |
+          [ "${{ needs.docs.result }}" = success ] || exit 1
           case "${{ needs.changes.result }}/${{ needs.check.result }}" in
               success/success | success/skipped) exit 0 ;;
           esac
