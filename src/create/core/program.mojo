@@ -31,10 +31,11 @@ trait Program(Deinitable, Movable):
 
         `canvas` is a real frame, presented like every later one: what is
         drawn here shows, and geometry is as valid as on any first frame (see
-        Gotcha 3). The design size and autoscale mode are `run`'s arguments,
-        already in place; `context.design_size` or `context.autoscale`
-        called here applies from the next frame, like any dial. `context.time`
-        is zero and no key or button is down; `context.frame_count()` is 1.
+        gotcha 1 in docs/programs.md). The design size and autoscale mode are
+        `run`'s arguments, already in place; `context.design_size` or
+        `context.autoscale` called here applies from the next frame, like any
+        dial. `context.time` is zero and no key or button is down;
+        `context.frame_count()` is 1.
 
         Drawing that needs the program's own fields builds `Self` into a
         local first, draws, then returns it.

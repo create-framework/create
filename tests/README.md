@@ -19,6 +19,10 @@ def main() raises:
 passing file, with any `SKIP` lines it printed indented beneath. Each file is its own process;
 namespace any scratch path under `/tmp` per file.
 
+Fixtures are named relative to the test file, as Create resolves every path it is given
+(`Image.load("../fixtures/test_2x2.png")` from `tests/image/`); a fixture read through the stdlib's
+`open()` goes through `source_path`, which resolves the same way.
+
 **Rendering is tested for real.** `run_headless` returns the last frame as an `Image`, and
 `image.pixel(x, y)` reads it back — assert on pixels, don't eyeball. It antialiases at
 `MEDIUM` like `run`: a test pinning an edge pixel's exact colour passes `antialiasing=Antialiasing.OFF`.

@@ -51,6 +51,7 @@ from ._command import (
 )
 from .style import Style
 from create.math._optional_float64 import _OptionalFloat64
+from create._path import _caller_relative
 from ._command import RenderCommand
 from ._shape_command import RegionCapture, curves_command, shape_command
 from ._transform import pixel_scale
@@ -835,6 +836,7 @@ struct Canvas(DrawTarget, Movable):
             )
         )
 
+    @always_inline
     def save_image(
         mut self,
         path: String,
@@ -865,7 +867,16 @@ struct Canvas(DrawTarget, Movable):
         what it has drawn so far. Its pixels are already rasterised, so a
         `scale` other than its own resamples them, and `transparent` keeps
         their alpha rather than dropping a `background` it has painted.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, not the working directory, as `Image.load`'s is.
         """
+        self._save_image(_caller_relative(path), scale, transparent)
+
+    def _save_image(
+        mut self, path: String, scale: Float64, transparent: Bool
+    ) raises:
+        """`save_image`, to a path already resolved."""
         if scale <= 0.0:
             raise Error(
                 "save_image needs a positive scale, got " + String(scale)
@@ -1023,6 +1034,7 @@ struct Canvas(DrawTarget, Movable):
         _seed(mem, target, self._base, to_target)
         return mem^
 
+    @always_inline
     def save_screenshot(mut self, path: String) raises:
         """Save this frame as a PNG at the framebuffer's own resolution.
 
@@ -1039,13 +1051,21 @@ struct Canvas(DrawTarget, Movable):
 
         An offscreen canvas writes at once: its own pixels, at its own
         density, alpha kept — it has no window to have been seen in.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, as `save_image`'s is.
         """
+        self._save_screenshot(_caller_relative(path))
+
+    def _save_screenshot(mut self, path: String) raises:
+        """`save_screenshot`, to a path already resolved."""
         if self._offscreen():
             self._state._backend.bake(self._scale)
             self._state._backend.target.value().save(path, opaque=False)
             return
         self._state._backend.captures.request_screenshot(path)
 
+    @always_inline
     def start_recording(
         mut self,
         path: String,
@@ -1091,7 +1111,24 @@ struct Canvas(DrawTarget, Movable):
         `frames` both given, a value that isn't positive, `fps` above 50, a
         file that can't be opened, or an offscreen canvas, which has no
         frames to record.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, as `save_image`'s is.
         """
+        self._start_recording(
+            _caller_relative(path), seconds, frames, fps, scale, dither
+        )
+
+    def _start_recording(
+        mut self,
+        path: String,
+        seconds: _OptionalFloat64,
+        frames: Optional[Int],
+        fps: Float64,
+        scale: Float64,
+        dither: Bool,
+    ) raises:
+        """`start_recording`, to a path already resolved."""
         if self._offscreen():
             raise Error(
                 "start_recording needs the frame canvas: an offscreen canvas"

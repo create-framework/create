@@ -2,6 +2,8 @@
 
 from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
+from create.core import source_path
+
 from create.text.font import (
     Font,
     FontWeight,
@@ -15,10 +17,11 @@ from create.text.font import (
     _noto_sans_symbols,
 )
 
-comptime _NOTO_SANS_FILE = "src/create/text/fonts/NotoSans.ttf"
-"""The file the packaged Noto Sans is generated from, for loading by path."""
+comptime _NOTO_SANS_FILE = "../../src/create/text/fonts/NotoSans.ttf"
+"""The file the packaged Noto Sans is generated from, for loading by path,
+relative to this file as `Font.load` resolves it."""
 
-comptime _SLNT_FIXTURE = "tests/fixtures/fonts/RobotoFlex-slnt.ttf"
+comptime _SLNT_FIXTURE = "../fixtures/fonts/RobotoFlex-slnt.ttf"
 """Roboto Flex cut down to A-Z, a-z and its `wght` and `slnt` axes: a face
 whose italic is an axis of the same file."""
 
@@ -105,10 +108,12 @@ def test_a_face_without_an_italic_is_sheared() raises -> None:
 
 def test_a_slnt_axis_is_the_italic_of_its_own_file() raises -> None:
     var upright = _Face(
-        _FontSource.file(_SLNT_FIXTURE), 48, FontWeight.REGULAR.value
+        _FontSource.file(source_path(_SLNT_FIXTURE)),
+        48,
+        FontWeight.REGULAR.value,
     )
     var slanted = _Face(
-        _FontSource.file(_SLNT_FIXTURE),
+        _FontSource.file(source_path(_SLNT_FIXTURE)),
         48,
         FontWeight.REGULAR.value,
         slanted=True,
@@ -171,7 +176,7 @@ def test_each_load_is_its_own_font() raises -> None:
 
 def test_a_font_prints_as_it_is_loaded() raises -> None:
     var f = Font.load(_NOTO_SANS_FILE)
-    assert_equal(String(f), 'Font.load("' + _NOTO_SANS_FILE + '")')
+    assert_equal(String(f), 'Font.load("' + source_path(_NOTO_SANS_FILE) + '")')
 
 
 def test_an_italic_partner_prints_with_the_font() raises -> None:
@@ -179,9 +184,9 @@ def test_an_italic_partner_prints_with_the_font() raises -> None:
     assert_equal(
         String(f),
         'Font.load("'
-        + _NOTO_SANS_FILE
+        + source_path(_NOTO_SANS_FILE)
         + '", italic_path="'
-        + _SLNT_FIXTURE
+        + source_path(_SLNT_FIXTURE)
         + '")',
     )
 

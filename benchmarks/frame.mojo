@@ -47,7 +47,7 @@ struct Bench(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Bench:
         return Bench(
             0.0,
-            Image.load(source_path("../assets/logo/png/logo-cutout.png")),
+            Image.load("../assets/logo/png/logo-cutout.png"),
             0,
             0.0,
             0.0,

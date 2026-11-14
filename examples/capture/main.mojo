@@ -45,16 +45,14 @@ struct Capture(Program):
         # file holds the whole frame however early in `update` it was asked
         # for, so nothing has to be rendered before asking.
         if context.keyboard.pressed(Key.S):
-            canvas.save_screenshot(source_path("out/screenshot.png"))
+            canvas.save_screenshot("out/screenshot.png")
             self.saved = "screenshot.png: the window, bars included"
         elif context.keyboard.pressed(Key.I):
             if context.keyboard.down(Key.SHIFT):
-                canvas.save_image(
-                    source_path("out/image@2x.png"), 2.0, transparent=True
-                )
+                canvas.save_image("out/image@2x.png", 2.0, transparent=True)
                 self.saved = "image@2x.png: 1600x1000, transparent"
             else:
-                canvas.save_image(source_path("out/image.png"))
+                canvas.save_image("out/image.png")
                 self.saved = "image.png: 800x500, no bars"
         elif context.keyboard.pressed(Key.R):
             # Recording runs on by itself, frame after frame, until its
@@ -64,7 +62,7 @@ struct Capture(Program):
                 self.saved = "recording.gif"
             else:
                 canvas.start_recording(
-                    source_path("out/recording.gif"), seconds=_RECORD_SECONDS
+                    "out/recording.gif", seconds=_RECORD_SECONDS
                 )
                 self.saved = ""
         elif context.keyboard.pressed(Key.X) and canvas.recording():

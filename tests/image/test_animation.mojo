@@ -111,7 +111,7 @@ def test_count_past_the_end_raises() raises -> None:
 
 
 def test_from_folder_frame_count() raises -> None:
-    var anim = Animation.from_folder("tests/fixtures/anim")
+    var anim = Animation.from_folder("../fixtures/anim")
     # notes.txt in the same directory is skipped.
     assert_equal(anim.frame_count(), 3)
 
@@ -119,25 +119,25 @@ def test_from_folder_frame_count() raises -> None:
 def test_from_folder_orders_naturally() raises -> None:
     # frame_1 is red, frame_2 green, frame_10 blue -- so the order is readable
     # from the pixels. Lexicographic order would put frame_10 second.
-    var anim = Animation.from_folder("tests/fixtures/anim")
+    var anim = Animation.from_folder("../fixtures/anim")
     assert_equal(_red(anim.frame(0), 0, 0), 255)
     assert_equal(_green(anim.frame(1), 0, 0), 255)
     assert_equal(_blue(anim.frame(2), 0, 0), 255)
 
 
 def test_from_folder_fps() raises -> None:
-    var anim = Animation.from_folder("tests/fixtures/anim", fps=24.0)
+    var anim = Animation.from_folder("../fixtures/anim", fps=24.0)
     assert_equal(anim.fps, 24.0)
 
 
 def test_from_folder_without_images_raises() raises -> None:
     with assert_raises(contains="no BMP, PNG or JPEG files"):
-        _ = Animation.from_folder("tests/fixtures/anim_no_images")
+        _ = Animation.from_folder("../fixtures/anim_no_images")
 
 
 def test_from_folder_missing_directory_raises() raises -> None:
     with assert_raises():
-        _ = Animation.from_folder("tests/fixtures/does_not_exist")
+        _ = Animation.from_folder("../fixtures/does_not_exist")
 
 
 def test_frame_number_reads_the_trailing_digits() raises -> None:

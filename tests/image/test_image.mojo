@@ -51,7 +51,7 @@ def test_from_rgba_roundtrip() raises -> None:
 
 
 def test_load_bmp_dimensions() raises -> None:
-    var s = Image.load("tests/fixtures/test_2x2.bmp")
+    var s = Image.load("../fixtures/test_2x2.bmp")
     assert_equal(s.width(), 2)
     assert_equal(s.height(), 2)
     assert_equal(len(s._pixels[]), 2 * 2 * 4)
@@ -59,7 +59,7 @@ def test_load_bmp_dimensions() raises -> None:
 
 def test_load_bmp_pixels() raises -> None:
     # test_2x2.bmp: top-left=red, top-right=white, bottom-left=blue, bottom-right=white
-    var s = Image.load("tests/fixtures/test_2x2.bmp")
+    var s = Image.load("../fixtures/test_2x2.bmp")
     var ptr = s._pixels[].unsafe_ptr()
     assert_equal(Int(ptr[unsafe_offset=0]), 255)  # (0,0) R
     assert_equal(Int(ptr[unsafe_offset=1]), 0)  # (0,0) G
@@ -78,7 +78,7 @@ def test_load_bmp_32bit_pixels_and_alpha() raises -> None:
     # TR=white, BL=blue, BR=white) but 32-bit BI_RGB with four distinct,
     # file-supplied alpha values -- the only decode path that reads alpha
     # from disk rather than synthesising it.
-    var s = Image.load("tests/fixtures/test_2x2_32bit.bmp")
+    var s = Image.load("../fixtures/test_2x2_32bit.bmp")
     assert_equal(s.width(), 2)
     assert_equal(s.height(), 2)
     var ptr = s._pixels[].unsafe_ptr()
@@ -104,8 +104,8 @@ def test_load_topdown_bmp_matches_bottom_up() raises -> None:
     # test_2x2_topdown.bmp carries a negative height and top-down row order,
     # but the same final image as test_2x2.bmp. Identical output here is the
     # only proof the row flip fires for one file and not the other.
-    var top_down = Image.load("tests/fixtures/test_2x2_topdown.bmp")
-    var bottom_up = Image.load("tests/fixtures/test_2x2.bmp")
+    var top_down = Image.load("../fixtures/test_2x2_topdown.bmp")
+    var bottom_up = Image.load("../fixtures/test_2x2.bmp")
     assert_equal(top_down.width(), bottom_up.width())
     assert_equal(top_down.height(), bottom_up.height())
     var a = top_down._pixels[].unsafe_ptr()
@@ -115,14 +115,14 @@ def test_load_topdown_bmp_matches_bottom_up() raises -> None:
 
 
 def test_load_png() raises -> None:
-    var s = Image.load("tests/assets/image.png")
+    var s = Image.load("../assets/image.png")
     assert_equal(s.width(), 500)
     assert_equal(s.height(), 500)
     assert_equal(len(s._pixels[]), 500 * 500 * 4)
 
 
 def test_load_jpeg() raises -> None:
-    var s = Image.load("tests/assets/image.jpeg")
+    var s = Image.load("../assets/image.jpeg")
     assert_equal(s.width(), 500)
     assert_equal(s.height(), 500)
     assert_equal(len(s._pixels[]), 500 * 500 * 4)
@@ -132,7 +132,7 @@ def test_load_png_pixels() raises -> None:
     # test_2x2.png: top-left=red, top-right=green, bottom-left=blue,
     # bottom-right=white. Source has no alpha channel -- decoder must
     # synthesise 255.
-    var s = Image.load("tests/fixtures/test_2x2.png")
+    var s = Image.load("../fixtures/test_2x2.png")
     var ptr = s._pixels[].unsafe_ptr()
     assert_equal(Int(ptr[unsafe_offset=0]), 255)  # (0,0) R -- red
     assert_equal(Int(ptr[unsafe_offset=1]), 0)
@@ -159,7 +159,7 @@ def test_load_jpeg_pixels() raises -> None:
     # no chroma subsampling. Lossy, so compare within a band far tighter than
     # the gap between any two of these colours -- a red/blue channel swap
     # would blow well past this tolerance.
-    var s = Image.load("tests/fixtures/test_2x2.jpeg")
+    var s = Image.load("../fixtures/test_2x2.jpeg")
     var ptr = s._pixels[].unsafe_ptr()
     var tol = 16
     _assert_close(Int(ptr[unsafe_offset=0]), 255, tol)  # (0,0) -- red
@@ -178,37 +178,37 @@ def test_load_jpeg_pixels() raises -> None:
 
 def test_load_nonexistent_path_raises() raises -> None:
     with assert_raises():
-        _ = Image.load("tests/fixtures/does_not_exist.bmp")
+        _ = Image.load("../fixtures/does_not_exist.bmp")
 
 
 def test_load_bmp_too_small_raises() raises -> None:
     with assert_raises(contains="too small"):
-        _ = Image.load("tests/fixtures/bmp_too_small.bmp")
+        _ = Image.load("../fixtures/bmp_too_small.bmp")
 
 
 def test_load_bmp_bad_magic_raises() raises -> None:
     with assert_raises(contains="Not a BMP"):
-        _ = Image.load("tests/fixtures/bmp_bad_magic.bmp")
+        _ = Image.load("../fixtures/bmp_bad_magic.bmp")
 
 
 def test_load_bmp_bad_dib_header_raises() raises -> None:
     with assert_raises(contains="DIB header"):
-        _ = Image.load("tests/fixtures/bmp_bad_dib.bmp")
+        _ = Image.load("../fixtures/bmp_bad_dib.bmp")
 
 
 def test_load_bmp_bad_bpp_raises() raises -> None:
     with assert_raises(contains="24-bit or 32-bit"):
-        _ = Image.load("tests/fixtures/bmp_bad_bpp.bmp")
+        _ = Image.load("../fixtures/bmp_bad_bpp.bmp")
 
 
 def test_load_bmp_rle_compression_raises() raises -> None:
     with assert_raises(contains="Compressed BMP"):
-        _ = Image.load("tests/fixtures/bmp_rle_compressed.bmp")
+        _ = Image.load("../fixtures/bmp_rle_compressed.bmp")
 
 
 def test_load_bmp_bitfields_compression_raises() raises -> None:
     with assert_raises(contains="Compressed BMP"):
-        _ = Image.load("tests/fixtures/bmp_bitfields_compressed.bmp")
+        _ = Image.load("../fixtures/bmp_bitfields_compressed.bmp")
 
 
 def test_resize_dimensions() raises -> None:
@@ -484,7 +484,7 @@ def test_jpeg_dimensions_bad_marker_raises() raises -> None:
 
 
 def test_load_bmp_alpha_channel() raises -> None:
-    var s = Image.load("tests/fixtures/test_2x2.bmp")
+    var s = Image.load("../fixtures/test_2x2.bmp")
     var ptr = s._pixels[].unsafe_ptr()
     # BMP has no alpha — loader should set alpha=255 for all pixels
     assert_equal(Int(ptr[unsafe_offset=3]), 255)  # (0,0) A

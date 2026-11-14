@@ -80,7 +80,7 @@ Build one anywhere, `create` included, and keep it as a field to draw into acros
   lands on what is there. Read when something changed, not every frame regardless.
 - **Density is fixed by `scale`** (pixels per unit). `snapshot(scale=canvas.scale())` reads the
   pixels as they are; any other scale resamples them, nearest pixel. Don't take `scale` from the
-  frame canvas in `create` ([gotcha 2](programs.md#critical-gotchas)); pick a fixed density.
+  frame canvas in `create` ([gotcha 1](programs.md#critical-gotchas)); pick a fixed density.
 - **`save_image` and `save_screenshot` write at once**, having no frame to defer to.
   `save_screenshot` writes the pixels at their own density with alpha; `save_image` keeps alpha
   with `transparent=True`. `autoclear` and `letterbox_color` have no effect.

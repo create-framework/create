@@ -11,7 +11,7 @@ copies share their samples.
 
 ```mojo
 # A fragment, inside `create`.
-var chime = Sound.load(source_path("assets/chime.wav"))
+var chime = Sound.load("assets/chime.wav")
 ```
 
 - **Loading:** `Sound.load(path)` reads WAV, OGG, FLAC or MP3, chosen by the file's contents, not

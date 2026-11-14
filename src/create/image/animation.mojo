@@ -1,6 +1,7 @@
 from std.memory import ArcPointer
 from std.os import listdir
 
+from create._path import _caller_relative
 from create.image.image import Image
 from create.image.pixel_buffer import PixelBuffer
 
@@ -135,12 +136,16 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
         return Animation(frames^, fps)
 
     @staticmethod
+    @always_inline
     def from_folder(path: String, fps: Float64 = 12.0) raises -> Animation:
         """Load every image in a directory as a frame, in natural number order.
 
         ```mojo
-        var run = Animation.from_folder(source_path("../assets/run"))
+        var run = Animation.from_folder("assets/run")
         ```
+
+        A relative `path` is resolved against the directory of the calling
+        source file, as `Image.load`'s is.
 
         Names are ordered by the number they end in, not by string comparison,
         so `frame_2` comes before `frame_10` -- the ordering an author means
@@ -148,6 +153,11 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
         not BMP, PNG or JPEG are skipped; a directory with no images at all
         raises rather than yielding an empty animation.
         """
+        return Animation._from_folder(_caller_relative(path), fps)
+
+    @staticmethod
+    def _from_folder(path: String, fps: Float64) raises -> Animation:
+        """`from_folder`, from a path already resolved."""
         var names = List[String]()
         for entry in listdir(path):
             var ext = Image._extension(entry)
@@ -159,7 +169,7 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
 
         var frames = List[Image]()
         for name in names:
-            frames.append(Image.load(path + "/" + name))
+            frames.append(Image._load(path + "/" + name))
         return Animation(frames^, fps)
 
     @staticmethod

@@ -187,7 +187,7 @@ style: `canvas.font(f)`, `Style(font=f)` or `with canvas.style(font=f):`, beside
 
 ```mojo
 # A fragment: `title_font` is a field, loaded in `create`.
-var title_font = Font.load(source_path("fonts/Title.ttf"))
+var title_font = Font.load("fonts/Title.ttf")
 
 # In `update`:
 with canvas.style(font=self.title_font, font_size=48, font_weight=FontWeight.BOLD):

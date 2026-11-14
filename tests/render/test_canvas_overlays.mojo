@@ -104,7 +104,7 @@ struct ScaledImage(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> ScaledImage:
-        return ScaledImage(Image.load("tests/fixtures/test_2x2.bmp"))
+        return ScaledImage(Image.load("../fixtures/test_2x2.bmp"))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)

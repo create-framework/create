@@ -5,10 +5,11 @@ from std.testing import (
     assert_raises,
     assert_true,
 )
+from create.core import source_path
 from create.data import JSON, JSONKind
 from std.os import makedirs
 
-comptime FIXTURES = "tests/fixtures/data/"
+comptime FIXTURES = "../fixtures/data/"
 comptime SCRATCH = "/tmp/create_test_json/"
 
 
@@ -18,7 +19,7 @@ def _scratch(name: String) raises -> String:
 
 
 def _read(path: String) raises -> String:
-    with open(path, "r") as f:
+    with open(source_path(path), "r") as f:
         return f.read()
 
 
@@ -203,7 +204,7 @@ def test_prints_as_compact_json() raises -> None:
 
 def test_every_fixture_round_trips() raises -> None:
     for name in ["config.json", "unicode.json"]:
-        with open(FIXTURES + name, "r") as f:
+        with open(source_path(FIXTURES + name), "r") as f:
             _round_trips(f.read())
     _round_trips("[0.1, 1e-7, -0.0, 1.7976931348623157e308, 5e-324]")
 

@@ -5,11 +5,12 @@ from std.testing import (
     assert_raises,
     assert_true,
 )
+from create.core import source_path
 from create.data import Table
 from create.data.table import _parse_delimited
 from std.os import makedirs
 
-comptime FIXTURES = "tests/fixtures/data/"
+comptime FIXTURES = "../fixtures/data/"
 comptime SCRATCH = "/tmp/create_test_table/"
 
 
@@ -19,7 +20,7 @@ def _scratch(name: String) raises -> String:
 
 
 def _read(path: String) raises -> String:
-    with open(path, "r") as f:
+    with open(source_path(path), "r") as f:
         return f.read()
 
 

@@ -1,5 +1,7 @@
 from std.memory import ArcPointer
 
+from create._path import _caller_relative
+
 
 @fieldwise_init
 struct _Header(Copyable, Movable):
@@ -194,7 +196,7 @@ struct Table(Copyable, Movable):
     Rows are handed out by reference, so reading a cell copies nothing:
 
     ```mojo
-    var scores = Table.load(source_path("scores.csv"))
+    var scores = Table.load("scores.csv")
     var best = scores.row(0).string("name")
     for ref row in scores.rows():
         total += row.int("score")
@@ -232,6 +234,7 @@ struct Table(Copyable, Movable):
         self._rows = []
 
     @staticmethod
+    @always_inline
     def load(
         path: String,
         header: Bool = True,
@@ -242,7 +245,17 @@ struct Table(Copyable, Movable):
         The separator is a tab for a `.tsv` file and a comma otherwise,
         unless `separator` names one. Quoted fields may hold separators,
         newlines and doubled quotes, as RFC 4180 has it.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, not the working directory, as `Image.load`'s is.
         """
+        return Table._load(_caller_relative(path), header, separator)
+
+    @staticmethod
+    def _load(
+        path: String, header: Bool, separator: Optional[String]
+    ) raises -> Table:
+        """`load`, from a path already resolved."""
         var text: String
         with open(path, "r") as f:
             text = f.read()
@@ -441,13 +454,19 @@ struct Table(Copyable, Movable):
             sorted.append(self._rows[i].copy())
         self._rows = sorted^
 
+    @always_inline
     def save(self, path: String, separator: Optional[String] = None) raises:
         """Write the table as CSV or TSV, the header line first.
 
         The separator follows `load`'s rule. A field is quoted only when it
         holds the separator, a quote or a line break, so a file `load` read
-        is written back as it was.
+        is written back as it was. A relative `path` is resolved against the
+        directory of the calling source file, as `load`'s is.
         """
+        self._save(_caller_relative(path), separator)
+
+    def _save(self, path: String, separator: Optional[String]) raises:
+        """`save`, to a path already resolved."""
         var text = self._format(_separator_for(path, separator))
         with open(path, "w") as f:
             f.write(text)
