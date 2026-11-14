@@ -992,13 +992,13 @@ struct GLRenderer(Movable):
             var blur = Int(c.paint.shadow_blur * sf + 0.5)
             if blur == 0:
                 self._one(sh, images, text, width, height, scale)
-            elif blurs_analytically(c):
+            elif blurs_analytically(sh):
                 emit_blurred_shadow(self.vertices, sh, scale)
             elif c.payload.isa[TextPayload]():
                 self._text(sh, text, scale, blur)
             elif c.payload.isa[ImagePayload]():
                 self._image_shadow(sh, images, scale, blur)
-            elif is_lowered(c):
+            elif is_lowered(sh):
                 self._mask_shadow(
                     shape_shadow_mask(sh, sh.transform, scale, blur),
                     c.paint.shadow_color,
@@ -1027,10 +1027,10 @@ struct GLRenderer(Movable):
                 self._clear_gradient(c, row, width, height)
             else:
                 self._clear(c.paint.fill_color, width, height, c.clip != 0)
-        elif c.payload.isa[RectPayload]():
+        elif c.payload.isa[RectPayload]() and not c.paint._stroke_dashed():
             var row = self._ramp_row(c)
             emit_rect(self.vertices, c, scale, row)
-        elif c.payload.isa[CirclePayload]():
+        elif c.payload.isa[CirclePayload]() and not c.paint._stroke_dashed():
             var row = self._ramp_row(c)
             emit_circle(self.vertices, c, scale, row)
         elif is_plain_triangle(c):

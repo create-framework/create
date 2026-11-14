@@ -178,7 +178,10 @@ comptime _SHAPE_BLURRED_SQUARE_BEZIER = 81
 comptime _SHAPE_ALIGNED = 82
 """The first of 32 aligned-stroke cases: eight region kinds, each centred and
 outside, each without and then with a blurred shadow (`_draw_aligned`)."""
-comptime _SHAPE_COUNT = 114
+comptime _SHAPE_DASHED = 114
+"""The first of 20 dashed-stroke cases: the eight region kinds, a line and a
+Bézier, each without and then with a blurred shadow (`_draw_dashed`)."""
+comptime _SHAPE_COUNT = 134
 
 comptime _SHADOW_INK = Color(0x10, 0x10, 0x10)
 """Opaque and far from `_BACKGROUND`, so a shadow counts as ink and its
@@ -234,26 +237,75 @@ def _draw_aligned(mut canvas: Canvas, i: Int) raises:
     if parts[2]:
         look = _blurred(look^)
     with canvas.style(look):
-        if kind == 0:
-            canvas.rectangle((0, 0), 80, 50)
-        elif kind == 1:
-            canvas.rectangle((0, 0), 80, 50, corner_radius=12)
-        elif kind == 2:
-            canvas.circle((0, 0), 35)
-        elif kind == 3:
-            canvas.sector((0, 0), 50, 0.3, 4.0)
-        elif kind == 4:
-            canvas.draw(Polygon.star((0, 0), 55, 25, 5))
-        elif kind == 5:
-            with canvas.transform(rotate(0.4)):
-                canvas.ellipse((0, 0), 100, 50)
-        elif kind == 6:
-            canvas.capsule((-35, -15), (35, 15), 22)
+        _draw_region(canvas, kind)
+
+
+def _dashed_parts(i: Int) -> Tuple[Int, Bool]:
+    """The `i`-th dashed case's kind (`_draw_dashed`) and whether it casts a
+    blurred shadow."""
+    return (i % 10, i >= 10)
+
+
+def _draw_dashed(mut canvas: Canvas, i: Int) raises:
+    """A dashed stroke on each kind: preset dashes with round caps on the
+    odd kinds, exact lengths with butt caps on the even ones."""
+    var parts = _dashed_parts(i)
+    var kind = parts[0]
+    var look = Style(
+        fill=Color(0x40, 0xC0, 0xE0),
+        stroke=Color(0x30, 0x30, 0xA0),
+        stroke_thickness=6,
+        stroke_dash=StrokeDash.DASHED if kind % 2 == 1 else StrokeDash(14, 8),
+        stroke_cap=StrokeCap.ROUND if kind % 2 == 1 else StrokeCap.BUTT,
+    )
+    if parts[1]:
+        look = _blurred(look^)
+    with canvas.style(look):
+        if kind < 8:
+            _draw_region(canvas, kind)
+        elif kind == 8:
+            canvas.line((-80, -40), (80, 30))
         else:
-            canvas.triangle((-45, -30), (45, -30), (0, 40), corner_radius=8)
+            canvas.bezier((-80, -40), (-20, 60), (20, -60), (80, 40))
+
+
+def _draw_region(mut canvas: Canvas, kind: Int) raises:
+    """One of the eight region kinds the aligned and dashed cases share."""
+    if kind == 0:
+        canvas.rectangle((0, 0), 80, 50)
+    elif kind == 1:
+        canvas.rectangle((0, 0), 80, 50, corner_radius=12)
+    elif kind == 2:
+        canvas.circle((0, 0), 35)
+    elif kind == 3:
+        canvas.sector((0, 0), 50, 0.3, 4.0)
+    elif kind == 4:
+        canvas.draw(Polygon.star((0, 0), 55, 25, 5))
+    elif kind == 5:
+        with canvas.transform(rotate(0.4)):
+            canvas.ellipse((0, 0), 100, 50)
+    elif kind == 6:
+        canvas.capsule((-35, -15), (35, 15), 22)
+    else:
+        canvas.triangle((-45, -30), (45, -30), (0, 40), corner_radius=8)
 
 
 def _shape_name(shape: Int) -> String:
+    if shape >= _SHAPE_DASHED:
+        var parts = _dashed_parts(shape - _SHAPE_DASHED)
+        var kinds: List[String] = [
+            "rect",
+            "rounded rect",
+            "circle",
+            "sector",
+            "star",
+            "turned ellipse",
+            "capsule",
+            "rounded triangle",
+            "line",
+            "bezier",
+        ]
+        return ("blurred " if parts[1] else "") + "dashed " + kinds[parts[0]]
     if shape >= _SHAPE_ALIGNED:
         var parts = _aligned_parts(shape - _SHAPE_ALIGNED)
         var kinds: List[String] = [
@@ -478,7 +530,9 @@ struct _Parity(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_BACKGROUND)
 
-        if self.shape >= _SHAPE_ALIGNED:
+        if self.shape >= _SHAPE_DASHED:
+            _draw_dashed(canvas, self.shape - _SHAPE_DASHED)
+        elif self.shape >= _SHAPE_ALIGNED:
             _draw_aligned(canvas, self.shape - _SHAPE_ALIGNED)
         elif self.shape == _SHAPE_RECT:
             with canvas.style():

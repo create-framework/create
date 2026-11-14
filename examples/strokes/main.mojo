@@ -1,8 +1,8 @@
-"""Stroke caps and alignment side by side: each cap on a thick translucent
-line and arc, each alignment on a rectangle, a rounded triangle and a
-polygon, with a thin guide marking the true geometry. Drag the mouse to
-draw with round caps, which close the notches between segments; press
-Space to clear.
+"""Stroke caps, alignment and dashes side by side: each cap on a thick
+translucent line and arc, each alignment on a rectangle, a rounded triangle
+and a polygon, with a thin guide marking the true geometry, and three dash
+patterns, the last marching round. Drag the mouse to draw with round caps,
+which close the notches between segments; press Space to clear.
 """
 
 from create import *
@@ -116,6 +116,31 @@ struct App(Program):
             canvas.text(
                 "stroke_alignment " + _alignment_name(alignments[i]), (x, -10)
             )
+
+        # Dashes: a preset sized by the thickness, round dots, and exact
+        # lengths marching round as their offset grows.
+        var dashes: List[StrokeDash] = [
+            StrokeDash.DASHED,
+            StrokeDash.DOTTED,
+            StrokeDash(24, 10, 4, 10).with_offset(context.time.elapsed * 40),
+        ]
+        var dash_names: List[String] = [
+            "StrokeDash.DASHED",
+            "StrokeDash.DOTTED",
+            "StrokeDash(24, 10, 4, 10)",
+        ]
+        for i in range(3):
+            var x = (Float64(i) - 1.0) * _COLUMN
+            with canvas.style(
+                fill=_FILL,
+                stroke=_STROKE,
+                stroke_thickness=8,
+                stroke_dash=dashes[i],
+                stroke_cap=StrokeCap.ROUND if i == 2 else StrokeCap.BUTT,
+            ):
+                canvas.rectangle((x - 70, -250), 140, 80, corner_radius=14)
+                canvas.circle((x + 110, -250), 40)
+            canvas.text("stroke_dash " + dash_names[i], (x, -320))
 
         # The mouse drawing: each segment its own line, round-capped, so
         # the segments meet without a notch at any turn.

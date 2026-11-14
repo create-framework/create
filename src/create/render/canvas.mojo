@@ -6,6 +6,7 @@ from create.color.gradient import Gradient
 from .align import Align
 from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
+from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from .antialiasing import Antialiasing
 from .autoscale import Autoscale
@@ -501,6 +502,7 @@ struct Canvas(DrawTarget, Movable):
         stroke_enabled: Optional[Bool] = None,
         stroke_alignment: Optional[StrokeAlign] = None,
         stroke_cap: Optional[StrokeCap] = None,
+        stroke_dash: Optional[StrokeDash] = None,
         corner_radius: _OptionalFloat64 = None,
         text_color: Optional[Color] = None,
         font: Optional[Font] = None,
@@ -553,6 +555,8 @@ struct Canvas(DrawTarget, Movable):
             self.stroke_alignment(stroke_alignment.value())
         if stroke_cap:
             self.stroke_cap(stroke_cap.value())
+        if stroke_dash:
+            self.stroke_dash(stroke_dash.value())
         if corner_radius:
             self.corner_radius(corner_radius.value())
         if text_color:
@@ -770,9 +774,19 @@ struct Canvas(DrawTarget, Movable):
         """Finish the open ends of lines and curves with `cap`:
         `StrokeCap.BUTT` (the default) flush with the end point, `ROUND` a
         half disc, `SQUARE` pushed out by half the thickness. A region's
-        stroke and a closed curve have no ends, so it changes nothing there.
+        stroke and a closed curve have no ends, so it changes nothing there
+        unless the stroke is dashed, when it finishes every dash.
         Doesn't switch the stroke on."""
         self._style.stroke_cap = cap
+
+    def stroke_dash(mut self, dash: StrokeDash):
+        """Break every stroke into dashes: `StrokeDash.DASHED` or `DOTTED`,
+        scaled to the stroke's thickness, or exact lengths in world units
+        such as `StrokeDash(12, 6)`. `StrokeDash.SOLID` (the default) draws
+        it unbroken again. Each dash's ends take `stroke_cap`, a region's
+        too; see `StrokeDash` for where a pattern starts. Doesn't switch
+        the stroke on."""
+        self._style.stroke_dash = dash
 
     def corner_radius(mut self, radius: Float64):
         """Round the shapes built from numbers by `rectangle`, `triangle`,

@@ -13,6 +13,7 @@ from std.collections import Optional
 from .align import Align
 from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
+from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
 from create.color.gradient import Gradient
@@ -34,6 +35,9 @@ struct Paint(Copyable, ImplicitlyCopyable, Movable):
     var stroke_enabled: Bool
     var stroke_alignment: StrokeAlign
     var stroke_cap: StrokeCap
+    var stroke_dash: StrokeDash
+    """Resolved to explicit lengths (`StrokeDash._resolved`) when the
+    command is recorded."""
     var blend_mode: BlendMode
     var shadow_color: Color
     var shadow_offset: Vector2D
@@ -69,6 +73,11 @@ struct Paint(Copyable, ImplicitlyCopyable, Movable):
             and self.stroke_color.a > 0
             and self.stroke_thickness > 0
         )
+
+    def _stroke_dashed(self) -> Bool:
+        """Whether the stroke paints, broken into dashes: the replays draw
+        such a stroke as dashes along its middle (`_dash.mojo`)."""
+        return self._stroke_visible() and not self.stroke_dash._is_solid()
 
     def _shadow_visible(self) -> Bool:
         """Whether the shadow actually paints anything.

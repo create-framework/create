@@ -28,9 +28,11 @@ page is for working on the package: the [user guide](../../../docs/README.md) co
 | `_tessellate.mojo` | `RenderCommand` to triangles for the GPU |
 | `_stroke.mojo` | Stroke alignment for both replays: `stroke_offset` (how far a command grows) and `aligned_stroke` (the command grown so its inset ring lands where `stroke_alignment` says) |
 | `stroke_cap.mojo` / `stroke_align.mojo` | The public `StrokeCap` and `StrokeAlign` enums |
+| `stroke_dash.mojo` | The public `StrokeDash`: its presets, patterns and `_resolved`, a preset as lengths |
+| `_dash.mojo` | Dashed strokes for both replays: the stroke's middle per kind, the pattern walked along it (`dash_path`), each dash a `stroke_pieces` strip (`dashed_stroke`) |
 | `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (an inset shadow's interior and cut) |
 | `_pieces.mojo` | `Pieces`, a shape as convex device pieces (fill and stroke, quads and polygons); `fill_pieces`, the CPU's one way to fill them; `pieces_shadow_mask`, their blurred mask; `PlacedMask` |
-| `_lower.mojo` | `shape_pieces`, the one lowering of every kind but rectangles and circles (lines, curves, sectors, polygons, triangles) to `Pieces`; `shape_shadow_mask`; `is_lowered`, `is_plain_triangle` |
+| `_lower.mojo` | `shape_pieces`, the one lowering of every kind but rectangles and circles (lines, curves, sectors, polygons, triangles; and any dashed shape) to `Pieces`; `shape_shadow_mask`; `is_lowered`, `is_plain_triangle` |
 | `_curve.mojo` | Bézier stroke geometry: flattening in device pixels, the mitred quad strip and its caps (`stroke_pieces`) |
 | `_sector.mojo` | Sector fill and stroke tiled into device quads (`sector_quads`, returning `Pieces`) |
 | `_polygon.mojo` | Polygon fill and stroke tiled into device quads (`polygon_quads`, returning `Pieces`) |
@@ -64,7 +66,8 @@ with `emit_pieces`, and a blurred shadow is the shadow command's pieces masked
 (`shape_shadow_mask`). So both draw the same pieces, and a new lowered kind is one branch there and
 a tiler returning `Pieces` — no backend learns it. Rectangles and circles are not lowered: each
 replay rasterises them from their equations (`CpuReplay._rect`/`_circle`, `emit_rect`/`emit_circle`),
-which is where they are fast, and their shadows blur analytically. Nor is a plain triangle's fill —
+which is where they are fast, and their shadows blur analytically, unless their stroke is dashed
+(see Dashes). Nor is a plain triangle's fill —
 no rounding, no visible stroke (`is_plain_triangle`) — one `fill_triangle` pass or one GPU
 triangle.
 
@@ -189,6 +192,36 @@ centripetal knot spacing depends on distances, which a non-uniform scale would c
 converted after it would change shape rather than just stretch. Separate commands per curve would
 meet on their ends (butt, or overlapping round caps) and double-blend a translucent joint; one
 chain doesn't.
+
+## Dashes
+
+A dashed stroke (`paint._stroke_dashed()`: a visible stroke whose `stroke_dash` isn't solid) is
+lowered on **every** kind, so `is_lowered` is true for a dashed rectangle or circle too, and both
+replays test it before their analytic rect and circle paths. `shape_pieces` hands it to
+`_dashed_pieces`: the fill the solid stroke would leave (a lowered kind's own tiler with its
+stroke dropped, or a rectangle's or circle's outline eroded by the thickness, one convex polygon)
+plus `dashed_stroke`'s dashes as the stroke.
+
+`dashed_stroke` finds the stroke's **middle** in device space — a line's or curve's path, or a
+region's outline moved in by half the thickness — and `dash_path` walks the pattern along it,
+stroking each dash with `stroke_pieces`, so a dash's ends take `stroke_cap` and a dash round a
+corner is one mitred strip. A rectangle's, circle's and triangle's middle comes from their own
+numbers, so rounding stays exact. A sector's and a polygon's is their outline with every vertex
+mitred in (`_inset`), less their `grow`, so an alignment's or a shadow's spread moves it back out;
+an edge shorter than the inset beside a sharp corner would fold there, so `_inset` drops the
+smoother vertex of any edge that runs backwards. Known limitation: a rounded polygon whose fillets
+are tighter than half the stroke is only approximately inset.
+
+**A preset becomes lengths at record time** (`StrokeDash._resolved`, from `Style._paint`), scaled by
+the style's thickness, and `DOTTED` sets the cap to `ROUND` there. So a shadow, whose ring thickens
+the stroke by the spread, keeps the shape's pattern. Lengths reach device pixels by
+`pixel_scale`, as the thickness does. A cut that falls on a vertex snaps to it (`_SNAP_PX`): a
+point a rounding error away would leave a segment of no direction for the next joint to mitre.
+A period under a device pixel, or more than `_MAX_DASHES` dashes, draws the path solid.
+
+**Shadows** decide on the shadow command, not the shape: a stroke-only shadow keeps the dashes and
+is lowered and masked (`blurs_analytically` is false for a dashed stroke), while a filled shape's
+shadow is its solid silhouette, which still blurs analytically.
 
 ## Sectors
 

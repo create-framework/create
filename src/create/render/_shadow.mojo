@@ -434,7 +434,10 @@ a capsule, which blurs through `capsule_coverage`."""
 
 def blurs_analytically(c: RenderCommand) -> Bool:
     """Whether `c`'s shadow blurs through `BlurredSilhouette` rather than
-    as an image: the shapes and lines, whose edges are known exactly."""
+    as an image: the shapes and lines, whose edges are known exactly. A
+    dashed stroke's are not: it is masked like any lowered shape."""
+    if c.paint._stroke_dashed():
+        return False
     return (
         c.payload.isa[RectPayload]()
         or c.payload.isa[CirclePayload]()

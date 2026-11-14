@@ -3,6 +3,7 @@ from std.collections import Optional
 from .align import Align
 from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
+from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
 from create.color.gradient import Gradient
@@ -46,8 +47,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     The constructor's keywords are named after the canvas setters and act
     like them: naming any part of the fill, stroke or shadow switches it
-    on (a part, not a modifier such as `stroke_alignment`, `stroke_cap` or
-    `corner_radius`),
+    on (a part, not a modifier such as `stroke_alignment`, `stroke_cap`,
+    `stroke_dash` or `corner_radius`),
     unless `fill_enabled`, `stroke_enabled` or `shadow_enabled` says
     otherwise, so `Style(shadow=Color.RED, shadow_enabled=False)` keeps a
     shadow ready but off. `fill_gradient` is the keyword for `fill`'s
@@ -69,7 +70,9 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     set. Lines and curves are always stroked centred."""
     var stroke_cap: StrokeCap
     """How the open ends of lines and curves are finished; `BUTT` unless
-    set. Regions' strokes and closed curves have no ends."""
+    set. Regions' strokes and closed curves have no ends, unless dashed."""
+    var stroke_dash: StrokeDash
+    """How the stroke is broken into dashes; `SOLID` unless set."""
     var corner_radius: Float64
     """How far the shapes the canvas builds from numbers are rounded, in
     world units; 0 is sharp. A shape value keeps its own."""
@@ -102,6 +105,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         stroke_enabled: Optional[Bool] = None,
         stroke_alignment: StrokeAlign = StrokeAlign.INSIDE,
         stroke_cap: StrokeCap = StrokeCap.BUTT,
+        stroke_dash: StrokeDash = StrokeDash.SOLID,
         corner_radius: _OptionalFloat64 = None,
         text_color: Color = Color.BLACK,
         font: Optional[Font] = None,
@@ -130,6 +134,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.stroke_enabled = stroke_enabled.or_else(True)
         self.stroke_alignment = stroke_alignment
         self.stroke_cap = stroke_cap
+        self.stroke_dash = stroke_dash
         self.corner_radius = corner_radius.or_else(0.0)
         self.text_color = text_color
         self.font = font
@@ -179,6 +184,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             self.stroke_alignment,
             ", stroke_cap=",
             self.stroke_cap,
+            ", stroke_dash=",
+            self.stroke_dash,
             ", corner_radius=",
             self.corner_radius,
             ", text_color=",
@@ -222,7 +229,11 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         )
 
     def _paint(self) -> Paint:
-        """What a command recorded in this style paints with."""
+        """What a command recorded in this style paints with: a dash preset
+        resolved against the thickness, and `DOTTED`'s dots round."""
+        var cap = self.stroke_cap
+        if self.stroke_dash._is_dotted():
+            cap = StrokeCap.ROUND
         return Paint(
             fill_color=self.fill_color,
             fill_gradient=self.fill_gradient,
@@ -231,7 +242,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             stroke_thickness=self.stroke_thickness,
             stroke_enabled=self.stroke_enabled,
             stroke_alignment=self.stroke_alignment,
-            stroke_cap=self.stroke_cap,
+            stroke_cap=cap,
+            stroke_dash=self.stroke_dash._resolved(self.stroke_thickness),
             blend_mode=self.blend_mode,
             shadow_color=self.shadow_color,
             shadow_offset=self.shadow_offset,

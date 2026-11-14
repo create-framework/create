@@ -811,13 +811,13 @@ struct CpuReplay(Movable):
             var blur = Int(c.paint.shadow_blur * sf + 0.5)
             if blur == 0:
                 self._one(res, s, sh, scale, pre)
-            elif blurs_analytically(c):
+            elif blurs_analytically(sh):
                 _blurred_shadow(t, sh, scale, sm)
             elif c.payload.isa[TextPayload]():
                 self._text(res, t, sh, scale, sm, blur)
             elif c.payload.isa[ImagePayload]():
                 self._image_shadow(res, t, sh, scale, sm, blur)
-            elif is_lowered(c):
+            elif is_lowered(sh):
                 var placed = shape_shadow_mask(sh, sm, scale, blur)
                 blit_alpha(
                     t,
@@ -897,10 +897,11 @@ struct CpuReplay(Movable):
     ) raises:
         """Draw the shape `c` by pixel centres: a rectangle or a circle by
         its own rasteriser, a plain triangle in one pass, every other kind
-        as the pieces `shape_pieces` cuts it into."""
-        if c.payload.isa[RectPayload]():
+        as the pieces `shape_pieces` cuts it into: a dashed stroke too."""
+        var dashed = c.paint._stroke_dashed()
+        if c.payload.isa[RectPayload]() and not dashed:
             self._rect(s, c, scale, m)
-        elif c.payload.isa[CirclePayload]():
+        elif c.payload.isa[CirclePayload]() and not dashed:
             self._circle(s, c, scale, m)
         elif is_plain_triangle(c):
             if c.paint._fill_visible():
