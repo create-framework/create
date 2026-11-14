@@ -2,14 +2,18 @@ from std.math import clamp
 
 from .easing import Easing, ease
 from .util import lerp, wrap
+from ._run_clock import _scaled_now
 
 
 struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
     """A value moving from one number to another over a fixed duration.
 
     A tween is a playhead, in the same sense as `Animator`: the program
-    owns one per thing being animated and ticks it once per frame with the
-    frame delta.
+    owns one per thing being animated. Nothing ticks it: a tween remembers
+    when it was started and works out its value from the run's clock
+    whenever it is asked. The clock is the run's scaled time,
+    `context.time.elapsed`, so slowing or pausing the run's time slows or
+    stops every tween with it.
 
     ```mojo
     @staticmethod
@@ -17,7 +21,6 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         return Self(Tween(0.0, 1.0, 0.4, Easing.OUT_CUBIC))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.fade.update(context.time.delta)
         if context.keyboard.pressed(Key.SPACE):
             self.fade.play()
         canvas.fill(Color(255, 255, 255, Int(255 * self.fade.value())))
@@ -55,13 +58,14 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
     var curve: Easing
     """The easing curve applied to `progress` to get `value`."""
 
-    var _value: Float64
-    var _progress: Float64
-    var _playing: Bool
-    var _finished: Bool
+    var _started: Bool
+    var _paused: Bool
     var _looping: Bool
     var _ping_pong: Bool
-    var _reversed: Bool
+    var _began: Float64
+    """The clock's time at the start of the current run, while it runs."""
+    var _held: Float64
+    """Seconds into the run where `pause` froze it."""
 
     def __init__(
         out self,
@@ -74,17 +78,16 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         debug_assert(
             duration > 0.0, "Tween: duration must be greater than zero"
         )
-        self._value = start
-        self._progress = 0.0
         self.start = start
         self.end = end
         self.duration = duration
         self.curve = curve
-        self._playing = False
-        self._finished = False
+        self._started = False
+        self._paused = False
         self._looping = False
         self._ping_pong = False
-        self._reversed = False
+        self._began = 0.0
+        self._held = 0.0
 
     def __init__(out self, duration: Float64, curve: Easing = Easing.LINEAR):
         """A tween from 0 to 1 -- the fraction `Vector2D.lerp` and `Color.lerp`
@@ -93,9 +96,8 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         self = Self(0.0, 1.0, duration, curve)
 
     def value(self) -> Float64:
-        """The eased value, between `start` and `end`. Read this after
-        `update`."""
-        return self._value
+        """The eased value, between `start` and `end`."""
+        return lerp(self.start, self.end, ease(self.curve, self.progress()))
 
     def progress(self) -> Float64:
         """How far through the duration, 0 to 1, *before* easing.
@@ -104,17 +106,22 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         and what `value` is derived from. While ping-ponging it runs back down
         to 0.
         """
-        return self._progress
+        var runs = self._seconds() / self.duration
+        if self._ping_pong:
+            # Out and back is one cycle of two runs.
+            var cycle = wrap(runs, 2.0)
+            return cycle if cycle <= 1.0 else 2.0 - cycle
+        if self._looping:
+            return wrap(runs, 1.0)
+        return clamp(runs, 0.0, 1.0)
 
     def play(mut self):
         """Run once from the start, holding `end` at the finish."""
-        self._progress = 0.0
-        self._playing = True
-        self._finished = False
+        self._began = _scaled_now()
+        self._started = True
+        self._paused = False
         self._looping = False
         self._ping_pong = False
-        self._reversed = False
-        self._apply()
 
     def loop(mut self):
         """Run from the start, snapping back and repeating forever.
@@ -140,71 +147,46 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     def pause(mut self):
         """Freeze at the current value. `resume` continues from here."""
-        self._playing = False
+        if self.is_playing():
+            self._held = self._seconds()
+            self._paused = True
 
     def resume(mut self):
-        """Continue a paused tween without rewinding."""
-        if not self._finished:
-            self._playing = True
+        """Continue a paused tween without rewinding. A stopped one starts
+        from the beginning; a finished `play` stays finished."""
+        if self._paused:
+            self._began = _scaled_now() - self._held
+            self._paused = False
+        elif not self._started:
+            self._began = _scaled_now()
+            self._started = True
 
     def stop(mut self):
         """Halt and rewind, putting `value` back to `start`."""
-        self._progress = 0.0
-        self._playing = False
-        self._finished = False
-        self._reversed = False
-        self._apply()
-
-    def update(mut self, dt: Float64):
-        """Advance the playhead by `dt` seconds. Call once per frame.
-
-        Nothing else moves a tween, so a tween never ticked is a tween stuck at
-        `start` -- the same failure mode as an `Animator` that is never
-        updated.
-        """
-        if not self._playing:
-            return
-
-        var step = dt / self.duration
-        self._progress += -step if self._reversed else step
-
-        if self._progress > 1.0:
-            if self._ping_pong:
-                # Reflect the overshoot back down so a long frame loses no
-                # time. Clamped because a frame longer than the whole duration
-                # would reflect past the far end.
-                self._progress = clamp(2.0 - self._progress, 0.0, 1.0)
-                self._reversed = True
-            elif self._looping:
-                self._progress = wrap(self._progress, 1.0)
-            else:
-                self._progress = 1.0
-                self._playing = False
-                self._finished = True
-        elif self._progress < 0.0:
-            # Only reachable on a ping-pong return leg, which always loops.
-            self._progress = clamp(-self._progress, 0.0, 1.0)
-            self._reversed = False
-
-        self._apply()
+        self._started = False
+        self._paused = False
 
     def is_playing(self) -> Bool:
         """True while the playhead is advancing -- false when stopped, paused
         or finished."""
-        return self._playing
+        return self._started and not self._paused and not self.is_finished()
 
     def is_finished(self) -> Bool:
         """True once a `play` reached `end`. Never true for `loop` or
         `ping_pong`, which have no end to reach."""
-        return self._finished
+        return (
+            self._started
+            and not self._looping
+            and self._seconds() >= self.duration
+        )
 
     def write_to[W: Writer](self, mut writer: W):
         # The public state only: the loop and direction flags have no reader.
         writer.write(
             "Tween(value=",
-            self._value,
+            self.value(),
             ", progress=",
-            self._progress,
+            self.progress(),
             ", start=",
             self.start,
             ", end=",
@@ -214,13 +196,18 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
             ", curve=",
             self.curve,
             ", playing=",
-            self._playing,
+            self.is_playing(),
             ", finished=",
-            self._finished,
+            self.is_finished(),
             ")",
         )
 
-    def _apply(mut self):
-        self._value = lerp(
-            self.start, self.end, ease(self.curve, self._progress)
-        )
+    def _seconds(self) -> Float64:
+        """Seconds into the run: frozen while paused, zero while stopped.
+        Never below 0, as a clock restarted by a new run is behind a tween
+        started in the last one."""
+        if not self._started:
+            return 0.0
+        if self._paused:
+            return self._held
+        return max(_scaled_now() - self._began, 0.0)

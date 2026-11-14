@@ -52,9 +52,6 @@ struct App(Program):
             # snapping to the start.
             self.hovered = hovered
             self.clock.ping_pong()
-        # Nothing else advances a tween. A tween never updated sits at its
-        # start forever, exactly like an un-ticked Animator.
-        self.clock.update(context.time.delta)
 
         canvas.background(Color(40, 40, 44))
 
