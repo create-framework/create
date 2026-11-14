@@ -9,7 +9,8 @@ struct StrokeCap(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     Only open ends have caps: a `Line`, a `Bezier`, an `Arc` short of a whole
     turn, and an open `Spline`. A closed curve and the stroke of a region
-    (rectangle, circle, triangle, sector, polygon) have none. A line of no
+    (rectangle, circle, triangle, sector, polygon) have none, unless the
+    stroke is dashed (`StrokeDash`): then each dash has two. A line of no
     length draws a dot under `ROUND`, a square lined up with the local axes
     under `SQUARE`, and nothing under `BUTT`.
 

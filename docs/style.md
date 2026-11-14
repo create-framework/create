@@ -73,8 +73,8 @@ not round `rect`.
 
 ## Strokes
 
-Strokes are style like the rest: `canvas.stroke(color, thickness)`, `stroke_enabled`, and two
-settings that place the paint.
+Strokes are style like the rest: `canvas.stroke(color, thickness)`, `stroke_enabled`, two
+settings that place the paint and one that breaks it into dashes.
 
 **`stroke_alignment(StrokeAlign.INSIDE/CENTER/OUTSIDE)`** puts a region's stroke inside its edge
 (the default), centred on it, or around it. The fill meets the stroke's inner edge, so `OUTSIDE`
@@ -90,11 +90,47 @@ leaves the whole shape to the fill.
 **`stroke_cap(StrokeCap.BUTT/ROUND/SQUARE)`** ends an open stroke — a `Line`, `Arc`, `Bezier` or
 open `Spline` — flush (the default), with a half disc, or half the thickness further, square.
 
-- A closed curve and a shape's stroke have no ends.
+- A closed curve and a shape's stroke have no ends, unless dashed: then every dash has two.
 - A zero-length line draws nothing with `BUTT`, a dot with `ROUND` and an axis-aligned square with
   `SQUARE`.
 - Caps composite with the stroke once, translucent or not, and are part of its shadow, so
   segments drawn end to end with `ROUND` meet without notches.
+
+**`stroke_dash(...)`** breaks every stroke into dashes, regions' included. A preset is a finished
+look and scales with the thickness; a constructor gives exact lengths in world units, scaled like
+the thickness by autoscale, the camera and the transform:
+
+| Value | Stroke |
+|---|---|
+| `StrokeDash.SOLID` | Unbroken (the default) |
+| `StrokeDash.DASHED` | Dashes 3 thicknesses long, 2 apart |
+| `StrokeDash.DOTTED` | Round dots as wide as the stroke, 2 thicknesses apart |
+| `StrokeDash(12, 6)` | Dashes 12 long, 6 apart |
+| `StrokeDash(12, 4, 2, 4)` | Up to four on/off pairs, repeated (dash-dot here) |
+
+```mojo
+# A fragment of an `update`: marching ants round a selection.
+var ants = StrokeDash(6, 6).with_offset(context.time.elapsed * 20)
+with canvas.style(stroke=Color.BLACK, fill_enabled=False, stroke_dash=ants):
+    canvas.draw(self.selection)
+```
+
+- **Each dash is a stroke of its own:** `stroke_cap` finishes both its ends, and one round a corner
+  is mitred. A dot is a dash of no length, so `StrokeDash(0, 8)` draws dots under `ROUND`, squares
+  under `SQUARE` and nothing under `BUTT`; `DOTTED` is round whatever the cap. Caps that reach into
+  each other overlap, which a translucent stroke shows.
+- **Where it starts:** a line at its start, a curve at its first point, a polygon or triangle at
+  its first vertex, in their own order; a rectangle at its top-left corner and a circle or ellipse
+  at its right-most point, counter-clockwise; a sector at its tip, out along its start radius.
+  `offset` starts that far into the pattern, so raising it marches the dashes back along the stroke.
+  A closed outline doesn't stretch the pattern to fit, so a dash can meet a shorter one where it
+  comes round.
+- **Lengths run along the middle of the stroke**, after `stroke_alignment` has placed it. The fill
+  still meets the stroke's inner edge, so a gap shows what is behind the shape; with `OUTSIDE` the
+  fill lies under the gaps.
+- **Shadows:** a stroke alone casts its dashes; a filled shape casts its whole silhouette, gaps
+  included.
+- A pattern repeating in under a device pixel can't be seen and is drawn solid.
 
 ## Gradients
 

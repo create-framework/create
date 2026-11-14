@@ -14,6 +14,7 @@ def test_default_style_matches_a_fresh_frame() raises -> None:
     assert_true(s.stroke_enabled)
     assert_true(s.stroke_alignment == StrokeAlign.INSIDE)
     assert_true(s.stroke_cap == StrokeCap.BUTT)
+    assert_true(s.stroke_dash == StrokeDash.SOLID)
     assert_equal(s.text_color, Color.BLACK)
     assert_equal(s.font_size, 16)
     assert_equal(s.font_weight, FontWeight.REGULAR)
@@ -40,6 +41,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
         stroke_enabled=False,
         stroke_alignment=StrokeAlign.OUTSIDE,
         stroke_cap=StrokeCap.ROUND,
+        stroke_dash=StrokeDash.DASHED,
         corner_radius=5,
         text_color=Color.WHITE,
         font_size=32,
@@ -64,6 +66,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     assert_false(s.stroke_enabled)
     assert_true(s.stroke_alignment == StrokeAlign.OUTSIDE)
     assert_true(s.stroke_cap == StrokeCap.ROUND)
+    assert_true(s.stroke_dash == StrokeDash.DASHED)
     assert_equal(s.corner_radius, 5.0)
     assert_equal(s.text_color, Color.WHITE)
     assert_equal(s.font_size, 32)
@@ -108,7 +111,8 @@ def test_style_writes_constructor_keywords() raises -> None:
             " fill_enabled=False, stroke=Color(0, 0, 0, 255),"
             " stroke_thickness=1.0, stroke_enabled=True,"
             " stroke_alignment=StrokeAlign.INSIDE,"
-            " stroke_cap=StrokeCap.BUTT, corner_radius=0.0,"
+            " stroke_cap=StrokeCap.BUTT, stroke_dash=StrokeDash.SOLID,"
+            " corner_radius=0.0,"
             " text_color=Color(0, 0, 0, 255), font=None, font_size=16.0,"
             " font_weight=FontWeight.REGULAR, font_italic=False,"
             " text_alignment=Align.CENTER, tint=Color(255, 255, 255, 255),"
