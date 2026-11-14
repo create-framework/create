@@ -104,7 +104,8 @@ the design, by `canvas.scale()`. See [examples/window](../examples/window/main.m
 
 `Context`'s settings (its "dials") belong to the run, not the drawing: `design_size`,
 `autoscale`, `title`, `window_mode`, `resizable`, `cursor`, `lock_mouse`, `text_input`,
-`quit_on_escape` and `max_frame_rate`. Like the canvas setters, they are methods, each read back
+`quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` (see
+[Slowing and pausing time](math.md#slowing-and-pausing-time)). Like the canvas setters, they are methods, each read back
 with no arguments:
 
 ```mojo
@@ -119,7 +120,7 @@ var mode = context.autoscale()  # Autoscale.EXTEND
 
 Every `run` argument but `backend` has a setter (a dial here, or `canvas.antialiasing`), and the
 argument is only the starting value. Not every dial is a `run` argument: `cursor`,
-`quit_on_escape` and `max_frame_rate` are set in `create`.
+`quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` are set in `create`.
 
 **The cursor.** `context.cursor(Cursor.CROSSHAIR)` is Processing's `cursor(CROSS)`, and
 `Cursor.HIDDEN` its `noCursor()`; any other value shows the cursor again. Each `Cursor` is the
@@ -137,7 +138,8 @@ A frame-wide setting applies to the frame it is set in: the canvas ones (see
 
 What decides the frame's geometry waits for the next frame: `design_size`, `autoscale` and
 `window_mode`, which is switched after presenting (some compositors report the new size a frame
-later). A getter reports the value as set.
+later). A getter reports the value as set. So do `time_scale` and `time_paused`: the frame being
+drawn keeps the `delta` it was given, and the next frame's clock tick reads them.
 
 `max_frame_rate()`, `quit()` and `rumble()` are read after the frame body returns. Headless runs
 ignore the window dials, like `rumble`.

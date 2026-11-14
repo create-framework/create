@@ -33,7 +33,8 @@ struct Context(Copyable, Movable):
     overlay or a settings screen to show.
 
     The dials are the run's, not the drawing's: the autoscale mode and design
-    size the next frame's mapping is derived from, and the ones the run loop
+    size the next frame's mapping is derived from, the time scale and pause
+    the next frame's clock tick reads, and the ones the run loop
     reads after a frame has been released, `max_frame_rate`, `quit` and
     `rumble`. Drawing settings that outlive a frame, such as the font, the
     letterbox colour and the autoclear, are on the `Canvas`.
@@ -79,6 +80,8 @@ struct Context(Copyable, Movable):
     var _design_h: Int
     var _frame_count: Int
     var _max_frame_rate: Int
+    var _time_scale: Float64
+    var _time_paused: Bool
     var _quit: Bool
     # This frame's `rumble` calls, sent by the windowed loops after `update`
     # and dropped at the next frame's start either way.
@@ -103,6 +106,8 @@ struct Context(Copyable, Movable):
         self._design_h = 0
         self._frame_count = 0
         self._max_frame_rate = 0
+        self._time_scale = 1.0
+        self._time_paused = False
         self._quit = False
         self._rumbles = []
         # A new run starts the playheads' clock at zero.
@@ -263,14 +268,15 @@ struct Context(Copyable, Movable):
         return self._frame_count
 
     def frame_rate(self) -> Float64:
-        """Current frames per second, derived from the last frame's delta.
+        """Current frames per second, derived from the last frame's real
+        delta, so the time scale does not change it.
 
-        `0.0` on the first frame, where `delta` is still `0.0` and there is
-        no prior frame to measure against.
+        `0.0` on the first frame, where `real_delta` is still `0.0` and there
+        is no prior frame to measure against.
         """
-        if self.time.delta == 0.0:
+        if self.time.real_delta == 0.0:
             return 0.0
-        return 1.0 / self.time.delta
+        return 1.0 / self.time.real_delta
 
     def max_frame_rate(self) -> Int:
         """The frame-rate cap. `0` unless set, meaning uncapped."""
@@ -291,6 +297,43 @@ struct Context(Copyable, Movable):
                 "max_frame_rate fps must not be negative, got " + String(fps)
             )
         self._max_frame_rate = fps
+
+    def time_scale(self) -> Float64:
+        """How fast the run's scaled time runs against real time. `1.0`
+        unless set."""
+        return self._time_scale
+
+    def time_scale(mut self, scale: Float64) raises:
+        """Run the program's time at `scale` times real time: `0.5` is slow
+        motion, `2.0` double speed.
+
+        Scales `context.time.delta` and `elapsed`, and so every `Animator`
+        and `Tween`, which keep time by them; `real_delta` and
+        `real_elapsed` are untouched, as are audio and recordings. Applies
+        from the next frame's tick: the frame being drawn keeps the delta it
+        was given. Raises on a negative scale, since time does not run
+        backwards; `0.0` stops time, though `time_paused` is the way to pause,
+        as it keeps the scale to resume at.
+        """
+        if not (scale >= 0.0):
+            raise Error("time_scale must not be negative, got " + String(scale))
+        self._time_scale = scale
+
+    def time_paused(self) -> Bool:
+        """Whether the run's scaled time is paused. `False` unless set."""
+        return self._time_paused
+
+    def time_paused(mut self, paused: Bool):
+        """Pause the program's time, or let it run on.
+
+        While paused, `context.time.delta` is zero and `elapsed` holds, so
+        every `Animator` and `Tween` freezes, and so does anything the
+        program moves by `delta`. Real time runs on, for a pause menu to
+        animate by. Separate from `time_scale`, so unpausing returns to the
+        scale that was set, slow motion included. Applies from the next
+        frame's tick, like `time_scale`.
+        """
+        self._time_paused = paused
 
     def _set_viewport(
         self, mut state: _PersistentCanvasState, pixel_w: Int, pixel_h: Int
@@ -327,13 +370,13 @@ struct Context(Copyable, Movable):
     def _advance_frame(mut self, now: Int):
         """Tick the clock and count the frame, before each `update`."""
         self._count_frame()
-        self.time._tick(now)
+        self.time._tick(now, 0.0 if self._time_paused else self._time_scale)
         self._publish_clock()
 
     def _publish_clock(self):
         """Hand the clock to the playheads, which read it rather than being
         ticked."""
-        _set_run_clock(self.time.elapsed, self.time.elapsed)
+        _set_run_clock(self.time.elapsed, self.time.real_elapsed)
 
     def _count_frame(mut self):
         """Count a frame without ticking the clock — on its own, the first

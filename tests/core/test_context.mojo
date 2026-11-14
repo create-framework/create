@@ -30,7 +30,7 @@ def test_advancing_a_frame_counts_it_and_ticks_the_clock() raises -> None:
     context.time._start(1_000)
     context._advance_frame(1_016)
     assert_equal(context.frame_count(), 1)
-    assert_equal(context.time.delta_millis, 16)
+    assert_almost_equal(context.time.delta, 0.016)
     context._advance_frame(1_048)
     assert_equal(context.frame_count(), 2)
 
@@ -48,6 +48,56 @@ def test_advancing_a_frame_publishes_the_run_clock() raises -> None:
     context._advance_frame(1_250)
     assert_almost_equal(_scaled_now(), 0.25)
     assert_almost_equal(_real_now(), 0.25)
+
+
+def test_time_scale_and_pause_default_to_running_at_one() raises -> None:
+    var context = Context()
+    assert_equal(context.time_scale(), 1.0)
+    assert_false(context.time_paused())
+
+
+def test_time_scale_scales_the_next_tick_and_the_run_clock() raises -> None:
+    var context = Context()
+    context.time._start(0)
+    context.time_scale(0.5)
+    assert_equal(context.time_scale(), 0.5)
+    context._advance_frame(200)
+    assert_almost_equal(context.time.delta, 0.1)
+    assert_almost_equal(context.time.real_delta, 0.2)
+    assert_almost_equal(_scaled_now(), 0.1)
+    assert_almost_equal(_real_now(), 0.2)
+
+
+def test_time_scale_rejects_a_negative_scale() raises -> None:
+    var context = Context()
+    with assert_raises(contains="negative"):
+        context.time_scale(-1.0)
+    assert_equal(context.time_scale(), 1.0)
+
+
+def test_pausing_time_stops_the_scaled_clock_and_keeps_the_scale() raises -> (
+    None
+):
+    var context = Context()
+    context.time._start(0)
+    context.time_scale(2.0)
+    context.time_paused(True)
+    assert_true(context.time_paused())
+    context._advance_frame(100)
+    assert_equal(context.time.delta, 0.0)
+    assert_equal(_scaled_now(), 0.0)
+    assert_almost_equal(_real_now(), 0.1)
+    context.time_paused(False)
+    context._advance_frame(200)
+    assert_almost_equal(context.time.delta, 0.2)
+
+
+def test_frame_rate_ignores_the_time_scale() raises -> None:
+    var context = Context()
+    context.time._start(0)
+    context.time_scale(0.5)
+    context._advance_frame(20)
+    assert_almost_equal(context.frame_rate(), 50.0)
 
 
 def test_frame_rate_is_zero_before_the_first_tick() raises -> None:

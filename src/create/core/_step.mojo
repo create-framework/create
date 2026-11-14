@@ -16,8 +16,9 @@ def first_step[
     audio) does not land in the first `update`'s delta.
     """
     context._count_frame()
-    # The clock a recording is timed by: render never sees `Context`.
-    state._backend.captures.clock = context.time.elapsed
+    # The clock a recording is timed by: render never sees `Context`. Real
+    # time, so a GIF plays at the speed the frames were shown.
+    state._backend.captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     try:
         var program = P.create(context, canvas)
@@ -60,7 +61,7 @@ def step[
     know how to build; in the windowed case that is only valid after events
     have been pumped.
     """
-    state._backend.captures.clock = context.time.elapsed
+    state._backend.captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     program.update(context, canvas)
     # Recorded last, so it doubles as the clip for anything rendered out of

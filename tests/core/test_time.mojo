@@ -11,8 +11,9 @@ def _started(now: Int) raises -> Time:
 def test_fresh_time_is_zeroed() raises -> None:
     var t = Time()
     assert_equal(t.delta, 0.0)
-    assert_equal(t.delta_millis, 0)
     assert_equal(t.elapsed, 0.0)
+    assert_equal(t.real_delta, 0.0)
+    assert_equal(t.real_elapsed, 0.0)
 
 
 def test_first_tick_measures_from_the_seed_not_the_epoch() raises -> None:
@@ -20,7 +21,6 @@ def test_first_tick_measures_from_the_seed_not_the_epoch() raises -> None:
     # from process start, so an unseeded Time would report 900_016ms here.
     var t = _started(900_000)
     t._tick(900_016)
-    assert_equal(t.delta_millis, 16)
     assert_almost_equal(t.delta, 0.016)
 
 
@@ -28,14 +28,12 @@ def test_delta_is_millis_in_seconds() raises -> None:
     var t = _started(0)
     t._tick(250)
     assert_almost_equal(t.delta, 0.25)
-    assert_equal(t.delta_millis, 250)
 
 
 def test_delta_spans_only_the_last_frame() raises -> None:
     var t = _started(1_000)
     t._tick(1_016)
     t._tick(1_048)
-    assert_equal(t.delta_millis, 32)
     assert_almost_equal(t.delta, 0.032)
 
 
@@ -62,7 +60,6 @@ def test_zero_length_frame_is_harmless() raises -> None:
     # a fast frame legitimately reports no elapsed time.
     var t = _started(2_000)
     t._tick(2_000)
-    assert_equal(t.delta_millis, 0)
     assert_equal(t.delta, 0.0)
     assert_equal(t.elapsed, 0.0)
 
@@ -72,8 +69,36 @@ def test_restart_rebases_without_disturbing_totals() raises -> None:
     t._tick(16)
     t._start(10_000)
     t._tick(10_016)
-    assert_equal(t.delta_millis, 16)
+    assert_almost_equal(t.delta, 0.016)
     assert_almost_equal(t.elapsed, 0.032)
+
+
+def test_scale_multiplies_the_scaled_clock_only() raises -> None:
+    var t = _started(0)
+    t._tick(100, 0.5)
+    assert_almost_equal(t.delta, 0.05)
+    assert_almost_equal(t.elapsed, 0.05)
+    assert_almost_equal(t.real_delta, 0.1)
+    assert_almost_equal(t.real_elapsed, 0.1)
+
+
+def test_a_new_scale_does_not_make_elapsed_jump() raises -> None:
+    # Summed per step, not derived from real time: the half-speed second
+    # stays half a second when the scale goes back to 1.
+    var t = _started(0)
+    t._tick(1_000, 0.5)
+    t._tick(2_000, 1.0)
+    assert_almost_equal(t.elapsed, 1.5)
+    assert_almost_equal(t.real_elapsed, 2.0)
+
+
+def test_a_zero_scale_holds_scaled_time() raises -> None:
+    var t = _started(0)
+    t._tick(100)
+    t._tick(300, 0.0)
+    assert_equal(t.delta, 0.0)
+    assert_almost_equal(t.elapsed, 0.1)
+    assert_almost_equal(t.real_delta, 0.2)
 
 
 def test_time_writes_its_public_fields() raises -> None:
@@ -82,7 +107,7 @@ def test_time_writes_its_public_fields() raises -> None:
     t._tick(1250)
     assert_equal(
         String(t),
-        "Time(delta=0.25, delta_millis=250, elapsed=0.25, elapsed_millis=250)",
+        "Time(delta=0.25, elapsed=0.25, real_delta=0.25, real_elapsed=0.25)",
     )
 
 
