@@ -1,5 +1,5 @@
 from create.image.animation import Animation
-from create.math._run_clock import _scaled_now
+from create.math.clock import Clock
 
 comptime _FRAME_SLACK = 1e-6
 """A hair of a frame, so a clock landing exactly on a frame's start, give or
@@ -17,7 +17,8 @@ struct Animator(Copyable, Movable, Writable):
     its frame from the run's clock whenever it is asked, so it keeps time
     with no call each frame. The clock is the run's scaled time,
     `context.time.elapsed`, so slowing or pausing the run's time slows or
-    stops every animator with it.
+    stops every animator with it; an animator built with `clock=Clock.REAL`
+    runs on real time instead, as a pause menu's own animation must.
 
     Constructed stopped on frame 0 -- nothing advances until `play`, `loop`
     or `use`. Two kinds of call drive it:
@@ -43,6 +44,7 @@ struct Animator(Copyable, Movable, Writable):
     """
 
     var _animation: Animation
+    var _clock: Clock
     var _started: Bool
     """Whether `play`, `loop`, `use` or `resume` has set the playhead going
     since construction, the last `stop` or the last switch -- what tells a
@@ -55,13 +57,17 @@ struct Animator(Copyable, Movable, Writable):
     var _held: Float64
     """Seconds into the animation where `pause` froze it."""
 
-    def __init__(out self, var animation: Animation):
-        """Hold `animation`, stopped on frame 0.
+    def __init__(
+        out self, var animation: Animation, clock: Clock = Clock.SCALED
+    ):
+        """Hold `animation`, stopped on frame 0, to play it timed by
+        `clock`.
 
         An animator always has an animation, so there is no empty state to
         guard against when rendering.
         """
         self._animation = animation^
+        self._clock = clock
         self._started = False
         self._paused = False
         self._looping = False
@@ -110,7 +116,7 @@ struct Animator(Copyable, Movable, Writable):
 
     def play(mut self):
         """Play once from frame 0, holding the last frame at the end."""
-        self._start = _scaled_now()
+        self._start = self._clock._now()
         self._started = True
         self._paused = False
         self._looping = False
@@ -143,10 +149,10 @@ struct Animator(Copyable, Movable, Writable):
         """Continue a paused animation without rewinding. A stopped one
         starts from frame 0; a finished `play` stays finished."""
         if self._paused:
-            self._start = _scaled_now() - self._held
+            self._start = self._clock._now() - self._held
             self._paused = False
         elif not self._started:
-            self._start = _scaled_now()
+            self._start = self._clock._now()
             self._started = True
 
     def stop(mut self):
@@ -175,7 +181,7 @@ struct Animator(Copyable, Movable, Writable):
             return 0.0
         if self._paused:
             return self._held
-        return _scaled_now() - self._start
+        return self._clock._now() - self._start
 
     def _frames_passed(self) -> Int:
         """Whole frame durations since frame 0, without wrapping."""

@@ -1,5 +1,6 @@
-"""Maths: `Point2D`, `Vector2D` and `Matrix`, `Random` and `Noise`, easing and
-`Tween`, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
+"""Maths: `Point2D`, `Vector2D` and `Matrix`, `Random` and `Noise`, easing,
+`Tween` and the `Clock` it keeps time by, scalar helpers, `PI` and `TAU`, and
+the common `std.math` functions.
 """
 from .util import (
     lerp,
@@ -14,6 +15,7 @@ from .util import (
 )
 from .easing import Easing, ease
 from .tween import Tween
+from .clock import Clock
 from .point2d import Point2D
 from .vector2d import Vector2D
 from .matrix import (

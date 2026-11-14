@@ -103,3 +103,12 @@ The pause is separate from the scale, so unpausing returns to the scale that was
 motion included. Both apply from the next frame. **Real time**, `context.time.real_delta` and
 `real_elapsed`, ignores both, for what must keep moving while the program's time stands still.
 `context.frame_rate()`, recordings and audio run on real time.
+
+An animator or tween keeps time by scaled time unless it is built on real time, as a pause
+menu's own animations must be to keep moving while the game behind them is paused:
+
+```mojo
+# A fragment, inside `create`.
+var blink = Tween(0.6, Easing.IN_OUT_SINE, clock=Clock.REAL)
+var cursor = Animator(cursor_animation, clock=Clock.REAL)
+```

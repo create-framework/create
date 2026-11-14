@@ -1,5 +1,6 @@
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
 from create.image import Image, Animation, Animator
+from create.math import Clock
 from create.color import Color
 from create.math._run_clock import _scaled_now, _real_now, _set_run_clock
 
@@ -258,6 +259,22 @@ def test_lands_on_a_frame_exactly_at_its_start() raises -> None:
     for _ in range(3):
         _advance(0.1)
     assert_equal(a.frame_index(), 3)
+
+
+def test_holds_while_the_run_time_is_paused() raises -> None:
+    var a = Animator(_animation(8, fps=10.0))
+    a.loop()
+    _advance(0.2)
+    _set_run_clock(_scaled_now(), _real_now() + 0.5)
+    assert_equal(a.frame_index(), 2)
+
+
+def test_on_real_time_runs_through_a_pause() raises -> None:
+    var a = Animator(_animation(8, fps=10.0), clock=Clock.REAL)
+    a.loop()
+    _advance(0.2)
+    _set_run_clock(_scaled_now(), _real_now() + 0.5)
+    assert_equal(a.frame_index(), 7)
 
 
 def test_a_clock_restarted_behind_it_shows_frame_zero() raises -> None:

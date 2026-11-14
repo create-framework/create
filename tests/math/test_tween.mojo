@@ -7,6 +7,7 @@ from std.testing import (
 )
 from create.math.easing import Easing, ease
 from create.math.tween import Tween
+from create.math.clock import Clock
 from create.math._run_clock import _scaled_now, _real_now, _set_run_clock
 
 
@@ -397,6 +398,39 @@ def test_tween_a_clock_restarted_behind_it_reads_start() raises -> None:
     assert_equal(t.value(), 10.0)
 
 
+def _advance_real_only(seconds: Float64):
+    """Move real time on with the run's time paused."""
+    _set_run_clock(_scaled_now(), _real_now() + seconds)
+
+
+def test_tween_holds_while_the_run_time_is_paused() raises -> None:
+    var t = Tween(0.0, 100.0, 1.0)
+    t.play()
+    _advance(0.2)
+    _advance_real_only(0.5)
+    assert_almost_equal(t.value(), 20.0)
+
+
+def test_tween_on_real_time_runs_through_a_pause() raises -> None:
+    var t = Tween(0.0, 100.0, 1.0, clock=Clock.REAL)
+    assert_true(t.clock == Clock.REAL)
+    t.play()
+    _advance(0.2)
+    _advance_real_only(0.5)
+    assert_almost_equal(t.value(), 70.0)
+
+
+def test_tween_duration_only_takes_a_clock() raises -> None:
+    var t = Tween(1.0, Easing.OUT_CUBIC, Clock.REAL)
+    assert_true(t.clock == Clock.REAL)
+
+
+def test_clock_writes_its_constant_name() raises -> None:
+    assert_equal(String(Clock.SCALED), "Clock.SCALED")
+    assert_equal(String(Clock.REAL), "Clock.REAL")
+    assert_equal(String(Clock(7)), "Clock(7)")
+
+
 # --- write_to -----------------------------------------------------------------
 
 
@@ -422,7 +456,8 @@ def test_tween_writes_its_public_state() raises -> None:
         String(t),
         (
             "Tween(value=0.0, progress=0.0, start=0.0, end=10.0, duration=2.0,"
-            " curve=Easing.OUT_CUBIC, playing=True, finished=False)"
+            " curve=Easing.OUT_CUBIC, clock=Clock.SCALED, playing=True,"
+            " finished=False)"
         ),
     )
 
