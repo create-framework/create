@@ -1,3 +1,5 @@
+"""Images and animation: `Image`, `PixelBuffer`, `Animation` and `Animator`.
+"""
 from .image import Image
 from .pixel_buffer import PixelBuffer
 from .animation import Animation

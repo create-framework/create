@@ -1,3 +1,6 @@
+"""Shapes and curves, the traits that make a type drawable, and the collision
+tests: `overlaps`, and each shape's `contains` and `intersects`.
+"""
 from .rectangle import Rectangle
 from .circle import Circle
 from .ellipse import Ellipse
