@@ -49,8 +49,8 @@ without cursors (dummy, offscreen) refuses them, which never raises. SDL's curso
 not a window's: one window a run, so the same thing.
 
 The loop owns one `Context` for the whole run and writes the frame's readings into it:
-`context._advance_frame` (clock tick and frame count) before each `step`, `apply_events` into the devices. There is no separate
-input state or clock in a loop, and `step` takes only `(program, context, state)`. Every frame's
+`context._advance_frame` (clock tick, under the time scale and pause, and frame count) before each `step`, `apply_events` into the devices. There is no separate
+input state or clock in a loop, and `step` takes only `(program, context, state)`. Each tick, and a new `Context`, publishes `time.elapsed` and `real_elapsed` to `math`'s process-wide run clock (`_run_clock`), which `Animator` and `Tween` read instead of being ticked. Every frame's
 `Canvas` comes from `context._new_canvas(state^)` and every remap from `context._set_viewport`, so
 the mapping dials reach `render` in one place.
 

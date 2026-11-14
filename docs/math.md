@@ -81,7 +81,25 @@ There are two clocks:
 
 - **`context.time`** is the run's clock: ticked by the loop, zero at the first frame, synthetic in
   headless runs. `delta` is the seconds since the last frame (move things by it), and `elapsed`
-  the seconds since the run started; `delta_millis` and `elapsed_millis` are the same in whole
-  milliseconds.
+  the seconds since the run started. Every `Animator` and `Tween` keeps time by `elapsed`.
 - **`DateTime.now()`** is the computer's local wall clock, read once into consistent fields
   (`year` … `millisecond`). Take one reading per frame rather than calling it per field.
+
+### Slowing and pausing time
+
+`delta` and `elapsed` are **scaled time**: `context.time_scale(0.5)` runs them at half speed,
+and `context.time_paused(True)` stops them, `delta` reading zero until it is unpaused. What
+moves by `delta`, and every animator and tween, slows and stops together, so slow motion and a
+pause screen are one call each:
+
+```mojo
+# A fragment, inside `update`.
+if context.keyboard.pressed(Key.P):
+    context.time_paused(not context.time_paused())
+self.position = self.position + self.velocity * context.time.delta  # holds while paused
+```
+
+The pause is separate from the scale, so unpausing returns to the scale that was set, slow
+motion included. Both apply from the next frame. **Real time**, `context.time.real_delta` and
+`real_elapsed`, ignores both, for what must keep moving while the program's time stands still.
+`context.frame_rate()`, recordings and audio run on real time.
