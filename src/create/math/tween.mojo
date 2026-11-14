@@ -2,7 +2,7 @@ from std.math import clamp
 
 from .easing import Easing, ease
 from .util import lerp, wrap
-from ._run_clock import _scaled_now
+from .clock import Clock
 
 
 struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -13,7 +13,8 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
     when it was started and works out its value from the run's clock
     whenever it is asked. The clock is the run's scaled time,
     `context.time.elapsed`, so slowing or pausing the run's time slows or
-    stops every tween with it.
+    stops every tween with it; a tween built with `clock=Clock.REAL` runs on
+    real time instead, as a pause menu's own animation must.
 
     ```mojo
     @staticmethod
@@ -58,6 +59,11 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
     var curve: Easing
     """The easing curve applied to `progress` to get `value`."""
 
+    var clock: Clock
+    """The run's clock the tween keeps time by: `Clock.SCALED`, which the
+    time scale and pause apply to, unless built with `Clock.REAL`. Change it
+    while stopped: the run under way was timed by the other clock."""
+
     var _started: Bool
     var _paused: Bool
     var _looping: Bool
@@ -73,8 +79,10 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         end: Float64,
         duration: Float64,
         curve: Easing = Easing.LINEAR,
+        clock: Clock = Clock.SCALED,
     ):
-        """A tween from `start` to `end` over `duration` seconds."""
+        """A tween from `start` to `end` over `duration` seconds, timed by
+        `clock`."""
         debug_assert(
             duration > 0.0, "Tween: duration must be greater than zero"
         )
@@ -82,6 +90,7 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.end = end
         self.duration = duration
         self.curve = curve
+        self.clock = clock
         self._started = False
         self._paused = False
         self._looping = False
@@ -89,11 +98,16 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         self._began = 0.0
         self._held = 0.0
 
-    def __init__(out self, duration: Float64, curve: Easing = Easing.LINEAR):
+    def __init__(
+        out self,
+        duration: Float64,
+        curve: Easing = Easing.LINEAR,
+        clock: Clock = Clock.SCALED,
+    ):
         """A tween from 0 to 1 -- the fraction `Vector2D.lerp` and `Color.lerp`
         take, and the form to reach for when animating anything that is not a
         plain number."""
-        self = Self(0.0, 1.0, duration, curve)
+        self = Self(0.0, 1.0, duration, curve, clock)
 
     def value(self) -> Float64:
         """The eased value, between `start` and `end`."""
@@ -117,7 +131,7 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     def play(mut self):
         """Run once from the start, holding `end` at the finish."""
-        self._began = _scaled_now()
+        self._began = self.clock._now()
         self._started = True
         self._paused = False
         self._looping = False
@@ -155,10 +169,10 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
         """Continue a paused tween without rewinding. A stopped one starts
         from the beginning; a finished `play` stays finished."""
         if self._paused:
-            self._began = _scaled_now() - self._held
+            self._began = self.clock._now() - self._held
             self._paused = False
         elif not self._started:
-            self._began = _scaled_now()
+            self._began = self.clock._now()
             self._started = True
 
     def stop(mut self):
@@ -195,6 +209,8 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
             self.duration,
             ", curve=",
             self.curve,
+            ", clock=",
+            self.clock,
             ", playing=",
             self.is_playing(),
             ", finished=",
@@ -210,4 +226,4 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
             return 0.0
         if self._paused:
             return self._held
-        return max(_scaled_now() - self._began, 0.0)
+        return max(self.clock._now() - self._began, 0.0)
