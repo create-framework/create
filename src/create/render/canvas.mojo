@@ -1792,12 +1792,14 @@ struct Canvas(DrawTarget, Movable):
 
     def text_width(self, text: String) raises -> Float64:
         """How wide `text(text, ...)` would render under the current font, size
-        and weight, in the units the next render call is positioned in.
+        and weight, in the units the next render call is positioned in: the
+        width of its widest line.
 
-        Exact for any prefix too, since glyphs sit advance to advance with no
-        kerning, so a caret after a string's first few characters goes at the
-        text's left edge plus the width of those characters. With the default
-        `Align.CENTER`, that left edge is `position.x - text_width(text) / 2`.
+        Exact for any prefix of a line too, since glyphs sit advance to
+        advance with no kerning, so a caret after a line's first few
+        characters goes at the line's left edge plus the width of those
+        characters. With the default `Align.CENTER`, that left edge is
+        `position.x - text_width(line) / 2`.
 
         Raises only if the default font has to be loaded and cannot be.
         """
@@ -1807,7 +1809,29 @@ struct Canvas(DrawTarget, Movable):
         )
         return Float64(pixels) / scale
 
+    def text_height(self, text: String) raises -> Float64:
+        """How tall `text(text, ...)` would render under the current font and
+        size, in the units the next render call is positioned in: from the
+        font's ascent above the first line to its descent below the last, the
+        box `text_alignment` anchors. Each line break adds the font's line
+        height.
+
+        Raises only if the default font has to be loaded and cannot be.
+        """
+        var scale = pixel_scale(self._transform, self._scale)
+        var pixels = self._state._backend.resources.text[].height(
+            text, self._style._text_style(), scale
+        )
+        return Float64(pixels) / scale
+
     def text(mut self, text: String, position: Point2D):
+        """Draw `text` at `position` in the current text style, anchored by
+        `text_alignment`.
+
+        A newline starts a new line, the font's line height below; each line
+        is aligned on its own, and the alignment's top and bottom are those
+        of the whole block (see `text_height`).
+        """
         if self._style.text_color.a == 0:
             return
         # Deferred whole. Nothing about the layout is decided here: the

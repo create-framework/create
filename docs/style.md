@@ -207,3 +207,20 @@ packaged Noto Sans ships its italic this way), else the file's own `ital` or `sl
 upright glyphs sheared 12°. Fallback glyphs follow, so Noto Sans Symbols comes out sheared. Weight
 reaches a variable italic like an upright. A shear's overhang is not measured: `text_width` is the
 advance, as in CSS.
+
+**Lines.** A newline (`"\n"`, or `"\r\n"`) in the string starts a new line, the font's line
+height below. Each line is aligned on its own by `text_alignment`, whose top and bottom are those
+of the whole block. `canvas.text_width(string)` is the widest line's width, and
+`canvas.text_height(string)` the block's height, from the first line's ascent to the last line's
+descent:
+
+```mojo
+# A fragment of `update`: a two-line caption hanging from the top-left corner,
+# and a line under it.
+var caption = "Level 1\nThe caves"
+var corner = Point2D(canvas.left() + 20, canvas.top() - 20)
+canvas.text_alignment(Align.TOP_LEFT)
+canvas.text(caption, corner)
+var under = corner.y - canvas.text_height(caption) - 4
+canvas.line((corner.x, under), (corner.x + canvas.text_width(caption), under))
+```

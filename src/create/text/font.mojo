@@ -151,10 +151,11 @@ comptime _FACE_GLYPH = 152
 comptime _FACE_SIZE = 160  # FT_Size* pointer
 
 # FT_SizeRec: face(8) + generic(16) = metrics at offset 24
-# FT_Size_Metrics: x_ppem(2)+y_ppem(2)+pad(4)+x_scale(8)+y_scale(8) = ascender at +24, descender at +32
+# FT_Size_Metrics: x_ppem(2)+y_ppem(2)+pad(4)+x_scale(8)+y_scale(8) = ascender at +24, descender at +32, height at +40
 comptime _SIZE_METRICS = 24
 comptime _METRICS_ASC = 24
 comptime _METRICS_DESC = 32
+comptime _METRICS_HEIGHT = 40
 
 # FT_MM_Var offsets (64-bit layout: 3×UInt(4)+pad(4)+pointer(8))
 comptime _MM_NUM_AXIS = 0
@@ -287,6 +288,7 @@ struct _Face(Movable):
     var sheared: Bool  # slanted by a transform, the file having no italic
     var ascender: Int  # pixels above baseline (positive)
     var descender: Int  # pixels below baseline (negative)
+    var line_height: Int  # pixels from one baseline to the next
 
     def __init__(
         out self,
@@ -330,6 +332,7 @@ struct _Face(Movable):
         self.sheared = False
         self.ascender = 0
         self.descender = 0
+        self.line_height = 0
         if slanted:
             self._slant(ft)
         self._set_size(ft, size)
@@ -356,6 +359,7 @@ struct _Face(Movable):
         var m = size_ptr + _SIZE_METRICS
         self.ascender = _read_ptr(m + _METRICS_ASC) >> 6
         self.descender = _read_ptr(m + _METRICS_DESC) >> 6
+        self.line_height = _read_ptr(m + _METRICS_HEIGHT) >> 6
 
     def _slant(mut self, ft: _DLHandle) raises:
         """Find this file's italic axis, or shear the face if it has none.
@@ -637,12 +641,13 @@ struct Font(Copyable, ImplicitlyCopyable, Movable, Writable):
     def _set_weight(mut self, weight: Int) raises:
         self._faces[].face(self._draws_italic)._set_weight(weight)
 
-    def _vertical_metrics(mut self, size: Int) raises -> Tuple[Int, Int]:
+    def _vertical_metrics(mut self, size: Int) raises -> Tuple[Int, Int, Int]:
         """Pixels above and below the baseline at `size`, the second
-        negative. Scales the face to `size` first, free when it already is."""
+        negative, and from one line's baseline to the next. Scales the face
+        to `size` first, free when it already is."""
         ref face = self._faces[].face(self._draws_italic)
         face._set_size(load_library("libfreetype", 6), size)
-        return (face.ascender, face.descender)
+        return (face.ascender, face.descender, face.line_height)
 
     def _render(mut self, codepoint: Int, size: Int) raises -> _GlyphInfo:
         """Rasterise one glyph at `size` pixels; see `_Face.render`."""
