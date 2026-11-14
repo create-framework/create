@@ -11,6 +11,8 @@ set -eu
 
 if [ $# -gt 0 ]; then
     out=$1
+    # rattler-build creates the directory but not its parents.
+    mkdir -p "$out"
 else
     out=$(mktemp -d)
     trap 'rm -rf "$out"' EXIT
