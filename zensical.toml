@@ -1,7 +1,7 @@
-# The documentation site, published at site_url by CI on every push to main.
-# Its pages are staged by scripts/docs.py from the README, docs/ and the
-# library's docstrings; `pixi run docs` builds it, `pixi run docs-serve`
-# previews it.
+# The documentation site. Its pages are staged by scripts/docs.py from the
+# README, docs/ and the library's docstrings; `pixi run docs` builds it,
+# `pixi run docs-serve` previews it. scripts/docs_site.py publishes it at
+# site_url, as main/ beside latest/, the newest release (docs.yml).
 [project]
 site_name = "Create"
 site_description = "A creative coding library for Mojo, inspired by Processing."

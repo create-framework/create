@@ -86,6 +86,7 @@ pixi run format                           # 80 columns, enforced by pre-commit
 pixi run embed-fonts                      # regenerate text/_noto.mojo after changing a face in text/fonts/
 pixi run docs                             # build the documentation site into build/docs/site
 pixi run docs-serve                       # preview it, rebuilt as you edit (rerun after a docstring change)
+pixi run docs-site                        # the published site, main and the latest release, into build/docs/published
 pixi run setup                            # once per clone: git hooks + blame ignore-revs
 ```
 
