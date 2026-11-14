@@ -1,15 +1,20 @@
 #!/bin/sh
-# Builds the conda package from this checkout with rattler-build, as
-# modular-community's CI builds the published recipe, and runs its test:
-# text rendered through the installed package. The only check that sees
-# Create as installed rather than as source — a path baked in at compile
-# time, say, is valid in the tree and gone in a package.
+# Builds the conda package from this checkout with rattler-build, as the
+# release workflow publishes it, and runs its test: text rendered through the
+# installed package. The only check that sees Create as installed rather than
+# as source — a path baked in at compile time, say, is valid in the tree and
+# gone in a package.
 #
-#   pixi run check-package
+#   pixi run check-package                # build and test, then discard
+#   pixi run check-package build/package  # keep it in build/package/<platform>/
 set -eu
 
-out=$(mktemp -d)
-trap 'rm -rf "$out"' EXIT
+if [ $# -gt 0 ]; then
+    out=$1
+else
+    out=$(mktemp -d)
+    trap 'rm -rf "$out"' EXIT
+fi
 
 CREATE_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pixi.toml)
 export CREATE_VERSION

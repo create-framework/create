@@ -96,12 +96,12 @@ create run
 
 ### Option 2: pixi
 
-If you don't want to use the create-cli, you can set up the pixi project by hand. Create it with the MAX and Modular community conda channels enabled:
+If you don't want to use the create-cli, you can set up the pixi project by hand. Create it with the MAX and Create conda channels enabled:
 
 ```sh
 pixi init my-project \
   -c https://conda.modular.com/max \
-  -c https://repo.prefix.dev/modular-community \
+  -c https://prefix.dev/create-framework/create \
   -c conda-forge
 ```
 

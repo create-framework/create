@@ -1,0 +1,70 @@
+# Publishes a release to the prefix.dev channel create-framework/create, the
+# one create-cli is on, when a tag vX.Y.Z is pushed (see RELEASING.md).
+#
+# A .mojoc and its native dependencies are per platform, so each platform
+# builds and tests its own package, and the upload waits for all of them:
+# a release is on every platform or none. The upload authenticates through
+# trusted publishing: the channel must trust this repository and workflow.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CHANNEL: create-framework/create
+
+jobs:
+  build:
+    name: build-${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - platform: linux-64
+            runner: ubuntu-latest
+          - platform: osx-arm64
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      # The package's version is pixi.toml's; the tag must name it.
+      - name: Check the tag against pixi.toml
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' pixi.toml)
+          [ "$GITHUB_REF_NAME" = "v$version" ] || {
+              echo "the tag $GITHUB_REF_NAME is not pixi.toml's v$version" >&2
+              exit 1
+          }
+      - uses: prefix-dev/setup-pixi@v0.11.0
+        with:
+          locked: true
+          environments: package
+      - run: pixi run check-package build/package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.platform }}
+          path: build/package/${{ matrix.platform }}/*.conda
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: prefix-dev/setup-pixi@v0.11.0
+        with:
+          locked: true
+          environments: package
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: package-*
+          path: dist
+          merge-multiple: true
+      - run: pixi run -e package rattler-build upload prefix --channel "$CHANNEL" dist/*.conda
