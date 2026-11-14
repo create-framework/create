@@ -167,8 +167,8 @@ docs: Move the release process to RELEASING.md
 ## Documentation
 
 The documentation site, [create-framework.org](https://create-framework.org/),
-is built from this repo by `pixi run docs` and published by CI on every push to `main`, so a change
-and its documentation land together. [scripts/docs.py](scripts/docs.py) stages its pages:
+is built from this repo by `pixi run docs`, so a change and its documentation land together.
+[scripts/docs.py](scripts/docs.py) stages its pages:
 
 - **Home** is the [README](README.md), and the **user guide** is [docs/](docs/README.md). Write their
   links for GitHub, relative to the file: the site keeps links between its pages, copies images
@@ -178,6 +178,13 @@ and its documentation land together. [scripts/docs.py](scripts/docs.py) stages i
   the reference can't disagree; a package's own docstring heads its page.
 
 A new guide page or subpackage also needs an entry in `nav` in [zensical.toml](zensical.toml).
+
+The site is published in two versions, picked by a selector in its header: `/latest/`, the newest
+release and what the root redirects to, and `/main/`, under a banner saying it is unreleased.
+[scripts/docs_site.py](scripts/docs_site.py) (`pixi run docs-site`) builds both, the release from
+a worktree of its tag with that tag's own environment and scripts, and adds the versioning.
+[.github/workflows/docs.yml](.github/workflows/docs.yml) publishes them on every push to `main`
+and after every release. A docs fix after a release reaches `/latest/` with the next release.
 
 ## Code conventions
 
