@@ -1,0 +1,8 @@
+{#- The published site's theme overrides, used by scripts/docs_site.py. -#}
+{% extends "base.html" %}
+
+{#- Shown on every version but the latest release: main's pages. -#}
+{% block outdated %}
+  These pages document <strong>main</strong>, which is not released yet.
+  <a href="{{ '../' ~ base_url }}">Read the docs for the latest release.</a>
+{% endblock %}

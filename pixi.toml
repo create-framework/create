@@ -43,10 +43,12 @@ check-package = "bash scripts/check_package.sh"
 [feature.docs.dependencies]
 python = ">=3.12"
 zensical = ">=0.1.1,<0.2"
+tomli-w = ">=1.2.0,<2"
 
 [feature.docs.tasks]
 docs = "python scripts/docs.py && zensical build --strict --clean"
 docs-serve = "python scripts/docs.py && zensical serve"
+docs-site = "python scripts/docs_site.py"
 
 [environments]
 package = { features = ["package"], no-default-feature = true }
