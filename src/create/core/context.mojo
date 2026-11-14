@@ -1,6 +1,7 @@
 from create.render.autoscale import Autoscale
 from create.render.canvas import Canvas, _PersistentCanvasState
 
+from create.math._run_clock import _set_run_clock
 from .time import Time
 from .window_mode import WindowMode
 from .cursor import Cursor
@@ -104,6 +105,8 @@ struct Context(Copyable, Movable):
         self._max_frame_rate = 0
         self._quit = False
         self._rumbles = []
+        # A new run starts the playheads' clock at zero.
+        self._publish_clock()
 
     def design_size(self) -> Tuple[Int, Int]:
         """The width and height the program is authored in: the size passed
@@ -325,6 +328,12 @@ struct Context(Copyable, Movable):
         """Tick the clock and count the frame, before each `update`."""
         self._count_frame()
         self.time._tick(now)
+        self._publish_clock()
+
+    def _publish_clock(self):
+        """Hand the clock to the playheads, which read it rather than being
+        ticked."""
+        _set_run_clock(self.time.elapsed, self.time.elapsed)
 
     def _count_frame(mut self):
         """Count a frame without ticking the clock — on its own, the first
