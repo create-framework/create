@@ -3,6 +3,7 @@ from std.math import sqrt
 from create.color.color import Color, _tinted
 from create.color.gradient import Gradient
 from ._paint import Paint, TextStyle
+from ._text import NO_WRAP
 from .style import Style
 from create.geometry.bezier import Bezier
 from create.math.matrix import Matrix, identity
@@ -100,6 +101,14 @@ struct TextPayload(Copyable, Movable):
     `Font` is 80 bytes, and a `Variant` is as large as its largest arm, so
     inline it would make every command's payload text-sized. Copying a
     command shares it, so change it only through `recolor`."""
+    var wrap: Float64
+    """The width its lines wrap at, in local units, or `NO_WRAP`."""
+
+    def wrap_pixels(self, pixel_scale: Float64) -> Float64:
+        """`wrap` in the pixels the text is laid out in, at `pixel_scale`."""
+        if self.wrap == NO_WRAP:
+            return NO_WRAP
+        return self.wrap * pixel_scale
 
     def recolor(mut self, color: Color):
         """Draw this text in `color`, without touching a command it was
@@ -564,16 +573,22 @@ def image_command(
 
 
 def text_command(
-    transform: Matrix[3, 3], style: Style, x: Float64, y: Float64, var s: String
+    transform: Matrix[3, 3],
+    style: Style,
+    x: Float64,
+    y: Float64,
+    var s: String,
+    wrap: Float64 = NO_WRAP,
 ) -> RenderCommand:
-    """Text anchored at `(x, y)` in local units.
+    """Text anchored at `(x, y)` in local units, its lines wrapped at `wrap`
+    local units.
 
-    Deferred whole: the alignment, advances and baseline all come out of
-    `style` and the backend's font at replay time, so nothing about the layout
-    is decided here.
+    Deferred whole: the alignment, advances, line breaks and baseline all come
+    out of `style` and the backend's font at replay time, so nothing about the
+    layout is decided here.
     """
     return RenderCommand(
-        TextPayload(Point2D(x, y), s^, ArcPointer(style._text_style())),
+        TextPayload(Point2D(x, y), s^, ArcPointer(style._text_style()), wrap),
         transform,
         style,
     )

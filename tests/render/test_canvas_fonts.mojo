@@ -142,6 +142,30 @@ def test_text_height_counts_the_lines() raises -> None:
     assert_equal(canvas.text_width("H\nHi"), canvas.text_width("Hi"))
 
 
+def test_wrapped_text_draws_as_its_lines() raises -> None:
+    var canvas = _canvas()
+    canvas.font_size(12)
+    canvas.text_alignment(Align.TOP_LEFT)
+    var width = canvas.text_width("there")
+    canvas.text("Hi there", (-50, 20), width)
+    var wrapped = canvas.snapshot()
+    var reference = _canvas()
+    reference.font_size(12)
+    reference.text_alignment(Align.TOP_LEFT)
+    reference.text("Hi\nthere", (-50, 20))
+    var broken = reference.snapshot()
+    assert_equal(_differing_in_half(wrapped, broken, right=False), 0)
+    assert_equal(_differing_in_half(wrapped, broken, right=True), 0)
+    assert_equal(
+        canvas.text_height("Hi there", width=width),
+        canvas.text_height("Hi\nthere"),
+    )
+    assert_equal(
+        canvas.text_width("Hi there", width=width),
+        canvas.text_width("there"),
+    )
+
+
 def test_a_style_prints_its_font() raises -> None:
     var font = _symbols()
     var style = Style(font=font)

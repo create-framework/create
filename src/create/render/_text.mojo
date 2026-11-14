@@ -77,6 +77,10 @@ struct PlacedGlyph(Copyable, Movable):
 
 comptime _NEWLINE = 10
 comptime _CARRIAGE_RETURN = 13
+comptime _SPACE = 32
+
+comptime NO_WRAP = -1.0
+"""The wrap width of text that breaks only at its newlines."""
 
 
 @fieldwise_init
@@ -90,17 +94,35 @@ struct _Line(ImplicitlyCopyable, Movable):
 
 
 struct _Run(Movable):
-    """A string measured for layout: each glyph's cache key and advance, and
-    the lines they break into. Line breaks take no glyph."""
+    """A string measured for layout: each glyph's cache key and pen position,
+    and the lines they break into. Line breaks take no glyph."""
 
     var keys: List[Int]
-    var advances: List[Int]
+    var pens: List[Int]
+    """The pen's x before each glyph, from the run's start, and one more
+    after the last: glyphs sit advance to advance with no kerning, so the
+    glyphs `[a, b)` are `pens[b] - pens[a]` wide."""
+    var spaces: List[Bool]
+    """Whether each glyph is a space, where a wrapped line may break."""
     var lines: List[_Line]
 
     def __init__(out self):
         self.keys = List[Int]()
-        self.advances = List[Int]()
+        self.pens = [0]
+        self.spaces = List[Bool]()
         self.lines = List[_Line]()
+
+    def append(mut self, key: Int, advance: Int, space: Bool):
+        self.keys.append(key)
+        self.pens.append(self.pens[len(self.pens) - 1] + advance)
+        self.spaces.append(space)
+
+    def width(self, start: Int, end: Int) -> Int:
+        """How wide the glyphs `[start, end)` are, in pixels."""
+        return self.pens[end] - self.pens[start]
+
+    def end_line(mut self, start: Int, end: Int):
+        self.lines.append(_Line(start, end, self.width(start, end)))
 
 
 struct TextRenderer(Movable):
@@ -277,56 +299,95 @@ struct TextRenderer(Movable):
         return self._glyphs[key].pixels
 
     def _measure(
-        mut self, slot: Int, s: String, size: Int, weight: Int, blur: Int
+        mut self,
+        slot: Int,
+        s: String,
+        size: Int,
+        weight: Int,
+        blur: Int,
+        wrap: Float64 = NO_WRAP,
     ) raises -> _Run:
-        """Cache every glyph of `s` and break it into lines at each newline.
+        """Cache every glyph of `s` and break it into lines: at each newline,
+        and, unless `wrap` is `NO_WRAP`, wherever a line would grow wider
+        than `wrap` pixels.
 
-        A carriage return is dropped, so a Windows line ending breaks once.
-        Glyphs sit advance to advance with no kerning, so a line's width is
-        the sum of its advances.
+        A carriage return is dropped, so a Windows line ending breaks once. A
+        wrapped line breaks before the last run of spaces that fits, and the
+        spaces are dropped, so no line starts or ends with them; a word wider
+        than `wrap` alone breaks between its glyphs. Every line keeps at
+        least one glyph, so a `wrap` of 0 puts one on each. Spaces may
+        overhang `wrap`, as they do in CSS, since nothing is drawn of them.
         """
         var run = _Run()
+        # The current line's first glyph.
         var start = 0
-        var width = 0
+        # The current line's last run of spaces after a word, where it would
+        # break: the run's first space.
+        var gap = -1
         for cp in s.codepoints():
             var c = Int(cp)
             if c == _NEWLINE:
-                run.lines.append(_Line(start, len(run.keys), width))
+                run.end_line(start, len(run.keys))
                 start = len(run.keys)
-                width = 0
+                gap = -1
                 continue
             if c == _CARRIAGE_RETURN:
                 continue
             var key = self._ensure_glyph(slot, c, size, weight, blur)
             var advance = self._glyphs[key].advance_x
-            run.keys.append(key)
-            run.advances.append(advance)
-            width += advance
-        run.lines.append(_Line(start, len(run.keys), width))
+            var i = len(run.keys)
+            var space = c == _SPACE
+            while (
+                wrap >= 0.0
+                and not space
+                and i > start
+                and Float64(run.width(start, i) + advance) > wrap
+            ):
+                if gap > start:
+                    run.end_line(start, gap)
+                    start = gap
+                    while start < i and run.spaces[start]:
+                        start += 1
+                    gap = -1
+                else:
+                    run.end_line(start, i)
+                    start = i
+            if space and i > start and not run.spaces[i - 1]:
+                gap = i
+            run.append(key, advance, space)
+        run.end_line(start, len(run.keys))
         return run^
 
     def width(
-        mut self, s: String, style: TextStyle, pixel_scale: Float64
+        mut self,
+        s: String,
+        style: TextStyle,
+        pixel_scale: Float64,
+        wrap: Float64 = NO_WRAP,
     ) raises -> Int:
         """How wide `layout` makes `s`, in pixels, without placing it: its
         widest line."""
         var size = _pixel_size(style, pixel_scale)
         var slot = self._slot(self._face(style))
-        var run = self._measure(slot, s, size, _key_weight(style), 0)
+        var run = self._measure(slot, s, size, _key_weight(style), 0, wrap)
         var widest = 0
         for ref line in run.lines:
             widest = max(widest, line.width)
         return widest
 
     def height(
-        mut self, s: String, style: TextStyle, pixel_scale: Float64
+        mut self,
+        s: String,
+        style: TextStyle,
+        pixel_scale: Float64,
+        wrap: Float64 = NO_WRAP,
     ) raises -> Int:
         """How tall `layout` makes `s`, in pixels: the top of its first line
         to the bottom of its last, the box `Align` anchors."""
         var size = _pixel_size(style, pixel_scale)
         var face = self._face(style)
         var slot = self._slot(face)
-        var run = self._measure(slot, s, size, _key_weight(style), 0)
+        var run = self._measure(slot, s, size, _key_weight(style), 0, wrap)
         var metrics = face._vertical_metrics(size)
         return metrics[0] - metrics[1] + (len(run.lines) - 1) * metrics[2]
 
@@ -338,9 +399,11 @@ struct TextRenderer(Movable):
         style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,
+        wrap: Float64 = NO_WRAP,
     ) raises -> List[PlacedGlyph]:
         """Place `s` around the already-mapped anchor `(tx, ty)`, as masks
-        blurred by `blur` pixels (see `_ensure_glyph`).
+        blurred by `blur` pixels (see `_ensure_glyph`), broken into lines at
+        its newlines and wrapped at `wrap` pixels (see `_measure`).
 
         Glyphs lay out upright in pixel space, y down, so `Align.TOP`/`BOTTOM`
         mean the top and bottom of the text box: the first line's ascent to
@@ -360,7 +423,7 @@ struct TextRenderer(Movable):
         var blur_px = min(max(blur, 0), _MAX_BLUR)
 
         # Two passes: measure every line for alignment, then place.
-        var run = self._measure(slot, s, size, weight, blur_px)
+        var run = self._measure(slot, s, size, weight, blur_px, wrap)
 
         var metrics = face._vertical_metrics(size)
         var asc = metrics[0]
@@ -390,16 +453,16 @@ struct TextRenderer(Movable):
                 var key = run.keys[i]
                 ref g = self._glyphs[key]
                 if g.width > 0 and g.height > 0:
+                    var x = cx + run.width(line.start, i)
                     placed.append(
                         PlacedGlyph(
                             key,
-                            cx + g.bearing_x,
+                            x + g.bearing_x,
                             baseline_y - g.bearing_y,
                             g.width,
                             g.height,
                         )
                     )
-                cx += run.advances[i]
             baseline_y += line_height
         return placed^
 
@@ -414,11 +477,12 @@ struct TextRenderer(Movable):
         style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,
+        wrap: Float64 = NO_WRAP,
     ) raises:
         """Blit `s` through `layout`, so the CPU and GL paths place a glyph
         with one function rather than two that have to agree."""
         var c = style.text_color
-        for ref p in self.layout(s, tx, ty, style, pixel_scale, blur):
+        for ref p in self.layout(s, tx, ty, style, pixel_scale, blur, wrap):
             ref g = self._glyphs[p.key]
             blit_glyph(surf, g, p.x, p.y, c)
 
@@ -432,12 +496,13 @@ struct TextRenderer(Movable):
         style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,
+        wrap: Float64 = NO_WRAP,
     ) raises:
         """Blit `s` laid out upright around the origin, every glyph mapped
         onto the device by `glyphs` (`glyph_transform`): text turned,
         sheared or mirrored with its transform."""
         var c = style.text_color
-        for ref p in self.layout(s, 0.0, 0.0, style, pixel_scale, blur):
+        for ref p in self.layout(s, 0.0, 0.0, style, pixel_scale, blur, wrap):
             ref g = self._glyphs[p.key]
             blit_alpha_mapped(
                 surf,

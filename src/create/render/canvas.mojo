@@ -54,7 +54,8 @@ from create.math._optional_float64 import _OptionalFloat64
 from create._path import _caller_relative
 from ._command import RenderCommand
 from ._shape_command import RegionCapture, curves_command, shape_command
-from ._transform import pixel_scale
+from ._text import NO_WRAP
+from ._transform import pixel_scale, text_pixel_scale
 
 
 comptime _AUTOCLEAR_COLOR = Color(200)
@@ -1803,11 +1804,16 @@ struct Canvas(DrawTarget, Movable):
 
         Raises only if the default font has to be loaded and cannot be.
         """
-        var scale = pixel_scale(self._transform, self._scale)
-        var pixels = self._state._backend.resources.text[].width(
-            text, self._style._text_style(), scale
-        )
-        return Float64(pixels) / scale
+        return self._measure_width(text, NO_WRAP)
+
+    def text_width(self, text: String, *, width: Float64) raises -> Float64:
+        """How wide `text(text, ..., width)` would render: the width of its
+        widest line once wrapped at `width`, at most `width` unless a single
+        glyph is wider.
+
+        Raises only if the default font has to be loaded and cannot be.
+        """
+        return self._measure_width(text, max(width, 0.0))
 
     def text_height(self, text: String) raises -> Float64:
         """How tall `text(text, ...)` would render under the current font and
@@ -1818,9 +1824,39 @@ struct Canvas(DrawTarget, Movable):
 
         Raises only if the default font has to be loaded and cannot be.
         """
-        var scale = pixel_scale(self._transform, self._scale)
+        return self._measure_height(text, NO_WRAP)
+
+    def text_height(self, text: String, *, width: Float64) raises -> Float64:
+        """How tall `text(text, ..., width)` would render: its height once
+        wrapped at `width`, every line it wraps onto counted.
+
+        Raises only if the default font has to be loaded and cannot be.
+        """
+        return self._measure_height(text, max(width, 0.0))
+
+    def _text_scale(self) -> Float64:
+        """The pixels per unit text is laid out at under the current
+        transform, as the replays lay it out, so a measured string wraps
+        where a drawn one does."""
+        return text_pixel_scale(self._transform, self._scale)
+
+    def _measure_width(self, text: String, wrap: Float64) raises -> Float64:
+        var scale = self._text_scale()
+        var pixels = self._state._backend.resources.text[].width(
+            text,
+            self._style._text_style(),
+            scale,
+            wrap * scale if wrap != NO_WRAP else NO_WRAP,
+        )
+        return Float64(pixels) / scale
+
+    def _measure_height(self, text: String, wrap: Float64) raises -> Float64:
+        var scale = self._text_scale()
         var pixels = self._state._backend.resources.text[].height(
-            text, self._style._text_style(), scale
+            text,
+            self._style._text_style(),
+            scale,
+            wrap * scale if wrap != NO_WRAP else NO_WRAP,
         )
         return Float64(pixels) / scale
 
@@ -1832,11 +1868,28 @@ struct Canvas(DrawTarget, Movable):
         is aligned on its own, and the alignment's top and bottom are those
         of the whole block (see `text_height`).
         """
+        self._text(text, position, NO_WRAP)
+
+    def text(mut self, text: String, position: Point2D, width: Float64):
+        """Draw `text` at `position` as `text(text, position)` does, wrapped
+        onto as many lines as keep each at most `width` units wide.
+
+        A line breaks at its last space that fits, the spaces dropped; a word
+        wider than `width` alone breaks between its letters. Newlines still
+        break, and each line is aligned on its own, so `text_alignment` both
+        anchors the block and aligns its lines: `Align.TOP_LEFT` sets ragged
+        right text hanging from `position`. Measure the block with
+        `text_width(text, width=...)` and `text_height(text, width=...)`.
+        """
+        self._text(text, position, max(width, 0.0))
+
+    def _text(mut self, text: String, position: Point2D, wrap: Float64):
         if self._style.text_color.a == 0:
             return
         # Deferred whole. Nothing about the layout is decided here: the
-        # advances, the alignment and the baseline all come out of the font,
-        # which the backend owns, so they are resolved at replay.
+        # advances, the line breaks, the alignment and the baseline all come
+        # out of the font, which the backend owns, so they are resolved at
+        # replay.
         self._state._backend.buffer.record(
             text_command(
                 self._transform,
@@ -1844,5 +1897,6 @@ struct Canvas(DrawTarget, Movable):
                 position.x,
                 position.y,
                 text.copy(),
+                wrap,
             )
         )

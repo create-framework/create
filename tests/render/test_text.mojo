@@ -491,5 +491,67 @@ def test_height_grows_by_a_line_per_break() raises -> None:
     assert_equal(t.height("a\nb\nc", style, 1.0), one + 2 * _line_height())
 
 
+def _same_layout(
+    mut t: TextRenderer, wrapped: String, wrap: Int, broken: String
+) raises -> Bool:
+    """Whether `wrapped`, wrapped at `wrap` pixels, places its glyphs where
+    `broken` places them, its line breaks written in."""
+    var style = _style(Align.TOP_LEFT)
+    var a = t.layout(wrapped, 40.0, 30.0, style, 1.0, wrap=Float64(wrap))
+    var b = t.layout(broken, 40.0, 30.0, style, 1.0)
+    if len(a) != len(b):
+        return False
+    for i in range(len(a)):
+        if a[i].key != b[i].key or a[i].x != b[i].x or a[i].y != b[i].y:
+            return False
+    return True
+
+
+def test_wrapping_breaks_at_the_last_space_that_fits() raises -> None:
+    var t = TextRenderer()
+    var style = _style(Align.LEFT)
+    var whole = t.width("Hi there you", style, 1.0)
+    assert_true(_same_layout(t, "Hi there you", whole, "Hi there you"))
+    assert_true(_same_layout(t, "Hi there you", whole - 1, "Hi there\nyou"))
+    # The widest word.
+    var word = t.width("there", style, 1.0)
+    assert_true(_same_layout(t, "Hi there you", word, "Hi\nthere\nyou"))
+
+
+def test_wrapping_drops_the_spaces_it_breaks_at() raises -> None:
+    var t = TextRenderer()
+    var wrap = t.width("there", _style(Align.LEFT), 1.0)
+    assert_true(_same_layout(t, "Hi   there", wrap, "Hi\nthere"))
+
+
+def test_a_word_wider_than_the_wrap_breaks_between_glyphs() raises -> None:
+    var t = TextRenderer()
+    var wrap = t.width("Hel", _style(Align.LEFT), 1.0)
+    assert_true(_same_layout(t, "Hello", wrap, "Hel\nlo"))
+    assert_true(_same_layout(t, "Hi", 0, "H\ni"))
+
+
+def test_wrapping_keeps_the_newlines() raises -> None:
+    var t = TextRenderer()
+    var word = t.width("there", _style(Align.LEFT), 1.0)
+    assert_true(_same_layout(t, "Hi\nthere you", word, "Hi\nthere\nyou"))
+    var wrap = t.width("Hi there", _style(Align.LEFT), 1.0)
+    assert_true(_same_layout(t, "Hi there you\nHi", wrap, "Hi there\nyou\nHi"))
+
+
+def test_wrapped_measures_follow_the_lines() raises -> None:
+    var t = TextRenderer()
+    var style = _style(Align.LEFT)
+    var wrap = Float64(t.width("Hi there", style, 1.0))
+    assert_equal(
+        t.width("Hi there you", style, 1.0, wrap),
+        t.width("Hi there", style, 1.0),
+    )
+    assert_equal(
+        t.height("Hi there you", style, 1.0, wrap),
+        t.height("Hi\nyou", style, 1.0),
+    )
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

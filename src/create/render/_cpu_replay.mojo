@@ -1527,9 +1527,12 @@ struct CpuReplay(Movable):
         # transparent; text has no other visibility gate (fill is unrelated).
         var sf = text_pixel_scale(m, scale)
         ref text = c.payload[TextPayload]
+        var wrap = text.wrap_pixels(sf)
         if text_upright(m):
             var p = mat_apply(m, text.position.x, text.position.y)
-            res.text[].render(s, text.text, p[0], p[1], text.style[], sf, blur)
+            res.text[].render(
+                s, text.text, p[0], p[1], text.style[], sf, blur, wrap
+            )
         else:
             res.text[].render_mapped(
                 s,
@@ -1538,6 +1541,7 @@ struct CpuReplay(Movable):
                 text.style[],
                 sf,
                 blur,
+                wrap,
             )
 
     def _letterbox[
