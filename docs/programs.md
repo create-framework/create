@@ -124,12 +124,6 @@ Everything the program drives on its own schedule is a field it constructs in `c
 or an offscreen `Canvas(w, h)` (see [Drawing into an image](pixels.md#drawing-into-an-image)), which is the
 program's own. So adding one touches neither `Program` nor the run loop.
 
-## What each frame needs
-
-A few objects only move forward when the program calls them every frame. Nothing enforces this:
-
-- `tween.update(context.time.delta)`, or the tween never moves.
-
 ## Assets and playheads
 
 An `Image`, `Font`, `Animation` or `Sound` is a shared, immutable **asset**. It shares its data
@@ -137,8 +131,8 @@ itself, so a plain field or a copy is cheap and nothing needs wrapping in an `Ar
 
 An `Animator`, or a `Voice` (what `audio.play` and `audio.loop` return), is a **playhead**: one
 entity's position in an asset. Two enemies sharing one walk `Animation` each have their own
-`Animator`. The frame rate, `fps`, belongs to the asset. An animator keeps time on its own: it
-reads its frame off the run's clock, so nothing ticks it.
+`Animator`. The frame rate, `fps`, belongs to the asset. An animator, like a `Tween`, keeps time
+on its own: it reads its position off the run's clock, so nothing ticks it.
 
 An animator's `use(anim)` is the per-frame selector: call it every frame with the animation the
 entity should show, and the animation already held is left as it is, paused or finished included.

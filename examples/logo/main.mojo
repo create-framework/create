@@ -184,7 +184,6 @@ struct Logo(Program):
                 and not piece.tween.is_finished()
             ):
                 piece.tween.play()
-            piece.tween.update(context.time.delta)
             landed = landed and piece.tween.is_finished()
         if landed:
             self.shown += context.time.delta

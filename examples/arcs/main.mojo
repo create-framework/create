@@ -22,8 +22,6 @@ struct App(Program):
         return App(progress=progress)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.progress.update(context.time.delta)
-
         canvas.background(_BACKGROUND)
         canvas.fill_enabled(False)
 

@@ -68,11 +68,11 @@ var slide = Tween(-300, 0, 0.5, Easing.OUT_BACK)  # from -300 to 0 over half a s
 # In `update`:
 if context.keyboard.pressed(Key.SPACE):
     self.slide.play()
-self.slide.update(context.time.delta)  # every frame, or it never moves
 canvas.rectangle((self.slide.value(), 0), 100, 100)
 ```
 
-Each entity owns its own `Tween`. Frame-by-frame animation, a sprite sheet, is
+Nothing ticks a tween: it remembers when it was started and works its value out from
+`context.time` whenever it is asked. Each entity owns its own `Tween`. Frame-by-frame animation, a sprite sheet, is
 `Animation`/`Animator` (in `image`), not a tween.
 
 ## Time
