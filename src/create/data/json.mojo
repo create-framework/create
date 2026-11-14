@@ -1,6 +1,8 @@
 from std.math import isinf, isnan
 from std.memory import ArcPointer
 
+from create._path import _caller_relative
+
 
 struct JSONKind(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     """Which of JSON's six kinds of value a `JSON` holds."""
@@ -98,7 +100,7 @@ struct JSON(Copyable, Movable, Sized, Writable):
     nested value copies nothing:
 
     ```mojo
-    var config = JSON.load(source_path("config.json"))
+    var config = JSON.load("config.json")
     var speed = config["player"]["speed"].float()
     for enemy in config["enemies"].values():
         canvas.text(enemy["name"].string(), (0, y))
@@ -187,8 +189,18 @@ struct JSON(Copyable, Movable, Sized, Writable):
         return JSON(_node=_Node.scalar(JSONKind.NULL))
 
     @staticmethod
+    @always_inline
     def load(path: String) raises -> JSON:
-        """Load a JSON file. Errors name `path:line:column`."""
+        """Load a JSON file. Errors name `path:line:column`.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, not the working directory, as `Image.load`'s is.
+        """
+        return JSON._load(_caller_relative(path))
+
+    @staticmethod
+    def _load(path: String) raises -> JSON:
+        """`load`, from a path already resolved."""
         var text: String
         with open(path, "r") as f:
             text = f.read()
@@ -373,13 +385,19 @@ struct JSON(Copyable, Movable, Sized, Writable):
     def _node(self) -> ref[self._document[].nodes[0]] _Node:
         return self._document[].nodes[self._index]
 
+    @always_inline
     def save(self, path: String, indent: Int = 2) raises:
         """Write the value to a JSON file, keys in their order.
 
         Indented `indent` spaces a level, one item per line; 0 writes it
         compact, as it prints. Raises for an infinite or NaN number, which
-        JSON has no way to write.
+        JSON has no way to write. A relative `path` is resolved against the
+        directory of the calling source file, as `load`'s is.
         """
+        self._save(_caller_relative(path), indent)
+
+    def _save(self, path: String, indent: Int) raises:
+        """`save`, to a path already resolved."""
         if indent < 0:
             raise Error("indent must be 0 or more, not " + String(indent))
         var bad = _non_finite_path(self._document[].nodes, self._index, "")

@@ -602,7 +602,7 @@ struct ImageBlit(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> ImageBlit:
-        return ImageBlit(Image.load("tests/fixtures/test_2x2.bmp"))
+        return ImageBlit(Image.load("../fixtures/test_2x2.bmp"))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
@@ -628,7 +628,7 @@ struct PngImageBlit(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> PngImageBlit:
-        return PngImageBlit(Image.load("tests/fixtures/test_2x2.png"))
+        return PngImageBlit(Image.load("../fixtures/test_2x2.png"))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
@@ -660,7 +660,7 @@ struct TransformedImageBlit[transform: Int](Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Self:
-        return Self(Image.load("tests/fixtures/test_2x2.png"))
+        return Self(Image.load("../fixtures/test_2x2.png"))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)

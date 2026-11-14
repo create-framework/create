@@ -140,7 +140,7 @@ struct Logo(Program):
         var picture = layer.snapshot()
         # Saving into a folder that isn't there fails, so make it first.
         makedirs(source_path("out"), exist_ok=True)
-        canvas.start_recording(source_path("out/logo.gif"))
+        canvas.start_recording("out/logo.gif")
         return Logo(
             pieces=pieces^,
             random=Random(),

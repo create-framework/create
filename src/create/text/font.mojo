@@ -6,6 +6,7 @@ from std.math import abs
 
 from create._bytes import cstr, decode_base64, le_uint, sign_extend_32
 from create._library import load_library
+from create._path import _caller_relative
 from ._noto import _NOTO_SANS, _NOTO_SANS_ITALIC, _NOTO_SANS_SYMBOLS
 
 # The packaged faces: Noto Sans for text, Noto Sans Italic for its italic,
@@ -553,17 +554,22 @@ struct Font(Copyable, ImplicitlyCopyable, Movable, Writable):
     var _italic_path: Optional[String]
 
     @staticmethod
+    @always_inline
     def load(path: String, italic_path: Optional[String] = None) raises -> Font:
         """Open the face at `path`, and the italic at `italic_path` if given.
         Raises if either cannot be read as one.
 
-        Resolve a path next to the program's source with `source_path`, as
-        for images and sounds.
+        A relative path is resolved against the directory of the calling
+        source file, not the working directory, as `Image.load`'s is.
         """
         var italic_source: Optional[_FontSource] = None
         if italic_path:
-            italic_source = _FontSource.file(italic_path.value())
-        return Font._open(_FontSource.file(path), italic_source)
+            italic_source = _FontSource.file(
+                _caller_relative(italic_path.value())
+            )
+        return Font._open(
+            _FontSource.file(_caller_relative(path)), italic_source
+        )
 
     @staticmethod
     def _open(

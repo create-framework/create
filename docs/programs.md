@@ -89,7 +89,7 @@ run[Ball]("Ball", backend=RenderBackend.from_arguments())
 
 **`create` draws frame 1**, like Processing's `setup`: its `canvas` is a real frame, presented like
 every later one, so what you draw there shows, and the canvas's geometry is as valid as on any
-first frame (but see [gotcha 2](#critical-gotchas)). In `create`, `context.frame_count()` is 1 (it
+first frame (but see [gotcha 1](#critical-gotchas)). In `create`, `context.frame_count()` is 1 (it
 is 2 in the first `update`), `context.time` is zero and no key or button is down.
 
 `create` has no `self` yet, so drawing that needs the program's fields builds `Self` into a local
@@ -145,6 +145,31 @@ entity should show, and the animation already held is left as it is, paused or f
 `play` and `loop`, with or without an animation, are commands and always start from frame 0. Read
 [`Animator`](../src/create/image/animator.mojo) before driving one.
 
+## File paths
+
+A relative path given to Create is relative to **the source file that makes the call**, not the
+working directory. So an asset beside the program is named as it sits on disk, and is found
+wherever the program is run from:
+
+```mojo
+# A fragment, inside `create`, in game/main.mojo: opens game/assets/player.png.
+var player = Image.load("assets/player.png")
+```
+
+- **Every loader and saver works this way:** `Image.load`, `Animation.from_folder`, `Font.load`
+  (both paths), `Sound.load`, `Table.load` and `save`, `JSON.load` and `save`, and the canvas's
+  `save_image`, `save_screenshot` and `start_recording`. An absolute path is used as it is.
+- **A call in another file** resolves against that file, as Python's `__file__` does: a helper in
+  `game/enemies/spawn.mojo` loading `"sprites/bat.png"` opens `game/enemies/sprites/bat.png`.
+- **Built programs:** the caller's path is baked in at compile time, so a `mojo build` binary finds
+  its files from any directory, as long as they stay where they were at build time.
+- **Anything else that takes a path**, such as the standard library's `open()`, `listdir` or
+  `makedirs`, resolves against the working directory. Give it `source_path("...")` to get the same
+  answer Create's loaders do.
+- **A path that arrives while the program runs**, such as a command-line argument or typed text,
+  means the working directory to whoever gave it. Make it absolute first with
+  `String(cwd() / path)`, using `cwd` from `std.pathlib`.
+
 ## Multiple screens
 
 A program with a menu, a game and a pause screen keeps each screen as a plain field of the root
@@ -173,20 +198,6 @@ dispatch with `isa[T]()`. See [examples/scenes](../examples/scenes/main.mojo).
 
 ## Critical gotchas
 
-1. **Resolve asset paths with `source_path(...)`**, not bare relative paths, which resolve
-   against the current working directory. This holds for `Image.load`, `Font.load` and
-   `Sound.load` alike:
-
-   ```mojo
-   # A fragment, inside `create`.
-   var player = Image.load(source_path("assets/player.png"))
-   ```
-
-   `source_path` resolves against the calling source file, baked in at compile time as an absolute
-   path, so a `mojo build` binary finds its assets from any directory, as long as they stay where
-   they were at build time. Tests assume the repo root as the working directory, which
-   `pixi run test` guarantees.
-
-2. **Don't cache pixel dimensions from `create` or the first frame.** A window's first reported
+1. **Don't cache pixel dimensions from `create` or the first frame.** A window's first reported
    size can be wrong (fullscreen, Wayland); the loop corrects it from the next frame on. Read
    `canvas.width()`, `canvas.right()` and the like each frame instead.

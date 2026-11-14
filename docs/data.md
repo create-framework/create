@@ -8,7 +8,7 @@ A `Table` is rows of text cells from CSV or TSV, like Processing's:
 
 ```mojo
 # A fragment: scores.csv has a header line, "name,score".
-var table = Table.load(source_path("scores.csv"))
+var table = Table.load("scores.csv")
 for ref row in table.rows():
     print(row.string("name"), row.int("score"))
 
@@ -16,7 +16,7 @@ ref row = table.add_row()
 row.set("name", "Ada")
 row.set("score", 120)
 table.sort("score", descending=True)
-table.save(source_path("scores.csv"))
+table.save("scores.csv")
 ```
 
 - **Loading:** `Table.load(path)` reads a file, `Table.parse(text)` a string, and
@@ -36,12 +36,12 @@ table.save(source_path("scores.csv"))
 
 ```mojo
 # A fragment: config.json is {"player": {"speed": 2.5}, "enemies": [{"hp": 3}, {"hp": 5}]}.
-var config = JSON.load(source_path("config.json"))
+var config = JSON.load("config.json")
 var speed = config["player"]["speed"].float()
 config["player"]["speed"] = 3.0  # edits the document
 for enemy in config["enemies"].values():
     enemy["hp"] = enemy["hp"].int() + 1  # edits land in `config`
-config.save(source_path("config.json"))
+config.save("config.json")
 ```
 
 - **Reading:** `[]` by key or index, then `float`, `int`, `string` or `bool`; `kind()` is a

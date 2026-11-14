@@ -21,9 +21,7 @@ struct App(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        return App(
-            Image.load(source_path("../../assets/logo/png/logo-cutout.png"))
-        )
+        return App(Image.load("../../assets/logo/png/logo-cutout.png"))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_BACKGROUND)

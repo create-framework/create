@@ -21,6 +21,7 @@ explaining, a README beside its code goes into the detail; see
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` playback, `Voice` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
+| `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
@@ -53,16 +54,16 @@ The packages form layers, and a package imports only from the layers below it:
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | Run | `core` | `render`, `input`, `image`, `math`, `_window` |
-| Drawing | `render` | `geometry`, `color`, `image`, `text`, `math`, `_bytes`, `_library` |
-| Assets | `image`, `text`, `audio` | `image`: `color`, `_bytes`, `_library`; `text` and `audio`: `_bytes`, `_library` |
+| Drawing | `render` | `geometry`, `color`, `image`, `text`, `math`, `_bytes`, `_library`, `_path` |
+| Assets | `image`, `text`, `audio` | `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `color`, `input` | `math` |
-| Foundations | `math`, `data` | Nothing |
-| Internal | `_window`, `_bytes`, `_library` | `_window`: `_library`; the others nothing |
+| Foundations | `math`, `data` | `math`: nothing; `data`: `_path` |
+| Internal | `_window`, `_bytes`, `_library`, `_path` | `_window`: `_library`; the others nothing |
 
 The rules behind it, and what each one buys:
 
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
-  `geometry`, `color`, `image`, `text`, `_bytes` and `_library`, so it works without a run loop. So
+  `geometry`, `color`, `image`, `text`, `_bytes`, `_library` and `_path`, so it works without a run loop. So
   the mapping dials reach `render` as plain values: `context._set_viewport(state, …)` in `core`
   passes the design size and autoscale in, and `context._new_canvas(state^)` builds the frame.
   Frame-wide drawing settings live on `_PersistentCanvasState` itself.
@@ -70,15 +71,21 @@ The rules behind it, and what each one buys:
   `render`; `render` imports it.
 - **`color`** depends only on `math`; `image` and `render` both import it. It sits below `image` so
   that `Image.pixel` can return a `Color` without a `render`↔`image` cycle.
-- **`data`** imports nothing from `create`: files through the stdlib's `open()`, numbers through
-  `atof`. Nothing imports it but the root.
-- **`text`** depends only on `_bytes` and `_library`. `render`→`text` is nominal, like
+- **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`,
+  numbers through `atof`. Nothing imports it but the root.
+- **`text`** depends only on `_bytes`, `_library` and `_path`. `render`→`text` is nominal, like
   `render`→`image`: `Style`, `canvas.font` and text layout name `Font`, and `_raster.blit_glyph`
   takes `_GlyphInfo` by its internal path.
 - **`input`** depends only on `math`; `core` imports it. Its devices are plain state: `core`'s
   `apply_events` folds each window event in through one `_`-prefixed method per kind
   (`keyboard._key_down`, `mouse._button_down`, …), so `input` never sees an `Event` and `_window`
   stays `core`'s alone.
+- **`_path`** is a leaf imported by every package with a public function taking a file path,
+  re-exported by nothing; `core`'s `source_path` is its public face. Such a function is
+  `@always_inline` and passes the path through `_caller_relative` straight from its own body
+  (`call_location` counts exactly those two inlined calls), then hands the absolute path to a
+  `_`-named twin. Library code calls the twin (`Image._load`), never the public function, whose
+  caller would be the library's own file.
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
 - **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. A
   binding opens its library with `load_library("libname", version)`, the soname's version, never

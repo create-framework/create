@@ -4,6 +4,7 @@ from std.memory import ArcPointer, unsafe_memcpy
 
 from create._bytes import le_uint, sign_extend_32
 from create._library import load_library
+from create._path import _caller_relative
 from create.color.color import Color
 from .pixel_buffer import PixelBuffer
 
@@ -290,8 +291,20 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
         return Image(buffer^)
 
     @staticmethod
+    @always_inline
     def load(path: String) raises -> Image:
-        """Load an image file. Supports BMP, PNG, and JPEG."""
+        """Load an image file. Supports BMP, PNG, and JPEG.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, not the working directory, so
+        `Image.load("assets/hero.png")` finds the file beside the program
+        wherever it is run from.
+        """
+        return Image._load(_caller_relative(path))
+
+    @staticmethod
+    def _load(path: String) raises -> Image:
+        """`load`, from a path already resolved."""
         var ext = Image._extension(path)
         with open(path, "r") as f:
             var data = f.read_bytes()

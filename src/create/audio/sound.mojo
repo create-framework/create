@@ -1,6 +1,8 @@
 from std.math import clamp
 from std.memory import ArcPointer
 
+from create._path import _caller_relative
+
 from ._sdl_audio import SDLAudio
 from ._sndfile import SndFile
 
@@ -59,11 +61,21 @@ struct Sound(Copyable, ImplicitlyCopyable, Movable):
         return max(Float64(value) / 32767.0, -1.0)
 
     @staticmethod
+    @always_inline
     def load(path: String) raises -> Sound:
         """Load a WAV, OGG, FLAC, or MP3 file. Dispatches on the file's magic
         bytes, not its extension: `RIFF` (WAV) decodes via the zero-dependency
         `SDL_LoadWAV` path; everything else goes through `libsndfile`. Raises,
-        naming `path`, when the file can't be read or holds no samples."""
+        naming `path`, when the file can't be read or holds no samples.
+
+        A relative `path` is resolved against the directory of the calling
+        source file, not the working directory, as `Image.load`'s is.
+        """
+        return Sound._load(_caller_relative(path))
+
+    @staticmethod
+    def _load(path: String) raises -> Sound:
+        """`load`, from a path already resolved."""
         var sound: Sound
         try:
             sound = Sound._decode(path)
