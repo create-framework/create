@@ -2348,7 +2348,7 @@ def _takes_a_bare_canvas(mut canvas: Canvas) raises:
 
 
 struct AnimatorBlit(Program):
-    """Eight 2x2 frames, frame i tinted R = i * 20, advanced by the run loop.
+    """Eight 2x2 frames, frame i tinted R = i * 20, timed by the run's clock.
 
     `Animation`, `Animator` and the `canvas.image` overload all
     arrive through `from create import *` alone.
@@ -2369,15 +2369,13 @@ struct AnimatorBlit(Program):
         return AnimatorBlit(a^)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.animator.update(context.time.delta)
-
         canvas.background(Color.BLACK)
         canvas.image(self.animator, (0.0, 0.0))
 
 
 def test_animator_blits_the_current_frame() raises -> None:
     # Headless frames are a synthetic 16ms; at 100 fps a frame is held 10ms, so
-    # the playhead runs ahead of the loop: after one frame it is on index 1,
+    # the playhead, started in create at time zero, runs ahead of the loop: after one frame it is on index 1,
     # and after three (48ms, 4.8 frame durations) on index 4. Same render call
     # each time, so the overload reads the live index rather than a frame
     # captured at construction.
