@@ -29,9 +29,9 @@ libpng = ">=1.6,<2"
 libjpeg-turbo = ">=3,<4"
 libsndfile = ">=1.2,<2"
 
-# rattler-build for `check-package`, apart from the default environment: it
-# builds the package in environments of its own. The version modular-
-# community's CI builds the published recipe with.
+# rattler-build for `check-package` and the release workflow's upload, apart
+# from the default environment: it builds the package in environments of its
+# own.
 [feature.package.dependencies]
 rattler-build = ">=0.30.0,<0.31"
 

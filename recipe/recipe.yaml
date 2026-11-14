@@ -1,10 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
 #
-# The conda package, built from this checkout by `pixi run check-package`.
-# The published recipe is recipes/create/ in modular/modular-community: this
-# file with `context` and `source` swapped for the release tarball (see
-# RELEASING.md). Change the build, requirements and test here
-# first, then carry them over.
+# The conda package, built from this checkout by `pixi run check-package`,
+# and by the release workflow (.github/workflows/release.yml), which publishes
+# it to the prefix.dev channel create-framework/create (see RELEASING.md).
 context:
   version: ${{ env.get("CREATE_VERSION") }}
 
