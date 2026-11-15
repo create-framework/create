@@ -1,7 +1,7 @@
 from std.math import clamp
 
-from .easing import Easing, ease
-from .util import lerp, wrap
+from create.math.easing import Easing, ease
+from create.math.util import lerp, wrap
 from create.time.clock import Clock
 
 

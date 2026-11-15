@@ -1,4 +1,4 @@
-from create.image.animation import Animation
+from .animation import Animation
 from create.time.clock import Clock
 
 comptime _FRAME_SLACK = 1e-6

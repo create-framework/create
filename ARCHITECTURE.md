@@ -9,15 +9,16 @@ explaining, a README beside its code goes into the detail; see
 
 | Module | Path | Responsibility |
 |---|---|---|
-| root | `src/create/__init__.mojo` | The preamble: star-imports all eleven subpackages below |
+| root | `src/create/__init__.mojo` | The preamble: star-imports all twelve subpackages below |
 | `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `EditableText`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
-| `math` | `src/create/math/` | `Point2D`, `Vector2D`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease` and `Tween`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
+| `math` | `src/create/math/` | `Point2D`, `Vector2D`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Shape`/`Region`/`Curve` and `Drawable`/`DrawTarget` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
-| `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer`, `Animation`, `Animator` |
+| `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer` |
+| `animation` | `src/create/animation/` | The playheads: `Tween`, and `Animation` (a sprite's frames) with its `Animator`. Each keeps time off the run clock |
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` playback, `Voice` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
@@ -71,10 +72,10 @@ The packages form layers, and a package imports only from the layers below it:
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path` |
-| Drawing | `render` | `geometry`, `color`, `image`, `text`, `math`, `_bytes`, `_library`, `_path` |
-| Assets | `image`, `text`, `audio` | `image`: `color`, `math`, `time`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
+| Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path` |
+| Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `color`, `input` | `math` |
-| Foundations | `math`, `time`, `data` | `math`: `time`; `time`: nothing; `data`: `_path` |
+| Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
 | Internal | `_window`, `_bytes`, `_library`, `_path` | `_window`: `_library`; the others nothing |
 
 The same, as a graph; every arrow points down. The leaves `_bytes`, `_library` and `_path` are
@@ -94,19 +95,21 @@ flowchart TD
     render --> geometry
     render --> color
     render --> image
+    render --> animation
+    animation --> image
+    animation --> math
+    animation --> time
     geometry --> math
     image --> color
     image --> math
-    image --> time
     color --> math
     input --> math
-    math --> time
 ```
 
 The rules behind it, and what each one buys:
 
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
-  `geometry`, `color`, `image`, `text`, `_bytes`, `_library` and `_path`, so it works without a run loop. So
+  `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works without a run loop. So
   the mapping dials reach `render` as plain values: `context._set_viewport(state, …)` in `core`
   passes the design size and autoscale in, and `context._new_canvas(state^)` builds the frame.
   Frame-wide drawing settings live on `_PersistentCanvasState` itself.
@@ -116,10 +119,14 @@ The rules behind it, and what each one buys:
   that `Image.pixel` can return a `Color` without a `render`↔`image` cycle.
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`,
   numbers through `atof`. Nothing imports it but the root.
-- **`time`** imports nothing from `create`. It sits below `math` so that `Tween` (in `math`) and
-  `Animator` (in `image`) can read the run clock, `_run_clock`: process-wide state that `core`
-  publishes `Context.time` to once a frame, so a playhead keeps time with no argument carrying
-  the clock to it. It is the package's only shared state.
+- **`time`** imports nothing from `create`; `core` and `animation` import it. Its run clock,
+  `_run_clock`, is process-wide state that `core` publishes `Context.time` to once a frame, so a
+  playhead keeps time with no argument carrying the clock to it. It is the package's only shared
+  state.
+- **`animation`** holds the playheads: `Tween`, and `Animator` over its asset, `Animation`, as
+  `audio` holds `Voice` beside `Sound`. It is the only package that reads the run clock, so
+  `math` and `image` stay free of time. It imports `math` for the easing curves and `image` for
+  the frames.
 - **`text`** depends only on `_bytes`, `_library` and `_path`. `render`→`text` is nominal, like
   `render`→`image`: `Style`, `canvas.font` and text layout name `Font`, and `_raster.blit_glyph`
   takes `_GlyphInfo` by its internal path.
@@ -140,8 +147,8 @@ The rules behind it, and what each one buys:
   versioned name is the runtime package's, so a system without `-devel` packages has it.
 - **`_window`** imports nothing from `create` but `_library`; `core` is its only consumer; nothing
   re-exports it.
-- **`render`→`image` is nominal:** only `canvas.image`'s overloads and `canvas.snapshot` name
-  `Image`/`Animator`. A `render` function that needs pixels takes a pointer plus width/height, not
+- **`render`→`image` and `render`→`animation` are nominal:** only `canvas.image`'s overloads and
+  `canvas.snapshot` name `Image`, and `canvas.image(animator, …)` names `Animator`. A `render` function that needs pixels takes a pointer plus width/height, not
   an image type.
 
 ## Imports and public surface
@@ -149,7 +156,7 @@ The rules behind it, and what each one buys:
 A program writes `from create import *`. Otherwise import by name from the owning package
 (`from create.geometry import overlaps`); a single subpackage star is not a preamble.
 
-- The root has no names of its own: it star-imports the eleven subpackages. Never add a name there;
+- The root has no names of its own: it star-imports the twelve subpackages. Never add a name there;
   add it to the owning subpackage.
 - A subpackage exports only what it owns, never a lower layer's symbol. The one exception is
   `math`, which also re-exports common `std.math` functions (`sqrt`, `sin`, `cos`, `atan2`,

@@ -40,7 +40,7 @@ from create.math.matrix import (
     translate as mat_translate,
 )
 from create.image.image import Image
-from create.image.animator import Animator
+from create.animation.animator import Animator
 from ._backend import Backend, _seed
 from ._captures import _ImageRequest, _Recording
 from ._gif import GifWriter

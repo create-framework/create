@@ -1,5 +1,6 @@
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
-from create.image import Image, Animation, Animator
+from create.image import Image
+from create.animation import Animation, Animator
 from create.time import Clock
 from create.color import Color
 from create.time._run_clock import _scaled_now, _real_now, _set_run_clock

@@ -1,6 +1,7 @@
 from std.testing import TestSuite, assert_equal, assert_true, assert_raises
-from create.image import Image, Animation
-from create.image.animation import _frame_number, _sort_frame_names
+from create.image import Image
+from create.animation import Animation
+from create.animation.animation import _frame_number, _sort_frame_names
 from create.color import Color
 
 
