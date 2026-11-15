@@ -38,6 +38,7 @@ nav = [
     "reference/color.md",
     "reference/render.md",
     "reference/image.md",
+    "reference/animation.md",
     "reference/text.md",
     "reference/audio.md",
     "reference/data.md",
