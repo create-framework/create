@@ -396,10 +396,16 @@ def _delete_object(
     _ = buf^
 
 
-struct _MultisampleTarget(Copyable, Movable):
-    """A multisampled framebuffer the frame is drawn into and then resolved
-    from: colour and depth-stencil renderbuffers (`canvas.clip` needs the
-    stencil) at one size and sample count.
+struct _FrameTarget(Copyable, Movable):
+    """The framebuffer every frame is drawn into and then copied (resolved,
+    when multisampled) from: colour and depth-stencil renderbuffers
+    (`canvas.clip` needs the stencil) at one size and sample count, 0 for
+    single-sampled.
+
+    It outlives the frame, so a frame drawn with the autoclear off starts
+    from the last one's pixels, as the CPU backend's do; a window's own
+    back buffer holds nothing defined after a swap. It starts transparent,
+    as a resized window's pixels do on the CPU.
 
     Owned by `GLRenderer`, which deletes it through its own `GL` — this holds
     names only, so it needs no `GL` of its own.
@@ -452,7 +458,9 @@ struct _MultisampleTarget(Copyable, Movable):
             != GL_FRAMEBUFFER_COMPLETE
         ):
             self.delete(gl)
-            raise Error("the multisampled framebuffer is incomplete")
+            raise Error("the frame's framebuffer is incomplete")
+        gl.clear_color(0.0, 0.0, 0.0, 0.0)
+        gl.clear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
     def delete(self, gl: GL):
         _delete_object(gl.delete_framebuffers, self.fbo)
@@ -634,10 +642,11 @@ struct GLRenderer(Movable):
     var draw_calls: Int
     """Batches flushed by the last `render`. Read by the bench example and the
     Phase 8 performance work; it costs one increment a batch."""
-    var msaa: Optional[_MultisampleTarget]
-    """Where a multisampled frame is drawn before it is resolved into the
-    destination, sized to the drawable and the antialiasing level of the
-    last frame that asked for one."""
+    var frame: Optional[_FrameTarget]
+    """Where the frame is drawn before it is copied into the destination,
+    sized to the drawable and the sample count of the last frame. Kept
+    while neither changes, which is what keeps a frame's pixels for the
+    next one."""
     var max_samples: Int
     """The driver's `GL_MAX_SAMPLES`, which caps the sample count."""
 
@@ -664,7 +673,7 @@ struct GLRenderer(Movable):
         self.bound = 0
         self.vertices = VertexBuffer()
         self.draw_calls = 0
-        self.msaa = None
+        self.frame = None
         self.max_samples = self.gl.read_int(GL_MAX_SAMPLES)
 
         var name = String("u_viewport")
@@ -699,8 +708,8 @@ struct GLRenderer(Movable):
         self.gl.check("initialising the GL renderer")
 
     def __deinit__(deinit self):
-        if self.msaa:
-            self.msaa.value().delete(self.gl)
+        if self.frame:
+            self.frame.value().delete(self.gl)
         self.gl.delete_program(self.program)
         _delete_object(self.gl.delete_buffers, self.vbo)
         _delete_object(self.gl.delete_vertex_arrays, self.vao)
@@ -872,34 +881,35 @@ struct GLRenderer(Movable):
         display scaling the two differ, and the letterbox bars have to reach
         the real edge of the frame.
 
-        Multisampling is the renderer's own, not the window's: the frame is
-        drawn into an offscreen multisampled target and resolved into the
-        drawable, so the level can change from one frame to the next
-        without recreating the window — and a headless run's framebuffer
-        object gets it too. The count is capped at the driver's maximum; at
-        0 (or a driver without multisampling) the frame is drawn straight
-        into the drawable.
+        The frame is drawn into the renderer's own `_FrameTarget` and copied
+        into the drawable, never straight into it: the target keeps its
+        pixels for the next frame, which a window's back buffer doesn't
+        after a swap, so the autoclear can be off. Multisampling is the
+        target's too, resolved by that copy, so the level can change from
+        one frame to the next without recreating the window — and a
+        headless run's framebuffer object gets it too. The count is capped
+        at the driver's maximum; below 2 the target is single-sampled.
+
+        A new size or sample count builds a new target, transparent: the
+        last frame's pixels are lost then, as a resized window's are on the
+        CPU.
         """
         var count = min(samples, self.max_samples)
         if count < 2:
-            if self.msaa:
-                self.msaa.value().delete(self.gl)
-                self.msaa = None
-            self._render(cmds, clips, images, text, width, height, scale)
-            return
+            count = 0
         var destination = UInt32(self.gl.read_int(GL_DRAW_FRAMEBUFFER_BINDING))
-        if self.msaa:
-            ref target = self.msaa.value()
+        if self.frame:
+            ref target = self.frame.value()
             if (
                 target.width != width
                 or target.height != height
                 or target.samples != count
             ):
                 target.delete(self.gl)
-                self.msaa = None
-        if not self.msaa:
-            self.msaa = _MultisampleTarget(self.gl, width, height, count)
-        var fbo = self.msaa.value().fbo
+                self.frame = None
+        if not self.frame:
+            self.frame = _FrameTarget(self.gl, width, height, count)
+        var fbo = self.frame.value().fbo
         self.gl.bind_framebuffer(GL_FRAMEBUFFER, fbo)
         self._render(cmds, clips, images, text, width, height, scale)
         self.gl.bind_framebuffer(GL_READ_FRAMEBUFFER, fbo)

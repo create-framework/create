@@ -28,8 +28,7 @@ These look like Processing but behave differently, and each one catches people o
   button went down.
 - **Fading trails need the autoclear off.** Every frame starts cleared, so a translucent
   `background()` blends over a clean frame, not over the last one. Call
-  `canvas.autoclear(False)` in `create` to keep the previous frame's drawing (on the CPU
-  backend, the default). See
+  `canvas.autoclear(False)` in `create` to keep the previous frame's drawing. See
   [The background](drawing.md#the-background).
 - **Time is in seconds.** Move things by `context.time.delta`, the seconds since the last frame,
   rather than by a fixed step per frame, so they move at the same speed at any frame rate.
