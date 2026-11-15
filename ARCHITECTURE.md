@@ -69,12 +69,35 @@ The packages form layers, and a package imports only from the layers below it:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
-| Run | `core` | `render`, `input`, `image`, `math`, `_window` |
+| Run | `core` | `render`, `input`, `image`, `math`, `_window`, `_path` |
 | Drawing | `render` | `geometry`, `color`, `image`, `text`, `math`, `_bytes`, `_library`, `_path` |
 | Assets | `image`, `text`, `audio` | `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `color`, `input` | `math` |
 | Foundations | `math`, `data` | `math`: nothing; `data`: `_path` |
 | Internal | `_window`, `_bytes`, `_library`, `_path` | `_window`: `_library`; the others nothing |
+
+The same, as a graph; every arrow points down. The leaves `_bytes`, `_library` and `_path` are
+left out, and so are `audio` and `data`, which import only those leaves and which no package here
+imports:
+
+```mermaid
+flowchart TD
+    core --> _window
+    core --> math
+    core --> render
+    core --> image
+    core --> input
+    render --> math
+    render --> text
+    render --> geometry
+    render --> color
+    render --> image
+    geometry --> math
+    image --> color
+    image --> math
+    color --> math
+    input --> math
+```
 
 The rules behind it, and what each one buys:
 
