@@ -8,7 +8,8 @@ Nothing here is written by hand twice: the pages are this repo's own.
 - index.md is the README; guide/ is docs/, its README the guide's index.
 - reference/ is the API reference, one page per subpackage, rendered from
   `mojo doc`'s JSON. A page lists exactly what the subpackage's __init__.mojo
-  imports, in that order, since that is the public surface (ARCHITECTURE.md).
+  imports, since that is the public surface (ARCHITECTURE.md): grouped into
+  types, traits, functions and constants, each in the order it is imported.
 
 A link in the README or the guide is written for GitHub, relative to the
 file. Rewritten for the site: one to another staged page stays relative; one
@@ -39,6 +40,16 @@ BOILERPLATE = {
     "copy",
     "write_to",
     "write_repr_to",
+}
+
+# How the reference groups a package's names, by `mojo doc`'s kind, in
+# this order: the index lists them so, and each page puts them under these
+# headings.
+KIND_GROUPS = {
+    "struct": "Types",
+    "trait": "Traits",
+    "function": "Functions",
+    "alias": "Constants",
 }
 
 
@@ -192,19 +203,31 @@ class Package:
         if missing:
             sys.exit(f"create.{name}: no documentation for {missing}")
 
+    def groups(self) -> dict:
+        """The package's names grouped by kind, leaving out empty groups;
+        each in the order __init__.mojo lists them."""
+        groups = {label: [] for label in KIND_GROUPS.values()}
+        for name in self.names:
+            groups[KIND_GROUPS[self.declarations[name]["kind"]]].append(name)
+        return {label: names for label, names in groups.items() if names}
+
     def index_entry(self) -> str:
-        names = ", ".join(
-            f"[`{n}`]({self.name}.md#{anchor(n)})" for n in self.names
-        )
+        lines = [
+            f"- **{label}:** "
+            + ", ".join(f"[`{n}`]({self.name}.md#{anchor(n)})" for n in names)
+            for label, names in self.groups().items()
+        ]
         return (
             f"## [`create.{self.name}`]({self.name}.md)\n\n"
-            f"{summary_and_description(self.decl)}\n{names}\n"
+            f"{summary_and_description(self.decl)}\n" + "\n".join(lines) + "\n"
         )
 
     def render(self) -> str:
         out = [f"# create.{self.name}\n", summary_and_description(self.decl)]
-        for name in self.names:
-            out.append(render_declaration(self.declarations[name]))
+        for label, names in self.groups().items():
+            out.append(f"## {label}\n")
+            for name in names:
+                out.append(render_declaration(self.declarations[name]))
         if self.reexports:
             names = ", ".join(f"`{n}`" for n in self.reexports)
             out.append(
@@ -224,7 +247,7 @@ def anchor(name: str) -> str:
 def render_declaration(item: dict) -> str:
     kind = item["kind"]
     name = item["name"]
-    out = [f"## `{name}` {{ #{anchor(name)} }}\n"]
+    out = [f"### `{name}` {{ #{anchor(name)} }}\n"]
     if kind == "function":
         out.append(render_overloads(item["overloads"]))
         return "\n".join(out)
@@ -245,12 +268,12 @@ def render_declaration(item: dict) -> str:
 
     constants = item.get("aliases", [])
     if constants:
-        out.append("### Constants\n")
+        out.append("#### Constants\n")
         out.extend(member_line(f"{c['name']} = {c['value']}", c) for c in constants)
         out.append("")
     fields = [f for f in item.get("fields", []) if not f["name"].startswith("_")]
     if fields:
-        out.append("### Fields\n")
+        out.append("#### Fields\n")
         out.extend(member_line(f"{f['name']}: {f['type']}", f) for f in fields)
         out.append("")
 
@@ -263,7 +286,7 @@ def render_declaration(item: dict) -> str:
         if all(is_internal(o) for o in function["overloads"]):
             continue
         label = "Constructors" if method == "__init__" else f"`{method}`"
-        out.append(f"### {label} {{ #{anchor(name)}.{anchor(method)} }}\n")
+        out.append(f"#### {label} {{ #{anchor(name)}.{anchor(method)} }}\n")
         out.append(render_overloads(function["overloads"]))
     return "\n".join(out)
 

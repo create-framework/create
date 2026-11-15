@@ -174,8 +174,9 @@ is built from this repo by `pixi run docs`, so a change and its documentation la
   links for GitHub, relative to the file: the site keeps links between its pages, copies images
   in, and points everything else (an example, a source file) at GitHub, at the commit built.
 - The **API reference** is rendered from the docstrings by `mojo doc`, one page per subpackage. It
-  lists what the subpackage's `__init__.mojo` imports, in that order, so the public surface and
-  the reference can't disagree; a package's own docstring heads its page.
+  lists what the subpackage's `__init__.mojo` imports, grouped into types, traits, functions and
+  constants and in import order within each, so the public surface and the reference can't
+  disagree; a package's own docstring heads its page.
 
 A new guide page or subpackage also needs an entry in `nav` in [zensical.toml](zensical.toml).
 
