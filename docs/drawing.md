@@ -44,7 +44,7 @@ the collision tests between them, are [Geometry](geometry.md).
 A program's own type is drawn the same way, by conforming to `Drawable` and drawing its parts:
 
 ```mojo
-# A fragment of examples/drawables.
+# From examples/drawables:
 @fieldwise_init
 struct Button(Copyable, Drawable, Movable):
     var plate: Rectangle
@@ -99,7 +99,7 @@ the frame is presented, and reads back with no arguments (`canvas.antialiasing()
 `canvas.clip(...)`, it returns a guard that, used in a `with` block, unwinds when the block ends:
 
 ```mojo
-# A fragment of an `update`.
+# In `update`:
 with canvas.transform(translate(100, 0) @ rotate(context.time.elapsed)):
     canvas.rectangle((0, 0), 60, 60)  # spins about (100, 0)
 canvas.rectangle((0, 0), 60, 60)  # upright again
@@ -135,7 +135,7 @@ meeting inside a pixel can show a faint one.
 only what is outside it, for fog or a spotlight:
 
 ```mojo
-# A fragment of an `update`: darkness everywhere but a circle round the mouse.
+# In `update`: darkness everywhere but a circle round the mouse.
 with canvas.clip(Circle(context.mouse.position, 120), invert=True):
     canvas.background(Color(0, 0, 0, 220))
 ```

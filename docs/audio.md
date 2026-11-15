@@ -10,7 +10,7 @@ A `Sound` is decoded samples, an asset like an `Image` (see
 copies share their samples.
 
 ```mojo
-# A fragment, inside `create`.
+# In `create`:
 var chime = Sound.load("assets/chime.wav")
 ```
 
@@ -28,7 +28,7 @@ var chime = Sound.load("assets/chime.wav")
 A one-second 440 Hz tone:
 
 ```mojo
-# A fragment, inside `create`.
+# In `create`:
 var samples = List[Float64](capacity=44100)
 for i in range(44100):
     samples.append(0.5 * sin(TAU * 440.0 * Float64(i) / 44100.0))
@@ -46,8 +46,8 @@ returns a `Voice`, the handle of that one playback, a playhead in the sound like
 an animation. A sound can play as many voices at once:
 
 ```mojo
-# A fragment of `update`: the program has `audio: Audio`, `music: Sound`, `jump: Sound` and
-# `music_voice: Voice` fields.
+# In `update`, with `audio: Audio`, `music: Sound`, `jump: Sound` and
+# `music_voice: Voice` fields:
 if context.keyboard.pressed(Key.SPACE):
     _ = self.audio.play(self.jump, volume=0.6)
 if context.keyboard.pressed(Key.M):

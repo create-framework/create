@@ -81,7 +81,7 @@ text field is in use.
 **`EditableText`** does the editing for a text field:
 
 ```mojo
-# A fragment: `name` is an `EditableText` field.
+# In `update`, with an `EditableText` field `name`:
 self.name.update(context)
 canvas.text(self.name.text, (0, 0))
 var caret_x = canvas.text_width(self.name.before_caret())
@@ -121,7 +121,7 @@ camera. Unlock it for a menu. `context.cursor(...)` sets the pointer's look (see
 `context.gamepad(i)` is a copy of player `i`'s pad (default 0):
 
 ```mojo
-# A fragment of an `update`.
+# In `update`:
 var pad = context.gamepad()
 self.position = self.position + pad.left_stick * 300 * context.time.delta
 if pad.pressed(GamepadButton.SOUTH):  # Xbox A, PlayStation Cross

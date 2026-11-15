@@ -7,7 +7,7 @@ Reading and writing data files: tables of rows and columns (CSV and TSV), and JS
 A `Table` is rows of text cells from CSV or TSV, like Processing's:
 
 ```mojo
-# A fragment: scores.csv has a header line, "name,score".
+# With scores.csv's header line "name,score":
 var table = Table.load("scores.csv")
 for ref row in table.rows():
     print(row.string("name"), row.int("score"))
@@ -35,7 +35,7 @@ table.save("scores.csv")
 `JSON` is one type for every JSON value:
 
 ```mojo
-# A fragment: config.json is {"player": {"speed": 2.5}, "enemies": [{"hp": 3}, {"hp": 5}]}.
+# With config.json as {"player": {"speed": 2.5}, "enemies": [{"hp": 3}, {"hp": 5}]}:
 var config = JSON.load("config.json")
 var speed = config["player"]["speed"].float()
 config["player"]["speed"] = 3.0  # edits the document

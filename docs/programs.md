@@ -71,7 +71,7 @@ Every argument but `backend` is only a starting value, changed later through a s
 the same frame, apart from the GPU's multisampled edges:
 
 ```mojo
-# A fragment, inside `main`.
+# In `main`:
 run[Ball]("Ball", backend=RenderBackend.GPU)
 ```
 
@@ -81,7 +81,7 @@ program. [examples/backends](../examples/backends/main.mojo) reads it this way, 
 `pixi run example backends` and `pixi run example backends gpu` compare the two.
 
 ```mojo
-# A fragment, inside `main`.
+# In `main`:
 run[Ball]("Ball", backend=RenderBackend.from_arguments())
 ```
 
@@ -96,7 +96,7 @@ is 2 in the first `update`), `context.time` is zero and no key or button is down
 first:
 
 ```mojo
-# A fragment: the program has a `draw(mut self, mut canvas: Canvas)` method of its own.
+# In a program with a `draw(mut self, mut canvas: Canvas)` method of its own:
 @staticmethod
 def create(mut context: Context, mut canvas: Canvas) raises -> Self:
     var program = Self(...)
@@ -146,7 +146,7 @@ working directory. So an asset beside the program is named as it sits on disk, a
 wherever the program is run from:
 
 ```mojo
-# A fragment, inside `create`, in game/main.mojo: opens game/assets/player.png.
+# In `create`, in game/main.mojo: opens game/assets/player.png.
 var player = Image.load("assets/player.png")
 ```
 
@@ -170,7 +170,7 @@ A program with a menu, a game and a pause screen keeps each screen as a plain fi
 `Program` (not a `Program` itself) and switches between them with an int field and `if`/`elif`:
 
 ```mojo
-# A fragment of examples/scenes: `Menu` and `Paint` are plain structs.
+# From examples/scenes: `Menu` and `Paint` are plain structs.
 def update(mut self, mut context: Context, mut canvas: Canvas) raises:
     if self.scene == _MENU:
         self.menu.update(context, canvas)

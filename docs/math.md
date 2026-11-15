@@ -13,7 +13,7 @@ Create has two types for a pair of numbers, chosen by role:
 - An **extent** is a scalar: `width`, `height`, `radius`.
 
 ```mojo
-# A fragment.
+# In `update`:
 var position = Point2D(0, 0)
 var velocity = Vector2D.from_angle(PI / 4, 100)  # 100 units a second, up and to the right
 position = position + velocity * context.time.delta  # a point moved by a vector
@@ -40,7 +40,7 @@ var speed = to_mouse.limit(300)  # at most 300 long
 questions:
 
 ```mojo
-# A fragment: both are fields, built in `create`.
+# In `create`, building the `random` and `noise` fields:
 var random = Random(42)  # Random() seeds from the clock
 var noise = Noise(42, feature_size=200)
 
@@ -62,7 +62,7 @@ An **`Easing`** is a stateless curve over a 0-to-1 fraction: `ease(Easing.OUT_CU
 **`Tween`** walks that fraction over a duration:
 
 ```mojo
-# A fragment: `slide` is a field, built in `create`.
+# In `create`, building the `slide` field:
 var slide = Tween(-300, 0, 0.5, Easing.OUT_BACK)  # from -300 to 0 over half a second
 
 # In `update`:
@@ -93,7 +93,7 @@ moves by `delta`, and every animator and tween, slows and stops together, so slo
 pause screen are one call each:
 
 ```mojo
-# A fragment, inside `update`.
+# In `update`:
 if context.keyboard.pressed(Key.P):
     context.time_paused(not context.time_paused())
 self.position = self.position + self.velocity * context.time.delta  # holds while paused
@@ -108,7 +108,7 @@ An animator or tween keeps time by scaled time unless it is built on real time, 
 menu's own animations must be to keep moving while the game behind them is paused:
 
 ```mojo
-# A fragment, inside `create`.
+# In `create`:
 var blink = Tween(0.6, Easing.IN_OUT_SINE, clock=Clock.REAL)
 var cursor = Animator(cursor_animation, clock=Clock.REAL)
 ```
