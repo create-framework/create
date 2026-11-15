@@ -1,8 +1,8 @@
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
 from create.image import Image, Animation, Animator
-from create.math import Clock
+from create.time import Clock
 from create.color import Color
-from create.math._run_clock import _scaled_now, _real_now, _set_run_clock
+from create.time._run_clock import _scaled_now, _real_now, _set_run_clock
 
 
 def _advance(seconds: Float64):

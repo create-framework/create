@@ -7,8 +7,8 @@ from std.testing import (
 )
 from create.math.easing import Easing, ease
 from create.math.tween import Tween
-from create.math.clock import Clock
-from create.math._run_clock import _scaled_now, _real_now, _set_run_clock
+from create.time.clock import Clock
+from create.time._run_clock import _scaled_now, _real_now, _set_run_clock
 
 
 def _advance(seconds: Float64):
@@ -423,12 +423,6 @@ def test_tween_on_real_time_runs_through_a_pause() raises -> None:
 def test_tween_duration_only_takes_a_clock() raises -> None:
     var t = Tween(1.0, Easing.OUT_CUBIC, Clock.REAL)
     assert_true(t.clock == Clock.REAL)
-
-
-def test_clock_writes_its_constant_name() raises -> None:
-    assert_equal(String(Clock.SCALED), "Clock.SCALED")
-    assert_equal(String(Clock.REAL), "Clock.REAL")
-    assert_equal(String(Clock(7)), "Clock(7)")
 
 
 # --- write_to -----------------------------------------------------------------

@@ -1,8 +1,8 @@
 from create.render.autoscale import Autoscale
 from create.render.canvas import Canvas, _PersistentCanvasState
 
-from create.math._run_clock import _set_run_clock
-from .time import Time
+from create.time._run_clock import _set_run_clock
+from create.time.time import Time
 from .window_mode import WindowMode
 from .cursor import Cursor
 from create.input.keyboard import Keyboard
