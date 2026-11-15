@@ -20,6 +20,7 @@ nav = [
     "guide/style.md",
     "guide/input.md",
     "guide/images.md",
+    "guide/animation.md",
     "guide/geometry.md",
     "guide/math.md",
     "guide/time.md",

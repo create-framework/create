@@ -13,10 +13,10 @@ How to use Create, topic by topic. New to it? Start with the [README](../README.
   antialiasing and clipping.
 - [Style](style.md): colours, strokes, gradients, shadows, tint and blend modes, and text.
 - [Input](input.md): the keyboard, mouse and gamepads, the cursor, and text entry.
-- [Images and animation](images.md): loading and drawing images, sprite animation, and building
-  an image pixel by pixel.
+- [Images](images.md): loading and drawing images, and building an image pixel by pixel.
+- [Animation](animation.md): easing and tweens, and sprite animation.
 - [Geometry](geometry.md): the shapes and curves, and collision tests between them.
-- [Randomness and easing](math.md): random numbers and noise, and easing and tweens.
+- [Randomness and noise](math.md): random numbers and noise.
 - [Time](time.md): moving by time, frames and the frame rate, slowing and pausing time, and the
   wall clock.
 - [Audio](audio.md): loading and synthesizing sounds, playing them, and controlling each

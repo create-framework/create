@@ -2,7 +2,7 @@
 
 Reading back what has been drawn, drawing into an image of your own, saving the frame as a PNG,
 and recording it as a GIF. Loading and drawing images, and building one pixel by pixel, is in
-[Images and animation](images.md).
+[Images](images.md).
 
 ## Reading the screen
 

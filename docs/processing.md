@@ -91,7 +91,7 @@ These look like Processing but behave differently, and each one catches people o
 | `random(a, b)` | `random.float(a, b)`, on a `Random` field |
 | `noise(x, y)` | `noise.at((x, y))`, on a `Noise` field (see [Random numbers and noise](math.md#random-numbers-and-noise)) |
 | `map`, `lerp`, `constrain` | `map`, `lerp`, `clamp` |
-| `loadImage(path)` | `Image.load(path)` (see [Images and animation](images.md)) |
+| `loadImage(path)` | `Image.load(path)` (see [Images](images.md)) |
 | `image(img, x, y)` | `canvas.image(img, (x, y))`, centred |
 | `loadTable`, `loadJSONObject` | `Table.load`, `JSON.load` (see [Data](data.md)) |
 | `SoundFile` (Sound library) | `Sound.load` and `Audio` (see [Audio](audio.md)) |

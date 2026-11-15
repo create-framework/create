@@ -30,10 +30,11 @@ must keep. Before changing, using or answering questions about one of these area
 | [drawing](docs/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, transforms and guards, antialiasing, clipping |
 | [style](docs/style.md) | `Color`, `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
 | [input](docs/input.md) | the keyboard, mouse or gamepads, the cursor, text entry, `EditableText` |
-| [images](docs/images.md) | `Image`, `canvas.image`, `Animation` and `Animator`, `PixelBuffer` |
+| [images](docs/images.md) | `Image`, `canvas.image`, `PixelBuffer` |
+| [animation](docs/animation.md) | `Easing`/`ease`, `Tween`, `Animation` and `Animator` |
 | [pixels](docs/pixels.md) | `color_at`, `snapshot`, offscreen canvases, saving images, recording GIFs |
 | [geometry](docs/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
-| [math](docs/math.md) | `Random`, `Noise`, `Easing`/`Tween` |
+| [math](docs/math.md) | `Random`, `Noise` |
 | [time](docs/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
 | [audio](docs/audio.md) | `Sound`, `Audio` and `Voice`: loading, synthesizing and playing sounds |
 | [data](docs/data.md) | `Table` (CSV/TSV) or `JSON` |
