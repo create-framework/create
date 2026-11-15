@@ -358,11 +358,15 @@ GPU clip's rim is multisampled.
 
 ## Antialiasing
 
-**GPU:** `GLRenderer.render(..., samples)` draws into a `_MultisampleTarget` (colour and
-depth-stencil renderbuffers) and blits it into the framebuffer that was bound — the window's, or a
-headless `_GLTarget` — then rebinds that. The target is reallocated when the drawable size or the
-sample count changes, and freed at `OFF`; the count is capped at `GL_MAX_SAMPLES`. Windows open
-single-sampled, so the level can change without recreating the GL context.
+**GPU:** `GLRenderer.render(..., samples)` draws into a `_FrameTarget` (colour and depth-stencil
+renderbuffers, multisampled unless the count is below 2) and blits it into the framebuffer that was
+bound — the window's, or a headless `_GLTarget` — then rebinds that. The target outlives the frame,
+so with the autoclear off a frame starts from the last one's pixels: a window's back buffer holds
+nothing defined after a swap, so the frame is never drawn straight into it. The target is rebuilt,
+transparent, when the drawable size or the sample count changes, so changing the antialiasing
+level loses the kept pixels, where the CPU keeps them: a blit can't write into a multisampled
+target. The count is capped at `GL_MAX_SAMPLES`. Windows open single-sampled, so
+the level can change without recreating the GL context.
 
 **CPU:** `Backend.antialiasing` (an `Antialiasing`, seeded by the run loops and set by
 `canvas.antialiasing`) applies to the CPU replay of the
@@ -407,7 +411,9 @@ the screen are made transparent afterwards, since a clear fills the whole target
   `color_at` and a full-screen scale-1 `snapshot` share it.
 - `seeded` (autoclear off): the first such read sets `keep_frames`. From then on `present` samples
   each finished CPU frame down to design size into `last_frame` (`_keep_frame`), and later
-  reads start from it (`_seed`), nearest pixel.
+  reads start from it (`_seed`), nearest pixel. `present_gpu` has no host pixels to sample, so it
+  keeps the frame as a seeded `read_frame`: one CPU replay of the frame at design size a frame,
+  paid only once a program has made such a read.
 
 **Offscreen canvas.** `Canvas(width, height, …)` builds its own CPU `Backend` with `target`, a
 `MemorySurface` of `width*scale` × `height*scale`, set; `_offscreen()` is whether it is. It never

@@ -123,8 +123,8 @@ struct Backend(Movable):
     it; `frame_read_at` is the `recorded` it was read at."""
     var frame_read_at: Int
     var keep_frames: Bool
-    """Whether `present` keeps a copy of each finished frame in
-    `last_frame`. Switched on by the first read made with the autoclear off,
+    """Whether `present` and `present_gpu` keep a copy of each finished
+    frame in `last_frame`. Switched on by the first read made with the autoclear off,
     the one case where a frame starts from the last one's pixels rather than
     from its own commands."""
     var last_frame: Optional[MemorySurface]
@@ -364,6 +364,11 @@ struct Backend(Movable):
         pixel buffer — `width` and `height` are the drawable's, which is what
         the letterbox bars and `glViewport` are sized from.
         """
+        if self.keep_frames:
+            # No host pixels to sample, so the frame is kept as a read
+            # keeps it: replayed on the CPU, starting from the last one.
+            self.read_frame(seeded=True)
+            self.last_frame = self.frame_read.take()
         var cmds = self.buffer.commands^
         self.buffer.commands = List[RenderCommand]()
         gl.render(

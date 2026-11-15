@@ -75,8 +75,8 @@ anything else you draw:
   need the autoclear off (below). An opaque one costs nothing extra: it replaces the clear.
 - `canvas.autoclear(False)` switches the clear off, so ink accumulates from frame to frame, as in
   a painting program. It applies to the whole frame it is called in, wherever in `update` it is
-  called, and lasts until changed, so set it once in `create`. It works on the CPU backend only:
-  the GPU backend doesn't keep the previous frame.
+  called, and lasts until changed, so set it once in `create`. Resizing the window starts the
+  drawing over from transparent, and on the GPU backend so does changing `canvas.antialiasing`.
 
 ## Settings that outlive the frame
 

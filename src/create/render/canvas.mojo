@@ -1780,7 +1780,7 @@ struct Canvas(DrawTarget, Movable):
 
         On by default, clearing to gray 200 so the default style is visible
         on a program that never calls `background()`. Off lets ink
-        accumulate across frames (CPU backend only — the GPU swaps buffers).
+        accumulate across frames, on either backend.
 
         A frame-wide setting: it applies to this whole frame, wherever in it
         it is called — off takes this frame's opening clear back out, on puts
