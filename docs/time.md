@@ -2,7 +2,7 @@
 
 The run's clock and how to move things by it, frames and the frame rate, slowing and pausing
 time, and the computer's wall clock. Easing and tweens are in
-[Randomness and easing](math.md#easing-and-tweens).
+[Animation](animation.md#easing-and-tweens).
 
 ## Moving by time
 

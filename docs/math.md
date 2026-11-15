@@ -1,8 +1,9 @@
-# Randomness and easing
+# Randomness and noise
 
-Random numbers and noise, and easing and tweens. Common `std.math` functions
+Random numbers and noise. Common `std.math` functions
 (`sqrt`, `sin`, `cos`, `atan2`, `clamp`, `floor`, …) come with `from create import *`, as in
-Processing. Points and vectors are in [Coordinates](coordinates.md#points-and-vectors).
+Processing. Points and vectors are in [Coordinates](coordinates.md#points-and-vectors), and easing curves in
+[Animation](animation.md#easing-and-tweens).
 
 ## Random numbers and noise
 
@@ -65,26 +66,3 @@ var height = self.noise.at(Point2D(x, 0))  # the same input always gives the sam
   faster or slower, scale the time you pass in.
 - Noise is several layers of detail (`octaves`, 4 by default) added together, so its values
   cluster around 0.5 rather than spreading evenly; stretch them with `smoothstep` for contrast.
-
-## Easing and tweens
-
-An **`Easing`** is a curve that reshapes progress from 0 to 1, so motion can start slowly, end
-with a bounce and so on: `ease(Easing.OUT_CUBIC, t)`. A **`Tween`** runs that progress over a
-duration in seconds, from a start value to an end value:
-
-```mojo
-# In `create`, building the `slide` field:
-var slide = Tween(-300, 0, 0.5, Easing.OUT_BACK)  # from -300 to 0 over half a second
-
-# In `update`:
-if context.keyboard.pressed(Key.SPACE):
-    self.slide.play()
-canvas.rectangle((self.slide.value(), 0), 100, 100)
-```
-
-Nothing ticks a tween: it remembers when it was started and works its value out from
-`context.time` whenever it is asked, so it slows and pauses with the run's time unless built on
-real time (see [Slowing and pausing time](time.md#slowing-and-pausing-time)). Each entity owns
-its own `Tween`. Frame-by-frame animation, a sprite sheet, is an `Animation` and an `Animator`,
-not a tween (see [Sprite animation](images.md#sprite-animation)).
-

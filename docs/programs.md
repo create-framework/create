@@ -135,7 +135,7 @@ An `Animator`, or a `Voice` (what `audio.play` and `audio.loop` return), is a **
 entity's position in an asset. Two enemies sharing one walk `Animation` each have their own
 `Animator`. An animator, like a `Tween`, keeps time on its own: it reads its position off the
 run's clock, so nothing ticks it. How to drive one is in
-[Images and animation](images.md#sprite-animation).
+[Animation](animation.md#sprite-animation).
 
 ## What lasts how long
 
