@@ -201,8 +201,8 @@ change one. What mutates is what has state over time — `Tween`, `Animator`, `A
 
 Use `Point2D` for new locations, `Vector2D` for displacements and scalars for extents;
 `canvas.rectangle(position: Point2D, width: Float64, height: Float64)` is the shape to copy. The
-reasons are in [Points and vectors](docs/math.md#points-and-vectors), and three rules keep them
-working:
+reasons are in [Points and vectors](docs/coordinates.md#points-and-vectors), and three rules keep
+them working:
 
 - Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
   `Point2D` one: a bare tuple already fills a `Point2D` parameter, and `(x, y)` keeps the pairs
