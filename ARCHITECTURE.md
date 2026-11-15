@@ -43,6 +43,22 @@ user did, and `render` turns drawing into pixels.
    pixels; on the GPU, they are tessellated into one vertex buffer and drawn through OpenGL 3.3.
    Pixel reads and captures replay on the CPU either way, so both backends read the same pixels.
 
+```mermaid
+flowchart TD
+    run["run[P]: seed the Context, pick the backend"] --> viewport["Derive the viewport"]
+    viewport --> first["first_step: create draws frame 1"]
+    first --> record["Render calls record commands<br/>into the frame's Backend"]
+    record --> present{"Present"}
+    present -->|CPU| raster["Rasterise onto the window's pixels"]
+    present -->|GPU| gl["Tessellate, draw through OpenGL 3.3"]
+    raster --> pump["Pump the window's events"]
+    gl --> pump
+    pump --> apply["apply_events: fold them into<br/>keyboard, mouse, gamepads"]
+    apply --> tick["Tick context.time"]
+    tick --> step["step: fresh Canvas, call update"]
+    step --> record
+```
+
 Every loop runs frame 1 through `first_step` and every later one through `step`, so the loops can
 differ only in how a frame starts and where its pixels go. The details are in the
 [`core`](src/create/core/README.md) and [`render`](src/create/render/README.md) READMEs.
