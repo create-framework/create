@@ -156,9 +156,9 @@ So set the frame's style in `update`, every frame, and the lasting settings once
 
 `Context`'s settings belong to the run, not the drawing: `design_size`, `autoscale`, `title`,
 `window_mode`, `resizable`, `cursor` (see [The cursor](input.md#the-cursor)), `lock_mouse`,
-`text_input`, `quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` (see
-[Slowing and pausing time](math.md#slowing-and-pausing-time)). Like the canvas setters, they are
-methods, each read back with no arguments:
+`text_input`, `quit_on_escape`, `max_frame_rate` (see [Frames](time.md#frames)), `time_scale`
+and `time_paused` (see [Slowing and pausing time](time.md#slowing-and-pausing-time)). Like the
+canvas setters, they are methods, each read back with no arguments:
 
 ```mojo
 # In `create`:

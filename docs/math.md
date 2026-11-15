@@ -1,6 +1,6 @@
-# Randomness, easing and time
+# Randomness and easing
 
-Random numbers and noise, easing and tweens, and the two clocks. Common `std.math` functions
+Random numbers and noise, and easing and tweens. Common `std.math` functions
 (`sqrt`, `sin`, `cos`, `atan2`, `clamp`, `floor`, …) come with `from create import *`, as in
 Processing. Points and vectors are in [Coordinates](coordinates.md#points-and-vectors).
 
@@ -83,47 +83,8 @@ canvas.rectangle((self.slide.value(), 0), 100, 100)
 ```
 
 Nothing ticks a tween: it remembers when it was started and works its value out from
-`context.time` whenever it is asked. Each entity owns its own `Tween`. Frame-by-frame animation,
-a sprite sheet, is an `Animation` and an `Animator`, not a tween (see
-[Sprite animation](images.md#sprite-animation)).
+`context.time` whenever it is asked, so it slows and pauses with the run's time unless built on
+real time (see [Slowing and pausing time](time.md#slowing-and-pausing-time)). Each entity owns
+its own `Tween`. Frame-by-frame animation, a sprite sheet, is an `Animation` and an `Animator`,
+not a tween (see [Sprite animation](images.md#sprite-animation)).
 
-## Time
-
-There are two clocks:
-
-- **`context.time`** is the run's clock: ticked by the loop, zero at the first frame, and advanced a
-  fixed 16 ms a frame in headless runs. `delta` is the seconds since the last frame (move things by
-  it), and `elapsed` the seconds since the run started. Every `Animator` and `Tween` keeps time by
-  `elapsed`.
-- **`DateTime.now()`** is the computer's local wall clock, read once into consistent fields
-  (`year` … `millisecond`). Take one reading per frame rather than calling it per field.
-
-### Slowing and pausing time
-
-`delta` and `elapsed` are **scaled time**: `context.time_scale(0.5)` runs them at half speed,
-and `context.time_paused(True)` stops them, `delta` reading zero until it is unpaused. What
-moves by `delta`, and every animator and tween, slows and stops together, so slow motion and a
-pause screen are one call each:
-
-```mojo
-# In `update`:
-if context.keyboard.pressed(Key.P):
-    context.time_paused(not context.time_paused())
-self.position = self.position + self.velocity * context.time.delta  # holds while paused
-```
-
-The pause is separate from the scale, so unpausing returns to the scale that was set, slow
-motion included. Both apply from the next frame. **Real time**, `context.time.real_delta` and
-`real_elapsed`, ignores both, for what must keep moving while the program's time stands still.
-`context.frame_rate()`, recordings and audio run on real time.
-
-An animator or tween keeps time by scaled time unless it is built on real time, as a pause
-menu's own animations must be to keep moving while the game behind them is paused:
-
-```mojo
-# In `create`:
-var blink = Tween(0.6, Easing.IN_OUT_SINE, clock=Clock.REAL)
-var cursor = Animator(cursor_animation, clock=Clock.REAL)
-```
-
-A `Tween` given only a duration, as `blink` is, runs from 0 to 1.

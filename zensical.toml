@@ -22,6 +22,7 @@ nav = [
     "guide/images.md",
     "guide/geometry.md",
     "guide/math.md",
+    "guide/time.md",
     "guide/audio.md",
     "guide/pixels.md",
     "guide/data.md",

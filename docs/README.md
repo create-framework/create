@@ -16,8 +16,9 @@ How to use Create, topic by topic. New to it? Start with the [README](../README.
 - [Images and animation](images.md): loading and drawing images, sprite animation, and building
   an image pixel by pixel.
 - [Geometry](geometry.md): the shapes and curves, and collision tests between them.
-- [Randomness, easing and time](math.md): random numbers and noise, easing and tweens, and the
-  clocks.
+- [Randomness and easing](math.md): random numbers and noise, and easing and tweens.
+- [Time](time.md): moving by time, frames and the frame rate, slowing and pausing time, and the
+  wall clock.
 - [Audio](audio.md): loading and synthesizing sounds, playing them, and controlling each
   playback.
 - [Pixels, saving and recording](pixels.md): reading back what was drawn, offscreen canvases,
