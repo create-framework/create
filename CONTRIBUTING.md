@@ -176,7 +176,9 @@ is built from this repo by `pixi run docs`, so a change and its documentation la
 - The **API reference** is rendered from the docstrings by `mojo doc`, one page per subpackage. It
   lists what the subpackage's `__init__.mojo` imports, grouped into types, traits, functions and
   constants and in import order within each, so the public surface and the reference can't
-  disagree; a package's own docstring heads its page.
+  disagree; a package's own docstring heads its page. A type's members are grouped into
+  constants, fields, constructors, methods and special methods (the dunders); a static method
+  is listed as a constructor when it returns `Self`, so write a factory's return type so.
 
 A new guide page or subpackage also needs an entry in `nav` in [zensical.toml](zensical.toml).
 
