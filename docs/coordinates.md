@@ -71,7 +71,7 @@ A `Camera` has a `position` (the world point at the centre of the screen) and a 
 transform, and is reset every frame. `canvas.overlay()` suspends it for HUD content:
 
 ```mojo
-# A fragment of an `update` whose program keeps a `camera: Camera` field.
+# In `update`, with a `camera: Camera` field:
 canvas.camera(self.camera)
 canvas.image(self.player.image, self.player.position)  # world space
 with canvas.overlay():
@@ -109,7 +109,7 @@ the design, by `canvas.scale()`. See [examples/window](../examples/window/main.m
 with no arguments:
 
 ```mojo
-# A fragment, inside `create`.
+# In `create`:
 context.autoscale(Autoscale.EXTEND)
 context.title("Level 1")
 var mode = context.autoscale()  # Autoscale.EXTEND

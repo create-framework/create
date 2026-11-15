@@ -49,7 +49,7 @@ not a `Spline`.
 Three tests answer whether shapes touch:
 
 ```mojo
-# A fragment of an `update`.
+# In `update`:
 var player = Circle(self.position, 16)
 var wall = Rectangle((200, 0), 40, 300)
 var laser = Line((-300, 50), (300, 50))

@@ -61,7 +61,7 @@ canvas of the program's own: draw into it with every render call and guard, and 
 `color_at` or `snapshot`. It is the way to draw shapes, text and gradients into an image:
 
 ```mojo
-# A fragment, inside `create` (or anywhere else).
+# In `create`, or anywhere else:
 var badge = Canvas(64, 64)
 badge.fill(Color.YELLOW)
 badge.circle((0, 0), 30)
@@ -99,7 +99,7 @@ it. To build one pixel by pixel, fill a `PixelBuffer` with `set(x, y, color)` (r
 `pixel(x, y)`; it starts transparent), then `Image(buffer^)` takes the pixels over without copying:
 
 ```mojo
-# A fragment: an 8 by 8 checkerboard.
+# An 8 by 8 checkerboard:
 var buffer = PixelBuffer(8, 8)
 for y in range(8):
     for x in range(8):
@@ -128,7 +128,7 @@ frames from the one it is called in as an animated GIF, the only format; the pat
 `.gif`:
 
 ```mojo
-# A fragment of an `update`: R records the next five seconds.
+# In `update`: R records the next five seconds.
 if context.keyboard.pressed(Key.R):
     canvas.start_recording("capture.gif", seconds=5)
 ```

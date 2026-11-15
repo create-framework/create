@@ -109,7 +109,7 @@ the thickness by autoscale, the camera and the transform:
 | `StrokeDash(12, 4, 2, 4)` | Up to four on/off pairs, repeated (dash-dot here) |
 
 ```mojo
-# A fragment of an `update`: marching ants round a selection.
+# In `update`: marching ants round a selection.
 var ants = StrokeDash(6, 6).with_offset(context.time.elapsed * 20)
 with canvas.style(stroke=Color.BLACK, fill_enabled=False, stroke_dash=ants):
     canvas.draw(self.selection)
@@ -140,7 +140,7 @@ keep it as a field (or in a `Style`): construction samples its colour ramp, and 
 one ramp per distinct set of stops.
 
 ```mojo
-# A fragment: `sky` is a field, built in `create`.
+# In `create`, building the `sky` and `glow` fields:
 var sky = Gradient.linear(Color(20, 30, 80), Color(250, 150, 90))  # top to bottom
 var glow = Gradient.radial(Color.WHITE, Color.TRANSPARENT)
 
@@ -184,7 +184,7 @@ switches the current one back on. `shadow_enabled(False)` switches it off, and `
 takes the same parts as `shadow*` keywords (`shadow=` for the colour):
 
 ```mojo
-# A fragment of an `update`.
+# In `update`:
 with canvas.style(shadow=Color(0, 0, 0, 120), shadow_blur=12):
     canvas.rectangle((0, 0), 200, 120)
 ```
@@ -222,7 +222,7 @@ style: `canvas.font(f)`, `Style(font=f)` or `with canvas.style(font=f):`, beside
 `font_weight` and `font_italic`:
 
 ```mojo
-# A fragment: `title_font` is a field, loaded in `create`.
+# In `create`, loading the `title_font` field:
 var title_font = Font.load("fonts/Title.ttf")
 
 # In `update`:
@@ -251,7 +251,7 @@ of the whole block. `canvas.text_width(string)` is the widest line's width, and
 descent:
 
 ```mojo
-# A fragment of `update`: a two-line caption hanging from the top-left corner,
+# In `update`: a two-line caption hanging from the top-left corner,
 # and a line under it.
 var caption = "Level 1\nThe caves"
 var corner = Point2D(canvas.left() + 20, canvas.top() - 20)
@@ -269,7 +269,7 @@ on its own, so `Align.TOP_LEFT` sets ragged-right text hanging from `position`.
 block:
 
 ```mojo
-# A fragment of `update`: a paragraph in a 300-unit column, a panel behind it.
+# In `update`: a paragraph in a 300-unit column, a panel behind it.
 var story = "The caves run deeper than the old maps show, and nobody who went down came back."
 canvas.text_alignment(Align.TOP_LEFT)
 var corner = Point2D(canvas.left() + 20, canvas.top() - 20)
