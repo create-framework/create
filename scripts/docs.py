@@ -10,6 +10,9 @@ Nothing here is written by hand twice: the pages are this repo's own.
   `mojo doc`'s JSON. A page lists exactly what the subpackage's __init__.mojo
   imports, since that is the public surface (ARCHITECTURE.md): grouped into
   types, traits, functions and constants, each in the order it is imported.
+  A type's members are grouped in turn: constants, fields, constructors
+  (`__init__` and the static methods returning `Self`), methods, and special
+  methods (the other dunders).
 
 A link in the README or the guide is written for GitHub, relative to the
 file. Rewritten for the site: one to another staged page stays relative; one
@@ -37,6 +40,7 @@ BOILERPLATE = {
     "__copyinit__",
     "__moveinit__",
     "__del__",
+    "__deinit__",
     "copy",
     "write_to",
     "write_repr_to",
@@ -277,6 +281,27 @@ def render_declaration(item: dict) -> str:
         out.extend(member_line(f"{f['name']}: {f['type']}", f) for f in fields)
         out.append("")
 
+    groups = member_groups(item)
+    for label, functions in groups.items():
+        if not functions:
+            continue
+        # The constructors' heading keeps the `#type.init` id that
+        # `__init__`'s own heading had; each other method gets its own.
+        ids = f" {{ #{anchor(name)}.init }}" if label == "Constructors" else ""
+        out.append(f"#### {label}{ids}\n")
+        for function in functions:
+            method = function["name"]
+            if method != "__init__":
+                out.append(f"##### `{method}` {{ #{anchor(name)}.{anchor(method)} }}\n")
+            out.append(render_overloads(function["overloads"]))
+    return "\n".join(out)
+
+
+def member_groups(item: dict) -> dict:
+    """A type's public methods under the headings its page gives them:
+    `__init__` and the static factories returning `Self` are constructors,
+    the other dunders special methods, and the rest plain methods."""
+    groups = {"Constructors": [], "Methods": [], "Special methods": []}
     for function in item.get("functions", []):
         method = function["name"]
         if method in BOILERPLATE:
@@ -285,10 +310,21 @@ def render_declaration(item: dict) -> str:
             continue
         if all(is_internal(o) for o in function["overloads"]):
             continue
-        label = "Constructors" if method == "__init__" else f"`{method}`"
-        out.append(f"#### {label} {{ #{anchor(name)}.{anchor(method)} }}\n")
-        out.append(render_overloads(function["overloads"]))
-    return "\n".join(out)
+        if method == "__init__" or is_factory(function):
+            groups["Constructors"].append(function)
+        elif method.startswith("__"):
+            groups["Special methods"].append(function)
+        else:
+            groups["Methods"].append(function)
+    return groups
+
+
+def is_factory(function: dict) -> bool:
+    """A static method that builds the type, such as `Image.load`."""
+    return all(
+        o.get("isStatic") and o["signature"].rstrip().endswith("-> Self")
+        for o in function["overloads"]
+    )
 
 
 def member_line(text: str, item: dict) -> str:
