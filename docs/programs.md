@@ -1,8 +1,10 @@
 # Programs
 
 A Create program is a struct that implements the `Program` trait, handed to `run`. The
-[README](../README.md#how-a-program-works)'s "Hello, world!" shows the smallest one; this page
-explains how a program runs, where its state lives, and the few things each frame needs.
+[README](../README.md#how-a-program-works)'s "Hello, world!" shows a simple one; this page
+explains how a program runs, where its state lives, which settings belong to the run and how long
+each one lasts. Coming from Processing? [Coming from Processing](processing.md) lists what works
+differently.
 
 ## `create` and `update`
 
@@ -13,41 +15,39 @@ explains how a program runs, where its state lives, and the few things each fram
 - `update(mut self, mut context, mut canvas)`, called once for every frame after that. It reads
   input, changes the program's state and draws the frame.
 
-If you know Processing, `create` is `setup` and `update` is `draw`. A program that moves a ball
-and turns it around with the space bar:
+## Example program
+
+A program that draws a circle at the mouse, orange while the left mouse button is held and blue
+otherwise:
 
 ```mojo
 from create import *
 
 
 @fieldwise_init
-struct Ball(Program):
-    var position: Point2D
-    var velocity: Vector2D
-
+struct Example(Program):
     @staticmethod
-    def create(mut context: Context, mut canvas: Canvas) raises -> Ball:
-        return Ball((0, 0), Vector2D(120, 80))
+    def create(mut context: Context, mut canvas: Canvas) raises -> Example:
+        return Example()
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.WHITE)
-        if context.keyboard.pressed(Key.SPACE):
-            self.velocity = -self.velocity
-        self.position = self.position + self.velocity * context.time.delta
-        canvas.fill(Color.ORANGE)
-        canvas.circle(self.position, 20)
+        if context.mouse.down():  # held this frame; the left button by default
+            canvas.fill(Color.ORANGE)
+        else:
+            canvas.fill(Color.BLUE)
+        canvas.circle(context.mouse.position, 40)
 
 
 def main() raises:
-    run[Ball]("Ball")
+    run[Example]("Example")
 ```
 
 `@fieldwise_init` writes the struct's constructor from its fields, so use it on program structs.
-Make `canvas.background(...)` the first render call in `update`; with the autoclear off (see
-[Drawing](drawing.md#the-background)), call `canvas.autoclear(False)` and `canvas.background(...)`
-once, in `create`, instead. A complete, bigger program is
-[examples/sidescroller](../examples/sidescroller/main.mojo); the smallest that builds is
-[tests/core/test_smoke.mojo](../tests/core/test_smoke.mojo).
+Every frame starts cleared to light gray, so a program needs no background call to get a clean
+frame. `canvas.background(...)` paints the frame another colour, and paints over everything drawn
+before it, so call it before anything else you draw (see [Drawing](drawing.md#the-background)).
+See [examples/sidescroller](../examples/sidescroller/main.mojo) for a complete bigger program.
 
 ## Running a program
 
@@ -64,36 +64,37 @@ keywords with defaults:
 | `autoscale` | `Autoscale.FIT` | How the design size maps onto the window |
 
 Every argument but `backend` is only a starting value, changed later through a setter (see
-[The run's settings](coordinates.md#the-runs-settings)).
+[The run's settings](#the-runs-settings)).
 
 **The backend** is fixed for the run. Rendering runs on the CPU by default;
 `RenderBackend.GPU` runs the same program through an OpenGL 3.3 backend instead. The two draw
-the same frame, apart from the GPU's multisampled edges:
+the same frame, apart from tiny differences along antialiased edges:
 
 ```mojo
 # In `main`:
-run[Ball]("Ball", backend=RenderBackend.GPU)
+run[Example]("Example", backend=RenderBackend.GPU)
 ```
 
 `RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run
-with a `gpu` argument (`./ball gpu`), the CPU otherwise. Other arguments are left for the
+with a `gpu` argument (`./example gpu`), the CPU otherwise. Other arguments are left for the
 program. [examples/backends](../examples/backends/main.mojo) reads it this way, so
 `pixi run example backends` and `pixi run example backends gpu` compare the two.
 
 ```mojo
 # In `main`:
-run[Ball]("Ball", backend=RenderBackend.from_arguments())
+run[Example]("Example", backend=RenderBackend.from_arguments())
 ```
 
 ## The first frame
 
-**`create` draws frame 1**, like Processing's `setup`: its `canvas` is a real frame, presented like
-every later one, so what you draw there shows, and the canvas's geometry is as valid as on any
-first frame (but see [gotcha 1](#critical-gotchas)). In `create`, `context.frame_count()` is 1 (it
-is 2 in the first `update`), `context.time` is zero and no key or button is down.
+**`create` draws frame 1**, like Processing's `setup`: its `canvas` is an ordinary frame, and what
+you draw there is the first thing on screen. (The window's size may not be final yet; see [The
+window's size on the first frame](#the-windows-size-on-the-first-frame).) In `create`,
+`context.frame_count()` is 1 (it is 2 in the first `update`), `context.time` is zero and no key or
+button is down.
 
-`create` has no `self` yet, so drawing that needs the program's fields builds `Self` into a local
-first:
+`create` has no `self` yet. To draw something that needs the program's fields, build the program
+in a local variable first and draw through it:
 
 ```mojo
 # In a program with a `draw(mut self, mut canvas: Canvas)` method of its own:
@@ -104,25 +105,26 @@ def create(mut context: Context, mut canvas: Canvas) raises -> Self:
     return program^
 ```
 
-`run_headless(frames=N)` runs `create`'s frame and then N `update`s, so `frames=0` returns
-`create`'s frame alone.
+`run_headless(frames=N)`, which runs a program without a window (for tests), runs `create`'s
+frame and then N `update`s, so `frames=0` gives `create`'s frame alone.
 
 ## Parameters and fields
 
 What the loop hands `create` and every `update` is a parameter:
 
-- **`Context`** is the run's state and outlives the frame. Its readings are filled in by the loop
-  before each `update`: it ticks `context.time` and folds events into `context.keyboard`,
-  `context.mouse` and the gamepads (`context.gamepad(player)`). Read them, don't write them: the
-  loop carries them into the next frame. Input only arrives this way; there are no event
-  callbacks. See [Input](input.md).
-- **`Canvas`** is where this frame is drawn. The loop builds it fresh each frame, so nothing may
-  hold on to it across frames.
+- **`Context`** is the run's state and outlives the frame. Its *readings*, the time and the input
+  devices, are filled in by the loop before each `update`: it advances `context.time` and records
+  what happened to `context.keyboard`, `context.mouse` and the gamepads
+  (`context.gamepad(player)`). Read them, but don't change them: the loop works out the next
+  frame's readings from them. Input only arrives this way; there are no event callbacks. See
+  [Input](input.md).
+- **`Canvas`** is where this frame is drawn. The loop builds a fresh one every frame, so don't
+  keep it in a field; draw on the one each call receives.
 
-Everything the program drives on its own schedule is a field it constructs in `create`: an
-`Image`, `Font`, `Sound`, `Audio`, `Animator`, `Camera`, `Tween`, `Noise`, a `Table` or `JSON`,
-or an offscreen `Canvas(w, h)` (see [Drawing into an image](pixels.md#drawing-into-an-image)), which is the
-program's own. So adding one touches neither `Program` nor the run loop.
+Everything else the program keeps from frame to frame is a field, built in `create`: an `Image`,
+`Font`, `Sound`, `Audio`, `Animator`, `Camera`, `Tween`, `Noise`, a `Table` or `JSON`, or an
+offscreen `Canvas(width, height)`, which, unlike the frame's canvas, is the program's own to keep
+(see [Drawing into an image](pixels.md#drawing-into-an-image)).
 
 ## Assets and playheads
 
@@ -131,13 +133,61 @@ itself, so a plain field or a copy is cheap and nothing needs wrapping in an `Ar
 
 An `Animator`, or a `Voice` (what `audio.play` and `audio.loop` return), is a **playhead**: one
 entity's position in an asset. Two enemies sharing one walk `Animation` each have their own
-`Animator`. The frame rate, `fps`, belongs to the asset. An animator, like a `Tween`, keeps time
-on its own: it reads its position off the run's clock, so nothing ticks it.
+`Animator`. An animator, like a `Tween`, keeps time on its own: it reads its position off the
+run's clock, so nothing ticks it. How to drive one is in
+[Images and animation](images.md#sprite-animation).
 
-An animator's `use(anim)` is the per-frame selector: call it every frame with the animation the
-entity should show, and the animation already held is left as it is, paused or finished included.
-`play` and `loop`, with or without an animation, are commands and always start from frame 0. Read
-[`Animator`](../src/create/image/animator.mojo) before driving one.
+## What lasts how long
+
+Some things reset every frame, some last until a `with` block ends, and some last until changed:
+
+| What | Lasts | Where it is explained |
+|---|---|---|
+| Style (`fill`, `stroke`, `font`, …) and `camera`, set with a plain call | Until the end of the frame | [Style](style.md), [Coordinates](coordinates.md#the-camera) |
+| Anything set by a `with` block: `canvas.style(...)`, `transform`, `overlay`, `clip` | Until the block ends | [Drawing](drawing.md#transforms-and-guards) |
+| The canvas settings: `autoclear`, `letterbox_color`, `antialiasing` | Until changed; each applies to the whole frame it is set in | [Drawing](drawing.md#settings-that-outlive-the-frame) |
+| The run's settings on `Context`: `title`, `design_size`, `cursor`, … | Until changed; when each takes effect is [below](#when-a-change-applies) | [The run's settings](#the-runs-settings) |
+| A recording | Until it stops, or the run ends | [Recording](pixels.md#recording) |
+| The program's own fields | The whole run | [Parameters and fields](#parameters-and-fields) |
+
+So set the frame's style in `update`, every frame, and the lasting settings once, in `create`.
+
+## The run's settings
+
+`Context`'s settings belong to the run, not the drawing: `design_size`, `autoscale`, `title`,
+`window_mode`, `resizable`, `cursor` (see [The cursor](input.md#the-cursor)), `lock_mouse`,
+`text_input`, `quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` (see
+[Slowing and pausing time](math.md#slowing-and-pausing-time)). Like the canvas setters, they are
+methods, each read back with no arguments:
+
+```mojo
+# In `create`:
+context.autoscale(Autoscale.EXTEND)
+context.title("Level 1")
+var mode = context.autoscale()  # Autoscale.EXTEND
+```
+
+`Context`'s only fields are the readings: `time`, `keyboard` and `mouse`. The gamepads are
+`context.gamepad(player)`, a copy, since there can be several.
+
+Every `run` argument except `backend` can be changed later: `antialiasing` through
+`canvas.antialiasing`, the rest through a setting here. Not every setting is a `run` argument:
+`cursor`, `quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` are set in `create`.
+
+## When a change applies
+
+Each setting takes effect at one of three points:
+
+- **In the frame it is set in**, wherever in `update` it is set: the canvas settings (see
+  [Drawing](drawing.md#settings-that-outlive-the-frame)), and `title`, `resizable`, `cursor`,
+  `lock_mouse` and `text_input`.
+- **From the next frame:** `design_size`, `autoscale` and `window_mode`, which change the frame's
+  size or shape, and `time_scale` and `time_paused`, since the frame being drawn already has its
+  `delta`. Some compositors report a new window mode's size a frame later still.
+- **When `update` returns:** `max_frame_rate`, `quit()` and `rumble()`.
+
+Reading a setting back gives the new value at once, even before it takes effect. Headless runs
+ignore the window settings and `rumble`.
 
 ## File paths
 
@@ -161,12 +211,12 @@ var player = Image.load("assets/player.png")
   `makedirs`, resolves against the working directory. Give it `source_path("...")` to get the same
   answer Create's loaders do.
 - **A path that arrives while the program runs**, such as a command-line argument or typed text,
-  means the working directory to whoever gave it. Make it absolute first with
+  is meant relative to the working directory. Make it absolute first with
   `String(cwd() / path)`, using `cwd` from `std.pathlib`.
 
-## Multiple screens
+## Multiple scenes
 
-A program with a menu, a game and a pause screen keeps each screen as a plain field of the root
+A program with a menu, a game and a pause screen keeps each scene as a plain field of the root
 `Program` (not a `Program` itself) and switches between them with an int field and `if`/`elif`:
 
 ```mojo
@@ -183,15 +233,15 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises:
             self.scene = _MENU
 ```
 
-A screen's `update` takes only what it uses (`context` to read input or time, `canvas` to draw),
+A scene's `update` takes only what it uses (`context` to read input or time, `canvas` to draw),
 and a one-shot reset is a plain `enter(...)` method the parent calls before switching, taking
 whatever that transition carries. There is no scene trait on purpose: it would force one
-`update`/`enter` signature on every screen, and those must vary. Mojo 1.2 has no dynamic trait
+`update`/`enter` signature on every scene, and those must vary. Mojo 1.2 has no dynamic trait
 dispatch either; to store different types side by side, use `Variant` from `std.utils` and
 dispatch with `isa[T]()`. See [examples/scenes](../examples/scenes/main.mojo).
 
-## Critical gotchas
+## The window's size on the first frame
 
-1. **Don't cache pixel dimensions from `create` or the first frame.** A window's first reported
-   size can be wrong (fullscreen, Wayland); the loop corrects it from the next frame on. Read
-   `canvas.width()`, `canvas.right()` and the like each frame instead.
+**Don't cache pixel dimensions from `create` or the first frame.** A window's first reported size
+can be wrong (fullscreen, Wayland); the loop corrects it from the next frame on. Read
+`canvas.width()`, `canvas.right()` and the like each frame instead.

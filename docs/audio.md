@@ -1,7 +1,38 @@
 # Audio
 
 Playing sounds: loading or synthesizing a `Sound`, playing it through an `Audio` as voices, and
-controlling each voice. A complete program is [examples/audio](../examples/audio/main.mojo).
+controlling each voice. A program that builds a short beep and plays it on Space:
+
+```mojo
+from create import *
+
+
+@fieldwise_init
+struct Beep(Program):
+    var audio: Audio
+    var beep: Sound
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Beep:
+        var samples = List[Float64](capacity=22050)  # half a second
+        for i in range(22050):
+            var fade = 1.0 - Float64(i) / 22050.0
+            var wave = sin(TAU * 440.0 * Float64(i) / 44100.0)  # 440 Hz
+            samples.append(0.5 * fade * wave)
+        return Beep(Audio(), Sound.from_samples(samples))
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.WHITE)
+        canvas.text("Press Space", (0, 0))
+        if context.keyboard.pressed(Key.SPACE):
+            _ = self.audio.play(self.beep)  # `_ =`: this program never needs the voice
+
+
+def main() raises:
+    run[Beep]("Beep")
+```
+
+A bigger one, loading sounds from files, is [examples/audio](../examples/audio/main.mojo).
 
 ## Sounds
 
@@ -18,22 +49,13 @@ var chime = Sound.load("assets/chime.wav")
   its extension. The whole file is decoded at load, to 16-bit samples whatever the file held. It
   raises, naming the path, for a file it can't read or one with no samples.
 - **Synthesizing:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` takes `Float64`
-  samples from `-1.0` to `1.0`, clipping any outside. With several channels they interleave, a
-  sample of each to a frame: left, right, left, right. It raises unless `channels` and
-  `sample_rate` are positive and the samples are whole frames.
+  samples from `-1.0` to `1.0`, clipping any outside. With several channels the samples
+  interleave, one per channel in turn: left, right, left, right. Each such group is an audio
+  *frame*, unrelated to the display's frames. It raises unless `channels` and `sample_rate` are
+  positive and the samples are whole frames.
 - **Reading:** `channels()`, `sample_rate()`, `frame_count()` and `duration()` in seconds.
   `sample(frame, channel=0)` reads one sample back, from `-1.0` to `1.0`, and is `0.0` outside
   the sound, so drawing a waveform needs no bounds checks.
-
-A one-second 440 Hz tone:
-
-```mojo
-# In `create`:
-var samples = List[Float64](capacity=44100)
-for i in range(44100):
-    samples.append(0.5 * sin(TAU * 440.0 * Float64(i) / 44100.0))
-var tone = Sound.from_samples(samples)
-```
 
 ## Playing
 
@@ -43,7 +65,7 @@ raising, so the program still runs.
 
 `audio.play(sound)` plays a sound once and `audio.loop(sound)` over and over until stopped. Each
 returns a `Voice`, the handle of that one playback, a playhead in the sound like an `Animator` in
-an animation. A sound can play as many voices at once:
+an animation. A sound can play as several voices at once:
 
 ```mojo
 # In `update`, with `audio: Audio`, `music: Sound`, `jump: Sound` and
@@ -57,15 +79,14 @@ if context.keyboard.pressed(Key.M):
         self.music_voice = self.audio.loop(self.music)
 ```
 
-An `Audio` needs nothing each frame. A looping voice is fed on SDL's audio thread whenever the
-device wants more, so it plays on through a slow frame or a long load; a one-shot voice is stale
-once it has played to its end.
+An `Audio` needs nothing each frame. Sound plays on a background thread, so it carries on
+smoothly through a slow frame or a long load.
 
 ## Voices
 
-Each call taking a voice does nothing once the voice is stale, that is once it has ended (a
-one-shot that played to its end) or been stopped, even after its slot plays another sound.
-`Voice.NONE` is no voice, for a field before anything plays.
+A voice becomes **stale** when it ends: a one-shot that has played to its end, or any voice that
+was stopped. A call on a stale voice does nothing, safely, even if a newer sound has started
+playing since. `Voice.NONE` is no voice, for a field before anything plays.
 
 | Call | Does |
 |---|---|
@@ -77,7 +98,8 @@ one-shot that played to its end) or been stopped, even after its slot plays anot
 | `stop_all()`, `pause_all()`, `resume_all()` | The same for every voice at once |
 
 `play` and `loop` take a starting `volume=` and `speed=`, applied before the first sample
-plays; setting them afterwards can let the start through as it was.
+plays. Pass them there rather than setting them right after: by then the first moment may have
+played at the old values.
 
 - **Volume:** `0.0` is silent and `1.0` as recorded; above `1.0` amplifies, and below `0.0` is
   silent too. `audio.volume(v)` is the overall volume, which scales every voice's own: a voice

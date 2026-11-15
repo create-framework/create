@@ -6,28 +6,48 @@ block it was set in.
 
 ## Defaults
 
-`Style()` defaults are not blank: **stroke `BLACK`, on, 1 unit**; fill `WHITE`, off; `BLACK`
-text. Every frame opens with a clear to gray 200 so those defaults are visible (see
-[Drawing](drawing.md#the-background)). So a shape drawn with no style at all is a thin black
-outline.
+**Shapes are not filled by default**, unlike in Processing. A new style has a black stroke, on and
+1 unit thick, and a white fill that is switched off; text is black. So a shape drawn with no style
+at all is a thin black outline, which shows on the light gray every frame starts with (see
+[Drawing](drawing.md#the-background)).
 
 ## Colours
 
-`fill`, `stroke` and `text_color` set three independent colours: `fill_enabled(False)` does not
-hide text, and text is hidden by a zero-alpha `text_color` instead.
+A `Color` is red, green and blue, each from 0 to 255, and an alpha from 0 (invisible) to 255
+(opaque, the default):
 
-`fill_enabled` and `stroke_enabled` switch a part off without losing its colour.
-`fill(...)`, `stroke(...)` and `shadow(...)` switch it back on, and with no arguments keep every
-part, so `fill()` alone paints the default white.
+```mojo
+# In `update`:
+canvas.fill(Color(255, 128, 0))  # orange
+canvas.fill(Color(255, 128, 0, 128))  # orange, half transparent
+canvas.fill(Color(200))  # one number is a gray
+canvas.fill(Color.RED.with_alpha(64))  # a named colour, mostly transparent
+canvas.fill(Color.hex("#336699"))  # as a design tool writes it
+canvas.fill(Color.hsv(200, 0.8, 1.0))  # hue in degrees, saturation and value from 0 to 1
+```
+
+- The named colours are `BLACK`, `WHITE`, `DARK_GRAY`, `GRAY`, `LIGHT_GRAY`, `RED`, `GREEN`,
+  `BLUE`, `CYAN`, `MAGENTA`, `YELLOW`, `ORANGE`, `PINK`, `PURPLE`, `BROWN` and `TRANSPARENT`.
+- `Color.hex` also takes a number, `Color.hex(0x336699)`, and its string can carry alpha,
+  `"#33669980"`.
+- `a.lerp(b, t)` mixes two colours, `t` from 0 (all `a`) to 1 (all `b`).
+
+**Fill, stroke and text have separate colours**, set by `fill`, `stroke` and `text_color`. Unlike
+Processing, `fill` never colours text, and `fill_enabled(False)` doesn't hide it; a transparent
+`text_color` does.
+
+`fill_enabled(False)` and `stroke_enabled(False)` switch a part off and keep its colour.
+`fill(color)` sets the colour and switches the fill on; `fill()` with no arguments switches it back
+on with the colour it had (white, if never set). `stroke` and `shadow` work the same way.
 
 ## Three ways to style
 
-All three are additive:
+They can be mixed and nested:
 
 | Form | Effect |
 |---|---|
 | `canvas.fill(Color.RED)` (any setter) | Rest of the frame |
-| `with canvas.style(fill=Color.RED):` | Only the named fields, for the block (each goes through its setter) |
+| `with canvas.style(fill=Color.RED):` | Only the named fields, for the block |
 | `with canvas.style(heading):` | A whole `Style` value, for the block — unset fields are `Style()` defaults, not the previous style |
 
 ```mojo
@@ -57,38 +77,40 @@ def main() raises:
     run[Styles]("Styles")
 ```
 
-`Style(...)` takes the setters' names as keywords and, like them, naming any part of the fill,
-stroke or shadow switches it on unless its `*_enabled` keyword says otherwise. A reusable style is
-a field built in `create`, like `label` above.
+`Style(...)` takes the setters' names as keywords. Like the setters, naming any part of the fill,
+stroke or shadow switches that part on, unless its `*_enabled` keyword says otherwise:
+`Style(fill=Color.RED)` is filled. A reusable style is a field built in `create`, like `label`
+above.
 
-A `Float64` keyword (`blur`, `spread`, `thickness`, `font_size`, `opacity`) takes `12`, `1.5`,
-`None` or an `Optional[Float64]` alike. It is the internal `_OptionalFloat64`, since an integer
-literal won't convert through `Optional[Float64]` in one step. Every optional keyword left unset
-is `None`.
+A number keyword (`blur`, `spread`, `thickness`, `font_size`, `opacity`) takes a whole or a
+decimal number alike, `12` or `1.5`.
 
-**Corner radius** is style only for shapes the canvas builds from numbers: `canvas.corner_radius(r)`
-rounds the next `canvas.rectangle(...)`. A shape value keeps its own (see
-[`corner_radius`](geometry.md#corner-radius)), so `with canvas.style(corner_radius=8): canvas.draw(rect)` does
-not round `rect`.
+**Corner radius** is style only for shapes the canvas builds from numbers:
+`canvas.corner_radius(radius)` rounds every `canvas.rectangle`, `triangle`, `polygon` and `sector`
+drawn after it. A shape value keeps its own (see [`corner_radius`](geometry.md#corner-radius)), so
+`with canvas.style(corner_radius=8): canvas.draw(rect)` does not round `rect`.
 
 ## Strokes
 
-Strokes are style like the rest: `canvas.stroke(color, thickness)`, `stroke_enabled`, two
-settings that place the paint and one that breaks it into dashes.
+Strokes are style like the rest: `canvas.stroke(color, thickness)` and `stroke_enabled`, plus three
+settings: where the stroke sits (`stroke_alignment`), how its ends look (`stroke_cap`) and dashes
+(`stroke_dash`).
 
 **`stroke_alignment(StrokeAlign.INSIDE/CENTER/OUTSIDE)`** puts a region's stroke inside its edge
-(the default), centred on it, or around it. The fill meets the stroke's inner edge, so `OUTSIDE`
-leaves the whole shape to the fill.
+(the default; Processing centres it), centred on it, or outside it. The fill always stops where
+the stroke starts, so with `OUTSIDE` the fill covers the whole shape.
 
 - Regions only (rectangle, circle, triangle, sector, polygon): lines and curves have no inside and
   are always centred. A self-crossing polygon's seams (edges through its inside) stay centred
   under every alignment.
-- `INSIDE` keeps drawn pixels within what `contains`, `overlaps` and `clip` see.
+- With `INSIDE`, nothing is drawn outside the shape, so what you see matches what `contains`,
+  `overlaps` and `clip` use.
 - Shadows and a gradient fill follow the shape, not the stroke: the gradient spans the true shape
   whatever the alignment.
 
-**`stroke_cap(StrokeCap.BUTT/ROUND/SQUARE)`** ends an open stroke — a `Line`, `Arc`, `Bezier` or
-open `Spline` — flush (the default), with a half disc, or half the thickness further, square.
+**`stroke_cap(StrokeCap.BUTT/ROUND/SQUARE)`** sets how an open stroke ends — a `Line`, `Arc`,
+`Bezier` or open `Spline`: `BUTT` (the default) stops flush at the end point, `ROUND` adds a half
+disc, and `SQUARE` reaches half the thickness further, square.
 
 - A closed curve and a shape's stroke have no ends, unless dashed: then every dash has two.
 - A zero-length line draws nothing with `BUTT`, a dot with `ROUND` and an axis-aligned square with
@@ -96,9 +118,9 @@ open `Spline` — flush (the default), with a half disc, or half the thickness f
 - Caps composite with the stroke once, translucent or not, and are part of its shadow, so
   segments drawn end to end with `ROUND` meet without notches.
 
-**`stroke_dash(...)`** breaks every stroke into dashes, regions' included. A preset is a finished
-look and scales with the thickness; a constructor gives exact lengths in world units, scaled like
-the thickness by autoscale, the camera and the transform:
+**`stroke_dash(...)`** breaks every stroke into dashes, regions' included. The presets scale with
+the stroke's thickness; `StrokeDash(...)` takes exact lengths, in the same units as the
+thickness:
 
 | Value | Stroke |
 |---|---|
@@ -136,8 +158,8 @@ with canvas.style(stroke=Color.BLACK, fill_enabled=False, stroke_dash=ants):
 
 A `Gradient` fills regions and backgrounds: `canvas.fill(gradient)` and
 `canvas.background(gradient)` are overloads beside the colour ones. Build one in `create` and
-keep it as a field (or in a `Style`): construction samples its colour ramp, and the GPU uploads
-one ramp per distinct set of stops.
+keep it as a field (or in a `Style`), since building one does work up front that drawing it
+reuses.
 
 ```mojo
 # In `create`, building the `sky` and `glow` fields:
@@ -152,29 +174,27 @@ with canvas.style(fill_gradient=self.glow, stroke_enabled=False):
 
 A gradient is its stops (0..1 positions, each a `Color`) and how it runs:
 
-- **Placed by the shape's local bounding box**, before the transform, so it moves and turns with
-  the shape and one `Style` suits every entity. A sector's box is its whole circle.
+- **It stretches to fit each shape it fills** (the shape's bounding box, before the transform), so
+  it moves and turns with the shape, and one gradient suits shapes of every size. A sector's box is
+  its whole circle.
 - `linear` runs along `direction` (a `Vector2D`, default `DOWN`, any length); the box's extreme
   corners land on 0 and 1, as in CSS. `Gradient.linear([(0.0, Color.BLUE), (0.7, Color.PURPLE),
   (1.0, Color.ORANGE)])` places the stops; given colours alone, they are spread evenly.
 - `radial` runs from `center` in the box's unit space (-1..1, y up) out to its edges: an ellipse
   on a long box.
 - A zero `direction` or a zero-size box paints the first stop.
-- It blends premultiplied, so a fade to `TRANSPARENT` stays clean, and is dithered on both
-  backends.
+- A fade to `TRANSPARENT` stays clean, with no dark fringe, and a gradient is dithered against
+  banding on both backends.
 
 How it combines with the rest of the style:
 
-- In `Style` and `canvas.style`, the keyword is `fill_gradient=`, not `fill=`: one keyword can't
-  take both types, and an `Optional[Paint]` wrapper would need two implicit conversions from a
-  bare `Color`, which Mojo won't chain. Given `fill=` and `fill_gradient=` together, the gradient
-  wins.
-- While a gradient is set it fills, and `fill_color` is kept: `fill(color)` clears the gradient,
-  while `fill()` and `fill_enabled(...)` keep it.
+- In `Style` and `canvas.style`, the keyword is `fill_gradient=`, not `fill=`. Given `fill=` and
+  `fill_gradient=` together, the gradient wins.
+- While a gradient is set it fills instead of the fill colour, which is kept. `fill(color)`
+  removes the gradient; `fill()` and `fill_enabled(...)` keep it.
 - It fills only. Strokes, lines, curves and text ignore it, and a shadow stays the silhouette in
   `shadow_color` (a fill fading to transparent still casts a full shadow).
-- `background(gradient)` spans the screen (`left()`…`top()`), ignoring the camera, and replaces
-  the autoclear only if every stop is opaque.
+- `background(gradient)` spans the screen (`left()`…`top()`), ignoring the camera.
 
 ## Shadows
 
@@ -192,7 +212,7 @@ with canvas.style(shadow=Color(0, 0, 0, 120), shadow_blur=12):
 - **One silhouette, like CSS `drop-shadow`:** fill and stroke cast together (a stroke alone casts
   a ring); lines and arcs cast their stroke, text its glyphs, images their alpha. A translucent
   fill shows its own shadow through it. The clear, the background and the letterbox never cast.
-- **`blur` is the CSS radius** (σ = blur / 2). `blur` and `spread` are world units, scaled like
+- **`blur` is the CSS radius** (σ = blur / 2). `blur` and `spread` are in units, scaled like
   coordinates. Blur 0 is hard.
 - **`shadow_inset`** paints inside the shape instead, after it, clipped to the interior within the
   stroke. Rectangles, circles and triangles only: sectors, polygons, lines, arcs, text and images
@@ -203,12 +223,13 @@ with canvas.style(shadow=Color(0, 0, 0, 120), shadow_blur=12):
 
 ## Tint, opacity and blend modes
 
-These reach every render call, images included (`background()` never), and every shape composites
-once: fill and stroke never overlap, so a translucent shape is evenly translucent.
+These apply to every render call, images included, but never to `background()`. A shape's fill
+and stroke never overlap, so a translucent shape is evenly translucent, with no darker band where
+they meet.
 
 - **`canvas.tint(color)`** multiplies every colour of the call — fill, gradient stops, stroke,
   text, shadow, each image texel — channel by channel. White (the default) is no tint, and its
-  alpha stacks with `opacity`. It recolours a whole look at once, where `fill`, `stroke` and
+  alpha multiplies with `opacity`. It recolours a whole look at once, where `fill`, `stroke` and
   `text_color` set one part each; scope it with `with canvas.style(tint=...)`. Multiplying only
   darkens, so it can't flash a sprite white.
 - **`canvas.opacity(a)`**, from 0 to 1, fades the whole call.
@@ -234,15 +255,21 @@ with canvas.style(font=self.title_font, font_size=48, font_weight=FontWeight.BOL
   last copy goes.
 - With no font set, text is the packaged Noto Sans, and a character the face lacks falls back to
   Noto Sans Symbols.
-- Each `text` call keeps its face, so several share a frame. Like every style setter,
-  `canvas.font` resets next frame. Switching faces costs nothing: cached glyphs are keyed by face.
+- Different `text` calls in one frame can use different fonts. Like every style setter,
+  `canvas.font` resets next frame. Switching fonts costs nothing.
 
 **Italic** is `canvas.font_italic(True)` (or the `font_italic=` keyword), and always slants, from
 the best source the font has: the `italic_path` file of `Font.load(path, italic_path=...)` (the
 packaged Noto Sans ships its italic this way), else the file's own `ital` or `slnt` axis, else its
-upright glyphs sheared 12°. Fallback glyphs follow, so Noto Sans Symbols comes out sheared. Weight
-reaches a variable italic like an upright. A shear's overhang is not measured: `text_width` is the
-advance, as in CSS.
+upright glyphs sheared 12°. Fallback glyphs follow, so Noto Sans Symbols comes out sheared. Weights
+apply to italic text as to upright text. `text_width` ignores the slant, as in CSS, so italic text
+can stick out slightly past it.
+
+**Alignment.** `canvas.text_alignment(Align.CENTER)`, the default, centres the text on its
+position, like every shape. The other eight values name the point of the text's box that lands on
+the position: `TOP`, `BOTTOM`, `LEFT` and `RIGHT` are the middles of its edges, and `TOP_LEFT`,
+`TOP_RIGHT`, `BOTTOM_LEFT` and `BOTTOM_RIGHT` its corners. So `Align.TOP_LEFT` hangs the text below
+and to the right of the position.
 
 **Lines.** A newline (`"\n"`, or `"\r\n"`) in the string starts a new line, the font's line
 height below. Each line is aligned on its own by `text_alignment`, whose top and bottom are those

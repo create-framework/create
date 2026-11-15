@@ -46,12 +46,12 @@ def main() raises:
 
 - The mouse's methods default to `MouseButton.LEFT`.
 - Unlike Processing's `mousePressed`, *pressed* never means held.
-- When the window loses focus, everything held is released, each with its *released* edge, since
-  what is let go while it is away is never reported to it. A disconnecting pad releases its
-  buttons the same way.
+- When the window loses focus, everything held is released, each with its *released* edge, because
+  the window can't see keys and buttons let go while it is in the background. A disconnecting pad
+  releases its buttons the same way.
 - The most recent press is `keyboard.key`, `mouse.button` and `pad.button`, each
   `Key.NONE`/`MouseButton.NONE`/`GamepadButton.NONE` before any. Like every enum they are typed,
-  so a bare number never passes for a key, a button or a `FontWeight`.
+  so a bare number never passes for a key or a button.
 
 ## The keyboard
 
@@ -60,16 +60,16 @@ layout, so `Key.W` is the key above `S` (AZERTY's Z), and WASD lands under the s
 every layout. Characters never come from a `Key`; they are `context.keyboard.text` (below).
 
 - `CTRL`, `SHIFT`, `ALT` and `SUPER` match either side.
-- `Key.from_name` reads a binding from a file (`"page_up"`, `"a"`, `"/"`), as do
-  `MouseButton.from_name`, `GamepadButton.from_name` and `Cursor.from_name`, each by its
-  constants' names, case folded.
+- `Key.from_name("page_up")` turns a name into a key (`"a"`, `"/"`, …), for key bindings kept in
+  a settings file. `MouseButton`, `GamepadButton` and `Cursor` have a `from_name` too, each taking
+  its constants' names in any case.
 
 ## Typing text
 
-Text entry has its own two readings, both reset every frame:
+Typing has two readings of its own, both reset every frame:
 
 - **`context.keyboard.text`** is this frame's typed characters, UTF-8, with shift, layout and IME
-  applied. Append it; don't rebuild it from keys.
+  applied. Add it to your text; don't try to work characters out from key presses.
 - **`keyboard.typed(key)`** is true when a key is pressed or auto-repeated while held, for editing
   keys (Backspace, the arrows).
 
@@ -99,22 +99,30 @@ var caret_x = canvas.text_width(self.name.before_caret())
 - `canvas.text_width(field.before_caret())` places the caret, and `before_selection()` and
   `selected_text()` the selection's highlight.
 
-`EditableText` lives in `core`, beside the `Context` it reads. See
-[examples/typing](../examples/typing/main.mojo).
+See [examples/typing](../examples/typing/main.mojo).
 
 ## The mouse
 
 `context.mouse` holds:
 
-- `position` and `press_position`, `Point2D`s in screen space (see
-  [Coordinates](coordinates.md#screen-world-and-local-space)).
-- `wheel`, this frame's scroll, added up.
+- `position`, and `press_position`, where the latest press happened: `Point2D`s in screen space
+  (see [Coordinates](coordinates.md#screen-world-and-local-space)).
+- `wheel`, a `Vector2D`: how far the wheel scrolled this frame.
 - `movement`, how far the pointer moved this frame, y up, in screen units.
 
 `movement` keeps counting where `position` stops: at the screen's edge, and while
 `context.lock_mouse(True)` hides the pointer and holds it in the window, for a first-person
-camera. Unlock it for a menu. `context.cursor(...)` sets the pointer's look (see
-[Coordinates](coordinates.md#the-runs-settings)).
+camera. Unlock it for a menu.
+
+### The cursor
+
+`context.cursor(Cursor.CROSSHAIR)` sets the pointer's look, like Processing's `cursor(CROSS)`, and
+`Cursor.HIDDEN` hides it, like `noCursor()`; any other value shows the cursor again. Each `Cursor`
+is the platform's own system cursor: `ARROW` (the default), `CROSSHAIR`, `HAND`, `TEXT`, `WAIT`,
+`PROGRESS`, `MOVE`, `NOT_ALLOWED`, and four resize ones, `RESIZE_HORIZONTAL`, `RESIZE_VERTICAL`
+and the diagonals named by slope, `RESIZE_DIAGONAL_RISING` (`/`) and `RESIZE_DIAGONAL_FALLING`.
+A cursor is sent to the window only when it changes, so setting it every frame from a hover test
+is free. Image cursors are not supported.
 
 ## Gamepads
 
@@ -138,7 +146,7 @@ if pad.pressed(GamepadButton.SOUTH):  # Xbox A, PlayStation Cross
   `Gamepad.TRIGGER_PRESS` (0.5) and up again below `TRIGGER_RELEASE` (0.4), so
   `pad.pressed(GamepadButton.RIGHT_TRIGGER)` fires once per pull.
 - `connected_this_frame` and `disconnected_this_frame` are the edges of `connected`, and `name`
-  survives the frame a pad leaves in.
+  still holds the pad's name in the frame it disconnects.
 - `context.rumble(seconds, low_frequency=, high_frequency=, player=)` shakes a pad (both motors
   full by default; a new rumble replaces the running one). It is an output, so it lives on
   `Context`, not on the `Gamepad` copy.

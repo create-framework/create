@@ -26,14 +26,16 @@ must keep. Before changing, using or answering questions about one of these area
 
 | Read | When the task involves |
 |---|---|
+| [processing](docs/processing.md) | how Create differs from Processing, or a Processing call's equivalent |
 | [drawing](docs/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, transforms and guards, antialiasing, clipping |
-| [style](docs/style.md) | `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
-| [pixels](docs/pixels.md) | `color_at`, `snapshot`, offscreen canvases, `Image` and `PixelBuffer`, saving images, recording GIFs |
-| [input](docs/input.md) | the keyboard, mouse or gamepads, text entry, `EditableText` |
+| [style](docs/style.md) | `Color`, `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
+| [input](docs/input.md) | the keyboard, mouse or gamepads, the cursor, text entry, `EditableText` |
+| [images](docs/images.md) | `Image`, `canvas.image`, `Animation` and `Animator`, `PixelBuffer` |
+| [pixels](docs/pixels.md) | `color_at`, `snapshot`, offscreen canvases, saving images, recording GIFs |
 | [geometry](docs/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
-| [math](docs/math.md) | `Point2D`/`Vector2D`, `Random`, `Noise`, `Easing`/`Tween`, `Time`/`DateTime` |
-| [data](docs/data.md) | `Table` (CSV/TSV) or `JSON` |
+| [math](docs/math.md) | `Random`, `Noise`, `Easing`/`Tween`, `Time`/`DateTime` |
 | [audio](docs/audio.md) | `Sound`, `Audio` and `Voice`: loading, synthesizing and playing sounds |
+| [data](docs/data.md) | `Table` (CSV/TSV) or `JSON` |
 
 A task often spans several (a shadow on a clipped shape is style and drawing); read each it
 touches, and when unsure whether one applies, read it.
