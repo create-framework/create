@@ -1,9 +1,6 @@
 # AGENTS.md — Create
 
-Create's docs are written for every contributor, human or agent. Read them before working here;
-this file adds only what is specific to agents.
-
-## Always
+## Read Always
 
 These apply to every task and are imported below:
 
@@ -22,7 +19,7 @@ These apply to every task and are imported below:
 
 @docs/coordinates.md
 
-## When the task touches it
+## Read when relevant
 
 The rest of the [user guide](docs/README.md) describes how the library behaves, which every change
 must keep. Before changing, using or answering questions about one of these areas, read its page:
@@ -41,12 +38,7 @@ must keep. Before changing, using or answering questions about one of these area
 A task often spans several (a shadow on a clipped shape is style and drawing); read each it
 touches, and when unsure whether one applies, read it.
 
-Also:
-
-- A package's README before changing that package: [render](src/create/render/README.md),
-  [core](src/create/core/README.md), [tests](tests/README.md). The `AGENTS.md` beside each imports
-  it, so it loads when you work there.
-- [RELEASING.md](RELEASING.md), only when asked to cut a release.
+The release procedure is described in [RELEASING.md](RELEASING.md).
 
 ## As an agent
 
