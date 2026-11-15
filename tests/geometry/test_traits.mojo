@@ -33,8 +33,8 @@ def _moves_with_its_bounds[S: Shape](shape: S) raises:
     assert_equal(shape.bounds().position, before.position)
     assert_almost_equal(after.position.x, before.position.x + 3.0, atol=1e-9)
     assert_almost_equal(after.position.y, before.position.y - 2.0, atol=1e-9)
-    assert_almost_equal(after.w, before.w, atol=1e-9)
-    assert_almost_equal(after.h, before.h, atol=1e-9)
+    assert_almost_equal(after.width, before.width, atol=1e-9)
+    assert_almost_equal(after.height, before.height, atol=1e-9)
     var far = Point2D(100.0, 100.0)
     assert_true(after.contains(moved.closest_point(far)))
 

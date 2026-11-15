@@ -200,8 +200,9 @@ change one. What mutates is what has state over time — `Tween`, `Animator`, `A
 ### Locations, displacements and extents
 
 Use `Point2D` for new locations, `Vector2D` for displacements and scalars for extents;
-`canvas.rectangle(position: Point2D, w: Float64, h: Float64)` is the shape to copy. The reasons
-are in [Points and vectors](docs/math.md#points-and-vectors), and three rules keep them working:
+`canvas.rectangle(position: Point2D, width: Float64, height: Float64)` is the shape to copy. The
+reasons are in [Points and vectors](docs/math.md#points-and-vectors), and three rules keep them
+working:
 
 - Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
   `Point2D` one: a bare tuple already fills a `Point2D` parameter, and `(x, y)` keeps the pairs
@@ -219,7 +220,7 @@ A public value type implements `Writable` and prints as it would be written in s
 - By name for an `Int`-wrapping enum: `Easing.OUT_BOUNCE` (an unnamed value falls back to
   `Easing(99)`).
 - In keyword form otherwise, labelled by the constructor's keywords where it has them
-  (`Circle(position=Point2D(0.0, 0.0), r=5.0)`) and by public field names where it doesn't
+  (`Circle(position=Point2D(0.0, 0.0), radius=5.0)`) and by public field names where it doesn't
   (`Time`, `Tween`). Private fields are left out.
 
 Resource handles (`Image`, `PixelBuffer`, `Sound`, `Audio`, `Voice`) and shared assets

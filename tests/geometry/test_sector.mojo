@@ -28,7 +28,7 @@ def test_prints_in_keyword_form() raises -> None:
     assert_equal(
         String(Sector((1.0, 2.0), 10, 0.5, -1.5)),
         (
-            "Sector(position=Point2D(1.0, 2.0), r=10.0, start_angle=0.5,"
+            "Sector(position=Point2D(1.0, 2.0), radius=10.0, start_angle=0.5,"
             " sweep_angle=-1.5)"
         ),
     )
@@ -405,7 +405,8 @@ def _sampled_contains(s: Sector, c: Circle, n: Int) -> Bool:
     for i in range(n):
         var angle = TAU * Float64(i) / Float64(n)
         var p = Point2D(
-            c.position.x + c.r * cos(angle), c.position.y + c.r * sin(angle)
+            c.position.x + c.radius * cos(angle),
+            c.position.y + c.radius * sin(angle),
         )
         if not s.contains(p):
             return False

@@ -8,9 +8,9 @@ Points and vectors, random numbers and noise, easing and tweens, and the two clo
 
 Create has two types for a pair of numbers, chosen by role:
 
-- A **location** is a `Point2D`: `canvas.circle(position, r)`, `context.mouse.position`.
+- A **location** is a `Point2D`: `canvas.circle(position, radius)`, `context.mouse.position`.
 - A **displacement** is a `Vector2D`: `translate(delta)`, a velocity.
-- An **extent** is a scalar: `w`, `h`, `r`.
+- An **extent** is a scalar: `width`, `height`, `radius`.
 
 ```mojo
 # A fragment.

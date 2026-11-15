@@ -44,11 +44,14 @@ def test_rotation_takes_part_in_equality_and_printing() raises -> None:
     assert_true(r != Rectangle((0.0, 0.0), 3.0, 4.0))
     assert_equal(
         String(r),
-        "Rectangle(position=Point2D(0.0, 0.0), w=3.0, h=4.0, rotation=0.5)",
+        (
+            "Rectangle(position=Point2D(0.0, 0.0), width=3.0, height=4.0,"
+            " rotation=0.5)"
+        ),
     )
     assert_equal(
         String(Rectangle((0.0, 0.0), 3, 4)),
-        "Rectangle(position=Point2D(0.0, 0.0), w=3.0, h=4.0)",
+        "Rectangle(position=Point2D(0.0, 0.0), width=3.0, height=4.0)",
     )
 
 
@@ -72,8 +75,8 @@ def test_bounds_and_edges_are_the_bounding_box() raises -> None:
     var half = 5.0 * sqrt(2.0)
     var b = d.bounds()
     assert_equal(b.rotation, 0.0)
-    assert_almost_equal(b.w, 2.0 * half)
-    assert_almost_equal(b.h, 2.0 * half)
+    assert_almost_equal(b.width, 2.0 * half)
+    assert_almost_equal(b.height, 2.0 * half)
     assert_almost_equal(d.left(), -half)
     assert_almost_equal(d.right(), half)
     assert_almost_equal(d.bottom(), -half)
@@ -83,7 +86,7 @@ def test_bounds_and_edges_are_the_bounding_box() raises -> None:
 def test_rounded_bounds_are_pulled_in_at_the_corners() raises -> None:
     # Fully rounded, the diamond is the circle of radius 5, whatever its turn.
     var round = Rectangle((0.0, 0.0), 10.0, 10.0, corner_radius=5, rotation=1.0)
-    assert_almost_equal(round.bounds().w, 10.0)
+    assert_almost_equal(round.bounds().width, 10.0)
     assert_almost_equal(round.right(), 5.0)
 
 

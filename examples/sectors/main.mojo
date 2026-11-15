@@ -71,7 +71,7 @@ struct App(Program):
         var chew = context.time.elapsed * _CHEW
         var gape = 0.4 + 0.35 * abs(sin(chew))
         var pacman = Sector(_PACMAN, 150, gape, TAU - 2.0 * gape)
-        var mouth = Sector(pacman.position, pacman.r, -gape, 2.0 * gape)
+        var mouth = Sector(pacman.position, pacman.radius, -gape, 2.0 * gape)
 
         if self.respawn_in > 0.0:
             self.respawn_in -= context.time.delta

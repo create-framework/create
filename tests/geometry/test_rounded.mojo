@@ -152,13 +152,13 @@ def test_a_rounded_rectangle_compares_and_prints_its_radius() raises -> None:
     assert_equal(
         String(Rectangle((0.0, 0.0), 2.0, 3.0, corner_radius=1.0)),
         (
-            "Rectangle(position=Point2D(0.0, 0.0), w=2.0, h=3.0,"
+            "Rectangle(position=Point2D(0.0, 0.0), width=2.0, height=3.0,"
             " corner_radius=1.0)"
         ),
     )
     assert_equal(
         String(Rectangle((0.0, 0.0), 2.0, 3.0)),
-        "Rectangle(position=Point2D(0.0, 0.0), w=2.0, h=3.0)",
+        "Rectangle(position=Point2D(0.0, 0.0), width=2.0, height=3.0)",
     )
 
 
@@ -448,7 +448,7 @@ def test_a_rounded_sector_compares_and_prints_its_radius() raises -> None:
     assert_equal(
         String(rounded),
         (
-            "Sector(position=Point2D(0.0, 0.0), r=1.0, start_angle=0.0,"
+            "Sector(position=Point2D(0.0, 0.0), radius=1.0, start_angle=0.0,"
             " sweep_angle=1.0, corner_radius=0.25)"
         ),
     )

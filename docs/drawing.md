@@ -9,7 +9,7 @@ shadows, text) is [Style](style.md).
 `canvas.draw(shape)` draws any shape or curve — `Rectangle`, `Circle`, `Ellipse`, `Capsule`,
 `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`, `Bezier`, `Spline` — in the current style and
 transform. The named methods build a shape from numbers and draw it, so
-`canvas.rectangle(p, w, h)` is `canvas.draw(Rectangle(p, w, h))`:
+`canvas.rectangle(position, width, height)` is `canvas.draw(Rectangle(position, width, height))`:
 
 ```mojo
 from create import *

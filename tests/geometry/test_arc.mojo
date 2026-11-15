@@ -20,7 +20,7 @@ def test_prints_in_keyword_form() raises -> None:
     assert_equal(
         String(Arc((1.0, 2.0), 10, 0.5, -1.5)),
         (
-            "Arc(position=Point2D(1.0, 2.0), r=10.0, start_angle=0.5,"
+            "Arc(position=Point2D(1.0, 2.0), radius=10.0, start_angle=0.5,"
             " sweep_angle=-1.5)"
         ),
     )
@@ -107,8 +107,8 @@ def test_bounds_of_a_clockwise_sweep_across_the_x_axis() raises -> None:
 
 def test_bounds_of_a_full_circle() raises -> None:
     var b = Arc((1, 2), 3, 0.3, TAU).bounds()
-    assert_almost_equal(b.w, 6.0)
-    assert_almost_equal(b.h, 6.0)
+    assert_almost_equal(b.width, 6.0)
+    assert_almost_equal(b.height, 6.0)
     _assert_point_near(b.center(), Point2D(1.0, 2.0))
 
 

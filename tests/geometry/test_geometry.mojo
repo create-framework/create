@@ -70,8 +70,8 @@ def test_rect_int_constructor() raises -> None:
     var r = Rectangle(Point2D(1.0, 2.0), 10, 6)
     assert_equal(r.position.x, 1.0)
     assert_equal(r.position.y, 2.0)
-    assert_equal(r.w, 10.0)
-    assert_equal(r.h, 6.0)
+    assert_equal(r.width, 10.0)
+    assert_equal(r.height, 6.0)
 
 
 def test_rect_move_to() raises -> None:
@@ -215,7 +215,7 @@ def test_line_bounds() raises -> None:
     var b = Line((4.0, -1.0), (0.0, 3.0)).bounds()
     assert_equal(b, Rectangle((2.0, 1.0), 4.0, 4.0))
     var flat = Line((0.0, 1.0), (4.0, 1.0)).bounds()
-    assert_equal(flat.h, 0.0)
+    assert_equal(flat.height, 0.0)
 
 
 def test_line_flatten_is_its_ends() raises -> None:
@@ -961,11 +961,11 @@ def test_shapes_still_take_bare_tuples() raises -> None:
 def test_shapes_write_keyword_form() raises -> None:
     assert_equal(
         String(Rectangle(Point2D(1.0, 2.0), 3.0, 4.0)),
-        "Rectangle(position=Point2D(1.0, 2.0), w=3.0, h=4.0)",
+        "Rectangle(position=Point2D(1.0, 2.0), width=3.0, height=4.0)",
     )
     assert_equal(
         String(Circle(Point2D(1.0, 2.0), 3.0)),
-        "Circle(position=Point2D(1.0, 2.0), r=3.0)",
+        "Circle(position=Point2D(1.0, 2.0), radius=3.0)",
     )
     assert_equal(
         String(Line(Point2D(0.0, 0.0), Point2D(1.0, 1.0))),

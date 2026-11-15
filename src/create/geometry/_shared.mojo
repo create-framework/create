@@ -225,7 +225,7 @@ def _arc_middles(a: Arc, crossings: List[Point2D]) -> List[Point2D]:
     var middles = List[Point2D]()
     for i in range(len(cuts) - 1):
         var middle = s[0] + (cuts[i] + cuts[i + 1]) / 2.0
-        middles.append(a.position + _unit(middle) * a.r)
+        middles.append(a.position + _unit(middle) * a.radius)
     return middles^
 
 

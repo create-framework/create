@@ -36,20 +36,21 @@ struct Rectangle(
     Locations are `Point2D` and displacements `Vector2D`, throughout this
     module; extents are plain scalars, like `Circle`'s radius. Width and
     height are two independent lengths rather than a coordinate pair, so
-    they are not grouped: read them as `w`/`h` and pair them however the
-    caller needs.
+    they are not grouped: read them as `width`/`height` and pair them however
+    the caller needs.
 
     `position` is the centre, not a corner -- consistent with every shape in
-    this module and with `canvas.rectangle`. `w`/`h` are full width and
-    height, so `left()`/`right()`/`bottom()`/`top()` are `+-w/2`/`+-h/2`
-    from the centre. Coordinates follow world space: y grows upward, so
-    `top()` is `position.y + h/2` and `bottom()` is `position.y - h/2`.
+    this module and with `canvas.rectangle`. `width`/`height` are the full
+    width and height, so `left()`/`right()`/`bottom()`/`top()` are
+    `+-width/2`/`+-height/2` from the centre. Coordinates follow world space: y
+    grows upward, so `top()` is `position.y + height/2` and `bottom()` is
+    `position.y - height/2`.
 
     `contains` and `closest_point` treat the boundary as inside -- a point
     exactly on an edge is contained, and `closest_point` returns it
-    unchanged. A zero `w`/`h` collapses the rectangle to a segment or a
+    unchanged. A zero `width`/`height` collapses the rectangle to a segment or a
     point; `contains`/`overlaps` remain exact for it rather than reporting
-    a false containment or overlap. `w`/`h` are assumed non-negative.
+    a false containment or overlap. `width`/`height` are assumed non-negative.
 
     `corner_radius` rounds all four corners, as `canvas.rectangle` draws
     them, and every test here sees the rounded shape: a point in a sharp
@@ -58,8 +59,8 @@ struct Rectangle(
 
     `rotation` turns the rectangle about `position`, in radians
     counter-clockwise (y is up), as `canvas.transform(rotate(...))` turns
-    what it draws; `w` and `h` stay its own width and height. Every test
-    sees the turned shape, exactly, and `left()`/`right()`/`bottom()`/
+    what it draws; `width` and `height` stay its own width and height. Every
+    test sees the turned shape, exactly, and `left()`/`right()`/`bottom()`/
     `top()` and `bounds()` are its upright bounding box's. Drawn, it is the
     upright rectangle turned, so a gradient fill, the rounding and the
     stroke turn with it, while a shadow's offset stays screen-fixed unless
@@ -67,10 +68,11 @@ struct Rectangle(
     """
 
     var position: Point2D
-    var w: Float64
-    var h: Float64
+    var width: Float64
+    var height: Float64
     var corner_radius: Float64
-    """How far each corner is rounded, in the units of `w`/`h`; 0 is sharp."""
+    """How far each corner is rounded, in the units of `width`/`height`; 0 is
+    sharp."""
     var rotation: Float64
     """How far the rectangle is turned about `position`, in radians
     counter-clockwise; 0 is upright."""
@@ -78,31 +80,31 @@ struct Rectangle(
     def __init__(
         out self,
         position: Point2D,
-        w: Float64,
-        h: Float64,
+        width: Float64,
+        height: Float64,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
         rotation: _OptionalFloat64 = 0.0,
     ):
         self.position = position
-        self.w = w
-        self.h = h
+        self.width = width
+        self.height = height
         self.corner_radius = corner_radius.or_else(0.0)
         self.rotation = rotation.or_else(0.0)
 
     def __init__(
         out self,
         position: Point2D,
-        w: Int,
-        h: Int,
+        width: Int,
+        height: Int,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
         rotation: _OptionalFloat64 = 0.0,
     ):
         self = Rectangle(
             position,
-            Float64(w),
-            Float64(h),
+            Float64(width),
+            Float64(height),
             corner_radius=corner_radius,
             rotation=rotation,
         )
@@ -110,8 +112,8 @@ struct Rectangle(
     def __eq__(self, other: Rectangle) -> Bool:
         return (
             self.position == other.position
-            and self.w == other.w
-            and self.h == other.h
+            and self.width == other.width
+            and self.height == other.height
             and self.corner_radius == other.corner_radius
             and self.rotation == other.rotation
         )
@@ -123,10 +125,10 @@ struct Rectangle(
         writer.write(
             "Rectangle(position=",
             self.position,
-            ", w=",
-            self.w,
-            ", h=",
-            self.h,
+            ", width=",
+            self.width,
+            ", height=",
+            self.height,
         )
         if self.corner_radius != 0.0:
             writer.write(", corner_radius=", self.corner_radius)
@@ -139,7 +141,7 @@ struct Rectangle(
 
     def area(self) -> Float64:
         var r = self._radius()
-        return self.w * self.h - (4.0 - PI) * r * r
+        return self.width * self.height - (4.0 - PI) * r * r
 
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around this one: upright,
@@ -154,8 +156,8 @@ struct Rectangle(
             return _rounded_closest(self._inner().closest_point(p), p, r)
         if self.rotation != 0.0:
             var q = self._to_local(p)
-            var half_w = self.w / 2.0
-            var half_h = self.h / 2.0
+            var half_w = self.width / 2.0
+            var half_h = self.height / 2.0
             if abs(q.x) <= half_w and abs(q.y) <= half_h:
                 return p
             return self._from_local(
@@ -187,7 +189,9 @@ struct Rectangle(
             return _distance_squared(self._inner().closest_point(p), p) <= r * r
         if self.rotation != 0.0:
             var q = self._to_local(p)
-            return abs(q.x) <= self.w / 2.0 and abs(q.y) <= self.h / 2.0
+            return (
+                abs(q.x) <= self.width / 2.0 and abs(q.y) <= self.height / 2.0
+            )
         return (
             self.left() <= p.x <= self.right()
             and self.bottom() <= p.y <= self.top()
@@ -267,7 +271,7 @@ struct Rectangle(
 
     def _radius(self) -> Float64:
         """The corner radius as drawn: clamped to half the shorter side."""
-        return rect_corner_radius(self.corner_radius, self.w, self.h)
+        return rect_corner_radius(self.corner_radius, self.width, self.height)
 
     def _is_plain(self) -> Bool:
         """Whether the rectangle is sharp and upright: its own bounds."""
@@ -279,8 +283,8 @@ struct Rectangle(
         var r = self._radius()
         return Rectangle(
             self.position,
-            self.w - 2.0 * r,
-            self.h - 2.0 * r,
+            self.width - 2.0 * r,
+            self.height - 2.0 * r,
             rotation=self.rotation,
         )
 
@@ -299,12 +303,12 @@ struct Rectangle(
         """Half the width and height of the bounding box: the inner
         rectangle's, turned, grown by the corner radius."""
         if self.rotation == 0.0:
-            return (self.w / 2.0, self.h / 2.0)
+            return (self.width / 2.0, self.height / 2.0)
         var r = self._radius()
         var c = abs(cos(self.rotation))
         var s = abs(sin(self.rotation))
-        var half_w = self.w / 2.0 - r
-        var half_h = self.h / 2.0 - r
+        var half_w = self.width / 2.0 - r
+        var half_h = self.height / 2.0 - r
         return (half_w * c + half_h * s + r, half_w * s + half_h * c + r)
 
     def _to_local(self, p: Point2D) -> Vector2D:
@@ -319,8 +323,8 @@ struct Rectangle(
         """The corners, counter-clockwise from the upright rectangle's
         bottom left."""
         if self.rotation != 0.0:
-            var u = _unit(self.rotation) * (self.w / 2.0)
-            var v = _unit(self.rotation + PI / 2.0) * (self.h / 2.0)
+            var u = _unit(self.rotation) * (self.width / 2.0)
+            var v = _unit(self.rotation + PI / 2.0) * (self.height / 2.0)
             return [
                 self.position - u - v,
                 self.position + u - v,
@@ -339,7 +343,7 @@ struct Rectangle(
         boundary."""
         if self.rotation != 0.0:
             var q = self._to_local(p)
-            return abs(q.x) < self.w / 2.0 and abs(q.y) < self.h / 2.0
+            return abs(q.x) < self.width / 2.0 and abs(q.y) < self.height / 2.0
         return (
             self.left() < p.x < self.right()
             and self.bottom() < p.y < self.top()

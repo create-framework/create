@@ -25,7 +25,7 @@ from .triangle import Triangle
 
 
 struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
-    """A circular arc: part of the circle around `position` with radius `r`,
+    """A circular arc: part of the circle around `position` with `radius`,
     from `start_angle` round by `sweep_angle`. `end_angle`, `at`, `tangent`,
     `length`, `at_distance`, `split`, `bounds`, `flatten`, `beziers`,
     `closest_point`, `intersects`, `move_to`, `translate`.
@@ -39,41 +39,41 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     Like `Line` and `Bezier`, an arc is a curve with no interior: there is
     no `area`, `contains` or `overlaps` for it. `position` is the circle's
-    centre, which the arc passes through only when `r` is zero, and
-    `move_to` moves that centre. A zero `r` or sweep collapses the arc to a
+    centre, which the arc passes through only when `radius` is zero, and
+    `move_to` moves that centre. A zero `radius` or sweep collapses the arc to a
     point.
     """
 
     var position: Point2D
-    var r: Float64
+    var radius: Float64
     var start_angle: Float64
     var sweep_angle: Float64
 
     def __init__(
         out self,
         position: Point2D,
-        r: Float64,
+        radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
     ):
         self.position = position
-        self.r = r
+        self.radius = radius
         self.start_angle = start_angle
         self.sweep_angle = sweep_angle
 
     def __init__(
         out self,
         position: Point2D,
-        r: Int,
+        radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
     ):
-        self = Arc(position, Float64(r), start_angle, sweep_angle)
+        self = Arc(position, Float64(radius), start_angle, sweep_angle)
 
     def __eq__(self, other: Arc) -> Bool:
         return (
             self.position == other.position
-            and self.r == other.r
+            and self.radius == other.radius
             and self.start_angle == other.start_angle
             and self.sweep_angle == other.sweep_angle
         )
@@ -85,8 +85,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         writer.write(
             "Arc(position=",
             self.position,
-            ", r=",
-            self.r,
+            ", radius=",
+            self.radius,
             ", start_angle=",
             self.start_angle,
             ", sweep_angle=",
@@ -103,7 +103,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return max(-TAU, min(self.sweep_angle, TAU))
 
     def _point_at_angle(self, angle: Float64) -> Point2D:
-        return self.position + _unit(angle) * self.r
+        return self.position + _unit(angle) * self.radius
 
     def at(self, t: Float64) -> Point2D:
         """The point at parameter `t`: 0 at the start, 1 at the end, and
@@ -117,11 +117,11 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         everywhere). Zero for a collapsed arc."""
         var sweep = self._sweep()
         var angle = self.start_angle + sweep * t
-        return Vector2D(-sin(angle), cos(angle)) * (self.r * sweep)
+        return Vector2D(-sin(angle), cos(angle)) * (self.radius * sweep)
 
     def length(self) -> Float64:
         """The distance along the arc from start to end. Exact."""
-        return self.r * abs(self._sweep())
+        return self.radius * abs(self._sweep())
 
     def at_distance(self, distance: Float64) -> Point2D:
         """The point `distance` along the arc from its start, clamped to the
@@ -142,8 +142,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         var sweep = self._sweep()
         var cut = self.start_angle + sweep * t
         return (
-            Arc(self.position, self.r, self.start_angle, sweep * t),
-            Arc(self.position, self.r, cut, sweep * (1.0 - t)),
+            Arc(self.position, self.radius, self.start_angle, sweep * t),
+            Arc(self.position, self.radius, cut, sweep * (1.0 - t)),
         )
 
     def bounds(self) -> Rectangle:
@@ -155,13 +155,13 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         var lo = Point2D(min(a.x, b.x), min(a.y, b.y))
         var hi = Point2D(max(a.x, b.x), max(a.y, b.y))
         if _in_sweep(Vector2D(1.0, 0.0), s[0], s[1]):
-            hi.x = self.position.x + self.r
+            hi.x = self.position.x + self.radius
         if _in_sweep(Vector2D(0.0, 1.0), s[0], s[1]):
-            hi.y = self.position.y + self.r
+            hi.y = self.position.y + self.radius
         if _in_sweep(Vector2D(-1.0, 0.0), s[0], s[1]):
-            lo.x = self.position.x - self.r
+            lo.x = self.position.x - self.radius
         if _in_sweep(Vector2D(0.0, -1.0), s[0], s[1]):
-            lo.y = self.position.y - self.r
+            lo.y = self.position.y - self.radius
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
     def flatten(self, tolerance: Float64) -> List[Point2D]:
@@ -174,10 +174,10 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         """
         var sweep = abs(self._sweep())
         var n = 1
-        if tolerance > 0.0 and tolerance < self.r and sweep > 0.0:
+        if tolerance > 0.0 and tolerance < self.radius and sweep > 0.0:
             # A chord spanning angle `a` strays r * (1 - cos(a / 2)) from
             # the circle at its middle.
-            var widest = 2.0 * acos(1.0 - tolerance / self.r)
+            var widest = 2.0 * acos(1.0 - tolerance / self.radius)
             n = Int(ceil(sweep / widest))
             n = max(1, min(n, _MAX_ARC_FLATTEN_SEGMENTS))
         var points = List[Point2D](capacity=n + 1)
@@ -193,13 +193,13 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         """
         var curves = List[Bezier]()
         var sweep = self._sweep()
-        if self.r == 0.0 or sweep == 0.0:
+        if self.radius == 0.0 or sweep == 0.0:
             return curves^
         var n = Int(ceil(abs(sweep) / _MAX_ARC_BEZIER_ANGLE))
         var step = sweep / Float64(n)
         # Each control sits on the tangent at its end, this far out along
         # it: the length that makes the cubic's midpoint land on the circle.
-        var reach = self.r * 4.0 / 3.0 * tan(step / 4.0)
+        var reach = self.radius * 4.0 / 3.0 * tan(step / 4.0)
         var first = self.at(0.0)
         var start = first
         for i in range(n):
@@ -228,7 +228,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
             return self.at(0.0)
         var s = _normalized_sweep(self.start_angle, self.sweep_angle)
         if _in_sweep(v, s[0], s[1]):
-            return self.position + v * (self.r / v.magnitude())
+            return self.position + v * (self.radius / v.magnitude())
         var a = self.at(0.0)
         var b = self.at(1.0)
         return a if _distance_squared(p, a) <= _distance_squared(p, b) else b
@@ -240,7 +240,9 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         if direction.magnitude_squared() > 0.0 and self._spans(
             self.position + direction
         ):
-            return self.position + direction * (self.r / direction.magnitude())
+            return self.position + direction * (
+                self.radius / direction.magnitude()
+            )
         var a = self.at(0.0)
         var b = self.at(1.0)
         return a if (a - b).dot(direction) >= 0.0 else b
@@ -253,8 +255,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     # The `intersects` family is documented above `Line.intersects`.
     def intersects(self, p: Point2D) -> Bool:
-        var off = abs((p - self.position).magnitude() - self.r)
-        return off <= _RADIUS_EPSILON * self.r and self._spans(p)
+        var off = abs((p - self.position).magnitude() - self.radius)
+        return off <= _RADIUS_EPSILON * self.radius and self._spans(p)
 
     def intersects(self, l: Line) -> Bool:
         var d = l.end - l.start
@@ -269,10 +271,10 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         # after rounding still gets its one touching point.
         var length = sqrt(len_sq)
         var h = abs(_cross(d, f)) / length
-        if h > self.r * (1.0 + _RADIUS_EPSILON):
+        if h > self.radius * (1.0 + _RADIUS_EPSILON):
             return False
         var t_near = -f.dot(d) / len_sq
-        var half = sqrt(max(0.0, self.r * self.r - h * h)) / length
+        var half = sqrt(max(0.0, self.radius * self.radius - h * h)) / length
         var t0 = max(0.0, min(t_near - half, 1.0))
         var t1 = max(0.0, min(t_near + half, 1.0))
         return self.intersects(l.start + d * t0) or self.intersects(
@@ -280,17 +282,17 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         )
 
     def intersects(self, other: Arc) -> Bool:
-        if self.r == 0.0:
+        if self.radius == 0.0:
             return other.intersects(self.position)
-        if other.r == 0.0:
+        if other.radius == 0.0:
             return self.intersects(other.position)
         var between = other.position - self.position
         var d = between.magnitude()
-        var slack = _RADIUS_EPSILON * (self.r + other.r)
+        var slack = _RADIUS_EPSILON * (self.radius + other.radius)
         if d <= slack:
             # One circle: the arcs meet where their sweeps overlap, which
             # is exactly when one holds an end of the other.
-            if abs(self.r - other.r) > slack:
+            if abs(self.radius - other.radius) > slack:
                 return False
             return (
                 self._spans(other.at(0.0))
@@ -298,12 +300,17 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
                 or other._spans(self.at(0.0))
                 or other._spans(self.at(1.0))
             )
-        if d > self.r + other.r + slack or d < abs(self.r - other.r) - slack:
+        if (
+            d > self.radius + other.radius + slack
+            or d < abs(self.radius - other.radius) - slack
+        ):
             return False
         # The circles cross on the chord `along` from this centre towards
         # the other, `h` either side of the line between them.
-        var along = (d * d + self.r * self.r - other.r * other.r) / (2.0 * d)
-        var h = sqrt(max(0.0, self.r * self.r - along * along))
+        var along = (
+            d * d + self.radius * self.radius - other.radius * other.radius
+        ) / (2.0 * d)
+        var h = sqrt(max(0.0, self.radius * self.radius - along * along))
         var u = between * (1.0 / d)
         var mid = self.position + u * along
         var side = Vector2D(-u.y, u.x) * h
@@ -317,7 +324,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return c.contains(self.closest_point(c.position))
 
     def intersects(self, c: Capsule) -> Bool:
-        return _spine_distance(c._spine(), self) <= c.r
+        return _spine_distance(c._spine(), self) <= c.radius
 
     def intersects(self, e: Ellipse) -> Bool:
         # An arc mapped onto the ellipse's unit circle is no arc, so it is
@@ -329,12 +336,12 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
                 return True
         return False
 
-    def intersects(self, r: Rectangle) -> Bool:
-        if r._radius() > 0.0:
-            return self.intersects(r._outline())
-        if r.contains(self.at(0.0)) or r.contains(self.at(1.0)):
+    def intersects(self, radius: Rectangle) -> Bool:
+        if radius._radius() > 0.0:
+            return self.intersects(radius._outline())
+        if radius.contains(self.at(0.0)) or radius.contains(self.at(1.0)):
             return True
-        var pts = r._points()
+        var pts = radius._points()
         for i in range(4):
             if self.intersects(Line(pts[i], pts[(i + 1) % 4])):
                 return True

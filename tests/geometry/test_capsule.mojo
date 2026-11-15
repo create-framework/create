@@ -35,7 +35,7 @@ def test_measures() raises -> None:
     assert_equal(_C.bounds(), Rectangle((10.0, 0.0), 30.0, 10.0))
     assert_equal(
         String(_C),
-        "Capsule(start=Point2D(0.0, 0.0), end=Point2D(20.0, 0.0), r=5.0)",
+        "Capsule(start=Point2D(0.0, 0.0), end=Point2D(20.0, 0.0), radius=5.0)",
     )
     assert_equal(
         Capsule((0.0, 0.0), (1.0, 1.0), 2), Capsule((0.0, 0.0), (1.0, 1.0), 2.0)

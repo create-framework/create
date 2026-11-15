@@ -320,7 +320,7 @@ def overlaps(a: Ellipse, b: Ellipse) -> Bool:
 # A capsule against a curved or concave region: its spine comes within its
 # radius of it (`_spine_distance`).
 def overlaps(a: Capsule, b: Ellipse) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r
+    return _spine_distance(a._spine(), b) <= a.radius
 
 
 def overlaps(a: Ellipse, b: Capsule) -> Bool:
@@ -328,7 +328,7 @@ def overlaps(a: Ellipse, b: Capsule) -> Bool:
 
 
 def overlaps(a: Capsule, b: Sector) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r
+    return _spine_distance(a._spine(), b) <= a.radius
 
 
 def overlaps(a: Sector, b: Capsule) -> Bool:
@@ -336,7 +336,7 @@ def overlaps(a: Sector, b: Capsule) -> Bool:
 
 
 def overlaps(a: Capsule, b: Polygon) -> Bool:
-    return _spine_distance(a._spine(), b) <= a.r
+    return _spine_distance(a._spine(), b) <= a.radius
 
 
 def overlaps(a: Polygon, b: Capsule) -> Bool:

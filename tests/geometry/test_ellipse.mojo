@@ -33,7 +33,8 @@ def test_measures() raises -> None:
     assert_almost_equal(_E.area(), PI * 20.0 * 10.0, atol=1e-9)
     assert_equal(_E.bounds(), Rectangle((10.0, 5.0), 40.0, 20.0))
     assert_equal(
-        String(_E), "Ellipse(position=Point2D(10.0, 5.0), w=40.0, h=20.0)"
+        String(_E),
+        "Ellipse(position=Point2D(10.0, 5.0), width=40.0, height=20.0)",
     )
     assert_equal(Ellipse((0.0, 0.0), 4, 2), Ellipse((0.0, 0.0), 4.0, 2.0))
     assert_true(_E != Ellipse((10.0, 5.0), 40.0, 21.0))
@@ -61,7 +62,9 @@ def _brute_closest(e: Ellipse, p: Point2D) -> Point2D:
     var best_distance = Float64.MAX
     for i in range(20000):
         var t = TAU * Float64(i) / 20000.0
-        var q = e.position + Vector2D(e.w / 2.0 * cos(t), e.h / 2.0 * sin(t))
+        var q = e.position + Vector2D(
+            e.width / 2.0 * cos(t), e.height / 2.0 * sin(t)
+        )
         var d = q.distance(p)
         if d < best_distance:
             best = q
@@ -109,8 +112,8 @@ def test_round_ellipse_agrees_with_its_circle() raises -> None:
         assert_equal(overlaps(e, o), overlaps(c, o))
         assert_equal(e.contains(o), c.contains(o))
         assert_equal(
-            Circle(o.position, o.r + 20.0).contains(e),
-            Circle(o.position, o.r + 20.0).contains(c),
+            Circle(o.position, o.radius + 20.0).contains(e),
+            Circle(o.position, o.radius + 20.0).contains(c),
         )
 
 

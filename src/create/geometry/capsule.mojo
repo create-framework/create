@@ -23,17 +23,17 @@ struct Capsule(
     Writable,
     _Collider,
 ):
-    """A capsule: every point within `r` of the segment from `start` to
+    """A capsule: every point within `radius` of the segment from `start` to
     `end` -- a rectangle along the segment, capped by a half disc at each
     end. `center`, `area`, `bounds`, `closest_point`, `contains`,
     `move_to`, `translate`.
 
     Like a `Line`, it lies along any direction and is placed by its ends,
     so `center()` is the segment's midpoint and `move_to` moves that. A
-    stadium is also `Rectangle(position, w, h, corner_radius=h / 2,
-    rotation=angle)`; a capsule is the one placed by its ends, the usual
-    round collider for a moving body. With `start == end` it is the `Circle` of
-    radius `r` there, and a zero `r` collapses it to the segment.
+    stadium is also a `Rectangle` with `corner_radius=height / 2`, turned by
+    `rotation=angle`; a capsule is the one placed by its ends, the usual round
+    collider for a moving body. With `start == end` it is the `Circle` of
+    `radius` there, and a zero `radius` collapses it to the segment.
 
     `contains` treats the boundary as inside, and `closest_point` returns
     the query point itself when it is inside. Every test is a distance from
@@ -43,26 +43,26 @@ struct Capsule(
     its corners (or its ends' discs) inside, since a capsule is convex.
     Holding a `Sector`'s arc or an `Ellipse`, it follows them as a curve is
     followed, within 1e-4 of their size, and a rounded polygon or sector is
-    tested as its outline, as everywhere. `r` is assumed non-negative.
+    tested as its outline, as everywhere. `radius` is assumed non-negative.
     """
 
     var start: Point2D
     var end: Point2D
-    var r: Float64
+    var radius: Float64
 
-    def __init__(out self, start: Point2D, end: Point2D, r: Float64):
+    def __init__(out self, start: Point2D, end: Point2D, radius: Float64):
         self.start = start
         self.end = end
-        self.r = r
+        self.radius = radius
 
-    def __init__(out self, start: Point2D, end: Point2D, r: Int):
-        self = Capsule(start, end, Float64(r))
+    def __init__(out self, start: Point2D, end: Point2D, radius: Int):
+        self = Capsule(start, end, Float64(radius))
 
     def __eq__(self, other: Capsule) -> Bool:
         return (
             self.start == other.start
             and self.end == other.end
-            and self.r == other.r
+            and self.radius == other.radius
         )
 
     def __ne__(self, other: Capsule) -> Bool:
@@ -74,8 +74,8 @@ struct Capsule(
             self.start,
             ", end=",
             self.end,
-            ", r=",
-            self.r,
+            ", radius=",
+            self.radius,
             ")",
         )
 
@@ -83,28 +83,31 @@ struct Capsule(
         return self._spine().midpoint()
 
     def area(self) -> Float64:
-        return 2.0 * self.r * self._spine().length() + PI * self.r * self.r
+        return (
+            2.0 * self.radius * self._spine().length()
+            + PI * self.radius * self.radius
+        )
 
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around the capsule: the
-        segment's, grown by `r` all round."""
+        segment's, grown by `radius` all round."""
         return Rectangle(
             self.center(),
-            abs(self.end.x - self.start.x) + 2.0 * self.r,
-            abs(self.end.y - self.start.y) + 2.0 * self.r,
+            abs(self.end.x - self.start.x) + 2.0 * self.radius,
+            abs(self.end.y - self.start.y) + 2.0 * self.radius,
         )
 
     def closest_point(self, p: Point2D) -> Point2D:
         var q = self._spine().closest_point(p)
         var d = p - q
         var distance_squared = d.dot(d)
-        if distance_squared <= self.r * self.r:
+        if distance_squared <= self.radius * self.radius:
             return p
-        return q + d * (self.r / sqrt(distance_squared))
+        return q + d * (self.radius / sqrt(distance_squared))
 
     def contains(self, p: Point2D) -> Bool:
         return _distance_squared(self._spine().closest_point(p), p) <= (
-            self.r * self.r
+            self.radius * self.radius
         )
 
     # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
@@ -113,8 +116,8 @@ struct Capsule(
     def contains(self, l: Line) -> Bool:
         return _contains(self, l)
 
-    def contains(self, r: Rectangle) -> Bool:
-        return _contains(self, r)
+    def contains(self, radius: Rectangle) -> Bool:
+        return _contains(self, radius)
 
     def contains(self, c: Circle) -> Bool:
         return _contains(self, c)
@@ -173,16 +176,16 @@ struct Capsule(
 
     def _core(self) -> _Core[Self._corner_count]:
         """The spine, grown by the radius."""
-        return _Core[2]([self.start, self.end], self.r)
+        return _Core[2]([self.start, self.end], self.radius)
 
     def _spine(self) -> Line:
-        """The segment the capsule is the points within `r` of."""
+        """The segment the capsule is the points within `radius` of."""
         return Line(self.start, self.end)
 
     def _ends(self) -> Array[Circle, 2]:
         """The discs at either end, whose hull the capsule is: a convex
         region holds the capsule when it holds both."""
-        return [Circle(self.start, self.r), Circle(self.end, self.r)]
+        return [Circle(self.start, self.radius), Circle(self.end, self.radius)]
 
     def _direction(self) -> Vector2D:
         """The unit direction from `start` to `end`, +x when they meet."""
@@ -195,7 +198,7 @@ struct Capsule(
     def _sides(self) -> List[Line]:
         """The two straight edges, counter-clockwise round the capsule."""
         var u = self._direction()
-        var n = Vector2D(-u.y, u.x) * self.r
+        var n = Vector2D(-u.y, u.x) * self.radius
         return [
             Line(self.start - n, self.end - n),
             Line(self.end + n, self.start + n),
@@ -207,8 +210,8 @@ struct Capsule(
         var u = self._direction()
         var angle = atan2(u.y, u.x)
         return [
-            Arc(self.end, self.r, angle - PI / 2.0, PI),
-            Arc(self.start, self.r, angle + PI / 2.0, PI),
+            Arc(self.end, self.radius, angle - PI / 2.0, PI),
+            Arc(self.start, self.radius, angle + PI / 2.0, PI),
         ]
 
     def _vertices(self, steps: Int) -> List[Point2D]:
@@ -220,19 +223,19 @@ struct Capsule(
         var points = List[Point2D](capacity=2 * steps + 2)
         for i in range(steps + 1):
             var t = angle - PI / 2.0 + PI * Float64(i) / Float64(steps)
-            points.append(self.end + _unit(t) * self.r)
+            points.append(self.end + _unit(t) * self.radius)
         var first = 1 if self.start == self.end else 0
         var last = steps - 1 if self.start == self.end else steps
         for i in range(first, last + 1):
             var t = angle + PI / 2.0 + PI * Float64(i) / Float64(steps)
-            points.append(self.start + _unit(t) * self.r)
+            points.append(self.start + _unit(t) * self.radius)
         return points^
 
     def _holds_strictly(self, p: Point2D) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary."""
         return _distance_squared(self._spine().closest_point(p), p) < (
-            self.r * self.r
+            self.radius * self.radius
         )
 
 
@@ -282,7 +285,7 @@ def _spine_distance(l: Line, a: Arc) -> Float64:
     var along = l.end - l.start
     var length = along.magnitude()
     if length > 0.0:
-        var n = Vector2D(-along.y, along.x) * (a.r / length)
+        var n = Vector2D(-along.y, along.x) * (a.radius / length)
         for k in range(2):
             var p = a.position + (n if k == 0 else -n)
             if a._spans(p):
@@ -303,8 +306,8 @@ def _spine_distance(l: Line, e: Ellipse) -> Float64:
         sqrt(_distance_squared(e.closest_point(l.end), l.end)),
     )
     var along = l.end - l.start
-    var a = e.w / 2.0
-    var b = e.h / 2.0
+    var a = e.width / 2.0
+    var b = e.height / 2.0
     # The points of the curve whose normal is the segment's: the support
     # points across it, `(a^2 nx, b^2 ny)` scaled onto the curve.
     var reach = sqrt(a * a * along.y * along.y + b * b * along.x * along.x)
