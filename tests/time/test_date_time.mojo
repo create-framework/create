@@ -1,5 +1,5 @@
 from std.testing import TestSuite, assert_equal, assert_true
-from create.core.date_time import DateTime
+from create.time.date_time import DateTime
 
 
 def test_now_reads_a_plausible_calendar() raises -> None:

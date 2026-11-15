@@ -15,9 +15,8 @@ package: the [user guide](../../../docs/README.md) covers using it,
 | `_step.mojo` | `first_step` — frame 1, drawn by `create` — and `step`, every later frame's body |
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor — before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |
 | `_events.mojo` | `apply_events` — the one `Event` fold, into `context.keyboard`, `context.mouse` and the gamepads, through each device's per-event methods |
-| `context.mojo`, `time.mojo` | The run state the loop owns and the program reads: `Context` and its `time` reading. Its devices (`keyboard`, `mouse`, `_gamepads`) are `create.input`'s |
+| `context.mojo` | The run state the loop owns and the program reads: `Context`. Its `time` reading is `create.time`'s `Time`, and its devices (`keyboard`, `mouse`, `_gamepads`) are `create.input`'s |
 | `editable_text.mojo` | `EditableText`, a consumer of `Context` rather than run state: it replays `keyboard._strokes` and reaches the clipboard, which is why it sits in `core` and not `input` |
-| `date_time.mojo` | `DateTime`, the wall clock via libc `clock_gettime` + `localtime_r`. Not run state: nothing in the loop touches it |
 
 ## Rules
 
@@ -50,7 +49,7 @@ not a window's: one window a run, so the same thing.
 
 The loop owns one `Context` for the whole run and writes the frame's readings into it:
 `context._advance_frame` (clock tick, under the time scale and pause, and frame count) before each `step`, `apply_events` into the devices. There is no separate
-input state or clock in a loop, and `step` takes only `(program, context, state)`. Each tick, and a new `Context`, publishes `time.elapsed` and `real_elapsed` to `math`'s process-wide run clock (`_run_clock`), which `Animator` and `Tween` read instead of being ticked. Every frame's
+input state or clock in a loop, and `step` takes only `(program, context, state)`. Each tick, and a new `Context`, publishes `time.elapsed` and `real_elapsed` to `time`'s process-wide run clock (`_run_clock`), which `Animator` and `Tween` read instead of being ticked. Every frame's
 `Canvas` comes from `context._new_canvas(state^)` and every remap from `context._set_viewport`, so
 the mapping dials reach `render` in one place.
 

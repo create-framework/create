@@ -32,6 +32,7 @@ nav = [
     "reference/core.md",
     "reference/input.md",
     "reference/math.md",
+    "reference/time.md",
     "reference/geometry.md",
     "reference/color.md",
     "reference/render.md",

@@ -1,5 +1,5 @@
 from create.image.animation import Animation
-from create.math.clock import Clock
+from create.time.clock import Clock
 
 comptime _FRAME_SLACK = 1e-6
 """A hair of a frame, so a clock landing exactly on a frame's start, give or

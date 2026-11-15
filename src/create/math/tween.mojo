@@ -2,7 +2,7 @@ from std.math import clamp
 
 from .easing import Easing, ease
 from .util import lerp, wrap
-from .clock import Clock
+from create.time.clock import Clock
 
 
 struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):

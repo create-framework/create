@@ -12,7 +12,7 @@ from std.testing import (
 )
 
 from create.core.context import Context
-from create.math._run_clock import _scaled_now, _real_now, _set_run_clock
+from create.time._run_clock import _scaled_now, _real_now, _set_run_clock
 from create.core.cursor import Cursor
 from create.core._events import apply_events
 from create.render._viewport import Viewport
