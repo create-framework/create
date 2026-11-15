@@ -74,10 +74,10 @@ triangle.
 **Shapes reach the canvas through `DrawTarget`** (in `create.geometry`). `canvas.draw(shape)` is
 `shape.draw_to(canvas)`, which calls the primitive for the shape's kind (`_rectangle`, `_circle`,
 `_ellipse`, `_capsule`, `_triangle`, `_sector`, `_polygon`, `_line`, `_curves`); each records
-`shape_command(shape, transform, style, scale)`. The named methods (`rectangle(p, w, h)`, …) only
-build the shape, resolving `corner_radius` against the style, and call `draw`. A new shape kind
-needs a geometry type with `draw_to`, a primitive on `DrawTarget` and `Canvas`, a `shape_command`
-overload, and the payload above.
+`shape_command(shape, transform, style, scale)`. The named methods
+(`rectangle(position, width, height)`, …) only build the shape, resolving `corner_radius` against
+the style, and call `draw`. A new shape kind needs a geometry type with `draw_to`, a primitive on
+`DrawTarget` and `Canvas`, a `shape_command` overload, and the payload above.
 
 **A command is a header and a payload.** The header — `transform`, `paint`, `clip`, `stroke_grow` —
 is every kind's; `payload` is a `Variant` of one struct per kind (`ClearPayload`, `RectPayload`,
@@ -303,10 +303,10 @@ the same as circles. A dedicated kind with its inset ring tiled like `triangle_p
 that, at the cost of every replay, shadow and clip path learning it.
 
 A **capsule** is recorded the same way, through `Capsule._vertices`: each half circle in half the
-`circle_segments` of `r`. Its chords fall short of its bounds, so it records through
-`framed_polygon_command`, which sets `gradient_box` as a rounded sector does and `_fill_box` spans the
-capsule's true bounds. A zero `r` records a polygon of no vertices, which draws nothing. Stroked,
-2000 small ones cost ~2.3x as many circles (~80 against ~34 ms); filled, the same.
+`circle_segments` of `radius`. Its chords fall short of its bounds, so it records through
+`framed_polygon_command`, which sets `gradient_box` as a rounded sector does and `_fill_box` spans
+the capsule's true bounds. A zero `radius` records a polygon of no vertices, which draws nothing.
+Stroked, 2000 small ones cost ~2.3x as many circles (~80 against ~34 ms); filled, the same.
 
 ## Clips
 

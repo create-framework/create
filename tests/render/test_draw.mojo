@@ -141,7 +141,7 @@ def test_a_generic_helper_draws_any_drawable() raises -> None:
     _draw_all(drawn, circles)
     var named = _canvas()
     for c in circles:
-        named.circle(c.position, c.r)
+        named.circle(c.position, c.radius)
     _assert_same(drawn, named, "helper")
 
 

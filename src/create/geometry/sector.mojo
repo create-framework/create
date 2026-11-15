@@ -31,7 +31,7 @@ struct Sector(
     Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
 ):
     """A sector -- a slice of pie: the region between two radii of the
-    circle around `position` with radius `r`, from `start_angle` round by
+    circle around `position` with radius `radius`, from `start_angle` round by
     `sweep_angle`. `end_angle`, `center`, `area`, `arc`, `bounds`,
     `closest_point`, `contains`, `move_to`, `translate`.
 
@@ -43,8 +43,8 @@ struct Sector(
     centroid. `contains` treats the boundary as inside, within the slack
     `Arc.intersects` allows, so points found on the sector's own arc count;
     `closest_point` returns the query point itself when it is inside. A sweep wider than a
-    half turn is not convex. A zero `r` collapses the sector to its tip, and
-    a zero sweep to the one radius at `start_angle`. `r` is assumed
+    half turn is not convex. A zero `radius` collapses the sector to its tip,
+    and a zero sweep to the one radius at `start_angle`. `radius` is assumed
     non-negative.
 
     `corner_radius` rounds the tip and both ends of the arc, as
@@ -58,7 +58,7 @@ struct Sector(
     """
 
     var position: Point2D
-    var r: Float64
+    var radius: Float64
     var start_angle: Float64
     var sweep_angle: Float64
     var corner_radius: Float64
@@ -67,14 +67,14 @@ struct Sector(
     def __init__(
         out self,
         position: Point2D,
-        r: Float64,
+        radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
     ):
         self.position = position
-        self.r = r
+        self.radius = radius
         self.start_angle = start_angle
         self.sweep_angle = sweep_angle
         self.corner_radius = corner_radius.or_else(0.0)
@@ -82,7 +82,7 @@ struct Sector(
     def __init__(
         out self,
         position: Point2D,
-        r: Int,
+        radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
         *,
@@ -90,7 +90,7 @@ struct Sector(
     ):
         self = Sector(
             position,
-            Float64(r),
+            Float64(radius),
             start_angle,
             sweep_angle,
             corner_radius=corner_radius,
@@ -99,7 +99,7 @@ struct Sector(
     def __eq__(self, other: Sector) -> Bool:
         return (
             self.position == other.position
-            and self.r == other.r
+            and self.radius == other.radius
             and self.start_angle == other.start_angle
             and self.sweep_angle == other.sweep_angle
             and self.corner_radius == other.corner_radius
@@ -112,8 +112,8 @@ struct Sector(
         writer.write(
             "Sector(position=",
             self.position,
-            ", r=",
-            self.r,
+            ", radius=",
+            self.radius,
             ", start_angle=",
             self.start_angle,
             ", sweep_angle=",
@@ -133,11 +133,13 @@ struct Sector(
     def area(self) -> Float64:
         if self._is_rounded():
             return self._outline().area()
-        return 0.5 * self.r * self.r * abs(self.arc()._sweep())
+        return 0.5 * self.radius * self.radius * abs(self.arc()._sweep())
 
     def arc(self) -> Arc:
         """The curved edge of the sector, running the same way round."""
-        return Arc(self.position, self.r, self.start_angle, self.sweep_angle)
+        return Arc(
+            self.position, self.radius, self.start_angle, self.sweep_angle
+        )
 
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around the sector: its arc's,
@@ -174,7 +176,7 @@ struct Sector(
         # boundaries get an arc's slack: the sector holds its own edge.
         if self._is_rounded():
             return self._outline().contains(p)
-        var reach = self.r * (1.0 + _RADIUS_EPSILON)
+        var reach = self.radius * (1.0 + _RADIUS_EPSILON)
         if _distance_squared(p, self.position) > reach * reach:
             return False
         return self.arc()._spans(p)
@@ -184,12 +186,12 @@ struct Sector(
     # a `Circle` as a whole-turn `Arc`, another `Sector` as its two radii
     # and its arc. A rounded sector, or a rounded shape it is given, is
     # tested as its outline polygon.
-    def contains(self, r: Rectangle) -> Bool:
+    def contains(self, radius: Rectangle) -> Bool:
         if self._is_rounded():
-            return self._outline().contains(r)
-        if r._radius() > 0.0:
-            return self.contains(r._outline())
-        return self._contains_polygon(r._points())
+            return self._outline().contains(radius)
+        if radius._radius() > 0.0:
+            return self.contains(radius._outline())
+        return self._contains_polygon(radius._points())
 
     def contains(self, t: Triangle) -> Bool:
         if self._is_rounded():
@@ -201,7 +203,7 @@ struct Sector(
     def contains(self, c: Circle) -> Bool:
         if self._is_rounded():
             return self._outline().contains(c)
-        return self._contains_arc(Arc(c.position, c.r, 0.0, TAU))
+        return self._contains_arc(Arc(c.position, c.radius, 0.0, TAU))
 
     def contains(self, other: Sector) -> Bool:
         if self._is_rounded():
@@ -228,7 +230,7 @@ struct Sector(
         var cuts = List[Float64]()
         for radius in self._radii():
             _cut_at_line(l, radius, cuts)
-        _cut_at_circle(l, self.position, self.r, cuts)
+        _cut_at_circle(l, self.position, self.radius, cuts)
         for middle in _segment_middles(l, cuts^):
             if not self.contains(middle):
                 return False
@@ -249,12 +251,18 @@ struct Sector(
             return False
         var crossings = List[Point2D]()
         for radius in self._radii():
-            _circle_crossings(radius, a.position, a.r, crossings)
+            _circle_crossings(radius, a.position, a.radius, crossings)
         var between = self.position - a.position
         var d = between.magnitude()
-        if d > 0.0 and d <= a.r + self.r and d >= abs(a.r - self.r):
-            var along = (d * d + a.r * a.r - self.r * self.r) / (2.0 * d)
-            var h = sqrt(max(0.0, a.r * a.r - along * along))
+        if (
+            d > 0.0
+            and d <= a.radius + self.radius
+            and d >= abs(a.radius - self.radius)
+        ):
+            var along = (
+                d * d + a.radius * a.radius - self.radius * self.radius
+            ) / (2.0 * d)
+            var h = sqrt(max(0.0, a.radius * a.radius - along * along))
             var u = between * (1.0 / d)
             var mid = a.position + u * along
             var side = Vector2D(-u.y, u.x) * h
@@ -279,7 +287,7 @@ struct Sector(
         if self.corner_radius <= 0.0:
             return False
         var radii = sector_corner_radii(
-            self.r, self.sweep_angle, self.corner_radius
+            self.radius, self.sweep_angle, self.corner_radius
         )
         return radii[0] > 0.0 or radii[1] > 0.0
 
@@ -288,7 +296,7 @@ struct Sector(
         return Polygon(
             rounded_sector_vertices(
                 self.position,
-                self.r,
+                self.radius,
                 self.start_angle,
                 self.sweep_angle,
                 self.corner_radius,
@@ -335,7 +343,7 @@ struct Sector(
         # straight edges and two half circles.
         if self._is_rounded():
             return self._outline().contains(c)
-        if c.r <= 0.0:
+        if c.radius <= 0.0:
             return self.contains(c._spine())
         for side in c._sides():
             if not self.contains(side):
@@ -361,7 +369,7 @@ struct Sector(
     def _holds_strictly(self, p: Point2D) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary, which gets its usual slack, taken inward."""
-        var reach = self.r * (1.0 - _RADIUS_EPSILON)
+        var reach = self.radius * (1.0 - _RADIUS_EPSILON)
         if _distance_squared(p, self.position) >= reach * reach:
             return False
         var sweep = _normalized_sweep(self.start_angle, self.sweep_angle)

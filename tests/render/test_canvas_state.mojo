@@ -80,7 +80,7 @@ def test_extend_reports_a_fractional_size() raises -> None:
     var canvas = context._new_canvas(_state(context, 1000, 700))
     assert_almost_equal(canvas.width(), 6000.0 / 7.0)
     assert_almost_equal(canvas.right() - canvas.left(), canvas.width())
-    assert_almost_equal(canvas.bounds().w, canvas.width())
+    assert_almost_equal(canvas.bounds().width, canvas.width())
     var shot = canvas.snapshot()
     assert_equal(shot.width(), 857)
     assert_equal(shot.height(), 600)

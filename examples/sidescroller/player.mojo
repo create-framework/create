@@ -69,8 +69,8 @@ struct Player(Copyable, Drawable, Movable):
         """Stand on the platform whose top the feet crossed this frame, if
         any. Tested as a crossing, so a fast fall can't skip one."""
         for platform in platforms:
-            var top = platform.position.y + platform.h / 2.0
-            var reach = (platform.w + Self.WIDTH) / 2.0
+            var top = platform.position.y + platform.height / 2.0
+            var reach = (platform.width + Self.WIDTH) / 2.0
             if (
                 feet_before >= top
                 and self.feet() <= top

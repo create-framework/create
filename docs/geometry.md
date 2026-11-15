@@ -9,15 +9,15 @@ There are eleven, in two kinds. A **region** has an inside; a **curve** is a pat
 
 | Shape | Kind | Built from |
 |---|---|---|
-| `Rectangle` | Region | `Rectangle(position, w, h, corner_radius=, rotation=)` |
-| `Circle` | Region | `Circle(position, r)` |
-| `Ellipse` | Region | `Ellipse(position, w, h)` |
-| `Capsule` | Region | `Capsule(start, end, r)` |
+| `Rectangle` | Region | `Rectangle(position, width, height, corner_radius=, rotation=)` |
+| `Circle` | Region | `Circle(position, radius)` |
+| `Ellipse` | Region | `Ellipse(position, width, height)` |
+| `Capsule` | Region | `Capsule(start, end, radius)` |
 | `Triangle` | Region | `Triangle(a, b, c, corner_radius=)` |
-| `Sector` | Region | `Sector(position, r, start_angle, sweep_angle, corner_radius=)` |
+| `Sector` | Region | `Sector(position, radius, start_angle, sweep_angle, corner_radius=)` |
 | `Polygon` | Region | `Polygon(vertex, vertex, …, corner_radius=)`, `Polygon.regular(…)`, `Polygon.star(…)` |
 | `Line` | Curve | `Line(start, end)` |
-| `Arc` | Curve | `Arc(position, r, start_angle, sweep_angle)` |
+| `Arc` | Curve | `Arc(position, radius, start_angle, sweep_angle)` |
 | `Bezier` | Curve | `Bezier(start, control1, control2, end)` |
 | `Spline` | Curve | `Spline(points, alpha=, closed=)` |
 
@@ -95,31 +95,31 @@ whatever the style says.
 
 ### `Rectangle`
 
-Centre-positioned, `w` by `h`, and upright unless turned: `rotation=` (keyword-only, radians
-counter-clockwise about `position`, default 0) on `Rectangle` and `canvas.rectangle`. Every test
-sees the turned shape exactly; `bounds()` and `left()`, `right()`, `bottom()`, `top()` are its
+Centre-positioned, `width` by `height`, and upright unless turned: `rotation=` (keyword-only,
+radians counter-clockwise about `position`, default 0) on `Rectangle` and `canvas.rectangle`. Every
+test sees the turned shape exactly; `bounds()` and `left()`, `right()`, `bottom()`, `top()` are its
 upright bounding box's. It is drawn as the upright rectangle under a rotation, so rounding, stroke
 and a gradient turn with it and a shadow's offset stays screen-fixed, as under `canvas.transform`.
 
 ### `Ellipse`
 
-Axis-aligned, a region: `position` is its centre and `w`/`h` its full width and height, as a
-`Rectangle`'s, whose `bounds()` it fills (`canvas.ellipse(p, w, h)`, Processing's `ellipse`). Turn
-one with `canvas.transform`.
+Axis-aligned, a region: `position` is its centre and `width`/`height` its full width and height, as
+a `Rectangle`'s, whose `bounds()` it fills (`canvas.ellipse(position, width, height)`, Processing's
+`ellipse`). Turn one with `canvas.transform`.
 
 - Tests against a point, `Line`, `Circle`, another `Ellipse` and a sharp `Rectangle`, `Triangle`
   or `Polygon` are exact: the stretch onto the unit circle keeps those kinds, and a circle or
   ellipse goes through the exact closest point on an ellipse. Against a `Sector` or an `Arc` the
   ellipse stands in as its outline polygon, within 1e-4 of its size.
-- A zero `w` or `h` is its zero-size bounds, in every test and when drawn.
+- A zero `width` or `height` is its zero-size bounds, in every test and when drawn.
 - It is drawn as a polygon flattened as finely as a circle of its larger radius, so its stroke is
   as thick all round and placed by `stroke_alignment`. Filled, it costs what a circle does;
   stroked, about three times as much. No inset shadow.
 
 ### `Capsule`
 
-Every point within `r` of the segment `start`→`end`, a region: the round collider for a moving
-body, at any angle (`canvas.capsule(start, end, r)`).
+Every point within `radius` of the segment `start`→`end`, a region: the round collider for a moving
+body, at any angle (`canvas.capsule(start, end, radius)`).
 
 - Placed by its ends like a `Line`, so `center()` and `move_to` are the midpoint's. `start == end`
   is the `Circle` there, and a stadium is already
@@ -127,15 +127,16 @@ body, at any angle (`canvas.capsule(start, end, r)`).
 - Every test is a distance from the segment, exact against everything — points, lines, arcs,
   circles, ellipses, capsules, straight-edged shapes and rounded rectangles and triangles — except
   holding a `Sector`'s arc or an `Ellipse`, which it follows within 1e-4.
-- A zero `r` is the segment, and draws nothing.
-- It is drawn as a polygon, each end flattened as finely as a circle of `r`, its gradient spanning
-  its bounds. Filled it costs what a circle does, stroked about 2.3 times as much. No inset shadow.
+- A zero `radius` is the segment, and draws nothing.
+-  It is drawn as a polygon, each end flattened as finely as a circle of `radius`, its gradient
+  spanning its bounds. Filled it costs what a circle does, stroked about 2.3 times as much. No inset
+  shadow.
 
 ### `Polygon`
 
 Any `vertices`, in order, closed back to the first: concave or crossing itself, a region.
-`Polygon.regular(position, r, sides)` and `Polygon.star(position, r, inner_radius, tips)` start at
-`start_angle`, straight up by default.
+`Polygon.regular(position, radius, sides)` and `Polygon.star(position, radius, inner_radius, tips)`
+start at `start_angle`, straight up by default.
 
 - Inside by the **nonzero rule**, so a pentagram of five crossing vertices is solid through its
   middle; vertex order is irrelevant, and the boundary is inside.
@@ -150,7 +151,7 @@ Any `vertices`, in order, closed back to the first: concave or crossing itself, 
 
 ### Sweep: `Sector` and `Arc`
 
-`Arc` and `Sector` share `position` (the circle's centre), `r`, `start_angle` and a **signed**
+`Arc` and `Sector` share `position` (the circle's centre), `radius`, `start_angle` and a **signed**
 `sweep_angle`, in radians from +x: positive is counter-clockwise (y is up), negative clockwise,
 and |sweep| ≥ `TAU` is the whole circle. They are stored as given, so `==` and printing
 round-trip; `end_angle()` is `start_angle + sweep_angle`.

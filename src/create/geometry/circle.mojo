@@ -25,45 +25,47 @@ struct Circle(
     """A circle: `center`, `area`, `diameter`, `closest_point`, `contains`,
     `move_to`, `translate`.
 
-    `position` is the centre and `r` the radius -- there is no orientation, so
-    unlike `Rectangle`/`Triangle` there is nothing y-up affects beyond the
-    centre's own coordinates.
+    `position` is the centre -- there is no orientation, so unlike
+    `Rectangle`/`Triangle` there is nothing y-up affects beyond the centre's
+    own coordinates.
 
     `contains` treats the boundary as inside (`distance <= r`), and
     `closest_point` returns the query point itself when it is already
     inside or exactly at the centre, rather than an arbitrary point on the
-    circumference. A zero `r` collapses the circle to a point; `contains`
+    circumference. A zero `radius` collapses the circle to a point; `contains`
     then holds only for that exact point, and `overlaps`/`intersects`
-    remain exact rather than always-false. `r` is assumed non-negative.
+    remain exact rather than always-false. `radius` is assumed non-negative.
     """
 
     var position: Point2D
-    var r: Float64
+    var radius: Float64
 
-    def __init__(out self, position: Point2D, r: Float64):
+    def __init__(out self, position: Point2D, radius: Float64):
         self.position = position
-        self.r = r
+        self.radius = radius
 
-    def __init__(out self, position: Point2D, r: Int):
-        self = Circle(position, Float64(r))
+    def __init__(out self, position: Point2D, radius: Int):
+        self = Circle(position, Float64(radius))
 
     def __eq__(self, other: Circle) -> Bool:
-        return self.position == other.position and self.r == other.r
+        return self.position == other.position and self.radius == other.radius
 
     def __ne__(self, other: Circle) -> Bool:
         return not (self == other)
 
     def write_to[W: Writer](self, mut writer: W):
-        writer.write("Circle(position=", self.position, ", r=", self.r, ")")
+        writer.write(
+            "Circle(position=", self.position, ", radius=", self.radius, ")"
+        )
 
     def center(self) -> Point2D:
         return self.position
 
     def area(self) -> Float64:
-        return PI * self.r * self.r
+        return PI * self.radius * self.radius
 
     def diameter(self) -> Float64:
-        return self.r * 2.0
+        return self.radius * 2.0
 
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around the circle."""
@@ -72,12 +74,15 @@ struct Circle(
     def closest_point(self, p: Point2D) -> Point2D:
         var d = p - self.position
         var distance_squared = d.dot(d)
-        if distance_squared == 0.0 or distance_squared <= self.r * self.r:
+        if (
+            distance_squared == 0.0
+            or distance_squared <= self.radius * self.radius
+        ):
             return p
-        return self.position + d * (self.r / sqrt(distance_squared))
+        return self.position + d * (self.radius / sqrt(distance_squared))
 
     def contains(self, p: Point2D) -> Bool:
-        return _distance_squared(p, self.position) <= self.r * self.r
+        return _distance_squared(p, self.position) <= self.radius * self.radius
 
     # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
     # a `Line`, is a convex core grown by a radius, and is held exactly when
@@ -85,8 +90,8 @@ struct Circle(
     def contains(self, other: Circle) -> Bool:
         return _contains(self, other)
 
-    def contains(self, r: Rectangle) -> Bool:
-        return _contains(self, r)
+    def contains(self, radius: Rectangle) -> Bool:
+        return _contains(self, radius)
 
     def contains(self, t: Triangle) -> Bool:
         return _contains(self, t)
@@ -117,7 +122,7 @@ struct Circle(
         if not self.contains(s.position):
             return False
         var far = s.arc()._furthest_along(s.position - self.position)
-        var reach = self.r * (1.0 + _RADIUS_EPSILON)
+        var reach = self.radius * (1.0 + _RADIUS_EPSILON)
         return _distance_squared(far, self.position) <= reach * reach
 
     def contains(self, p: Polygon) -> Bool:
@@ -151,4 +156,4 @@ struct Circle(
 
     def _core(self) -> _Core[Self._corner_count]:
         """The centre, grown by the radius."""
-        return _Core[1]([self.position], self.r)
+        return _Core[1]([self.position], self.radius)

@@ -25,8 +25,12 @@ def _pixel_centre(i: Int, j: Int) -> Point2D:
 def test_a_rounded_rectangle_paints_what_it_contains() raises -> None:
     var r = Rectangle((3.0, -2.0), 60.0, 44.0, corner_radius=15.0)
     # Pixel centres this close to the edge may fall either way.
-    var grown = Rectangle(r.position, r.w + 0.2, r.h + 0.2, corner_radius=15.1)
-    var shrunk = Rectangle(r.position, r.w - 0.2, r.h - 0.2, corner_radius=14.9)
+    var grown = Rectangle(
+        r.position, r.width + 0.2, r.height + 0.2, corner_radius=15.1
+    )
+    var shrunk = Rectangle(
+        r.position, r.width - 0.2, r.height - 0.2, corner_radius=14.9
+    )
     var canvas = _canvas()
     canvas.draw(r)
     var shot = canvas.snapshot()

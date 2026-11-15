@@ -993,8 +993,8 @@ struct Canvas(DrawTarget, Movable):
             raise Error(
                 "snapshot needs an upright region, got " + String(region)
             )
-        var pw = Int(region.w * scale + 0.5)
-        var ph = Int(region.h * scale + 0.5)
+        var pw = Int(region.width * scale + 0.5)
+        var ph = Int(region.height * scale + 0.5)
         if pw <= 0 or ph <= 0:
             raise Error(
                 "snapshot needs a region of at least one pixel, got "
@@ -1015,8 +1015,8 @@ struct Canvas(DrawTarget, Movable):
             backend.read_frame(seeded=not self._state.autoclear)
             return Image.from_rgba(pw, ph, backend.frame_read.value().data)
         var to_target = mat_translate(
-            (region.w / 2.0 - region.position.x) * scale,
-            (region.h / 2.0 + region.position.y) * scale,
+            (region.width / 2.0 - region.position.x) * scale,
+            (region.height / 2.0 + region.position.y) * scale,
         ) @ mat_scale(scale, -scale)
         var mem = backend.read(
             pw, ph, scale, to_target, not self._state.autoclear
@@ -1031,8 +1031,8 @@ struct Canvas(DrawTarget, Movable):
         ref backend = self._state._backend
         backend.bake(self._scale)
         ref target = backend.target.value()
-        var pw = Int(region.w * scale + 0.5)
-        var ph = Int(region.h * scale + 0.5)
+        var pw = Int(region.width * scale + 0.5)
+        var ph = Int(region.height * scale + 0.5)
         var mem = MemorySurface(pw, ph)
         if (
             pw == target.width
@@ -1043,8 +1043,8 @@ struct Canvas(DrawTarget, Movable):
             mem.data = target.data.copy()
             return mem^
         var to_target = mat_translate(
-            (region.w / 2.0 - region.position.x) * scale,
-            (region.h / 2.0 + region.position.y) * scale,
+            (region.width / 2.0 - region.position.x) * scale,
+            (region.height / 2.0 + region.position.y) * scale,
         ) @ mat_scale(scale, -scale)
         _seed(mem, target, self._base, to_target)
         return mem^
@@ -1214,21 +1214,21 @@ struct Canvas(DrawTarget, Movable):
     def rectangle(
         mut self,
         position: Point2D,
-        w: Float64,
-        h: Float64,
+        width: Float64,
+        height: Float64,
         *,
         corner_radius: _OptionalFloat64 = None,
         rotation: _OptionalFloat64 = 0.0,
     ):
-        """Draw the `w` by `h` rectangle centred on `position`, its corners
-        rounded by `corner_radius`, or by the style's when not given (clamped
-        to half the shorter side), and turned about its centre by `rotation`
-        radians counter-clockwise, as `Rectangle` describes it."""
+        """Draw the `width` by `height` rectangle centred on `position`, its
+        corners rounded by `corner_radius`, or by the style's when not given
+        (clamped to half the shorter side), and turned about its centre by
+        `rotation` radians counter-clockwise, as `Rectangle` describes it."""
         self.draw(
             Rectangle(
                 position,
-                w,
-                h,
+                width,
+                height,
                 corner_radius=corner_radius.or_else(self._style.corner_radius),
                 rotation=rotation,
             )
@@ -1237,30 +1237,31 @@ struct Canvas(DrawTarget, Movable):
     def rectangle(
         mut self,
         position: Point2D,
-        w: Int,
-        h: Int,
+        width: Int,
+        height: Int,
         *,
         corner_radius: _OptionalFloat64 = None,
         rotation: _OptionalFloat64 = 0.0,
     ):
         self.rectangle(
             position,
-            Float64(w),
-            Float64(h),
+            Float64(width),
+            Float64(height),
             corner_radius=corner_radius,
             rotation=rotation,
         )
 
-    def circle(mut self, position: Point2D, r: Float64):
-        self.draw(Circle(position, r))
+    def circle(mut self, position: Point2D, radius: Float64):
+        self.draw(Circle(position, radius))
 
-    def circle(mut self, position: Point2D, r: Int):
-        self.circle(position, Float64(r))
+    def circle(mut self, position: Point2D, radius: Int):
+        self.circle(position, Float64(radius))
 
-    def ellipse(mut self, position: Point2D, w: Float64, h: Float64):
-        """Draw the axis-aligned ellipse centred on `position`, `w` wide and
-        `h` high: an `Ellipse`, filling the rectangle `rectangle(position, w,
-        h)` would draw. Turn one with `transform`.
+    def ellipse(mut self, position: Point2D, width: Float64, height: Float64):
+        """Draw the axis-aligned ellipse centred on `position`, `width` wide and
+        `height` high: an `Ellipse`, filling the rectangle
+        `rectangle(position, width, height)` would draw. Turn one with
+        `transform`.
 
         The stroke is inset, as a circle's is, and as thick all round: the
         fill stops where it starts, and a translucent ellipse composites
@@ -1268,42 +1269,43 @@ struct Canvas(DrawTarget, Movable):
         its larger radius, so filled it costs what a circle does and
         stroked what a stroked `polygon` of its outline does, about three
         times a circle's. It casts no inset shadow; a blurred drop shadow
-        costs what a `bezier`'s does. With `w == h` it covers what
-        `circle(position, w / 2)` does, to within its flattening.
+        costs what a `bezier`'s does. With `width == height` it covers what
+        `circle(position, width / 2)` does, to within its flattening.
         """
-        self.draw(Ellipse(position, w, h))
+        self.draw(Ellipse(position, width, height))
 
-    def ellipse(mut self, position: Point2D, w: Int, h: Int):
-        self.ellipse(position, Float64(w), Float64(h))
+    def ellipse(mut self, position: Point2D, width: Int, height: Int):
+        self.ellipse(position, Float64(width), Float64(height))
 
-    def capsule(mut self, start: Point2D, end: Point2D, r: Float64):
+    def capsule(mut self, start: Point2D, end: Point2D, radius: Float64):
         """Draw the capsule round the segment from `start` to `end`: every
-        point within `r` of it, a `Capsule`, its ends half discs.
+        point within `radius` of it, a `Capsule`, its ends half discs.
 
         The stroke is inset, as a circle's is: the fill stops where it
         starts, and a translucent capsule composites once. Unlike a
         round-capped `line`, it has a fill and a stroke of its own. It is
-        drawn as a polygon, each end flattened as finely as a circle of `r`,
-        so filled it costs what a circle does and stroked what a stroked
-        `polygon` of its outline does. It casts no inset shadow; a blurred
-        drop shadow costs what a `bezier`'s does. A zero `r` draws nothing.
+        drawn as a polygon, each end flattened as finely as a circle of
+        `radius`, so filled it costs what a circle does and stroked what a
+        stroked `polygon` of its outline does. It casts no inset shadow; a
+        blurred drop shadow costs what a `bezier`'s does. A zero `radius` draws
+        nothing.
         """
-        self.draw(Capsule(start, end, r))
+        self.draw(Capsule(start, end, radius))
 
-    def capsule(mut self, start: Point2D, end: Point2D, r: Int):
-        self.capsule(start, end, Float64(r))
+    def capsule(mut self, start: Point2D, end: Point2D, radius: Int):
+        self.capsule(start, end, Float64(radius))
 
     def sector(
         mut self,
         position: Point2D,
-        r: Float64,
+        radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
         *,
         corner_radius: _OptionalFloat64 = None,
     ):
-        """Draw the pie slice of the circle around `position` with radius
-        `r`, from `start_angle` round by `sweep_angle`: a `Sector`, its tip at
+        """Draw the pie slice of the circle around `position` with `radius`,
+        from `start_angle` round by `sweep_angle`: a `Sector`, its tip at
         `position`.
 
         Angles are radians, counter-clockwise from the +x axis (y is up); a
@@ -1320,7 +1322,7 @@ struct Canvas(DrawTarget, Movable):
         self.draw(
             Sector(
                 position,
-                r,
+                radius,
                 start_angle,
                 sweep_angle,
                 corner_radius=corner_radius.or_else(self._style.corner_radius),
@@ -1330,7 +1332,7 @@ struct Canvas(DrawTarget, Movable):
     def sector(
         mut self,
         position: Point2D,
-        r: Int,
+        radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
         *,
@@ -1338,7 +1340,7 @@ struct Canvas(DrawTarget, Movable):
     ):
         self.sector(
             position,
-            Float64(r),
+            Float64(radius),
             start_angle,
             sweep_angle,
             corner_radius=corner_radius,
@@ -1437,11 +1439,11 @@ struct Canvas(DrawTarget, Movable):
     def arc(
         mut self,
         position: Point2D,
-        r: Float64,
+        radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
     ):
-        """Stroke the arc of the circle around `position` with radius `r`,
+        """Stroke the arc of the circle around `position` with radius `radius`,
         from `start_angle` round by `sweep_angle`, in the stroke colour and
         thickness: an `Arc`.
 
@@ -1455,16 +1457,16 @@ struct Canvas(DrawTarget, Movable):
         A zero radius or sweep
         draws nothing.
         """
-        self.draw(Arc(position, r, start_angle, sweep_angle))
+        self.draw(Arc(position, radius, start_angle, sweep_angle))
 
     def arc(
         mut self,
         position: Point2D,
-        r: Int,
+        radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
     ):
-        self.arc(position, Float64(r), start_angle, sweep_angle)
+        self.arc(position, Float64(radius), start_angle, sweep_angle)
 
     def triangle(
         mut self,
@@ -1558,7 +1560,11 @@ struct Canvas(DrawTarget, Movable):
         )
 
     def image(
-        mut self, image: Image, position: Point2D, w: Float64, h: Float64
+        mut self,
+        image: Image,
+        position: Point2D,
+        width: Float64,
+        height: Float64,
     ):
         # The image is interned *now*, not at replay: the command then carries
         # an id rather than a borrow of the program's pixels, which is what
@@ -1572,8 +1578,8 @@ struct Canvas(DrawTarget, Movable):
                 self._style,
                 position.x,
                 position.y,
-                w,
-                h,
+                width,
+                height,
                 id,
                 image.width(),
                 image.height(),
@@ -1585,17 +1591,28 @@ struct Canvas(DrawTarget, Movable):
         self.image(animator.animation().frame(animator.frame_index()), position)
 
     def image(
-        mut self, animator: Animator, position: Point2D, w: Float64, h: Float64
+        mut self,
+        animator: Animator,
+        position: Point2D,
+        width: Float64,
+        height: Float64,
     ):
         self.image(
-            animator.animation().frame(animator.frame_index()), position, w, h
+            animator.animation().frame(animator.frame_index()),
+            position,
+            width,
+            height,
         )
 
-    def image(mut self, image: Image, position: Point2D, w: Int, h: Int):
-        self.image(image, position, Float64(w), Float64(h))
+    def image(
+        mut self, image: Image, position: Point2D, width: Int, height: Int
+    ):
+        self.image(image, position, Float64(width), Float64(height))
 
-    def image(mut self, animator: Animator, position: Point2D, w: Int, h: Int):
-        self.image(animator, position, Float64(w), Float64(h))
+    def image(
+        mut self, animator: Animator, position: Point2D, width: Int, height: Int
+    ):
+        self.image(animator, position, Float64(width), Float64(height))
 
     def text_color(mut self, color: Color):
         """Paint glyphs in `color`. Separate from `fill`, so a shape colour and

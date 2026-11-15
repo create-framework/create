@@ -252,8 +252,12 @@ def test_bounds_contain_every_point_on_the_curve() raises -> None:
     for closed in [False, True]:
         var s = Spline(_zigzag(), closed=closed)
         var b = s.bounds()
-        var lo = Point2D(b.position.x - b.w / 2.0, b.position.y - b.h / 2.0)
-        var hi = Point2D(b.position.x + b.w / 2.0, b.position.y + b.h / 2.0)
+        var lo = Point2D(
+            b.position.x - b.width / 2.0, b.position.y - b.height / 2.0
+        )
+        var hi = Point2D(
+            b.position.x + b.width / 2.0, b.position.y + b.height / 2.0
+        )
         for k in range(201):
             var p = s.at(Float64(k) / 200.0)
             assert_true(p.x >= lo.x - 1e-9 and p.x <= hi.x + 1e-9)

@@ -53,7 +53,7 @@ def _quads(
         style,
         s.position.x,
         s.position.y,
-        s.r,
+        s.radius,
         s.start_angle,
         s.sweep_angle,
     )
@@ -96,7 +96,7 @@ def _signed_distance(s: Sector, p: Point2D) -> Float64:
     """How far `p` lies inside the sector's edge; negative outside."""
     if not s.contains(p):
         return -p.distance(s.closest_point(p))
-    var d = s.r - p.distance(s.position)
+    var d = s.radius - p.distance(s.position)
     if abs(s.sweep_angle) < TAU:
         for radius in s._radii():
             d = min(d, p.distance(radius.closest_point(p)))

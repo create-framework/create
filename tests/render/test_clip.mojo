@@ -119,7 +119,7 @@ struct EdgeOf[clipped: Bool](Program):
         else:
             canvas.stroke_enabled(False)
             canvas.fill(Color.RED)
-            canvas.circle(disc.position, disc.r)
+            canvas.circle(disc.position, disc.radius)
 
 
 def _at(m: Image, x: Int, y: Int) -> Color:

@@ -54,7 +54,7 @@ def _curve_segments[C: Curve](curve: C) -> List[Line]:
     `_INTERSECT_PRECISION` of its larger side: how `intersects` and a
     region's `contains` follow a curve with no closed form against it."""
     var b = curve.bounds()
-    var points = curve.flatten(_INTERSECT_PRECISION * max(b.w, b.h))
+    var points = curve.flatten(_INTERSECT_PRECISION * max(b.width, b.height))
     var segments = List[Line](capacity=len(points) - 1)
     for i in range(1, len(points)):
         segments.append(Line(points[i - 1], points[i]))
@@ -257,14 +257,14 @@ struct Bezier(
 
     def _size(self) -> Float64:
         var b = self.bounds()
-        return max(b.w, b.h)
+        return max(b.width, b.height)
 
     def _reach(self) -> Rectangle:
         """The bounds grown by the flattening tolerance on every side: no
         shape outside it can meet the flattened curve."""
         var b = self.bounds()
-        var grow = 2.0 * _INTERSECT_PRECISION * max(b.w, b.h)
-        return Rectangle(b.position, b.w + grow, b.h + grow)
+        var grow = 2.0 * _INTERSECT_PRECISION * max(b.width, b.height)
+        return Rectangle(b.position, b.width + grow, b.height + grow)
 
     def _segments(self) -> List[Line]:
         """The curve as straight segments, within `_INTERSECT_PRECISION`

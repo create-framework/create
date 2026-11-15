@@ -83,26 +83,26 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     @staticmethod
     def regular(
         position: Point2D,
-        r: Float64,
+        radius: Float64,
         sides: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
     ) -> Polygon:
         """A regular polygon of `sides` vertices on the circle around
-        `position` with radius `r`, the first at `start_angle` (radians
+        `position` with radius `radius`, the first at `start_angle` (radians
         counter-clockwise from +x; straight up by default), the rest
         following counter-clockwise."""
         var vertices = List[Point2D](capacity=max(sides, 0))
         for i in range(sides):
             var angle = start_angle + TAU * Float64(i) / Float64(sides)
-            vertices.append(position + _unit(angle) * r)
+            vertices.append(position + _unit(angle) * radius)
         return Polygon(vertices^, corner_radius=corner_radius)
 
     @staticmethod
     def regular(
         position: Point2D,
-        r: Int,
+        radius: Int,
         sides: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
@@ -110,7 +110,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     ) -> Polygon:
         return Polygon.regular(
             position,
-            Float64(r),
+            Float64(radius),
             sides,
             start_angle,
             corner_radius=corner_radius,
@@ -119,29 +119,30 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     @staticmethod
     def star(
         position: Point2D,
-        r: Float64,
+        radius: Float64,
         inner_radius: Float64,
         tips: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
     ) -> Polygon:
-        """A star of `tips` points about `position`: its tips on radius `r`,
-        the first at `start_angle` (straight up by default), and between
-        each two tips a vertex on radius `inner_radius`, halfway round. The
-        outline does not cross itself, so it is a simple polygon."""
+        """A star of `tips` points about `position`: its tips on `radius`, the
+        first at `start_angle` (straight up by default), and between each two
+        tips a vertex on `inner_radius`, halfway round. The outline does not
+        cross itself, so it is a simple polygon."""
         var vertices = List[Point2D](capacity=max(2 * tips, 0))
         for i in range(2 * tips):
             var angle = start_angle + PI * Float64(i) / Float64(tips)
             vertices.append(
-                position + _unit(angle) * (r if i % 2 == 0 else inner_radius)
+                position
+                + _unit(angle) * (radius if i % 2 == 0 else inner_radius)
             )
         return Polygon(vertices^, corner_radius=corner_radius)
 
     @staticmethod
     def star(
         position: Point2D,
-        r: Int,
+        radius: Int,
         inner_radius: Int,
         tips: Int,
         start_angle: Float64 = TAU / 4.0,
@@ -150,7 +151,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     ) -> Polygon:
         return Polygon.star(
             position,
-            Float64(r),
+            Float64(radius),
             Float64(inner_radius),
             tips,
             start_angle,
@@ -287,17 +288,17 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
                 return False
         return True
 
-    def contains(self, r: Rectangle) -> Bool:
+    def contains(self, radius: Rectangle) -> Bool:
         if self._is_rounded():
-            return self._outline().contains(r)
-        if r._radius() > 0.0:
-            return self.contains(r._outline())
-        var outline = _closed_outline(r._points())
+            return self._outline().contains(radius)
+        if radius._radius() > 0.0:
+            return self.contains(radius._outline())
+        var outline = _closed_outline(radius._points())
         for edge in outline:
             if not self.contains(edge):
                 return False
         for p in self._rim(outline, []):
-            if r._holds_strictly(p):
+            if radius._holds_strictly(p):
                 return False
         return True
 
@@ -318,11 +319,11 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     def contains(self, c: Circle) -> Bool:
         if self._is_rounded():
             return self._outline().contains(c)
-        var outline = Arc(c.position, c.r, 0.0, TAU)
+        var outline = Arc(c.position, c.radius, 0.0, TAU)
         if not self._contains_arc(outline):
             return False
         for p in self._rim([], [outline]):
-            if _distance_squared(p, c.position) < c.r * c.r:
+            if _distance_squared(p, c.position) < c.radius * c.radius:
                 return False
         return True
 
@@ -369,7 +370,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     def contains(self, c: Capsule) -> Bool:
         if self._is_rounded():
             return self._outline().contains(c)
-        if c.r <= 0.0:
+        if c.radius <= 0.0:
             return self.contains(c._spine())
         var sides = c._sides()
         var caps = c._caps()
@@ -481,7 +482,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             for l in lines:
                 _cut_at_line(e, l, cuts)
             for a in arcs:
-                _cut_at_circle(e, a.position, a.r, cuts)
+                _cut_at_circle(e, a.position, a.radius, cuts)
             for middle in _segment_middles(e, cuts^):
                 if not self._wound_beside(i, middle):
                     rim.append(middle)
@@ -571,7 +572,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             return False
         var crossings = List[Point2D]()
         for i in range(len(self.vertices)):
-            _circle_crossings(self._edge(i), a.position, a.r, crossings)
+            _circle_crossings(self._edge(i), a.position, a.radius, crossings)
         for middle in _arc_middles(a, crossings):
             if not self.contains(middle):
                 return False

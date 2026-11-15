@@ -174,20 +174,20 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
             return Rectangle(self._lone_point(), 0.0, 0.0)
         var box = curves[0].bounds()
         var lo = Point2D(
-            box.position.x - box.w / 2.0, box.position.y - box.h / 2.0
+            box.position.x - box.width / 2.0, box.position.y - box.height / 2.0
         )
         var hi = Point2D(
-            box.position.x + box.w / 2.0, box.position.y + box.h / 2.0
+            box.position.x + box.width / 2.0, box.position.y + box.height / 2.0
         )
         for i in range(1, len(curves)):
             box = curves[i].bounds()
             lo = Point2D(
-                min(lo.x, box.position.x - box.w / 2.0),
-                min(lo.y, box.position.y - box.h / 2.0),
+                min(lo.x, box.position.x - box.width / 2.0),
+                min(lo.y, box.position.y - box.height / 2.0),
             )
             hi = Point2D(
-                max(hi.x, box.position.x + box.w / 2.0),
-                max(hi.y, box.position.y + box.h / 2.0),
+                max(hi.x, box.position.x + box.width / 2.0),
+                max(hi.y, box.position.y + box.height / 2.0),
             )
         return Rectangle(
             Point2D((lo.x + hi.x) / 2.0, (lo.y + hi.y) / 2.0),

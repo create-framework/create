@@ -63,8 +63,8 @@ def shape_command(
             style,
             0.0,
             0.0,
-            r.w,
-            r.h,
+            r.width,
+            r.height,
             r.corner_radius,
         )
     return rect_command(
@@ -72,8 +72,8 @@ def shape_command(
         style,
         r.position.x,
         r.position.y,
-        r.w,
-        r.h,
+        r.width,
+        r.height,
         r.corner_radius,
     )
 
@@ -81,7 +81,9 @@ def shape_command(
 def shape_command(
     c: Circle, transform: Matrix[3, 3], style: Style, scale: Float64
 ) -> RenderCommand:
-    return circle_command(transform, style, c.position.x, c.position.y, c.r)
+    return circle_command(
+        transform, style, c.position.x, c.position.y, c.radius
+    )
 
 
 def shape_command(
@@ -93,9 +95,9 @@ def shape_command(
     rectangle's. A flat one is the zero-size rectangle it is."""
     if e._is_flat():
         return rect_command(
-            transform, style, e.position.x, e.position.y, e.w, e.h, 0.0
+            transform, style, e.position.x, e.position.y, e.width, e.height, 0.0
         )
-    var radius_px = max(e.w, e.h) / 2.0 * pixel_scale(transform, scale)
+    var radius_px = max(e.width, e.height) / 2.0 * pixel_scale(transform, scale)
     var segments = (circle_segments(radius_px) + 3) // 4 * 4
     return polygon_command(transform, style, e._vertices(segments))
 
@@ -107,10 +109,10 @@ def shape_command(
     the chords a circle of its radius is drawn with, its gradient spanning
     its bounds. With no radius there is no inside, and fewer than three
     vertices draw nothing."""
-    if c.r <= 0.0:
+    if c.radius <= 0.0:
         return polygon_command(transform, style, List[Point2D]())
     var steps = max(
-        (circle_segments(c.r * pixel_scale(transform, scale)) + 1) // 2, 2
+        (circle_segments(c.radius * pixel_scale(transform, scale)) + 1) // 2, 2
     )
     var b = c.bounds()
     return framed_polygon_command(
@@ -119,8 +121,8 @@ def shape_command(
         c._vertices(steps),
         b.position.x,
         b.position.y,
-        b.w / 2.0,
-        b.h / 2.0,
+        b.width / 2.0,
+        b.height / 2.0,
     )
 
 
@@ -146,14 +148,14 @@ def shape_command(
     """Rounded, the polygon through the sector's outline, its curves
     flattened as finely as circles of their radii are drawn; sharp, a
     sector's own."""
-    var radii = sector_corner_radii(s.r, s.sweep_angle, s.corner_radius)
+    var radii = sector_corner_radii(s.radius, s.sweep_angle, s.corner_radius)
     if radii[0] <= 0.0 and radii[1] <= 0.0:
         return sector_command(
             transform,
             style,
             s.position.x,
             s.position.y,
-            s.r,
+            s.radius,
             s.start_angle,
             s.sweep_angle,
         )
@@ -164,16 +166,16 @@ def shape_command(
         style,
         rounded_sector_vertices(
             s.position,
-            s.r,
+            s.radius,
             s.start_angle,
             s.sweep_angle,
             s.corner_radius,
             TAU / Float64(circle_segments(fillet * sf)),
-            TAU / Float64(circle_segments(s.r * sf)),
+            TAU / Float64(circle_segments(s.radius * sf)),
         ),
         s.position.x,
         s.position.y,
-        s.r,
+        s.radius,
     )
 
 
