@@ -97,7 +97,7 @@ enemies share a walk cycle.
 
 **Timing.** Nothing ticks an animator: it works out its frame from the run's clock whenever it is
 asked. So it follows `context.time_scale` and `time_paused` (see
-[Slowing and pausing time](math.md#slowing-and-pausing-time)), unless it is built with
+[Slowing and pausing time](time.md#slowing-and-pausing-time)), unless it is built with
 `Animator(animation, clock=Clock.REAL)`.
 
 See [examples/animation](../examples/animation/main.mojo).

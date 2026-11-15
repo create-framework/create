@@ -31,7 +31,8 @@ These look like Processing but behave differently, and each one catches people o
   `canvas.autoclear(False)` in `create` to keep the previous frame's drawing. See
   [The background](drawing.md#the-background).
 - **Time is in seconds.** Move things by `context.time.delta`, the seconds since the last frame,
-  rather than by a fixed step per frame, so they move at the same speed at any frame rate.
+  rather than by a fixed step per frame, so they move at the same speed at any frame rate. See
+  [Time](time.md).
 - **State lives in fields.** A program is a struct; what Processing keeps in global variables
   is a field of it, built in `create`. See [Programs](programs.md#parameters-and-fields).
 
