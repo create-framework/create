@@ -173,14 +173,19 @@ is built from this repo by `pixi run docs`, so a change and its documentation la
 - **Home** is the [README](README.md), and the **user guide** is [docs/](docs/README.md). Write their
   links for GitHub, relative to the file: the site keeps links between its pages, copies images
   in, and points everything else (an example, a source file) at GitHub, at the commit built.
-- The **API reference** is rendered from the docstrings by `mojo doc`, one page per subpackage. It
-  lists what the subpackage's `__init__.mojo` imports, grouped into types, traits, functions and
-  constants and in import order within each, so the public surface and the reference can't
-  disagree; a package's own docstring heads its page. A type's members are grouped into
-  constants, fields, constructors, methods and special methods (the dunders); a static method
-  is listed as a constructor when it returns `Self`, so write a factory's return type so.
+- The **API reference** is rendered from the docstrings by `mojo doc`. Each subpackage's page
+  lists what its `__init__.mojo` imports, grouped into types, traits, functions and constants
+  and in import order within each, so the public surface and the reference can't disagree; a
+  package's own docstring heads it. Each type, trait and function has a page of its own, listed
+  there by its docstring's first line, so write that line to stand alone; a constant is
+  documented on the package's page. A type's members are grouped into constants, fields,
+  constructors, methods and special methods (the dunders); a static method is listed as a
+  constructor when it returns `Self`, so write a factory's return type so. A function's
+  overloads share one page, and those documented alike one block.
 
-A new guide page or subpackage also needs an entry in `nav` in [zensical.toml](zensical.toml).
+A new guide page needs an entry in `nav` in [zensical.toml](zensical.toml). The reference's nav is
+generated: `docs.py` writes the config the site is built from to `build/docs/zensical.toml`, with
+a page for every subpackage, type and function added.
 
 The site is published in two versions, picked by a selector in its header: `/latest/`, the newest
 release and what the root redirects to, and `/main/`, under a banner saying it is unreleased.
