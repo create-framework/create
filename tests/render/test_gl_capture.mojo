@@ -253,5 +253,54 @@ def test_a_gpu_restart_starts_an_autoclear_off_recording_over() raises -> None:
     assert_equal(_mid_rgb(gif, 2, 6 + 8 * 3), 0xFF0000)
 
 
+comptime _GIF_SEED = "/tmp/mojo_create_test_gl_capture_seed.gif"
+
+
+@fieldwise_init
+struct PaintThenRecord(Program):
+    """With the autoclear off, white and then a red square more each frame,
+    recording two frames from the fourth on."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        canvas.autoclear(False)
+        canvas.background(Color.WHITE)
+        PaintAcrossARestart._square(canvas, 0)
+        return Self(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        if context.frame_count() == 4:
+            canvas.start_recording(_GIF_SEED, frames=2, fps=50)
+        PaintAcrossARestart._square(canvas, context.frame_count() - 1)
+
+
+def test_a_gpu_autoclear_off_recording_starts_from_the_screen() raises -> None:
+    # The first frame is read back from the GPU's drawable, twice the
+    # design size, and sampled down to the recording's.
+    try:
+        _ = run_headless[PaintThenRecord](
+            64,
+            48,
+            10,
+            window_size=(128, 96),
+            backend=RenderBackend.GPU,
+            antialiasing=Antialiasing.OFF,
+        )
+    except e:
+        print("SKIP — no GL context:", e)
+        return
+    var gif = decode_gif(_GIF_SEED)
+    remove(_GIF_SEED)
+    assert_equal(len(gif.frames), 2)
+    # Frames 4 and 6, as in test_record: squares 0 to 3, then 0 to 5.
+    for index in range(7):
+        var want = 0xFF0000 if index <= 3 else 0xFFFFFF
+        assert_equal(_mid_rgb(gif, 0, 6 + 8 * index), want)
+        want = 0xFF0000 if index <= 5 else 0xFFFFFF
+        assert_equal(_mid_rgb(gif, 1, 6 + 8 * index), want)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

@@ -138,6 +138,8 @@ See [examples/capture](../examples/capture/main.mojo).
 - **With the autoclear off, it keeps what the screen keeps:** a frame holds the ink of every
   frame since recording started, the frames between two captured ones included, since every
   frame is replayed into the recording while it runs. That costs a CPU replay of each frame.
+  It starts from the picture already on screen: the first frame is the window's own, sampled to
+  the recording's size, so that one frame depends on the window and the backend.
   Whatever starts the screen's picture over (resizing the window, or on the GPU changing the
   antialiasing) starts the recording's over too.
 - **Lasts across frames**, like the [canvas settings](drawing.md#settings-that-outlive-the-frame):

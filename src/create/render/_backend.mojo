@@ -1,5 +1,6 @@
 from std.collections import Optional
 from std.math import max, min, ceil, floor
+from std.memory import unsafe_memcpy
 
 from create.math.matrix import (
     Matrix,
@@ -12,7 +13,7 @@ from create.math.matrix import (
 
 from ._command import RenderCommand
 from ._gl_backend import GLRenderer
-from ._surface import MemorySurface, Surface
+from ._surface import MemorySurface, Surface, _force_opaque
 from ._resources import Resources
 from ._captures import Captures
 from ._command_buffer import CommandBuffer
@@ -181,8 +182,19 @@ struct Backend(Movable):
         )
         mem.save(request.path, opaque=not request.transparent)
 
+    def _needs_seed(self) -> Bool:
+        """Whether the recording in progress wants the window's finished
+        frame: at its first frame, with the autoclear off. Asked before
+        `_record_frame`, so the GPU reads the frame back only then."""
+        if not self.captures.recording or self.buffer.autoclear:
+            return False
+        return not self.captures.recording.value().seeded
+
     def _record_frame(
-        mut self, cmds: List[RenderCommand], window: Tuple[Int, Int, Int]
+        mut self,
+        cmds: List[RenderCommand],
+        window: Tuple[Int, Int, Int],
+        var seed: Optional[MemorySurface] = None,
     ) raises:
         """Capture the presented frame into the recording, if its slot is due.
 
@@ -193,6 +205,11 @@ struct Backend(Movable):
         frame is replayed onto them, due or not, and they hold what the
         screen holds; a change of `window` (its pixel size and the GPU's
         sample count), which starts the screen over, starts them over too.
+
+        `seed` is the window's finished frame, in window pixels, when
+        `_needs_seed` asked for it: the first frame with the autoclear off
+        is sampled from it, since the picture earlier frames left on screen
+        has no commands left to replay.
         """
         var slot = self.captures.frame_due()
         if not self.captures.recording:
@@ -211,11 +228,25 @@ struct Backend(Movable):
                 or last[2] != window[2]
             )
         recording.window = window
+        var first = not recording.seeded
+        recording.seeded = True
         if not accumulate or restarted:
             mem.data = List[UInt8](length=mem.width * mem.height * 4, fill=0)
-        var scale = recording.scale
-        var pre = recording.capture_base @ self.screen_inv
-        self.replay(mem.surface(), cmds, scale, pre=pre, skip_letterbox=True)
+        if accumulate and first and seed:
+            # The finished frame already holds this frame's drawing.
+            _seed(
+                mem,
+                seed.value(),
+                inverse(self.screen_inv),
+                recording.capture_base,
+            )
+            _force_opaque(mem.data)
+        else:
+            var scale = recording.scale
+            var pre = recording.capture_base @ self.screen_inv
+            self.replay(
+                mem.surface(), cmds, scale, pre=pre, skip_letterbox=True
+            )
         if slot:
             self.captures.add_frame(mem, slot.value())
         if self.captures.recording:
@@ -328,8 +359,17 @@ struct Backend(Movable):
         self.replay(s, cmds, scale)
         self.captures.flush_screenshot(s)
         self._flush_image(cmds)
+        var seed = Optional[MemorySurface]()
+        if self._needs_seed():
+            var copy = MemorySurface(s.width, s.height)
+            unsafe_memcpy(
+                dest=copy.data.unsafe_ptr(),
+                src=s.px,
+                count=s.width * s.height * 4,
+            )
+            seed = copy^
         # The CPU keeps the frame's pixels across an antialiasing change.
-        self._record_frame(cmds, (s.width, s.height, 0))
+        self._record_frame(cmds, (s.width, s.height, 0), seed^)
         if self.keep_frames:
             self._keep_frame(s)
         cmds.clear()
@@ -408,8 +448,13 @@ struct Backend(Movable):
         )
         self.captures.flush_screenshot_gpu(gl, width, height)
         self._flush_image(cmds)
+        var seed = Optional[MemorySurface]()
+        if self._needs_seed():
+            var copy = MemorySurface(width, height)
+            copy.data = gl.read_frame(width, height)
+            seed = copy^
         self._record_frame(
-            cmds, (width, height, self.antialiasing._gpu_samples())
+            cmds, (width, height, self.antialiasing._gpu_samples()), seed^
         )
         cmds.clear()
         self.buffer.commands = cmds^

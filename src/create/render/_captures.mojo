@@ -90,6 +90,10 @@ struct _Recording(Movable):
     """The window's pixel size and GPU sample count at the last present.
     A change starts the screen's picture over from transparent with the
     autoclear off, so it starts `canvas` over too."""
+    var seeded: Bool
+    """Whether `canvas` has had its first frame. With the autoclear off,
+    that one is the window's finished frame, the picture earlier frames
+    left included, which no command can replay."""
 
     def __init__(
         out self,
@@ -119,6 +123,7 @@ struct _Recording(Movable):
         self.written = 0
         self.canvas = MemorySurface(self.width, self.height)
         self.window = None
+        self.seeded = False
 
     def write_pending(mut self, until_slot: Int) raises:
         """Write the waiting frame, shown until `until_slot` begins."""
