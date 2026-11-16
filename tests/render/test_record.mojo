@@ -5,6 +5,7 @@
 
 from std.testing import TestSuite, assert_equal, assert_true
 
+from std.collections import Set
 from std.os import remove
 from std.os.path import exists
 
@@ -159,6 +160,52 @@ struct Mover(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.GRAY)
         _square(canvas, context.frame_count() - 1)
+
+
+@fieldwise_init
+struct Still(Program):
+    """The same picture every frame, recorded for half a second."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        canvas.background(Color.WHITE)
+        _square(canvas, 2)
+        canvas.start_recording(_path(31), seconds=0.5)
+        return Self(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.WHITE)
+        _square(canvas, 2)
+
+
+@fieldwise_init
+struct GradientMover(Program):
+    """A square moving over a picture of far more than 256 colours, so
+    every frame is quantised by median cut, recorded until the run ends."""
+
+    var sky: Gradient
+    var glow: Gradient
+
+    def draw(self, mut canvas: Canvas, index: Int):
+        canvas.background(self.sky)
+        with canvas.style(fill_gradient=self.glow, stroke_enabled=False):
+            canvas.circle((0, 0), 30)
+        _square(canvas, index)
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        var program = Self(
+            Gradient.linear(Color(20, 30, 80), Color(250, 150, 90)),
+            Gradient.radial(Color(255, 255, 200), Color(255, 0, 120, 0)),
+        )
+        program.draw(canvas, 0)
+        canvas.start_recording(_path(32), fps=50)
+        return program^
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        self.draw(canvas, context.frame_count() - 1)
 
 
 def _delays(gif: DecodedGif) -> Int:
@@ -378,6 +425,55 @@ def test_a_transparent_recording_starts_transparent() raises -> None:
             String("square ", index),
         )
     remove(_path(23))
+
+
+def test_a_frame_holds_only_what_changed() raises -> None:
+    _ = run_headless[Painter[0]](
+        _WIDTH, _HEIGHT, 10, antialiasing=Antialiasing.OFF
+    )
+    var gif = decode_gif(_path(20))
+    assert_equal(gif.frames[0].width, _WIDTH)
+    assert_equal(gif.frames[0].height, _HEIGHT)
+    # Frame 2 adds squares 1 and 2, centred on x 14 and 22, 6 wide and tall.
+    assert_equal(gif.frames[1].left, 11)
+    assert_equal(gif.frames[1].width, 14)
+    assert_equal(gif.frames[1].height, 6)
+    for frame in range(2, 4):
+        assert_equal(gif.frames[frame].width, 6)
+        assert_equal(gif.frames[frame].height, 6)
+    remove(_path(20))
+
+
+def test_an_unchanged_frame_lengthens_the_one_before() raises -> None:
+    _ = run_headless[Still](_WIDTH, _HEIGHT, 60)
+    var gif = decode_gif(_path(31))
+    assert_equal(len(gif.frames), 1)
+    assert_equal(gif.frames[0].delay, 50)
+    remove(_path(31))
+
+
+def test_partial_frames_stay_close_to_a_many_coloured_picture() raises -> None:
+    # 10 frames of 16 ms at 50 fps: the last, at 160 ms, is captured.
+    var last = run_headless[GradientMover](
+        _WIDTH, _HEIGHT, 10, antialiasing=Antialiasing.OFF
+    )
+    var colours = Set[Int]()
+    for y in range(_HEIGHT):
+        for x in range(_WIDTH):
+            var c = last.pixel(x, y)
+            colours.add((Int(c.r) << 16) | (Int(c.g) << 8) | Int(c.b))
+    assert_true(len(colours) > 256, "the picture must need median cut")
+    var gif = decode_gif(_path(32))
+    assert_true(gif.frames[1].width < _WIDTH, "a partial frame")
+    ref shown = gif.frames[len(gif.frames) - 1].pixels
+    for y in range(_HEIGHT):
+        for x in range(_WIDTH):
+            var c = last.pixel(x, y)
+            var o = (y * _WIDTH + x) * 4
+            assert_true(abs(Int(shown[o]) - Int(c.r)) <= 24)
+            assert_true(abs(Int(shown[o + 1]) - Int(c.g)) <= 24)
+            assert_true(abs(Int(shown[o + 2]) - Int(c.b)) <= 24)
+    remove(_path(32))
 
 
 def _raises[scenario: Int](expected: String) raises:

@@ -53,6 +53,76 @@ def _centiseconds(slot: Int, fps: Float64) -> Int:
     return Int(Float64(slot) * 100.0 / fps + 0.5)
 
 
+def _changed_rect(
+    previous: List[UInt8], current: List[UInt8], width: Int, height: Int
+) -> Optional[Tuple[Int, Int, Int, Int]]:
+    """The smallest rectangle, as left, top, width and height, holding
+    every pixel whose colour differs between the two `width` x `height`
+    RGBA frames, or `None` if none does. Alpha is not compared: an opaque
+    GIF shows none."""
+    var a = previous.unsafe_ptr()
+    var b = current.unsafe_ptr()
+    var left = width
+    var right = -1
+    var top = height
+    var bottom = -1
+    for y in range(height):
+        var first = -1
+        var last = -1
+        for x in range(width):
+            var o = (y * width + x) * 4
+            if (
+                a[unsafe_offset=o] != b[unsafe_offset=o]
+                or a[unsafe_offset=o + 1] != b[unsafe_offset=o + 1]
+                or a[unsafe_offset=o + 2] != b[unsafe_offset=o + 2]
+            ):
+                if first < 0:
+                    first = x
+                last = x
+        if first >= 0:
+            left = min(left, first)
+            right = max(right, last)
+            top = min(top, y)
+            bottom = y
+    if right < 0:
+        return None
+    return (left, top, right - left + 1, bottom - top + 1)
+
+
+def _delta(
+    previous: List[UInt8],
+    current: List[UInt8],
+    width: Int,
+    rect: Tuple[Int, Int, Int, Int],
+) -> Tuple[List[UInt8], Bool]:
+    """`rect` of `current` (a frame `width` wide), with the pixels whose
+    colour `previous` already has at alpha 0 and the rest at 255, and
+    whether there were any of the first: the frame to draw over `previous`
+    so the image becomes `current`."""
+    var w = rect[2]
+    var h = rect[3]
+    var out = List[UInt8](length=w * h * 4, fill=0)
+    var holes = False
+    var a = previous.unsafe_ptr()
+    var b = current.unsafe_ptr()
+    var d = out.unsafe_ptr()
+    for y in range(h):
+        for x in range(w):
+            var o = ((rect[1] + y) * width + rect[0] + x) * 4
+            var p = (y * w + x) * 4
+            if (
+                a[unsafe_offset=o] == b[unsafe_offset=o]
+                and a[unsafe_offset=o + 1] == b[unsafe_offset=o + 1]
+                and a[unsafe_offset=o + 2] == b[unsafe_offset=o + 2]
+            ):
+                holes = True
+                continue
+            for k in range(3):
+                d[unsafe_offset=p + k] = b[unsafe_offset=o + k]
+            d[unsafe_offset=p + 3] = 255
+    return (out^, holes)
+
+
 struct _Recording(Movable):
     """A `canvas.start_recording` in progress, captured at each present it is due.
 
@@ -87,6 +157,9 @@ struct _Recording(Movable):
     var frames: Int
     """Frames captured so far, the pending one included."""
     var pending: Optional[EncodedFrame]
+    var previous: Optional[List[UInt8]]
+    """The last frame added, as captured, in an opaque recording: what the
+    next is compared with, so it need hold only what changed."""
     var pending_slot: Int
     var written: Int
     """Centiseconds already given to the frames written."""
@@ -131,6 +204,7 @@ struct _Recording(Movable):
         self.next_slot = 0
         self.frames = 0
         self.pending = None
+        self.previous = None
         self.pending_slot = 0
         self.written = 0
         self.canvas = MemorySurface(self.width, self.height)
@@ -273,17 +347,52 @@ struct Captures(Movable):
     def add_frame(mut self, mem: MemorySurface, slot: Int) raises:
         """Encode `mem`, the frame `frame_due` asked for, as the frame of
         `slot`: the one before it is written now that its length is known,
-        and the recording finishes once it has its `frames`."""
+        and the recording finishes once it has its `frames`.
+
+        An opaque recording's frame after the first holds only the rectangle
+        that changed, drawn over the one before it, with the pixels in it
+        that didn't change transparent; a frame where nothing changed isn't
+        written at all, and the one before it is shown for longer. A
+        transparent recording's frames replace each other, so each is whole.
+        """
         ref recording = self.recording.value()
-        var frame = encode_frame(
-            mem.data,
-            recording.width,
-            recording.height,
-            recording.dither,
-            transparent=recording.transparent,
-        )
-        recording.write_pending(slot)
-        recording.pending = Optional(frame^)
+        var frame = Optional[EncodedFrame]()
+        if recording.transparent or not recording.previous:
+            frame = encode_frame(
+                mem.data,
+                recording.width,
+                recording.height,
+                recording.dither,
+                transparent=recording.transparent,
+            )
+        else:
+            var rect = _changed_rect(
+                recording.previous.value(),
+                mem.data,
+                recording.width,
+                recording.height,
+            )
+            if rect:
+                var r = rect.value()
+                var delta = _delta(
+                    recording.previous.value(), mem.data, recording.width, r
+                )
+                frame = encode_frame(
+                    delta[0],
+                    r[2],
+                    r[3],
+                    recording.dither,
+                    transparent=delta[1],
+                    left=r[0],
+                    top=r[1],
+                )
+        if not recording.transparent:
+            recording.previous = mem.data.copy()
+        if frame:
+            recording.write_pending(slot)
+            recording.pending = frame^
+        # The waiting frame is shown until the slot after this one, whether
+        # this one replaced it or added nothing.
         recording.pending_slot = slot
         recording.next_slot = slot + 1
         recording.frames += 1

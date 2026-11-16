@@ -160,6 +160,10 @@ See [examples/capture](../examples/capture/main.mojo).
   rest are drawn whole: antialiased edges come out hard, in their own colour, with no fringe.
   With the autoclear off, a transparent recording starts from nothing rather than the screen,
   whose picture has the background in it.
+- **Only what changed is stored:** each frame after the first holds just the rectangle that
+  changed since the one before, and a frame where nothing changed lengthens the one before
+  instead, so a mostly still scene makes a small file. A transparent recording stores every
+  frame whole.
 - **A palette per frame:** exact with 256 colours or fewer, median cut otherwise; `dither` trades
   banding for grain. Capturing and encoding run when the frame is presented, so recording a heavy
   scene slows it.
