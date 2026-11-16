@@ -14,7 +14,10 @@ from create import *
 comptime _SIDE = 640.0
 comptime _PAPER = Color(253, 253, 250)
 
-comptime _POINTS_PER_FRAME = 1000
+comptime _START_RATE = 30.0
+"""Points a second at the start."""
+comptime _DOUBLING = 0.25
+"""Seconds for the rate of points to double."""
 comptime _MAX_POINTS = 240_000
 """Where the points stop."""
 comptime _GROW_POINTS = 40_000
@@ -134,9 +137,7 @@ struct Logo(Program):
                     delay=Float64(i) * _STAGGER,
                 )
             )
-        var layer = Canvas(
-            canvas.width(), canvas.height(), antialiasing=Antialiasing.OFF
-        )
+        var layer = Canvas(canvas.width(), canvas.height())
         var picture = layer.snapshot()
         # Saving into a folder that isn't there fails, so make it first.
         makedirs(source_path("out"), exist_ok=True)
@@ -152,6 +153,15 @@ struct Logo(Program):
             shown=0.0,
         )
 
+    @staticmethod
+    def points_by(seconds: Float64) -> Int:
+        """How many points there are `seconds` into the run: the rate starts
+        at `_START_RATE` and doubles every `_DOUBLING` seconds, so the first
+        points appear one by one and the rest fill in fast."""
+        var growth = log(2.0) / _DOUBLING
+        var points = _START_RATE / growth * (exp(growth * seconds) - 1.0)
+        return min(Int(points), _MAX_POINTS)
+
     def random_corner(mut self) -> Point2D:
         var pick = self.random.int(0, 3)
         if pick == 0:
@@ -161,16 +171,17 @@ struct Logo(Program):
         return _corner(4, 4)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        if self.count < _MAX_POINTS:
-            # A point on the logo's edge would stick half a pixel out past
-            # it, and nothing drawn later covers the outside: clip to it.
+        var target = Self.points_by(context.time.elapsed)
+        if self.count < target:
+            # A point on the logo's edge would stick a pixel out past it,
+            # and nothing drawn later covers the outside: clip to it.
             var stroke = Triangle(_corner(0, 0), _corner(4, 0), _corner(4, 4))
             with self.layer.clip(stroke):
                 with self.layer.style(fill=Color.BLACK, stroke_enabled=False):
-                    for _ in range(_POINTS_PER_FRAME):
+                    for _ in range(target - self.count):
                         self.point = self.point.lerp(self.random_corner(), 0.5)
-                        self.layer.rectangle(self.point, 1, 1)
-            self.count += _POINTS_PER_FRAME
+                        self.layer.circle(self.point, 1)
+            self.count = target
             self.picture = self.layer.snapshot()
         if self.count >= _GROW_POINTS:
             self.elapsed += context.time.delta
@@ -197,8 +208,19 @@ struct Logo(Program):
             # Under the landed pieces, so no seam shows where two meet.
             canvas.fill(Color.BLACK)
             canvas.triangle(_corner(0, 0), _corner(4, 0), _corner(4, 4))
+            # The gap's edges lie under the coloured pieces around it, and
+            # antialiased, they'd leave a dark rim inside those pieces'
+            # edges: grow it a little, under their solid insides, so their
+            # edges blend into paper alone.
+            var gap = Triangle(_corner(2, 1), _corner(3, 1), _corner(3, 2))
+            var middle = gap.center()
+            comptime grow = 1.04
             canvas.fill(_PAPER)
-            canvas.triangle(_corner(2, 1), _corner(3, 1), _corner(3, 2))
+            canvas.triangle(
+                middle + (gap.a - middle) * grow,
+                middle + (gap.b - middle) * grow,
+                middle + (gap.c - middle) * grow,
+            )
         for piece in self.pieces:
             if not piece.tween.is_playing() and not piece.tween.is_finished():
                 continue
@@ -214,5 +236,4 @@ struct Logo(Program):
 
 
 def main() raises:
-    # Hard edges, pixel for pixel like the points'.
-    run[Logo]("Logo", width=1280, height=720, antialiasing=Antialiasing.OFF)
+    run[Logo]("Logo", width=1280, height=640)
