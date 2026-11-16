@@ -2,10 +2,10 @@
 # Applied automatically by `pixi run setup` (blame.ignoreRevsFile).
 
 # Format the repo with mojo format
-388b99fcca0593e1d8fd50ddc4c41653c21a0b18
+44dfc8154b16e16b53986a6f020089262f3296df
 
 # Rename Options→Context, Frame→Canvas
-daceb034448035e59c6eb0698cd25fcac1a1d913
+2c4d128107efb9d217f13d1d7a5b577e5a5e9b9e
 
 # Rename outline to stroke across the API
 be4c4a911fb3cc5069300fcfb307ef76a21c01f8
