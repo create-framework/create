@@ -55,8 +55,8 @@ again on the CPU, as [`save_image`](#saving-images) does. See
   picking, a capture or a feedback effect; read once rather than per object.
 - **With `canvas.autoclear(False)`**, a read includes what earlier frames left on screen, as the
   frame itself does, but only from the frame after the program's first read: that first read
-  starts the keeping of past frames, so it sees only its own frame's drawing. CPU backend only,
-  the one that keeps past frames.
+  starts the keeping of past frames, so it sees only its own frame's drawing. A recording keeps
+  them from its first frame on (see [Recording](#recording)).
 
 ## Drawing into an image
 
@@ -121,9 +121,8 @@ On an offscreen canvas both write at once (see [Drawing into an image](#drawing-
 ## Recording
 
 `canvas.start_recording(path, seconds=, frames=, fps=30, scale=1.0, dither=False,
-transparent=False)` records an
-animated GIF, starting with the frame it is called in. GIF is the only format, so the path must
-end in `.gif`:
+transparent=False)` records an animated GIF, starting with the frame it is called in. GIF is the
+only format, so the path must end in `.gif`:
 
 ```mojo
 # In `update`: R records the next five seconds.
@@ -135,14 +134,14 @@ See [examples/capture](../examples/capture/main.mojo).
 
 - **Each frame is a `save_image`:** design size × `scale`, no letterbox, replayed on the CPU, so
   either backend and every machine record the same bytes, and a headless run records
-  deterministically.
+  deterministically. The one exception is below.
 - **With the autoclear off, it keeps what the screen keeps:** a frame holds the ink of every
   frame since recording started, the frames between two captured ones included, since every
-  frame is replayed into the recording while it runs. That costs a CPU replay of each frame.
-  It starts from the picture already on screen: the first frame is the window's own, sampled to
-  the recording's size, so that one frame depends on the window and the backend.
-  Whatever starts the screen's picture over (resizing the window, or on the GPU changing the
-  antialiasing) starts the recording's over too.
+  frame is replayed into the recording while it runs; that costs a CPU replay of each frame. It
+  starts from the picture already on screen: the first frame is the window's own, sampled to the
+  recording's size, so that one frame depends on the window and the backend. Whatever starts the
+  screen's picture over (resizing the window, or on the GPU changing the antialiasing) starts the
+  recording's over too.
 - **Lasts across frames**, like the [canvas settings](drawing.md#settings-that-outlive-the-frame):
   until `seconds` of the run's time or `frames` frames, `canvas.stop_recording()` (the file is
   complete when it returns), or the end of the run, which finishes it. `canvas.cancel_recording()`
