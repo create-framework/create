@@ -108,7 +108,7 @@ struct Painter[scenario: Int](Program):
 
 
 def _rgb(gif: DecodedGif, frame: Int, x: Int, y: Int) -> Tuple[Int, Int, Int]:
-    var o = (y * gif.width + x) * 3
+    var o = (y * gif.width + x) * 4
     ref pixels = gif.frames[frame].pixels
     return (Int(pixels[o]), Int(pixels[o + 1]), Int(pixels[o + 2]))
 
@@ -163,7 +163,7 @@ def test_a_frame_limit_records_that_many_frames() raises -> None:
     for frame in gif.frames:
         assert_true(frame.delay == 3 or frame.delay == 4)
     # The first frame is the one record was called in, which create drew.
-    var middle = ((_HEIGHT // 2) * _WIDTH + _WIDTH // 2) * 3
+    var middle = ((_HEIGHT // 2) * _WIDTH + _WIDTH // 2) * 4
     assert_equal(Int(gif.frames[0].pixels[middle]), 255)
     assert_equal(Int(gif.frames[0].pixels[middle + 1]), 0)
     assert_equal(Int(gif.frames[0].pixels[middle + 2]), 0)
