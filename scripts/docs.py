@@ -230,7 +230,13 @@ class Package:
         out = [f"# create.{self.name}\n", summary_and_description(self.decl)]
         for label, names in self.groups().items():
             out.append(f"## {label}\n")
-            for name in names:
+            for i, name in enumerate(names):
+                # A rule sets each declaration apart from the one before;
+                # the first follows its group's heading, which does that.
+                # The blank line before it keeps `---` from underlining the
+                # text above into a heading.
+                if i > 0:
+                    out.append("\n---\n")
                 out.append(render_declaration(self.declarations[name]))
         if self.reexports:
             names = ", ".join(f"`{n}`" for n in self.reexports)
