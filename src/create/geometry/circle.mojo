@@ -1,7 +1,8 @@
+from std.iter import downcast
 from std.math import sqrt
 from create.math import PI, Point2D, Vector2D
 from .bezier import _curve_segments
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Region, Shape
 from ._collider import _Collider, _Core, _contains
 from ._shared import _RADIUS_EPSILON, _distance_squared
 from .capsule import Capsule
@@ -84,60 +85,53 @@ struct Circle(
     def contains(self, p: Point2D) -> Bool:
         return _distance_squared(p, self.position) <= self.radius * self.radius
 
-    # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
-    # a `Line`, is a convex core grown by a radius, and is held exactly when
-    # a disc of its radius round every corner of its core is (`_contains`).
-    def contains(self, other: Circle) -> Bool:
-        return _contains(self, other)
+    def contains[S: Shape](self, shape: S) -> Bool:
+        """Whether the whole of `shape` is inside, its boundary included.
 
-    def contains(self, radius: Rectangle) -> Bool:
-        return _contains(self, radius)
-
-    def contains(self, t: Triangle) -> Bool:
-        return _contains(self, t)
-
-    def contains(self, l: Line) -> Bool:
-        return _contains(self, l)
-
-    def contains(self, c: Capsule) -> Bool:
-        return _contains(self, c)
-
-    def contains[C: Curve](self, curve: C) -> Bool:
-        """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
-        inside: every segment of it flattened to within 1e-4 of its size,
-        as `intersects` follows it, so a curve grazing the edge from inside
-        is decided only that closely."""
-        for segment in _curve_segments(curve):
-            if not self.contains(segment):
+        `shape` is a region (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+        `Triangle`, `Sector` or `Polygon`) or a curve. A `Line` is decided
+        exactly; an `Arc`, `Bezier` or `Spline` segment by segment, flattened
+        to within 1e-4 of its size as `intersects` follows it, so a curve
+        grazing the edge from inside is decided only that closely."""
+        # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
+        # a `Line`, is a convex core grown by a radius, and is held exactly when
+        # a disc of its radius round every corner of its core is (`_contains`).
+        comptime if conforms_to(S, _Collider):
+            return _contains(self, rebind[downcast[S, _Collider]](shape))
+        elif S == Sector:
+            ref s = rebind[Sector](shape)
+            # A sector is its tip fanned out to its arc, and a disc is convex,
+            # so it holds the sector when it holds the tip and the arc's point
+            # furthest from its centre. That point comes through `cos` and
+            # `sin`, so it gets an arc's slack, as in `Sector.contains`.
+            if s._is_rounded():
+                return self.contains(s._outline())
+            if not self.contains(s.position):
                 return False
-        return True
-
-    def contains(self, s: Sector) -> Bool:
-        # A sector is its tip fanned out to its arc, and a disc is convex,
-        # so it holds the sector when it holds the tip and the arc's point
-        # furthest from its centre. That point comes through `cos` and
-        # `sin`, so it gets an arc's slack, as in `Sector.contains`.
-        if s._is_rounded():
-            return self.contains(s._outline())
-        if not self.contains(s.position):
-            return False
-        var far = s.arc()._furthest_along(s.position - self.position)
-        var reach = self.radius * (1.0 + _RADIUS_EPSILON)
-        return _distance_squared(far, self.position) <= reach * reach
-
-    def contains(self, p: Polygon) -> Bool:
-        if p._is_rounded():
-            return self.contains(p._outline())
-        for v in p.vertices:
-            if not self.contains(v):
-                return False
-        return True
-
-    def contains(self, e: Ellipse) -> Bool:
-        # A circle is the ellipse of its diameter, which takes it exactly.
-        return Ellipse(
-            self.position, self.diameter(), self.diameter()
-        ).contains(e)
+            var far = s.arc()._furthest_along(s.position - self.position)
+            var reach = self.radius * (1.0 + _RADIUS_EPSILON)
+            return _distance_squared(far, self.position) <= reach * reach
+        elif S == Polygon:
+            ref p = rebind[Polygon](shape)
+            if p._is_rounded():
+                return self.contains(p._outline())
+            for v in p.vertices:
+                if not self.contains(v):
+                    return False
+            return True
+        elif S == Ellipse:
+            ref e = rebind[Ellipse](shape)
+            # A circle is the ellipse of its diameter, which takes it exactly.
+            return Ellipse(
+                self.position, self.diameter(), self.diameter()
+            ).contains(e)
+        elif conforms_to(S, Curve):
+            for segment in _curve_segments(rebind[downcast[S, Curve]](shape)):
+                if not self.contains(segment):
+                    return False
+            return True
+        else:
+            comptime assert False, "contains takes a region or a curve"
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._circle(self)

@@ -1,9 +1,10 @@
+from std.iter import downcast
 from std.math import min, max
 from create.math import PI, TAU, Point2D, Vector2D
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Region, Shape
 from ._shared import (
     _FILLET_STEP,
     _arc_middles,
@@ -258,132 +259,138 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
                 return True
         return self._winding(p) != 0
 
-    # A polygon may be concave, so a shape with its outline inside can
-    # still bridge a notch; and it may wind round a hole, which a shape
-    # can enclose with its whole outline inside. So it holds a shape when
-    # it holds the shape's outline -- cut where it crosses the lines of the
-    # edges, the middle of every piece inside, as for `Sector` -- and no
-    # edge piece strictly inside the shape has the outside along it. A
-    # rounded polygon does all this as its outline.
-    def contains(self, l: Line) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(l)
-        if not (self.contains(l.start) and self.contains(l.end)):
-            return False
-        var cuts = List[Float64]()
-        for i in range(len(self.vertices)):
-            _cut_at_line(l, self._edge(i), cuts)
-        for middle in _segment_middles(l, cuts^):
-            if not self.contains(middle):
-                return False
-        return True
+    def contains[S: Shape](self, shape: S) -> Bool:
+        """Whether the whole of `shape` is inside, its boundary included.
 
-    def contains[C: Curve](self, curve: C) -> Bool:
-        """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
-        inside: every segment of it flattened to within 1e-4 of its size,
-        as `intersects` follows it, so a curve grazing the edge from inside
-        is decided only that closely."""
-        for segment in _curve_segments(curve):
-            if not self.contains(segment):
+        `shape` is a region (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+        `Triangle`, `Sector` or `Polygon`) or a curve. A `Line` is decided
+        exactly; an `Arc`, `Bezier` or `Spline` segment by segment, flattened
+        to within 1e-4 of its size as `intersects` follows it, so a curve
+        grazing the edge from inside is decided only that closely."""
+        # A polygon may be concave, so a shape with its outline inside can
+        # still bridge a notch; and it may wind round a hole, which a shape
+        # can enclose with its whole outline inside. So it holds a shape when
+        # it holds the shape's outline -- cut where it crosses the lines of the
+        # edges, the middle of every piece inside, as for `Sector` -- and no
+        # edge piece strictly inside the shape has the outside along it. A
+        # rounded polygon does all this as its outline.
+        comptime if S == Line:
+            ref l = rebind[Line](shape)
+            if self._is_rounded():
+                return self._outline().contains(l)
+            if not (self.contains(l.start) and self.contains(l.end)):
                 return False
-        return True
-
-    def contains(self, radius: Rectangle) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(radius)
-        if radius._radius() > 0.0:
-            return self.contains(radius._outline())
-        var outline = _closed_outline(radius._points())
-        for edge in outline:
-            if not self.contains(edge):
+            var cuts = List[Float64]()
+            for i in range(len(self.vertices)):
+                _cut_at_line(l, self._edge(i), cuts)
+            for middle in _segment_middles(l, cuts^):
+                if not self.contains(middle):
+                    return False
+            return True
+        elif S == Rectangle:
+            ref r = rebind[Rectangle](shape)
+            if self._is_rounded():
+                return self._outline().contains(r)
+            if r._radius() > 0.0:
+                return self.contains(r._outline())
+            var outline = _closed_outline(r._points())
+            for edge in outline:
+                if not self.contains(edge):
+                    return False
+            for p in self._rim(outline, []):
+                if r._holds_strictly(p):
+                    return False
+            return True
+        elif S == Triangle:
+            ref t = rebind[Triangle](shape)
+            if self._is_rounded():
+                return self._outline().contains(t)
+            if t._radius() > 0.0:
+                return self.contains(t._outline())
+            var outline = _closed_outline(t._points())
+            for edge in outline:
+                if not self.contains(edge):
+                    return False
+            for p in self._rim(outline, []):
+                if t._holds_strictly(p):
+                    return False
+            return True
+        elif S == Circle:
+            ref c = rebind[Circle](shape)
+            if self._is_rounded():
+                return self._outline().contains(c)
+            var outline = Arc(c.position, c.radius, 0.0, TAU)
+            if not self._contains_arc(outline):
                 return False
-        for p in self._rim(outline, []):
-            if radius._holds_strictly(p):
+            for p in self._rim([], [outline]):
+                if _distance_squared(p, c.position) < c.radius * c.radius:
+                    return False
+            return True
+        elif S == Sector:
+            ref s = rebind[Sector](shape)
+            if self._is_rounded():
+                return self._outline().contains(s)
+            if s._is_rounded():
+                return self.contains(s._outline())
+            var radii = s._radii()
+            var outline: List[Line] = [radii[0], radii[1]]
+            for radius in outline:
+                if not self.contains(radius):
+                    return False
+            if not self._contains_arc(s.arc()):
                 return False
-        return True
-
-    def contains(self, t: Triangle) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(t)
-        if t._radius() > 0.0:
-            return self.contains(t._outline())
-        var outline = _closed_outline(t._points())
-        for edge in outline:
-            if not self.contains(edge):
-                return False
-        for p in self._rim(outline, []):
-            if t._holds_strictly(p):
-                return False
-        return True
-
-    def contains(self, c: Circle) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(c)
-        var outline = Arc(c.position, c.radius, 0.0, TAU)
-        if not self._contains_arc(outline):
-            return False
-        for p in self._rim([], [outline]):
-            if _distance_squared(p, c.position) < c.radius * c.radius:
-                return False
-        return True
-
-    def contains(self, s: Sector) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(s)
-        if s._is_rounded():
-            return self.contains(s._outline())
-        var radii = s._radii()
-        var outline: List[Line] = [radii[0], radii[1]]
-        for radius in outline:
-            if not self.contains(radius):
-                return False
-        if not self._contains_arc(s.arc()):
-            return False
-        for p in self._rim(outline, [s.arc()]):
-            if s._holds_strictly(p):
-                return False
-        return True
-
-    def contains(self, other: Polygon) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(other)
-        if other._is_rounded():
-            return self.contains(other._outline())
-        var outline = other._edges()
-        for edge in outline:
-            if not self.contains(edge):
-                return False
-        for p in self._rim(outline, []):
-            if other._holds_strictly(p):
-                return False
-        return True
-
-    def contains(self, e: Ellipse) -> Bool:
-        # With `e` mapped onto the unit circle, the polygon mapped alike is
-        # still one.
-        if self._is_rounded():
-            return self._outline().contains(e)
-        if e._is_flat():
-            return self.contains(e.bounds())
-        return e._to_unit(self).contains(_UNIT_CIRCLE)
-
-    def contains(self, c: Capsule) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(c)
-        if c.radius <= 0.0:
-            return self.contains(c._spine())
-        var sides = c._sides()
-        var caps = c._caps()
-        for side in sides:
-            if not self.contains(side):
-                return False
-        for cap in caps:
-            if not self._contains_arc(cap):
-                return False
-        for p in self._rim(sides, caps):
-            if c._holds_strictly(p):
-                return False
-        return True
+            for p in self._rim(outline, [s.arc()]):
+                if s._holds_strictly(p):
+                    return False
+            return True
+        elif S == Polygon:
+            ref other = rebind[Polygon](shape)
+            if self._is_rounded():
+                return self._outline().contains(other)
+            if other._is_rounded():
+                return self.contains(other._outline())
+            var outline = other._edges()
+            for edge in outline:
+                if not self.contains(edge):
+                    return False
+            for p in self._rim(outline, []):
+                if other._holds_strictly(p):
+                    return False
+            return True
+        elif S == Ellipse:
+            ref e = rebind[Ellipse](shape)
+            # With `e` mapped onto the unit circle, the polygon mapped alike is
+            # still one.
+            if self._is_rounded():
+                return self._outline().contains(e)
+            if e._is_flat():
+                return self.contains(e.bounds())
+            return e._to_unit(self).contains(_UNIT_CIRCLE)
+        elif S == Capsule:
+            ref c = rebind[Capsule](shape)
+            if self._is_rounded():
+                return self._outline().contains(c)
+            if c.radius <= 0.0:
+                return self.contains(c._spine())
+            var sides = c._sides()
+            var caps = c._caps()
+            for side in sides:
+                if not self.contains(side):
+                    return False
+            for cap in caps:
+                if not self._contains_arc(cap):
+                    return False
+            for p in self._rim(sides, caps):
+                if c._holds_strictly(p):
+                    return False
+            return True
+        elif conforms_to(S, Curve):
+            for segment in _curve_segments(rebind[downcast[S, Curve]](shape)):
+                if not self.contains(segment):
+                    return False
+            return True
+        else:
+            comptime assert False, "contains takes a region or a curve"
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._polygon(self)

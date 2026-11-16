@@ -19,6 +19,7 @@ from create.geometry import (
     Shape,
     Spline,
     Triangle,
+    overlaps,
 )
 from create.math import PI, Point2D, Vector2D
 
@@ -45,6 +46,18 @@ def _holds_its_center[R: Region](region: R) raises:
     var moved = region.move_to((10.0, 10.0))
     assert_true(moved.contains((10.0, 10.0)))
     assert_true(region.contains(region.center()))
+
+
+def _meets_itself_moved[R: Region](region: R) raises:
+    """`overlaps` and `contains` are generic, so code over `Region` reaches
+    them for every pair of its type."""
+    var near = region.translate(Vector2D(0.5, 0.0))
+    var far = region.translate(Vector2D(100.0, 0.0))
+    assert_true(overlaps(region, near))
+    assert_true(overlaps(near, region))
+    assert_equal(overlaps(region, far), False)
+    assert_true(region.contains(Line(region.center(), region.center())))
+    assert_equal(region.contains(far), False)
 
 
 def _runs_end_to_end[C: Curve](curve: C) raises:
@@ -89,6 +102,16 @@ def test_every_region_holds_its_center() raises -> None:
     _holds_its_center(Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=5))
     # A sector's center() is its tip, on its boundary; move_to places it.
     _holds_its_center(Sector((0.0, 0.0), 3.0, 0.0, PI / 2.0))
+
+
+def test_every_region_meets_itself_through_generic_code() raises -> None:
+    _meets_itself_moved(Rectangle((0.0, 0.0), 4.0, 2.0))
+    _meets_itself_moved(Circle((1.0, 1.0), 2.0))
+    _meets_itself_moved(Ellipse((1.0, 1.0), 6.0, 2.0))
+    _meets_itself_moved(Capsule((0.0, 0.0), (4.0, 3.0), 1.0))
+    _meets_itself_moved(Triangle((0.0, 0.0), (4.0, 0.0), (1.0, 3.0)))
+    _meets_itself_moved(Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=5))
+    _meets_itself_moved(Sector((0.0, 0.0), 3.0, 0.0, PI / 2.0))
 
 
 def test_every_curve_runs_end_to_end() raises -> None:

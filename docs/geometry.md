@@ -212,7 +212,9 @@ any of them (`def f[C: Curve](c: C)`):
   curve, as in mathematics): `at`, `tangent` (the derivative, not unit), `length`, `at_distance`,
   `flatten`, `beziers`.
 
-Some methods are not trait methods. The tests between two shapes (`overlaps`, `contains(shape)`,
-`intersects`) are overloads per pair. A curve's `move_to` exists only on `Line` (its midpoint) and
+The tests between two shapes are generic, so code generic over `Region` can call them:
+`overlaps[A: Region, B: Region]` and `Region`'s `contains[S: Shape]` take any of the library's own
+shapes, and a shape type of your own fails to compile there. `intersects` is not a trait method but
+an overload per pair. A curve's `move_to` exists only on `Line` (its midpoint) and
 `Arc` (its centre), and `split(t)` only on `Line`, `Arc` and `Bezier`: a piece of a `Spline` is
 not a `Spline`.

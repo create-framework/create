@@ -49,8 +49,9 @@ trait Drawable:
 trait Shape(Copyable, Deinitable, Drawable):
     """A geometric shape: a `Region` or a `Curve`. What every one of them
     answers, whichever it is, and a plain value generic code can keep, copy
-    and drop. Tests between two shapes (`contains`, `intersects`,
-    `overlaps`) are overloads per pair, not part of this."""
+    and drop. `overlaps` and a region's `contains` are generic over the
+    library's own shapes; a curve's `intersects` is an overload per pair,
+    not part of this."""
 
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around the shape."""
@@ -78,6 +79,11 @@ trait Region(Shape):
 
     def contains(self, p: Point2D) -> Bool:
         """Whether `p` is inside, its boundary included."""
+        ...
+
+    def contains[S: Shape](self, shape: S) -> Bool:
+        """Whether the whole of `shape`, a region or a curve, is inside, its
+        boundary included."""
         ...
 
     def move_to(self, position: Point2D) -> Self:

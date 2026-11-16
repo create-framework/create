@@ -1,7 +1,8 @@
+from std.iter import downcast
 from std.math import cos, sin, sqrt
 from create.math import PI, TAU, Point2D, Vector2D
 from .bezier import _curve_segments
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Region, Shape
 from ._shared import _distance_squared, _swapped
 from .capsule import Capsule
 from .circle import Circle
@@ -178,90 +179,95 @@ struct Ellipse(
         var q = self._to_unit(p)
         return q.x * q.x + q.y * q.y <= 1.0
 
-    # An ellipse is convex, so it holds a straight-edged shape exactly when
-    # it holds its corners. Collapsed, it is its bounds, and a rounded shape
-    # is tested as its outline polygon.
-    def contains(self, radius: Rectangle) -> Bool:
-        if self._is_flat():
-            return self.bounds().contains(radius)
-        if radius._radius() > 0.0:
-            return self.contains(radius._outline())
-        for p in radius._points():
-            if not self.contains(p):
+    def contains[S: Shape](self, shape: S) -> Bool:
+        """Whether the whole of `shape` is inside, its boundary included.
+
+        `shape` is a region (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+        `Triangle`, `Sector` or `Polygon`) or a curve. A `Line` is decided
+        exactly; an `Arc`, `Bezier` or `Spline` segment by segment, flattened
+        to within 1e-4 of its size as `intersects` follows it, so a curve
+        grazing the edge from inside is decided only that closely."""
+        # An ellipse is convex, so it holds a straight-edged shape exactly when
+        # it holds its corners. Collapsed, it is its bounds, and a rounded shape
+        # is tested as its outline polygon.
+        comptime if S == Rectangle:
+            ref r = rebind[Rectangle](shape)
+            if self._is_flat():
+                return self.bounds().contains(r)
+            if r._radius() > 0.0:
+                return self.contains(r._outline())
+            for p in r._points():
+                if not self.contains(p):
+                    return False
+            return True
+        # Whether `c` is inside: its centre is, and no nearer the curve than its
+        # radius.
+        elif S == Circle:
+            ref c = rebind[Circle](shape)
+            if self._is_flat():
+                return self.bounds().contains(c)
+            if not self.contains(c.position):
                 return False
-        return True
-
-    def contains(self, c: Circle) -> Bool:
-        """Whether `c` is inside: its centre is, and no nearer the curve
-        than its radius."""
-        if self._is_flat():
-            return self.bounds().contains(c)
-        if not self.contains(c.position):
-            return False
-        var edge = self._closest_on_boundary(c.position)
-        return _distance_squared(edge, c.position) >= c.radius * c.radius
-
-    def contains(self, t: Triangle) -> Bool:
-        if self._is_flat():
-            return self.bounds().contains(t)
-        if t._radius() > 0.0:
-            return self.contains(t._outline())
-        for p in t._points():
-            if not self.contains(p):
-                return False
-        return True
-
-    def contains(self, l: Line) -> Bool:
-        if self._is_flat():
-            return self.bounds().contains(l)
-        return self.contains(l.start) and self.contains(l.end)
-
-    def contains[C: Curve](self, curve: C) -> Bool:
-        """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
-        inside: every segment of it flattened to within 1e-4 of its size,
-        as `intersects` follows it, so a curve grazing the edge from inside
-        is decided only that closely."""
-        for segment in _curve_segments(curve):
-            if not self.contains(segment):
-                return False
-        return True
-
-    def contains(self, s: Sector) -> Bool:
-        """Whether `s` is inside: its tip and its arc are, since every point
-        of a sector lies between the two and the ellipse is convex."""
-        if self._is_flat():
-            return self.bounds().contains(s)
-        if s._is_rounded():
-            return self.contains(s._outline())
-        return self.contains(s.position) and self.contains(s.arc())
-
-    def contains(self, p: Polygon) -> Bool:
-        if self._is_flat():
-            return self.bounds().contains(p)
-        if p._is_rounded():
-            return self.contains(p._outline())
-        for v in p.vertices:
-            if not self.contains(v):
-                return False
-        return True
-
-    def contains(self, other: Ellipse) -> Bool:
-        """Whether `other` is inside: with `other` mapped onto the unit
-        circle, this one, mapped alike, still an ellipse, holds that
-        circle."""
-        if other._is_flat():
-            return self.contains(other.bounds())
-        if self._is_flat():
-            return self.bounds().contains(other)
-        return other._to_unit(self).contains(_UNIT_CIRCLE)
-
-    def contains(self, c: Capsule) -> Bool:
-        # Convex, so it holds the capsule when it holds the discs at both
-        # ends, whose hull the capsule is.
-        for end in c._ends():
-            if not self.contains(end):
-                return False
-        return True
+            var edge = self._closest_on_boundary(c.position)
+            return _distance_squared(edge, c.position) >= c.radius * c.radius
+        elif S == Triangle:
+            ref t = rebind[Triangle](shape)
+            if self._is_flat():
+                return self.bounds().contains(t)
+            if t._radius() > 0.0:
+                return self.contains(t._outline())
+            for p in t._points():
+                if not self.contains(p):
+                    return False
+            return True
+        elif S == Line:
+            ref l = rebind[Line](shape)
+            if self._is_flat():
+                return self.bounds().contains(l)
+            return self.contains(l.start) and self.contains(l.end)
+        # Whether `s` is inside: its tip and its arc are, since every point of a
+        # sector lies between the two and the ellipse is convex.
+        elif S == Sector:
+            ref s = rebind[Sector](shape)
+            if self._is_flat():
+                return self.bounds().contains(s)
+            if s._is_rounded():
+                return self.contains(s._outline())
+            return self.contains(s.position) and self.contains(s.arc())
+        elif S == Polygon:
+            ref p = rebind[Polygon](shape)
+            if self._is_flat():
+                return self.bounds().contains(p)
+            if p._is_rounded():
+                return self.contains(p._outline())
+            for v in p.vertices:
+                if not self.contains(v):
+                    return False
+            return True
+        # Whether `other` is inside: with `other` mapped onto the unit circle,
+        # this one, mapped alike, still an ellipse, holds that circle.
+        elif S == Ellipse:
+            ref other = rebind[Ellipse](shape)
+            if other._is_flat():
+                return self.contains(other.bounds())
+            if self._is_flat():
+                return self.bounds().contains(other)
+            return other._to_unit(self).contains(_UNIT_CIRCLE)
+        elif S == Capsule:
+            ref c = rebind[Capsule](shape)
+            # Convex, so it holds the capsule when it holds the discs at both
+            # ends, whose hull the capsule is.
+            for end in c._ends():
+                if not self.contains(end):
+                    return False
+            return True
+        elif conforms_to(S, Curve):
+            for segment in _curve_segments(rebind[downcast[S, Curve]](shape)):
+                if not self.contains(segment):
+                    return False
+            return True
+        else:
+            comptime assert False, "contains takes a region or a curve"
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._ellipse(self)

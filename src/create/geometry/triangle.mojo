@@ -1,9 +1,10 @@
+from std.iter import downcast
 from std.math import min, max, sqrt
 from create.math import PI, Point2D, Vector2D
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import triangle_corner_radius
 from .bezier import _curve_segments
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Region, Shape
 from ._collider import _Collider, _Core, _contains
 from ._shared import (
     _closest_on_segment,
@@ -171,77 +172,70 @@ struct Triangle(
         var has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
         return not (has_neg and has_pos)
 
-    # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
-    # a `Line`, is a convex core grown by a radius, and is held exactly when
-    # a disc of its radius round every corner of its core is (`_contains`).
-    def contains(self, other: Triangle) -> Bool:
-        return _contains(self, other)
+    def contains[S: Shape](self, shape: S) -> Bool:
+        """Whether the whole of `shape` is inside, its boundary included.
 
-    def contains(self, r: Rectangle) -> Bool:
-        return _contains(self, r)
-
-    def contains(self, c: Circle) -> Bool:
-        return _contains(self, c)
-
-    def contains(self, l: Line) -> Bool:
-        return _contains(self, l)
-
-    def contains(self, c: Capsule) -> Bool:
-        return _contains(self, c)
-
-    def contains[C: Curve](self, curve: C) -> Bool:
-        """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
-        inside: every segment of it flattened to within 1e-4 of its size,
-        as `intersects` follows it, so a curve grazing the edge from inside
-        is decided only that closely."""
-        for segment in _curve_segments(curve):
-            if not self.contains(segment):
+        `shape` is a region (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+        `Triangle`, `Sector` or `Polygon`) or a curve. A `Line` is decided
+        exactly; an `Arc`, `Bezier` or `Spline` segment by segment, flattened
+        to within 1e-4 of its size as `intersects` follows it, so a curve
+        grazing the edge from inside is decided only that closely."""
+        # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
+        # a `Line`, is a convex core grown by a radius, and is held exactly when
+        # a disc of its radius round every corner of its core is (`_contains`).
+        comptime if conforms_to(S, _Collider):
+            return _contains(self, rebind[downcast[S, _Collider]](shape))
+        # A rounded triangle holds the rest as its outline polygon, and a
+        # rounded shape is tested as its own.
+        elif S == Sector:
+            ref s = rebind[Sector](shape)
+            if self._radius() > 0.0:
+                return self._outline().contains(s)
+            if s._is_rounded():
+                return self.contains(s._outline())
+            # A sector is its tip fanned out to its arc, and a triangle is
+            # convex, so it holds the sector when it holds the tip and, for
+            # each edge, the arc's point furthest across it. Both ways across
+            # are tried, so a degenerate triangle needs no winding.
+            if not self.contains(s.position):
                 return False
-        return True
-
-    # A rounded triangle holds the rest as its outline polygon, and a
-    # rounded shape is tested as its own.
-    def contains(self, s: Sector) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(s)
-        if s._is_rounded():
-            return self.contains(s._outline())
-        # A sector is its tip fanned out to its arc, and a triangle is
-        # convex, so it holds the sector when it holds the tip and, for
-        # each edge, the arc's point furthest across it. Both ways across
-        # are tried, so a degenerate triangle needs no winding.
-        if not self.contains(s.position):
-            return False
-        var a = s.arc()
-        var pts = self._points()
-        for i in range(3):
-            var e = pts[(i + 1) % 3] - pts[i]
-            var normal = Vector2D(-e.y, e.x)
-            if not (
-                self.contains(a._furthest_along(normal))
-                and self.contains(a._furthest_along(-normal))
-            ):
-                return False
-        return True
-
-    def contains(self, p: Polygon) -> Bool:
-        if self._radius() > 0.0:
-            return self._outline().contains(p)
-        if p._is_rounded():
-            return self.contains(p._outline())
-        for v in p.vertices:
-            if not self.contains(v):
-                return False
-        return True
-
-    def contains(self, e: Ellipse) -> Bool:
-        # With `e` mapped onto the unit circle, the triangle mapped alike is
-        # still one.
-        if self._radius() > 0.0:
-            return self._outline().contains(e)
-        if e._is_flat():
-            return self.contains(e.bounds())
-        return e._to_unit(self).contains(_UNIT_CIRCLE)
+            var a = s.arc()
+            var pts = self._points()
+            for i in range(3):
+                var e = pts[(i + 1) % 3] - pts[i]
+                var normal = Vector2D(-e.y, e.x)
+                if not (
+                    self.contains(a._furthest_along(normal))
+                    and self.contains(a._furthest_along(-normal))
+                ):
+                    return False
+            return True
+        elif S == Polygon:
+            ref p = rebind[Polygon](shape)
+            if self._radius() > 0.0:
+                return self._outline().contains(p)
+            if p._is_rounded():
+                return self.contains(p._outline())
+            for v in p.vertices:
+                if not self.contains(v):
+                    return False
+            return True
+        elif S == Ellipse:
+            ref e = rebind[Ellipse](shape)
+            # With `e` mapped onto the unit circle, the triangle mapped alike is
+            # still one.
+            if self._radius() > 0.0:
+                return self._outline().contains(e)
+            if e._is_flat():
+                return self.contains(e.bounds())
+            return e._to_unit(self).contains(_UNIT_CIRCLE)
+        elif conforms_to(S, Curve):
+            for segment in _curve_segments(rebind[downcast[S, Curve]](shape)):
+                if not self.contains(segment):
+                    return False
+            return True
+        else:
+            comptime assert False, "contains takes a region or a curve"
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._triangle(self)

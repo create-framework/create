@@ -1,9 +1,10 @@
+from std.iter import downcast
 from std.math import min, max, sqrt
 from create.math import TAU, Point2D, Vector2D
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Region, Shape
 from ._shared import (
     _FILLET_STEP,
     _RADIUS_EPSILON,
@@ -181,70 +182,110 @@ struct Sector(
             return False
         return self.arc()._spans(p)
 
-    # A sector has no holes, so it holds a shape exactly when it holds the
-    # shape's outline: a `Rectangle`, `Triangle` or `Polygon` edge by edge,
-    # a `Circle` as a whole-turn `Arc`, another `Sector` as its two radii
-    # and its arc. A rounded sector, or a rounded shape it is given, is
-    # tested as its outline polygon.
-    def contains(self, radius: Rectangle) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(radius)
-        if radius._radius() > 0.0:
-            return self.contains(radius._outline())
-        return self._contains_polygon(radius._points())
+    def contains[S: Shape](self, shape: S) -> Bool:
+        """Whether the whole of `shape` is inside, its boundary included.
 
-    def contains(self, t: Triangle) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(t)
-        if t._radius() > 0.0:
-            return self.contains(t._outline())
-        return self._contains_polygon(t._points())
-
-    def contains(self, c: Circle) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(c)
-        return self._contains_arc(Arc(c.position, c.radius, 0.0, TAU))
-
-    def contains(self, other: Sector) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(other)
-        if other._is_rounded():
-            return self.contains(other._outline())
-        for radius in other._radii():
-            if not self.contains(radius):
+        `shape` is a region (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+        `Triangle`, `Sector` or `Polygon`) or a curve. A `Line` is decided
+        exactly; an `Arc`, `Bezier` or `Spline` segment by segment, flattened
+        to within 1e-4 of its size as `intersects` follows it, so a curve
+        grazing the edge from inside is decided only that closely."""
+        # A sector has no holes, so it holds a shape exactly when it holds the
+        # shape's outline: a `Rectangle`, `Triangle` or `Polygon` edge by edge,
+        # a `Circle` as a whole-turn `Arc`, another `Sector` as its two radii
+        # and its arc. A rounded sector, or a rounded shape it is given, is
+        # tested as its outline polygon.
+        comptime if S == Rectangle:
+            ref r = rebind[Rectangle](shape)
+            if self._is_rounded():
+                return self._outline().contains(r)
+            if r._radius() > 0.0:
+                return self.contains(r._outline())
+            return self._contains_polygon(r._points())
+        elif S == Triangle:
+            ref t = rebind[Triangle](shape)
+            if self._is_rounded():
+                return self._outline().contains(t)
+            if t._radius() > 0.0:
+                return self.contains(t._outline())
+            return self._contains_polygon(t._points())
+        elif S == Circle:
+            ref c = rebind[Circle](shape)
+            if self._is_rounded():
+                return self._outline().contains(c)
+            return self._contains_arc(Arc(c.position, c.radius, 0.0, TAU))
+        elif S == Sector:
+            ref other = rebind[Sector](shape)
+            if self._is_rounded():
+                return self._outline().contains(other)
+            if other._is_rounded():
+                return self.contains(other._outline())
+            for radius in other._radii():
+                if not self.contains(radius):
+                    return False
+            return self._contains_arc(other.arc())
+        # A segment or arc with both ends inside can still leave the sector:
+        # across the missing wedge of one wider than a half turn, or bulging
+        # out through a radius or the arc. Where it crosses the boundary -- the
+        # line of either radius, or the circle -- cuts it into pieces that are
+        # each wholly inside or wholly outside, so the sector holds it exactly
+        # when it holds the middle of every piece. A piece that only touches
+        # the boundary is inside, within the slack of `contains(Point2D)`.
+        elif S == Line:
+            ref l = rebind[Line](shape)
+            if self._is_rounded():
+                return self._outline().contains(l)
+            if not (self.contains(l.start) and self.contains(l.end)):
                 return False
-        return self._contains_arc(other.arc())
-
-    # A segment or arc with both ends inside can still leave the sector:
-    # across the missing wedge of one wider than a half turn, or bulging
-    # out through a radius or the arc. Where it crosses the boundary -- the
-    # line of either radius, or the circle -- cuts it into pieces that are
-    # each wholly inside or wholly outside, so the sector holds it exactly
-    # when it holds the middle of every piece. A piece that only touches
-    # the boundary is inside, within the slack of `contains(Point2D)`.
-    def contains(self, l: Line) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(l)
-        if not (self.contains(l.start) and self.contains(l.end)):
-            return False
-        var cuts = List[Float64]()
-        for radius in self._radii():
-            _cut_at_line(l, radius, cuts)
-        _cut_at_circle(l, self.position, self.radius, cuts)
-        for middle in _segment_middles(l, cuts^):
-            if not self.contains(middle):
-                return False
-        return True
-
-    def contains[C: Curve](self, curve: C) -> Bool:
-        """Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is
-        inside: every segment of it flattened to within 1e-4 of its size,
-        as `intersects` follows it, so a curve grazing the edge from inside
-        is decided only that closely."""
-        for segment in _curve_segments(curve):
-            if not self.contains(segment):
-                return False
-        return True
+            var cuts = List[Float64]()
+            for radius in self._radii():
+                _cut_at_line(l, radius, cuts)
+            _cut_at_circle(l, self.position, self.radius, cuts)
+            for middle in _segment_middles(l, cuts^):
+                if not self.contains(middle):
+                    return False
+            return True
+        elif S == Polygon:
+            ref p = rebind[Polygon](shape)
+            if self._is_rounded():
+                return self._outline().contains(p)
+            if p._is_rounded():
+                return self.contains(p._outline())
+            for i in range(len(p.vertices)):
+                if not self.contains(p._edge(i)):
+                    return False
+            return True
+        elif S == Ellipse:
+            ref e = rebind[Ellipse](shape)
+            # A sector's arc stays no arc mapped onto the ellipse's unit circle,
+            # so the ellipse stands in as its outline polygon.
+            if self._is_rounded():
+                return self._outline().contains(e)
+            if e._is_flat():
+                return self.contains(e.bounds())
+            return self.contains(e._outline())
+        elif S == Capsule:
+            ref c = rebind[Capsule](shape)
+            # No holes, so it holds the capsule when it holds its outline: two
+            # straight edges and two half circles.
+            if self._is_rounded():
+                return self._outline().contains(c)
+            if c.radius <= 0.0:
+                return self.contains(c._spine())
+            for side in c._sides():
+                if not self.contains(side):
+                    return False
+            for cap in c._caps():
+                if not self._contains_arc(cap):
+                    return False
+            return True
+        elif conforms_to(S, Curve):
+            for segment in _curve_segments(rebind[downcast[S, Curve]](shape)):
+                if not self.contains(segment):
+                    return False
+            return True
+        else:
+            comptime assert False, "contains takes a region or a curve"
 
     def _contains_arc(self, a: Arc) -> Bool:
         if not (self.contains(a.at(0.0)) and self.contains(a.at(1.0))):
@@ -270,16 +311,6 @@ struct Sector(
             crossings.append(mid - side)
         for middle in _arc_middles(a, crossings):
             if not self.contains(middle):
-                return False
-        return True
-
-    def contains(self, p: Polygon) -> Bool:
-        if self._is_rounded():
-            return self._outline().contains(p)
-        if p._is_rounded():
-            return self.contains(p._outline())
-        for i in range(len(p.vertices)):
-            if not self.contains(p._edge(i)):
                 return False
         return True
 
@@ -328,30 +359,6 @@ struct Sector(
             if a.intersects(radius):
                 return True
         return a.intersects(self.arc())
-
-    def contains(self, e: Ellipse) -> Bool:
-        # A sector's arc stays no arc mapped onto the ellipse's unit circle,
-        # so the ellipse stands in as its outline polygon.
-        if self._is_rounded():
-            return self._outline().contains(e)
-        if e._is_flat():
-            return self.contains(e.bounds())
-        return self.contains(e._outline())
-
-    def contains(self, c: Capsule) -> Bool:
-        # No holes, so it holds the capsule when it holds its outline: two
-        # straight edges and two half circles.
-        if self._is_rounded():
-            return self._outline().contains(c)
-        if c.radius <= 0.0:
-            return self.contains(c._spine())
-        for side in c._sides():
-            if not self.contains(side):
-                return False
-        for cap in c._caps():
-            if not self._contains_arc(cap):
-                return False
-        return True
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._sector(self)
