@@ -56,7 +56,7 @@ def _meets_itself_moved[R: Region](region: R) raises:
     assert_true(overlaps(region, near))
     assert_true(overlaps(near, region))
     assert_equal(overlaps(region, far), False)
-    assert_true(region.contains(Line(region.center(), region.center())))
+    assert_true(region.contains(region))
     assert_equal(region.contains(far), False)
 
 

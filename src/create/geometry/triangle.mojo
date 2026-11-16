@@ -7,6 +7,7 @@ from .bezier import _curve_segments
 from .drawable import Curve, DrawTarget, Region, Shape
 from ._collider import _Collider, _Core, _contains
 from ._shared import (
+    _cross,
     _closest_on_segment,
     _distance_squared,
     _orientation,
@@ -98,9 +99,7 @@ struct Triangle(
         )
 
     def _signed_area2(self) -> Float64:
-        var ab = self.b - self.a
-        var ac = self.c - self.a
-        return ab.x * ac.y - ab.y * ac.x
+        return _cross(self.b - self.a, self.c - self.a)
 
     def area(self) -> Float64:
         var r = self._radius()

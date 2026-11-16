@@ -456,6 +456,23 @@ def test_contains_across_a_horizontal_edge_wound_both_sides() raises -> None:
     assert_true(not ring.contains(Rectangle((5, 5), 9, 9)))
 
 
+def test_contains_itself_and_shapes_on_its_corners() raises -> None:
+    # Corners from cos and sin: a piece along an edge has its computed
+    # middle a rounding error off it, which must still count as held.
+    for sides in range(3, 12):
+        var p = Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=sides)
+        assert_true(p.contains(p))
+        for edge in p._edges():
+            assert_true(p.contains(edge))
+    var r = Rectangle((0.3, 0.1), 2.0, 1.0, rotation=0.3)
+    var corners = r._points()
+    assert_true(
+        Polygon(corners[0], corners[1], corners[2], corners[3]).contains(r)
+    )
+    var t = Triangle((0.1, 0.0), (4.3, 0.2), (1.1, 3.7))
+    assert_true(Polygon(t.a, t.b, t.c).contains(t))
+
+
 def test_regions_contain_a_polygon() raises -> None:
     var l = _l_shape()
     assert_true(Rectangle((5, 5), 10, 10).contains(l))
