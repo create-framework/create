@@ -1124,7 +1124,10 @@ struct Canvas(DrawTarget, Movable):
         With the autoclear off, the recording keeps what earlier frames
         left, as the screen does: every frame is replayed into it, captured
         or not, so ink drawn between two captured frames is kept, at the
-        cost of a CPU replay of every frame while it records. Whatever
+        cost of a CPU replay of every frame while it records. It starts from
+        the picture already on screen: its first frame is the window's own,
+        sampled to the recording's size, so that one frame, unlike the rest,
+        depends on the window and the backend. Whatever
         starts the screen's picture over starts the recording's over too:
         resizing the window, and on the GPU changing the antialiasing.
 

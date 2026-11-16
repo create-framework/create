@@ -86,8 +86,9 @@ def _square(mut canvas: Canvas, index: Int):
 @fieldwise_init
 struct Painter[scenario: Int](Program):
     """With the autoclear off: white once, then a square more each frame,
-    recorded at 50 fps from `create` on. A frame lasts 16 ms, so the second
-    frame shares the first's slot and is never captured itself."""
+    recorded at 50 fps: from `create` on in scenario 0, where a frame lasts
+    16 ms, so the second frame shares the first's slot and is never
+    captured itself; from the fourth frame on in scenario 1."""
 
     var _unused: Int
 
@@ -96,10 +97,13 @@ struct Painter[scenario: Int](Program):
         canvas.autoclear(False)
         canvas.background(Color.WHITE)
         _square(canvas, 0)
-        canvas.start_recording(_path(20 + Self.scenario), frames=4, fps=50)
+        if Self.scenario == 0:
+            canvas.start_recording(_path(20), frames=4, fps=50)
         return Self(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        if Self.scenario == 1 and context.frame_count() == 4:
+            canvas.start_recording(_path(21), frames=2, fps=50)
         _square(canvas, context.frame_count() - 1)
 
 
@@ -246,6 +250,33 @@ def test_with_the_autoclear_off_a_recording_keeps_what_the_screen_keeps() raises
                 String("frame ", frame, ", square ", index),
             )
     remove(_path(20))
+
+
+def test_with_the_autoclear_off_a_recording_starts_from_the_screen() raises -> (
+    None
+):
+    # The window is twice the design size, so the first frame is sampled
+    # down from the window's pixels.
+    _ = run_headless[Painter[1]](
+        _WIDTH,
+        _HEIGHT,
+        10,
+        window_size=(_WIDTH * 2, _HEIGHT * 2),
+        antialiasing=Antialiasing.OFF,
+    )
+    var gif = decode_gif(_path(21))
+    assert_equal(len(gif.frames), 2)
+    # Started in the fourth frame (48 ms): squares 0 to 2 came from the
+    # frames before it, which the recording never saw drawn. The fifth
+    # shares its slot, so the second is the sixth, at 80 ms.
+    for index in range(7):
+        assert_equal(
+            _painted(gif, 0, index), index <= 3, String("square ", index)
+        )
+        assert_equal(
+            _painted(gif, 1, index), index <= 5, String("square ", index)
+        )
+    remove(_path(21))
 
 
 def _raises[scenario: Int](expected: String) raises:
