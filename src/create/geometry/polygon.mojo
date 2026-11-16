@@ -270,11 +270,14 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             return self._outline().contains(l)
         if not (self.contains(l.start) and self.contains(l.end)):
             return False
+        var edges = self._edges()
         var cuts = List[Float64]()
-        for i in range(len(self.vertices)):
-            _cut_at_line(l, self._edge(i), cuts)
+        for edge in edges:
+            _cut_at_line(l, edge, cuts)
+        # A piece along an edge is on the boundary, so inside, though its
+        # computed middle may land a rounding error outside.
         for middle in _segment_middles(l, cuts^):
-            if not self.contains(middle):
+            if not (self.contains(middle) or _runs_along(l, middle, edges)):
                 return False
         return True
 
@@ -471,7 +474,14 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
         each edge cut where another edge, one of `lines` or a circle of
         `arcs` crosses it -- so each piece lies wholly inside or wholly
         outside a shape with that boundary, and on one side of it or the
-        other runs the outside all along."""
+        other runs the outside all along.
+
+        A piece running along one of `lines` is on that shape's boundary,
+        never strictly inside it, so it is left out: its middle, computed,
+        can land a rounding error inside, where a shape sharing an edge
+        with this polygon would read it as held strictly. Running along is
+        decided exactly, as `_cut_at_line` decides it, which also cut the
+        edge at the line's ends."""
         var rim = List[Point2D]()
         for i in range(len(self.vertices)):
             var e = self._edge(i)
@@ -484,7 +494,9 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             for a in arcs:
                 _cut_at_circle(e, a.position, a.radius, cuts)
             for middle in _segment_middles(e, cuts^):
-                if not self._wound_beside(i, middle):
+                if not self._wound_beside(i, middle) and not _runs_along(
+                    e, middle, lines
+                ):
                     rim.append(middle)
         return rim^
 
@@ -577,3 +589,18 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             if not self.contains(middle):
                 return False
         return True
+
+
+def _runs_along(e: Line, middle: Point2D, lines: List[Line]) -> Bool:
+    """Whether the piece of `e` with middle `middle` lies on one of
+    `lines`: `e` runs along its line, by the exact test `_cut_at_line`
+    makes, and the middle falls between its ends."""
+    var d = e.end - e.start
+    for l in lines:
+        var f = l.end - l.start
+        if _cross(d, f) != 0.0 or _cross(l.start - e.start, d) != 0.0:
+            continue
+        var along = (middle - l.start).dot(f)
+        if 0.0 <= along <= f.magnitude_squared():
+            return True
+    return False
