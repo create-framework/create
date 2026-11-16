@@ -1117,7 +1117,9 @@ struct Canvas(DrawTarget, Movable):
 
         Each frame gets a palette of its own: exact if it has 256 colours or
         fewer, the nearest 256 otherwise. `dither` mixes neighbouring pixels
-        so smooth gradients don't band, at the cost of a grainier file.
+        so smooth gradients don't band, at the cost of a grainier file. Only
+        what changed is stored: a frame after the first holds the rectangle
+        that changed, and an unchanged frame lengthens the one before.
 
         `transparent` leaves the background out, as `save_image`'s does:
         the frame's clears and `background` calls are dropped, and a pixel
