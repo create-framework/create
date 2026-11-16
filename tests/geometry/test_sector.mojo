@@ -13,7 +13,6 @@ from create.geometry import (
     Rectangle,
     Sector,
     Triangle,
-    overlaps,
 )
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
@@ -173,23 +172,23 @@ def test_move_to_and_translate_move_the_tip() raises -> None:
 
 
 def _assert_overlap(a: Sector, b: Circle, expected: Bool) raises:
-    assert_equal(overlaps(a, b), expected)
-    assert_equal(overlaps(b, a), expected)
+    assert_equal(a.overlaps(b), expected)
+    assert_equal(b.overlaps(a), expected)
 
 
 def _assert_overlap(a: Sector, b: Rectangle, expected: Bool) raises:
-    assert_equal(overlaps(a, b), expected)
-    assert_equal(overlaps(b, a), expected)
+    assert_equal(a.overlaps(b), expected)
+    assert_equal(b.overlaps(a), expected)
 
 
 def _assert_overlap(a: Sector, b: Triangle, expected: Bool) raises:
-    assert_equal(overlaps(a, b), expected)
-    assert_equal(overlaps(b, a), expected)
+    assert_equal(a.overlaps(b), expected)
+    assert_equal(b.overlaps(a), expected)
 
 
 def _assert_overlap(a: Sector, b: Sector, expected: Bool) raises:
-    assert_equal(overlaps(a, b), expected)
-    assert_equal(overlaps(b, a), expected)
+    assert_equal(a.overlaps(b), expected)
+    assert_equal(b.overlaps(a), expected)
 
 
 def test_overlaps_a_circle() raises -> None:

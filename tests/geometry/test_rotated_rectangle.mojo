@@ -16,7 +16,6 @@ from create.geometry import (
     Rectangle,
     Sector,
     Triangle,
-    overlaps,
 )
 from create.math.point2d import Point2D
 from create.math.vector2d import Vector2D
@@ -118,47 +117,47 @@ def test_overlaps_rectangle_inside_the_bounds_but_off_the_shape() raises -> (
     # past its edge, where |x| + |y| = 10 > 7.07.
     var d = _diamond()
     var corner = Rectangle((7.0, 7.0), 4.0, 4.0)
-    assert_true(overlaps(d.bounds(), corner))
-    assert_false(overlaps(d, corner))
-    assert_false(overlaps(corner, d))
-    assert_true(overlaps(d, Rectangle((5.0, 0.0), 4.0, 4.0)))
+    assert_true(d.bounds().overlaps(corner))
+    assert_false(d.overlaps(corner))
+    assert_false(corner.overlaps(d))
+    assert_true(d.overlaps(Rectangle((5.0, 0.0), 4.0, 4.0)))
 
 
 def test_overlaps_two_turned_rectangles() raises -> None:
-    assert_true(overlaps(_bar(), _diamond()))
+    assert_true(_bar().overlaps(_diamond()))
     var apart = Rectangle((12.0, 12.0), 10.0, 10.0, rotation=PI / 4.0)
-    assert_false(overlaps(_diamond(), apart))
+    assert_false(_diamond().overlaps(apart))
     # Edge to edge along x + y = 7.07: touching counts.
     var touching = Rectangle(
         (5.0 * sqrt(2.0), 5.0 * sqrt(2.0)), 10.0, 10.0, rotation=PI / 4.0
     )
-    assert_true(overlaps(_diamond(), touching))
+    assert_true(_diamond().overlaps(touching))
 
 
 def test_overlaps_round_shapes_by_the_turned_edge() raises -> None:
     # (6, 6) is (12 - 7.07) / sqrt(2) = 3.49 from the diamond's edge.
     var d = _diamond()
-    assert_false(overlaps(d, Circle((6.0, 6.0), 3.4)))
-    assert_true(overlaps(d, Circle((6.0, 6.0), 3.5)))
-    assert_false(overlaps(d, Capsule((6.0, 6.0), (9.0, 9.0), 3.4)))
-    assert_true(overlaps(Capsule((6.0, 6.0), (9.0, 9.0), 3.5), d))
+    assert_false(d.overlaps(Circle((6.0, 6.0), 3.4)))
+    assert_true(d.overlaps(Circle((6.0, 6.0), 3.5)))
+    assert_false(d.overlaps(Capsule((6.0, 6.0), (9.0, 9.0), 3.4)))
+    assert_true(Capsule((6.0, 6.0), (9.0, 9.0), 3.5).overlaps(d))
 
 
 def test_overlaps_straight_edged_regions() raises -> None:
     var d = _diamond()
-    assert_false(overlaps(d, Triangle((5.0, 5.0), (9.0, 5.0), (5.0, 9.0))))
-    assert_true(overlaps(d, Triangle((3.0, 3.0), (9.0, 3.0), (3.0, 9.0))))
+    assert_false(d.overlaps(Triangle((5.0, 5.0), (9.0, 5.0), (5.0, 9.0))))
+    assert_true(d.overlaps(Triangle((3.0, 3.0), (9.0, 3.0), (3.0, 9.0))))
     var square = Polygon((5.0, 5.0), (9.0, 5.0), (9.0, 9.0), (5.0, 9.0))
-    assert_false(overlaps(d, square))
-    assert_false(overlaps(square, d))
+    assert_false(d.overlaps(square))
+    assert_false(square.overlaps(d))
 
 
 def test_overlaps_curved_regions() raises -> None:
     var d = _diamond()
-    assert_false(overlaps(d, Ellipse((6.0, 6.0), 6.0, 6.0)))
-    assert_true(overlaps(Ellipse((6.0, 6.0), 7.2, 7.2), d))
-    assert_false(overlaps(d, Sector((6.0, 6.0), 3.0, 0.0, PI / 2.0)))
-    assert_true(overlaps(Sector((6.0, 6.0), 3.6, PI, PI / 2.0), d))
+    assert_false(d.overlaps(Ellipse((6.0, 6.0), 6.0, 6.0)))
+    assert_true(Ellipse((6.0, 6.0), 7.2, 7.2).overlaps(d))
+    assert_false(d.overlaps(Sector((6.0, 6.0), 3.0, 0.0, PI / 2.0)))
+    assert_true(Sector((6.0, 6.0), 3.6, PI, PI / 2.0).overlaps(d))
 
 
 def test_contains_shapes_that_fit_only_turned() raises -> None:

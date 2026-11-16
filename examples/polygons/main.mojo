@@ -124,7 +124,7 @@ struct App(Program):
             (150, 20),
             (60, 20),
         )
-        var hit = overlaps(u, self.pentagram)
+        var hit = u.overlaps(self.pentagram)
         var fill = Color(98, 104, 168, 150)
         if u.contains(mouse):
             fill = Color(240, 236, 222, 190)

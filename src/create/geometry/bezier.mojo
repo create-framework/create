@@ -8,7 +8,6 @@ from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
-from .overlaps import overlaps
 from create.math import Point2D
 from .drawable import Curve, DrawTarget
 from .spline import Spline
@@ -283,7 +282,7 @@ struct Bezier(
         return q.distance(p) <= _ON_CURVE_PRECISION * self._size()
 
     def intersects(self, l: Line) -> Bool:
-        if not overlaps(self._reach(), l.bounds()):
+        if not self._reach().overlaps(l.bounds()):
             return False
         for s in self._segments():
             if s.intersects(l):
@@ -291,7 +290,7 @@ struct Bezier(
         return False
 
     def intersects(self, a: Arc) -> Bool:
-        if not overlaps(self._reach(), a.bounds()):
+        if not self._reach().overlaps(a.bounds()):
             return False
         for s in self._segments():
             if s.intersects(a):
@@ -299,11 +298,11 @@ struct Bezier(
         return False
 
     def intersects(self, other: Bezier) -> Bool:
-        if not overlaps(self._reach(), other._reach()):
+        if not self._reach().overlaps(other._reach()):
             return False
         var theirs = other._segments()
         for s in self._segments():
-            if not overlaps(s.bounds(), other._reach()):
+            if not s.bounds().overlaps(other._reach()):
                 continue
             for o in theirs:
                 if s.intersects(o):
@@ -316,7 +315,7 @@ struct Bezier(
     # A region is met where the curve enters it or runs inside it: each
     # segment's `Line.intersects`, which sees the region's rounding.
     def intersects(self, c: Circle) -> Bool:
-        if not overlaps(self._reach(), c.bounds()):
+        if not self._reach().overlaps(c.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(c):
@@ -324,7 +323,7 @@ struct Bezier(
         return False
 
     def intersects(self, c: Capsule) -> Bool:
-        if not overlaps(self._reach(), c.bounds()):
+        if not self._reach().overlaps(c.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(c):
@@ -332,7 +331,7 @@ struct Bezier(
         return False
 
     def intersects(self, e: Ellipse) -> Bool:
-        if not overlaps(self._reach(), e.bounds()):
+        if not self._reach().overlaps(e.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(e):
@@ -340,7 +339,7 @@ struct Bezier(
         return False
 
     def intersects(self, r: Rectangle) -> Bool:
-        if not overlaps(self._reach(), r.bounds()):
+        if not self._reach().overlaps(r.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(r):
@@ -348,7 +347,7 @@ struct Bezier(
         return False
 
     def intersects(self, t: Triangle) -> Bool:
-        if not overlaps(self._reach(), t.bounds()):
+        if not self._reach().overlaps(t.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(t):
@@ -356,7 +355,7 @@ struct Bezier(
         return False
 
     def intersects(self, s: Sector) -> Bool:
-        if not overlaps(self._reach(), s.bounds()):
+        if not self._reach().overlaps(s.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(s):
@@ -364,7 +363,7 @@ struct Bezier(
         return False
 
     def intersects(self, p: Polygon) -> Bool:
-        if not overlaps(self._reach(), p.bounds()):
+        if not self._reach().overlaps(p.bounds()):
             return False
         for segment in self._segments():
             if segment.intersects(p):

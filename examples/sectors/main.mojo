@@ -121,7 +121,7 @@ struct App(Program):
         var body = Color(250, 200, 40)
         if pacman.contains(mouse):
             body = Color(240, 236, 222)
-        var hit = not eaten and overlaps(pacman, self.ball)
+        var hit = not eaten and pacman.overlaps(self.ball)
         with canvas.style(
             fill=body,
             stroke=Color(226, 46, 56) if hit else _BACKGROUND,

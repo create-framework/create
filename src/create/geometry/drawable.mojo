@@ -50,7 +50,8 @@ trait Shape(Copyable, Deinitable, Drawable):
     """A geometric shape: a `Region` or a `Curve`. What every one of them
     answers, whichever it is, and a plain value generic code can keep, copy
     and drop. Tests between two shapes (`contains`, `intersects`,
-    `overlaps`) are overloads per pair, not part of this."""
+    `overlaps`) are methods overloaded per shape they take, not part of
+    this."""
 
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around the shape."""

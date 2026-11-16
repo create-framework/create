@@ -17,7 +17,6 @@ from .capsule import Capsule, _spine_distance
 from .circle import Circle
 from .ellipse import Ellipse
 from .line import Line
-from .overlaps import overlaps
 from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
@@ -329,7 +328,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
     def intersects(self, e: Ellipse) -> Bool:
         # An arc mapped onto the ellipse's unit circle is no arc, so it is
         # followed as a curve is, by its segments.
-        if not overlaps(self.bounds(), e.bounds()):
+        if not self.bounds().overlaps(e.bounds()):
             return False
         for segment in _curve_segments(self):
             if segment.intersects(e):

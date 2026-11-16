@@ -42,7 +42,7 @@ public by star-importing all twelve, so a name added to `math/__init__.mojo`
 appears here with no second edit and the two cannot drift apart.
 
 Code that wants less than the whole surface imports by name from the package
-that defines it (`from create.geometry import overlaps`), rather than starring one
+that defines it (`from create.geometry import Circle`), rather than starring one
 subpackage.
 
 The stars widen nothing on their own. A star import skips `_`-prefixed
