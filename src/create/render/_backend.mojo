@@ -188,7 +188,9 @@ struct Backend(Movable):
         `_record_frame`, so the GPU reads the frame back only then."""
         if not self.captures.recording or self.buffer.autoclear:
             return False
-        return not self.captures.recording.value().seeded
+        ref recording = self.captures.recording.value()
+        # A transparent recording leaves out the background the window has.
+        return not recording.seeded and not recording.transparent
 
     def _record_frame(
         mut self,
@@ -244,8 +246,14 @@ struct Backend(Movable):
         else:
             var scale = recording.scale
             var pre = recording.capture_base @ self.screen_inv
+            var transparent = recording.transparent
             self.replay(
-                mem.surface(), cmds, scale, pre=pre, skip_letterbox=True
+                mem.surface(),
+                cmds,
+                scale,
+                pre=pre,
+                skip_letterbox=True,
+                skip_clear=transparent,
             )
         if slot:
             self.captures.add_frame(mem, slot.value())
