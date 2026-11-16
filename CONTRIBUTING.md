@@ -79,7 +79,7 @@ pixi run test render                      # subpackage, file name sans test_, or
 pixi run test -j 4 canvas tween           # pin worker count (default nproc, max 8)
 pixi run test --shard 2/4                 # every 4th file from the 2nd; CI runs 4 shards
 pixi run precompile                       # type-check the library into build/create.mojoc
-pixi run build-examples                   # type-check every example and benchmark; a warning fails it
+pixi run build-examples                   # type-check every example, benchmark and the template; a warning fails it
 pixi run check-standalone                 # a `mojo build` program, run outside the environment
 pixi run check-package                    # the conda package from recipe/, built and tested as installed
 pixi run format                           # 80 columns, enforced by pre-commit
@@ -99,6 +99,14 @@ nothing in the environment has changed. So a run with the library unchanged star
 rather than 8; the first one after a library edit pays the ~10 s rebuild. `test`,
 `build-examples` and `check-standalone` precompile `src` afresh into a temporary package of their
 own and build every file against it, so none is ever stale or re-parses the library per file.
+
+**The project template.** [template/](template/) is the project
+[create-cli](https://github.com/create-framework/create-cli)'s `create new` starts from: a
+`main.mojo` and the `assets/` it loads. The package installs it to `share/create/template`, so a
+new project gets the template written for the Create it installs. `create new` replaces
+`{{name}}` in `main.mojo` with the project's name; the placeholder sits inside a string so the
+file builds as it is. `build-examples` builds it with the examples, so a change to the API that
+breaks it fails CI here, and is fixed in the same pull request.
 
 `mojo format`'s grammar is narrower than the compiler's and will abort a commit: `where` is
 reserved (not usable as a name), and `;` statement separators don't parse.

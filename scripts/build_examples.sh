@@ -1,5 +1,6 @@
 #!/bin/sh
-# Builds every example and benchmark entrypoint, several at a time.
+# Builds every example and benchmark entrypoint, and the project template
+# (template/main.mojo), several at a time.
 #
 #   pixi run build-examples
 #
@@ -21,7 +22,7 @@ set -u
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 
-entrypoints=$(grep -rlE '^def main' examples benchmarks --include='*.mojo' \
+entrypoints=$(grep -rlE '^def main' examples benchmarks template --include='*.mojo' \
     | sort)
 if [ -z "$entrypoints" ]; then
     echo "No example or benchmark entrypoints found." >&2
