@@ -76,15 +76,13 @@ If you don't already have it, install [pixi](https://pixi.sh):
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-### Option 1: create-cli
-
 The [create-cli](https://github.com/create-framework/create-cli) makes creating and running projects very easy. Running this command installs it to `~/.pixi/bin`:
 
 ```sh
 pixi global install create-cli --channel https://prefix.dev/create-framework/create
 ```
 
-Make a project and run it:
+Now, you can use the create-cli to make your first project and run it:
 
 ```sh
 create new my-project
@@ -92,31 +90,9 @@ cd my-project
 create run
 ```
 
-`create new` makes a pixi project with the `mojo` and `create` packages and a `main.mojo` to start from, and `create run` runs it from anywhere inside the project.
+`create new` makes a pixi project with the `mojo` and `create` packages and a `main.mojo` to start from, and `create run` runs your project from anywhere inside it.
 
-### Option 2: pixi
-
-If you don't want to use the create-cli, you can set up the pixi project by hand. Create it with the MAX and Create conda channels enabled:
-
-```sh
-pixi init my-project \
-  -c https://conda.modular.com/max \
-  -c https://prefix.dev/create-framework/create \
-  -c conda-forge
-```
-
-Then `cd` into the project, add the `mojo` and `create` packages:
-
-```sh
-cd my-project
-pixi add mojo create
-```
-
-Now, you can write your `main.mojo`, and use the following command to run it:
-
-```sh
-pixi run mojo run main.mojo
-```
+For more installation options, see [setup.md](docs/setup.md) in the user guide.
 
 ## Documentation
 
@@ -137,5 +113,4 @@ The user guide and the API reference are also published together at [create-fram
 
 Intel Macs and native Windows are not supported: Mojo doesn't run on either. Every dependency, Mojo included,
 comes from [pixi](https://pixi.sh), so `pixi run` is all a supported machine needs. A program built with
-`mojo build` finds those libraries itself, from any directory, while the pixi environment it was built in
-stays where it is.
+`mojo build` finds the libraries it needs, regardless of which directory it is run from, as long as the pixi environment it was built in stays where it is.

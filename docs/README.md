@@ -4,6 +4,8 @@ How to use Create, topic by topic. New to it? Start with the [README](../README.
 "Hello, world!" and the programs under [examples/](../examples/). Coming from Processing? Read
 [Coming from Processing](processing.md) first: it lists what works differently.
 
+- [Installation and setup](setup.md): installing Create and starting a project, with
+  `create-cli` or plain pixi.
 - [Programs](programs.md): how a program runs, `create` and `update`, `run`'s arguments and the
   CPU or GPU backend, what is a field and what a parameter, what lasts how long, the run's
   settings, file paths and scenes.
