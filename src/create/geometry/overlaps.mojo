@@ -38,46 +38,68 @@ from .triangle import Triangle
 # fully degenerate triangle -- remain exact rather than reporting a false
 # overlap.
 def overlaps(a: Circle, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Circle, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Circle, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Circle, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Capsule, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Capsule, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Capsule, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Capsule, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Rectangle, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Rectangle, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Rectangle, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     # The commonest test in a game: two sharp, upright rectangles overlap when their
     # spans do along both axes, four comparisons and no polygon test.
     if a._is_plain() and b._is_plain():
@@ -91,22 +113,32 @@ def overlaps(a: Rectangle, b: Rectangle) -> Bool:
 
 
 def overlaps(a: Rectangle, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Triangle, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Triangle, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Triangle, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
 def overlaps(a: Triangle, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _overlaps(a, b)
 
 
@@ -124,15 +156,21 @@ def _polygon_overlaps_sector[N: Int](pts: Array[Point2D, N], s: Sector) -> Bool:
 
 
 def overlaps(a: Sector, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     # `closest_point` already sees a rounded sector's rounding.
     return b.contains(a.closest_point(b.position))
 
 
 def overlaps(a: Circle, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Sector, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._radius() > 0.0:
@@ -141,10 +179,14 @@ def overlaps(a: Sector, b: Rectangle) -> Bool:
 
 
 def overlaps(a: Rectangle, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Sector, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._radius() > 0.0:
@@ -153,10 +195,14 @@ def overlaps(a: Sector, b: Triangle) -> Bool:
 
 
 def overlaps(a: Triangle, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Sector, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._is_rounded():
@@ -179,15 +225,21 @@ def _edges_meet_polygon[N: Int](pts: Array[Point2D, N], p: Polygon) -> Bool:
 
 
 def overlaps(a: Polygon, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     # `closest_point` already sees a rounded polygon's rounding.
     return b.contains(a.closest_point(b.position))
 
 
 def overlaps(a: Circle, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Polygon, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._radius() > 0.0:
@@ -198,10 +250,14 @@ def overlaps(a: Polygon, b: Rectangle) -> Bool:
 
 
 def overlaps(a: Rectangle, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Polygon, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._radius() > 0.0:
@@ -212,10 +268,14 @@ def overlaps(a: Polygon, b: Triangle) -> Bool:
 
 
 def overlaps(a: Triangle, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Polygon, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._is_rounded():
@@ -232,10 +292,14 @@ def overlaps(a: Polygon, b: Sector) -> Bool:
 
 
 def overlaps(a: Sector, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Polygon, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_rounded():
         return overlaps(a._outline(), b)
     if b._is_rounded():
@@ -253,16 +317,22 @@ def overlaps(a: Polygon, b: Polygon) -> Bool:
 # against a sector, whose arc that map would bend, its outline polygon. A
 # flat ellipse is its zero-size bounds throughout.
 def overlaps(a: Ellipse, b: Circle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_flat():
         return overlaps(a.bounds(), b)
     return b.contains(a.closest_point(b.position))
 
 
 def overlaps(a: Circle, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Ellipse, b: Rectangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_flat():
         return overlaps(a.bounds(), b)
     if not b._is_plain():
@@ -271,10 +341,14 @@ def overlaps(a: Ellipse, b: Rectangle) -> Bool:
 
 
 def overlaps(a: Rectangle, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Ellipse, b: Triangle) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_flat():
         return overlaps(a.bounds(), b)
     if b._radius() > 0.0:
@@ -283,20 +357,28 @@ def overlaps(a: Ellipse, b: Triangle) -> Bool:
 
 
 def overlaps(a: Triangle, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Ellipse, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_flat():
         return overlaps(a.bounds(), b)
     return overlaps(a._outline(), b)
 
 
 def overlaps(a: Sector, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Ellipse, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     if a._is_flat():
         return overlaps(a.bounds(), b)
     if b._is_rounded():
@@ -305,10 +387,14 @@ def overlaps(a: Ellipse, b: Polygon) -> Bool:
 
 
 def overlaps(a: Polygon, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Ellipse, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     # Mapped onto `a`'s unit circle, `b` is still an axis-aligned ellipse.
     if a._is_flat():
         return overlaps(b, a.bounds())
@@ -320,24 +406,36 @@ def overlaps(a: Ellipse, b: Ellipse) -> Bool:
 # A capsule against a curved or concave region: its spine comes within its
 # radius of it (`_spine_distance`).
 def overlaps(a: Capsule, b: Ellipse) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _spine_distance(a._spine(), b) <= a.radius
 
 
 def overlaps(a: Ellipse, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Capsule, b: Sector) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _spine_distance(a._spine(), b) <= a.radius
 
 
 def overlaps(a: Sector, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)
 
 
 def overlaps(a: Capsule, b: Polygon) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return _spine_distance(a._spine(), b) <= a.radius
 
 
 def overlaps(a: Polygon, b: Capsule) -> Bool:
+    """Whether `a` and `b` share any point, their boundaries included: shapes
+    that only touch, along an edge or at a corner, overlap."""
     return overlaps(b, a)

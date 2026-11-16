@@ -1,25 +1,25 @@
-"""How the window presents itself at launch.
-
-A mode selector with a type of its own: `run`'s `mode` parameter is a
-`WindowMode`, compared with `==`, the same shape as `RenderBackend`. The type
-is what lets `mode` sit ahead of `width`/`height` in `run`'s signature — an
-`Int` there would have made `run("T", 800)` a silently valid mode. The
-constructor is deliberately not `@implicit` for the same reason.
-
-`FULLSCREEN`, `BORDERLESS` and `MAXIMIZED` are mutually exclusive by
-construction — one `Int` can only equal one constant — which independent
-bools could not guarantee. `WINDOWED` is the default: an ordinary decorated,
-sized window.
-"""
-
-
+# A type of its own, not an `Int`: `mode` sits ahead of `width`/`height` in
+# `run`'s signature, where an `Int` would make `run("T", 800)` a silently
+# valid mode. The constructor is not `@implicit` for the same reason. One
+# value is exactly one mode, which independent bools could not guarantee.
 struct WindowMode(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
+    """How the window presents itself: `run`'s `mode`, and
+    `context.window_mode`'s value.
+
+    `WINDOWED` is the default. Compare modes with `==`.
+    """
+
     var value: Int
 
     comptime WINDOWED = WindowMode(0)
+    """An ordinary decorated window of the design size."""
     comptime FULLSCREEN = WindowMode(1)
+    """The whole display, with the design scaled onto it."""
     comptime BORDERLESS = WindowMode(2)
+    """A window of the design size with no title bar or border."""
     comptime MAXIMIZED = WindowMode(3)
+    """A decorated window filling the display's work area, with the design
+    scaled onto it."""
 
     def __init__(out self, value: Int):
         self.value = value

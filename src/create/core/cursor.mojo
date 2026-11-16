@@ -1,18 +1,16 @@
-"""The mouse cursor over the window: `context.cursor`'s value.
-
-A selector with a type of its own, compared with `==`, like `WindowMode`:
-the constructor is not `@implicit`, so a bare number never passes for a
-cursor. Each is the platform's own system cursor, so it looks native on
-every desktop.
-
-`ARROW` is the default. `HIDDEN` hides the cursor over the window, like
-Processing's `noCursor()`; any other value shows it again. The resize
-cursors are named by the line they run along, read left to right with y
-up: `RESIZE_DIAGONAL_RISING` is `/`, `RESIZE_DIAGONAL_FALLING` is `\\`.
-"""
-
-
+# A type of its own, like `WindowMode`: the constructor is not `@implicit`,
+# so a bare number never passes for a cursor.
 struct Cursor(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
+    """The mouse cursor over the window: `context.cursor`'s value.
+
+    Each is the platform's own system cursor, so it looks native on every
+    desktop. `ARROW` is the default. `HIDDEN` hides the cursor over the
+    window, like Processing's `noCursor()`; any other value shows it again.
+    The resize cursors are named by the line they run along, read left to
+    right with y up: `RESIZE_DIAGONAL_RISING` is `/`,
+    `RESIZE_DIAGONAL_FALLING` is `\\`.
+    """
+
     var value: Int
 
     comptime ARROW = Cursor(0)

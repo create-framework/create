@@ -52,6 +52,14 @@ def _tinted(color: Color, tint: Color, opacity: Float64 = 1.0) -> Color:
 
 
 struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
+    """A colour: red, green and blue, each from 0 to 255, and an alpha from 0
+    (invisible) to 255 (opaque, the default).
+
+    `Color(200)` is a gray. Build one from text with `hex`, or from hue,
+    saturation and value with `hsv`; the named colours (`RED`, `TRANSPARENT`,
+    …) are constants. `with_alpha` and `lerp` derive new colours.
+    """
+
     var r: UInt8
     var g: UInt8
     var b: UInt8

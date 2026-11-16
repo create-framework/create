@@ -1,24 +1,27 @@
-"""Which renderer replays a frame's `RenderCommand`s.
-
-A selector with a type of its own: the `backend` parameter of
-`run`/`run_headless` is a `RenderBackend`, compared with `==`, the same shape
-as `WindowMode`; the run picks its loop by it. The type keeps a backend constant from binding
-to a neighbouring `Int` parameter by position — `run_headless(w, h,
-RenderBackend.GPU)` used to mean `frames=1` on the CPU backend and compile.
-The constructor is deliberately not `@implicit` for the same reason.
-"""
-
 from std.sys import argv
 
 
+# A type of its own, like `WindowMode`: it keeps a backend constant from
+# binding to a neighbouring `Int` parameter by position (`run_headless(w, h,
+# RenderBackend.GPU)` once meant `frames=1` on the CPU, and compiled). The
+# constructor is not `@implicit` for the same reason.
 struct RenderBackend(
     Copyable, Equatable, ImplicitlyCopyable, Movable, Writable
 ):
+    """Which renderer draws a run's frames: `run`'s and `run_headless`'s
+    `backend`.
+
+    Fixed for the run. Both draw the same frame, apart from tiny differences
+    along antialiased edges. Compare backends with `==`.
+    """
+
     var value: Int
 
     comptime CPU = RenderBackend(0)
+    """Create's own rasteriser, on the CPU. The default."""
     # replays onto a Surface through _raster.mojo
     comptime GPU = RenderBackend(1)
+    """OpenGL 3.3."""
     # replays through GLRenderer — see _gl_backend.mojo
 
     def __init__(out self, value: Int):
