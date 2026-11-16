@@ -134,7 +134,12 @@ See [examples/capture](../examples/capture/main.mojo).
 
 - **Each frame is a `save_image`:** design size × `scale`, no letterbox, replayed on the CPU, so
   either backend and every machine record the same bytes, and a headless run records
-  deterministically. With the autoclear off a frame holds only its own drawing, as an image does.
+  deterministically.
+- **With the autoclear off, it keeps what the screen keeps:** a frame holds the ink of every
+  frame since recording started, the frames between two captured ones included, since every
+  frame is replayed into the recording while it runs. That costs a CPU replay of each frame.
+  Whatever starts the screen's picture over (resizing the window, or on the GPU changing the
+  antialiasing) starts the recording's over too.
 - **Lasts across frames**, like the [canvas settings](drawing.md#settings-that-outlive-the-frame):
   until `seconds` of the run's time or `frames` frames, `canvas.stop_recording()` (the file is
   complete when it returns), or the end of the run, which finishes it. `canvas.cancel_recording()`

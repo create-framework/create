@@ -447,8 +447,12 @@ both the finished framebuffer and the unconsumed command buffer; a failed write 
   is a `glReadPixels` stall — fine on a keypress, not per frame.
 - `canvas.start_recording(path, …)` — a `_Recording` on `Captures` that lasts across frames, serviced by
   `Backend._record_frame` in both presents as `_flush_image` is serviced, through the CPU replay:
-  `Captures.frame_due` says whether this frame's slot is due, the backend replays it, and
-  `Captures.add_frame` encodes it. It keeps the
+  `Captures.frame_due` says whether this frame's slot is due, the backend replays it onto the
+  recording's own pixels (`_Recording.canvas`), and `Captures.add_frame` encodes them. With the
+  autoclear on, a due frame is replayed onto them cleared; with it off
+  (`CommandBuffer.autoclear`), every frame is, due or not, so they hold what the screen holds, and
+  a change of the window's pixel size or the GPU's sample count, which starts the screen over,
+  zeroes them. It keeps the
   capture's own base matrix and composes it with each frame's `screen_inv`, so a resize mid-recording
   is undone like any frame's. Timing: `Captures.clock` is set from `context.time.elapsed` by
   `first_step`/`step` (render never sees `Context`); the clock is cut into `1/fps` slots from the first

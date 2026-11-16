@@ -181,21 +181,45 @@ struct Backend(Movable):
         )
         mem.save(request.path, opaque=not request.transparent)
 
-    def _record_frame(mut self, cmds: List[RenderCommand]) raises:
+    def _record_frame(
+        mut self, cmds: List[RenderCommand], window: Tuple[Int, Int, Int]
+    ) raises:
         """Capture the presented frame into the recording, if its slot is due.
 
-        Replayed on the CPU onto a buffer of the recording's own size, as
+        Replayed on the CPU onto the recording's own pixels, as
         `_flush_image` captures, so both backends record the same pixels.
+        With the autoclear on, a due frame is replayed onto them cleared.
+        With it off, a frame starts from the last one's pixels, so every
+        frame is replayed onto them, due or not, and they hold what the
+        screen holds; a change of `window` (its pixel size and the GPU's
+        sample count), which starts the screen over, starts them over too.
         """
         var slot = self.captures.frame_due()
-        if not slot:
+        if not self.captures.recording:
+            return  # none, or its time ran out at this frame
+        var accumulate = not self.buffer.autoclear
+        if not slot and not accumulate:
             return
         ref recording = self.captures.recording.value()
-        var mem = MemorySurface(recording.width, recording.height)
+        var mem = recording.canvas.take()
+        var restarted = False
+        if recording.window:
+            ref last = recording.window.value()
+            restarted = (
+                last[0] != window[0]
+                or last[1] != window[1]
+                or last[2] != window[2]
+            )
+        recording.window = window
+        if not accumulate or restarted:
+            mem.data = List[UInt8](length=mem.width * mem.height * 4, fill=0)
         var scale = recording.scale
         var pre = recording.capture_base @ self.screen_inv
         self.replay(mem.surface(), cmds, scale, pre=pre, skip_letterbox=True)
-        self.captures.add_frame(mem, slot.value())
+        if slot:
+            self.captures.add_frame(mem, slot.value())
+        if self.captures.recording:
+            self.captures.recording.value().canvas = mem^
 
     def begin_frame(
         mut self, screen: Matrix[3, 3], width: Float64, height: Float64
@@ -304,7 +328,8 @@ struct Backend(Movable):
         self.replay(s, cmds, scale)
         self.captures.flush_screenshot(s)
         self._flush_image(cmds)
-        self._record_frame(cmds)
+        # The CPU keeps the frame's pixels across an antialiasing change.
+        self._record_frame(cmds, (s.width, s.height, 0))
         if self.keep_frames:
             self._keep_frame(s)
         cmds.clear()
@@ -383,7 +408,9 @@ struct Backend(Movable):
         )
         self.captures.flush_screenshot_gpu(gl, width, height)
         self._flush_image(cmds)
-        self._record_frame(cmds)
+        self._record_frame(
+            cmds, (width, height, self.antialiasing._gpu_samples())
+        )
         cmds.clear()
         self.buffer.commands = cmds^
         self.buffer.clips.clear()

@@ -7,6 +7,8 @@
 
 from std.os import remove
 
+from _gif_decode import DecodedGif, decode_gif
+
 from create import *
 from create.core.headless import run_headless
 from create.render.render_backend import RenderBackend
@@ -184,6 +186,71 @@ def test_gpu_recording_matches_cpu_recording_byte_for_byte() raises -> None:
     assert_equal(len(cpu), len(gpu))
     for i in range(len(cpu)):
         assert_equal(cpu[i], gpu[i])
+
+
+comptime _GIF_RESTART = "/tmp/mojo_create_test_gl_capture_restart.gif"
+
+
+@fieldwise_init
+struct PaintAcrossARestart(Program):
+    """With the autoclear off, white and then a red square more each
+    frame, recorded at 50 fps; the third frame changes the antialiasing,
+    which on the GPU starts the kept picture over from transparent."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        canvas.autoclear(False)
+        canvas.background(Color.WHITE)
+        PaintAcrossARestart._square(canvas, 0)
+        canvas.start_recording(_GIF_RESTART, frames=4, fps=50)
+        return Self(0)
+
+    @staticmethod
+    def _square(mut canvas: Canvas, index: Int):
+        with canvas.style(fill=Color.RED, stroke_enabled=False):
+            canvas.rectangle(
+                (canvas.left() + 6.5 + 8.0 * Float64(index), 0.0), 6, 6
+            )
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        if context.frame_count() == 3:
+            canvas.antialiasing(Antialiasing.OFF)
+        PaintAcrossARestart._square(canvas, context.frame_count() - 1)
+
+
+def _mid_rgb(gif: DecodedGif, frame: Int, x: Int) -> Int:
+    """Pixel `x` of `frame`'s middle row, as 0xRRGGBB."""
+    var o = ((gif.height // 2) * gif.width + x) * 3
+    ref p = gif.frames[frame].pixels
+    return (Int(p[o]) << 16) | (Int(p[o + 1]) << 8) | Int(p[o + 2])
+
+
+def test_a_gpu_restart_starts_an_autoclear_off_recording_over() raises -> None:
+    try:
+        _ = run_headless[PaintAcrossARestart](
+            64, 48, 10, backend=RenderBackend.GPU
+        )
+    except e:
+        print("SKIP — no GL context:", e)
+        return
+    var gif = decode_gif(_GIF_RESTART)
+    remove(_GIF_RESTART)
+    assert_equal(len(gif.frames), 4)
+
+    # Before the change (frame 1 at 0 ms): square 0 on white.
+    assert_equal(_mid_rgb(gif, 0, 6), 0xFF0000)
+    assert_equal(_mid_rgb(gif, 0, 6 + 8), 0xFFFFFF)
+    # From the change (frame 3, at 32 ms) on: only what was drawn since,
+    # on the transparent black the GPU's picture starts over from.
+    assert_equal(_mid_rgb(gif, 1, 6 + 8 * 2), 0xFF0000)
+    assert_equal(
+        _mid_rgb(gif, 1, 6), 0x000000
+    )  # square 0 and the white are gone
+    assert_equal(_mid_rgb(gif, 1, 6 + 8 * 3), 0x000000)
+    assert_equal(_mid_rgb(gif, 2, 6 + 8 * 2), 0xFF0000)
+    assert_equal(_mid_rgb(gif, 2, 6 + 8 * 3), 0xFF0000)
 
 
 def main() raises:
