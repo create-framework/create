@@ -146,7 +146,7 @@ def test_gpu_save_image_matches_cpu_save_image_byte_for_byte() raises -> None:
 
 
 @fieldwise_init
-struct RecordFrames[path: StaticString](Program):
+struct RecordFrames[path: StaticString, transparent: Bool = False](Program):
     """Records three frames of the scene, moving the square each frame."""
 
     var _unused: Int
@@ -154,7 +154,9 @@ struct RecordFrames[path: StaticString](Program):
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Self:
         _scene(canvas)
-        canvas.start_recording(String(Self.path), frames=3)
+        canvas.start_recording(
+            String(Self.path), frames=3, transparent=Self.transparent
+        )
         return Self(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -177,6 +179,26 @@ def test_gpu_recording_matches_cpu_recording_byte_for_byte() raises -> None:
         print("SKIP — no GL context:", e)
         return
     _ = run_headless[RecordFrames[_GIF_CPU]](
+        200, 100, 8, window_size=(640, 480)
+    )
+    var cpu = open(_GIF_CPU, "r").read_bytes()
+    var gpu = open(_GIF_GPU, "r").read_bytes()
+    remove(_GIF_CPU)
+    remove(_GIF_GPU)
+    assert_equal(len(cpu), len(gpu))
+    for i in range(len(cpu)):
+        assert_equal(cpu[i], gpu[i])
+
+
+def test_a_transparent_gpu_recording_matches_the_cpu_one() raises -> None:
+    try:
+        _ = run_headless[RecordFrames[_GIF_GPU, True]](
+            200, 100, 8, window_size=(640, 480), backend=RenderBackend.GPU
+        )
+    except e:
+        print("SKIP — no GL context:", e)
+        return
+    _ = run_headless[RecordFrames[_GIF_CPU, True]](
         200, 100, 8, window_size=(640, 480)
     )
     var cpu = open(_GIF_CPU, "r").read_bytes()

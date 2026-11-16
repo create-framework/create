@@ -120,7 +120,8 @@ On an offscreen canvas both write at once (see [Drawing into an image](#drawing-
 
 ## Recording
 
-`canvas.start_recording(path, seconds=, frames=, fps=30, scale=1.0, dither=False)` records an
+`canvas.start_recording(path, seconds=, frames=, fps=30, scale=1.0, dither=False,
+transparent=False)` records an
 animated GIF, starting with the frame it is called in. GIF is the only format, so the path must
 end in `.gif`:
 
@@ -153,6 +154,12 @@ See [examples/capture](../examples/capture/main.mojo).
 - **Timed by the run's clock**, sampled `fps` times a second (at most 50): a display faster than
   `fps` skips frames, and a slow frame stays on screen longer, so the GIF plays at the program's
   speed.
+- **`transparent=True` leaves the background out**, as `save_image`'s does: clears and
+  `background()` calls are dropped, and each frame replaces the last rather than drawing over it.
+  A GIF pixel is either transparent or opaque, so a pixel under half alpha is left out and the
+  rest are drawn whole: antialiased edges come out hard, in their own colour, with no fringe.
+  With the autoclear off, a transparent recording starts from nothing rather than the screen,
+  whose picture has the background in it.
 - **A palette per frame:** exact with 256 colours or fewer, median cut otherwise; `dither` trades
   banding for grain. Capturing and encoding run when the frame is presented, so recording a heavy
   scene slows it.

@@ -88,7 +88,8 @@ struct Painter[scenario: Int](Program):
     """With the autoclear off: white once, then a square more each frame,
     recorded at 50 fps: from `create` on in scenario 0, where a frame lasts
     16 ms, so the second frame shares the first's slot and is never
-    captured itself; from the fourth frame on in scenario 1."""
+    captured itself; from the fourth frame on in scenario 1. Scenarios 2
+    and 3 are 0 and 1 recorded with a transparent background."""
 
     var _unused: Int
 
@@ -97,13 +98,25 @@ struct Painter[scenario: Int](Program):
         canvas.autoclear(False)
         canvas.background(Color.WHITE)
         _square(canvas, 0)
-        if Self.scenario == 0:
-            canvas.start_recording(_path(20), frames=4, fps=50)
+        if Self.scenario == 0 or Self.scenario == 2:
+            canvas.start_recording(
+                _path(20 + Self.scenario),
+                frames=4,
+                fps=50,
+                transparent=Self.scenario == 2,
+            )
         return Self(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        if Self.scenario == 1 and context.frame_count() == 4:
-            canvas.start_recording(_path(21), frames=2, fps=50)
+        if (
+            Self.scenario == 1 or Self.scenario == 3
+        ) and context.frame_count() == 4:
+            canvas.start_recording(
+                _path(20 + Self.scenario),
+                frames=2,
+                fps=50,
+                transparent=Self.scenario == 3,
+            )
         _square(canvas, context.frame_count() - 1)
 
 
@@ -123,6 +136,29 @@ def _painted(gif: DecodedGif, frame: Int, index: Int) raises -> Bool:
     assert_equal(c[1], 255)
     assert_equal(c[2], 255)
     return False
+
+
+def _alpha(gif: DecodedGif, frame: Int, x: Int, y: Int) -> Int:
+    return Int(gif.frames[frame].pixels[(y * gif.width + x) * 4 + 3])
+
+
+@fieldwise_init
+struct Mover(Program):
+    """A square moving right a step each frame over a gray background,
+    recorded with a transparent background and the autoclear on."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        canvas.background(Color.GRAY)
+        _square(canvas, 0)
+        canvas.start_recording(_path(30), frames=3, transparent=True)
+        return Self(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.GRAY)
+        _square(canvas, context.frame_count() - 1)
 
 
 def _delays(gif: DecodedGif) -> Int:
@@ -277,6 +313,71 @@ def test_with_the_autoclear_off_a_recording_starts_from_the_screen() raises -> (
             _painted(gif, 1, index), index <= 5, String("square ", index)
         )
     remove(_path(21))
+
+
+def test_a_transparent_recording_leaves_the_background_out() raises -> None:
+    # A 30 fps recording of 16 ms frames: frames 1, 4 and 6, at 0, 48 and
+    # 80 ms, the first in each 33 ms slot.
+    _ = run_headless[Mover](_WIDTH, _HEIGHT, 10, antialiasing=Antialiasing.OFF)
+    var gif = decode_gif(_path(30))
+    assert_equal(len(gif.frames), 3)
+    var shown = [0, 3, 5]
+    for frame in range(3):
+        for index in range(6):
+            # Only this frame's square: the gray is gone, and so is every
+            # square before, which each frame replaces rather than covers.
+            var want = 255 if index == shown[frame] else 0
+            assert_equal(
+                _alpha(gif, frame, 6 + 8 * index, _HEIGHT // 2),
+                want,
+                String("frame ", frame, ", square ", index),
+            )
+        assert_equal(_alpha(gif, frame, 2, 2), 0)
+    var o = ((_HEIGHT // 2) * _WIDTH + 6) * 4
+    assert_equal(Int(gif.frames[0].pixels[o]), 0)  # black
+    remove(_path(30))
+
+
+def test_a_transparent_recording_keeps_ink_with_the_autoclear_off() raises -> (
+    None
+):
+    _ = run_headless[Painter[2]](
+        _WIDTH, _HEIGHT, 10, antialiasing=Antialiasing.OFF
+    )
+    var gif = decode_gif(_path(22))
+    assert_equal(len(gif.frames), 4)
+    # As in the opaque recording, with the white left out.
+    var last = [0, 2, 3, 4]
+    for frame in range(4):
+        for index in range(6):
+            assert_equal(
+                _alpha(gif, frame, 6 + 8 * index, _HEIGHT // 2),
+                255 if index <= last[frame] else 0,
+                String("frame ", frame, ", square ", index),
+            )
+    remove(_path(22))
+
+
+def test_a_transparent_recording_starts_transparent() raises -> None:
+    # Started in the fourth frame, it holds only what was drawn from then
+    # on: the window's picture has the background in it, so it is not used.
+    _ = run_headless[Painter[3]](
+        _WIDTH, _HEIGHT, 10, antialiasing=Antialiasing.OFF
+    )
+    var gif = decode_gif(_path(23))
+    assert_equal(len(gif.frames), 2)
+    for index in range(7):
+        assert_equal(
+            _alpha(gif, 0, 6 + 8 * index, _HEIGHT // 2),
+            255 if index == 3 else 0,
+            String("square ", index),
+        )
+        assert_equal(
+            _alpha(gif, 1, 6 + 8 * index, _HEIGHT // 2),
+            255 if index >= 3 and index <= 5 else 0,
+            String("square ", index),
+        )
+    remove(_path(23))
 
 
 def _raises[scenario: Int](expected: String) raises:

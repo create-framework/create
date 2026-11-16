@@ -454,7 +454,10 @@ both the finished framebuffer and the unconsumed command buffer; a failed write 
   a change of the window's pixel size or the GPU's sample count, which starts the screen over,
   zeroes them. The first frame with it off is not replayed but sampled through `_seed` from the
   window's finished frame (a copy of the CPU surface, or one `GLRenderer.read_frame`, asked for
-  only when `_needs_seed`), since what earlier frames left has no commands to replay. It keeps the
+  only when `_needs_seed`), since what earlier frames left has no commands to replay. A
+  `transparent` recording replays with `skip_clear`, as a transparent `save_image` does, is never
+  seeded (the window has the background in it), and writes each frame with a transparent index
+  and `DISPOSE_BACKGROUND`, so it replaces the last. It keeps the
   capture's own base matrix and composes it with each frame's `screen_inv`, so a resize mid-recording
   is undone like any frame's. Timing: `Captures.clock` is set from `context.time.elapsed` by
   `first_step`/`step` (render never sees `Context`); the clock is cut into `1/fps` slots from the first

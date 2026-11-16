@@ -13,7 +13,13 @@ from std.math import floor
 
 from create.math.matrix import Matrix
 
-from ._gif import EncodedFrame, GifWriter, encode_frame
+from ._gif import (
+    DISPOSE_BACKGROUND,
+    DISPOSE_KEEP,
+    EncodedFrame,
+    GifWriter,
+    encode_frame,
+)
 from ._gl_backend import GLRenderer
 from ._png import write_png
 from ._surface import MemorySurface, Surface, _force_opaque
@@ -67,6 +73,10 @@ struct _Recording(Movable):
     `screen_inv` at present, so a resized window records the same."""
     var fps: Float64
     var dither: Bool
+    var transparent: Bool
+    """Whether the background is left out: frames replayed without their
+    clears, encoded with a transparent index and disposed of to the
+    background, so each replaces the last."""
     var max_slots: Optional[Int]
     """From `seconds`: the slots the recording may fill."""
     var max_frames: Optional[Int]
@@ -102,6 +112,7 @@ struct _Recording(Movable):
         capture_base: Matrix[3, 3],
         fps: Float64,
         dither: Bool,
+        transparent: Bool,
         max_slots: Optional[Int],
         max_frames: Optional[Int],
     ):
@@ -112,6 +123,7 @@ struct _Recording(Movable):
         self.capture_base = capture_base
         self.fps = fps
         self.dither = dither
+        self.transparent = transparent
         self.max_slots = max_slots
         self.max_frames = max_frames
         self.started = False
@@ -131,7 +143,11 @@ struct _Recording(Movable):
             return
         var end = _centiseconds(until_slot, self.fps)
         var frame = self.pending.take()
-        self.writer.write_frame(frame, end - self.written)
+        self.writer.write_frame(
+            frame,
+            end - self.written,
+            DISPOSE_BACKGROUND if self.transparent else DISPOSE_KEEP,
+        )
         self.written = end
 
 
@@ -260,7 +276,11 @@ struct Captures(Movable):
         and the recording finishes once it has its `frames`."""
         ref recording = self.recording.value()
         var frame = encode_frame(
-            mem.data, recording.width, recording.height, recording.dither
+            mem.data,
+            recording.width,
+            recording.height,
+            recording.dither,
+            transparent=recording.transparent,
         )
         recording.write_pending(slot)
         recording.pending = Optional(frame^)

@@ -7,6 +7,7 @@
     Shift+I    the same image at 2x, with a transparent background
     R          start or stop recording an animated GIF of what the program
                draws, as the image is drawn, for up to ten seconds
+    Shift+R    the same recording, with a transparent background
     X          throw the recording in progress away, keeping any file
                saved before
 
@@ -61,8 +62,11 @@ struct Capture(Program):
                 canvas.stop_recording()
                 self.saved = "recording.gif"
             else:
+                var transparent = context.keyboard.down(Key.SHIFT)
                 canvas.start_recording(
-                    "out/recording.gif", seconds=_RECORD_SECONDS
+                    "out/recording.gif",
+                    seconds=_RECORD_SECONDS,
+                    transparent=transparent,
                 )
                 self.saved = ""
         elif context.keyboard.pressed(Key.X) and canvas.recording():
@@ -84,7 +88,7 @@ struct Capture(Program):
             text_alignment=Align.TOP,
         ):
             canvas.text(
-                "S: screenshot   I: image   Shift+I: image at 2x   R: record",
+                "S: screenshot   I: image   R: record   Shift: transparent",
                 (0, 220),
             )
         with canvas.style(text_color=Color(240, 236, 222), font_size=20):

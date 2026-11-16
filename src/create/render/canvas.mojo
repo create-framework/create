@@ -1090,6 +1090,7 @@ struct Canvas(DrawTarget, Movable):
         fps: Float64 = 30.0,
         scale: Float64 = 1.0,
         dither: Bool = False,
+        transparent: Bool = False,
     ) raises:
         """Record the frames from this one on as an animated GIF at `path`.
 
@@ -1118,6 +1119,15 @@ struct Canvas(DrawTarget, Movable):
         fewer, the nearest 256 otherwise. `dither` mixes neighbouring pixels
         so smooth gradients don't band, at the cost of a grainier file.
 
+        `transparent` leaves the background out, as `save_image`'s does:
+        the frame's clears and `background` calls are dropped, and a pixel
+        under half alpha is transparent. A GIF pixel is either transparent
+        or opaque, so an antialiased edge comes out hard, though in its own
+        colour, with no fringe. Each frame replaces the last rather than
+        drawing over it, so nothing earlier shows through its holes. With
+        the autoclear off, it starts from nothing rather than the picture on
+        screen, which has the background in it.
+
         Capturing and encoding run as each frame is presented, so a long
         recording of a heavy scene slows it down.
 
@@ -1140,7 +1150,13 @@ struct Canvas(DrawTarget, Movable):
         source file, as `save_image`'s is.
         """
         self._start_recording(
-            _caller_relative(path), seconds, frames, fps, scale, dither
+            _caller_relative(path),
+            seconds,
+            frames,
+            fps,
+            scale,
+            dither,
+            transparent,
         )
 
     def _start_recording(
@@ -1151,6 +1167,7 @@ struct Canvas(DrawTarget, Movable):
         fps: Float64,
         scale: Float64,
         dither: Bool,
+        transparent: Bool,
     ) raises:
         """`start_recording`, to a path already resolved."""
         if self._offscreen():
@@ -1198,6 +1215,7 @@ struct Canvas(DrawTarget, Movable):
                 capture.base_matrix(),
                 fps,
                 dither,
+                transparent,
                 max_slots,
                 frames,
             )
