@@ -131,7 +131,7 @@ offscreen `Canvas(width, height)`, which, unlike the frame's canvas, is the prog
 An `Image`, `Font`, `Animation` or `Sound` is a shared, immutable **asset**. It shares its data
 itself, so a plain field or a copy is cheap and nothing needs wrapping in an `ArcPointer`.
 
-An `Animator`, or a `Voice` (what `audio.play` and `audio.loop` return), is a **playhead**: one
+An `Animator`, or a `Playback` (what `audio.play` and `audio.loop` return), is a **playhead**: one
 entity's position in an asset. Two enemies sharing one walk `Animation` each have their own
 `Animator`. An animator, like a `Tween`, keeps time on its own: it reads its position off the
 run's clock, so nothing ticks it. How to drive one is in

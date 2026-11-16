@@ -9,12 +9,12 @@ from create.audio import Audio, Sound
 
 def test_audio_plays_silently_where_no_device_opens() raises -> None:
     var audio = Audio()
-    var voice = audio.loop(
+    var playback = audio.loop(
         Sound.from_samples(List[Float64](length=22050, fill=0.0))
     )
-    assert_true(audio.is_playing(voice))
+    assert_true(audio.is_playing(playback))
     sleep(0.1)
-    assert_true(audio.is_playing(voice))
+    assert_true(audio.is_playing(playback))
 
 
 def main() raises:
