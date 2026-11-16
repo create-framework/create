@@ -74,6 +74,53 @@ struct Recorder[scenario: Int](Program):
             canvas.rectangle((canvas.left() + 4, canvas.top() - 4), 8, 8)
 
 
+def _square(mut canvas: Canvas, index: Int):
+    """A black 6x6 square, the `index`th along the middle row from the
+    left: its centre is pixel (6 + 8 * index, `_HEIGHT // 2`)."""
+    with canvas.style(fill=Color.BLACK, stroke_enabled=False):
+        canvas.rectangle(
+            (canvas.left() + 6.5 + 8.0 * Float64(index), 0.0), 6, 6
+        )
+
+
+@fieldwise_init
+struct Painter[scenario: Int](Program):
+    """With the autoclear off: white once, then a square more each frame,
+    recorded at 50 fps from `create` on. A frame lasts 16 ms, so the second
+    frame shares the first's slot and is never captured itself."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        canvas.autoclear(False)
+        canvas.background(Color.WHITE)
+        _square(canvas, 0)
+        canvas.start_recording(_path(20 + Self.scenario), frames=4, fps=50)
+        return Self(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        _square(canvas, context.frame_count() - 1)
+
+
+def _rgb(gif: DecodedGif, frame: Int, x: Int, y: Int) -> Tuple[Int, Int, Int]:
+    var o = (y * gif.width + x) * 3
+    ref pixels = gif.frames[frame].pixels
+    return (Int(pixels[o]), Int(pixels[o + 1]), Int(pixels[o + 2]))
+
+
+def _painted(gif: DecodedGif, frame: Int, index: Int) raises -> Bool:
+    """Whether square `index` is in `frame`, which must be black or white
+    there."""
+    var c = _rgb(gif, frame, 6 + 8 * index, _HEIGHT // 2)
+    if c[0] == 0 and c[1] == 0 and c[2] == 0:
+        return True
+    assert_equal(c[0], 255)
+    assert_equal(c[1], 255)
+    assert_equal(c[2], 255)
+    return False
+
+
 def _delays(gif: DecodedGif) -> Int:
     var total = 0
     for frame in gif.frames:
@@ -177,6 +224,28 @@ def test_scale_sets_the_recordings_size() raises -> None:
     var gif = decode_gif(_path(5))
     assert_equal(gif.width, _WIDTH // 2)
     assert_equal(gif.height, _HEIGHT // 2)
+
+
+def test_with_the_autoclear_off_a_recording_keeps_what_the_screen_keeps() raises -> (
+    None
+):
+    _ = run_headless[Painter[0]](
+        _WIDTH, _HEIGHT, 10, antialiasing=Antialiasing.OFF
+    )
+    var gif = decode_gif(_path(20))
+    assert_equal(len(gif.frames), 4)
+    # The frames at 0, 32, 48 and 64 ms: squares 0, 0 to 2, 0 to 3 and 0 to
+    # 4. Square 1, drawn in the frame no slot captured, is kept all the same,
+    # and the white from create stays under them all.
+    var last = [0, 2, 3, 4]
+    for frame in range(4):
+        for index in range(6):
+            assert_equal(
+                _painted(gif, frame, index),
+                index <= last[frame],
+                String("frame ", frame, ", square ", index),
+            )
+    remove(_path(20))
 
 
 def _raises[scenario: Int](expected: String) raises:

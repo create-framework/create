@@ -80,6 +80,16 @@ struct _Recording(Movable):
     var pending_slot: Int
     var written: Int
     """Centiseconds already given to the frames written."""
+    var canvas: Optional[MemorySurface]
+    """The recording's own pixels, at its size, kept for the whole
+    recording: what each frame is replayed onto. With the autoclear off,
+    every presented frame is replayed onto it, captured or not, so it holds
+    what the screen holds. An `Optional` only so the backend can take it
+    out while it replays onto it."""
+    var window: Optional[Tuple[Int, Int, Int]]
+    """The window's pixel size and GPU sample count at the last present.
+    A change starts the screen's picture over from transparent with the
+    autoclear off, so it starts `canvas` over too."""
 
     def __init__(
         out self,
@@ -107,6 +117,8 @@ struct _Recording(Movable):
         self.pending = None
         self.pending_slot = 0
         self.written = 0
+        self.canvas = MemorySurface(self.width, self.height)
+        self.window = None
 
     def write_pending(mut self, until_slot: Int) raises:
         """Write the waiting frame, shown until `until_slot` begins."""

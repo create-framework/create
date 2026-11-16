@@ -1119,8 +1119,14 @@ struct Canvas(DrawTarget, Movable):
         so smooth gradients don't band, at the cost of a grainier file.
 
         Capturing and encoding run as each frame is presented, so a long
-        recording of a heavy scene slows it down. With the autoclear off,
-        each frame holds only what was drawn in it, as `save_image` does.
+        recording of a heavy scene slows it down.
+
+        With the autoclear off, the recording keeps what earlier frames
+        left, as the screen does: every frame is replayed into it, captured
+        or not, so ink drawn between two captured frames is kept, at the
+        cost of a CPU replay of every frame while it records. Whatever
+        starts the screen's picture over starts the recording's over too:
+        resizing the window, and on the GPU changing the antialiasing.
 
         Raises at once for a path not ending in `.gif`, `seconds` and
         `frames` both given, a value that isn't positive, `fps` above 50, a

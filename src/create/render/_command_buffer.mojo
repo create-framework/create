@@ -37,6 +37,11 @@ struct CommandBuffer(Movable):
     """Whether the frame's first command is still the clear the frame opened
     with, so `set_autoclear` can take it back out. Cleared when a
     `background()` replaces it, which then stays."""
+    var autoclear: Bool
+    """Whether frames open with the clear, as `set_autoclear` last set it:
+    whether a frame starts from its own commands or from the last frame's
+    pixels, which a recording needs to know. Unlike `autoclear_head`, an
+    opaque `background()` leaves it as it is."""
 
     def __init__(out self):
         self.commands = List[RenderCommand]()
@@ -44,6 +49,7 @@ struct CommandBuffer(Movable):
         self.clip = 0
         self.recorded = 0
         self.autoclear_head = False
+        self.autoclear = True
 
     def record(mut self, var c: RenderCommand):
         """Append one render to the frame being recorded, under the current
@@ -101,6 +107,7 @@ struct CommandBuffer(Movable):
         does nothing if the frame already opens with an opaque clear. Either
         change counts as a record, so a cached read is replayed.
         """
+        self.autoclear = enabled
         if not enabled:
             if self.autoclear_head:
                 _ = self.commands.pop(0)
