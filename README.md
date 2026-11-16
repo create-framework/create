@@ -67,15 +67,15 @@ The [create-cli](https://github.com/create-framework/create-cli) makes creating 
 pixi global install create-cli --channel https://prefix.dev/create-framework/create
 ```
 
-Now, you can use the create-cli to make your first project and run it:
+When it is installed, you can make your first project and run it like this:
 
 ```sh
 create new my-project
 cd my-project
-create run
+create run            
 ```
 
-`create new` makes a pixi project with the `mojo` and `create` packages and a `main.mojo` to start from, and `create run` runs your project from anywhere inside it.
+You are now ready to write your first **Create** program!
 
 For more installation options, see [setup.md](docs/guide/setup.md) in the user guide.
 
