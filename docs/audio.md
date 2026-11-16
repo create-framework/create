@@ -1,7 +1,7 @@
 # Audio
 
-Playing sounds: loading or synthesizing a `Sound`, playing it through an `Audio` as voices, and
-controlling each voice. A program that builds a short beep and plays it on Space:
+Playing sounds: loading or synthesizing a `Sound`, playing it through an `Audio`, and
+controlling each playback. A program that builds a short beep and plays it on Space:
 
 ```mojo
 from create import *
@@ -25,7 +25,7 @@ struct Beep(Program):
         canvas.background(Color.WHITE)
         canvas.text("Press Space", (0, 0))
         if context.keyboard.pressed(Key.SPACE):
-            _ = self.audio.play(self.beep)  # `_ =`: this program never needs the voice
+            _ = self.audio.play(self.beep)  # `_ =`: this program never needs the playback
 
 
 def main() raises:
@@ -64,49 +64,49 @@ Where no audio device can be opened, as on a server or in CI, it plays silently 
 raising, so the program still runs.
 
 `audio.play(sound)` plays a sound once and `audio.loop(sound)` over and over until stopped. Each
-returns a `Voice`, the handle of that one playback, a playhead in the sound like an `Animator` in
-an animation. A sound can play as several voices at once:
+returns a `Playback`, the handle of that one playback: a playhead in the sound, like an `Animator`
+in an animation. A sound can have several playbacks at once:
 
 ```mojo
 # In `update`, with `audio: Audio`, `music: Sound`, `jump: Sound` and
-# `music_voice: Voice` fields:
+# `music_playback: Playback` fields:
 if context.keyboard.pressed(Key.SPACE):
     _ = self.audio.play(self.jump, volume=0.6)
 if context.keyboard.pressed(Key.M):
-    if self.audio.is_playing(self.music_voice):
-        self.audio.stop(self.music_voice)
+    if self.audio.is_playing(self.music_playback):
+        self.audio.stop(self.music_playback)
     else:
-        self.music_voice = self.audio.loop(self.music)
+        self.music_playback = self.audio.loop(self.music)
 ```
 
 An `Audio` needs nothing each frame. Sound plays on a background thread, so it carries on
 smoothly through a slow frame or a long load.
 
-## Voices
+## Playbacks
 
-A voice becomes **stale** when it ends: a one-shot that has played to its end, or any voice that
-was stopped. A call on a stale voice does nothing, safely, even if a newer sound has started
-playing since. `Voice.NONE` is no voice, for a field before anything plays.
+A playback becomes **stale** when it ends: a one-shot that has played to its end, or any playback that
+was stopped. A call on a stale playback does nothing, safely, even if a newer sound has started
+playing since. `Playback.NONE` is no playback, for a field before anything plays.
 
 | Call | Does |
 |---|---|
-| `stop(voice)` | Stops it for good: it is stale from now on |
-| `pause(voice)`, `resume(voice)` | Holds it where it is, and continues it from there |
-| `is_playing(voice)`, `is_paused(voice)` | Whether it sounds, or is held. Neither means stale |
-| `volume(voice)`, `volume(voice, v)` | Its own volume, `1.0` unless set; `0.0` once stale |
-| `speed(voice)`, `speed(voice, s)` | Its playback speed, `1.0` unless set; `0.0` once stale |
-| `stop_all()`, `pause_all()`, `resume_all()` | The same for every voice at once |
+| `stop(playback)` | Stops it for good: it is stale from now on |
+| `pause(playback)`, `resume(playback)` | Holds it where it is, and continues it from there |
+| `is_playing(playback)`, `is_paused(playback)` | Whether it sounds, or is held. Neither means stale |
+| `volume(playback)`, `volume(playback, v)` | Its own volume, `1.0` unless set; `0.0` once stale |
+| `speed(playback)`, `speed(playback, s)` | Its speed, `1.0` unless set; `0.0` once stale |
+| `stop_all()`, `pause_all()`, `resume_all()` | The same for every playback at once |
 
 `play` and `loop` take a starting `volume=` and `speed=`, applied before the first sample
 plays. Pass them there rather than setting them right after: by then the first moment may have
 played at the old values.
 
 - **Volume:** `0.0` is silent and `1.0` as recorded; above `1.0` amplifies, and below `0.0` is
-  silent too. `audio.volume(v)` is the overall volume, which scales every voice's own: a voice
-  at `0.5` under an overall `0.5` plays at a quarter. Either applies at once, to voices already
+  silent too. `audio.volume(v)` is the overall volume, which scales every playback's own: a playback
+  at `0.5` under an overall `0.5` plays at a quarter. Either applies at once, to playbacks already
   playing.
-- **Speed** plays a voice faster and higher, or slower and lower, as a record sped up or slowed
+- **Speed** plays a sound faster and higher, or slower and lower, as a record sped up or slowed
   down: `2.0` is twice as fast and an octave up. It clamps to `0.01` through `100.0`.
-- **A pause screen** calls `pause_all()` on the way in and `resume_all()` on the way out. Voices
+- **A pause screen** calls `pause_all()` on the way in and `resume_all()` on the way out. Playbacks
   played in between play as usual, so the screen can have sounds of its own; `resume_all` also
-  resumes voices paused one by one before.
+  resumes playbacks paused one by one before.

@@ -231,7 +231,7 @@ A public value type implements `Writable` and prints as it would be written in s
   (`Circle(position=Point2D(0.0, 0.0), radius=5.0)`) and by public field names where it doesn't
   (`Time`, `Tween`). Private fields are left out.
 
-Resource handles (`Image`, `PixelBuffer`, `Sound`, `Audio`, `Voice`) and shared assets
+Resource handles (`Image`, `PixelBuffer`, `Sound`, `Audio`, `Playback`) and shared assets
 (`Animation`) are not printable. A `Font` prints as it is loaded, `Font.load("path")` (with
 `, italic_path="..."` when it has one). `JSON` prints as compact JSON text, its own source form;
 `Table` and `TableRow` are containers and not printable.

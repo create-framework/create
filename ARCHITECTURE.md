@@ -20,7 +20,7 @@ explaining, a README beside its code goes into the detail; see
 | `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer` |
 | `animation` | `src/create/animation/` | The playheads: `Tween`, and `Animation` (a sprite's frames) with its `Animator`. Each keeps time off the run clock |
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
-| `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` playback, `Voice` |
+| `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
@@ -124,7 +124,7 @@ The rules behind it, and what each one buys:
   playhead keeps time with no argument carrying the clock to it. It is the package's only shared
   state.
 - **`animation`** holds the playheads: `Tween`, and `Animator` over its asset, `Animation`, as
-  `audio` holds `Voice` beside `Sound`. It is the only package that reads the run clock, so
+  `audio` holds `Playback` beside `Sound`. It is the only package that reads the run clock, so
   `math` and `image` stay free of time. It imports `math` for the easing curves and `image` for
   the frames.
 - **`text`** depends only on `_bytes`, `_library` and `_path`. `render`→`text` is nominal, like

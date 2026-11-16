@@ -1,5 +1,5 @@
-"""Sound: `Sound` (the asset), `Audio` (the playback device) and `Voice` (one
+"""Sound: `Sound` (the asset), `Audio` (the playback device) and `Playback` (one
 playback).
 """
 from .sound import Sound
-from .audio import Audio, Voice
+from .audio import Audio, Playback

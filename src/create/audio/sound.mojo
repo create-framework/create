@@ -8,12 +8,12 @@ from ._sndfile import SndFile
 
 
 struct Sound(Copyable, ImplicitlyCopyable, Movable):
-    """Decoded samples, the asset, not a playing voice: 16-bit integers,
+    """Decoded samples, the asset, not a playing playback: 16-bit integers,
     channels interleaved, whatever the file held.
 
     Decoding happens once, at load; `Audio.play` reads the samples without
     touching the file again. Copying one is cheap, like copying an `Image`:
-    the copies share the samples, and so does every voice playing it.
+    the copies share the samples, and so does every playback playing it.
     """
 
     var _samples: ArcPointer[List[Int16]]

@@ -17,8 +17,8 @@ comptime _MAX_SPEED = 100.0
 
 
 struct _LoopFeed(Movable):
-    """What a looping voice's stream callback reads and writes, on SDL's audio
-    thread. It lives on the heap, so its address holds while `_Voice`s move in
+    """What a looping playback's stream callback reads and writes, on SDL's audio
+    thread. It lives on the heap, so its address holds while `_Slot`s move in
     their list, and only the callback touches it until the stream is
     destroyed, so it needs no lock but the stream's own."""
 
@@ -41,7 +41,7 @@ struct _LoopFeed(Movable):
 def _feed_loop(
     userdata: Int, stream: Int, additional: Int32, total: Int32
 ) abi("C"):
-    """The stream callback of a looping voice: queue what the device asked
+    """The stream callback of a looping playback: queue what the device asked
     for, `additional` bytes in the sound's format, from where the last call
     left off and round again. Runs on SDL's audio thread, as often as the
     device needs, so a loop is fed whatever the program's frame rate, or with
@@ -64,19 +64,19 @@ def _feed_loop(
         needed -= count
 
 
-struct _Voice(Movable):
+struct _Slot(Movable):
     """One playback slot. `stream == 0` means free.
 
-    A one-shot voice's samples are all queued when it starts. A looping
-    voice's are queued as the device asks, by `_feed_loop` from `loop_feed`.
+    A one-shot playback's samples are all queued when it starts. A looping
+    playback's are queued as the device asks, by `_feed_loop` from `loop_feed`.
     """
 
     var stream: Int
     var generation: Int
-    # This voice's own volume, from `volume(id, ...)`; it plays at this times
+    # This playback's own volume, from `volume(id, ...)`; it plays at this times
     # `Audio`'s volume.
     var gain: Float64
-    # This voice's playback speed, from `speed(id, ...)`.
+    # This playback's speed, from `speed(id, ...)`.
     var speed: Float64
     var paused: Bool
     var looping: Bool
@@ -107,29 +107,29 @@ struct _Voice(Movable):
         self.loop_feed = None
 
 
-struct Voice(Copyable, Equatable, ImplicitlyCopyable, Movable):
+struct Playback(Copyable, Equatable, ImplicitlyCopyable, Movable):
     """One playback of a `Sound`, as `audio.play` and `audio.loop` return it:
     the handle `stop`, `pause`, `resume`, `volume`, `speed`, `is_playing`
     and `is_paused` take.
 
-    A `Sound` can play as several voices at once. A voice that has ended or
+    A `Sound` can have several playbacks at once. One that has ended or
     been stopped is stale: every call on it does nothing, even after its slot
-    plays another sound. `Voice.NONE` is no voice, for a field before
+    plays another sound. `Playback.NONE` is no playback, for a field before
     anything plays. A handle, like `Sound`, so not printable.
     """
 
     var _id: Int
     """The slot index and its generation, as `Audio._encode` packs them."""
 
-    comptime NONE = Voice(_id=0)
+    comptime NONE = Playback(_id=0)
 
     def __init__(out self, *, _id: Int):
         self._id = _id
 
-    def __eq__(self, other: Voice) -> Bool:
+    def __eq__(self, other: Playback) -> Bool:
         return self._id == other._id
 
-    def __ne__(self, other: Voice) -> Bool:
+    def __ne__(self, other: Playback) -> Bool:
         return self._id != other._id
 
 
@@ -138,16 +138,16 @@ struct Audio(Movable):
     call `play` from `update`. Where no audio device can be opened, it plays
     silently rather than raising.
 
-    It needs nothing each frame: a looping voice is fed on SDL's audio
-    thread, as the device asks, and a one-shot voice reads as stale once it
+    It needs nothing each frame: a looping playback is fed on SDL's audio
+    thread, as the device asks, and a one-shot playback reads as stale once it
     has played to its end, its slot freed by the next `play`.
     """
 
     var _sdl: SDLAudio
-    # The one logical device every voice's stream is bound to, so SDL mixes
-    # them; a voice is a cheap stream, not a device of its own.
+    # The one logical device every playback's stream is bound to, so SDL mixes
+    # them; a playback is a cheap stream, not a device of its own.
     var _device: UInt32
-    var _voices: List[_Voice]
+    var _slots: List[_Slot]
     var _volume: Float64
 
     def __init__(out self) raises:
@@ -161,29 +161,29 @@ struct Audio(Movable):
         except:
             device = self._sdl.start_silent()
         self._device = device
-        self._voices = List[_Voice]()
+        self._slots = List[_Slot]()
         self._volume = 1.0
 
     def volume(self) -> Float64:
-        """The volume every voice plays at, `1.0` unless set."""
+        """The volume every playback plays at, `1.0` unless set."""
         return self._volume
 
     def volume(mut self, volume: Float64) raises:
-        """Set the volume every voice plays at, `0.0` silent and `1.0` as
+        """Set the volume every playback plays at, `0.0` silent and `1.0` as
         recorded; above `1.0` amplifies, and below `0.0` is silent too.
-        Applies at once, to the voices already playing as well as later ones;
-        each voice's own `volume(voice, ...)` scales it."""
+        Applies at once, to the playbacks already playing as well as later ones;
+        each playback's own `volume(playback, ...)` scales it."""
         self._volume = max(volume, 0.0)
-        for i in range(len(self._voices)):
-            if self._voices[i].stream != 0:
+        for i in range(len(self._slots)):
+            if self._slots[i].stream != 0:
                 self._apply_gain(i)
 
     def _apply_gain(mut self, index: Int) raises:
         # SDL takes its gain as a Float32; the API stays in Float64 like
         # every other fraction, and narrows here, at the boundary.
         self._sdl.set_gain(
-            self._voices[index].stream,
-            Float32(self._volume * self._voices[index].gain),
+            self._slots[index].stream,
+            Float32(self._volume * self._slots[index].gain),
         )
 
     @staticmethod
@@ -200,75 +200,73 @@ struct Audio(Movable):
         var generation = parts[1]
         return (
             index >= 0
-            and index < len(self._voices)
-            and self._voices[index].generation == generation
-            and self._voices[index].stream != 0
+            and index < len(self._slots)
+            and self._slots[index].generation == generation
+            and self._slots[index].stream != 0
             and not self._finished(index)
         )
 
     def _finished(self, index: Int) -> Bool:
-        """Whether the voice in a live slot has played to its end: a one-shot
+        """Whether the playback in a live slot has played to its end: a one-shot
         that is not paused, with nothing left to play. Its slot is freed by
         the next `play`, but it is stale from now on."""
-        ref voice = self._voices[index]
+        ref playback = self._slots[index]
         return (
-            not voice.looping
-            and not voice.paused
-            and self._sdl.drained(voice.stream)
+            not playback.looping
+            and not playback.paused
+            and self._sdl.drained(playback.stream)
         )
 
     def _reap(mut self) raises:
-        """Free the slot of every voice that has played to its end."""
-        for i in range(len(self._voices)):
-            if self._voices[i].stream != 0 and self._finished(i):
+        """Free the slot of every playback that has played to its end."""
+        for i in range(len(self._slots)):
+            if self._slots[i].stream != 0 and self._finished(i):
                 self._free_slot(i)
 
     def play(
         mut self, sound: Sound, volume: Float64 = 1.0, speed: Float64 = 1.0
-    ) raises -> Voice:
-        """Play `sound` once, as a new `Voice` at its own `volume` and
+    ) raises -> Playback:
+        """Play `sound` once, as a new `Playback` at its own `volume` and
         `speed`; it is stale once the sound ends."""
         return self._start(sound, volume, speed, loop=False)
 
     def loop(
         mut self, sound: Sound, volume: Float64 = 1.0, speed: Float64 = 1.0
-    ) raises -> Voice:
-        """Play `sound` over and over until stopped, as a new `Voice` at its
+    ) raises -> Playback:
+        """Play `sound` over and over until stopped, as a new `Playback` at its
         own `volume` and `speed`, as `Animator.loop` and `Tween.loop` repeat.
-        The voice is fed as the device asks, from a copy of `sound` that
+        The playback is fed as the device asks, from a copy of `sound` that
         shares its samples.
         """
         return self._start(sound, volume, speed, loop=True)
 
     def _start(
         mut self, sound: Sound, volume: Float64, speed: Float64, loop: Bool
-    ) raises -> Voice:
-        # Frees what has ended, so the list grows only to the most voices
+    ) raises -> Playback:
+        # Frees what has ended, so the list grows only to the most playbacks
         # sounding at once.
         self._reap()
         var index = -1
-        for i in range(len(self._voices)):
-            if self._voices[i].stream == 0:
+        for i in range(len(self._slots)):
+            if self._slots[i].stream == 0:
                 index = i
                 break
         if index == -1:
-            self._voices.append(_Voice())
-            index = len(self._voices) - 1
+            self._slots.append(_Slot())
+            index = len(self._slots) - 1
 
         var stream = self._sdl.create_stream(
             SDL_AUDIO_S16, Int32(sound._channels), Int32(sound._sample_rate)
         )
-        self._voices[index].stream = stream
-        self._voices[index].gain = max(volume, 0.0)
-        self._voices[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
-        self._voices[index].paused = False
-        self._voices[index].looping = loop
+        self._slots[index].stream = stream
+        self._slots[index].gain = max(volume, 0.0)
+        self._slots[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
+        self._slots[index].paused = False
+        self._slots[index].looping = loop
         # Gain and speed are set before binding, so not one sample plays
         # otherwise.
         self._apply_gain(index)
-        self._sdl.set_frequency_ratio(
-            stream, Float32(self._voices[index].speed)
-        )
+        self._sdl.set_frequency_ratio(stream, Float32(self._slots[index].speed))
 
         if loop:
             # The callback is set before binding, so the device's first
@@ -278,7 +276,7 @@ struct Audio(Movable):
             self._sdl.set_get_callback(
                 stream, callback, Int(Pointer(to=feed[]))
             )
-            self._voices[index].loop_feed = feed^
+            self._slots[index].loop_feed = feed^
             self._sdl.bind_stream(self._device, stream)
         else:
             # Bound before any data: a stream takes none until binding gives
@@ -290,121 +288,122 @@ struct Audio(Movable):
                 Int32(len(sound._samples[]) * 2),
             )
             self._sdl.flush(stream)
-        return Voice(_id=Self._encode(index, self._voices[index].generation))
+        return Playback(_id=Self._encode(index, self._slots[index].generation))
 
     def _free_slot(mut self, index: Int) raises:
         # Destroyed first: once SDL_DestroyAudioStream returns, the callback
         # can't be running, so `reset` may free its feed.
-        self._sdl.destroy_stream(self._voices[index].stream)
-        self._voices[index].reset()
+        self._sdl.destroy_stream(self._slots[index].stream)
+        self._slots[index].reset()
 
-    def stop(mut self, voice: Voice) raises:
-        """Stop and release `voice`. No-op if it is already stale."""
-        var id = voice._id
+    def stop(mut self, playback: Playback) raises:
+        """Stop and release `playback`. No-op if it is already stale."""
+        var id = playback._id
         if not self._valid(id):
             return
         self._free_slot(Self._decode(id)[0])
 
     def stop_all(mut self) raises:
-        """Stop and release every voice, playing or paused."""
-        for i in range(len(self._voices)):
-            if self._voices[i].stream != 0:
+        """Stop and release every playback, playing or paused."""
+        for i in range(len(self._slots)):
+            if self._slots[i].stream != 0:
                 self._free_slot(i)
 
     def pause_all(mut self) raises:
-        """Pause every playing voice, as for a pause screen. Voices played
+        """Pause every playing playback, as for a pause screen. Playbacks played
         afterwards play as usual, so the screen can have sounds of its own."""
-        for i in range(len(self._voices)):
+        for i in range(len(self._slots)):
             if (
-                self._voices[i].stream != 0
-                and not self._voices[i].paused
+                self._slots[i].stream != 0
+                and not self._slots[i].paused
                 and not self._finished(i)
             ):
-                self._sdl.unbind_stream(self._voices[i].stream)
-                self._voices[i].paused = True
+                self._sdl.unbind_stream(self._slots[i].stream)
+                self._slots[i].paused = True
 
     def resume_all(mut self) raises:
-        """Resume every paused voice, whether `pause_all` or `pause` held it."""
-        for i in range(len(self._voices)):
-            if self._voices[i].stream != 0 and self._voices[i].paused:
-                self._sdl.bind_stream(self._device, self._voices[i].stream)
-                self._voices[i].paused = False
+        """Resume every paused playback, whether `pause_all` or `pause` held it.
+        """
+        for i in range(len(self._slots)):
+            if self._slots[i].stream != 0 and self._slots[i].paused:
+                self._sdl.bind_stream(self._device, self._slots[i].stream)
+                self._slots[i].paused = False
 
-    def pause(mut self, voice: Voice) raises:
-        """Hold `voice` where it is; `resume` continues it."""
-        var id = voice._id
+    def pause(mut self, playback: Playback) raises:
+        """Hold `playback` where it is; `resume` continues it."""
+        var id = playback._id
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        if self._voices[index].paused:
+        if self._slots[index].paused:
             return
         # Unbound, the stream keeps its queued samples but nothing pulls them.
-        self._sdl.unbind_stream(self._voices[index].stream)
-        self._voices[index].paused = True
+        self._sdl.unbind_stream(self._slots[index].stream)
+        self._slots[index].paused = True
 
-    def volume(self, voice: Voice) -> Float64:
-        """`voice`'s own volume, `1.0` unless set; `0.0` once it is stale."""
-        if not self._valid(voice._id):
+    def volume(self, playback: Playback) -> Float64:
+        """`playback`'s own volume, `1.0` unless set; `0.0` once it is stale."""
+        if not self._valid(playback._id):
             return 0.0
-        return self._voices[Self._decode(voice._id)[0]].gain
+        return self._slots[Self._decode(playback._id)[0]].gain
 
-    def volume(mut self, voice: Voice, volume: Float64) raises:
-        """Set `voice`'s own volume, which `volume()` scales: a voice at
+    def volume(mut self, playback: Playback, volume: Float64) raises:
+        """Set `playback`'s own volume, which `volume()` scales: a playback at
         `0.5` under a volume of `0.5` plays at a quarter. Below `0.0` is
         silent, as for `volume()`. No-op if stale."""
-        var id = voice._id
+        var id = playback._id
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._voices[index].gain = max(volume, 0.0)
+        self._slots[index].gain = max(volume, 0.0)
         self._apply_gain(index)
 
-    def speed(self, voice: Voice) -> Float64:
-        """`voice`'s playback speed, `1.0` unless set; `0.0` once it is
+    def speed(self, playback: Playback) -> Float64:
+        """`playback`'s speed, `1.0` unless set; `0.0` once it is
         stale."""
-        if not self._valid(voice._id):
+        if not self._valid(playback._id):
             return 0.0
-        return self._voices[Self._decode(voice._id)[0]].speed
+        return self._slots[Self._decode(playback._id)[0]].speed
 
-    def speed(mut self, voice: Voice, speed: Float64) raises:
-        """Set `voice`'s playback speed: `2.0` plays it twice as fast and an
+    def speed(mut self, playback: Playback, speed: Float64) raises:
+        """Set `playback`'s speed: `2.0` plays it twice as fast and an
         octave higher, `0.5` half as fast and an octave lower, as a record
         sped up or slowed down. Clamped to `0.01` to `100.0`. No-op if stale.
         """
-        var id = voice._id
+        var id = playback._id
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._voices[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
+        self._slots[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
         self._sdl.set_frequency_ratio(
-            self._voices[index].stream, Float32(self._voices[index].speed)
+            self._slots[index].stream, Float32(self._slots[index].speed)
         )
 
-    def resume(mut self, voice: Voice) raises:
-        """Continue a paused `voice` from where it was held."""
-        var id = voice._id
+    def resume(mut self, playback: Playback) raises:
+        """Continue a paused `playback` from where it was held."""
+        var id = playback._id
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        if not self._voices[index].paused:
+        if not self._slots[index].paused:
             return
-        self._sdl.bind_stream(self._device, self._voices[index].stream)
-        self._voices[index].paused = False
+        self._sdl.bind_stream(self._device, self._slots[index].stream)
+        self._slots[index].paused = False
 
-    def is_playing(self, voice: Voice) -> Bool:
-        """Whether `voice` is sounding: false once paused or stale."""
-        var id = voice._id
+    def is_playing(self, playback: Playback) -> Bool:
+        """Whether `playback` is sounding: false once paused or stale."""
+        var id = playback._id
         if not self._valid(id):
             return False
-        return not self._voices[Self._decode(id)[0]].paused
+        return not self._slots[Self._decode(id)[0]].paused
 
-    def is_paused(self, voice: Voice) -> Bool:
-        """Whether `voice` is held by `pause`, waiting for `resume`. A voice
+    def is_paused(self, playback: Playback) -> Bool:
+        """Whether `playback` is held by `pause`, waiting for `resume`. A playback
         neither playing nor paused is stale: it has ended or been stopped."""
-        var id = voice._id
+        var id = playback._id
         if not self._valid(id):
             return False
-        return self._voices[Self._decode(id)[0]].paused
+        return self._slots[Self._decode(id)[0]].paused
 
     def __deinit__(deinit self):
         try:

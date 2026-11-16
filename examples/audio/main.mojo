@@ -1,9 +1,9 @@
 """Playing sounds: a one-shot chime, and a looping ambience to pause, resume
 and turn up or down.
 
-Each `play` or `loop` returns a `Voice`, the handle that playback of that one
+Each `play` or `loop` returns a `Playback`, the handle that one playing of a
 sound is controlled by; the `Audio` itself holds the overall volume, which
-scales every voice's own.
+scales every playback's own.
 
 Space plays the chime. L starts or stops the ambience, P pauses and resumes
 it, Up and Down set its volume, Left and Right the overall volume.
@@ -47,10 +47,10 @@ struct AudioDemo(Program):
     var audio: Audio
     var chime: Sound
     var ambience: Sound
-    var ambience_voice: Voice
-    """The looping ambience, or `Voice.NONE` while it is stopped."""
+    var ambience_playback: Playback
+    """The looping ambience, or `Playback.NONE` while it is stopped."""
     var ambience_volume: Float64
-    """Kept here as well as on the voice, so a restarted loop keeps it."""
+    """Kept here as well as on the playback, so a restarted loop keeps it."""
     var chimed_at: Float64
     """When the chime last played, to flash the circle."""
 
@@ -60,7 +60,7 @@ struct AudioDemo(Program):
             audio=Audio(),
             chime=Sound.load("assets/chime.wav"),
             ambience=Sound.load("assets/ambience.wav"),
-            ambience_voice=Voice.NONE,
+            ambience_playback=Playback.NONE,
             ambience_volume=0.8,
             chimed_at=-10.0,
         )
@@ -73,28 +73,28 @@ struct AudioDemo(Program):
             self.chimed_at = context.time.elapsed
 
         if context.keyboard.pressed(Key.L):
-            if self.ambience_voice == Voice.NONE:
-                self.ambience_voice = self.audio.loop(
+            if self.ambience_playback == Playback.NONE:
+                self.ambience_playback = self.audio.loop(
                     self.ambience, volume=self.ambience_volume
                 )
             else:
-                self.audio.stop(self.ambience_voice)
-                self.ambience_voice = Voice.NONE
+                self.audio.stop(self.ambience_playback)
+                self.ambience_playback = Playback.NONE
         if (
             context.keyboard.pressed(Key.P)
-            and self.ambience_voice != Voice.NONE
+            and self.ambience_playback != Playback.NONE
         ):
-            if self.audio.is_paused(self.ambience_voice):
-                self.audio.resume(self.ambience_voice)
+            if self.audio.is_paused(self.ambience_playback):
+                self.audio.resume(self.ambience_playback)
             else:
-                self.audio.pause(self.ambience_voice)
+                self.audio.pause(self.ambience_playback)
 
         if context.keyboard.down(Key.UP) or context.keyboard.down(Key.DOWN):
             var change = step if context.keyboard.down(Key.UP) else -step
             self.ambience_volume = clamp(
                 self.ambience_volume + change, 0.0, 1.0
             )
-            self.audio.volume(self.ambience_voice, self.ambience_volume)
+            self.audio.volume(self.ambience_playback, self.ambience_volume)
         if context.keyboard.down(Key.RIGHT):
             self.audio.volume(clamp(self.audio.volume() + step, 0.0, 1.0))
         if context.keyboard.down(Key.LEFT):
@@ -113,9 +113,9 @@ struct AudioDemo(Program):
             canvas.text("Space: chime", (-250.0, -30.0))
 
         var state: String
-        if self.audio.is_playing(self.ambience_voice):
+        if self.audio.is_playing(self.ambience_playback):
             state = "playing"
-        elif self.audio.is_paused(self.ambience_voice):
+        elif self.audio.is_paused(self.ambience_playback):
             state = "paused"
         else:
             state = "stopped"
