@@ -10,6 +10,8 @@
 
 **Create** is a creative coding library for [Mojo](https://mojolang.org/), inspired by [Processing](https://processing.org/). It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
 
+The API currently covers: drawing shapes, curves, text and images with fills, strokes, gradients and shadows; animating them with tweens and animators; reading keyboard, mouse and gamepad inputs; testing collisions between shapes; playing sounds; and loading data from CSV and JSON. Every program runs on the CPU or through OpenGL. The [user guide](https://create-framework.org/latest/guide/) covers each area in turn, and the [API reference](https://create-framework.org/latest/reference/) lists every type and function, package by package.
+
 ## Example Programs
 
 The GIF below shows an example program running. First it generates a [Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method (also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). 
@@ -23,28 +25,12 @@ Then coloured triangles grow into place on top of it, forming the **Create** log
 
 You can run the program yourself from the root of this repo using `pixi run example logo` (`logo` being the name of this specific example). The other programs under [examples/](examples/) can be run the same way. Run `pixi run example` with no name to list them all.
 
-## Features
-
-- **Shapes and curves**: rectangles, circles, ellipses, capsules, triangles, sectors and polygons (rounded corners optional), plus lines, arcs, Béziers and splines ([polygons](examples/polygons/main.mojo), [spline](examples/spline/main.mojo))
-- **Styling**: fills, strokes, gradients, drop and inset shadows, tint, opacity and blend modes ([gradients](examples/gradients/main.mojo), [shadows](examples/shadows/main.mojo), [blending](examples/blending/main.mojo))
-- **Text**: any font, with weights and italics; Noto Sans built in ([poster](examples/poster/main.mojo))
-- **Images and animation**: PNG, JPEG and BMP images, sprite animation, tweens and easing curves ([image](examples/image/main.mojo), [animation](examples/animation/main.mojo), [tween](examples/tween/main.mojo))
-- **Input**: keyboard, mouse and gamepads, plus text entry ([gamepad](examples/gamepad/main.mojo), [typing](examples/typing/main.mojo))
-- **Collisions**: overlap, containment and intersection tests between every shape ([collisions](examples/collisions/main.mojo))
-- **Camera and transforms**: a world camera, a fixed overlay for the HUD, and clipping ([camera](examples/camera/main.mojo), [transforms](examples/transforms/main.mojo), [clipping](examples/clipping/main.mojo))
-- **Audio**: WAV, OGG, FLAC and MP3 playback ([audio](examples/audio/main.mojo))
-- **Pixels and capture**: read back what has been drawn, draw offscreen and record GIFs ([pixels](examples/pixels/main.mojo), [offscreen](examples/offscreen/main.mojo), [capture](examples/capture/main.mojo))
-- **Data**: CSV/TSV tables and JSON ([data](examples/data/main.mojo))
-- **Randomness and noise**: seeded random numbers and smooth noise ([noise](examples/noise/main.mojo))
-- **CPU or GPU rendering**: every program runs on a CPU rasteriser or through OpenGL 3.3, chosen at startup
-
 ## How a Program Works
 
 Below is a small "Hello, world!" program, which can be run from the repo root using `pixi run example hello`:
 
 ```mojo
 from create import *
-
 
 @fieldwise_init
 struct MyApp(Program):
@@ -60,7 +46,6 @@ struct MyApp(Program):
         # Called once per frame: handle input, modify state and draw to the screen
         canvas.font_size(48)
         canvas.text(self.greeting, self.position)
-
 
 def main() raises:
     run[MyApp]("Hello")
@@ -96,12 +81,14 @@ For more installation options, see [setup.md](docs/guide/setup.md) in the user g
 
 ## Documentation
 
+The [user guide](https://create-framework.org/latest/guide/) and [API reference](https://create-framework.org/latest/reference/) are the main pieces of documentation for users of **Create**. They are published together at [create-framework.org](https://create-framework.org/) for the latest release as well as for the head of `main`.
+
+Both can also be found in Markdown format here in the repository together with the documentation for contributors:
+
 - [User guide](docs/guide/README.md): how to use **Create**, topic by topic.
 - [API reference](docs/reference/README.md): every public type and function, package by package, generated from the docstrings.
 - [Contributing](CONTRIBUTING.md): how to work on **Create** itself: its design ethos, building and testing, and how changes land.
 - [Architecture](ARCHITECTURE.md): how the source is organised, and which package may import which.
-
-The user guide and the API reference are also published together at [create-framework.org](https://create-framework.org/), for the latest release and for `main`. Tutorials are coming soon.
 
 ## Supported Platforms
 
