@@ -22,6 +22,9 @@ build:
         set -euo pipefail
         mkdir -p "${PREFIX}/lib/mojo"
         mojo precompile src/create -o "${PREFIX}/lib/mojo/create.mojoc"
+        # The project template create-cli's `create new` copies.
+        mkdir -p "${PREFIX}/share/create"
+        cp -R template "${PREFIX}/share/create/template"
 
 requirements:
   build:
@@ -42,6 +45,8 @@ tests:
       - if: unix
         then:
           - mojo run test.mojo
+          - test -f "${PREFIX}/share/create/template/main.mojo"
+          - test -f "${PREFIX}/share/create/template/assets/logo.png"
     files:
       recipe:
         - test.mojo
