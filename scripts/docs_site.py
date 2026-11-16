@@ -15,7 +15,7 @@ Each version is built by its own tree, with its own pixi environment,
 scripts/docs.py and zensical.toml, since the Mojo that writes the API
 reference and the pages it stages change between releases. The release's
 tree is a worktree of its tag, in build/docs/release. Versioning is added
-here, to a copy of each tree's zensical.toml, so a release tagged before the
+here, to a copy of each tree's config, so a release tagged before the
 site was versioned needs nothing of its own.
 """
 
@@ -110,13 +110,27 @@ def checkout(tag: str) -> None:
 def build(tree: Path, version: str, env: Mapping[str, str]) -> None:
     """Builds the tree's site as `version` and copies it into the published
     site."""
-    config = tomllib.loads((tree / "zensical.toml").read_text())
+    # MIKE_DOCS_VERSION is how mike tells Zensical it is building a version:
+    # the site URL, and so the canonical links and sitemap, gain /version/.
+    # The tree's pixi finds its own manifest, not the one running this script.
+    env = {k: v for k, v in env.items() if not k.startswith("PIXI_")}
+    env["MIKE_DOCS_VERSION"] = version
+    pixi = ["pixi", "run", "--locked", "-e", "docs"]
+    # docs.py writes the config it builds from, with the reference's nav, to
+    # build/docs; a release from before it did builds from zensical.toml.
+    staged = tree / "build" / "docs" / "zensical.toml"
+    staged.unlink(missing_ok=True)
+    run(tree, env, *pixi, "python", "scripts/docs.py")
+    source = staged if staged.exists() else tree / "zensical.toml"
+    config = tomllib.loads(source.read_text())
     project = config["project"]
     # The copy sits in build/docs, and its paths are relative to it.
     versioned = tree / "build" / "docs" / "zensical.versioned.toml"
-    site = tree / project["site_dir"]
+    site = source.parent / project["site_dir"]
     for key in ("docs_dir", "site_dir"):
-        project[key] = os.path.relpath(tree / project[key], versioned.parent)
+        project[key] = os.path.relpath(
+            source.parent / project[key], versioned.parent
+        )
     # Where the site is published is this checkout's say, not the tree's.
     project["site_url"] = SITE_URL
     project["theme"]["custom_dir"] = str(THEME)
@@ -127,13 +141,6 @@ def build(tree: Path, version: str, env: Mapping[str, str]) -> None:
     versioned.parent.mkdir(parents=True, exist_ok=True)
     versioned.write_text(tomli_w.dumps(config))
 
-    # MIKE_DOCS_VERSION is how mike tells Zensical it is building a version:
-    # the site URL, and so the canonical links and sitemap, gain /version/.
-    # The tree's pixi finds its own manifest, not the one running this script.
-    env = {k: v for k, v in env.items() if not k.startswith("PIXI_")}
-    env["MIKE_DOCS_VERSION"] = version
-    pixi = ["pixi", "run", "--locked", "-e", "docs"]
-    run(tree, env, *pixi, "python", "scripts/docs.py")
     build_site = ["zensical", "build", "--strict", "--clean", "-f"]
     run(tree, env, *pixi, *build_site, str(versioned))
     shutil.copytree(site, PUBLISHED / version)

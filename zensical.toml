@@ -2,6 +2,10 @@
 # README, docs/ and the library's docstrings; `pixi run docs` builds it,
 # `pixi run docs-serve` previews it. scripts/docs_site.py publishes it at
 # site_url, as main/ beside latest/, the newest release (docs.yml).
+#
+# The API reference's pages are generated, one per type and function, so its
+# nav is too: scripts/docs.py writes this file to build/docs/zensical.toml
+# with the reference added to the nav below, and the site is built from that.
 [project]
 site_name = "Create"
 site_description = "A creative coding library for Mojo, inspired by Processing."
@@ -29,21 +33,6 @@ nav = [
     "guide/data.md",
     "guide/processing.md",
   ] },
-  { "API reference" = [
-    "reference/index.md",
-    "reference/core.md",
-    "reference/input.md",
-    "reference/math.md",
-    "reference/time.md",
-    "reference/geometry.md",
-    "reference/color.md",
-    "reference/render.md",
-    "reference/image.md",
-    "reference/animation.md",
-    "reference/text.md",
-    "reference/audio.md",
-    "reference/data.md",
-  ] },
 ]
 
 [project.theme]
@@ -55,7 +44,6 @@ features = [
   "navigation.indexes",
   "navigation.instant",
   "navigation.path",
-  "navigation.sections",
   "navigation.tabs",
   "navigation.top",
   "navigation.tracking",

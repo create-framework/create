@@ -6,13 +6,18 @@
 Nothing here is written by hand twice: the pages are this repo's own.
 
 - index.md is the README; guide/ is docs/, its README the guide's index.
-- reference/ is the API reference, one page per subpackage, rendered from
-  `mojo doc`'s JSON. A page lists exactly what the subpackage's __init__.mojo
+- reference/ is the API reference, rendered from `mojo doc`'s JSON. Each
+  subpackage is a folder whose index.md lists exactly what its __init__.mojo
   imports, since that is the public surface (ARCHITECTURE.md): grouped into
   types, traits, functions and constants, each in the order it is imported.
-  A type's members are grouped in turn: constants, fields, constructors
-  (`__init__` and the static methods returning `Self`), methods, and special
-  methods (the other dunders).
+  A type, trait or function has a page of its own, linked from the list; a
+  constant is documented on the index itself. A type's members are grouped
+  in turn: constants, fields, constructors (`__init__` and the static methods
+  returning `Self`), methods, and special methods (the other dunders).
+
+The reference's pages are generated, so its navigation is too: the site's
+config is zensical.toml with the reference added to its nav, written to
+build/docs/zensical.toml, which the docs tasks build from.
 
 A link in the README or the guide is written for GitHub, relative to the
 file. Rewritten for the site: one to another staged page stays relative; one
@@ -26,7 +31,10 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
+
+import tomli_w
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build" / "docs"
@@ -47,13 +55,13 @@ BOILERPLATE = {
 }
 
 # How the reference groups a package's names, by `mojo doc`'s kind, in
-# this order: the index lists them so, and each page puts them under these
-# headings.
+# this order: the index lists them so, and each package's page puts them
+# under these headings, with each table's column named in the singular.
 KIND_GROUPS = {
-    "struct": "Types",
-    "trait": "Traits",
-    "function": "Functions",
-    "alias": "Constants",
+    "struct": ("Types", "Type"),
+    "trait": ("Traits", "Trait"),
+    "function": ("Functions", "Function"),
+    "alias": ("Constants", "Constant"),
 }
 
 
@@ -78,11 +86,16 @@ def main() -> None:
         re.M,
     )
     index = ["# API reference\n", summary_and_description(doc["decl"])]
+    nav = ["reference/index.md"]
     for name in order:
-        page = Package(name, packages[name])
-        write(f"reference/{name}.md", page.render())
-        index.append(page.index_entry())
+        package = Package(name, packages[name])
+        pages = package.render()
+        for path, text in pages.items():
+            write(f"reference/{path}", text)
+        nav.append({f"create.{name}": [f"reference/{p}" for p in pages]})
+        index.append(package.index_entry())
     write("reference/index.md", "\n".join(index))
+    write_config(nav)
 
 
 def git(*args: str) -> str:
@@ -93,6 +106,17 @@ def write(path: str, text: str) -> None:
     target = PAGES / path
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text.rstrip() + "\n")
+
+
+def write_config(reference: list) -> None:
+    """The site's config: zensical.toml with the reference's pages added to
+    its nav, its paths made relative to where the copy is written."""
+    config = tomllib.loads((ROOT / "zensical.toml").read_text())
+    project = config["project"]
+    for key in ("docs_dir", "site_dir"):
+        project[key] = os.path.relpath(ROOT / project[key], OUT)
+    project["nav"].append({"API reference": reference})
+    (OUT / "zensical.toml").write_text(tomli_w.dumps(config))
 
 
 def run_mojo_doc() -> dict:
@@ -210,34 +234,51 @@ class Package:
     def groups(self) -> dict:
         """The package's names grouped by kind, leaving out empty groups;
         each in the order __init__.mojo lists them."""
-        groups = {label: [] for label in KIND_GROUPS.values()}
+        groups = {label: [] for label, _ in KIND_GROUPS.values()}
         for name in self.names:
-            groups[KIND_GROUPS[self.declarations[name]["kind"]]].append(name)
+            groups[KIND_GROUPS[self.kind(name)][0]].append(name)
         return {label: names for label, names in groups.items() if names}
+
+    def kind(self, name: str) -> str:
+        return self.declarations[name]["kind"]
+
+    def page(self, name: str) -> str:
+        """Where a name is documented, relative to the reference: its own
+        page, or for a constant, its heading on the package's page."""
+        if self.kind(name) == "alias":
+            return f"{self.name}/index.md#{anchor(name)}"
+        return f"{self.name}/{name.lower()}.md"
 
     def index_entry(self) -> str:
         lines = [
             f"- **{label}:** "
-            + ", ".join(f"[`{n}`]({self.name}.md#{anchor(n)})" for n in names)
+            + ", ".join(f"[`{n}`]({self.page(n)})" for n in names)
             for label, names in self.groups().items()
         ]
         return (
-            f"## [`create.{self.name}`]({self.name}.md)\n\n"
+            f"## [`create.{self.name}`]({self.name}/index.md)\n\n"
             f"{summary_and_description(self.decl)}\n" + "\n".join(lines) + "\n"
         )
 
-    def render(self) -> str:
+    def render(self) -> dict:
+        """The package's pages by path, relative to the reference: its own
+        page first, then one per type, trait and function, in the order
+        __init__.mojo lists them."""
         out = [f"# create.{self.name}\n", summary_and_description(self.decl)]
+        pages = {}
         for label, names in self.groups().items():
             out.append(f"## {label}\n")
-            for i, name in enumerate(names):
-                # A rule sets each declaration apart from the one before;
-                # the first follows its group's heading, which does that.
-                # The blank line before it keeps `---` from underlining the
-                # text above into a heading.
-                if i > 0:
-                    out.append("\n---\n")
-                out.append(render_declaration(self.declarations[name]))
+            if label == "Constants":
+                out.extend(render_constant(self.declarations[n]) for n in names)
+                continue
+            column = KIND_GROUPS[self.kind(names[0])][1]
+            out.append(f"| {column} | Description |\n|---|---|")
+            for name in names:
+                item = self.declarations[name]
+                link = os.path.relpath(self.page(name), self.name)
+                out.append(f"| [`{name}`]({link}) | {table_cell(summary(item))} |")
+                pages[self.page(name)] = render_declaration(item)
+            out.append("")
         if self.reexports:
             names = ", ".join(f"`{n}`" for n in self.reexports)
             out.append(
@@ -245,7 +286,23 @@ class Package:
                 f"Re-exported from `std.math`, so a program has them without a "
                 f"second import: {names}.\n"
             )
-        return "\n".join(out)
+        return {f"{self.name}/index.md": "\n".join(out)} | pages
+
+
+def summary(item: dict) -> str:
+    """A declaration's one-line summary; a function's is the first one its
+    public overloads have."""
+    if item["kind"] != "function":
+        return item.get("summary", "").strip()
+    for overload in item["overloads"]:
+        text = overload.get("summary", "").strip()
+        if text and not is_internal(overload):
+            return text
+    return ""
+
+
+def table_cell(text: str) -> str:
+    return text.replace("|", "\\|")
 
 
 def anchor(name: str) -> str:
@@ -254,16 +311,26 @@ def anchor(name: str) -> str:
     return name.strip("_").lower()
 
 
+def render_constant(item: dict) -> str:
+    """A package's constant, under a heading of its own on the package's
+    page."""
+    name = item["name"]
+    return "\n".join(
+        [
+            f"### `{name}` {{ #{anchor(name)} }}\n",
+            code(f"comptime {name} = {item['value']}"),
+            summary_and_description(item),
+        ]
+    )
+
+
 def render_declaration(item: dict) -> str:
+    """A type's, trait's or function's own page."""
     kind = item["kind"]
     name = item["name"]
-    out = [f"### `{name}` {{ #{anchor(name)} }}\n"]
+    out = [f"# {name}\n"]
     if kind == "function":
         out.append(render_overloads(item["overloads"]))
-        return "\n".join(out)
-    if kind == "alias":
-        out.append(code(f"comptime {name} = {item['value']}"))
-        out.append(summary_and_description(item))
         return "\n".join(out)
 
     out.append(code(item.get("signature") or f"{kind} {name}"))
@@ -278,12 +345,12 @@ def render_declaration(item: dict) -> str:
 
     constants = item.get("aliases", [])
     if constants:
-        out.append("#### Constants\n")
+        out.append("## Constants\n")
         out.extend(member_line(f"{c['name']} = {c['value']}", c) for c in constants)
         out.append("")
     fields = [f for f in item.get("fields", []) if not f["name"].startswith("_")]
     if fields:
-        out.append("#### Fields\n")
+        out.append("## Fields\n")
         out.extend(member_line(f"{f['name']}: {f['type']}", f) for f in fields)
         out.append("")
 
@@ -294,11 +361,11 @@ def render_declaration(item: dict) -> str:
         # The constructors' heading keeps the `#type.init` id that
         # `__init__`'s own heading had; each other method gets its own.
         ids = f" {{ #{anchor(name)}.init }}" if label == "Constructors" else ""
-        out.append(f"#### {label}{ids}\n")
+        out.append(f"## {label}{ids}\n")
         for function in functions:
             method = function["name"]
             if method != "__init__":
-                out.append(f"##### `{method}` {{ #{anchor(name)}.{anchor(method)} }}\n")
+                out.append(f"### `{method}` {{ #{anchor(name)}.{anchor(method)} }}\n")
             out.append(render_overloads(function["overloads"]))
     return "\n".join(out)
 
