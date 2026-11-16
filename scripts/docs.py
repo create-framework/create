@@ -1,19 +1,25 @@
-"""Stages the documentation site's pages for Zensical, in build/docs/pages.
+"""Generates the API reference into docs/reference, and stages the
+documentation site's pages for Zensical, in build/docs/pages.
 
-    pixi run docs          -> stage, then build the site into build/docs/site
-    pixi run docs-serve    -> stage, then serve it with live reload
+    pixi run reference     -> generate docs/reference only
+    pixi run docs          -> generate, stage, then build the site into
+                              build/docs/site
+    pixi run docs-serve    -> generate, stage, then serve it with live reload
 
 Nothing here is written by hand twice: the pages are this repo's own.
 
-- index.md is the README; guide/ is docs/, its README the guide's index.
-- reference/ is the API reference, rendered from `mojo doc`'s JSON. Each
-  subpackage is a folder whose index.md lists exactly what its __init__.mojo
-  imports, since that is the public surface (ARCHITECTURE.md): grouped into
-  types, traits, functions and constants, each in the order it is imported.
-  A type, trait or function has a page of its own, linked from the list; a
-  constant is documented on the index itself. A type's members are grouped
-  in turn: constants, fields, constructors (`__init__` and the static methods
-  returning `Self`), methods, and special methods (the other dunders).
+- docs/reference is the API reference, rendered from `mojo doc`'s JSON and
+  committed, so it reads on GitHub too; CI fails when it differs from a fresh
+  one. Each subpackage is a folder whose README.md lists exactly what its
+  __init__.mojo imports, since that is the public surface (ARCHITECTURE.md):
+  grouped into types, traits, functions and constants, each in the order it
+  is imported. A type, trait or function has a page of its own, linked from
+  the list; a constant is documented on the package's page. A type's members
+  are grouped in turn: constants, fields, constructors (`__init__` and the
+  static methods returning `Self`), methods, and special methods (the other
+  dunders).
+- The site's index.md is the README; guide/ is docs/guide and reference/ is
+  docs/reference, each folder's README.md its index.md.
 
 The reference's pages are generated, so its navigation is too: the site's
 config is zensical.toml with the reference added to its nav, written to
@@ -39,6 +45,7 @@ import tomli_w
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build" / "docs"
 PAGES = OUT / "pages"
+REFERENCE = ROOT / "docs" / "reference"
 GITHUB = "https://github.com/create-framework/create"
 IMAGES = {".png", ".gif", ".jpg", ".jpeg", ".svg", ".webp"}
 
@@ -66,18 +73,35 @@ KIND_GROUPS = {
 
 
 def main() -> None:
+    packages = write_reference()
+    if sys.argv[1:] == ["--reference"]:
+        return
     commit = os.environ.get("GITHUB_SHA") or git("rev-parse", "HEAD")
     shutil.rmtree(PAGES, ignore_errors=True)
     PAGES.mkdir(parents=True)
 
     staged = {"README.md": "index.md"}
-    for page in sorted((ROOT / "docs").glob("*.md")):
-        name = "index.md" if page.name == "README.md" else page.name
-        staged[f"docs/{page.name}"] = f"guide/{name}"
+    for folder in ("guide", "reference"):
+        for page in sorted((ROOT / "docs" / folder).rglob("*.md")):
+            path = page.relative_to(ROOT / "docs")
+            if page.name == "README.md":
+                path = path.with_name("index.md")
+            staged[str(page.relative_to(ROOT))] = str(path)
     for source, target in staged.items():
         text = (ROOT / source).read_text()
-        write(target, Links(source, target, staged, commit).rewrite(text))
+        write(PAGES / target, Links(source, target, staged, commit).rewrite(text))
 
+    nav = [staged["docs/reference/README.md"]]
+    for name, pages in packages:
+        paths = [staged[f"docs/reference/{p}"] for p in pages]
+        nav.append({f"create.{name}": paths})
+    write_config(nav)
+
+
+def write_reference() -> list:
+    """Writes the API reference into docs/reference, afresh, and returns
+    each package's name and pages, relative to it, in the order the root
+    imports them."""
     doc = run_mojo_doc()
     packages = {p["name"]: p for p in doc["decl"]["packages"]}
     order = re.findall(
@@ -85,25 +109,25 @@ def main() -> None:
         (ROOT / "src/create/__init__.mojo").read_text(),
         re.M,
     )
+    shutil.rmtree(REFERENCE, ignore_errors=True)
     index = ["# API reference\n", summary_and_description(doc["decl"])]
-    nav = ["reference/index.md"]
+    written = []
     for name in order:
         package = Package(name, packages[name])
         pages = package.render()
         for path, text in pages.items():
-            write(f"reference/{path}", text)
-        nav.append({f"create.{name}": [f"reference/{p}" for p in pages]})
+            write(REFERENCE / path, text)
+        written.append((name, list(pages)))
         index.append(package.index_entry())
-    write("reference/index.md", "\n".join(index))
-    write_config(nav)
+    write(REFERENCE / "README.md", "\n".join(index))
+    return written
 
 
 def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
 
-def write(path: str, text: str) -> None:
-    target = PAGES / path
+def write(target: Path, text: str) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text.rstrip() + "\n")
 
@@ -121,6 +145,7 @@ def write_config(reference: list) -> None:
 
 def run_mojo_doc() -> dict:
     output = OUT / "api.json"
+    OUT.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         ["mojo", "doc", "src/create", "-o", str(output)], cwd=ROOT, check=True
     )
@@ -246,7 +271,7 @@ class Package:
         """Where a name is documented, relative to the reference: its own
         page, or for a constant, its heading on the package's page."""
         if self.kind(name) == "alias":
-            return f"{self.name}/index.md#{anchor(name)}"
+            return f"{self.name}/README.md#{name.lower()}"
         return f"{self.name}/{name.lower()}.md"
 
     def index_entry(self) -> str:
@@ -256,7 +281,7 @@ class Package:
             for label, names in self.groups().items()
         ]
         return (
-            f"## [`create.{self.name}`]({self.name}/index.md)\n\n"
+            f"## [`create.{self.name}`]({self.name}/README.md)\n\n"
             f"{summary_and_description(self.decl)}\n" + "\n".join(lines) + "\n"
         )
 
@@ -286,7 +311,7 @@ class Package:
                 f"Re-exported from `std.math`, so a program has them without a "
                 f"second import: {names}.\n"
             )
-        return {f"{self.name}/index.md": "\n".join(out)} | pages
+        return {f"{self.name}/README.md": "\n".join(out)} | pages
 
 
 def summary(item: dict) -> str:
@@ -305,19 +330,13 @@ def table_cell(text: str) -> str:
     return text.replace("|", "\\|")
 
 
-def anchor(name: str) -> str:
-    """A heading's id: `Canvas.rectangle` is `#canvas.rectangle`, and a
-    dunder loses its underscores, which Markdown would read as bold."""
-    return name.strip("_").lower()
-
-
 def render_constant(item: dict) -> str:
     """A package's constant, under a heading of its own on the package's
     page."""
     name = item["name"]
     return "\n".join(
         [
-            f"### `{name}` {{ #{anchor(name)} }}\n",
+            f"### `{name}`\n",
             code(f"comptime {name} = {item['value']}"),
             summary_and_description(item),
         ]
@@ -358,14 +377,11 @@ def render_declaration(item: dict) -> str:
     for label, functions in groups.items():
         if not functions:
             continue
-        # The constructors' heading keeps the `#type.init` id that
-        # `__init__`'s own heading had; each other method gets its own.
-        ids = f" {{ #{anchor(name)}.init }}" if label == "Constructors" else ""
-        out.append(f"## {label}{ids}\n")
+        out.append(f"## {label}\n")
         for function in functions:
             method = function["name"]
             if method != "__init__":
-                out.append(f"### `{method}` {{ #{anchor(name)}.{anchor(method)} }}\n")
+                out.append(f"### `{method}`\n")
             out.append(render_overloads(function["overloads"]))
     return "\n".join(out)
 

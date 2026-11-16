@@ -8,36 +8,36 @@ These apply to every task and are imported below:
   commit messages, and the code conventions.
 - [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules,
   and imports and public surface.
-- From the user guide, [programs](docs/programs.md) and [coordinates](docs/coordinates.md): the
+- From the user guide, [programs](docs/guide/programs.md) and [coordinates](docs/guide/coordinates.md): the
   shape of a program and the centred, y-up coordinates every other page assumes.
 
 @CONTRIBUTING.md
 
 @ARCHITECTURE.md
 
-@docs/programs.md
+@docs/guide/programs.md
 
-@docs/coordinates.md
+@docs/guide/coordinates.md
 
 ## Read when relevant
 
-The rest of the [user guide](docs/README.md) describes how the library behaves, which every change
+The rest of the [user guide](docs/guide/README.md) describes how the library behaves, which every change
 must keep. Before changing, using or answering questions about one of these areas, read its page:
 
 | Read | When the task involves |
 |---|---|
-| [processing](docs/processing.md) | how Create differs from Processing, or a Processing call's equivalent |
-| [drawing](docs/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, transforms and guards, antialiasing, clipping |
-| [style](docs/style.md) | `Color`, `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
-| [input](docs/input.md) | the keyboard, mouse or gamepads, the cursor, text entry, `EditableText` |
-| [images](docs/images.md) | `Image`, `canvas.image`, `PixelBuffer` |
-| [animation](docs/animation.md) | `Easing`/`ease`, `Tween`, `Animation` and `Animator` |
-| [pixels](docs/pixels.md) | `color_at`, `snapshot`, offscreen canvases, saving images, recording GIFs |
-| [geometry](docs/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
-| [math](docs/math.md) | `Random`, `Noise` |
-| [time](docs/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
-| [audio](docs/audio.md) | `Sound`, `Audio` and `Playback`: loading, synthesizing and playing sounds |
-| [data](docs/data.md) | `Table` (CSV/TSV) or `JSON` |
+| [processing](docs/guide/processing.md) | how Create differs from Processing, or a Processing call's equivalent |
+| [drawing](docs/guide/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, transforms and guards, antialiasing, clipping |
+| [style](docs/guide/style.md) | `Color`, `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
+| [input](docs/guide/input.md) | the keyboard, mouse or gamepads, the cursor, text entry, `EditableText` |
+| [images](docs/guide/images.md) | `Image`, `canvas.image`, `PixelBuffer` |
+| [animation](docs/guide/animation.md) | `Easing`/`ease`, `Tween`, `Animation` and `Animator` |
+| [pixels](docs/guide/pixels.md) | `color_at`, `snapshot`, offscreen canvases, saving images, recording GIFs |
+| [geometry](docs/guide/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
+| [math](docs/guide/math.md) | `Random`, `Noise` |
+| [time](docs/guide/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
+| [audio](docs/guide/audio.md) | `Sound`, `Audio` and `Playback`: loading, synthesizing and playing sounds |
+| [data](docs/guide/data.md) | `Table` (CSV/TSV) or `JSON` |
 
 A task often spans several (a shadow on a clipped shape is style and drawing); read each it
 touches, and when unsure whether one applies, read it.

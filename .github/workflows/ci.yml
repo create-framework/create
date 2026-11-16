@@ -132,6 +132,8 @@ jobs:
   # anchor, or a public name `mojo doc` can't find, fails it. Not gated on
   # `changes`, since a change to Markdown alone can break the site. This
   # checks main's pages; docs.yml publishes them beside the latest release's.
+  # Building regenerates docs/reference, so a committed reference that differs
+  # from the docstrings (`pixi run reference` not rerun) fails it too.
   docs:
     name: linux-docs
     runs-on: ubuntu-latest
@@ -143,6 +145,13 @@ jobs:
           locked: true
           environments: docs
       - run: pixi run docs
+      - name: docs/reference is up to date
+        run: |
+          if [ -n "$(git status --porcelain -- docs/reference)" ]; then
+              git status --short -- docs/reference
+              echo "::error::docs/reference differs from the docstrings: run 'pixi run reference' and commit the result."
+              exit 1
+          fi
 
   # The required check. A skipped matrix job reports under its unexpanded
   # name, not as linux-format/linux-precompile/..., so those can't be
