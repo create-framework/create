@@ -6,6 +6,14 @@ crisp), or by median cut over a 15-bit histogram otherwise, optionally with
 Floyd-Steinberg dithering. The indices are then compressed with GIF's LZW,
 and the frame is written with its own palette and display time.
 
+A frame may also be transparent where its alpha is under half, through a
+palette index of its own (GIF has no partial transparency), and cover only
+a rectangle of the image, placed by its left and top. Its disposal says
+what the next frame is drawn over: this one left in place
+(`DISPOSE_KEEP`), so a frame need hold only what changed, or this one's
+rectangle cleared to transparent (`DISPOSE_BACKGROUND`), so a transparent
+frame doesn't show the one before through its holes.
+
 The file is streamed: `GifWriter` writes the header when opened, each frame
 as it is added, and the trailer at `finish`, so a long recording holds one
 frame in memory, not all of them. It streams to a `.partial` file beside the
@@ -24,6 +32,17 @@ comptime _HISTOGRAM = 1 << 15
 """Buckets in the quantiser's histogram: five bits a channel."""
 comptime _MAX_COLORS = 256
 comptime _MAX_CODE_BITS = 12
+comptime _TRANSPARENT = 0
+"""The palette index of a transparent frame's transparent pixels."""
+comptime _OPAQUE_ALPHA = 128
+"""The least alpha a transparent frame draws: under it, a pixel is
+transparent; at it or over it, opaque in its own colour, which the
+surfaces store unpremultiplied, so an edge keeps its colour."""
+
+comptime DISPOSE_KEEP = 1
+"""Leave the frame in place: the next one is drawn over it."""
+comptime DISPOSE_BACKGROUND = 2
+"""Clear the frame's rectangle to transparent before the next one."""
 
 
 def _key15(r: Int, g: Int, b: Int) -> Int:
@@ -67,16 +86,16 @@ def _widest(box: _Box) -> Tuple[Int, Int]:
     return (best_channel, best_span)
 
 
-def _median_cut(counts: List[Int]) -> List[_Box]:
-    """Up to 256 boxes covering every populated bucket, each split from the
-    one spanning furthest at the median of its pixels."""
+def _median_cut(counts: List[Int], most: Int) -> List[_Box]:
+    """Up to `most` boxes covering every populated bucket, each split from
+    the one spanning furthest at the median of its pixels."""
     var populated = List[Int]()
     for key in range(_HISTOGRAM):
         if counts[key] > 0:
             populated.append(key)
     var boxes = List[_Box]()
     boxes.append(_Box(populated^, counts))
-    while len(boxes) < _MAX_COLORS:
+    while len(boxes) < most:
         var pick = -1
         var pick_score = 0
         var pick_channel = 0
@@ -122,8 +141,16 @@ struct _Quantised(Movable):
     var indices: List[UInt8]
     var bits: Int
     """log2 of the palette's length in colours, at least 1."""
+    var transparent: Optional[Int]
+    """The transparent pixels' index, in a frame that has one."""
 
-    def __init__(out self, var palette: List[UInt8], var indices: List[UInt8]):
+    def __init__(
+        out self,
+        var palette: List[UInt8],
+        var indices: List[UInt8],
+        transparent: Optional[Int],
+    ):
+        self.transparent = transparent
         var colors = len(palette) // 3
         self.bits = 1
         while (1 << self.bits) < colors:
@@ -134,12 +161,27 @@ struct _Quantised(Movable):
         self.indices = indices^
 
 
-def _exact(pixels: List[UInt8], count: Int) raises -> Optional[_Quantised]:
-    """The frame's own colours as its palette, if it has no more than 256."""
+def _opaque(pixels: List[UInt8], i: Int, transparent: Bool) -> Bool:
+    """Whether pixel `i` is drawn: always, unless the frame is transparent
+    and its alpha is under `_OPAQUE_ALPHA`."""
+    return not transparent or Int(pixels[i * 4 + 3]) >= _OPAQUE_ALPHA
+
+
+def _exact(
+    pixels: List[UInt8], count: Int, transparent: Bool
+) raises -> Optional[_Quantised]:
+    """The frame's own colours as its palette, if it has no more than 256,
+    or 255 beside the transparent index."""
     var index = Dict[Int, Int]()
     var palette = List[UInt8]()
+    var first = 0
+    if transparent:
+        palette = [0, 0, 0]
+        first = 1
     var indices = List[UInt8](length=count, fill=0)
     for i in range(count):
+        if not _opaque(pixels, i, transparent):
+            continue  # already _TRANSPARENT
         var o = i * 4
         var rgb = (
             (Int(pixels[o]) << 16)
@@ -150,20 +192,23 @@ def _exact(pixels: List[UInt8], count: Int) raises -> Optional[_Quantised]:
         if found:
             indices[i] = UInt8(found.value())
             continue
-        if len(index) == _MAX_COLORS:
+        if first + len(index) == _MAX_COLORS:
             return None
-        index[rgb] = len(index)
-        indices[i] = UInt8(len(index) - 1)
+        index[rgb] = first + len(index)
+        indices[i] = UInt8(first + len(index) - 1)
         palette.append(pixels[o])
         palette.append(pixels[o + 1])
         palette.append(pixels[o + 2])
-    return _Quantised(palette^, indices^)
+    return _Quantised(
+        palette^, indices^, Optional(_TRANSPARENT) if transparent else None
+    )
 
 
-def _nearest(palette: List[UInt8], r: Int, g: Int, b: Int) -> Int:
-    var best = 0
+def _nearest(palette: List[UInt8], first: Int, r: Int, g: Int, b: Int) -> Int:
+    """The palette's colour nearest `r`, `g`, `b`, from index `first` on."""
+    var best = first
     var best_distance = Int.MAX
-    for i in range(len(palette) // 3):
+    for i in range(first, len(palette) // 3):
         var dr = r - Int(palette[i * 3])
         var dg = g - Int(palette[i * 3 + 1])
         var db = b - Int(palette[i * 3 + 2])
@@ -175,18 +220,27 @@ def _nearest(palette: List[UInt8], r: Int, g: Int, b: Int) -> Int:
 
 
 def quantise(
-    pixels: List[UInt8], width: Int, height: Int, dither: Bool
+    pixels: List[UInt8],
+    width: Int,
+    height: Int,
+    dither: Bool,
+    transparent: Bool = False,
 ) raises -> _Quantised:
-    """Reduce `width` x `height` RGBA pixels (alpha ignored) to a palette of
-    at most 256 colours and an index a pixel."""
+    """Reduce `width` x `height` RGBA pixels to a palette of at most 256
+    colours and an index a pixel. Alpha is ignored unless `transparent`,
+    where a pixel under `_OPAQUE_ALPHA` takes the transparent index,
+    `_TRANSPARENT`, which is kept out of every other pixel's choice."""
     var count = width * height
-    var exact = _exact(pixels, count)
+    var exact = _exact(pixels, count, transparent)
     if exact:
         return exact.take()
 
+    var first = 1 if transparent else 0
     var counts = List[Int](length=_HISTOGRAM, fill=0)
     var sums = List[Int](length=_HISTOGRAM * 3, fill=0)
     for i in range(count):
+        if not _opaque(pixels, i, transparent):
+            continue
         var o = i * 4
         var key = _key15(Int(pixels[o]), Int(pixels[o + 1]), Int(pixels[o + 2]))
         counts[key] += 1
@@ -196,8 +250,8 @@ def quantise(
 
     # Each box's colour is the mean of the pixels in it, and every bucket
     # maps to its own box's colour.
-    var boxes = _median_cut(counts)
-    var palette = List[UInt8]()
+    var boxes = _median_cut(counts, _MAX_COLORS - first)
+    var palette = List[UInt8](length=first * 3, fill=0)
     var lookup = List[Int](length=_HISTOGRAM, fill=-1)
     for b in range(len(boxes)):
         var r = 0
@@ -207,15 +261,18 @@ def quantise(
             r += sums[key * 3]
             g += sums[key * 3 + 1]
             bl += sums[key * 3 + 2]
-            lookup[key] = b
+            lookup[key] = first + b
         var n = max(boxes[b].count, 1)
         palette.append(UInt8((r + n // 2) // n))
         palette.append(UInt8((g + n // 2) // n))
         palette.append(UInt8((bl + n // 2) // n))
 
+    var transparent_index = Optional(_TRANSPARENT) if transparent else None
     var indices = List[UInt8](length=count, fill=0)
     if not dither:
         for i in range(count):
+            if not _opaque(pixels, i, transparent):
+                continue  # already _TRANSPARENT
             var o = i * 4
             indices[i] = UInt8(
                 lookup[
@@ -224,12 +281,13 @@ def quantise(
                     )
                 ]
             )
-        return _Quantised(palette^, indices^)
+        return _Quantised(palette^, indices^, transparent_index)
 
     # Floyd-Steinberg: each pixel's rounding error is spread over the pixels
     # right of and below it, so a smooth ramp becomes a fine mix of palette
     # colours rather than bands. A dithered colour can land in a bucket no
     # pixel had, so a bucket's nearest colour is found when first needed.
+    # A transparent pixel takes no error and passes none on.
     var error = List[Float64](length=(width + 2) * 2 * 3, fill=0.0)
     for y in range(height):
         var row = (y % 2) * (width + 2) * 3
@@ -238,6 +296,8 @@ def quantise(
             for c in range(3):
                 error[next + x * 3 + c] = 0.0
         for x in range(width):
+            if not _opaque(pixels, y * width + x, transparent):
+                continue
             var o = (y * width + x) * 4
             var wanted = List[Int](length=3, fill=0)
             for c in range(3):
@@ -249,6 +309,7 @@ def quantise(
             if lookup[key] < 0:
                 lookup[key] = _nearest(
                     palette,
+                    first,
                     (key >> 10) * 8 + 4,
                     ((key >> 5) & 31) * 8 + 4,
                     (key & 31) * 8 + 4,
@@ -261,7 +322,7 @@ def quantise(
                 error[next + x * 3 + c] += off * 3.0 / 16.0
                 error[next + (x + 1) * 3 + c] += off * 5.0 / 16.0
                 error[next + (x + 2) * 3 + c] += off * 1.0 / 16.0
-    return _Quantised(palette^, indices^)
+    return _Quantised(palette^, indices^, transparent_index)
 
 
 struct _BitWriter(Movable):
@@ -341,17 +402,54 @@ def _u16(mut bytes: List[UInt8], value: Int):
     bytes.append(UInt8((value >> 8) & 0xFF))
 
 
+struct EncodedFrame(Movable):
+    """A frame from `encode_frame`, waiting for `GifWriter.write_frame` to
+    put its delay and disposal in front of it."""
+
+    var bytes: List[UInt8]
+    """Its descriptor, its own palette and its compressed indices."""
+    var transparent: Optional[Int]
+    """The palette index its transparent pixels take, if it has one."""
+    var left: Int
+    var top: Int
+    var width: Int
+    var height: Int
+    """Where in the image the frame's rectangle is."""
+
+    def __init__(
+        out self,
+        var bytes: List[UInt8],
+        transparent: Optional[Int],
+        left: Int,
+        top: Int,
+        width: Int,
+        height: Int,
+    ):
+        self.bytes = bytes^
+        self.transparent = transparent
+        self.left = left
+        self.top = top
+        self.width = width
+        self.height = height
+
+
 def encode_frame(
-    pixels: List[UInt8], width: Int, height: Int, dither: Bool
-) raises -> List[UInt8]:
-    """A whole-image GIF frame of `width` x `height` RGBA pixels: its
-    descriptor, its own palette and its compressed indices, but not the
-    delay, which `GifWriter.write_frame` puts in front of it."""
-    var q = quantise(pixels, width, height, dither)
+    pixels: List[UInt8],
+    width: Int,
+    height: Int,
+    dither: Bool,
+    transparent: Bool = False,
+    left: Int = 0,
+    top: Int = 0,
+) raises -> EncodedFrame:
+    """A GIF frame of `width` x `height` RGBA pixels, at `left`, `top` in
+    the image, quantised by `quantise`: with `transparent`, the pixels under
+    half alpha are left out."""
+    var q = quantise(pixels, width, height, dither, transparent)
     var bytes = List[UInt8]()
     bytes.append(0x2C)  # image descriptor
-    _u16(bytes, 0)
-    _u16(bytes, 0)
+    _u16(bytes, left)
+    _u16(bytes, top)
     _u16(bytes, width)
     _u16(bytes, height)
     bytes.append(UInt8(0x80 | (q.bits - 1)))  # a local colour table
@@ -367,7 +465,7 @@ def encode_frame(
             bytes.append(data[at + i])
         at += size
     bytes.append(0)  # the data's terminator
-    return bytes^
+    return EncodedFrame(bytes^, q.transparent, left, top, width, height)
 
 
 struct GifWriter(Movable):
@@ -412,19 +510,34 @@ struct GifWriter(Movable):
         header.append(0)
         self._file.write_bytes(Span(header))
 
-    def write_frame(mut self, frame: List[UInt8], delay: Int) raises:
+    def write_frame(
+        mut self, frame: EncodedFrame, delay: Int, dispose: Int = DISPOSE_KEEP
+    ) raises:
         """Write a frame from `encode_frame`, shown for `delay` hundredths of
-        a second."""
+        a second, then disposed of as `dispose` says (`DISPOSE_KEEP` or
+        `DISPOSE_BACKGROUND`)."""
+        if (
+            frame.left < 0
+            or frame.top < 0
+            or frame.left + frame.width > self.width
+            or frame.top + frame.height > self.height
+        ):
+            raise Error("a GIF frame must lie inside the image: " + self.path)
         var control = List[UInt8]()
         control.append(0x21)  # graphic control extension
         control.append(0xF9)
         control.append(4)
-        control.append(0x04)  # dispose: leave the frame in place
+        var flags = dispose << 2
+        if frame.transparent:
+            flags |= 1
+        control.append(UInt8(flags))
         _u16(control, max(delay, 0))
-        control.append(0)  # no transparent colour
+        control.append(
+            UInt8(frame.transparent.value()) if frame.transparent else 0
+        )
         control.append(0)
         self._file.write_bytes(Span(control))
-        self._file.write_bytes(Span(frame))
+        self._file.write_bytes(Span(frame.bytes))
         self.frames += 1
 
     def finish(mut self) raises:

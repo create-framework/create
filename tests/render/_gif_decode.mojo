@@ -55,11 +55,36 @@ def lzw_decode(data: List[UInt8], min_code_size: Int) raises -> List[UInt8]:
 struct DecodedFrame(Copyable, Movable):
     var delay: Int
     var pixels: List[UInt8]
-    """RGB a pixel."""
+    """The whole image as shown while the frame is: RGBA a pixel, every
+    frame so far drawn over the last as the disposals say, 0 alpha where
+    none drew."""
+    var left: Int
+    var top: Int
+    var width: Int
+    var height: Int
+    """The rectangle the frame itself covers."""
+    var dispose: Int
+    var transparent: Optional[Int]
 
-    def __init__(out self, delay: Int, var pixels: List[UInt8]):
+    def __init__(
+        out self,
+        delay: Int,
+        var pixels: List[UInt8],
+        left: Int,
+        top: Int,
+        width: Int,
+        height: Int,
+        dispose: Int,
+        transparent: Optional[Int],
+    ):
         self.delay = delay
         self.pixels = pixels^
+        self.left = left
+        self.top = top
+        self.width = width
+        self.height = height
+        self.dispose = dispose
+        self.transparent = transparent
 
 
 struct DecodedGif(Movable):
@@ -100,6 +125,11 @@ def decode_gif(path: String) raises -> DecodedGif:
     assert_equal(Int(data[10]) & 0x80, 0)  # no global colour table
     var at = 13
     var delay = -1
+    var dispose = 0
+    var transparent = Optional[Int]()
+    # What the player shows, and the last frame's disposal still to apply.
+    var screen = List[UInt8](length=gif.width * gif.height * 4, fill=0)
+    var clear_rect = Optional[Tuple[Int, Int, Int, Int]]()
     while True:
         var kind = data[at]
         if kind == 0x3B:
@@ -110,15 +140,22 @@ def decode_gif(path: String) raises -> DecodedGif:
             at += 2
             var body = _sub_blocks(data, at)
             if label == 0xF9:
+                var flags = Int(body[0])
+                dispose = (flags >> 2) & 7
+                assert_true(dispose <= 2, "disposal 3 is never written")
                 delay = _u16(body, 1)
+                transparent = None
+                if flags & 1:
+                    transparent = Int(body[3])
             elif label == 0xFF and len(body) >= 11:
                 gif.loops = True
             continue
         assert_equal(Int(kind), 0x2C)
+        var x0 = _u16(data, at + 1)
+        var y0 = _u16(data, at + 3)
         var w = _u16(data, at + 5)
         var h = _u16(data, at + 7)
-        assert_equal(w, gif.width)
-        assert_equal(h, gif.height)
+        assert_true(x0 + w <= gif.width and y0 + h <= gif.height)
         var flags = Int(data[at + 9])
         assert_true(flags & 0x80 != 0)
         var colors = 1 << ((flags & 7) + 1)
@@ -128,9 +165,28 @@ def decode_gif(path: String) raises -> DecodedGif:
         at += 1
         var indices = lzw_decode(_sub_blocks(data, at), min_code_size)
         assert_equal(len(indices), w * h)
-        var pixels = List[UInt8]()
-        for index in indices:
+        if clear_rect:
+            var r = clear_rect.value()
+            for y in range(r[1], r[1] + r[3]):
+                for x in range(r[0], r[0] + r[2]):
+                    for c in range(4):
+                        screen[(y * gif.width + x) * 4 + c] = 0
+        for i in range(w * h):
+            var index = Int(indices[i])
+            if transparent and index == transparent.value():
+                continue
+            var o = ((y0 + i // w) * gif.width + x0 + i % w) * 4
             for c in range(3):
-                pixels.append(data[palette_at + Int(index) * 3 + c])
-        gif.frames.append(DecodedFrame(delay, pixels^))
+                screen[o + c] = data[palette_at + index * 3 + c]
+            screen[o + 3] = 255
+        gif.frames.append(
+            DecodedFrame(
+                delay, screen.copy(), x0, y0, w, h, dispose, transparent
+            )
+        )
+        clear_rect = None
+        if dispose == 2:
+            clear_rect = (x0, y0, w, h)
         delay = -1
+        dispose = 0
+        transparent = None

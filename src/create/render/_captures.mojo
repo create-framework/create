@@ -13,7 +13,7 @@ from std.math import floor
 
 from create.math.matrix import Matrix
 
-from ._gif import GifWriter, encode_frame
+from ._gif import EncodedFrame, GifWriter, encode_frame
 from ._gl_backend import GLRenderer
 from ._png import write_png
 from ._surface import MemorySurface, Surface, _force_opaque
@@ -76,7 +76,7 @@ struct _Recording(Movable):
     var next_slot: Int
     var frames: Int
     """Frames captured so far, the pending one included."""
-    var pending: Optional[List[UInt8]]
+    var pending: Optional[EncodedFrame]
     var pending_slot: Int
     var written: Int
     """Centiseconds already given to the frames written."""

@@ -21,7 +21,7 @@ page is for working on the package: the [user guide](../../../docs/README.md) co
 | `_cpu_replay.mojo` | `CpuReplay` — commands rasterised onto a `Surface`: the CPU backend's presents and every capture and read; shadows, clips and antialiasing around the rasterisers. Handed the images, clips and antialiasing by `Backend.replay`, as `GLRenderer.render` is |
 | `_raster.mojo` | CPU rasteriser over a `Surface`; called only from `_cpu_replay.mojo` |
 | `_surface.mojo` | `Surface`, the borrowed RGBA view the rasteriser writes, and `MemorySurface`, an owned buffer (headless runs, pixel reads, offscreen canvases); `run_headless` hands its pixels over as an `Image` |
-| `_gif.mojo` | The GIF writer behind `canvas.start_recording`: per-frame quantising (exact up to 256 colours, else median cut, optional Floyd-Steinberg), LZW, and `GifWriter`, which streams frames to the file |
+| `_gif.mojo` | The GIF writer behind `canvas.start_recording`: per-frame quantising (exact up to 256 colours, else median cut, optional Floyd-Steinberg, optionally a transparent index for pixels under half alpha), LZW, frames covering a rectangle of the image with a disposal (`DISPOSE_KEEP`, `DISPOSE_BACKGROUND`), and `GifWriter`, which streams frames to the file |
 | `_gl.mojo` | GL entry points resolved at runtime; the only file that talks to the driver |
 | `_text.mojo` | `TextRenderer` — the glyph cache and layout both backends place text with; faces are `create.text.Font` |
 | `_gl_backend.mojo` | `GLRenderer` — shader, vertex buffer, glyph atlas, image textures, batching |

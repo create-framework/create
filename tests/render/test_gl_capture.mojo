@@ -222,7 +222,7 @@ struct PaintAcrossARestart(Program):
 
 def _mid_rgb(gif: DecodedGif, frame: Int, x: Int) -> Int:
     """Pixel `x` of `frame`'s middle row, as 0xRRGGBB."""
-    var o = ((gif.height // 2) * gif.width + x) * 3
+    var o = ((gif.height // 2) * gif.width + x) * 4
     ref p = gif.frames[frame].pixels
     return (Int(p[o]) << 16) | (Int(p[o + 1]) << 8) | Int(p[o + 2])
 
