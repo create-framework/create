@@ -40,7 +40,7 @@ def _closest_on_segment(p: Point2D, a: Point2D, b: Point2D) -> Point2D:
 
 
 def _orientation(a: Point2D, b: Point2D, c: Point2D) -> Int:
-    var cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+    var cross = _cross(b - a, c - a)
     if cross > 0.0:
         return 1
     if cross < 0.0:
@@ -94,7 +94,17 @@ def _rounded_closest(q: Point2D, p: Point2D, r: Float64) -> Point2D:
 
 
 def _cross(a: Vector2D, b: Vector2D) -> Float64:
-    return a.x * b.y - a.y * b.x
+    """The cross product of `a` and `b`, exactly zero whenever its two
+    products are equal. Written as one subtraction, the compiler may fuse
+    it into a multiply-add, which leaves the rounding of the second product
+    behind: parallel vectors, a vector with itself even, would come out not
+    quite parallel. The sign is the subtraction's either way, as rounding
+    keeps the order of the two products."""
+    var left = a.x * b.y
+    var right = a.y * b.x
+    if left == right:
+        return 0.0
+    return left - right
 
 
 def _unit(angle: Float64) -> Vector2D:

@@ -1,6 +1,7 @@
 from std.math import min, max
 from create.math import Point2D
 from ._shared import (
+    _cross,
     _distance_squared,
     _orientation,
     _segments_meet,
@@ -115,7 +116,7 @@ def _segment_distance_squared(p: Point2D, a: Point2D, b: Point2D) -> Float64:
         return offset.dot(offset)
     if t >= length_squared:
         return _distance_squared(p, b)
-    var across = along.x * offset.y - along.y * offset.x
+    var across = _cross(along, offset)
     return across * across / length_squared
 
 
