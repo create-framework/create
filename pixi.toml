@@ -49,6 +49,7 @@ tomli-w = ">=1.2.0,<2"
 docs = "python scripts/docs.py && zensical build --strict --clean -f build/docs/zensical.toml"
 docs-serve = "python scripts/docs.py && zensical serve -f build/docs/zensical.toml"
 docs-site = "python scripts/docs_site.py"
+reference = "python scripts/docs.py --reference"
 
 [environments]
 package = { features = ["package"], no-default-feature = true }

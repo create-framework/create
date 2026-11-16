@@ -257,7 +257,7 @@ struct Context(Copyable, Movable):
         was laid out for the window as it is, so the loop switches after
         presenting it, and the next frame is drawn at the new size. Some
         compositors take a frame or two longer to report it (gotcha 1 in
-        docs/programs.md). A window manager may refuse to maximize; a headless
+        docs/guide/programs.md). A window manager may refuse to maximize; a headless
         run ignores it.
         """
         self._window_mode = mode

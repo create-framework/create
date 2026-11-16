@@ -31,7 +31,7 @@ trait Program(Deinitable, Movable):
 
         `canvas` is a real frame, presented like every later one: what is
         drawn here shows, and geometry is as valid as on any first frame (see
-        "The window's size on the first frame" in docs/programs.md). The
+        "The window's size on the first frame" in docs/guide/programs.md). The
         design size and autoscale mode are `run`'s arguments, already in
         place; `context.design_size` or
         `context.autoscale` called here applies from the next frame, like any

@@ -7,7 +7,7 @@ visualisations.
 
 This guide is for anyone working on Create itself: what the project values, how to make a first
 change, and then the reference for building, testing, landing changes and the code's
-conventions. Using Create is covered in [docs/](docs/README.md), and how its code is organised in
+conventions. Using Create is covered in the [user guide](docs/guide/README.md), and how its code is organised in
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## What we value
@@ -84,7 +84,8 @@ pixi run check-standalone                 # a `mojo build` program, run outside 
 pixi run check-package                    # the conda package from recipe/, built and tested as installed
 pixi run format                           # 80 columns, enforced by pre-commit
 pixi run embed-fonts                      # regenerate text/_noto.mojo after changing a face in text/fonts/
-pixi run docs                             # build the documentation site into build/docs/site
+pixi run reference                        # regenerate docs/reference from the docstrings; commit the result
+pixi run docs                             # the same, then build the documentation site into build/docs/site
 pixi run docs-serve                       # preview it, rebuilt as you edit (rerun after a docstring change)
 pixi run docs-site                        # the published site, main and the latest release, into build/docs/published
 pixi run setup                            # once per clone: git hooks + blame ignore-revs
@@ -109,7 +110,7 @@ Two tiers of automated checks, and a third run by hand:
 | Where | Runs |
 |---|---|
 | `pre-commit` hook (after `pixi run setup`) | Formatting check on staged `.mojo` files, then builds `tests/core/test_smoke.mojo`. Constant cost |
-| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job — and the documentation site (`pixi run docs`). Linux only |
+| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job — and the documentation site (`pixi run docs`), which fails when the committed `docs/reference` is out of date. Linux only |
 | macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI — a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet — so run it before relying on a change that could differ there (windowing, GL, library search) |
 
 Neither tier subsumes the other: building a consumer program type-checks only the `def` bodies it
@@ -170,18 +171,22 @@ The documentation site, [create-framework.org](https://create-framework.org/),
 is built from this repo by `pixi run docs`, so a change and its documentation land together.
 [scripts/docs.py](scripts/docs.py) stages its pages:
 
-- **Home** is the [README](README.md), and the **user guide** is [docs/](docs/README.md). Write their
-  links for GitHub, relative to the file: the site keeps links between its pages, copies images
-  in, and points everything else (an example, a source file) at GitHub, at the commit built.
-- The **API reference** is rendered from the docstrings by `mojo doc`. Each subpackage's page
-  lists what its `__init__.mojo` imports, grouped into types, traits, functions and constants
-  and in import order within each, so the public surface and the reference can't disagree; a
-  package's own docstring heads it. Each type, trait and function has a page of its own, listed
-  there by its docstring's first line, so write that line to stand alone; a constant is
-  documented on the package's page. A type's members are grouped into constants, fields,
-  constructors, methods and special methods (the dunders); a static method is listed as a
-  constructor when it returns `Self`, so write a factory's return type so. A function's
-  overloads share one page, and those documented alike one block.
+- **Home** is the [README](README.md), and the **user guide** is
+  [docs/guide/](docs/guide/README.md). Write their links for GitHub, relative to the file: the site
+  keeps links between its pages, copies images in, and points everything else (an example, a source
+  file) at GitHub, at the commit built.
+- The **API reference** is [docs/reference/](docs/reference/README.md), generated from the
+  docstrings by `mojo doc` and committed, so it reads on GitHub as well as on the site. After
+  changing a docstring or the public surface, run `pixi run reference` and commit what changed;
+  CI's `linux-docs` regenerates it and fails when the committed copy differs. Never edit it by
+  hand. Each subpackage's page lists what its `__init__.mojo` imports, grouped into types, traits,
+  functions and constants and in import order within each, so the public surface and the reference
+  can't disagree; a package's own docstring heads it. Each type, trait and function has a page of
+  its own, listed there by its docstring's first line, so write that line to stand alone; a
+  constant is documented on the package's page. A type's members are grouped into constants,
+  fields, constructors, methods and special methods (the dunders); a static method is listed as a
+  constructor when it returns `Self`, so write a factory's return type so. A function's overloads
+  share one page, and those documented alike one block.
 
 A new guide page needs an entry in `nav` in [zensical.toml](zensical.toml). The reference's nav is
 generated: `docs.py` writes the config the site is built from to `build/docs/zensical.toml`, with
@@ -209,7 +214,7 @@ change one. What mutates is what has state over time — `Tween`, `Animator`, `A
 
 Use `Point2D` for new locations, `Vector2D` for displacements and scalars for extents;
 `canvas.rectangle(position: Point2D, width: Float64, height: Float64)` is the shape to copy. The
-reasons are in [Points and vectors](docs/coordinates.md#points-and-vectors), and three rules keep
+reasons are in [Points and vectors](docs/guide/coordinates.md#points-and-vectors), and three rules keep
 them working:
 
 - Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
