@@ -154,7 +154,7 @@ The rules behind it, and what each one buys:
 ## Imports and public surface
 
 A program writes `from create import *`. Otherwise import by name from the owning package
-(`from create.geometry import overlaps`); a single subpackage star is not a preamble.
+(`from create.geometry import Circle`); a single subpackage star is not a preamble.
 
 - The root has no names of its own: it star-imports the twelve subpackages. Never add a name there;
   add it to the owning subpackage.

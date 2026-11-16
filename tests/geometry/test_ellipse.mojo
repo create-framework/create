@@ -20,7 +20,6 @@ from create.geometry import (
     Sector,
     Spline,
     Triangle,
-    overlaps,
 )
 from create.math import PI, TAU, Point2D, Vector2D, cos, sin, sqrt
 
@@ -109,7 +108,7 @@ def test_round_ellipse_agrees_with_its_circle() raises -> None:
         Circle((3.0, 0.0), 7.1),
     ]
     for o in others:
-        assert_equal(overlaps(e, o), overlaps(c, o))
+        assert_equal(e.overlaps(o), c.overlaps(o))
         assert_equal(e.contains(o), c.contains(o))
         assert_equal(
             Circle(o.position, o.radius + 20.0).contains(e),
@@ -119,10 +118,10 @@ def test_round_ellipse_agrees_with_its_circle() raises -> None:
 
 def test_against_circles() raises -> None:
     # Off the end of the width, 20 away from the curve's nearest point.
-    assert_true(overlaps(_E, Circle((50.0, 5.0), 20.0)))
-    assert_false(overlaps(_E, Circle((50.0, 5.0), 19.99)))
-    assert_true(overlaps(Circle((10.0, 30.0), 15.0), _E))
-    assert_false(overlaps(Circle((10.0, 30.0), 14.99), _E))
+    assert_true(_E.overlaps(Circle((50.0, 5.0), 20.0)))
+    assert_false(_E.overlaps(Circle((50.0, 5.0), 19.99)))
+    assert_true(Circle((10.0, 30.0), 15.0).overlaps(_E))
+    assert_false(Circle((10.0, 30.0), 14.99).overlaps(_E))
     # Inside: no nearer the curve than its radius. Above the centre, the
     # curve is 10 away.
     assert_true(_E.contains(Circle((10.0, 5.0), 10.0)))
@@ -133,10 +132,10 @@ def test_against_circles() raises -> None:
 
 def test_against_ellipses() raises -> None:
     var wide = Ellipse((0.0, 0.0), 40.0, 20.0)
-    assert_true(overlaps(wide, Ellipse((40.0, 0.0), 40.0, 20.0)))
-    assert_false(overlaps(wide, Ellipse((40.01, 0.0), 40.0, 20.0)))
-    assert_true(overlaps(wide, Ellipse((0.0, 20.0), 4.0, 20.0)))
-    assert_false(overlaps(wide, Ellipse((0.0, 20.01), 4.0, 20.0)))
+    assert_true(wide.overlaps(Ellipse((40.0, 0.0), 40.0, 20.0)))
+    assert_false(wide.overlaps(Ellipse((40.01, 0.0), 40.0, 20.0)))
+    assert_true(wide.overlaps(Ellipse((0.0, 20.0), 4.0, 20.0)))
+    assert_false(wide.overlaps(Ellipse((0.0, 20.01), 4.0, 20.0)))
     assert_true(wide.contains(Ellipse((0.0, 0.0), 40.0, 20.0)))
     assert_true(wide.contains(Ellipse((0.0, 0.0), 30.0, 10.0)))
     # A thin ellipse along the width reaches past the curve's end.
@@ -148,18 +147,18 @@ def test_against_ellipses() raises -> None:
 
 def test_against_straight_edged_shapes() raises -> None:
     # A square touching the right end of the width.
-    assert_true(overlaps(_E, Rectangle((35.0, 5.0), 10.0, 10.0)))
-    assert_false(overlaps(_E, Rectangle((35.01, 5.0), 10.0, 10.0)))
+    assert_true(_E.overlaps(Rectangle((35.0, 5.0), 10.0, 10.0)))
+    assert_false(_E.overlaps(Rectangle((35.01, 5.0), 10.0, 10.0)))
     # In the bounds' corner, clear of the curve.
-    assert_false(overlaps(Rectangle((29.0, 14.0), 2.0, 2.0), _E))
+    assert_false(Rectangle((29.0, 14.0), 2.0, 2.0).overlaps(_E))
     assert_true(_E.contains(Rectangle((10.0, 5.0), 20.0, 10.0)))
     assert_false(_E.contains(Rectangle((10.0, 5.0), 30.0, 15.0)))
     assert_true(Rectangle((10.0, 5.0), 40.0, 20.0).contains(_E))
     assert_false(Rectangle((10.0, 5.0), 39.9, 20.0).contains(_E))
     var t = Triangle((-20.0, -20.0), (40.0, -20.0), (10.0, 40.0))
-    assert_true(overlaps(_E, t))
-    assert_true(overlaps(t, Ellipse((10.0, -25.0), 4.0, 10.0)))
-    assert_false(overlaps(t, Ellipse((10.0, -25.01), 4.0, 10.0)))
+    assert_true(_E.overlaps(t))
+    assert_true(t.overlaps(Ellipse((10.0, -25.0), 4.0, 10.0)))
+    assert_false(t.overlaps(Ellipse((10.0, -25.01), 4.0, 10.0)))
     assert_true(
         Triangle((-100.0, -50.0), (100.0, -50.0), (10.0, 200.0)).contains(_E)
     )
@@ -171,15 +170,12 @@ def test_against_straight_edged_shapes() raises -> None:
         Point2D(-10.0, 15.0),
     )
     assert_true(square.contains(_E))
-    assert_true(overlaps(square, _E))
+    assert_true(square.overlaps(_E))
     assert_false(_E.contains(square))
     assert_false(
-        overlaps(
-            Polygon(
-                Point2D(29.0, 14.0), Point2D(31.0, 14.0), Point2D(31.0, 16.0)
-            ),
-            _E,
-        )
+        Polygon(
+            Point2D(29.0, 14.0), Point2D(31.0, 14.0), Point2D(31.0, 16.0)
+        ).overlaps(_E)
     )
 
 
@@ -200,12 +196,12 @@ def test_against_rounded_shapes() raises -> None:
 
 def test_against_sectors() raises -> None:
     var s = Sector((10.0, 5.0), 50.0, 0.0, PI / 2.0)
-    assert_true(overlaps(_E, s))
+    assert_true(_E.overlaps(s))
     assert_true(s.contains(Ellipse((25.0, 20.0), 10.0, 10.0)))
     assert_false(s.contains(_E))
     assert_true(_E.contains(Sector((10.0, 5.0), 9.0, 0.3, 4.0)))
     assert_false(_E.contains(Sector((10.0, 5.0), 11.0, 0.3, 4.0)))
-    assert_false(overlaps(Sector((60.0, 5.0), 10.0, 0.0, PI), _E))
+    assert_false(Sector((60.0, 5.0), 10.0, 0.0, PI).overlaps(_E))
 
 
 def test_curves_meet_it() raises -> None:
@@ -240,9 +236,9 @@ def test_flat_ellipse_is_its_bounds() raises -> None:
     assert_false(flat.contains((0.0, 0.01)))
     assert_equal(flat.closest_point((5.0, 3.0)), Point2D(5.0, 0.0))
     var c = Circle((0.0, 5.0), 5.0)
-    assert_equal(overlaps(flat, c), overlaps(segment, c))
-    assert_true(overlaps(flat, Ellipse((0.0, 2.0), 4.0, 4.0)))
-    assert_false(overlaps(flat, Ellipse((0.0, 2.01), 4.0, 4.0)))
+    assert_equal(flat.overlaps(c), segment.overlaps(c))
+    assert_true(flat.overlaps(Ellipse((0.0, 2.0), 4.0, 4.0)))
+    assert_false(flat.overlaps(Ellipse((0.0, 2.01), 4.0, 4.0)))
     assert_true(Ellipse((0.0, 0.0), 30.0, 10.0).contains(flat))
     assert_false(flat.contains(Ellipse((0.0, 0.0), 4.0, 4.0)))
     assert_true(Line((0.0, -1.0), (0.0, 1.0)).intersects(flat))

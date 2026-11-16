@@ -63,19 +63,17 @@ struct Collisions(Program):
 
         # Regions: filled, lit while they overlap the probe.
         with canvas.style(stroke_enabled=False):
-            canvas.fill(
-                _HIT if overlaps(self.rectangle, self.probe) else _SHAPE
-            )
+            canvas.fill(_HIT if self.rectangle.overlaps(self.probe) else _SHAPE)
             canvas.draw(self.rectangle)
-            canvas.fill(_HIT if overlaps(self.circle, self.probe) else _SHAPE)
+            canvas.fill(_HIT if self.circle.overlaps(self.probe) else _SHAPE)
             canvas.draw(self.circle)
-            canvas.fill(_HIT if overlaps(self.triangle, self.probe) else _SHAPE)
+            canvas.fill(_HIT if self.triangle.overlaps(self.probe) else _SHAPE)
             canvas.draw(self.triangle)
-            canvas.fill(_HIT if overlaps(self.star, self.probe) else _SHAPE)
+            canvas.fill(_HIT if self.star.overlaps(self.probe) else _SHAPE)
             canvas.draw(self.star)
-            canvas.fill(_HIT if overlaps(self.ellipse, self.probe) else _SHAPE)
+            canvas.fill(_HIT if self.ellipse.overlaps(self.probe) else _SHAPE)
             canvas.draw(self.ellipse)
-            canvas.fill(_HIT if overlaps(self.capsule, self.probe) else _SHAPE)
+            canvas.fill(_HIT if self.capsule.overlaps(self.probe) else _SHAPE)
             canvas.draw(self.capsule)
 
         # Curves: stroked, lit while they cross the probe.

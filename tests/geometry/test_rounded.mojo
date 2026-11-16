@@ -15,7 +15,6 @@ from create.geometry import (
     Triangle,
     Polygon,
     Sector,
-    overlaps,
 )
 from create.math.point2d import Point2D
 
@@ -75,33 +74,32 @@ def test_a_rounded_rectangle_area_loses_its_corners() raises -> None:
 def test_rounded_rectangles_close_diagonally_do_not_overlap() raises -> None:
     var a = _rounded_square()
     var b = Rectangle((19.0, 19.0), 20.0, 20.0, corner_radius=5.0)
-    assert_false(overlaps(a, b))
-    assert_false(overlaps(b, a))
+    assert_false(a.overlaps(b))
+    assert_false(b.overlaps(a))
     # Sharp, their corners overlap.
     assert_true(
-        overlaps(
-            Rectangle((0.0, 0.0), 20.0, 20.0),
-            Rectangle((19.0, 19.0), 20.0, 20.0),
+        Rectangle((0.0, 0.0), 20.0, 20.0).overlaps(
+            Rectangle((19.0, 19.0), 20.0, 20.0)
         )
     )
     # Side by side, the straight edges still meet.
     assert_true(
-        overlaps(a, Rectangle((19.0, 0.0), 20.0, 20.0, corner_radius=5.0))
+        a.overlaps(Rectangle((19.0, 0.0), 20.0, 20.0, corner_radius=5.0))
     )
 
 
 def test_a_circle_in_the_cut_away_corner_does_not_overlap() raises -> None:
     var c = Circle((9.5, 9.5), 0.5)
-    assert_false(overlaps(_rounded_square(), c))
-    assert_false(overlaps(c, _rounded_square()))
-    assert_true(overlaps(Rectangle((0.0, 0.0), 20.0, 20.0), c))
+    assert_false(_rounded_square().overlaps(c))
+    assert_false(c.overlaps(_rounded_square()))
+    assert_true(Rectangle((0.0, 0.0), 20.0, 20.0).overlaps(c))
 
 
 def test_a_triangle_in_the_cut_away_corner_does_not_overlap() raises -> None:
     var t = Triangle((9.5, 9.5), (10.0, 9.5), (9.5, 10.0))
-    assert_false(overlaps(_rounded_square(), t))
-    assert_false(overlaps(t, _rounded_square()))
-    assert_true(overlaps(Rectangle((0.0, 0.0), 20.0, 20.0), t))
+    assert_false(_rounded_square().overlaps(t))
+    assert_false(t.overlaps(_rounded_square()))
+    assert_true(Rectangle((0.0, 0.0), 20.0, 20.0).overlaps(t))
 
 
 def test_a_line_across_the_cut_away_corner_misses() raises -> None:
@@ -233,8 +231,8 @@ def test_a_circle_in_a_rounded_triangle_corner_does_not_overlap() raises -> (
     None
 ):
     var c = Circle((0.3, 0.3), 0.3)
-    assert_false(overlaps(_rounded_right_triangle(), c))
-    assert_true(overlaps(Triangle((0.0, 0.0), (30.0, 0.0), (0.0, 30.0)), c))
+    assert_false(_rounded_right_triangle().overlaps(c))
+    assert_true(Triangle((0.0, 0.0), (30.0, 0.0), (0.0, 30.0)).overlaps(c))
 
 
 def test_rounded_triangles_close_at_their_tips_do_not_overlap() raises -> None:
@@ -242,10 +240,10 @@ def test_rounded_triangles_close_at_their_tips_do_not_overlap() raises -> None:
     var b = Triangle(
         (-0.2, -0.2), (-30.0, -0.2), (-0.2, -30.0), corner_radius=3.0
     )
-    assert_false(overlaps(a, b))
+    assert_false(a.overlaps(b))
     var sharp_a = Triangle((0.0, 0.0), (30.0, 0.0), (0.0, 30.0))
     var sharp_b = Triangle((0.1, 0.1), (-30.0, 0.1), (0.1, -30.0))
-    assert_true(overlaps(sharp_a, sharp_b))
+    assert_true(sharp_a.overlaps(sharp_b))
 
 
 def test_a_rounded_triangle_compares_and_prints_its_radius() raises -> None:
@@ -316,13 +314,13 @@ def test_each_corner_clamps_on_its_own() raises -> None:
 
 def test_a_rounded_polygon_tests_against_other_shapes() raises -> None:
     var p = _rounded_square_polygon()
-    assert_false(overlaps(p, Circle((9.5, 9.5), 0.5)))
-    assert_false(overlaps(Circle((9.5, 9.5), 0.5), p))
+    assert_false(p.overlaps(Circle((9.5, 9.5), 0.5)))
+    assert_false(Circle((9.5, 9.5), 0.5).overlaps(p))
     var corner = Triangle((9.5, 9.5), (10.0, 9.5), (9.5, 10.0))
-    assert_false(overlaps(p, corner))
-    assert_false(overlaps(corner, p))
+    assert_false(p.overlaps(corner))
+    assert_false(corner.overlaps(p))
     assert_false(Line((9.0, 11.0), (11.0, 9.0)).intersects(p))
-    assert_true(overlaps(p, _rounded_square()))
+    assert_true(p.overlaps(_rounded_square()))
     assert_true(Rectangle((0.0, 0.0), 20.0, 20.0).contains(p))
     assert_false(p.contains(Rectangle((0.0, 0.0), 19.0, 19.0)))
 
@@ -429,16 +427,16 @@ def test_a_rounded_sector_corner_radius_clamps() raises -> None:
 def test_a_rounded_sector_tests_against_other_shapes() raises -> None:
     var s = _rounded_quarter()
     var at_tip = Circle((0.4, 0.4), 0.4)
-    assert_false(overlaps(s, at_tip))
-    assert_false(overlaps(at_tip, s))
-    assert_true(overlaps(Sector((0.0, 0.0), 50.0, 0.0, PI / 2.0), at_tip))
+    assert_false(s.overlaps(at_tip))
+    assert_false(at_tip.overlaps(s))
+    assert_true(Sector((0.0, 0.0), 50.0, 0.0, PI / 2.0).overlaps(at_tip))
     var corner = Rectangle((49.4, 0.6), 0.8, 0.8)
-    assert_false(overlaps(s, corner))
-    assert_false(overlaps(corner, s))
+    assert_false(s.overlaps(corner))
+    assert_false(corner.overlaps(s))
     assert_true(Rectangle((25.0, 25.0), 50.0, 50.0).contains(s))
     assert_false(s.contains(Rectangle((25.0, 25.0), 50.0, 50.0)))
     assert_false(Line((-1.0, 1.0), (1.0, -1.0)).intersects(s))
-    assert_true(overlaps(s, Sector((40.0, 40.0), 10.0, PI, PI / 2.0)))
+    assert_true(s.overlaps(Sector((40.0, 40.0), 10.0, PI, PI / 2.0)))
 
 
 def test_a_rounded_sector_compares_and_prints_its_radius() raises -> None:

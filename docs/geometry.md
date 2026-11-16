@@ -54,7 +54,7 @@ struct Collisions(Program):
 
         var player = Circle(context.mouse.position, 30)
         canvas.stroke(Color.BLACK, 1)
-        if overlaps(player, self.wall):  # two regions touch
+        if player.overlaps(self.wall):  # two regions touch
             canvas.fill(Color.RED)
         elif self.laser.intersects(player):  # a curve crosses a shape
             canvas.fill(Color.ORANGE)
@@ -72,8 +72,9 @@ def main() raises:
     run[Collisions]("Collisions")
 ```
 
-- **`overlaps(a, b)`** is a free function, symmetric, for regions only (`Rectangle`, `Circle`,
-  `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`).
+- **`region.overlaps(other)`** asks whether two regions (`Rectangle`, `Circle`, `Ellipse`,
+  `Capsule`, `Triangle`, `Sector`, `Polygon`) share any point. It is symmetric: `a.overlaps(b)`
+  and `b.overlaps(a)` always agree.
 - **`curve.intersects(x)`** asks whether a curve (`Line`, `Arc`, `Bezier`, `Spline`) crosses or
   touches `x`, any shape or a `Point2D`. It is a method of curves only, since crossing is all a
   curve can do: write `line.intersects(circle)`, not the other way round.
@@ -213,6 +214,6 @@ any of them (`def f[C: Curve](c: C)`):
   `flatten`, `beziers`.
 
 Some methods are not trait methods. The tests between two shapes (`overlaps`, `contains(shape)`,
-`intersects`) are overloads per pair. A curve's `move_to` exists only on `Line` (its midpoint) and
-`Arc` (its centre), and `split(t)` only on `Line`, `Arc` and `Bezier`: a piece of a `Spline` is
-not a `Spline`.
+`intersects`) are methods overloaded per shape they take. A curve's `move_to` exists only on
+`Line` (its midpoint) and `Arc` (its centre), and `split(t)` only on `Line`, `Arc` and `Bezier`: a
+piece of a `Spline` is not a `Spline`.

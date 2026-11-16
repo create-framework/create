@@ -1,8 +1,9 @@
 from std.math import sqrt
 from create.math import PI, Point2D, Vector2D
 from .bezier import _curve_segments
+from ._overlap import _regions_overlap
 from .drawable import Curve, DrawTarget, Region
-from ._collider import _Collider, _Core, _contains
+from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import _RADIUS_EPSILON, _distance_squared
 from .capsule import Capsule
 from .ellipse import Ellipse
@@ -138,6 +139,48 @@ struct Circle(
         return Ellipse(
             self.position, self.diameter(), self.diameter()
         ).contains(e)
+
+    def overlaps(self, other: Rectangle) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _overlaps(self, other)
+
+    def overlaps(self, other: Circle) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _overlaps(self, other)
+
+    def overlaps(self, other: Ellipse) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _regions_overlap(other, self)
+
+    def overlaps(self, other: Capsule) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _overlaps(self, other)
+
+    def overlaps(self, other: Triangle) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _overlaps(self, other)
+
+    def overlaps(self, other: Sector) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _regions_overlap(other, self)
+
+    def overlaps(self, other: Polygon) -> Bool:
+        """Whether this and `other` share any point, their boundaries
+        included: shapes that only touch, along an edge or at a corner,
+        overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
+        return _regions_overlap(other, self)
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._circle(self)
