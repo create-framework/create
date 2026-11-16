@@ -12,3 +12,6 @@
 
 # Written by the examples that save files: capture, logo
 out/
+
+# Python bytecode, from the scripts
+__pycache__/
