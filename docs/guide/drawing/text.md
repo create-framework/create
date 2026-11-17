@@ -20,9 +20,9 @@ never colours text. Text is black until you set it.
 
 ## Fonts
 
-Fonts are part of the style: set one with `canvas.font(f)`, `Style(font=f)` or
-`with canvas.style(font=f):`, beside its size (`font_size`), its weight (`font_weight`) and its
-slant (`font_italic`):
+Fonts are part of the style: set one with `canvas.font(f)`, `Style(font=f)` or `with
+canvas.style(font=f):`. Its size (`font_size`), weight (`font_weight`) and slant (`font_italic`) are
+set the same way:
 
 ```mojo
 # In `create`, loading the `title_font` field:
@@ -67,10 +67,11 @@ on the position, and the text hangs below it and to its right.
 ## Several lines
 
 A newline (`"\n"`, or `"\r\n"`) in the string starts a new line, the font's line height below the
-last. Each line is aligned on its own by `text_alignment`, while the top and bottom it aligns to
-are those of the whole block of lines. `canvas.text_width(string)` is the width of the widest line,
-and `canvas.text_height(string)` the height of the whole block, from the top of the first line's
-tallest letters to the bottom of the last line's lowest:
+last. `text_alignment` places each line on its own from side to side, but the whole block of lines
+up and down: `TOP` aligns the top of the first line, and `BOTTOM` the bottom of the last.
+`canvas.text_width(string)` is the width of the widest line, and `canvas.text_height(string)` the
+height of the whole block, from the top of the first line's tallest letters to the bottom of the
+last line's lowest:
 
 ```mojo
 # In `update`: a two-line caption hanging from the top-left corner,

@@ -1,9 +1,9 @@
 # Keyboard
 
-`context.keyboard` tells a program which keys are held, and which went down or came up this
-frame. This page explains how keys are named, and why. Reading what the player types, as text, is
-a separate job, explained in [Typing](typing.md). What every device has in common, `down`,
-`pressed` and `released`, is in [Input](input.md#down-pressed-and-released).
+`context.keyboard` tells a program which keys are held, and which went down or came up this frame.
+This page explains how keys are named, and why. Reading what the player types, as text, is a
+separate job, explained in [Typing](typing.md). What every device has in common (`down`, `pressed`
+and `released`) is in [Input](input.md#down-pressed-and-released).
 
 ## Reading keys
 

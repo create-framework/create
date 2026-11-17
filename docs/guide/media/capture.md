@@ -54,7 +54,7 @@ See [examples/capture](../../../examples/capture/main.mojo).
   Whatever starts the screen's picture over, such as resizing the window or, on the GPU, changing
   the antialiasing, starts the recording's over too.
 - **It lasts across frames**, like the
-  [canvas settings](../drawing/drawing.md#settings-that-outlive-the-frame), until one of these ends
+  [canvas settings](../drawing/canvas.md#settings-that-outlive-the-frame), until one of these ends
   it and saves the file:
   - `seconds` of the run's time have passed, or `frames` frames have been recorded;
   - `canvas.stop_recording()` is called, and the file is complete when it returns;

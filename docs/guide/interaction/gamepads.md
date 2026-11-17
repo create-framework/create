@@ -1,8 +1,8 @@
 # Gamepads
 
 Create reads game controllers, such as Xbox and PlayStation pads, for one player or several. This
-page explains how pads are numbered, how to read their sticks, triggers and buttons, and how to
-make one rumble. What every device has in common, `down`, `pressed` and `released`, is in
+page explains how pads are numbered, how to read their sticks, triggers and buttons, and how to make
+one rumble. What every device has in common (`down`, `pressed` and `released`) is in
 [Input](input.md#down-pressed-and-released).
 
 ## Reading a pad
@@ -27,12 +27,12 @@ A pad takes the lowest free player number when it connects, and keeps it until i
 the first pad plugged in is player 0, the second player 1, and if player 0's pad is unplugged,
 the next pad to connect takes its place.
 
-A player with no pad reads `connected` as `False`, with every stick, trigger and button at zero,
-so a program can read any player without checking first; an empty slot simply does nothing.
-`connected_this_frame` and `disconnected_this_frame` are true only in the frame the pad connects
-or disconnects, as `pressed` and `released` are for a button, for a "controller disconnected"
-message, say. `name` is the pad's name as the system reports it, and still holds it in the frame
-the pad disconnects.
+A player with no pad reads `connected` as `False`, with every stick, trigger and button at zero, so
+a program can read any player without checking first; an empty slot simply does nothing.
+`connected_this_frame` and `disconnected_this_frame` are true only in the frame the pad connects or
+disconnects, as `pressed` and `released` are for a button. Use them for a "controller disconnected"
+message, for example. `name` is the pad's name as the system reports it, and still holds it in the
+frame the pad disconnects.
 
 ## Sticks
 
@@ -74,10 +74,9 @@ The other buttons are named for what they are:
 
 ## Rumble
 
-`context.rumble(seconds)` makes player 0's pad rumble for that long. It takes optional
-`low_frequency=` and `high_frequency=` strengths from 0 to 1, for the pad's heavy and light
-motors, both full by default, and a `player=` for another pad. A new rumble replaces one that is
-still running.
+`context.rumble(seconds)` makes player 0's pad rumble for that long. Optional `low_frequency=` and
+`high_frequency=` set the strengths of the pad's heavy and light motors, from 0 to 1 and both full
+by default, and `player=` picks another pad. A new rumble replaces one that is still running.
 
 Rumbling is something the program does to a pad rather than something it reads from one, so it
 lives on the `Context`, not on the `Gamepad` copy. It takes effect when `update` returns.

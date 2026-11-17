@@ -9,9 +9,9 @@ These apply to every task and are imported below:
 - [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules,
   and imports and public surface.
 - From the user guide, [programs](docs/guide/basics/programs.md),
-  [coordinates](docs/guide/basics/coordinates.md) and [vectors](docs/guide/math/vectors.md): the
-  shape of a program, the centred, y-up coordinates every other page assumes, and points and
-  vectors, which the code conventions build on.
+  [coordinates](docs/guide/basics/coordinates.md) and [points and
+  vectors](docs/guide/math/points-and-vectors.md): the shape of a program, the centred, y-up
+  coordinates every other page assumes, and points and vectors, which the code conventions build on.
 
 @CONTRIBUTING.md
 
@@ -21,7 +21,7 @@ These apply to every task and are imported below:
 
 @docs/guide/basics/coordinates.md
 
-@docs/guide/math/vectors.md
+@docs/guide/math/points-and-vectors.md
 
 ## Read when relevant
 
@@ -30,8 +30,9 @@ must keep. Before changing, using or answering questions about one of these area
 
 | Read | When the task involves |
 |---|---|
-| [processing](docs/guide/basics/processing.md) | how Create differs from Processing, or a Processing call's equivalent |
-| [drawing](docs/guide/drawing/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, `clear`, transforms and guards, antialiasing, clipping |
+| [mojo](docs/guide/basics/mojo.md) | the Mojo a program needs, explained for newcomers: numbers, `mut`, structs, `Optional`, `raises`/`try`, `^`, `ref` |
+| [coming from processing](docs/guide/basics/coming-from-processing.md) | how Create differs from Processing, or a Processing call's equivalent |
+| [the canvas](docs/guide/drawing/canvas.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, `clear`, transforms and guards, antialiasing, clipping |
 | [style](docs/guide/drawing/style.md) | `Style`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, tint, opacity, blend modes |
 | [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, `lerp`, `luminance` |
 | [strokes](docs/guide/drawing/strokes.md) | stroke thickness, `StrokeAlign`, `StrokeCap`, `StrokeDash` |
@@ -53,13 +54,13 @@ must keep. Before changing, using or answering questions about one of these area
 | [images](docs/guide/media/images.md) | `Image`, `canvas.image`, offscreen canvases |
 | [audio](docs/guide/media/audio.md) | `Sound`, `Audio` and `Playback`: loading, synthesizing and playing sounds |
 | [capture](docs/guide/media/capture.md) | `save_image`, `save_screenshot`, recording GIFs |
-| [tables](docs/guide/data/tables.md) | `Table` and `TableRow` (CSV/TSV) |
-| [json](docs/guide/data/json.md) | `JSON`, `JSONKind` |
+| [tables](docs/guide/data/tables.md) | `Table` and `TableRow` (CSV/TSV): reading, saving, finding, counting and removing rows and columns |
+| [json](docs/guide/data/json.md) | `JSON`, `JSONKind`: reading, editing, building a document, missing fields |
 | [angles](docs/guide/math/angles.md) | radians, `PI`/`TAU`, `sin`/`cos`/`atan2`, `degrees`/`radians` |
 | [matrices](docs/guide/math/matrices.md) | `Matrix`, `translate`/`rotate`/`scale`, `@`, `apply`, `inverse` |
 | [interpolation](docs/guide/math/interpolation.md) | `lerp`, `inverse_lerp`, `map`, `clamp`, `smoothstep`, `wrap` and the other scalar helpers |
 | [easing](docs/guide/math/easing.md) | `Easing`/`ease` |
-| [random](docs/guide/math/random.md) | `Random` |
+| [random numbers](docs/guide/math/random-numbers.md) | `Random` |
 | [noise](docs/guide/math/noise.md) | `Noise` |
 
 The math pages are written for readers with no prior knowledge of the mathematics; keep them so.

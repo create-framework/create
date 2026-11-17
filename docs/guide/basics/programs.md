@@ -3,8 +3,9 @@
 A Create program is a struct that implements the `Program` trait, handed to `run`. The
 [README](../../../README.md#how-a-program-works)'s "Hello, world!" shows a simple one; this page
 explains how a program runs, where its state lives, which settings belong to the run and how long
-each one lasts. Coming from Processing? [Processing](processing.md) lists what works
-differently.
+each one lasts, the window it runs in, and what to do when something goes wrong. If you know
+Processing, [Coming from Processing](coming-from-processing.md) lists what works differently, and
+if Mojo is new to you, [Mojo](mojo.md) explains the parts of it the examples use.
 
 ## `create` and `update`
 
@@ -47,7 +48,7 @@ def main() raises:
 Every frame starts cleared to light gray, so a program needs no background call to get a clean
 frame. `canvas.background(...)` paints the frame another colour, and paints over everything drawn
 before it, so call it before anything else you draw (see
-[Drawing](../drawing/drawing.md#the-background)). See
+[The canvas](../drawing/canvas.md#the-background)). See
 [examples/sidescroller](../../../examples/sidescroller/main.mojo) for a complete bigger program.
 
 ## Running a program
@@ -61,7 +62,7 @@ keywords with defaults:
 | `width`, `height` | `1280`, `720` | The design size, see [Coordinates](coordinates.md#design-size-and-autoscale) |
 | `backend` | `RenderBackend.CPU` | Which renderer draws the frames, below |
 | `resizable` | `True` | Whether the user can resize the window |
-| `antialiasing` | `Antialiasing.MEDIUM` | See [Drawing](../drawing/drawing.md#antialiasing) |
+| `antialiasing` | `Antialiasing.MEDIUM` | See [The canvas](../drawing/canvas.md#antialiasing) |
 | `autoscale` | `Autoscale.FIT` | How the design size maps onto the window |
 
 Every argument but `backend` is only a starting value, changed later through a setter (see
@@ -149,8 +150,8 @@ Some things reset every frame, some last until a `with` block ends, and some las
 | What | Lasts | Where it is explained |
 |---|---|---|
 | Style (`fill`, `stroke`, `font`, …) and `camera`, set with a plain call | Until the end of the frame | [Style](../drawing/style.md), [Coordinates](coordinates.md#the-camera) |
-| Anything set by a `with` block: `canvas.style(...)`, `transform`, `overlay`, `clip` | Until the block ends | [Drawing](../drawing/drawing.md#transforms-and-guards) |
-| The canvas settings: `autoclear`, `letterbox_color`, `antialiasing` | Until changed; each applies to the whole frame it is set in | [Drawing](../drawing/drawing.md#settings-that-outlive-the-frame) |
+| Anything set by a `with` block: `canvas.style(...)`, `transform`, `overlay`, `clip` | Until the block ends | [The canvas](../drawing/canvas.md#transforms-and-guards) |
+| The canvas settings: `autoclear`, `letterbox_color`, `antialiasing` | Until changed; each applies to the whole frame it is set in | [The canvas](../drawing/canvas.md#settings-that-outlive-the-frame) |
 | The run's settings on `Context`: `title`, `design_size`, `cursor`, … | Until changed; when each takes effect is [below](#when-a-change-applies) | [The run's settings](#the-runs-settings) |
 | A recording | Until it stops, or the run ends | [Recording](../media/capture.md#recording) |
 | The program's own fields | The whole run | [Parameters and fields](#parameters-and-fields) |
@@ -186,7 +187,7 @@ set them from the program, in `create` for a setting that should hold from the s
 Each setting takes effect at one of three points:
 
 - **In the frame it is set in**, wherever in `update` it is set: the canvas settings (see
-  [Drawing](../drawing/drawing.md#settings-that-outlive-the-frame)), and `title`, `resizable`,
+  [The canvas](../drawing/canvas.md#settings-that-outlive-the-frame)), and `title`, `resizable`,
   `cursor`, `lock_mouse` and `text_input`.
 - **From the next frame:** `design_size`, `autoscale` and `window_mode`, which change the frame's
   size or shape, and `time_scale` and `time_paused`, since the frame being drawn already has its
@@ -196,6 +197,88 @@ mode.
 
 Reading a setting back gives the new value at once, even before it takes effect. Headless runs
 ignore the window settings and `rumble`.
+
+## The window
+
+A program runs in a window, which `run` opens with the title and size it is given. How the
+window presents itself is its **mode**, set with `run(..., mode=)` or later with
+`context.window_mode(mode)`:
+
+| Mode | The window |
+|---|---|
+| `WINDOWED` (default) | An ordinary window, with a title bar and a border, at the design size |
+| `MAXIMIZED` | An ordinary window, with its title bar, filling the screen apart from the desktop's own bars and docks |
+| `FULLSCREEN` | The whole screen, with no title bar, border or desktop around it |
+| `BORDERLESS` | A window at the design size, with no title bar or border, for a splash screen or a program that draws its own frame |
+
+In `MAXIMIZED` and `FULLSCREEN`, the window is bigger than the design, and the design is scaled up
+to fill it as the [autoscale](coordinates.md#design-size-and-autoscale) mode says. A change of
+mode applies from the next frame, since the frame being drawn was laid out for the window as it
+is. A key that switches in and out of full screen is a few lines:
+
+```mojo
+# In `update`: F11 switches between a window and the full screen.
+if context.keyboard.pressed(Key.F11):
+    if context.window_mode() == WindowMode.FULLSCREEN:
+        context.window_mode(WindowMode.WINDOWED)
+    else:
+        context.window_mode(WindowMode.FULLSCREEN)
+```
+
+`context.title(text)` changes the text in the window's title bar, such as to show the level being
+played, and `context.resizable(False)` stops the player from dragging the window's edges to resize
+it. Both show from the frame they are set in, and cost nothing to set every frame, since the
+window is only told when they change.
+
+**Ending the run.** The run ends when the player closes the window, when the program calls
+`context.quit()`, which ends it once the current `update` returns, and, unless told otherwise,
+**when the player presses Escape**. Escape quitting is handy while trying out a sketch, but a game
+usually wants Escape for its own pause menu. `context.quit_on_escape(False)` turns the quitting
+off, so Escape becomes an ordinary key; then give the player another way out, such as a Quit
+button in the menu:
+
+```mojo
+# In `create`:
+context.quit_on_escape(False)
+
+# In `update`:
+if context.keyboard.pressed(Key.ESCAPE):
+    self.paused = not self.paused
+if self.paused and self.quit_button.contains(context.mouse.position) and context.mouse.pressed():
+    context.quit()
+```
+
+When the run ends, `run` returns, a recording still running is finished and saved, and `main`
+carries on from the line after `run`, if it has any.
+
+## When something goes wrong
+
+**An error ends the run.** `create` and `update` are marked `raises`, so anything inside them may
+raise an error: loading a file that isn't there, reading a JSON field that is missing, or a call
+given a value it can't use. An error that nothing catches leaves `update`, then `run`, then
+`main`, and ends the program: the window closes, and Mojo prints the error's message in the
+terminal the program was started from. Create's errors name what went wrong, and a file's path
+where there is one, so the message is the first place to look. A recording that was running is
+left unfinished, as its `.partial` file (see [Recording](../media/capture.md#recording)).
+
+An error the program expects, such as a save file that doesn't exist yet the first time a game
+runs, can be caught with `try` and `except`, so the run goes on (see
+[Errors](mojo.md#errors)).
+
+**Printing values.** `print(...)` writes to the terminal, and is the simplest way to see what a
+program is doing. Every value Create gives you prints the way it would be written in code, so
+what you see can be pasted straight back into the program:
+
+```mojo
+# In `update`:
+print(context.mouse.position)  # Point2D(-120.0, 45.5)
+print(Rectangle((0, 0), 100, 50))  # Rectangle(position=Point2D(0.0, 0.0), width=100.0, height=50.0)
+print(Color.RED)  # Color(255, 0, 0, 255)
+```
+
+Printing every frame floods the terminal quickly, so print when something happens, such as when a
+key is pressed, or draw the value on the screen instead, where it updates in place:
+`canvas.text(String(self.velocity), (0, canvas.top() - 20))`.
 
 ## File paths
 

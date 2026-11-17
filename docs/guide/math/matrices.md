@@ -68,10 +68,10 @@ with canvas.transform(translate(Vector2D(self.car_position))):
 
 ## Moving points by hand
 
-`canvas.transform` changes what is drawn, but sometimes you need to know where a point ends up,
-such as the tip of a turning cannon, to fire a shot from it. `apply(m, point)` gives the point
-moved by the matrix, and `apply(m, vector)` gives a vector changed by its turning and scaling (a
-vector, being a movement rather than a place, isn't moved by a translation):
+`canvas.transform` changes what is drawn, but sometimes you need to know where a point ends up, such
+as the tip of a turning cannon, to fire a shot from it. `apply(m, point)` gives the point moved by
+the matrix, and `apply(m, vector)` gives a vector changed by its turning and scaling only. A vector
+is a movement rather than a place, so a translation doesn't move it:
 
 ```mojo
 var cannon = translate(self.base) @ rotate(self.aim)
@@ -103,5 +103,5 @@ turn, scale and shear the point, and `c` and `f` move it. The extra 1, and the b
 3 by 3 matrix rather than 2 by 2. `@` multiplies two grids, which is how combining two matrices
 works.
 
-`m[row, column]` reads one number, counting from 0, and `Matrix[3, 3](...)` builds a matrix from
-nine numbers, row by row, for transforms the functions above don't build, such as a shear.
+`m[row, column]` reads one number, counting from 0. `Matrix[3, 3](...)` builds a matrix from nine
+numbers, row by row, for a transform the functions above don't build, such as a shear.

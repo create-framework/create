@@ -1,9 +1,9 @@
-# Drawing
+# The canvas
 
 Everything a program shows, it draws on the canvas it is handed each frame. This page explains how
 shapes reach the screen: drawing them, drawing your own types, the background each frame starts
 from, moving and turning what you draw with transforms, smoothing edges, and clipping. How shapes
-look, their colours, strokes, gradients, shadows and text, is [Style](style.md).
+look (their colours, strokes, gradients, shadows and text) is explained in [Style](style.md).
 
 ## Shapes
 
@@ -69,9 +69,9 @@ list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple-scenes
 
 ## The background
 
-Every frame starts cleared to light gray, `Color(200)`, so a shape drawn in the default style (a
-thin black outline, see [Style](style.md#defaults)) shows up on it. `canvas.background()` paints the
-frame another colour. It paints over everything drawn before it in the frame, so call it before
+Every frame starts cleared to light gray, `Color(200)`, so a shape drawn in the default style, a
+thin black outline (see [Style](style.md#defaults)), shows up on it. `canvas.background()` paints
+the frame another colour. It paints over everything drawn before it in the frame, so call it before
 anything else you draw:
 
 - A translucent `background()` blends over that gray, not over the last frame, so fading trails
@@ -82,15 +82,17 @@ anything else you draw:
   drawing over from transparent, and on the GPU backend so does changing `canvas.antialiasing`.
 
 **Starting over.** `canvas.clear()` discards everything drawn so far, back to how the canvas
-started: an [offscreen canvas](../media/images.md#drawing-into-an-image) to transparent, the frame
-canvas to its opening clear (or, with the autoclear off, the last frame's pixels). Style, transform
-and settings are untouched. To paint over what is there instead, use `background()`.
+started: an [offscreen canvas](../media/images.md#drawing-into-an-image) becomes transparent again,
+and the frame's canvas returns to the clear it started from (or, with the autoclear off, to the last
+frame's pixels). Style, transform and settings are untouched. To paint over what is there instead,
+use `background()`.
 
 ## Settings that outlive the frame
 
-Style, transform, camera and clip reset every frame. A few canvas settings are carried from frame
-to frame instead and last until changed, so set them once in `create` (all that lasts, and how
-long, is in [What lasts how long](../basics/programs.md#what-lasts-how-long)):
+Style, transform, camera and clip reset every frame. A few canvas settings are carried from frame to
+frame instead and last until changed, so set them once in `create`. Everything that lasts, and for
+how long, is listed in [What lasts how long](../basics/programs.md#what-lasts-how-long). The canvas
+settings are:
 
 - `autoclear`, above.
 - `letterbox_color`, the bars outside the design under `FIT` (see
@@ -102,12 +104,11 @@ with no arguments (`canvas.antialiasing()`).
 
 ## Transforms and guards
 
-`with canvas.transform(m):` moves, turns or scales everything drawn inside the block by a matrix
-(`translate`, `rotate`, `scale`; what a matrix is, and how they combine, is explained in
-[Matrices](../math/matrices.md)), and the block's end undoes it. It only works as a
-`with` block, so a transform can't accidentally stay on. `canvas.style(...)`, `canvas.overlay()`
-and `canvas.clip(...)` work the same way; each returns a **guard**, the object the `with` block
-holds:
+`with canvas.transform(m):` moves, turns or scales everything drawn inside the block by the matrix
+`m`, built with `translate`, `rotate` and `scale`, and the block's end undoes it. What a matrix is,
+and how matrices combine, is explained in [Matrices](../math/matrices.md). It only works as a `with`
+block, so a transform can't accidentally stay on. `canvas.style(...)`, `canvas.overlay()` and
+`canvas.clip(...)` work the same way; each returns a **guard**, the object the `with` block holds:
 
 ```mojo
 # In `update`:
@@ -158,21 +159,21 @@ with canvas.clip(Circle(context.mouse.position, 120), invert=True):
     canvas.background(Color(0, 0, 0, 220))
 ```
 
-`region` is any `Region` — a `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` or
-`Polygon`, the region types of `contains` and `overlaps` — rounded by its own `corner_radius` as
-when drawn. Lines and curves can't be clips (that doesn't compile). A clip only works as a `with`
-block, so it can't accidentally stay on. See
+`region` can be any `Region`: a `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` or
+`Polygon`, the same types `contains` and `overlaps` take. It is rounded by its own `corner_radius`,
+as when it is drawn. Lines and curves can't be clips (that doesn't compile). A clip only works as a
+`with` block, so it can't accidentally stay on. See
 [examples/clipping](../../../examples/clipping/main.mojo).
 
-- **Placed when the block starts**, like a render call: by the transform and camera current
-  then. A `transform` or `overlay` inside the block moves what is drawn, not the clip.
-- **A clip inside another** draws only where both allow. When the inner block ends, the outer
-  clip applies again.
+- **The clip is placed when the block starts**, like a render call, by the transform and camera
+  current then. A `transform` or `overlay` inside the block moves what is drawn, not the clip.
+- **A clip inside another** draws only where both allow. When the inner block ends, the outer clip
+  applies again.
 - **Everything is clipped**: shapes, images, text, shadows, and `background()`, which then paints
   only the clipped area. The letterbox is not.
 - **Edges** are smoothed at the frame's antialiasing level, like a shape's, so the two backends
   agree inside a clip and may differ slightly along its rim. With `Antialiasing.OFF` a clip is
-  hard-edged. Where the edges of nested clips pass through the same pixel, their smoothing
-  combines: a pixel half inside each of two clips is drawn at a quarter strength.
+  hard-edged. Where the edges of nested clips pass through the same pixel, their smoothing combines:
+  a pixel half inside each of two clips is drawn at a quarter strength.
 
 Soft masks (a gradient or an image's alpha) are not implemented yet.

@@ -1,12 +1,13 @@
-# Vectors
+# Points and vectors
 
-A position on the screen, and a movement across it, are both written as two numbers, an x and a
-y. But they are different things: a position says *where*, and a movement says *which way and how
-far*. Create gives each its own type, `Point2D` for positions and `Vector2D` for movements. This
-page explains what vectors are, why the two types are kept apart, and how to calculate with them.
-It assumes no prior knowledge of vectors.
+A position on the screen, and a movement across it, are both written as two numbers, an x and a y,
+measured in Create's [coordinates](../basics/coordinates.md). But they are different things: a
+position says *where*, and a movement says *which way and how far*. Create gives each its own type,
+`Point2D` for positions and `Vector2D` for movements. This page explains what points and vectors
+are, why the two types are kept apart, and how to calculate with them. It assumes no prior knowledge
+of vectors.
 
-## Points and vectors
+## Locations, displacements and extents
 
 Positions, movements and sizes each have their own kind of value:
 
@@ -21,7 +22,7 @@ Think of a treasure map. "The old oak tree" is a point: a place. "Ten paces nort
 instruction that can be followed from anywhere. Following it from the oak tree takes you to a new
 place, another point.
 
-## Calculating with points and vectors
+## Calculating with them
 
 The sums that make sense between points and vectors are the ones that make sense on the map:
 
@@ -53,7 +54,7 @@ When you really do need to cross between the two, say so with a constructor: `Ve
 movement from the origin to the point `p`, and `Point2D(v)` is where the movement `v` takes you
 from the origin.
 
-## Writing points and vectors
+## Writing them
 
 A point can be written as a bare pair of numbers wherever a `Point2D` is expected, so
 `canvas.circle((0, 0), 20)` works without naming the type. A vector always names its type:
@@ -128,7 +129,7 @@ if facing.dot(to_enemy) > 0.7:  # within about 45° either side of straight ahea
     self.spot(enemy)
 ```
 
-## Mixing points and vectors
+## Between two values
 
 `a.lerp(b, t)` is the point, or the vector, a fraction `t` of the way from `a` to `b`: 0 is `a`,
 1 is `b` and 0.5 halfway between them. It is the way to move something smoothly from one place to

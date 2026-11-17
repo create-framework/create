@@ -1,4 +1,4 @@
-# Processing
+# Coming from Processing
 
 Create is inspired by Processing, and much of it will feel familiar. This page lists what works
 differently, and where to find the Create version of the calls you know.
@@ -30,7 +30,7 @@ These look like Processing but behave differently, and each one catches people o
 - **Fading trails need the autoclear off.** Every frame starts cleared, so a translucent
   `background()` blends over a clean frame, not over the last one. Call
   `canvas.autoclear(False)` in `create` to keep the previous frame's drawing. See
-  [The background](../drawing/drawing.md#the-background).
+  [The background](../drawing/canvas.md#the-background).
 - **Time is in seconds.** Move things by `context.time.delta`, the seconds since the last frame,
   rather than by a fixed step per frame, so they move at the same speed at any frame rate. See
   [Time](../motion/time.md).
@@ -58,13 +58,13 @@ These look like Processing but behave differently, and each one catches people o
 
 | Processing | Create |
 |---|---|
-| `rect(x, y, w, h)`, `ellipse(...)`, `line(...)` | `canvas.rectangle((x, y), w, h)`, `canvas.ellipse(...)`, `canvas.line(...)`, all [centred](../drawing/drawing.md#shapes) |
+| `rect(x, y, w, h)`, `ellipse(...)`, `line(...)` | `canvas.rectangle((x, y), w, h)`, `canvas.ellipse(...)`, `canvas.line(...)`, all [centred](../drawing/canvas.md#shapes) |
 | `background(c)` | `canvas.background(c)` |
 | `fill(c)`, `noFill()` | `canvas.fill(c)`, `canvas.fill_enabled(False)` |
 | `stroke(c)`, `strokeWeight(w)`, `noStroke()` | `canvas.stroke(c, w)`, `canvas.stroke_enabled(False)` |
 | `color(r, g, b)`, `colorMode(HSB)` | `Color(r, g, b)`, `Color.hsv(h, s, v)` (see [Colours](../drawing/colours.md)) |
 | `lerpColor(a, b, t)` | `a.lerp(b, t)` |
-| `pushMatrix()`, `translate`, `rotate`, `popMatrix()` | `with canvas.transform(translate(x, y) @ rotate(a)):` (see [Transforms](../drawing/drawing.md#transforms-and-guards)) |
+| `pushMatrix()`, `translate`, `rotate`, `popMatrix()` | `with canvas.transform(translate(x, y) @ rotate(a)):` (see [Transforms](../drawing/canvas.md#transforms-and-guards)) |
 | `push()` / `pop()` for style | `with canvas.style(...):` |
 | `textSize`, `textFont`, `textAlign` | `canvas.font_size`, `canvas.font`, `canvas.text_alignment` (see [Text](../drawing/text.md)) |
 | `createFont`, `loadFont` | `Font.load(path)` |
@@ -88,8 +88,8 @@ These look like Processing but behave differently, and each one catches people o
 
 | Processing | Create |
 |---|---|
-| `PVector` | `Point2D` for a position, `Vector2D` for a movement (see [Vectors](../math/vectors.md)) |
-| `random(a, b)` | `random.float(a, b)`, on a `Random` field (see [Random](../math/random.md)) |
+| `PVector` | `Point2D` for a position, `Vector2D` for a movement (see [Points and vectors](../math/points-and-vectors.md)) |
+| `random(a, b)` | `random.float(a, b)`, on a `Random` field (see [Random numbers](../math/random-numbers.md)) |
 | `noise(x, y)` | `noise.at((x, y))`, on a `Noise` field (see [Noise](../math/noise.md)) |
 | `map`, `lerp`, `constrain` | `map`, `lerp`, `clamp` (see [Interpolation](../math/interpolation.md)) |
 | `loadImage(path)` | `Image.load(path)` (see [Images](../media/images.md)) |

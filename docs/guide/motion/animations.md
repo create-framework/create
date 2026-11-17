@@ -59,15 +59,15 @@ situation:
   frame. Without an argument they restart the animation already held. `pause()` freezes it,
   `resume()` continues from there, and `stop()` rewinds to frame 0.
 
-`is_playing()`, `is_finished()` (whether a `play` has shown its last frame) and `frame_index()`
-read an animator back, such as to start the next move once an attack animation has finished.
+`is_playing()`, `is_finished()` (whether a `play` has shown its last frame) and `frame_index()` read
+an animator back: use them, for example, to start the next move once an attack animation has
+finished.
 
 ## Animations and time
 
-Nothing needs to update an animator each frame: it works out its frame from the run's clock
-whenever it is asked. So it follows `context.time_scale` and `time_paused` (see
-[Slowing and pausing time](time.md#slowing-and-pausing-time)), slowing down and
-stopping with the rest of the game, unless it is built on real time with
-`Animator(animation, clock=Clock.REAL)`, as a pause menu's own animations must be.
+Nothing needs to update an animator each frame: it works out its frame from the run's clock whenever
+it is asked. So it slows down and stops with the rest of the game under `context.time_scale` and
+`time_paused` (see [Slowing and pausing time](time.md#slowing-and-pausing-time)), unless it is built
+on real time with `Animator(animation, clock=Clock.REAL)`, as a pause menu's own animations must be.
 
 See [examples/animation](../../../examples/animation/main.mojo).

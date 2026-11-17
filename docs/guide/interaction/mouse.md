@@ -1,9 +1,9 @@
 # Mouse
 
-`context.mouse` tells a program where the pointer is, how it moved, which buttons are held and
-how far the wheel turned. This page explains each of those, how to find what is under the
-pointer, and how to change the pointer's look. What every device has in common, `down`,
-`pressed` and `released`, is in [Input](input.md#down-pressed-and-released).
+`context.mouse` tells a program where the pointer is, how it moved, which buttons are held and how
+far the wheel turned. This page explains each of those, how to find what is under the pointer, and
+how to change the pointer's look. What every device has in common (`down`, `pressed` and `released`)
+is in [Input](input.md#down-pressed-and-released).
 
 ## Buttons
 
@@ -63,11 +63,11 @@ How the spaces relate is explained in
 
 ## Locking the mouse
 
-`movement` keeps counting where `position` has to stop, at the edge of the screen.
-`context.lock_mouse(True)` uses this for a first-person camera: it hides the pointer and holds it
-inside the window, so the player can keep turning in one direction for as long as they like, with
-`movement` saying how far. Unlock it with `context.lock_mouse(False)` when a menu needs the pointer
-back.
+At the edge of the screen, `position` has to stop, but `movement` keeps counting.
+`context.lock_mouse(True)` puts this to use for a first-person camera: it hides the pointer and
+holds it inside the window, so the player can keep turning in one direction for as long as they
+like, with `movement` saying how far. Unlock it with `context.lock_mouse(False)` when a menu needs
+the pointer back.
 
 ## The cursor
 

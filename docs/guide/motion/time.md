@@ -12,9 +12,9 @@ How many frames a program draws each second, its **frame rate**, depends on the 
 display: often 60, but 30 on a slow machine and 144 on a fast display. Something moved 5 units
 every frame would therefore move more than twice as fast on one computer as on another.
 
-So **move things by time, in seconds**, rather than by a fixed step each frame.
-`context.time.delta` is the seconds since the last frame, so multiplying a speed in units a second
-by it gives how far to move this frame, and things move at the same speed at any frame rate:
+So **move things by time, in seconds**, rather than by a fixed step each frame. `context.time.delta`
+is the seconds since the last frame. Multiplying a speed, in units a second, by it gives how far to
+move this frame, so things move at the same speed at any frame rate:
 
 ```mojo
 # In `update`:
@@ -52,10 +52,10 @@ it is asked.
 
 ## Slowing and pausing time
 
-`delta` and `elapsed` are **scaled time**: `context.time_scale(0.5)` runs them at half speed,
-and `context.time_paused(True)` stops them, `delta` reading zero until it is unpaused. What
-moves by `delta`, and every animator and tween, slows and stops together, so slow motion and a
-pause screen are one call each:
+`delta` and `elapsed` are **scaled time**: `context.time_scale(0.5)` runs them at half speed, and
+`context.time_paused(True)` stops them: `delta` reads zero until time is unpaused. What moves by
+`delta`, and every animator and tween, slows and stops together, so slow motion and a pause screen
+are one call each:
 
 ```mojo
 # In `update`:

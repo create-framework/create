@@ -1,24 +1,27 @@
 # User guide
 
-How to use Create, topic by topic. New to it? Start with the [README](../../README.md)'s
-"Hello, world!" and the programs under [examples/](../../examples/). Coming from Processing? Read
-[Processing](basics/processing.md) first: it lists what works differently.
+How to use Create, topic by topic. New to it? Start with the [README](../../README.md)'s "Hello,
+world!" and the programs under [examples/](../../examples/), and if Mojo is new to you too, read
+[Mojo](basics/mojo.md). Already know Processing? Read [Coming from
+Processing](basics/coming-from-processing.md) first: it lists what works differently.
 
 ## [Basics](basics/README.md)
 
 - [Setup](basics/setup.md): installing Create and starting a project, with `create-cli` or plain
   pixi.
+- [Mojo](basics/mojo.md): the parts of the Mojo language the examples use: variables and numbers,
+  `mut`, structs and traits, lists, optional values, errors, moving with `^`, and `ref`.
 - [Programs](basics/programs.md): how a program runs, `create` and `update`, `run`'s arguments and
   the CPU or GPU backend, what is a field and what a parameter, what lasts how long, the run's
-  settings, file paths and scenes.
-- [Coordinates](basics/coordinates.md): where things are on the screen, screen, world and local
-  space, the camera, and the design size.
-- [Processing](basics/processing.md): what works differently from Processing, and where the calls
-  you know are.
+  settings, the window and its modes, errors and printing, file paths and scenes.
+- [Coordinates](basics/coordinates.md): where things are on the screen, the three spaces (screen,
+  world and local), the camera and following the player with it, and the design size.
+- [Coming from Processing](basics/coming-from-processing.md): what works differently from
+  Processing, and where the calls you know are.
 
 ## [Drawing](drawing/README.md)
 
-- [Drawing](drawing/drawing.md): shapes and your own drawable types, the background, transforms,
+- [The canvas](drawing/canvas.md): shapes and your own drawable types, the background, transforms,
   antialiasing and clipping.
 - [Style](drawing/style.md): how the style works, its defaults, the three ways to change it, and
   tint, opacity and blend modes.
@@ -65,17 +68,20 @@ How to use Create, topic by topic. New to it? Start with the [README](../../READ
 
 ## [Data](data/README.md)
 
-- [Tables](data/tables.md): reading, changing and saving CSV and TSV tables.
-- [JSON](data/json.md): reading, changing and saving JSON files.
+- [Tables](data/tables.md): reading, changing and saving CSV and TSV tables, and finding, counting
+  and removing rows.
+- [JSON](data/json.md): reading, changing and saving JSON files, building a document from nothing,
+  and missing fields.
 
 ## [Math](math/README.md)
 
 These pages assume no prior knowledge of the mathematics they describe.
 
 - [Angles](math/angles.md): radians, which way angles go, and `sin`, `cos` and `atan2`.
-- [Vectors](math/vectors.md): points and vectors, length and direction, and the dot product.
+- [Points and vectors](math/points-and-vectors.md): positions and movements, length and direction,
+  and the dot product.
 - [Matrices](math/matrices.md): moving, turning and scaling with matrices, and combining them.
 - [Interpolation](math/interpolation.md): `lerp`, `map`, `clamp`, `smoothstep` and other helpers.
 - [Easing](math/easing.md): easing curves, and how to read their names.
-- [Random](math/random.md): random numbers and seeds.
+- [Random numbers](math/random-numbers.md): getting them, and seeds that repeat them.
 - [Noise](math/noise.md): values that vary randomly but smoothly, and how to shape them.

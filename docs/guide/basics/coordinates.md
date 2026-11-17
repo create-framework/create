@@ -1,9 +1,7 @@
 # Coordinates
 
 Every position in Create is a pair of numbers, an x and a y, and this page explains where those
-numbers land on the screen: Create's coordinate system, points and vectors, the three spaces a
-position can be in, the camera, and how the size a program is written for is fitted to a real
-window.
+numbers land on the screen. It explains Create's coordinate system, the difference between screen, world and local space, how the camera plays into all this, and how the size a program is written for is fitted to a real window.
 
 ## Create's coordinate system
 
@@ -51,14 +49,6 @@ they can be fractional. `canvas.bounds()` is the whole screen as a `Rectangle`, 
 shows. Text and images still appear the right way up, even though y increases upwards; they
 turn, shear and mirror only under `canvas.transform`, like everything else drawn.
 
-## Points and vectors
-
-A position, such as `context.mouse.position` or the centre of a shape, is a `Point2D`, and a
-movement, such as a velocity, is a `Vector2D`. Both are an x and a y, measured in the coordinates
-above, but they are kept apart because they mean different things: a point says *where*, and a
-vector says *which way and how far*. How to use them, and why they are separate types, is
-explained in [Vectors](../math/vectors.md).
-
 ## Screen, world and local space
 
 The same numbers can mean different places, depending on which **space** they are measured in.
@@ -72,16 +62,52 @@ There are three:
   world is on the screen. Without a camera, world space is the same as screen space.
   `camera.to_world(screen_point)` and `camera.to_screen(world_point)` convert between the two.
 - **Local space** is the space inside a `canvas.transform` block, which the transform has moved,
-  turned or scaled (see [Drawing](../drawing/drawing.md#transforms-and-guards)): what a drawing
-  call's numbers mean there. `canvas.to_local(screen_point)` and `canvas.to_screen(local_point)`
-  convert between local and screen space, through the transform and the camera together.
+  turned or scaled, so a drawing call's numbers there land somewhere else on the screen (see
+  [The canvas](../drawing/canvas.md#transforms-and-guards)). `canvas.to_local(screen_point)` and
+  `canvas.to_screen(local_point)` convert between local and screen space, through the transform
+  and the camera together.
 
 ## The camera
 
-A camera shows part of a larger world, and moves over it, as a film camera follows an actor. A
-`Camera` has a `position`, the point of the world shown at the centre of the screen, and a
-`zoom`. `canvas.camera(camera)` makes every later render call, and nested transform, draw through
-it. Like the style, it is reset every frame, so call it every frame.
+A camera shows part of a larger world, and moves over it, as a film camera follows an actor. It
+lets a game's world be much bigger than the screen: the level is laid out once, in world
+coordinates, and the camera decides which part of it the player sees.
+
+A `Camera` has two fields:
+
+- **`position`** is the point of the world shown at the centre of the screen. Moving it moves the
+  view: as the camera's position goes right, the world appears to slide left.
+- **`zoom`** is how much the world is magnified around that point. At 1, the default, one unit of
+  the world is one unit on the screen. At 2, everything appears twice as big, so only half as much
+  of the world fits across the screen; at 0.5, everything appears half as big, and twice as much
+  fits.
+
+The camera is the program's own: build it in `create`, keep it as a field, and move it whenever
+you like. Then, every frame, hand it to the canvas with `canvas.camera(camera)`, before drawing
+the world. From that call on, every render call, and every transform block, draws through it.
+Like the style, the camera is reset at the end of each frame, which is why it is set every frame
+rather than once.
+
+A camera that follows the player is the commonest kind. Setting its position to the player's
+each frame works, but the view then jerks with every sudden move. Moving it a fraction of the way
+towards the player each frame instead makes it trail smoothly behind, catching up quickly when
+far away and gently as it closes in (the fraction is worked out from the time that passed, so it
+follows at the same pace at any frame rate; see
+[Interpolation](../math/interpolation.md#lerp)):
+
+```mojo
+# In `create`, building the `camera` field:
+var camera = Camera()  # looking at the origin, at zoom 1
+
+# In `update`, with a `player` field that has a `position`:
+var follow = 1 - exp(-5 * context.time.delta)
+self.camera.position = self.camera.position.lerp(self.player.position, follow)
+self.camera.zoom = clamp(  # the mouse wheel zooms in and out
+    self.camera.zoom * (1 + context.mouse.wheel.y * 0.1), 0.25, 4.0
+)
+canvas.camera(self.camera)
+# Everything drawn from here on is drawn in world coordinates.
+```
 
 Some things should stay put on the screen while the camera moves, such as the score and a health
 bar. Draw them inside `with canvas.overlay():`, which suspends the camera for its block:
