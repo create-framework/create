@@ -1,4 +1,4 @@
-# Random
+# Random numbers
 
 Random numbers make a program less predictable: where the stars are scattered, which enemy
 appears next, how far a spark flies. This page explains how to get random numbers from a `Random`,

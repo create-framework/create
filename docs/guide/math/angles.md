@@ -22,7 +22,7 @@ with y increasing upwards (see [Coordinates](../basics/coordinates.md)).
 ## Radians
 
 Create measures angles in **radians** rather than degrees. A full turn is 2π radians, about 6.28,
-where it is 360 degrees:
+rather than 360 degrees:
 
 | Turn | Degrees | Radians | In Create |
 |---|---|---|---|
@@ -58,7 +58,8 @@ for i in range(12):
 ```
 
 `Vector2D.from_angle(angle, length)` does the same and gives a vector, which is usually the more
-convenient form: `Vector2D.from_angle(angle, 150)` (see [Vectors](vectors.md#angles)).
+convenient form: `Vector2D.from_angle(angle, 150)` (see [Points and
+vectors](points-and-vectors.md#angles)).
 
 Moving the angle with the time makes something go round in a circle:
 

@@ -48,9 +48,9 @@ A bigger one, loading sounds from files, is [examples/audio](../../../examples/a
 
 ## Sounds
 
-A `Sound` is a sound's samples, ready to play, an asset like an `Image` (see [Assets and
-playheads](../basics/programs.md#assets-and-playheads)): it never changes, and it is cheap to
-copy, since copies share their samples.
+A `Sound` is a sound's samples, ready to play. Like an `Image`, it is an asset (see [Assets and
+playheads](../basics/programs.md#assets-and-playheads)): it never changes, and it is cheap to copy,
+since copies share their samples.
 
 ```mojo
 # In `create`:
@@ -63,12 +63,12 @@ var chime = Sound.load("assets/chime.wav")
 - **Synthesizing:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` makes a sound from
   a list of `Float64` samples, from `-1.0` to `1.0`; any outside that range are cut off at it. With
   several channels, the samples take turns, one per channel: left, right, left, right. Each such
-  group, one sample for every channel, is called an audio *frame*, which has nothing to do with
-  the frames a program draws. It raises an error unless `channels` and `sample_rate` are positive
-  and the samples make up whole frames.
-- **Reading:** `channels()`, `sample_rate()`, `frame_count()` and `duration()` in seconds.
-  `sample(frame, channel=0)` reads one sample back, from `-1.0` to `1.0`, and is `0.0` outside
-  the sound, so drawing its waveform needs no checks for running off either end.
+  group, one sample for every channel, is called an audio *frame*, which has nothing to do with the
+  frames a program draws. It raises an error unless `channels` and `sample_rate` are positive and
+  the samples make up whole frames.
+- **Reading:** `channels()`, `sample_rate()`, `frame_count()` and `duration()`, in seconds, describe
+  the sound. `sample(frame, channel=0)` reads one sample back, from `-1.0` to `1.0`, and is `0.0`
+  outside the sound, so drawing its waveform needs no checks for running off either end.
 
 ## Playing
 
@@ -124,4 +124,4 @@ played at the old values.
   down: `2.0` is twice as fast and an octave up. It is kept between `0.01` and `100.0`.
 - **A pause screen** calls `pause_all()` on the way in and `resume_all()` on the way out. Playbacks
   played in between play as usual, so the screen can have sounds of its own; `resume_all` also
-  resumes playbacks paused one by one before.
+  resumes any playback that was paused on its own before.

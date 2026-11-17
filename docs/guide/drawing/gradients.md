@@ -8,8 +8,8 @@ style.
 ## Filling with a gradient
 
 A `Gradient` fills regions and backgrounds: `canvas.fill(gradient)` and
-`canvas.background(gradient)` work like their colour versions. Build a gradient once in `create`
-and keep it as a field (or in a `Style`), since building one does work up front that every
+`canvas.background(gradient)` work like their colour versions. Build a gradient once in `create` and
+keep it as a field (or in a `Style`), since building one does some work up front, which every
 drawing of it then reuses:
 
 ```mojo
@@ -45,23 +45,23 @@ the rest.
 
 ## How a gradient fits a shape
 
-**A gradient stretches to fit each shape it fills.** It is laid out across the shape's bounding
-box, the smallest upright rectangle round it, before the transform. So it moves and turns with
-the shape, and one gradient suits shapes of every size. A sector's box is that of its whole
-circle.
+**A gradient stretches to fit each shape it fills.** It is laid out across the shape's bounding box,
+the smallest upright rectangle round the shape before any transform is applied. So it moves and
+turns with the shape, and one gradient suits shapes of every size. A sector's box is that of its
+whole circle.
 
 - **A linear gradient** runs along its `direction`, a `Vector2D`, which is `Vector2D.DOWN` (top to
   bottom) unless you give another; only its direction matters, not its length. The gradient's 0
   lands on the box's corner furthest back along the direction, and its 1 on the corner furthest
   ahead, as in CSS, so the gradient covers the whole box.
-- **A radial gradient** runs from its first stop at its `center` out to its last at the box's
-  edges, so on a long box its rings are ellipses. `center` is measured across the box rather than
-  in units: `(0, 0)` is the box's centre (the default), `(-1, -1)` its bottom-left corner and
-  `(1, 1)` its top-right.
+- **A radial gradient** runs from its first stop at its `center` out to its last at the box's edges,
+  so on a long box its rings are ellipses. `center` is measured across the box rather than in units:
+  `(0, 0)` is the box's centre (the default), `(-1, -1)` its bottom-left corner and `(1, 1)` its
+  top-right.
 - A zero `direction`, or a box of no size, paints the first stop.
-- A fade to `TRANSPARENT` stays clean, with no dark fringe, and gradients are dithered (given a
-  faint, fine grain) on both backends, which hides the visible steps a smooth blend can otherwise
-  show.
+- A fade to `TRANSPARENT` stays clean, with no dark fringe.
+- Gradients are dithered on both backends: given a faint, fine grain, which hides the visible steps
+  a smooth blend can otherwise show.
 
 ## Gradients and the rest of the style
 

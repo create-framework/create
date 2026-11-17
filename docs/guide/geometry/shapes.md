@@ -1,7 +1,7 @@
 # Shapes
 
 Create's shapes are plain values: a `Circle` is a position and a radius, which you can keep in a
-field, move, draw with `canvas.draw` (see [Drawing](../drawing/drawing.md#shapes)) and test
+field, move, draw with `canvas.draw` (see [The canvas](../drawing/canvas.md#shapes)) and test
 against other shapes (see [Collisions](collisions.md)). This page describes the **regions**, the
 shapes with an inside: what each one is, how it is built, and what is particular about it. Lines
 and curves, which have no inside, are described in [Curves](curves.md).
@@ -30,9 +30,9 @@ leave the one they were called on as it was, so moving a rectangle is
 
 A rectangle, triangle, polygon or sector can have rounded corners. `corner_radius` is the radius of
 the rounding: the corners become arcs of a circle that size. It is a keyword-only field of
-`Rectangle`, `Triangle`, `Polygon` and `Sector`, such as
-`Rectangle(position, width, height, corner_radius=8)`, and a shape value is always drawn and
-clipped with its own radius, whatever the style says.
+`Rectangle`, `Triangle`, `Polygon` and `Sector`, such as `Rectangle(position, width, height,
+corner_radius=8)`. A shape value is always drawn and clipped with its own radius, whatever the style
+says.
 
 - **The canvas calls** that build a shape from numbers (`rectangle`, `triangle`, `polygon` and
   `sector`) take a `corner_radius=` keyword too. Without one, they use the style's corner radius,
@@ -86,12 +86,12 @@ its `bounds()` returns. `canvas.ellipse(position, width, height)` draws one, lik
 ## `Capsule`
 
 A capsule is shaped like a pill, a bar with round ends: every point within `radius` of the line
-segment from `start` to `end`. `canvas.capsule(start, end, radius)` draws one. As a collider it
-fits a long, rounded body, such as a standing character or a limb, more closely than a rectangle,
-whose corners would report hits where nothing is drawn, and unlike an `Ellipse` it can lie at any
-angle. It can also cover a moving circle's whole path: a capsule from where a ball was last frame
-to where it is now, with the ball's radius, overlaps a wall whenever the ball passed through it,
-so a fast ball can't skip through a thin wall between two frames (see
+segment from `start` to `end`. `canvas.capsule(start, end, radius)` draws one. As a collider it fits
+a long, rounded body, such as a standing character or a limb, more closely than a rectangle, whose
+corners would report hits where nothing is drawn. Unlike an `Ellipse`, it can also lie at any angle.
+It can also cover a moving circle's whole path: a capsule from where a ball was last frame to where
+it is now, with the ball's radius, overlaps a wall whenever the ball passed through it, so a fast
+ball can't skip through a thin wall between two frames (see
 [Collisions](collisions.md#moving-shapes)).
 
 - It is placed by its two ends, like a `Line`, so `center()` and `move_to` use the point midway

@@ -9,9 +9,9 @@ image pixel by pixel.
 
 ## Reading the screen
 
-`canvas.color_at(position)` returns the `Color` at a point, and `canvas.snapshot()` (or
-`snapshot(region)`, with an optional `scale=`) returns an `Image` of the screen. Both read what the
-frame has drawn **so far**. A colour picker:
+`canvas.color_at(position)` returns the `Color` at a point, and `canvas.snapshot()` returns an
+`Image` of the screen, or `snapshot(region)` of part of it; both take an optional `scale=`. Both
+read what the frame has drawn **so far**. A colour picker:
 
 ```mojo
 from create import *

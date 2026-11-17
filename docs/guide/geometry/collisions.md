@@ -55,10 +55,11 @@ def main() raises:
   `Capsule`, `Triangle`, `Sector`, `Polygon`) share any point. It works both ways round:
   `a.overlaps(b)` and `b.overlaps(a)` always agree.
 - **`curve.intersects(x)`** asks whether a curve (`Line`, `Arc`, `Bezier`, `Spline`) crosses or
-  touches `x`, any shape or a `Point2D`. It is a method of curves only, since crossing is all a
-  curve can do: write `line.intersects(circle)`, not the other way round.
-- **`region.contains(x)`** asks whether `x`, a point, region or curve, lies wholly inside the
-  region. It works one way only: a big circle can contain a small one, but not the other way round.
+  touches `x`, which can be any shape or a `Point2D`. It is a method of curves only, since crossing
+  is all a curve can do: write `line.intersects(circle)`, not the other way round.
+- **`region.contains(x)`** asks whether `x`, which can be a point, region or curve, lies wholly
+  inside the region. It works one way only: a big circle can contain a small one, but not the other
+  way round.
 
 A curve has no inside, so `overlaps` never takes a `Line`; use `intersects` instead. All three
 tests take a shape's rounded corners into account.
@@ -101,5 +102,5 @@ The tests only say whether shapes touch. To know how far apart a point and a sha
 var distance = point.distance(shape.closest_point(point))  # 0 inside the shape
 ```
 
-That is useful for things that should react before they touch, such as an enemy that notices the
-player within 200 units of a wall, or a magnet pulling coins towards the player.
+That is useful for things that should react before they touch, such as a door that opens once the
+player is within 200 units of it, or a magnet pulling coins towards the player.

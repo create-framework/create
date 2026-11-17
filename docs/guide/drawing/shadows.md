@@ -31,8 +31,8 @@ shadow through it. The frame's clear, the background and the letterbox never cas
 ## Shaping a shadow
 
 - **The offset** is how far the shadow sits from its shape, `(4, -4)` by default: down and to the
-  right. It is fixed to the screen, so rotating a shape doesn't turn its shadow's offset, as if the
-  light always came from the same place; camera zoom and autoscale still scale it.
+  right. It is fixed to the screen, as if the light always came from the same place, so rotating a
+  shape doesn't turn its shadow's offset. Camera zoom and autoscale still scale it.
   `shadow_follows_transform(True)` makes the offset turn with the shape instead.
 - **`blur`** softens the shadow's edge. It is roughly how far the fade from shadow to nothing
   reaches, as CSS's blur radius is, and a blur of 0 gives a hard edge.
@@ -43,9 +43,10 @@ shadow through it. The frame's clear, the background and the letterbox never cas
 
 ## Inset shadows
 
-`inset=True` (`shadow_inset=True` in `canvas.style`) paints the shadow inside the shape instead,
-after the shape itself, clipped to the inside of the stroke. It works on rectangles, circles and
-triangles only; sectors, polygons, lines, arcs, text and images cast nothing while it is set.
+`inset=True` (`shadow_inset=True` in `canvas.style`) paints the shadow inside the shape instead: it
+is drawn on top of the shape, and clipped to the inside of its stroke. It works on rectangles,
+circles and triangles only; sectors, polygons, lines, arcs, text and images cast nothing while it is
+set.
 
 ## Shadows and the rest of the style
 

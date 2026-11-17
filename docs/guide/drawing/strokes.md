@@ -1,8 +1,8 @@
 # Strokes
 
-The stroke is the line drawn along a shape's edge, or along a line or curve, which has no edge
-other than itself. This page covers its colour and thickness, where it sits against a shape's
-edge, how its ends look, and how to break it into dashes.
+The stroke is the line drawn along a shape's edge. A line or curve has no edge of its own, so its
+stroke is drawn along the line itself. This page covers its colour and thickness, where it sits
+against a shape's edge, how its ends look, and how to break it into dashes.
 
 ## Colour and thickness
 
@@ -35,8 +35,8 @@ The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers
 
 ## How the ends look
 
-**`stroke_cap(...)`** sets how an open stroke ends, that is, the stroke of a `Line`, `Arc`,
-`Bezier` or open `Spline`:
+**`stroke_cap(...)`** sets how an open stroke ends: the stroke of a `Line`, `Arc`, `Bezier` or open
+`Spline`:
 
 | Cap | End |
 |---|---|
@@ -54,8 +54,8 @@ The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers
 ## Dashes
 
 **`stroke_dash(...)`** breaks a stroke into dashes, on every kind of shape. The presets scale with
-the stroke's thickness, so they look the same on a thin stroke and a thick one, and
-`StrokeDash(...)` takes exact lengths, in the same units as the thickness:
+the stroke's thickness, so they look the same on a thin stroke and a thick one. `StrokeDash(...)`
+takes exact lengths instead, in the same units as the thickness:
 
 | Value | Stroke |
 |---|---|

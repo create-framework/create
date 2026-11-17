@@ -1,11 +1,11 @@
 # Style
 
-The style is everything about how a shape looks rather than where it is: its fill, its stroke,
-its shadow, the font of its text, and how it blends with what is already on the screen. This page
+The style is everything about how a shape looks rather than where it is: its fill, its stroke, its
+shadow, the font of its text, and how it blends with what is already on the screen. This page
 explains how the style works as a whole: what it starts as, the three ways to change it, and the
-settings that affect everything a **render call** (any call that draws, such as `canvas.circle` or
-`canvas.text`) draws at once. The parts of the style each have a page of
-their own:
+settings that affect everything a render call draws at once. (A **render call** is any call that
+draws, such as `canvas.circle` or `canvas.text`.) The parts of the style each have a page of their
+own:
 
 - [Colours](colours.md): making a `Color`, and mixing and fading colours.
 - [Strokes](strokes.md): the outline, where it sits, how its ends look, and dashes.
@@ -21,7 +21,7 @@ the `with` block it was set in ends.
 **Shapes are not filled by default**, unlike in Processing. A new style has a black stroke, which
 is switched on and 1 unit thick, and a white fill, which is switched off. Text is black. So a
 shape drawn with no style at all is a thin black outline, which shows up on the light gray every
-frame starts with (see [Drawing](drawing.md#the-background)).
+frame starts with (see [The canvas](canvas.md#the-background)).
 
 ## Fill, stroke and text colours
 

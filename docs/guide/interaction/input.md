@@ -56,14 +56,14 @@ def main() raises:
 ```
 
 - The mouse's methods ask about `MouseButton.LEFT` unless you name another button.
-- Unlike Processing's `mousePressed`, *pressed* never means held: Processing's `mousePressed` is
+- *Pressed* never means held. Processing's `mousePressed` variable, which does, is
   `context.mouse.down()` in Create.
 - When the player switches to another window, everything held is released, and `released` is true
   for each of them in that frame. The window can't see a key or button let go while another window
   is in front, so this keeps nothing stuck down. A gamepad that disconnects releases its buttons the
   same way.
-- The most recent press is `keyboard.key`, `mouse.button` and `pad.button`, which are
-  `Key.NONE`, `MouseButton.NONE` and `GamepadButton.NONE` before anything has been pressed.
+- `keyboard.key`, `mouse.button` and `pad.button` hold each device's most recent press. Before
+  anything has been pressed, they are `Key.NONE`, `MouseButton.NONE` and `GamepadButton.NONE`.
 
 ## Keys and buttons by name
 

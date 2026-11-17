@@ -3,8 +3,9 @@
 JSON is a text format for structured data: values such as numbers, strings and true or false,
 gathered into lists (*arrays*) and into named fields (*objects*), which can be nested inside each
 other. It is the usual format for settings, save games and level descriptions, and most tools and
-languages read and write it. This page explains how to read, change and save it. Plain rows and
-columns, such as a high-score list, are simpler as a [table](tables.md).
+languages read and write it. This page explains how to read, change and save it, how to build a
+document from nothing, and how to cope with a field that is missing. Plain rows and columns, such as
+a high-score list, are simpler as a [table](tables.md).
 
 ## Working with JSON
 
@@ -42,3 +43,82 @@ config.save("config.json")
   level, and `indent=0` writes it all on one line, as `print` shows it. A number that is infinite,
   or not a number at all (NaN), can't be written as JSON, so `save` raises an error for one, and
   `print` shows it as `null`.
+
+## Building a document
+
+A save game or a settings file has to be written before it can be loaded, so a program often
+builds a document from nothing. `JSON.object()` is an empty object and `JSON.array()` an empty
+array; fill an object by setting its fields, and an array with `append`:
+
+```mojo
+# Saving the game:
+var save = JSON.object()
+save["level"] = 3
+save["name"] = "Ada"
+save["sound"] = True
+save["player"] = JSON.object()  # an empty object, filled in next
+save["player"]["x"] = 120.5
+save["player"]["y"] = -40.0
+save["inventory"] = JSON.array()
+save["inventory"].append("sword")
+save["inventory"].append("rope")
+save.save("save.json")
+```
+
+`save.json` then holds:
+
+```json
+{
+  "level": 3,
+  "name": "Ada",
+  "sound": true,
+  "player": {
+    "x": 120.5,
+    "y": -40.0
+  },
+  "inventory": [
+    "sword",
+    "rope"
+  ]
+}
+```
+
+- **Numbers, strings and `True` or `False` become JSON values by themselves**, so they can be
+  set and appended as they are. `JSON.null()` is JSON's `null`, the value that stands for
+  "nothing here".
+- **A new field is added after the others**, and fields stay in the order they were added, so
+  the file reads in the order the program built it. Setting a field that already exists replaces
+  its value where it is.
+- **To nest an object or array, set an empty one first and then fill it in** through the
+  document, as `player` and `inventory` are above. Since setting a value stores a copy of it, an
+  object filled in separately and set afterwards works too, but changing it after setting it
+  doesn't change the document.
+- `JSON.parse(text)` reads JSON from a string rather than a file, and `print(save)` shows a
+  document as compact JSON, on one line.
+
+## Missing values
+
+A file written by an older version of the program, or edited by hand, may lack a field the
+program expects. Reading a field that isn't there raises an error, so check first, or give a
+default:
+
+- **`"name" in doc`** is whether an object has a field of that name.
+- **`doc.get(name, default)`** is the field's value, or `default` when there is none:
+  `settings.get("volume", 0.8).float()` is the saved volume, or 0.8 in a file that has none.
+- **`doc.is_null()`** is whether a value is `null`, and **`len(doc)`** how many fields an object
+  has, or items an array has.
+- **`doc.remove(name)`** removes a field from an object, and **`doc.remove(index)`** an item from
+  an array, moving the items after it up by one.
+
+The very first time a game runs, there is no save file at all, and `JSON.load` raises an error
+for a file it can't find. Catch the error, and start from an empty document instead (`try` and
+`except` are explained in [Errors](../basics/mojo.md#errors)):
+
+```mojo
+# In `create`:
+var save: JSON
+try:
+    save = JSON.load("save.json")
+except:
+    save = JSON.object()  # the first run: no save yet
+```

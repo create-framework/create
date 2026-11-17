@@ -77,8 +77,8 @@ way to make a colour that keeps changing:
 canvas.fill(Color.hsv(context.time.elapsed * 60, 1.0, 1.0))
 ```
 
-`color.to_hsv()` goes the other way, returning a colour's hue, saturation and value, so you can
-take an existing colour and change only its brightness, say.
+`color.to_hsv()` goes the other way, returning a colour's hue, saturation and value, so you can take
+an existing colour and change only its brightness, for example.
 
 ## Mixing colours
 
