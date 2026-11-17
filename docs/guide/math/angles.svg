@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 290" width="440" height="290" role="img" aria-labelledby="title">
+  <title id="title">Which way angles go in Create: 0 points right, PI / 2 up, PI left and -PI / 2 down. Angles grow counter-clockwise, as the arrow from 0 to PI / 4 shows.</title>
+  <style>
+    .circle { fill: rgba(0, 0, 0, 0.03); stroke: #8c959f; }
+    .axis { stroke: #8c959f; }
+    .ray { stroke: #0969da; }
+    .arrow { fill: #0969da; }
+    .point { fill: #0969da; }
+    .dot { fill: #57606a; }
+    .text { fill: #24292f; font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .code { fill: #24292f; font: 13px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+    .muted { fill: #57606a; }
+    .accent { fill: #0969da; }
+    @media (prefers-color-scheme: dark) {
+      .circle { fill: rgba(255, 255, 255, 0.04); stroke: #6e7681; }
+      .axis { stroke: #6e7681; }
+      .ray { stroke: #4493f8; }
+      .arrow, .point { fill: #4493f8; }
+      .dot { fill: #9da7b3; }
+      .text, .code { fill: #e6edf3; }
+      .muted { fill: #9da7b3; }
+      .accent { fill: #4493f8; }
+    }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+      <path class="arrow" d="M 0 0 L 10 5 L 0 10 z"/>
+    </marker>
+  </defs>
+
+  <!-- A circle of radius 100 round the centre (220, 150). -->
+  <circle class="circle" cx="220" cy="150" r="100" stroke-width="1.5"/>
+  <line class="axis" x1="120" y1="150" x2="320" y2="150" stroke-width="1"/>
+  <line class="axis" x1="220" y1="50" x2="220" y2="250" stroke-width="1"/>
+
+  <!-- The four directions. -->
+  <circle class="dot" cx="320" cy="150" r="4"/>
+  <text class="code" x="332" y="155">0</text>
+  <circle class="dot" cx="220" cy="50" r="4"/>
+  <text class="code" x="220" y="36" text-anchor="middle">PI / 2</text>
+  <circle class="dot" cx="120" cy="150" r="4"/>
+  <text class="code" x="108" y="155" text-anchor="end">PI</text>
+  <circle class="dot" cx="220" cy="250" r="4"/>
+  <text class="code" x="220" y="274" text-anchor="middle">-PI / 2</text>
+
+  <!-- An angle of PI / 4, turned counter-clockwise from 0. -->
+  <line class="ray" x1="220" y1="150" x2="290.71" y2="79.29" stroke-width="2"/>
+  <circle class="point" cx="290.71" cy="79.29" r="5"/>
+  <path class="ray" d="M 265 150 A 45 45 0 0 0 255.46 122.30" fill="none" stroke-width="2" marker-end="url(#head)"/>
+  <text class="code accent" x="272" y="128">PI / 4</text>
+</svg>

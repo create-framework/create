@@ -1,4 +1,4 @@
-# Installation and setup
+# Setup
 
 There are two ways to set up your first Create project:
 
@@ -6,7 +6,8 @@ There are two ways to set up your first Create project:
 2. [Plain pixi](#option-2-plain-pixi): for those who would rather manage the pixi project
    themselves.
 
-Both need [pixi](https://pixi.sh), which this command installs:
+Both need [pixi](https://pixi.sh), a tool that installs everything a project needs, Mojo and
+Create included, into the project itself. This command installs pixi:
 
 ```sh
 curl -fsSL https://pixi.sh/install.sh | sh
@@ -34,8 +35,8 @@ start from, and `create run` runs it from anywhere inside the project.
 
 ## Option 2: Plain pixi
 
-Without `create-cli`, set up the pixi project by hand. Create it with the MAX and Create conda
-channels enabled:
+Without `create-cli`, set up the pixi project by hand. Create it with the channels Mojo and Create
+are published on (a channel is a source of packages, which pixi installs from):
 
 ```sh
 pixi init my-project \

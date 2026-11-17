@@ -236,8 +236,8 @@ Applies from the next frame, like `autoscale`: the frame being drawn
 was laid out for the window as it is, so the loop switches after
 presenting it, and the next frame is drawn at the new size. Some
 compositors take a frame or two longer to report it (gotcha 1 in
-docs/guide/programs.md). A window manager may refuse to maximize; a headless
-run ignores it.
+docs/guide/basics/programs.md). A window manager may refuse to
+maximize; a headless run ignores it.
 
 ### `frame_count`
 
