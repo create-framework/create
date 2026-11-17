@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 310" width="520" height="310" role="img" aria-labelledby="title">
+  <title id="title">Create's coordinate system: the origin (0, 0) is the centre of the screen, x increases to the right and y increases upwards, and the screen's edges are left(), right(), top() and bottom().</title>
+  <style>
+    .screen { fill: rgba(0, 0, 0, 0.03); stroke: #8c959f; }
+    .axis { stroke: #57606a; }
+    .arrow { fill: #57606a; }
+    .text { fill: #24292f; font: 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .code { fill: #24292f; font: 13px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+    .muted { fill: #57606a; }
+    @media (prefers-color-scheme: dark) {
+      .screen { fill: rgba(255, 255, 255, 0.04); stroke: #6e7681; }
+      .axis { stroke: #9da7b3; }
+      .arrow { fill: #9da7b3; }
+      .text, .code { fill: #e6edf3; }
+      .muted { fill: #9da7b3; }
+    }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path class="arrow" d="M 0 0 L 10 5 L 0 10 z"/>
+    </marker>
+  </defs>
+
+  <!-- The screen: 360 by 220 pixels standing for 1280 by 720 units. -->
+  <rect class="screen" x="80" y="50" width="360" height="220" rx="6" stroke-width="1.5"/>
+
+  <!-- The axes, through the centre (260, 160). -->
+  <line class="axis" x1="80" y1="160" x2="436" y2="160" stroke-width="1.5" marker-end="url(#head)"/>
+  <line class="axis" x1="260" y1="270" x2="260" y2="54" stroke-width="1.5" marker-end="url(#head)"/>
+  <text class="text muted" x="424" y="150" text-anchor="end">+x</text>
+  <text class="text muted" x="268" y="70">+y</text>
+
+  <!-- The origin. -->
+  <circle class="axis" cx="260" cy="160" r="3.5" fill="none" stroke-width="1.5"/>
+  <text class="code" x="252" y="180" text-anchor="end">(0, 0)</text>
+
+  <!-- The edges. -->
+  <text class="code" x="72" y="165" text-anchor="end">left()</text>
+  <text class="code" x="448" y="165">right()</text>
+  <text class="code" x="260" y="38" text-anchor="middle">top()</text>
+  <text class="code" x="260" y="292" text-anchor="middle">bottom()</text>
+</svg>

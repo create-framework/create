@@ -1,8 +1,9 @@
 # Drawing
 
-How shapes reach the screen: drawing them, drawing your own types, the background each frame
-starts from, transforms, antialiasing and clipping. How they look (colours, strokes, gradients,
-shadows, text) is [Style](style.md).
+Everything a program shows, it draws on the canvas it is handed each frame. This page explains how
+shapes reach the screen: drawing them, drawing your own types, the background each frame starts
+from, moving and turning what you draw with transforms, smoothing edges, and clipping. How shapes
+look, their colours, strokes, gradients, shadows and text, is [Style](style.md).
 
 ## Shapes
 
@@ -39,7 +40,9 @@ def main() raises:
 A shape value is drawn with `draw`; there is no `canvas.rectangle(r)`. Every call that draws
 something, such as `canvas.circle`, `canvas.draw` or `canvas.text`, is a **render call**: it uses
 the style and transform current when it is made, and later changes don't reach back to it. The
-shapes themselves, and the collision tests between them, are [Geometry](geometry.md).
+shapes themselves are described in [Shapes](../geometry/shapes.md) and
+[Curves](../geometry/curves.md), and the tests for whether they touch in
+[Collisions](../geometry/collisions.md).
 
 ## Your own types
 
@@ -58,11 +61,11 @@ struct Button(Copyable, Drawable, Movable):
 ```
 
 `canvas.draw(button)` then draws both parts. Style comes from the canvas, not the parts, so set
-the fill before drawing it. See [examples/drawables](../../examples/drawables/main.mojo).
+the fill before drawing it. See [examples/drawables](../../../examples/drawables/main.mojo).
 
 `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts.
 `DrawTarget` is what `draw_to` draws into, the canvas. To keep drawables of different types in one
-list, use `Variant` (see [Multiple scenes](programs.md#multiple-scenes)).
+list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple-scenes)).
 
 ## The background
 
@@ -78,15 +81,20 @@ anything else you draw:
   called, and lasts until changed, so set it once in `create`. Resizing the window starts the
   drawing over from transparent, and on the GPU backend so does changing `canvas.antialiasing`.
 
+**Starting over.** `canvas.clear()` discards everything drawn so far, back to how the canvas
+started: an [offscreen canvas](../media/images.md#drawing-into-an-image) to transparent, the frame
+canvas to its opening clear (or, with the autoclear off, the last frame's pixels). Style, transform
+and settings are untouched. To paint over what is there instead, use `background()`.
+
 ## Settings that outlive the frame
 
 Style, transform, camera and clip reset every frame. A few canvas settings are carried from frame
 to frame instead and last until changed, so set them once in `create` (all that lasts, and how
-long, is in [What lasts how long](programs.md#what-lasts-how-long)):
+long, is in [What lasts how long](../basics/programs.md#what-lasts-how-long)):
 
 - `autoclear`, above.
 - `letterbox_color`, the bars outside the design under `FIT` (see
-  [Coordinates](coordinates.md#design-size-and-autoscale)), black by default.
+  [Coordinates](../basics/coordinates.md#design-size-and-autoscale)), black by default.
 - `antialiasing`, below.
 
 Each applies to the whole frame it is set in, not only to what is drawn after it, and reads back
@@ -95,7 +103,8 @@ with no arguments (`canvas.antialiasing()`).
 ## Transforms and guards
 
 `with canvas.transform(m):` moves, turns or scales everything drawn inside the block by a matrix
-from `math` (`translate`, `rotate`, `scale`), and the block's end undoes it. It only works as a
+(`translate`, `rotate`, `scale`; what a matrix is, and how they combine, is explained in
+[Matrices](../math/matrices.md)), and the block's end undoes it. It only works as a
 `with` block, so a transform can't accidentally stay on. `canvas.style(...)`, `canvas.overlay()`
 and `canvas.clip(...)` work the same way; each returns a **guard**, the object the `with` block
 holds:
@@ -108,7 +117,8 @@ canvas.rectangle((0, 0), 60, 60)  # upright again
 ```
 
 `a @ b` combines two matrices, and the one on the right applies first: above, the square is
-turned about its own centre, then moved to `(100, 0)`. Blocks nest, each inside the last.
+turned about its own centre, then moved to `(100, 0)`. Blocks nest, each one's transform applying
+inside the one around it.
 
 Calling style setters directly in `update` is fine, since style resets every frame. A helper
 function that changes the style should wrap its drawing in `with canvas.style():` (no arguments),
@@ -116,25 +126,31 @@ so its changes don't leak into what its caller draws next.
 
 ## Antialiasing
 
-Antialiasing smooths the edges of shapes. `run(..., antialiasing=Antialiasing.MEDIUM)` is the
-starting level; `OFF`, `LOW` and `HIGH` are the others, and `canvas.antialiasing(level)` changes
-it from the frame it is called in on, for the whole of that frame.
+A screen is a grid of square pixels, so a slanted or curved edge drawn with whole pixels looks
+like a staircase. **Antialiasing** smooths the staircase away, by colouring the pixels along an
+edge partway between the shape and what is behind it. `run(..., antialiasing=Antialiasing.MEDIUM)`
+is the starting level; `OFF`, `LOW` and `HIGH` are the others. `canvas.antialiasing(level)`
+changes it, starting with the whole of the frame it is called in.
 
-It is one setting for both backends: the GPU multisamples (capped at what the driver supports),
-and the CPU samples each shape on a finer grid (`LOW` 2x2, `MEDIUM` 4x4, `HIGH` 8x8 per pixel).
+It is one setting for both backends. A pixel along an edge is coloured by how much of it the
+shape covers, found by testing several points inside the pixel: on the CPU a grid of them (`LOW`
+2x2, `MEDIUM` 4x4, `HIGH` 8x8), and on the GPU the graphics card's own multisampling, with as many
+points as the level asks for, or as the driver allows if that is fewer.
 
-It smooths shapes and the edge of a rotated or sheared image; text and an image's own pixels are
-smooth already, and a clip's edge is antialiased like a shape's (see [Clipping](#clipping)). A
-shape's fill and stroke composite together, so no seam shows between them; two separate shapes
-meeting inside a pixel can show a faint seam.
+It smooths shapes and the edge of a rotated or sheared image. Text and an image's own pixels are
+smooth already, and a clip's edge is smoothed like a shape's (see [Clipping](#clipping)). A
+shape's fill and stroke are blended onto the frame together, as one, so no seam shows between
+them. Two separate shapes that meet inside a pixel are blended one after the other, each covering
+only part of it, so a faint seam can show where they meet.
 
 `run_headless` defaults to `MEDIUM` too, so a test asserting an edge pixel's exact colour passes
 `antialiasing=Antialiasing.OFF`.
 
 ## Clipping
 
-`with canvas.clip(region):` draws only inside `region` for the block, and `invert=True` keeps
-only what is outside it, for fog or a spotlight:
+Clipping limits drawing to a region, as painting through a stencil does: inside
+`with canvas.clip(region):`, only what falls inside `region` is drawn. `invert=True` keeps only
+what is outside it instead, for fog or a spotlight:
 
 ```mojo
 # In `update`: darkness everywhere but a circle round the mouse.
@@ -145,15 +161,18 @@ with canvas.clip(Circle(context.mouse.position, 120), invert=True):
 `region` is any `Region` — a `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` or
 `Polygon`, the region types of `contains` and `overlaps` — rounded by its own `corner_radius` as
 when drawn. Lines and curves can't be clips (that doesn't compile). A clip only works as a `with`
-block, so it can't accidentally stay on. See [examples/clipping](../../examples/clipping/main.mojo).
+block, so it can't accidentally stay on. See
+[examples/clipping](../../../examples/clipping/main.mojo).
 
 - **Placed when the block starts**, like a render call: by the transform and camera current
   then. A `transform` or `overlay` inside the block moves what is drawn, not the clip.
-- **Nested clips intersect.** On exit the enclosing clip is current again.
+- **A clip inside another** draws only where both allow. When the inner block ends, the outer
+  clip applies again.
 - **Everything is clipped**: shapes, images, text, shadows, and `background()`, which then paints
   only the clipped area. The letterbox is not.
-- **Edges** are antialiased at the frame's level, like a shape's, so the two backends agree inside
-  a clip and may differ slightly along its rim. With `Antialiasing.OFF` a clip is
-  hard-edged. Nested clips multiply their edges' coverage.
+- **Edges** are smoothed at the frame's antialiasing level, like a shape's, so the two backends
+  agree inside a clip and may differ slightly along its rim. With `Antialiasing.OFF` a clip is
+  hard-edged. Where the edges of nested clips pass through the same pixel, their smoothing
+  combines: a pixel half inside each of two clips is drawn at a quarter strength.
 
 Soft masks (a gradient or an image's alpha) are not implemented yet.

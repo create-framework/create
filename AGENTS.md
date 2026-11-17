@@ -8,16 +8,20 @@ These apply to every task and are imported below:
   commit messages, and the code conventions.
 - [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules,
   and imports and public surface.
-- From the user guide, [programs](docs/guide/programs.md) and [coordinates](docs/guide/coordinates.md): the
-  shape of a program and the centred, y-up coordinates every other page assumes.
+- From the user guide, [programs](docs/guide/basics/programs.md),
+  [coordinates](docs/guide/basics/coordinates.md) and [vectors](docs/guide/math/vectors.md): the
+  shape of a program, the centred, y-up coordinates every other page assumes, and points and
+  vectors, which the code conventions build on.
 
 @CONTRIBUTING.md
 
 @ARCHITECTURE.md
 
-@docs/guide/programs.md
+@docs/guide/basics/programs.md
 
-@docs/guide/coordinates.md
+@docs/guide/basics/coordinates.md
+
+@docs/guide/math/vectors.md
 
 ## Read when relevant
 
@@ -26,18 +30,39 @@ must keep. Before changing, using or answering questions about one of these area
 
 | Read | When the task involves |
 |---|---|
-| [processing](docs/guide/processing.md) | how Create differs from Processing, or a Processing call's equivalent |
-| [drawing](docs/guide/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, transforms and guards, antialiasing, clipping |
-| [style](docs/guide/style.md) | `Color`, `Style`, fills and strokes, gradients, shadows, tint, opacity, blend modes, fonts and text |
-| [input](docs/guide/input.md) | the keyboard, mouse or gamepads, the cursor, text entry, `EditableText` |
-| [images](docs/guide/images.md) | `Image`, `canvas.image`, `PixelBuffer` |
-| [animation](docs/guide/animation.md) | `Easing`/`ease`, `Tween`, `Animation` and `Animator` |
-| [pixels](docs/guide/pixels.md) | `color_at`, `snapshot`, offscreen canvases, saving images, recording GIFs |
-| [geometry](docs/guide/geometry.md) | the shapes and curves themselves, `corner_radius`, `overlaps`/`contains`/`intersects` |
-| [math](docs/guide/math.md) | `Random`, `Noise` |
-| [time](docs/guide/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
-| [audio](docs/guide/audio.md) | `Sound`, `Audio` and `Playback`: loading, synthesizing and playing sounds |
-| [data](docs/guide/data.md) | `Table` (CSV/TSV) or `JSON` |
+| [processing](docs/guide/basics/processing.md) | how Create differs from Processing, or a Processing call's equivalent |
+| [drawing](docs/guide/drawing/drawing.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, `clear`, transforms and guards, antialiasing, clipping |
+| [style](docs/guide/drawing/style.md) | `Style`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, tint, opacity, blend modes |
+| [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, `lerp`, `luminance` |
+| [strokes](docs/guide/drawing/strokes.md) | stroke thickness, `StrokeAlign`, `StrokeCap`, `StrokeDash` |
+| [gradients](docs/guide/drawing/gradients.md) | `Gradient`, linear and radial, stops, how a gradient fits a shape |
+| [shadows](docs/guide/drawing/shadows.md) | drop and inset shadows, blur, spread, offset |
+| [text](docs/guide/drawing/text.md) | `canvas.text`, `Font`, `FontWeight`, italic, `Align`, lines, wrapping, measuring text |
+| [pixels](docs/guide/drawing/pixels.md) | `color_at`, `snapshot`, `PixelBuffer`, `image.pixel` |
+| [input](docs/guide/interaction/input.md) | what all devices share: `down`/`pressed`/`released`, focus loss, `from_name` |
+| [keyboard](docs/guide/interaction/keyboard.md) | `Key`, keys by position, modifiers, key bindings |
+| [typing](docs/guide/interaction/typing.md) | `keyboard.text`, `typed`, `text_input`, `EditableText`, the clipboard |
+| [mouse](docs/guide/interaction/mouse.md) | `Mouse`, `MouseButton`, picking under the pointer, `lock_mouse`, `Cursor` |
+| [gamepads](docs/guide/interaction/gamepads.md) | `Gamepad`, `GamepadButton`, sticks, triggers, rumble |
+| [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
+| [tweens](docs/guide/motion/tweens.md) | `Tween` |
+| [animations](docs/guide/motion/animations.md) | `Animation` and `Animator` |
+| [shapes](docs/guide/geometry/shapes.md) | the regions (`Rectangle` … `Polygon`), `corner_radius`, the `Shape` and `Region` traits |
+| [curves](docs/guide/geometry/curves.md) | `Line`, `Arc`, `Bezier`, `Spline`, the `Curve` trait, sampling along a curve |
+| [collisions](docs/guide/geometry/collisions.md) | `overlaps`/`contains`/`intersects`, their accuracy, `closest_point` |
+| [images](docs/guide/media/images.md) | `Image`, `canvas.image`, offscreen canvases |
+| [audio](docs/guide/media/audio.md) | `Sound`, `Audio` and `Playback`: loading, synthesizing and playing sounds |
+| [capture](docs/guide/media/capture.md) | `save_image`, `save_screenshot`, recording GIFs |
+| [tables](docs/guide/data/tables.md) | `Table` and `TableRow` (CSV/TSV) |
+| [json](docs/guide/data/json.md) | `JSON`, `JSONKind` |
+| [angles](docs/guide/math/angles.md) | radians, `PI`/`TAU`, `sin`/`cos`/`atan2`, `degrees`/`radians` |
+| [matrices](docs/guide/math/matrices.md) | `Matrix`, `translate`/`rotate`/`scale`, `@`, `apply`, `inverse` |
+| [interpolation](docs/guide/math/interpolation.md) | `lerp`, `inverse_lerp`, `map`, `clamp`, `smoothstep`, `wrap` and the other scalar helpers |
+| [easing](docs/guide/math/easing.md) | `Easing`/`ease` |
+| [random](docs/guide/math/random.md) | `Random` |
+| [noise](docs/guide/math/noise.md) | `Noise` |
+
+The math pages are written for readers with no prior knowledge of the mathematics; keep them so.
 
 A task often spans several (a shadow on a clipped shape is style and drawing); read each it
 touches, and when unsure whether one applies, read it.

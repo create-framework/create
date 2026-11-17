@@ -1,7 +1,19 @@
 # Audio
 
-Playing sounds: loading or synthesizing a `Sound`, playing it through an `Audio`, and
-controlling each playback. A program that builds a short beep and plays it on Space:
+Sound effects and music bring a program to life. This page explains how to load a sound from a
+file or make one from scratch, how to play it, and how to control each sound while it plays.
+
+## How sound is stored
+
+Sound is a vibration of the air, and a speaker makes it by moving back and forth. A digital sound
+stores that movement as a long list of numbers called **samples**, each one the speaker's position
+at one instant, from -1 to 1. Played back fast enough, usually 44,100 samples a second (the
+**sample rate**), they make the sound again. A stereo sound has two **channels**, one for each
+speaker, left and right.
+
+## A first sound
+
+A program that builds a short beep from samples and plays it when Space is pressed:
 
 ```mojo
 from create import *
@@ -32,13 +44,13 @@ def main() raises:
     run[Beep]("Beep")
 ```
 
-A bigger one, loading sounds from files, is [examples/audio](../../examples/audio/main.mojo).
+A bigger one, loading sounds from files, is [examples/audio](../../../examples/audio/main.mojo).
 
 ## Sounds
 
-A `Sound` is decoded samples, an asset like an `Image` (see
-[Assets and playheads](programs.md#assets-and-playheads)): immutable, and cheap to copy, since
-copies share their samples.
+A `Sound` is a sound's samples, ready to play, an asset like an `Image` (see [Assets and
+playheads](../basics/programs.md#assets-and-playheads)): it never changes, and it is cheap to
+copy, since copies share their samples.
 
 ```mojo
 # In `create`:
@@ -48,24 +60,27 @@ var chime = Sound.load("assets/chime.wav")
 - **Loading:** `Sound.load(path)` reads WAV, OGG, FLAC or MP3, chosen by the file's contents, not
   its extension. The whole file is decoded at load, to 16-bit samples whatever the file held. It
   raises, naming the path, for a file it can't read or one with no samples.
-- **Synthesizing:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` takes `Float64`
-  samples from `-1.0` to `1.0`, clipping any outside. With several channels the samples
-  interleave, one per channel in turn: left, right, left, right. Each such group is an audio
-  *frame*, unrelated to the display's frames. It raises unless `channels` and `sample_rate` are
-  positive and the samples are whole frames.
+- **Synthesizing:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` makes a sound from
+  a list of `Float64` samples, from `-1.0` to `1.0`; any outside that range are cut off at it. With
+  several channels, the samples take turns, one per channel: left, right, left, right. Each such
+  group, one sample for every channel, is called an audio *frame*, which has nothing to do with
+  the frames a program draws. It raises an error unless `channels` and `sample_rate` are positive
+  and the samples make up whole frames.
 - **Reading:** `channels()`, `sample_rate()`, `frame_count()` and `duration()` in seconds.
   `sample(frame, channel=0)` reads one sample back, from `-1.0` to `1.0`, and is `0.0` outside
-  the sound, so drawing a waveform needs no bounds checks.
+  the sound, so drawing its waveform needs no checks for running off either end.
 
 ## Playing
 
-An `Audio` is the program's playback device: construct one in `create` and keep it as a field.
-Where no audio device can be opened, as on a server or in CI, it plays silently instead of
-raising, so the program still runs.
+An `Audio` is the program's connection to the computer's speakers: build one in `create` and keep
+it as a field. On a computer with no sound output, such as a test server, it plays silently
+rather than raising an error, so the program still runs.
 
-`audio.play(sound)` plays a sound once and `audio.loop(sound)` over and over until stopped. Each
-returns a `Playback`, the handle of that one playback: a playhead in the sound, like an `Animator`
-in an animation. A sound can have several playbacks at once:
+`audio.play(sound)` plays a sound once, and `audio.loop(sound)` plays it over and over until
+stopped. Each returns a `Playback`, which stands for that one playing of the sound, so the program
+can pause it, change its volume or stop it later. It is a playhead in the sound, as an `Animator`
+is in an animation, and one sound can be playing several times at once, each with its own
+`Playback`:
 
 ```mojo
 # In `update`, with `audio: Audio`, `music: Sound`, `jump: Sound` and
@@ -79,13 +94,13 @@ if context.keyboard.pressed(Key.M):
         self.music_playback = self.audio.loop(self.music)
 ```
 
-An `Audio` needs nothing each frame. Sound plays on a background thread, so it carries on
-smoothly through a slow frame or a long load.
+An `Audio` needs nothing each frame. Sound plays separately from the program's frames, so it
+carries on smoothly through a slow frame or a long load.
 
 ## Playbacks
 
-A playback becomes **stale** when it ends: a one-shot that has played to its end, or any playback that
-was stopped. A call on a stale playback does nothing, safely, even if a newer sound has started
+A playback becomes **stale** when it ends: a one-shot that has played to its end, or any playback
+that was stopped. A call on a stale playback does nothing, safely, even if a newer sound has started
 playing since. `Playback.NONE` is no playback, for a field before anything plays.
 
 | Call | Does |
@@ -106,7 +121,7 @@ played at the old values.
   at `0.5` under an overall `0.5` plays at a quarter. Either applies at once, to playbacks already
   playing.
 - **Speed** plays a sound faster and higher, or slower and lower, as a record sped up or slowed
-  down: `2.0` is twice as fast and an octave up. It clamps to `0.01` through `100.0`.
+  down: `2.0` is twice as fast and an octave up. It is kept between `0.01` and `100.0`.
 - **A pause screen** calls `pause_all()` on the way in and `resume_all()` on the way out. Playbacks
   played in between play as usual, so the screen can have sounds of its own; `resume_all` also
   resumes playbacks paused one by one before.
