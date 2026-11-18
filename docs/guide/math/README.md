@@ -1,8 +1,8 @@
 # Maths
 
-The mathematics behind moving, turning and shaping things, explained from the beginning: these pages
-assume no prior knowledge. Angles, vectors and matrices build on each other, so they read best in
-that order.
+The mathematics behind moving, turning and shaping things. Each page explains its topic from the
+beginning, assuming only basic school maths, such as negative numbers, multiplication and square
+roots. Angles, vectors and matrices build on each other, so they read best in that order.
 
 - [Angles](angles.md): radians, and turning angles into directions.
 - [Points and vectors](points-and-vectors.md): points, movements, length and direction.
