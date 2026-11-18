@@ -69,12 +69,12 @@ in one list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple
 
 ## The background
 
-Every frame starts cleared to light gray, `Color(200)`. A shape drawn in the default style is a thin
-black outline (see [Style](style.md#defaults)), so it shows up on the gray. `canvas.background()`
+Every frame starts cleared to light grey, `Color(200)`. A shape drawn in the default style is a thin
+black outline (see [Style](style.md#defaults)), so it shows up on the grey. `canvas.background()`
 paints the frame another colour. It paints over everything drawn before it in the frame, so call it
 before anything else you draw:
 
-- A translucent `background()` blends over that gray, not over the last frame, so fading trails need
+- A translucent `background()` blends over that grey, not over the last frame, so fading trails need
   the autoclear off (below). An opaque one costs nothing extra: it replaces the clear.
 - `canvas.autoclear(False)` switches the clear off, so ink accumulates from frame to frame, as in a
   painting program. It applies to the whole frame it is called in, wherever in `update` it is

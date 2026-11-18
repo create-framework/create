@@ -20,7 +20,7 @@ A style setting applies to every render call made after it, until the end of the
 
 **Shapes are not filled by default**, unlike in Processing. A new style has a black stroke, which is
 switched on and 1 unit thick, and a white fill, which is switched off. Text is black. So a shape
-drawn with no style at all is a thin black outline, which shows up on the light gray every frame
+drawn with no style at all is a thin black outline, which shows up on the light grey every frame
 starts with (see [The canvas](canvas.md#the-background)).
 
 ## Fill, stroke and text colours

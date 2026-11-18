@@ -8,7 +8,7 @@ mix and fade colours.
 
 A screen makes every colour it shows by mixing red, green and blue light, so a `Color` is three
 numbers, one for each, from 0 (none of that light) to 255 (as much as possible). All three at 0 is
-black, all three at 255 is white, and equal amounts of each make a gray. A fourth number, the
+black, all three at 255 is white, and equal amounts of each make a grey. A fourth number, the
 **alpha**, is how opaque the colour is, from 0 (invisible) to 255 (fully opaque). It is 255 when you
 leave it out:
 
@@ -59,7 +59,7 @@ people tend to:
 
 - The **hue** is which colour it is, as an angle in degrees round a colour wheel: 0 is red, 60
   yellow, 120 green, 180 cyan, 240 blue, 300 magenta, and 360 is back to red.
-- The **saturation**, from 0 to 1, is how intense it is: 0 is a gray, and 1 the purest form of the
+- The **saturation**, from 0 to 1, is how intense it is: 0 is a grey, and 1 the purest form of the
   hue.
 - The **value**, from 0 to 1, is how bright it is: 0 is black, and 1 as bright as the colour gets.
 
