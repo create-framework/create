@@ -1,0 +1,36 @@
+name: Feature request
+description: Something you want to make with Create that it doesn't support, or makes awkward.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Create aims to be intuitive, ergonomic, modular, consistent, composable and performant (see [What we value](https://github.com/create-framework/create/blob/main/CONTRIBUTING.md#what-we-value)). Create is in early development, so a proposal may change or replace the API that exists: breaking changes are fine if they make the library better.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What you want to do
+      description: The sketch, game or tool you are making, and the part of it Create gets in the way of. Start from the goal rather than a solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: How you do it today
+      description: The code you write for it now, if you have found a way, and what is awkward about it.
+      render: mojo
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What the code could look like
+      description: The calls you would like to write, as they would appear in a program. Rough is fine.
+      render: mojo
+
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: In other libraries
+      description: How Processing, p5.js, raylib, LÖVE or another library does the same thing, if you know.

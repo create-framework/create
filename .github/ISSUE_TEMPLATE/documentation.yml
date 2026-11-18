@@ -1,0 +1,26 @@
+name: Documentation
+description: A page of the user guide, the API reference or an example that is wrong, missing or hard to follow.
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: A link to the page, or the docstring's function or type.
+      placeholder: https://create-framework.org/latest/guide/drawing/strokes/
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing
+      description: Quote the passage if there is one. A page that is hard to follow is worth reporting too; say where you got lost.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What would help
+      description: How you would put it, or what you were looking for when you came to the page.

@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: User guide
+    url: https://create-framework.org/latest/guide/
+    about: How Create behaves, from setting up a project to drawing, input, motion and collisions.
+  - name: API reference
+    url: https://create-framework.org/latest/reference/
+    about: Every public type and function, generated from the docstrings.
+  - name: create-cli
+    url: https://github.com/create-framework/create-cli/issues
+    about: A problem with the `create` command (`create new`, `create run`) belongs in its own repository.
