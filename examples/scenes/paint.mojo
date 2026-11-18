@@ -5,12 +5,11 @@ from create import *
 struct Paint:
     """The painting scene. Left-drag paints, right-click returns to the menu.
 
-    Deliberately never calls `canvas.background()` per frame — `App.create`
-    calls `canvas.autoclear(False)`, so skipping the clear here is what lets ink
-    accumulate frame to frame. `enter()` is the one exception: it's a plain method, not
-    part of `Program`, that `App` calls the frame it switches in, so this
-    scene gets a one-shot clear instead of showing the menu bleeding through
-    the first stroke.
+    `App.create` turns autoclear off, and this scene never paints a
+    background in `update`, so the ink builds up from frame to frame.
+    `enter`, which `App` calls on the frame it switches here, makes the
+    scene clear the frame once, so the menu doesn't show under the first
+    stroke.
     """
 
     var back_pressed: Bool
@@ -31,7 +30,7 @@ struct Paint:
                 canvas.circle(context.mouse.position, 14.0)
 
         # Align.BOTTOM anchors the text box's bottom edge at y, so it grows
-        # upward from the margin instead of straddling it — the default
+        # upward from the margin instead of straddling it; the default
         # Align.CENTER would hang half the line below the margin, its
         # descenders against canvas.bottom() and the letterbox clip.
         with canvas.style(

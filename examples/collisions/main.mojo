@@ -1,9 +1,10 @@
 """Collision tests against a circle that follows the mouse.
 
-The six regions light up while they `overlap` it, and the two curves, a
-`Line` and an `Arc`, while they `intersect` it: a curve has no inside, so it
-is crossed rather than overlapped. A thin line runs from the mouse to each
-shape's `closest_point`, which inside a region is the mouse itself.
+The six regions light up while the circle `overlaps` them, and the two
+curves, a `Line` and an `Arc`, while it `intersects` them: a curve has no
+inside, so it is crossed rather than overlapped. A thin line runs from the
+mouse to each shape's `closest_point`, which inside a region is the mouse
+itself.
 """
 
 from create import *

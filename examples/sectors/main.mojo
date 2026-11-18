@@ -16,7 +16,7 @@ comptime _POP = 16.0
 
 comptime _PACMAN = Point2D(240.0, -20.0)
 comptime _CHEW = 4.0
-"""How fast the pac-man's mouth works; it shuts every PI / _CHEW seconds."""
+"""How fast the pac-man's mouth works; it shuts every `PI / _CHEW` seconds."""
 
 comptime _BALL_HOME = Point2D(500.0, -280.0)
 comptime _RESPAWN = 3.0

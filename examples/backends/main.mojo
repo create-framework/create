@@ -1,17 +1,18 @@
-"""One scene to run on each backend, CPU and GPU, made of the cases they
-could disagree about.
+"""One scene to run on each backend, CPU and GPU, made of the cases where
+they could disagree.
 
     pixi run example backends                 # CPU
     pixi run example backends gpu             # the same scene through the GPU
     pixi run example backends gpu fullscreen  # letterboxed on a wide display
 
-The two frames should be indistinguishable apart from the GPU's
-multisampled edges. Everything on screen is deliberately such a case — the
-five solid command kinds, a translucent fill under a stroke, an
-stroke wider than its shape, a rotated rect, a diagonal line, and in
-fullscreen a letterbox bar under `FIT`: the 4:3 design keeps its size, so
-on a 16:9 display the bars are on screen from the first frame. A cycles
-the antialiasing level, to compare the edges at each. Escape quits.
+The two frames should look the same, apart from the GPU's multisampled
+edges. The scene has filled and stroked rectangles and circles, a
+translucent fill under a stroke, a stroke wider than its shape, a turning
+rectangle, a diagonal line, text at each alignment and one image at two
+sizes. In full screen it also has the letterbox bars of `FIT`: the 4:3
+design keeps its size, so on a 16:9 display the bars show from the first
+frame. A cycles the antialiasing level, to compare the edges at each, and
+Escape quits.
 """
 
 from std.sys import argv
@@ -43,7 +44,7 @@ struct App(Program):
 
         canvas.background(Color(40, 40, 44))
 
-        # A plain filled rect and a stroked one, side by side.
+        # A plain filled rectangle and a stroked one, side by side.
         with canvas.style(fill=Color(98, 104, 168), stroke_enabled=False):
             canvas.rectangle((-260, 180), 160, 100)
 
@@ -62,7 +63,7 @@ struct App(Program):
         ):
             canvas.rectangle((160, 180), 40, 40)
 
-        # Translucent over the indigo rect — the case a double-blended fill
+        # Translucent over the indigo rectangle: the case a double-blended fill
         # under its own stroke would get visibly wrong.
         with canvas.style(
             fill=Color(201, 140, 150, 0x80),
@@ -81,7 +82,7 @@ struct App(Program):
         ):
             canvas.circle((220, 0), 80)
 
-        # A rotating rect: the transform is baked per vertex, so a rotated
+        # A rotating rectangle: the transform is baked per vertex, so a rotated
         # stroke ring has to follow the shape rather than stay axis-aligned.
         with canvas.transform(translate(-230, 0) @ rotate(self.angle)):
             with canvas.style(
@@ -101,8 +102,8 @@ struct App(Program):
         ):
             canvas.triangle((-140, -180), (40, -180), (-50, -30))
 
-        # The same image at two sizes: one texture, one upload, and — since
-        # the two renders are adjacent — one extra batch for the pair.
+        # The same image at two sizes: one texture, one upload and (since
+        # the two renders are adjacent) one extra batch for the pair.
         # Text before the images: solids and glyphs share the atlas binding
         # and so share one batch, which the image texture then breaks.
         with canvas.style(

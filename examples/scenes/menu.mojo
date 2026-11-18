@@ -3,10 +3,10 @@ from create import *
 
 @fieldwise_init
 struct Menu:
-    """Not a `Program` — a plain struct in the same shape (`update`).
+    """The menu scene: a plain struct with an `update`, not a `Program`.
 
-    `App` reads `start_pressed` after calling `update`, the same way it
-    would read any other field; that's the whole transition mechanism.
+    `App` reads `start_pressed` after calling `update`, as it would read any
+    other field, and switches scene when it is set.
     """
 
     var start_pressed: Bool

@@ -1,4 +1,7 @@
-"""The example code used in README."""
+"""Hello, world: the text drawn in the middle of the window.
+
+The program from the "How a Program Works" section of the README.
+"""
 
 from create import *
 
