@@ -6,8 +6,8 @@ These apply to every task and are imported below:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): the design ethos, building and testing, the workflow and
   commit messages, and the code conventions.
-- [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules,
-  and imports and public surface.
+- [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules, and
+  imports and public surface.
 - From the user guide, [programs](docs/guide/basics/programs.md),
   [coordinates](docs/guide/basics/coordinates.md) and [points and
   vectors](docs/guide/math/points-and-vectors.md): the shape of a program, the centred, y-up
@@ -25,8 +25,9 @@ These apply to every task and are imported below:
 
 ## Read when relevant
 
-The rest of the [user guide](docs/guide/README.md) describes how the library behaves, which every change
-must keep. Before changing, using or answering questions about one of these areas, read its page:
+The rest of the [user guide](docs/guide/README.md) describes how the library behaves, which every
+change must keep. Before changing, using or answering questions about one of these areas, read its
+page:
 
 | Read | When the task involves |
 |---|---|
@@ -65,8 +66,8 @@ must keep. Before changing, using or answering questions about one of these area
 
 The math pages are written for readers with no prior knowledge of the mathematics; keep them so.
 
-A task often spans several (a shadow on a clipped shape is style and drawing); read each it
-touches, and when unsure whether one applies, read it.
+A task often spans several (a shadow on a clipped shape is style and drawing); read each it touches,
+and when unsure whether one applies, read it.
 
 The release procedure is described in [RELEASING.md](RELEASING.md).
 
@@ -77,5 +78,6 @@ The release procedure is described in [RELEASING.md](RELEASING.md).
   development" says why. If an idea is worse for other reasons, say so.
 - Leave merging to the user unless they ask for it.
 - Run only the tests a change can reach (`pixi run test render`); CI runs the whole suite.
-- Write Mojo with the `mojo-syntax` skill ([.agents/skills/mojo-syntax/](.agents/skills/mojo-syntax/SKILL.md)):
-  Create is on Mojo 1.2, and much of what you know about Mojo is older.
+- Write Mojo with the `mojo-syntax` skill
+  ([.agents/skills/mojo-syntax/](.agents/skills/mojo-syntax/SKILL.md)): Create is on Mojo 1.2, and
+  much of what you know about Mojo is older.

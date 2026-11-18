@@ -8,14 +8,24 @@
 
 ---
 
-**Create** is a creative coding library for [Mojo](https://mojolang.org/), inspired by [Processing](https://processing.org/). It combines the simplicity and immediacy of creative coding with a structured, modular API, so it works not only for quick sketches but also for small- to medium-sized projects such as 2D games, simulations and visualisations.
+**Create** is a creative coding library for [Mojo](https://mojolang.org/), inspired by
+[Processing](https://processing.org/). It combines the simplicity and immediacy of creative coding
+with a structured, modular API, so it works not only for quick sketches but also for small- to
+medium-sized projects such as 2D games, simulations and visualisations.
 
-The API currently covers: drawing shapes, curves, text and images with fills, strokes, gradients and shadows; animating them with tweens and animators; reading keyboard, mouse and gamepad inputs; testing collisions between shapes; playing sounds; and loading data from CSV and JSON. Every program runs on the CPU or through OpenGL. The [user guide](https://create-framework.org/latest/guide/) covers each area in turn, and the [API reference](https://create-framework.org/latest/reference/) lists every type and function, package by package.
+The API currently covers: drawing shapes, curves, text and images with fills, strokes, gradients and
+shadows; animating them with tweens and animators; reading keyboard, mouse and gamepad inputs;
+testing collisions between shapes; playing sounds; and loading data from CSV and JSON. Every program
+runs on the CPU or through OpenGL. The [user guide](https://create-framework.org/latest/guide/)
+covers each area in turn, and the [API reference](https://create-framework.org/latest/reference/)
+lists every type and function, package by package.
 
 ## Example Programs
 
-The GIF below shows an example program running. First it generates a [Sierpiński triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method (also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). 
-Then coloured triangles grow into place on top of it, forming the **Create** logo.
+The GIF below shows an example program running. First it generates a [Sierpiński
+triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method
+(also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). Then coloured triangles
+grow into place on top of it, forming the **Create** logo.
 
 <p align="center">
     <img src="assets/gifs/logo-animation.gif" alt="The Create logo assembling: a Sierpiński triangle drawn in points, then the logo's triangles growing in over it">
@@ -23,11 +33,14 @@ Then coloured triangles grow into place on top of it, forming the **Create** log
     <sub>The logo drawn, animated and recorded to a GIF using the <b>Create</b> library itself. See <a href="examples/logo/main.mojo">examples/logo</a> for the source code.</sub>
 </p>
 
-You can run the program yourself from the root of this repo using `pixi run example logo` (`logo` being the name of this specific example). The other programs under [examples/](examples/) can be run the same way. Run `pixi run example` with no name to list them all.
+You can run the program yourself from the root of this repo using `pixi run example logo` (`logo`
+being the name of this specific example). The other programs under [examples/](examples/) can be run
+the same way. Run `pixi run example` with no name to list them all.
 
 ## How a Program Works
 
-Below is a small "Hello, world!" program, which can be run from the repo root using `pixi run example hello`:
+Below is a small "Hello, world!" program, which can be run from the repo root using `pixi run
+example hello`:
 
 ```mojo
 from create import *
@@ -51,7 +64,10 @@ def main() raises:
     run[MyApp]("Hello")
 ```
 
-A **Create** program is a struct implementing the `Program` trait, passed to `run` in `main`, which starts the run loop. `create` is called once when the run starts, to set the initial state and draw the first frame; `update` is called for every frame after that, to handle input, change the state and draw. For more details, read [programs.md](docs/guide/basics/programs.md) in the user guide.
+A **Create** program is a struct implementing the `Program` trait, passed to `run` in `main`, which
+starts the run loop. `create` is called once when the run starts, to set the initial state and draw
+the first frame; `update` is called for every frame after that, to handle input, change the state
+and draw. For more details, read [programs.md](docs/guide/basics/programs.md) in the user guide.
 
 ## Installation and Setup
 
@@ -61,7 +77,8 @@ If you don't already have it, install [pixi](https://pixi.sh):
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-The [create-cli](https://github.com/create-framework/create-cli) makes creating and running projects very easy. Running this command installs it to `~/.pixi/bin`:
+The [create-cli](https://github.com/create-framework/create-cli) makes creating and running projects
+very easy. Running this command installs it to `~/.pixi/bin`:
 
 ```sh
 pixi global install create-cli --channel https://prefix.dev/create-framework/create
@@ -81,13 +98,20 @@ For more installation options, see [setup.md](docs/guide/basics/setup.md) in the
 
 ## Documentation
 
-The [user guide](https://create-framework.org/latest/guide/) and [API reference](https://create-framework.org/latest/reference/) are the main pieces of documentation for users of **Create**. They are published together at [create-framework.org](https://create-framework.org/) for the latest release as well as for the head of `main`.
+The [user guide](https://create-framework.org/latest/guide/) and [API
+reference](https://create-framework.org/latest/reference/) are the main pieces of documentation for
+users of **Create**. They are published together at
+[create-framework.org](https://create-framework.org/) for the latest release as well as for the head
+of `main`.
 
-Both can also be found in Markdown format here in the repository together with the documentation for contributors:
+Both can also be found in Markdown format here in the repository together with the documentation for
+contributors:
 
 - [User guide](docs/guide/README.md): how to use **Create**, topic by topic.
-- [API reference](docs/reference/README.md): every public type and function, package by package, generated from the docstrings.
-- [Contributing](CONTRIBUTING.md): how to work on **Create** itself: its design ethos, building and testing, and how changes land.
+- [API reference](docs/reference/README.md): every public type and function, package by package,
+  generated from the docstrings.
+- [Contributing](CONTRIBUTING.md): how to work on **Create** itself: its design ethos, building and
+  testing, and how changes land.
 - [Architecture](ARCHITECTURE.md): how the source is organised, and which package may import which.
 
 ## Supported Platforms
@@ -98,6 +122,7 @@ Both can also be found in Markdown format here in the repository together with t
 | Windows through WSL2 | Supported, used day to day |
 | macOS on Apple silicon | Built and tested by a CI workflow run on demand, not on every change; little use on a real desktop yet |
 
-Intel Macs and native Windows are not supported: Mojo doesn't run on either. Every dependency, Mojo included,
-comes from [pixi](https://pixi.sh), so `pixi run` is all a supported machine needs. A program built with
-`mojo build` finds the libraries it needs, regardless of which directory it is run from, as long as the pixi environment it was built in stays where it is.
+Intel Macs and native Windows are not supported: Mojo doesn't run on either. Every dependency, Mojo
+included, comes from [pixi](https://pixi.sh), so `pixi run` is all a supported machine needs. A
+program built with `mojo build` finds the libraries it needs, regardless of which directory it is
+run from, as long as the pixi environment it was built in stays where it is.

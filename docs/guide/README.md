@@ -36,12 +36,12 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 
 ## [Interaction](interaction/README.md)
 
-- [Input](interaction/input.md): what the keyboard, mouse and gamepads have in common: held,
-  pressed and released.
+- [Input](interaction/input.md): what the keyboard, mouse and gamepads have in common: held, pressed
+  and released.
 - [Keyboard](interaction/keyboard.md): keys by position, modifier keys, and key bindings.
 - [Typing](interaction/typing.md): typed text, and text fields with `EditableText`.
-- [Mouse](interaction/mouse.md): buttons, position and movement, picking what is under the
-  pointer, locking the mouse, and the cursor.
+- [Mouse](interaction/mouse.md): buttons, position and movement, picking what is under the pointer,
+  locking the mouse, and the cursor.
 - [Gamepads](interaction/gamepads.md): players, sticks, triggers, buttons and rumble.
 
 ## [Motion](motion/README.md)

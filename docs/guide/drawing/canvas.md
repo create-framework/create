@@ -9,8 +9,8 @@ look (their colours, strokes, gradients, shadows and text) is explained in [Styl
 
 `canvas.draw(shape)` draws any shape or curve — `Rectangle`, `Circle`, `Ellipse`, `Capsule`,
 `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`, `Bezier`, `Spline` — in the current style and
-transform. The named methods build a shape from numbers and draw it, so
-`canvas.rectangle(position, width, height)` is `canvas.draw(Rectangle(position, width, height))`:
+transform. The named methods build a shape from numbers and draw it, so `canvas.rectangle(position,
+width, height)` is `canvas.draw(Rectangle(position, width, height))`:
 
 ```mojo
 from create import *
@@ -60,8 +60,8 @@ struct Button(Copyable, Drawable, Movable):
         target.draw(self.icon)
 ```
 
-`canvas.draw(button)` then draws both parts. Style comes from the canvas, not the parts, so set
-the fill before drawing it. See [examples/drawables](../../../examples/drawables/main.mojo).
+`canvas.draw(button)` then draws both parts. Style comes from the canvas, not the parts, so set the
+fill before drawing it. See [examples/drawables](../../../examples/drawables/main.mojo).
 
 `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts.
 `DrawTarget` is what `draw_to` draws into, the canvas. To keep drawables of different types in one
@@ -74,10 +74,10 @@ thin black outline (see [Style](style.md#defaults)), shows up on it. `canvas.bac
 the frame another colour. It paints over everything drawn before it in the frame, so call it before
 anything else you draw:
 
-- A translucent `background()` blends over that gray, not over the last frame, so fading trails
-  need the autoclear off (below). An opaque one costs nothing extra: it replaces the clear.
-- `canvas.autoclear(False)` switches the clear off, so ink accumulates from frame to frame, as in
-  a painting program. It applies to the whole frame it is called in, wherever in `update` it is
+- A translucent `background()` blends over that gray, not over the last frame, so fading trails need
+  the autoclear off (below). An opaque one costs nothing extra: it replaces the clear.
+- `canvas.autoclear(False)` switches the clear off, so ink accumulates from frame to frame, as in a
+  painting program. It applies to the whole frame it is called in, wherever in `update` it is
   called, and lasts until changed, so set it once in `create`. Resizing the window starts the
   drawing over from transparent, and on the GPU backend so does changing `canvas.antialiasing`.
 
@@ -117,41 +117,41 @@ with canvas.transform(translate(100, 0) @ rotate(context.time.elapsed)):
 canvas.rectangle((0, 0), 60, 60)  # upright again
 ```
 
-`a @ b` combines two matrices, and the one on the right applies first: above, the square is
-turned about its own centre, then moved to `(100, 0)`. Blocks nest, each one's transform applying
-inside the one around it.
+`a @ b` combines two matrices, and the one on the right applies first: above, the square is turned
+about its own centre, then moved to `(100, 0)`. Blocks nest, each one's transform applying inside
+the one around it.
 
 Calling style setters directly in `update` is fine, since style resets every frame. A helper
-function that changes the style should wrap its drawing in `with canvas.style():` (no arguments),
-so its changes don't leak into what its caller draws next.
+function that changes the style should wrap its drawing in `with canvas.style():` (no arguments), so
+its changes don't leak into what its caller draws next.
 
 ## Antialiasing
 
-A screen is a grid of square pixels, so a slanted or curved edge drawn with whole pixels looks
-like a staircase. **Antialiasing** smooths the staircase away, by colouring the pixels along an
-edge partway between the shape and what is behind it. `run(..., antialiasing=Antialiasing.MEDIUM)`
-is the starting level; `OFF`, `LOW` and `HIGH` are the others. `canvas.antialiasing(level)`
-changes it, starting with the whole of the frame it is called in.
+A screen is a grid of square pixels, so a slanted or curved edge drawn with whole pixels looks like
+a staircase. **Antialiasing** smooths the staircase away, by colouring the pixels along an edge
+partway between the shape and what is behind it. `run(..., antialiasing=Antialiasing.MEDIUM)` is the
+starting level; `OFF`, `LOW` and `HIGH` are the others. `canvas.antialiasing(level)` changes it,
+starting with the whole of the frame it is called in.
 
-It is one setting for both backends. A pixel along an edge is coloured by how much of it the
-shape covers, found by testing several points inside the pixel: on the CPU a grid of them (`LOW`
-2x2, `MEDIUM` 4x4, `HIGH` 8x8), and on the GPU the graphics card's own multisampling, with as many
-points as the level asks for, or as the driver allows if that is fewer.
+It is one setting for both backends. A pixel along an edge is coloured by how much of it the shape
+covers, found by testing several points inside the pixel: on the CPU a grid of them (`LOW` 2x2,
+`MEDIUM` 4x4, `HIGH` 8x8), and on the GPU the graphics card's own multisampling, with as many points
+as the level asks for, or as the driver allows if that is fewer.
 
 It smooths shapes and the edge of a rotated or sheared image. Text and an image's own pixels are
-smooth already, and a clip's edge is smoothed like a shape's (see [Clipping](#clipping)). A
-shape's fill and stroke are blended onto the frame together, as one, so no seam shows between
-them. Two separate shapes that meet inside a pixel are blended one after the other, each covering
-only part of it, so a faint seam can show where they meet.
+smooth already, and a clip's edge is smoothed like a shape's (see [Clipping](#clipping)). A shape's
+fill and stroke are blended onto the frame together, as one, so no seam shows between them. Two
+separate shapes that meet inside a pixel are blended one after the other, each covering only part of
+it, so a faint seam can show where they meet.
 
 `run_headless` defaults to `MEDIUM` too, so a test asserting an edge pixel's exact colour passes
 `antialiasing=Antialiasing.OFF`.
 
 ## Clipping
 
-Clipping limits drawing to a region, as painting through a stencil does: inside
-`with canvas.clip(region):`, only what falls inside `region` is drawn. `invert=True` keeps only
-what is outside it instead, for fog or a spotlight:
+Clipping limits drawing to a region, as painting through a stencil does: inside `with
+canvas.clip(region):`, only what falls inside `region` is drawn. `invert=True` keeps only what is
+outside it instead, for fog or a spotlight:
 
 ```mojo
 # In `update`: darkness everywhere but a circle round the mouse.

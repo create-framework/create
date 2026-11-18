@@ -1,10 +1,10 @@
 # Curves
 
-A curve is a path with no inside: a straight line, part of a circle's edge, or a smooth bend
-through several points. Curves are drawn with the stroke, so they show only while the stroke is
-on, and they are useful well beyond drawing: a curve can be a path for something to follow, a
-laser to test for hits, or the outline of a road. This page explains what the four curves are,
-and how to find points along one.
+A curve is a path with no inside: a straight line, part of a circle's edge, or a smooth bend through
+several points. Curves are drawn with the stroke, so they show only while the stroke is on, and they
+are useful well beyond drawing: a curve can be a path for something to follow, a laser to test for
+hits, or the outline of a road. This page explains what the four curves are, and how to find points
+along one.
 
 ## The curves
 
@@ -15,8 +15,8 @@ and how to find points along one.
 | `Bezier` | A smooth bend shaped by two control points | `Bezier(start, control1, control2, end)` |
 | `Spline` | A smooth curve through any number of points | `Spline(points, alpha=, closed=)` |
 
-A straight line counts as a curve, as in mathematics: it is a path with no inside, like the
-others. Like the shapes, a curve is a plain value, never changed by its own methods.
+A straight line counts as a curve, as in mathematics: it is a path with no inside, like the others.
+Like the shapes, a curve is a plain value, never changed by its own methods.
 
 ## Points along a curve
 
@@ -81,24 +81,22 @@ A Bézier curve is the smooth curve that drawing programs use for their pen tool
 The further away a control point is, the more strongly it pulls the curve. The curve passes through
 `start` and `end`, but not through the control points.
 
-- `canvas.bezier(start, control1, control2, end)` draws one with the stroke, and draws nothing
-  while the stroke is off.
-- Equal steps of `t` give unevenly spaced points along a Bézier curve (see
-  [Points along a curve](#points-along-a-curve)), so use `at_distance(d)` to move along it at a
-  steady speed.
+- `canvas.bezier(start, control1, control2, end)` draws one with the stroke, and draws nothing while
+  the stroke is off.
+- Equal steps of `t` give unevenly spaced points along a Bézier curve (see [Points along a
+  curve](#points-along-a-curve)), so use `at_distance(d)` to move along it at a steady speed.
 - `closest_point` is exact, apart from the tiny rounding errors of any calculation.
 
 ## `Spline`
 
-A spline is a smooth curve through every one of a list of `points`, in order, such as a path for
-an enemy to patrol or a road through a landscape. Unlike a Bézier curve, it passes through every
-point you give it, so it is the easier one to shape by hand. (Mathematicians call this kind a
-Catmull-Rom spline.) `closed=True` carries it on from the last point back to the first, for a
-loop.
+A spline is a smooth curve through every one of a list of `points`, in order, such as a path for an
+enemy to patrol or a road through a landscape. Unlike a Bézier curve, it passes through every point
+you give it, so it is the easier one to shape by hand. (Mathematicians call this kind a Catmull-Rom
+spline.) `closed=True` carries it on from the last point back to the first, for a loop.
 
-- `alpha` sets how the curve bends between its points: 0 (uniform) can overshoot into small
-  loops where points bunch together, 0.5 (centripetal, the default) never loops, and 1 (chordal)
-  swings wider round the points.
+- `alpha` sets how the curve bends between its points: 0 (uniform) can overshoot into small loops
+  where points bunch together, 0.5 (centripetal, the default) never loops, and 1 (chordal) swings
+  wider round the points.
 - It has the same methods for points along it as `Bezier`. `t` is shared out evenly between the
   stretches from one point to the next, so with five stretches, `t = 0.2` is at the second point,
   however long the stretches are.
@@ -108,7 +106,7 @@ loop.
 ## The `Curve` trait
 
 The four curves conform to **`Curve`**, as well as to `Shape` (see
-[Shapes](shapes.md#the-shape-and-region-traits)), so a function can take any of them
-(`def f[C: Curve](curve: C)`). `Curve` gives `at`, `tangent`, `length`, `at_distance`, `flatten`
-and `beziers`. `move_to` exists only on `Line` (moving its midpoint) and `Arc` (moving its
-centre), and `split` only on `Line`, `Arc` and `Bezier`.
+[Shapes](shapes.md#the-shape-and-region-traits)), so a function can take any of them (`def f[C:
+Curve](curve: C)`). `Curve` gives `at`, `tangent`, `length`, `at_distance`, `flatten` and `beziers`.
+`move_to` exists only on `Line` (moving its midpoint) and `Arc` (moving its centre), and `split`
+only on `Line`, `Arc` and `Bezier`.

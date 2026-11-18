@@ -9,33 +9,32 @@ These look like Processing but behave differently, and each one catches people o
 
 - **The origin is the centre of the screen, and y increases upwards.** `canvas.left()` and
   `canvas.bottom()` are negative, something falling moves towards negative y, and `rotate` turns
-  counter-clockwise.
-  See [Coordinates](coordinates.md#creates-coordinate-system).
+  counter-clockwise. See [Coordinates](coordinates.md#creates-coordinate-system).
 - **Every shape is positioned by its centre**, rectangles and images included, as if
   `rectMode(CENTER)` and `imageMode(CENTER)` were always on.
-- **Shapes are not filled by default.** A shape drawn with no style is just a black outline;
-  call `canvas.fill(...)` to fill it. See [Style](../drawing/style.md#defaults).
+- **Shapes are not filled by default.** A shape drawn with no style is just a black outline; call
+  `canvas.fill(...)` to fill it. See [Style](../drawing/style.md#defaults).
 - **`fill` doesn't colour text.** Text has its own colour, `canvas.text_color(...)`.
 - **A stroke sits inside the shape's edge** by default, not centred on it, so a stroked shape is
   exactly as big as its numbers say. `canvas.stroke_alignment(StrokeAlign.CENTER)` gives
   Processing's look. See [Strokes](../drawing/strokes.md).
 - **Style and transforms reset every frame.** There is nothing to push and pop between frames;
-  within a frame, a `with` block limits a change to the code inside it. See
-  [What lasts how long](programs.md#what-lasts-how-long).
+  within a frame, a `with` block limits a change to the code inside it. See [What lasts how
+  long](programs.md#what-lasts-how-long).
 - **There are no event callbacks** such as `keyPressed()` or `mousePressed()`. `update` asks the
   devices instead, every frame. See [Input](../interaction/input.md).
-- **_Pressed_ means "went down this frame"**, never "is held". Processing's `mousePressed`
-  variable is `context.mouse.down()`; `context.mouse.pressed()` is true only in the frame the
-  button went down.
+- **_Pressed_ means "went down this frame"**, never "is held". Processing's `mousePressed` variable
+  is `context.mouse.down()`; `context.mouse.pressed()` is true only in the frame the button went
+  down.
 - **Fading trails need the autoclear off.** Every frame starts cleared, so a translucent
-  `background()` blends over a clean frame, not over the last one. Call
-  `canvas.autoclear(False)` in `create` to keep the previous frame's drawing. See
-  [The background](../drawing/canvas.md#the-background).
+  `background()` blends over a clean frame, not over the last one. Call `canvas.autoclear(False)` in
+  `create` to keep the previous frame's drawing. See [The
+  background](../drawing/canvas.md#the-background).
 - **Time is in seconds.** Move things by `context.time.delta`, the seconds since the last frame,
   rather than by a fixed step per frame, so they move at the same speed at any frame rate. See
   [Time](../motion/time.md).
-- **State lives in fields.** A program is a struct; what Processing keeps in global variables
-  is a field of it, built in `create`. See [Programs](programs.md#parameters-and-fields).
+- **State lives in fields.** A program is a struct; what Processing keeps in global variables is a
+  field of it, built in `create`. See [Programs](programs.md#parameters-and-fields).
 
 ## Where things are
 

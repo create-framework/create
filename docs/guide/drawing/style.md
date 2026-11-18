@@ -13,15 +13,15 @@ own:
 - [Shadows](shadows.md): drop shadows and inset shadows.
 - [Text](text.md): fonts, alignment, lines and wrapping.
 
-A style setting applies to every render call made after it, until the end of the frame or until
-the `with` block it was set in ends.
+A style setting applies to every render call made after it, until the end of the frame or until the
+`with` block it was set in ends.
 
 ## Defaults
 
-**Shapes are not filled by default**, unlike in Processing. A new style has a black stroke, which
-is switched on and 1 unit thick, and a white fill, which is switched off. Text is black. So a
-shape drawn with no style at all is a thin black outline, which shows up on the light gray every
-frame starts with (see [The canvas](canvas.md#the-background)).
+**Shapes are not filled by default**, unlike in Processing. A new style has a black stroke, which is
+switched on and 1 unit thick, and a white fill, which is switched off. Text is black. So a shape
+drawn with no style at all is a thin black outline, which shows up on the light gray every frame
+starts with (see [The canvas](canvas.md#the-background)).
 
 ## Fill, stroke and text colours
 
@@ -71,8 +71,8 @@ def main() raises:
     run[Styles]("Styles")
 ```
 
-`Style(...)` takes the setters' names as keywords. As with the setters, naming any part of the
-fill, stroke or shadow switches that part on, unless its `*_enabled` keyword says otherwise, so
+`Style(...)` takes the setters' names as keywords. As with the setters, naming any part of the fill,
+stroke or shadow switches that part on, unless its `*_enabled` keyword says otherwise, so
 `Style(fill=Color.RED)` is filled. A style you reuse is a field built in `create`, like `label`
 above.
 
@@ -81,9 +81,9 @@ whole number or a decimal alike, such as `12` or `1.5`.
 
 **Corner radius** is part of the style only for shapes the canvas builds from numbers:
 `canvas.corner_radius(radius)` rounds every `canvas.rectangle`, `triangle`, `polygon` and `sector`
-drawn after it. A shape value keeps its own radius (see
-[Corner radius](../geometry/shapes.md#corner-radius)), so
-`with canvas.style(corner_radius=8): canvas.draw(rect)` does not round `rect`.
+drawn after it. A shape value keeps its own radius (see [Corner
+radius](../geometry/shapes.md#corner-radius)), so `with canvas.style(corner_radius=8):
+canvas.draw(rect)` does not round `rect`.
 
 ## Tint, opacity and blend modes
 
@@ -94,8 +94,8 @@ translucent, with no darker band where the two meet.
 - **`canvas.tint(color)`** multiplies every colour of the call by `color`, channel by channel: the
   fill, a gradient's stops, the stroke, text, the shadow and each pixel of an image. White, the
   default, is no tint, and the tint's alpha multiplies with `opacity`. Where `fill`, `stroke` and
-  `text_color` set one part each, a tint recolours the whole look at once; scope it with
-  `with canvas.style(tint=...)`. Multiplying can only darken, so a tint can't flash a sprite white.
+  `text_color` set one part each, a tint recolours the whole look at once; scope it with `with
+  canvas.style(tint=...)`. Multiplying can only darken, so a tint can't flash a sprite white.
 - **`canvas.opacity(a)`**, from 0 to 1, fades the whole call.
 - **`canvas.blend_mode(mode)`** sets how the call combines with what is already drawn:
 

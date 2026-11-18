@@ -2,8 +2,8 @@
 
 A shadow makes a shape look lifted off the screen, by drawing a darkened copy of its silhouette
 behind it, offset and softened. An inset shadow does the opposite, darkening the inside of a shape
-along its edge so that it looks pressed in. This page explains how to switch shadows on and
-shape them.
+along its edge so that it looks pressed in. This page explains how to switch shadows on and shape
+them.
 
 ## Switching a shadow on
 
@@ -18,15 +18,15 @@ with canvas.style(shadow=Color(0, 0, 0, 120), shadow_blur=12):
     canvas.rectangle((0, 0), 200, 120)
 ```
 
-A translucent black, as here, gives the most natural shadow: it darkens whatever is behind it
-rather than covering it.
+A translucent black, as here, gives the most natural shadow: it darkens whatever is behind it rather
+than covering it.
 
 ## What casts a shadow
 
-A render call casts **one silhouette**, as CSS's `drop-shadow` does. A shape's fill and stroke
-cast it together, and a stroke alone casts a ring. Lines and arcs cast their stroke, text casts
-its letters, and an image casts the shape of its opaque pixels. A translucent fill shows its own
-shadow through it. The frame's clear, the background and the letterbox never cast a shadow.
+A render call casts **one silhouette**, as CSS's `drop-shadow` does. A shape's fill and stroke cast
+it together, and a stroke alone casts a ring. Lines and arcs cast their stroke, text casts its
+letters, and an image casts the shape of its opaque pixels. A translucent fill shows its own shadow
+through it. The frame's clear, the background and the letterbox never cast a shadow.
 
 ## Shaping a shadow
 
@@ -51,5 +51,5 @@ set.
 ## Shadows and the rest of the style
 
 A shadow uses the render call's own tint, opacity and blend mode (see
-[Style](style.md#tint-opacity-and-blend-modes)). A gradient fill doesn't change the shadow, which
-is always the silhouette in the shadow's colour.
+[Style](style.md#tint-opacity-and-blend-modes)). A gradient fill doesn't change the shadow, which is
+always the silhouette in the shadow's colour.

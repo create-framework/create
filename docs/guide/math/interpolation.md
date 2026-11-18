@@ -1,10 +1,10 @@
 # Interpolation
 
 To interpolate is to find a value between two others: the colour halfway between red and blue, the
-position a third of the way along a path, the volume a quarter of the way from silent to loud. It
-is one of the most useful ideas in creative coding, because almost every smooth change, from a
-fade to a slide to a health bar, comes down to it. This page explains `lerp` and its relatives,
-which convert between ranges of numbers, and the small helpers that keep numbers within bounds.
+position a third of the way along a path, the volume a quarter of the way from silent to loud. It is
+one of the most useful ideas in creative coding, because almost every smooth change, from a fade to
+a slide to a health bar, comes down to it. This page explains `lerp` and its relatives, which
+convert between ranges of numbers, and the small helpers that keep numbers within bounds.
 
 ## `lerp`
 
@@ -22,8 +22,8 @@ lerp(10, 20, 0.5)  # 15
 lerp(100, 0, 0.25)  # 75: going down works the same way
 ```
 
-Points, vectors and colours have `lerp` too, as a method, so the same idea moves a position or
-mixes a colour:
+Points, vectors and colours have `lerp` too, as a method, so the same idea moves a position or mixes
+a colour:
 
 ```mojo
 var midpoint = a.lerp(b, 0.5)  # the point halfway between a and b
@@ -40,21 +40,21 @@ var position = self.start.lerp(self.end, self.slide.value())
 ```
 
 **Following.** Moving a value a small fraction of the way towards a target every frame makes it
-follow the target, quickly when far behind and gently as it closes in. It is a simple way to make
-a camera trail behind the player:
+follow the target, quickly when far behind and gently as it closes in. It is a simple way to make a
+camera trail behind the player:
 
 ```mojo
 # In `update`: close 10% of the gap to the player every frame.
 self.camera.position = self.camera.position.lerp(self.player, 0.1)
 ```
 
-That version follows faster at a higher frame rate, since it takes more steps a second. To make
-it the same at every frame rate, base the fraction on the time that passed:
-`1 - exp(-5 * context.time.delta)` closes the gap at the same rate however often it runs.
+That version follows faster at a higher frame rate, since it takes more steps a second. To make it
+the same at every frame rate, base the fraction on the time that passed: `1 - exp(-5 *
+context.time.delta)` closes the gap at the same rate however often it runs.
 
 `lerp` for numbers doesn't stop at 0 and 1: a `t` of 2 goes as far past `b` again, and -1 as far
-before `a`. That is sometimes what you want, but if not, keep `t` in range with `clamp` (below).
-A colour's `lerp` always keeps `t` between 0 and 1.
+before `a`. That is sometimes what you want, but if not, keep `t` in range with `clamp` (below). A
+colour's `lerp` always keeps `t` between 0 and 1.
 
 ## `inverse_lerp`
 
@@ -76,9 +76,9 @@ canvas.rectangle((0, 300), 200 * fraction, 20)
 
 ## `map`
 
-`map(value, in_low, in_high, out_low, out_high)` converts a value from one range to another: a
-value at `in_low` becomes `out_low`, a value at `in_high` becomes `out_high`, and everything in
-between is spread proportionally. It is `inverse_lerp` and `lerp` in one step:
+`map(value, in_low, in_high, out_low, out_high)` converts a value from one range to another: a value
+at `in_low` becomes `out_low`, a value at `in_high` becomes `out_high`, and everything in between is
+spread proportionally. It is `inverse_lerp` and `lerp` in one step:
 
 ```mojo
 # In `update`: the mouse's x position, from the left edge to the right one, sets
@@ -102,9 +102,9 @@ var volume = clamp(map(x, canvas.left(), canvas.right(), 0, 1), 0, 1)  # map, ke
 ## `smoothstep`
 
 `smoothstep(edge0, edge1, x)` is like `inverse_lerp`, giving 0 at `edge0` and 1 at `edge1`, with two
-differences: it stays at 0 below `edge0` and at 1 above `edge1`, and it eases in and out at the
-ends rather than changing at a constant rate. So a change driven by it starts gently, speeds up in
-the middle and settles gently, with no sudden start or stop:
+differences: it stays at 0 below `edge0` and at 1 above `edge1`, and it eases in and out at the ends
+rather than changing at a constant rate. So a change driven by it starts gently, speeds up in the
+middle and settles gently, with no sudden start or stop:
 
 ```mojo
 # In `update`: a hint that fades in as the player walks from 300 to 100 units
@@ -114,8 +114,8 @@ var opacity = smoothstep(300, 100, distance)
 ```
 
 It is also useful for adding contrast to values that bunch together in the middle, such as
-[noise](noise.md): `smoothstep(0.3, 0.7, value)` spreads the values from 0.3 to 0.7 across the
-whole range from 0 to 1. For more ways to shape a change from 0 to 1, see [Easing](easing.md).
+[noise](noise.md): `smoothstep(0.3, 0.7, value)` spreads the values from 0.3 to 0.7 across the whole
+range from 0 to 1. For more ways to shape a change from 0 to 1, see [Easing](easing.md).
 
 ## Other helpers
 
@@ -130,5 +130,5 @@ A few more small functions come up often enough to have names:
 
 Create also includes the common functions from Mojo's standard library, so they need no import of
 their own: `sqrt`, `floor`, `ceil`, `exp`, `log`, `log2`, `sin`, `cos`, `tan`, `asin`, `acos`,
-`atan2`, and `isnan`, `isinf` and `isfinite` for checking that a calculation gave a sensible
-number. `abs`, `min`, `max`, `round` and `pow` are part of Mojo itself, and always available.
+`atan2`, and `isnan`, `isinf` and `isfinite` for checking that a calculation gave a sensible number.
+`abs`, `min`, `max`, `round` and `pow` are part of Mojo itself, and always available.

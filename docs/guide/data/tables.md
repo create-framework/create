@@ -55,16 +55,16 @@ table.save("scores.csv")
 ```
 
 - **Loading:** `Table.load(path)` reads a file, `Table.parse(text)` reads a string, and
-  `Table(columns)` builds an empty table with the given column names. The first line of a file
-  names the columns, unless you pass `header=False`. Cells are separated by tabs in a `.tsv` or
-  `.tab` file and by commas otherwise, unless `separator=` names another separator.
-- **Changing rows:** `table.row(i)` and `for ref row in table.rows()` give the rows themselves,
-  not copies, so setting a cell through them changes the table. `ref row = table.add_row()` adds
-  an empty row at the end and gives it back to fill in.
-- **Cells are text until you read them** as something else: `row.string`, `row.float`,
-  `row.int` and `row.bool` read a cell, by its column's name or its position, and convert the text
-  each time. Reading a cell as a type it can't be, such as `"Ada"` as a number, raises an error
-  naming the column and the cell.
+  `Table(columns)` builds an empty table with the given column names. The first line of a file names
+  the columns, unless you pass `header=False`. Cells are separated by tabs in a `.tsv` or `.tab`
+  file and by commas otherwise, unless `separator=` names another separator.
+- **Changing rows:** `table.row(i)` and `for ref row in table.rows()` give the rows themselves, not
+  copies, so setting a cell through them changes the table. `ref row = table.add_row()` adds an
+  empty row at the end and gives it back to fill in.
+- **Cells are text until you read them** as something else: `row.string`, `row.float`, `row.int` and
+  `row.bool` read a cell, by its column's name or its position, and convert the text each time.
+  Reading a cell as a type it can't be, such as `"Ada"` as a number, raises an error naming the
+  column and the cell.
 - **`sort(column, descending=)`** sorts the rows by one column, and keeps rows with equal values in
   the order they were in. It sorts by number only when every cell in the column is a number, so a
   single blank cell makes it sort the whole column alphabetically, as text.
@@ -73,18 +73,18 @@ table.save("scores.csv")
 
 ## Finding, removing and counting rows
 
-Most tables need more than reading every row in turn. A high-score list has to find a player's
-row to update it, and keep only the best scores; a shop has to find the item the player picked.
+Most tables need more than reading every row in turn. A high-score list has to find a player's row
+to update it, and keep only the best scores; a shop has to find the item the player picked.
 
 **Counting.** `table.row_count()` is how many rows the table has, not counting the line of column
 names, and `table.column_count()` how many columns. Rows are numbered from 0, so the last row is
 `table.row(table.row_count() - 1)`.
 
-**Finding a row.** `table.find_row_index(column, value)` looks down a column for the first cell
-that is exactly `value`, and gives that row's position. It gives an `Optional[Int]`: a position
-when it finds one, and `None` when no row matches, so check it before using it (see
-[Optional values](../basics/mojo.md#optional-values)). `table.row(index)` then gives the row
-itself, to read or change:
+**Finding a row.** `table.find_row_index(column, value)` looks down a column for the first cell that
+is exactly `value`, and gives that row's position. It gives an `Optional[Int]`: a position when it
+finds one, and `None` when no row matches, so check it before using it (see [Optional
+values](../basics/mojo.md#optional-values)). `table.row(index)` then gives the row itself, to read
+or change:
 
 ```mojo
 # In `update`: record a new score for a player, adding them if they are new.
@@ -98,13 +98,13 @@ else:
     row.set("score", self.score)
 ```
 
-The comparison is between text, as every cell is text, so to find the row whose score is 120,
-look for `"120"`. `table.find_row_indices(column, value)` gives the position of every row that
-matches, in order, as a list, which is empty when none does.
+The comparison is between text, as every cell is text, so to find the row whose score is 120, look
+for `"120"`. `table.find_row_indices(column, value)` gives the position of every row that matches,
+in order, as a list, which is empty when none does.
 
-**Removing a row.** `table.remove_row(index)` removes the row at `index`, and the rows after it
-move up to fill the gap. So to keep only the ten best scores, sort the table and then remove the
-last row until ten are left:
+**Removing a row.** `table.remove_row(index)` removes the row at `index`, and the rows after it move
+up to fill the gap. So to keep only the ten best scores, sort the table and then remove the last row
+until ten are left:
 
 ```mojo
 self.table.sort("score", descending=True)
@@ -114,10 +114,10 @@ while self.table.row_count() > 10:
 
 **Adding a whole row at once.** Besides `add_row()`, which adds an empty row to fill in cell by
 cell, `table.add_row(cells)` adds a row from a list of texts, one for each column, in order:
-`table.add_row(["Linus", "80"])`. A table with column names must be given exactly one cell for
-each of its columns, and raises an error otherwise.
+`table.add_row(["Linus", "80"])`. A table with column names must be given exactly one cell for each
+of its columns, and raises an error otherwise.
 
 **Columns.** `table.columns()` is the list of column names, and `table.has_column(name)` whether
-there is a column of that name, which helps with a file that an older version of the program
-wrote. `table.add_column(name)` adds a column at the end, empty in every row, and
+there is a column of that name, which helps with a file that an older version of the program wrote.
+`table.add_column(name)` adds a column at the end, empty in every row, and
 `table.remove_column(name)` removes one from every row, moving the columns after it left by one.
