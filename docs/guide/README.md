@@ -73,7 +73,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 - [JSON](data/json.md): reading, changing and saving JSON files, building a document from nothing,
   and missing fields.
 
-## [Math](math/README.md)
+## [Maths](math/README.md)
 
 These pages assume no prior knowledge of the mathematics they describe.
 

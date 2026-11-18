@@ -1,4 +1,4 @@
-# Math
+# Maths
 
 The mathematics behind moving, turning and shaping things, explained from the beginning: these pages
 assume no prior knowledge. Angles, vectors and matrices build on each other, so they read best in

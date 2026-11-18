@@ -45,7 +45,7 @@ def main() raises:
 ```
 
 `@fieldwise_init` writes the struct's constructor from its fields, so use it on program structs.
-Every frame starts cleared to light gray, so a program needs no background call to get a clean
+Every frame starts cleared to light grey, so a program needs no background call to get a clean
 frame. `canvas.background(...)` paints the frame another colour, and paints over everything drawn
 before it, so call it before anything else you draw (see [The
 canvas](../drawing/canvas.md#the-background)). See

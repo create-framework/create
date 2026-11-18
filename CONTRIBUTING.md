@@ -243,7 +243,7 @@ Docstrings and the contributor docs follow the same style.
   item that makes one point can open with it in bold: "**Shapes are not filled by default.** A shape
   drawn with no style is…".
 - **British spelling in prose, the API's in code:** "Every colour in Create is a `Color`." So
-  colour, centre, behaviour, organise.
+  colour, centre, grey, maths, behaviour, organise.
 - **Punctuation:** no Oxford comma ("red, green and blue"); "such as" or "for example", not "e.g."
   or "i.e."; a colon, semicolon or parentheses rather than a dash.
 - **Code font for every name from the code:** types, functions, arguments, constants, files and
@@ -290,7 +290,7 @@ keep them working:
 
 A public value type implements `Writable` and prints as it would be written in source:
 
-- Positionally for the small math types and `Color`: `Point2D(1.0, 2.0)`.
+- Positionally for the small maths types and `Color`: `Point2D(1.0, 2.0)`.
 - By name for an `Int`-wrapping enum: `Easing.OUT_BOUNCE` (an unnamed value falls back to
   `Easing(99)`).
 - In keyword form otherwise, labelled by the constructor's keywords where it has them

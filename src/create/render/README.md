@@ -439,7 +439,7 @@ canvas at its own density and otherwise resamples through `_seed`, which takes t
 screen-to-pixel mapping (`_base` here, `_design_pixels` for `last_frame`). `bake` and `discard`
 (`canvas.clear`) clear `clips` only when no clip is open: a command recorded inside an open
 `canvas.clip` names its level by index, which must stay valid. `autoclear` stays off on an offscreen
-canvas: `set_autoclear` would insert a gray clear, which the next bake would paint in.
+canvas: `set_autoclear` would insert a grey clear, which the next bake would paint in.
 
 **The image cache** (`Resources.images`, `_resources.mojo`, beside the `TextRenderer`: what every
 replay reads besides the commands) holds one entry per image, keyed by a backend id; `interned_ids`

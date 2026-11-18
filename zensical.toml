@@ -68,7 +68,7 @@ nav = [
       "guide/data/tables.md",
       "guide/data/json.md",
     ] },
-    { "Math" = [
+    { "Maths" = [
       "guide/math/index.md",
       "guide/math/angles.md",
       "guide/math/points-and-vectors.md",

@@ -397,7 +397,7 @@ def clear(mut self)
 Discard everything drawn so far, back to how the canvas started.
 
 An offscreen canvas is transparent again. The frame canvas starts
-the frame over: opened with the clear to gray 200 while the
+the frame over: opened with the clear to grey 200 while the
 autoclear is on, or from the last frame's pixels while it is off.
 Style, transform, camera and settings are untouched — this undoes
 drawing, not state — and inside a `clip` block the clip still
@@ -1112,7 +1112,7 @@ those drawn before the call, and lasts until changed. `run`'s
 def autoclear(self) -> Bool
 ```
 
-Whether frames open with the clear to gray 200. On unless set.
+Whether frames open with the clear to grey 200. On unless set.
 
 ```mojo
 def autoclear(mut self, enabled: Bool)
@@ -1120,7 +1120,7 @@ def autoclear(mut self, enabled: Bool)
 
 Switch the clear each frame opens with off or back on.
 
-On by default, clearing to gray 200 so the default style is visible
+On by default, clearing to grey 200 so the default style is visible
 on a program that never calls `background()`. Off lets ink
 accumulate across frames, on either backend.
 
