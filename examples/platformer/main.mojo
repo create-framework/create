@@ -1,4 +1,4 @@
-"""A side-scroller: a player that runs and double-jumps under gravity across
+"""A platformer: a player that runs and double-jumps under gravity across
 platforms, and a camera that follows it through a world wider than the
 screen.
 
@@ -129,4 +129,4 @@ struct Game(Program):
 
 
 def main() raises:
-    run[Game]("Sidescroller")
+    run[Game]("Platformer")
