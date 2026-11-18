@@ -74,8 +74,8 @@ environment the first time it is used.
 ## Building and testing
 
 ```bash
-mojo run -I src examples/sketch/main.mojo      # -I src is required, see below
-pixi run example sketch                   # by name; no argument lists them
+mojo run -I src examples/hello/main.mojo       # -I src is required, see below
+pixi run example hello                    # by name; no argument lists them
 pixi run benchmark frame                  # benchmarks/, same form; frame cpu for the CPU backend
 pixi run test                             # whole suite, concurrent
 pixi run test render                      # subpackage, file name sans test_, or path; several allowed
