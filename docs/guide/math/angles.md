@@ -14,7 +14,7 @@ axis), and grows **counter-clockwise**:
     <img src="angles.svg" width="560" alt="A circle with its four directions labelled: 0 points right, PI / 2 up, PI left and -PI / 2 down. An arrow turning counter-clockwise from 0 to PI / 4 shows which way angles grow.">
 </p>
 
-So an angle of 0 points right, a quarter turn points up, a half turn points left, and three quarters
+So an angle of 0 points right, a quarter turn points up, a half turn points left and three quarters
 of a turn points down. Rotating something by a positive angle turns it counter-clockwise, and by a
 negative angle clockwise. This is the convention used throughout mathematics, and it goes with y
 increasing upwards (see [Coordinates](../basics/coordinates.md)).
@@ -98,4 +98,4 @@ An angle that keeps growing, such as a spinning wheel's, works fine as it is: an
 points the same way as 0, and `5 * TAU` the same way again. To bring an angle back into one turn,
 from 0 up to `TAU`, use `wrap(angle, TAU)` (see [Interpolation](interpolation.md#other-helpers)).
 
-Create also provides `tan`, and the inverse functions `asin` and `acos`, for those who need them.
+Create also provides `tan`, and the inverse functions `asin` and `acos`.

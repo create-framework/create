@@ -1,14 +1,14 @@
 # Style
 
 The style is everything about how a shape looks rather than where it is: its fill, its stroke, its
-shadow, the font of its text, and how it blends with what is already on the screen. This page
+shadow, the font of its text and how it blends with what is already on the screen. This page
 explains how the style works as a whole: what it starts as, the three ways to change it, and the
 settings that affect everything a render call draws at once. (A **render call** is any call that
 draws, such as `canvas.circle` or `canvas.text`.) The parts of the style each have a page of their
 own:
 
 - [Colours](colours.md): making a `Color`, and mixing and fading colours.
-- [Strokes](strokes.md): the outline, where it sits, how its ends look, and dashes.
+- [Strokes](strokes.md): the outline, where it sits, how its ends look and dashes.
 - [Gradients](gradients.md): fills that blend from one colour to another.
 - [Shadows](shadows.md): drop shadows and inset shadows.
 - [Text](text.md): fonts, alignment, lines and wrapping.

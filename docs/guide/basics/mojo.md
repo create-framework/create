@@ -53,7 +53,7 @@ def distance_to_mouse(position: Point2D, context: Context) -> Float64:
 **A function can't change its arguments, unless they are marked `mut`.** By default, an argument is
 only lent to the function to read. `mut` lends it for changing, and the changes reach the caller's
 value. That is why `update` is written `update(mut self, mut context: Context, mut canvas: Canvas)`:
-it changes the program's own fields through `self`, draws on the `canvas`, and may change the run's
+it changes the program's own fields through `self`, draws on the `canvas` and may change the run's
 settings through the `context`. A helper that only reads its arguments leaves `mut` out.
 
 ## Structs
@@ -119,6 +119,7 @@ Some questions have no answer. `Key.from_name("jmup")` is given a name that isn'
 what is inside, check that there is something:
 
 ```mojo
+# In `create`, with a key's name, `setting`, read from a settings file:
 var key = Key.from_name(setting)
 if key:  # true when the box holds a key
     self.jump_key = key.value()  # take the key out of the box
@@ -128,7 +129,7 @@ else:
 
 `key.value()` takes the value out. On an empty box it is an error that stops the program, so call it
 only after checking. When there is a sensible fallback, `or_else` does both at once: it gives the
-value if there is one, and the fallback otherwise: `Key.from_name(setting).or_else(Key.SPACE)`.
+value if there is one and the fallback otherwise, as in `Key.from_name(setting).or_else(Key.SPACE)`.
 
 ## Errors
 
@@ -186,6 +187,7 @@ A loop over a list or a table normally gives each item for reading only. `ref` m
 the item in the table:
 
 ```mojo
+# With a `Table` named `table`:
 for ref row in table.rows():
     row.set("score", row.int("score") + 10)  # changes the table's own row
 ```

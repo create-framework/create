@@ -2,7 +2,7 @@
 
 A gradient is a fill that blends smoothly from one colour to another, or through several: a sky
 fading from deep blue to orange at the horizon, or a glow that fades out from its centre. This page
-explains how to build one, how it fits each shape, and how it combines with the rest of the style.
+explains how to build one, how it fits each shape and how it combines with the rest of the style.
 
 ## Filling with a gradient
 
@@ -34,6 +34,7 @@ A gradient is a list of **stops**: colours placed at positions from 0, where the
 above, the stops are spread evenly; to place them yourself, give each a position:
 
 ```mojo
+# In `create`, building the `sunset` field:
 var sunset = Gradient.linear(
     [(0.0, Color.BLUE), (0.7, Color.PURPLE), (1.0, Color.ORANGE)]
 )

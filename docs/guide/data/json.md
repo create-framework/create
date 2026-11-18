@@ -4,7 +4,7 @@ JSON is a text format for structured data: values such as numbers, strings and t
 gathered into lists (*arrays*) and into named fields (*objects*), which can be nested inside each
 other. It is the usual format for settings, save games and level descriptions, and most tools and
 languages read and write it. This page explains how to read, change and save it, how to build a
-document from nothing, and how to cope with a field that is missing. Plain rows and columns, such as
+document from nothing and how to cope with a field that is missing. Plain rows and columns, such as
 a high-score list, are simpler as a [table](tables.md).
 
 ## Working with JSON
@@ -12,7 +12,7 @@ a high-score list, are simpler as a [table](tables.md).
 `JSON` is one type for every JSON value, whether a number, a string, an array or an object:
 
 ```mojo
-# With config.json as {"player": {"speed": 2.5}, "enemies": [{"hp": 3}, {"hp": 5}]}:
+# In `create`, with config.json as {"player": {"speed": 2.5}, "enemies": [{"hp": 3}, {"hp": 5}]}:
 var config = JSON.load("config.json")
 var speed = config["player"]["speed"].float()
 config["player"]["speed"] = 3.0  # edits the document
@@ -50,7 +50,7 @@ a document from nothing. `JSON.object()` is an empty object and `JSON.array()` a
 an object by setting its fields, and an array with `append`:
 
 ```mojo
-# Saving the game:
+# In `update`, when the player saves the game:
 var save = JSON.object()
 save["level"] = 3
 save["name"] = "Ada"

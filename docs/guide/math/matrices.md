@@ -1,9 +1,9 @@
 # Matrices
 
 A matrix describes a change of position that can be applied to every point of a drawing at once:
-moving it, turning it, making it bigger or smaller, mirroring it, or any combination of those.
+moving it, turning it, making it bigger or smaller, mirroring it or any combination of those.
 `canvas.transform` takes one, and draws everything inside its block changed by it. This page
-explains what a matrix does, how to build one, and how to combine them, without assuming prior
+explains what a matrix does, how to build one and how to combine them, without assuming prior
 knowledge of matrices.
 
 ## What a matrix does
@@ -53,8 +53,8 @@ So the usual order for placing something is to read it from right to left: scale
 then move it into place, `translate(position) @ rotate(angle) @ scale(size)`.
 
 **Nesting** `canvas.transform` blocks combines them too: a block inside another is changed by both,
-the inner one applying first, as if the two matrices were combined with `@`. That makes it easy to
-draw a thing made of parts that move together, such as a car whose wheels turn as it drives:
+the inner one applying first, as if the two matrices were combined with `@`. That is the way to draw
+a thing made of parts that move together, such as a car whose wheels turn as it drives:
 
 ```mojo
 # In `update`, with a `car_position: Point2D` field: the car moves, and each
@@ -74,6 +74,7 @@ the matrix, and `apply(m, vector)` gives a vector changed by its turning and sca
 is a movement rather than a place, so a translation doesn't move it:
 
 ```mojo
+# In `update`, with `base: Vector2D` and `aim: Float64` fields:
 var cannon = translate(self.base) @ rotate(self.aim)
 var tip = apply(cannon, Point2D(60, 0))  # the end of a barrel 60 long, pointing along +x
 var direction = apply(cannon, Vector2D.RIGHT)  # the way the barrel points

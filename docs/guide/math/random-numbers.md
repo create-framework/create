@@ -1,7 +1,7 @@
 # Random numbers
 
 Random numbers make a program less predictable: where the stars are scattered, which enemy appears
-next, how far a spark flies. This page explains how to get random numbers from a `Random`, and how a
+next, how far a spark flies. This page explains how to get random numbers from a `Random` and how a
 seed makes the same "random" numbers come out every time, when you want them to. For values that
 vary randomly but smoothly, such as the height of rolling hills, see [Noise](noise.md).
 
@@ -49,7 +49,7 @@ for _ in range(60):
 ```
 
 A fixed seed is useful when a random result should be repeatable: a level generated from a seed the
-player can share, a test that must see the same numbers every time, or a picture you want to draw
+player can share, a test that must see the same numbers every time or a picture you want to draw
 again exactly.
 
 ## One `Random`, kept

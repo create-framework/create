@@ -1,7 +1,7 @@
 # Colours
 
 Every colour in Create is a `Color`: the fill, the stroke, text, shadows, the background and the
-stops of a gradient. This page explains how a colour is made up, the ways to write one, and how to
+stops of a gradient. This page explains how a colour is made up, the ways to write one and how to
 mix and fade colours.
 
 ## Red, green, blue and alpha
@@ -16,7 +16,7 @@ leave it out:
 # In `update`:
 canvas.fill(Color(255, 128, 0))  # orange: full red, half green, no blue
 canvas.fill(Color(255, 128, 0, 128))  # the same orange, half transparent
-canvas.fill(Color(200))  # one number is a gray: Color(200, 200, 200)
+canvas.fill(Color(200))  # one number is a grey: Color(200, 200, 200)
 ```
 
 A translucent colour lets what is behind it show through, blended with it by its alpha.
@@ -25,9 +25,10 @@ A translucent colour lets what is behind it show through, blended with it by its
 
 The common colours have names, so you don't need to remember their numbers: `BLACK`, `WHITE`,
 `DARK_GRAY`, `GRAY`, `LIGHT_GRAY`, `RED`, `GREEN`, `BLUE`, `CYAN`, `MAGENTA`, `YELLOW`, `ORANGE`,
-`PINK`, `PURPLE`, `BROWN`, and `TRANSPARENT`, which is invisible.
+`PINK`, `PURPLE`, `BROWN` and `TRANSPARENT`, which is invisible.
 
 ```mojo
+# In `update`:
 canvas.fill(Color.RED)
 canvas.fill(Color.RED.with_alpha(64))  # red, mostly transparent
 ```
@@ -42,6 +43,7 @@ and then two hexadecimal digits each for red, green and blue. `Color.hex` reads 
 can be copied straight from one of those tools:
 
 ```mojo
+# In `update`:
 canvas.fill(Color.hex("#336699"))
 canvas.fill(Color.hex("#33669980"))  # two more digits are the alpha
 canvas.fill(Color.hex("#369"))  # the short form: the same as #336699
@@ -58,12 +60,13 @@ darker, less intense blue" is hard to turn into three numbers. **HSV** describes
 people tend to:
 
 - The **hue** is which colour it is, as an angle in degrees round a colour wheel: 0 is red, 60
-  yellow, 120 green, 180 cyan, 240 blue, 300 magenta, and 360 is back to red.
+  yellow, 120 green, 180 cyan, 240 blue, 300 magenta; 360 is back to red.
 - The **saturation**, from 0 to 1, is how intense it is: 0 is a grey, and 1 the purest form of the
   hue.
 - The **value**, from 0 to 1, is how bright it is: 0 is black, and 1 as bright as the colour gets.
 
 ```mojo
+# In `update`:
 canvas.fill(Color.hsv(200, 0.8, 1.0))  # a bright sky blue
 canvas.fill(Color.hsv(200, 0.8, 0.5))  # the same blue, darker
 canvas.fill(Color.hsv(200, 0.3, 1.0))  # the same blue, paler
@@ -103,5 +106,6 @@ sensitive to differences between dark colours than between light ones, so the po
 starts to read better than white is lower than you might expect, at about 0.18:
 
 ```mojo
+# With the `background` colour the text is drawn on:
 var text_color = Color.BLACK if background.luminance() > 0.18 else Color.WHITE
 ```

@@ -2,13 +2,13 @@
 
 Everything a program shows, it draws on the canvas it is handed each frame. This page explains how
 shapes reach the screen: drawing them, drawing your own types, the background each frame starts
-from, moving and turning what you draw with transforms, smoothing edges, and clipping. How shapes
+from, moving and turning what you draw with transforms, smoothing edges and clipping. How shapes
 look (their colours, strokes, gradients, shadows and text) is explained in [Style](style.md).
 
 ## Shapes
 
-`canvas.draw(shape)` draws any shape or curve — `Rectangle`, `Circle`, `Ellipse`, `Capsule`,
-`Triangle`, `Sector`, `Polygon`, `Line`, `Arc`, `Bezier`, `Spline` — in the current style and
+`canvas.draw(shape)` draws any shape or curve (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+`Triangle`, `Sector`, `Polygon`, `Line`, `Arc`, `Bezier` or `Spline`) in the current style and
 transform. The named methods build a shape from numbers and draw it, so `canvas.rectangle(position,
 width, height)` is `canvas.draw(Rectangle(position, width, height))`:
 
@@ -106,8 +106,8 @@ with no arguments (`canvas.antialiasing()`).
 
 `with canvas.transform(m):` moves, turns or scales everything drawn inside the block by the matrix
 `m`, which is built with `translate`, `rotate` and `scale`. The end of the block undoes it. What a
-matrix is, and how matrices combine, is explained in [Matrices](../math/matrices.md). It only works
-as a `with` block, so a transform can't accidentally stay on. `canvas.style(...)`,
+matrix is, and how matrices combine, is explained in [Matrices](../math/matrices.md). `transform`
+only works as a `with` block, so a transform can't accidentally stay on. `canvas.style(...)`,
 `canvas.overlay()` and `canvas.clip(...)` work the same way; each returns a **guard**, the object
 the `with` block holds:
 
@@ -170,11 +170,11 @@ as when it is drawn. Lines and curves can't be clips (that doesn't compile). A c
   current then. A `transform` or `overlay` inside the block moves what is drawn, not the clip.
 - **A clip inside another** draws only where both allow. When the inner block ends, the outer clip
   applies again.
-- **Everything is clipped**: shapes, images, text, shadows, and `background()`, which then paints
+- **Everything is clipped**: shapes, images, text, shadows and `background()`, which then paints
   only the clipped area. The letterbox is not.
 - **Edges** are smoothed at the frame's antialiasing level, like a shape's, so the two backends
   agree inside a clip and may differ slightly along its rim. With `Antialiasing.OFF` a clip is
   hard-edged. Where the edges of nested clips pass through the same pixel, their smoothing combines:
   a pixel half inside each of two clips is drawn at a quarter strength.
 
-Soft masks (a gradient or an image's alpha) are not implemented yet.
+A clip is always a region: a gradient or an image's alpha can't be used as a soft mask.

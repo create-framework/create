@@ -4,7 +4,7 @@ A pixel is one of the tiny squares of colour a screen, or an image, is made of. 
 need to think about them: they draw shapes, text and images, and Create works out the pixels. Some
 programs do need them, though: a colour picker reads the colour under the mouse, a feedback effect
 draws the last frame back into the next, and a generated texture is built one pixel at a time. This
-page explains how to read back what has been drawn, and how to build an image pixel by pixel.
+page explains how to read back what has been drawn and how to build an image pixel by pixel.
 
 ## Reading the screen
 
@@ -74,7 +74,7 @@ y)`). Then turn it into an image with `Image(buffer^)`, which takes the pixels o
 them:
 
 ```mojo
-# An 8 by 8 checkerboard:
+# In `create`: an 8 by 8 chessboard.
 var buffer = PixelBuffer(8, 8)
 for y in range(8):
     for x in range(8):

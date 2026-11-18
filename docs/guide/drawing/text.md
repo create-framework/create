@@ -1,8 +1,8 @@
 # Text
 
 `canvas.text` draws text, and like a shape it is drawn in the current style and transform. This page
-explains how to choose a font and its size, weight and slant, how text is placed, and how to draw
-text over several lines, or wrapped to fit a column.
+explains how to choose a font and its size, weight and slant, how text is placed and how to draw
+text over several lines or wrapped to fit a column.
 
 ## Drawing text
 

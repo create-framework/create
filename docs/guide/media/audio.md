@@ -1,7 +1,7 @@
 # Audio
 
 Sound effects and music bring a program to life. This page explains how to load a sound from a file
-or make one from scratch, how to play it, and how to control each sound while it plays.
+or make one from scratch, how to play it and how to control each sound while it plays.
 
 ## How sound is stored
 
@@ -60,7 +60,7 @@ var chime = Sound.load("assets/chime.wav")
 - **Loading:** `Sound.load(path)` reads WAV, OGG, FLAC or MP3, chosen by the file's contents, not
   its extension. The whole file is decoded at load, to 16-bit samples whatever the file held. It
   raises, naming the path, for a file it can't read or one with no samples.
-- **Synthesizing:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` makes a sound from
+- **Synthesising:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` makes a sound from
   a list of `Float64` samples, from `-1.0` to `1.0`; a sample outside that range is cut off at its
   end. With several channels, the samples take turns, one per channel: left, right, left, right.
   Each such group, one sample for every channel, is called an audio *frame*, which has nothing to do

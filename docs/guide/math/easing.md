@@ -3,7 +3,7 @@
 Things in the real world rarely start or stop moving all at once. A car pulls away slowly and
 gathers speed; a ball dropped on the floor bounces before it settles; a drawer slides out quickly
 and slows as it reaches the end. **Easing** gives a movement that kind of character. This page
-explains what an easing curve is, how to read the names of Create's curves, and how to use one.
+explains what an easing curve is, how to read the names of Create's curves and how to use one.
 
 ## What an easing curve does
 

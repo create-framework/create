@@ -1,7 +1,7 @@
 # Mouse
 
 `context.mouse` tells a program where the pointer is, how it moved, which buttons are held and how
-far the wheel turned. This page explains each of those, how to find what is under the pointer, and
+far the wheel turned. This page explains each of those, how to find what is under the pointer and
 how to change the pointer's look. What every device has in common (`down`, `pressed` and `released`)
 is in [Input](input.md#down-pressed-and-released).
 

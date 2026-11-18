@@ -253,7 +253,7 @@ carries on from the line after `run`, if it has any.
 ## When something goes wrong
 
 **An error ends the run.** `create` and `update` are marked `raises`, so anything inside them may
-raise an error: loading a file that isn't there, reading a JSON field that is missing, or a call
+raise an error: loading a file that isn't there, reading a JSON field that is missing or a call
 given a value it can't use. An error that nothing catches leaves `update`, then `run`, then `main`,
 and ends the program: the window closes, and Mojo prints the error's message in the terminal the
 program was started from. Create's errors name what went wrong, and a file's path where there is

@@ -2,7 +2,7 @@
 
 A game needs to know when things touch: when the player reaches a coin, when a ball hits a wall,
 when a laser crosses an enemy. Create's shapes answer this with tests that say yes or no. This page
-explains the three tests, how exact they are, and a few ways to use them.
+explains the three tests, how exact they are and a few ways to use them.
 
 ## The three tests
 
@@ -99,6 +99,7 @@ The tests only say whether shapes touch. To know how far apart a point and a sha
 `p`, and `p` itself when `p` is inside a region. So the distance is:
 
 ```mojo
+# With a `point` and any `shape`:
 var distance = point.distance(shape.closest_point(point))  # 0 inside the shape
 ```
 
