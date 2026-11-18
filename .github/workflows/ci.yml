@@ -133,7 +133,9 @@ jobs:
   # `changes`, since a change to Markdown alone can break the site. This
   # checks main's pages; docs.yml publishes them beside the latest release's.
   # Building regenerates docs/reference, so a committed reference that differs
-  # from the docstrings (`pixi run reference` not rerun) fails it too.
+  # from the docstrings (`pixi run reference` not rerun) fails it too, as does
+  # Markdown not wrapped at 100 columns, which pre-commit does but a clone
+  # without the hook may not.
   docs:
     name: linux-docs
     runs-on: ubuntu-latest
@@ -152,6 +154,9 @@ jobs:
               echo "::error::docs/reference differs from the docstrings: run 'pixi run reference' and commit the result."
               exit 1
           fi
+      - name: Markdown is wrapped
+        if: ${{ !cancelled() }}
+        run: pixi run -e docs python scripts/wrap_markdown.py --check
 
   # The required check. A skipped matrix job reports under its unexpanded
   # name, not as linux-format/linux-precompile/..., so those can't be
