@@ -4,7 +4,7 @@ back as an `Image` with `snapshot`.
 Two uses. A badge drawn once in `create` and kept as an image, stamped
 where the mouse is. And a paint layer kept as a field: drag to paint into
 it, and the strokes stay while the frame under them is redrawn every frame.
-Press `c` to clear the layer.
+C clears the layer.
 """
 
 from create import *

@@ -1,6 +1,6 @@
 """Up to four players, one per gamepad: the left stick moves, the right
-trigger boosts, SOUTH (Xbox A, PlayStation Cross) swaps colour with a
-buzz and START returns home. A pad thumps as it joins, and the screen
+trigger boosts, `SOUTH` (Xbox A, PlayStation Cross) swaps colour with a
+buzz and `START` returns home. A pad thumps as it joins, and the screen
 says who joined or left.
 """
 

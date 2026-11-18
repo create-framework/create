@@ -1,5 +1,5 @@
 """Three uses of `canvas.clip`: a panel whose list scrolls under its
-edges, a star-shaped window onto turning stripes, and fog everywhere
+edges, a star-shaped window onto turning stripes and fog everywhere
 except around the mouse.
 """
 

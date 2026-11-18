@@ -1,7 +1,7 @@
-"""Two ways to build an animation, the playback modes, and the run's time.
+"""Two ways to build an animation, the playback modes and the run's time.
 
-`idle` and `run` are cut out of one sprite sheet -- row 0 and row 1 of the
-same PNG -- while `spin` is loaded from a folder of numbered frames. Both
+`idle` and `run` are cut out of one sprite sheet (row 0 and row 1 of the
+same PNG), while `spin` is loaded from a folder of numbered frames. Both
 end up as the same type, so nothing downstream cares which path was used.
 
 Nothing ticks the animator: it reads its frame off the run's scaled time, so
@@ -89,7 +89,7 @@ struct Game(Program):
                 self.animator.use(self.idle)
 
         # The run's time, not the animator's own: everything timed by
-        # scaled time -- the animator, and the movement by `delta` above --
+        # scaled time (the animator, and the movement by `delta` above)
         # slows and pauses together. Both apply from the next frame.
         if context.keyboard.pressed(Key.P):
             context.time_paused(not context.time_paused())
@@ -117,7 +117,7 @@ struct Game(Program):
             (0.0, canvas.bottom() + height / 2.0), canvas.right() * 2.0, height
         )
 
-        # Rendered four times the 32x32 source size -- pixel art wants to be
+        # Rendered four times the 32x32 source size: pixel art wants to be
         # scaled up, and the sized overload does it without touching the asset.
         canvas.image(
             self.animator,

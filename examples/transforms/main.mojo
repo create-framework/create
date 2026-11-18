@@ -23,7 +23,7 @@ struct Transforms(Program):
         var moon_angle = elapsed * TAU / 3.5
 
         # Solar system: the sun sits at the origin, so it needs no transform of
-        # its own — the nesting below is what the demo is about.
+        # its own; the nesting below is what the demo is about.
         # Hit-test the sun in the frame it is rendered in. `to_local` maps a
         # screen position, which is what `context.mouse.position` is, into it.
         var sun = Circle((0.0, 0.0), 40.0)
@@ -33,7 +33,7 @@ struct Transforms(Program):
         canvas.fill(Color(226, 46, 56) if sun_hovered else Color(230, 180, 20))
         canvas.draw(sun)
 
-        # Planet — rotate then translate so it orbits the sun
+        # Planet: rotate then translate so it orbits the sun
         with canvas.transform(rotate(planet_angle) @ translate(160.0, 0.0)):
             # Thin orbit guide rendered in planet's frame before further nesting
             canvas.stroke(Color(62, 62, 68), thickness=1)
@@ -44,7 +44,7 @@ struct Transforms(Program):
             canvas.fill(Color(98, 104, 168))
             canvas.circle((0.0, 0.0), 18.0)
 
-            # Moon — orbits the planet
+            # Moon: orbits the planet
             with canvas.transform(rotate(moon_angle) @ translate(45.0, 0.0)):
                 canvas.fill(Color(176, 172, 162))
                 canvas.circle((0.0, 0.0), 8.0)

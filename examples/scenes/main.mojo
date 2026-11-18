@@ -1,12 +1,13 @@
-"""Multi-scene composition, not a scene machine.
+"""Two scenes in one program: a menu, and a canvas to paint on.
 
-`Program` stays exactly `create`/`update`. A scene switch is nothing more
-than an int field and an if/elif in `update`. `Menu` and `Paint` are plain
-structs, not `Program`s, so each `update` takes only what it uses and a
-switch can hand over whatever it carries (`enter`).
-docs/guide/basics/programs.md's "Multiple scenes" says why this beats a generic scene router: Mojo has no
-dynamic trait dispatch, and one shared trait would force a single `update`
-signature on every scene.
+Each scene is a plain struct, not a `Program`, kept as a field of the
+program. An `Int` field says which scene is showing, and an `if` in `update`
+runs it. Each scene's `update` takes only what it uses, and `enter` resets
+the painting scene as the program switches to it. "Multiple scenes" in the
+user guide's Programs page says why there is no scene trait.
+
+Click to start painting. Drag with the left button to paint, and
+right-click to go back to the menu.
 """
 
 from create import *

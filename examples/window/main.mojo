@@ -19,7 +19,7 @@ from create import *
 
 comptime _BACKGROUND = Color(40, 40, 44)
 comptime _BARS = Color(56, 58, 92)
-"""Not black, so the bars FIT leaves are plain to see."""
+"""Not black, so the bars `FIT` leaves are plain to see."""
 comptime _BALL = Color(226, 46, 56)
 comptime _BOX = Color(98, 104, 168)
 comptime _TEXT = Color(240, 236, 222)
