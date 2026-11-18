@@ -49,7 +49,7 @@ Every frame starts cleared to light grey, so a program needs no background call 
 frame. `canvas.background(...)` paints the frame another colour, and paints over everything drawn
 before it, so call it before anything else you draw (see [The
 canvas](../drawing/canvas.md#the-background)). See
-[examples/sidescroller](../../../examples/sidescroller/main.mojo) for a complete bigger program.
+[examples/platformer](../../../examples/platformer/main.mojo) for a complete bigger program.
 
 ## Running a program
 
