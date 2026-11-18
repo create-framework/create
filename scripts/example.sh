@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Resolve an example name to a path and run it.
 #
-#   pixi run example sketch          -> examples/sketch/main.mojo
+#   pixi run example hello           -> examples/hello/main.mojo
 #   pixi run example shadows gpu     -> extra arguments are passed through
 #
 # Every example is a folder of that name, run from its main.mojo, beside any
