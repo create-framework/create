@@ -8,11 +8,11 @@ differently, and where to find the Create version of the calls you know.
 These look like Processing but behave differently, and each one catches people out:
 
 - **The origin is the centre of the screen, and y increases upwards.** `canvas.left()` and
-  `canvas.bottom()` are negative, something falling moves towards negative y, and `rotate` turns
+  `canvas.bottom()` are negative, something falling moves towards negative y and `rotate` turns
   counter-clockwise. See [Coordinates](coordinates.md#creates-coordinate-system).
 - **Every shape is positioned by its centre**, rectangles and images included, as if
   `rectMode(CENTER)` and `imageMode(CENTER)` were always on.
-- **Shapes are not filled by default.** A shape drawn with no style is just a black outline; call
+- **Shapes are not filled by default.** A shape drawn with no style is a black outline; call
   `canvas.fill(...)` to fill it. See [Style](../drawing/style.md#defaults).
 - **`fill` doesn't colour text.** Text has its own colour, `canvas.text_color(...)`.
 - **A stroke sits inside the shape's edge** by default, not centred on it, so a stroked shape is

@@ -1,9 +1,9 @@
 # Curves
 
-A curve is a path with no inside: a straight line, part of a circle's edge, or a smooth bend through
+A curve is a path with no inside: a straight line, part of a circle's edge or a smooth bend through
 several points. Curves are drawn with the stroke, so they show only while the stroke is on, and they
 are useful well beyond drawing: a curve can be a path for something to follow, a laser to test for
-hits, or the outline of a road. This page explains what the four curves are, and how to find points
+hits or the outline of a road. This page explains what the four curves are and how to find points
 along one.
 
 ## The curves

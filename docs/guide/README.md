@@ -10,7 +10,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 - [Setup](basics/setup.md): installing Create and starting a project, with `create-cli` or plain
   pixi.
 - [Mojo](basics/mojo.md): the parts of the Mojo language the examples use: variables and numbers,
-  `mut`, structs and traits, lists, optional values, errors, moving with `^`, and `ref`.
+  `mut`, structs and traits, lists, optional values, errors, moving with `^` and `ref`.
 - [Programs](basics/programs.md): how a program runs, `create` and `update`, `run`'s arguments and
   the CPU or GPU backend, which values are fields and which are parameters, how long each lasts, the
   run's settings, the window and its modes, errors and printing, file paths and scenes.
@@ -27,7 +27,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
   tint, opacity and blend modes.
 - [Colours](drawing/colours.md): red, green, blue and alpha, named colours, hex codes, hue,
   saturation and value, and mixing colours.
-- [Strokes](drawing/strokes.md): thickness, where the stroke sits, how its ends look, and dashes.
+- [Strokes](drawing/strokes.md): thickness, where the stroke sits, how its ends look and dashes.
 - [Gradients](drawing/gradients.md): linear and radial gradients, and how they fit a shape.
 - [Shadows](drawing/shadows.md): drop shadows and inset shadows.
 - [Text](drawing/text.md): fonts, italic, alignment, several lines and wrapping.
@@ -38,10 +38,10 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 
 - [Input](interaction/input.md): what the keyboard, mouse and gamepads have in common: held, pressed
   and released.
-- [Keyboard](interaction/keyboard.md): keys by position, modifier keys, and key bindings.
+- [Keyboard](interaction/keyboard.md): keys by position, modifier keys and key bindings.
 - [Typing](interaction/typing.md): typed text, and text fields with `EditableText`.
 - [Mouse](interaction/mouse.md): buttons, position and movement, picking what is under the pointer,
-  locking the mouse, and the cursor.
+  locking the mouse and the cursor.
 - [Gamepads](interaction/gamepads.md): players, sticks, triggers, buttons and rumble.
 
 ## [Motion](motion/README.md)
@@ -56,13 +56,13 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 - [Shapes](geometry/shapes.md): the regions, from rectangles to polygons, and corner radius.
 - [Curves](geometry/curves.md): lines, arcs, Bézier curves and splines, and finding points along
   them.
-- [Collisions](geometry/collisions.md): testing whether shapes touch, fast-moving objects, and
+- [Collisions](geometry/collisions.md): testing whether shapes touch, fast-moving objects and
   distances.
 
 ## [Media](media/README.md)
 
 - [Images](media/images.md): loading and drawing images, and drawing into an image of your own.
-- [Audio](media/audio.md): loading and synthesizing sounds, playing them, and controlling each
+- [Audio](media/audio.md): loading and synthesising sounds, playing them and controlling each
   playback.
 - [Capture](media/capture.md): saving the frame as a PNG, and recording GIFs.
 
@@ -70,7 +70,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 
 - [Tables](data/tables.md): reading, changing and saving CSV and TSV tables, and finding, counting
   and removing rows.
-- [JSON](data/json.md): reading, changing and saving JSON files, building a document from nothing,
+- [JSON](data/json.md): reading, changing and saving JSON files, building a document from nothing
   and missing fields.
 
 ## [Maths](math/README.md)

@@ -3,7 +3,7 @@
 Create's shapes are plain values: a `Circle` is a position and a radius, which you can keep in a
 field, move, draw with `canvas.draw` (see [The canvas](../drawing/canvas.md#shapes)) and test
 against other shapes (see [Collisions](collisions.md)). This page describes the **regions**, the
-shapes with an inside: what each one is, how it is built, and what is particular about it. Lines and
+shapes with an inside: what each one is, how it is built and what is particular about it. Lines and
 curves, which have no inside, are described in [Curves](curves.md).
 
 ## The regions

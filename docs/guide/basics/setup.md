@@ -3,8 +3,7 @@
 There are two ways to set up your first Create project:
 
 1. [`create-cli`](#option-1-create-cli): recommended for most users.
-2. [Plain pixi](#option-2-plain-pixi): for those who would rather manage the pixi project
-   themselves.
+2. [Plain pixi](#option-2-plain-pixi): if you would rather manage the pixi project yourself.
 
 Both need [pixi](https://pixi.sh), a tool that installs everything a project needs, Mojo and Create
 included, into the project itself. This command installs pixi:
@@ -33,7 +32,7 @@ create run
 `create new` makes a pixi project with the `mojo` and `create` packages and a `main.mojo` to start
 from, and `create run` runs it from anywhere inside the project.
 
-## Option 2: Plain pixi
+## Option 2: plain pixi
 
 Without `create-cli`, set up the pixi project by hand. Create it with the channels Mojo and Create
 are published on (a channel is a source of packages, which pixi installs from):

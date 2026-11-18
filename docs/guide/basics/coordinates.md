@@ -2,13 +2,13 @@
 
 Every position in Create is a pair of numbers, an x and a y, and this page explains where those
 numbers land on the screen. It explains Create's coordinate system, the difference between screen,
-world and local space, how the camera plays into all this, and how the size a program is written for
-is fitted to a real window.
+world and local space, how the camera moves the view, and how the size a program is written for is
+fitted to a real window.
 
 ## Create's coordinate system
 
-Unlike Processing, **Create** uses a standard Cartesian coordinate system, where the origin is
-placed in the centre of the screen and y increases upwards and decreases downwards:
+Unlike Processing, Create uses the coordinate system of school maths: the origin is in the centre of
+the screen, and y increases upwards and decreases downwards:
 
 <p align="center">
     <img src="coordinates.svg" width="600" alt="The origin, (0, 0), at the centre of the screen, with x increasing to the right and y increasing upwards, and the screen's edges labelled left(), right(), top() and bottom().">
@@ -16,7 +16,7 @@ placed in the centre of the screen and y increases upwards and decreases downwar
 
 So on a screen `w` units wide and `h` units high, x runs from `-w/2` at the left edge to `w/2` at
 the right, and y from `-h/2` at the bottom to `h/2` at the top. A few things follow from that:
-`canvas.left()` and `canvas.bottom()` are negative, something falling has a negative y velocity, and
+`canvas.left()` and `canvas.bottom()` are negative, something falling has a negative y velocity and
 `rotate` turns counter-clockwise. Place things against the edges with `left()`, `right()`,
 `bottom()` and `top()`, rather than working them out from the width and height:
 
@@ -131,9 +131,9 @@ space things were drawn in: `camera.to_world(context.mouse.position)` is the poi
 Windows come in every size, but a program is written for one: the **design size**, the `width` and
 `height` passed to `run` (or set later with `context.design_size(width, height)`). It is measured in
 **units**, not pixels. Create scales the design to fit the actual window, so a program written for
-1280 by 720 units looks the same in a small window, a large one, or full screen. How it fits a
-window of a different shape is the **autoscale** mode, set with `run(..., autoscale=)`, or later
-with `context.autoscale(mode)`:
+1280 by 720 units looks the same in a small window, a large one or full screen. How it fits a window
+of a different shape is the **autoscale** mode, set with `run(..., autoscale=)`, or later with
+`context.autoscale(mode)`:
 
 | Mode | Effect |
 |---|---|

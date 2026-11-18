@@ -2,7 +2,7 @@
 
 The stroke is the line drawn along a shape's edge. A line or curve has no edge of its own, so its
 stroke is drawn along the line itself. This page covers its colour and thickness, where it sits
-against a shape's edge, how its ends look, and how to break it into dashes.
+against a shape's edge, how its ends look and how to break it into dashes.
 
 ## Colour and thickness
 
@@ -12,12 +12,12 @@ switches it back on. A new style has a black stroke 1 unit thick. In `Style` and
 the keywords are `stroke=` and `stroke_thickness=`.
 
 The stroke has three more settings: where it sits (`stroke_alignment`), how its ends look
-(`stroke_cap`), and whether it is broken into dashes (`stroke_dash`).
+(`stroke_cap`) and whether it is broken into dashes (`stroke_dash`).
 
 ## Where the stroke sits
 
 **`stroke_alignment(...)`** decides where a shape's stroke sits against its edge: inside it
-(`StrokeAlign.INSIDE`, the default), centred on it (`StrokeAlign.CENTER`), or outside it
+(`StrokeAlign.INSIDE`, the default), centred on it (`StrokeAlign.CENTER`) or outside it
 (`StrokeAlign.OUTSIDE`). Processing always centres the stroke, so a shape stroked there is larger
 than its numbers say by half the stroke's thickness. With `INSIDE`, a shape is exactly as big as its
 numbers say, however thick the stroke.
@@ -45,7 +45,7 @@ The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers
 | `StrokeCap.SQUARE` | Reaches half the thickness past the end point, square |
 
 - A closed curve and a shape's stroke have no ends, unless they are dashed: then every dash has two.
-- A line of zero length draws nothing with `BUTT`, a dot with `ROUND`, and an upright square with
+- A line of zero length draws nothing with `BUTT`, a dot with `ROUND` and an upright square with
   `SQUARE`.
 - The caps are blended onto the frame together with the stroke, as one, whether it is translucent or
   not, and are part of its shadow. So segments drawn end to end with `ROUND` caps meet without

@@ -74,7 +74,7 @@ See [examples/capture](../../../examples/capture/main.mojo).
   left out and the rest are drawn fully opaque. Smoothed edges therefore come out hard, though in
   their own colour, with no fringe. With the autoclear off, a transparent recording starts from
   nothing rather than the screen, whose picture has the background in it.
-- **Only what changed is stored:** each frame after the first holds just the rectangle that changed
+- **Only what changed is stored:** each frame after the first holds only the rectangle that changed
   since the one before. A frame where nothing changed isn't stored at all; the one before is shown
   for longer instead. So a mostly still scene makes a small file. A transparent recording stores
   every frame whole.

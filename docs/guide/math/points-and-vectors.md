@@ -4,7 +4,7 @@ A position on the screen, and a movement across it, are both written as two numb
 measured in Create's [coordinates](../basics/coordinates.md). But they are different things: a
 position says *where*, and a movement says *which way and how far*. Create gives each its own type,
 `Point2D` for positions and `Vector2D` for movements. This page explains what points and vectors
-are, why the two types are kept apart, and how to calculate with them. It assumes no prior knowledge
+are, why the two types are kept apart and how to calculate with them. It assumes no prior knowledge
 of vectors.
 
 ## Locations, displacements and extents
@@ -122,6 +122,7 @@ point in opposite directions. So it answers questions such as whether an enemy i
 player or behind:
 
 ```mojo
+# In `update`, with `heading` and `position` fields and an `enemy`:
 var facing = Vector2D.from_angle(self.heading)
 var to_enemy = (enemy.position - self.position).normalize()
 if facing.dot(to_enemy) > 0.7:  # within about 45° either side of straight ahead

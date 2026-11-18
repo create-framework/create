@@ -2,7 +2,7 @@
 
 A sprite comes alive by showing a sequence of pictures one after another, quickly enough that the
 eye sees movement, as in a flip book: a character's legs moving as it walks, a coin turning, a flag
-waving. This page explains how to make an animation from a sprite sheet or a folder of images, and
+waving. This page explains how to make an animation from a sprite sheet or a folder of images and
 how to play it. Moving a value smoothly from one number to another, such as sliding a menu in, is a
 different job, done by a [Tween](tweens.md).
 
@@ -53,7 +53,7 @@ An animator starts stopped, on frame 0. There are two ways to drive it, for two 
   restarting. Otherwise it switches to the animation and loops it from frame 0. Decide which
   animation applies every frame and `use` it, as above.
 - **Commands, for something that just happened**, such as a key press or a hit: `play(animation)`
-  plays once and holds the last frame, `loop(animation)` loops forever. Both always start from frame
+  plays once and holds the last frame; `loop(animation)` loops forever. Both always start from frame
   0, so calling them every frame keeps the animation stuck on its first frame. Without an argument
   they restart the animation already held. `pause()` freezes it, `resume()` continues from there,
   and `stop()` rewinds to frame 0.

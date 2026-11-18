@@ -1,8 +1,8 @@
 # Typing
 
 Reading keys tells a program which keys are held; typing is something else. A player typing their
-name expects capitals when they hold Shift, accents on a French keyboard, and characters composed
-with an input method when they write Japanese. This page explains how to take typed text, and how
+name expects capitals when they hold Shift, accents on a French keyboard and characters composed
+with an input method when they write Japanese. This page explains how to take typed text and how
 `EditableText` turns it into a working text field with a caret, a selection and the clipboard.
 
 ## Typed text
@@ -26,8 +26,8 @@ seems: a caret, a selection, deleting whole characters rather than bytes, copy a
 Taking text is on by default, and while it is on, the system may open an input method's window or a
 handheld's on-screen keyboard. So a game played on letter keys should switch it off with
 `context.text_input(False)`, and switch it on again only while a text field is in use. Switching it
-off changes only `text`, which then stays empty; `down`, `pressed` and `released` read the keys just
-as before.
+off changes only `text`, which then stays empty; `down`, `pressed` and `released` read the keys as
+before.
 
 ## Text fields
 

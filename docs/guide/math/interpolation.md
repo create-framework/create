@@ -26,6 +26,7 @@ Points, vectors and colours have `lerp` too, as a method, so the same idea moves
 a colour:
 
 ```mojo
+# With two points `a` and `b`:
 var midpoint = a.lerp(b, 0.5)  # the point halfway between a and b
 var orange = Color.RED.lerp(Color.YELLOW, 0.5)  # halfway between red and yellow
 ```
@@ -66,7 +67,7 @@ inverse_lerp(25, 0, 100)  # 0.25
 inverse_lerp(15, 10, 20)  # 0.5
 ```
 
-It turns a value into a fraction, ready for `lerp`, for a colour, or for a progress bar:
+It turns a value into a fraction, ready for `lerp`, for a colour or for a progress bar:
 
 ```mojo
 # In `update`: a health bar, its width a fraction of the full 200.
@@ -95,6 +96,7 @@ Like `lerp`, `map` doesn't stop at the ends of the range: a value beyond `in_hig
 `high` if above it, and the value itself otherwise.
 
 ```mojo
+# In `update`, with a `health` field and a position `x`:
 self.health = clamp(self.health, 0, self.max_health)  # never below 0 or above the maximum
 var volume = clamp(map(x, canvas.left(), canvas.right(), 0, 1), 0, 1)  # map, kept in range
 ```

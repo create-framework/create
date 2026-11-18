@@ -3,7 +3,7 @@
 A tween moves a number from one value to another over a set time: a menu sliding in from the edge of
 the screen, a coin fading out once collected, a button growing slightly when the pointer is over it.
 The name comes from animation, where the frames *in between* two key poses are called in-betweens.
-This page explains how to build a tween, play it, and use it to move things that aren't plain
+This page explains how to build a tween, play it and use it to move things that aren't plain
 numbers.
 
 ## Building and playing a tween

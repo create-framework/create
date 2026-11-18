@@ -3,7 +3,7 @@
 Random numbers jump: each one has nothing to do with the last. That is right for scattering stars,
 but wrong for the outline of a range of hills, the drift of a cloud or the wobble of a hand-drawn
 line, where each value should be close to its neighbours. **Noise** gives values that vary randomly
-but smoothly. This page explains how to use it, and how to shape it.
+but smoothly. This page explains how to use it and how to shape it.
 
 ## Random numbers and noise side by side
 
@@ -95,6 +95,7 @@ then coves within the bays, then rocks within the coves.
   layer is half as strong as the last. A larger falloff makes the detail rougher and more prominent.
 
 ```mojo
+# In `create`:
 var smooth = Noise(7, octaves=1, feature_size=200)  # gentle, rounded hills
 var rocky = Noise(7, octaves=6, falloff=0.6, feature_size=200)  # craggy, detailed hills
 ```

@@ -42,7 +42,7 @@ def main() raises:
 A file is loaded, changed and saved again like this:
 
 ```mojo
-# With scores.csv's header line "name,score":
+# In `create`, with scores.csv's header line "name,score":
 var table = Table.load("scores.csv")
 for ref row in table.rows():
     print(row.string("name"), row.int("score"))
@@ -107,6 +107,7 @@ up to fill the gap. So to keep only the ten best scores, sort the table and then
 until ten are left:
 
 ```mojo
+# In `update`, once a score is recorded:
 self.table.sort("score", descending=True)
 while self.table.row_count() > 10:
     self.table.remove_row(self.table.row_count() - 1)
