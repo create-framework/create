@@ -213,6 +213,37 @@ worktree of its tag with that tag's own environment and scripts, and adds the ve
 [.github/workflows/docs.yml](.github/workflows/docs.yml) publishes them on every push to `main` and
 after every release. A docs fix after a release reaches `/latest/` with the next release.
 
+### Prose style
+
+The user guide is written for someone new to creative coding as much as for someone who knows
+Processing: [Colours](docs/guide/drawing/colours.md) starts from what red, green and blue are.
+Docstrings and the contributor docs follow the same style.
+
+- **Say what it does, plainly.** Present tense, active voice, and the reader as "you", never "we".
+  Prefer the plain word, and leave out "simply", "easily" and "obviously": what is easy for the
+  writer may not be for the reader.
+- **Clear over short.** Give a sentence one idea, and spell out a step rather than leave the reader
+  to infer it. A longer sentence that reads at once beats a shorter one that has to be read twice.
+- **Claim only what is true now.** Describe how the library behaves, not how it used to ("no
+  longer", "now"), and check a claim about speed or behaviour before making it.
+- **Lead with the point.** A page opens with a paragraph saying what it covers. A paragraph or list
+  item that makes one point can open with it in bold: "**Shapes are not filled by default.** A shape
+  drawn with no style is…".
+- **British spelling in prose, the API's in code:** "Every colour in Create is a `Color`." So
+  colour, centre, behaviour, organise.
+- **Punctuation:** no Oxford comma ("red, green and blue"); "such as" or "for example", not "e.g."
+  or "i.e."; a colon, semicolon or parentheses rather than a dash.
+- **Code font for every name from the code:** types, functions, arguments, constants, files and
+  commands. Write a call as a program would, `canvas.fill(Color.RED)`, rather than describing it.
+- **Headings in sentence case, without a full stop:** "Hue, saturation and value".
+- **Examples build.** A complete program starts with `from create import *` and runs as it is. A
+  fragment opens with a comment saying where it goes, ``# In `update`:``, and what it assumes, ``#
+  In `create`, building the `random` field:``. A comment beside a line says what the line does, in
+  lowercase and without a full stop: `# red, mostly transparent`.
+- **Links** are relative and written for GitHub (see above). Link a page by its title, and a section
+  by its heading.
+- **A section's index page** lists each of its pages as `[Title](page.md): what it covers.`
+
 ## Code conventions
 
 ### Verbs on values
