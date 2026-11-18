@@ -42,8 +42,8 @@ Everything Create needs, Mojo included, comes from [pixi](https://pixi.sh); `pix
 environment the first time it is used.
 
 1. **Clone and set up**, once per clone. `pixi run setup` installs the git hooks (see
-   [Checks](#checks)) and tells `git blame` to skip the commits listed in `.git-blame-ignore-revs`,
-   bulk reformats and renames:
+   [Checks](#checks)). It also tells `git blame` to skip the commits listed in
+   `.git-blame-ignore-revs`, which are bulk reformats and renames:
 
    ```bash
    git clone https://github.com/create-framework/create.git
@@ -94,20 +94,23 @@ pixi run setup                            # once per clone: git hooks + blame ig
 
 **`-I src` is required for every `mojo run`**, or `from create import *` fails. Pixi tasks add it.
 
-`example` and `benchmark` run against `build/create.mojoc` (`-I build`), not the source: they depend
-on `precompile`, which pixi's task cache skips while no `src/create/**/*.mojo` file and nothing in
-the environment has changed. So a run with the library unchanged starts in about 2 s rather than 8;
-the first one after a library edit pays the ~10 s rebuild. `test`, `build-examples` and
-`check-standalone` precompile `src` afresh into a temporary package of their own and build every
-file against it, so none is ever stale or re-parses the library per file.
+`example` and `benchmark` run against the precompiled library, `build/create.mojoc` (`-I build`),
+not against the source. They depend on the `precompile` task, and pixi's task cache skips that task
+while no `src/create/**/*.mojo` file and nothing in the environment has changed. So while the
+library is unchanged, a run starts in about 2 s rather than 8, and the first run after a library
+edit pays for the ~10 s rebuild.
 
-**The project template.** [template/](template/) is the project
-[create-cli](https://github.com/create-framework/create-cli)'s `create new` starts from: a
-`main.mojo` and the `assets/` it loads. The package installs it to `share/create/template`, so a new
-project gets the template written for the Create it installs. `create new` replaces `{{name}}` in
-`main.mojo` with the project's name; the placeholder sits inside a string so the file builds as it
-is. `build-examples` builds it with the examples, so a change to the API that breaks it fails CI
-here, and is fixed in the same pull request.
+`test`, `build-examples` and `check-standalone` work differently. Each one precompiles `src` afresh
+into a temporary package of its own, then builds every file against that package. So their results
+are never stale, and the library is parsed once rather than once for every file.
+
+**The project template.** [template/](template/) is where a new project starts:
+[create-cli](https://github.com/create-framework/create-cli)'s `create new` copies it, a `main.mojo`
+and the `assets/` it loads. The Create package installs the template to `share/create/template`, so
+a new project always starts from the template that matches the installed Create. `create new`
+replaces `{{name}}` in `main.mojo` with the project's name. The placeholder sits inside a string, so
+the file builds as it is. `build-examples` builds the template along with the examples, so a change
+to the API that breaks the template fails CI here, and is fixed in the same pull request.
 
 `mojo format`'s grammar is narrower than the compiler's and will abort a commit: `where` is reserved
 (not usable as a name), and `;` statement separators don't parse.
@@ -119,25 +122,28 @@ Two tiers of automated checks, and a third run by hand:
 | Where | Runs |
 |---|---|
 | `pre-commit` hook (after `pixi run setup`) | Wraps staged Markdown at 100 columns and restages it, then checks the formatting of staged `.mojo` files and builds `tests/core/test_smoke.mojo`. Constant cost |
-| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job — and the documentation site (`pixi run docs`), which fails when the committed `docs/reference` is out of date or Markdown isn't wrapped. Linux only |
-| macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI — a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet — so run it before relying on a change that could differ there (windowing, GL, library search) |
+| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite (where a GL test that skips fails the job) and the documentation site (`pixi run docs`), which fails when the committed `docs/reference` is out of date or Markdown isn't wrapped. Linux only |
+| macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI, because a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet. Run it before relying on a change that could behave differently there (windowing, GL, library search) |
 
-Neither tier subsumes the other: building a consumer program type-checks only the `def` bodies it
-reaches (catches API drift, not an uncalled broken function); `mojo precompile` is the reverse.
+The smoke build and `mojo precompile` catch different mistakes, so neither replaces the other.
+Building a program type-checks only the `def` bodies the program reaches: it catches an API change
+that breaks a caller, but not a broken function that nothing calls. `mojo precompile` type-checks
+every function in the library, but not how a program uses them, such as `run[T]` with the program's
+own type.
 
-The hook and CI skip their checks when every changed path is inert (`*.md`, `LICENSE`, agent/editor
-config); the allowlist is in `.githooks/_inert.sh`, read by the hook and the workflow alike. The
-documentation site is the exception: Markdown alone can break it, so CI builds it for every change.
-So is wrapping: the hook wraps staged Markdown before its inert skip, and CI checks it with the
-site.
+The hook and CI skip their checks when every changed path is inert: `*.md`, `LICENSE`, and agent and
+editor config. The list of inert paths is in `.githooks/_inert.sh`, which the hook and the workflow
+both read. Two checks run for every change anyway, because Markdown alone can break them: CI builds
+the documentation site, and the hook wraps staged Markdown, which CI checks along with the site.
 
 ## Workflow
 
 `main` is protected by a ruleset: no direct pushes, no force pushes, no deletion, and a linear
-history. Every change lands as a pull request, merged once the required check `ci` passes. It passes
-when `linux-docs` passed and `linux-format`, `linux-precompile`, `linux-examples`, `linux-package`
-and the four test shards `linux-tests-1`…`linux-tests-4` all passed, or were skipped for an inert
-change; no approval is required. **Rebase and merge** is the only merge method enabled: squash and
+history. Every change lands as a pull request, merged once the required check `ci` passes. No
+approval is required. `ci` passes when `linux-docs` has passed and each of the other checks has
+either passed or been skipped because the change is inert. The other checks are `linux-format`,
+`linux-precompile`, `linux-examples`, `linux-package` and the four test shards
+`linux-tests-1`…`linux-tests-4`. **Rebase and merge** is the only merge method enabled: squash and
 merge commits are off.
 
 ```bash
@@ -148,11 +154,11 @@ gh pr merge --auto --rebase               # merges itself once CI is green
 git switch main && git pull --ff-only
 ```
 
-Each of the branch's commits lands on `main` as it is, rebased (new hashes), so every one should
-build and carry a finished message; tidy the branch before merging rather than relying on a squash.
-The branch need not be up to date with `main` to merge, and the head branch is deleted on merge. A
-repository admin may bypass the checks when merging a pull request (CI itself broken), never for a
-direct push.
+Each of the branch's commits lands on `main` as it is, rebased onto it with a new hash. Every commit
+should therefore build and carry a finished message: tidy the branch before merging, since there is
+no squash to tidy it for you. The branch doesn't need to be up to date with `main` to merge, and it
+is deleted once merged. A repository admin may bypass the checks to merge a pull request when CI
+itself is broken, but never to push to `main` directly.
 
 Releases are cut by a maintainer, as [RELEASING.md](RELEASING.md) describes.
 
@@ -186,17 +192,23 @@ repo by `pixi run docs`, so a change and its documentation land together.
   keeps links between its pages, copies images in, and points everything else (an example, a source
   file) at GitHub, at the commit built.
 - The **API reference** is [docs/reference/](docs/reference/README.md), generated from the
-  docstrings by `mojo doc` and committed, so it reads on GitHub as well as on the site. After
-  changing a docstring or the public surface, run `pixi run reference` and commit what changed; CI's
-  `linux-docs` regenerates it and fails when the committed copy differs. Never edit it by hand. Each
-  subpackage's page lists what its `__init__.mojo` imports, grouped into types, traits, functions
-  and constants and in import order within each, so the public surface and the reference can't
-  disagree; a package's own docstring heads it. Each type, trait and function has a page of its own,
-  listed there by its docstring's first line, so write that line to stand alone; a constant is
-  documented on the package's page. A type's members are grouped into constants, fields,
-  constructors, methods and special methods (the dunders); a static method is listed as a
-  constructor when it returns `Self`, so write a factory's return type so. A function's overloads
-  share one page, and those documented alike one block.
+  docstrings by `mojo doc`. It is committed, so it reads on GitHub as well as on the site. Never
+  edit it by hand: after changing a docstring or the public surface, run `pixi run reference` and
+  commit what changed. CI's `linux-docs` regenerates it and fails when the committed copy differs.
+
+How the reference is laid out decides how a docstring should be written:
+
+- **Each subpackage has a page**, headed by the package's own docstring. It lists what the package's
+  `__init__.mojo` imports, grouped into types, traits, functions and constants, in import order
+  within each group. So the public surface and the reference can't disagree.
+- **Each type, trait and function has a page of its own.** The package's page lists it by the first
+  line of its docstring, so write that line to make sense on its own. A constant has no page of its
+  own; it is documented on the package's page.
+- **A type's page groups its members** into constants, fields, constructors, methods and special
+  methods (the dunders). A static method is listed as a constructor only when its signature ends in
+  `-> Self`, so declare a factory's return type as `Self`, not by the type's name.
+- **A function's overloads share one page.** Consecutive overloads with the same documentation are
+  shown as one block of signatures.
 
 Write Markdown without minding line length: the pre-commit hook wraps prose at 100 columns
 ([scripts/wrap_markdown.py](scripts/wrap_markdown.py)), never splitting a word, and leaves code,
@@ -208,10 +220,11 @@ page for every subpackage, type and function added.
 
 The site is published in two versions, picked by a selector in its header: `/latest/`, the newest
 release and what the root redirects to, and `/main/`, under a banner saying it is unreleased.
-[scripts/docs_site.py](scripts/docs_site.py) (`pixi run docs-site`) builds both, the release from a
-worktree of its tag with that tag's own environment and scripts, and adds the versioning.
-[.github/workflows/docs.yml](.github/workflows/docs.yml) publishes them on every push to `main` and
-after every release. A docs fix after a release reaches `/latest/` with the next release.
+[scripts/docs_site.py](scripts/docs_site.py) (`pixi run docs-site`) builds both. It builds the
+release from a worktree of the release's tag, with that tag's own environment and scripts, and then
+adds the version selector. [.github/workflows/docs.yml](.github/workflows/docs.yml) publishes them
+on every push to `main` and after every release. A docs fix after a release reaches `/latest/` with
+the next release.
 
 ### Prose style
 
@@ -250,9 +263,10 @@ Docstrings and the contributor docs follow the same style.
 
 A value type's verb method returns a new value and leaves the receiver as it was: `rect =
 rect.translate(delta)`, `v.normalize()`, `line.split(t)`, `color.with_alpha(a)`. A shape, vector,
-point, colour or matrix is never changed in place by a method; assign a field to change one. What
-mutates is what has state over time — `Tween`, `Animator`, `Audio`, `EditableText`, `Random`, a
-`Table`, `PixelBuffer`, `Canvas`, `Context` — whose methods act (`tween.play()`, `table.sort(...)`).
+point, colour or matrix is never changed in place by a method; assign a field to change one. The
+types that change in place are those that hold state over time, and their methods act on that state
+(`tween.play()`, `table.sort(...)`): `Tween`, `Animator`, `Audio`, `EditableText`, `Random`,
+`Table`, `PixelBuffer`, `Canvas` and `Context`.
 
 ### Locations, displacements and extents
 
@@ -265,10 +279,12 @@ keep them working:
 - Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
   `Point2D` one: a bare tuple already fills a `Point2D` parameter, and `(x, y)` keeps the pairs
   readable where a run of numbers doesn't.
-- Don't give any type but `Point2D` an `@implicit` tuple constructor: a second one makes every
-  overload pair taking the two types ambiguous for a bare tuple, and locations are the literals
-  worth the shorthand.
-- Don't add `Point2D.__add__(Point2D)`: the type exists to refuse it.
+- Don't give any type but `Point2D` an `@implicit` tuple constructor. If two types could both be
+  built from a bare tuple, any function overloaded on those two types would be ambiguous when called
+  with a tuple. Locations are the values most worth writing as a tuple, so only `Point2D` gets the
+  shorthand.
+- Don't add `Point2D.__add__(Point2D)`. Adding two locations has no meaning, and refusing it is why
+  `Point2D` is a separate type from `Vector2D`.
 
 ### Printing
 

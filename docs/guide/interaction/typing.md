@@ -58,10 +58,10 @@ Copying and pasting go through the system clipboard, which a program can also us
 `EditableText(max_length=...)` caps how many characters the field can hold: typing and pasting stop
 adding once it is full.
 
-Two things are left to the program: what Enter does, such as submitting a name or starting a new
-line, which only the program can decide, and clicking into the text, since only the program knows
-where the text is drawn. `text` is a plain field, so the program can also set it, for example
-`self.name.text = ""` to empty the field once it has been submitted.
+Two more things are left to the program. One is what Enter does, such as submitting a name or
+starting a new line, which only the program can decide. The other is clicking into the text, since
+only the program knows where the text is drawn. `text` is a plain field, so the program can also set
+it, for example `self.name.text = ""` to empty the field once it has been submitted.
 
 **Drawing the caret and selection** is left to the program, since only it knows how the field should
 look. Measure the text before each with `canvas.text_width`: `before_caret()` is the text before the

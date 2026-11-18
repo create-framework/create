@@ -92,9 +92,9 @@ once.
 
 A camera that follows the player is the commonest kind. Setting its position to the player's each
 frame works, but the view then jerks with every sudden move. Moving it a fraction of the way towards
-the player each frame instead makes it trail smoothly behind, catching up quickly when far away and
-gently as it closes in (the fraction is worked out from the time that passed, so it follows at the
-same pace at any frame rate; see [Interpolation](../math/interpolation.md#lerp)):
+the player each frame instead makes it trail smoothly behind: it catches up quickly when far away,
+and gently as it closes in. The fraction is worked out from the time that passed, so the camera
+follows at the same pace at any frame rate (see [Interpolation](../math/interpolation.md#lerp)):
 
 ```mojo
 # In `create`, building the `camera` field:
@@ -142,6 +142,6 @@ with `context.autoscale(mode)`:
 | `OFF` | No scaling: one unit is one of the window's pixels |
 
 The design size and autoscale mode set from `create` take effect from the second frame, so to affect
-the very first frame, pass them to `run` instead. Everything scales with the design, font sizes,
-stroke thicknesses and images included: one unit is `canvas.scale()` of the window's pixels. See
+the very first frame, pass them to `run` instead. Everything scales with the design, including font
+sizes, stroke thicknesses and images: one unit is `canvas.scale()` of the window's pixels. See
 [examples/window](../../../examples/window/main.mojo).

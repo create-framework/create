@@ -67,11 +67,11 @@ Which part is set by two angles, in radians (see [Angles](../math/angles.md)):
 
 `end_angle()` is where the arc ends, `start_angle + sweep_angle`. `canvas.arc` draws one.
 
-An arc is a curve, like `Line`: it has no inside, so it is never tested with `overlaps`, and a
-pie-slice shape with an inside is a [`Sector`](shapes.md#sector) instead. Equal steps of `t` move
-equal distances along an arc, so `at(t)` and `at_distance(d)` are both exact. `beziers()`
-approximates it with Bézier curves, each covering at most an eighth of a turn, and `canvas.arc`
-draws those as one unbroken stroke.
+An arc is a curve, like `Line`: it has no inside, so it is never tested with `overlaps`. A pie-slice
+shape with an inside is a [`Sector`](shapes.md#sector) instead. Equal steps of `t` move equal
+distances along an arc, so `at(t)` and `at_distance(d)` are both exact. `beziers()` approximates it
+with Bézier curves, each covering at most an eighth of a turn, and `canvas.arc` draws those as one
+unbroken stroke.
 
 ## `Bezier`
 

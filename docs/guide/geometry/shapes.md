@@ -23,7 +23,7 @@ There are seven:
 Every shape is positioned by its centre (see [Coordinates](../basics/coordinates.md)), and angles
 are in radians, counter-clockwise from the positive x axis (see [Angles](../math/angles.md)). Like
 every value in Create, a shape is never changed by its own methods: they return a new shape and
-leave the one they were called on as it was, so moving a rectangle is `rect =
+leave the one they were called on as it was. So to move a rectangle, write `rect =
 rect.translate(delta)`.
 
 ## Corner radius
@@ -56,7 +56,7 @@ in radians, counter-clockwise round its centre, 0 by default.
 
 Every test sees the turned rectangle exactly. `bounds()`, and `left()`, `right()`, `bottom()` and
 `top()`, describe its bounding box instead: the smallest upright rectangle round it. A turned
-rectangle is drawn as an upright one turned by a transform, so its rounding, stroke and gradient
+rectangle is drawn as an upright one turned by a transform. So its rounding, stroke and gradient
 turn with it, while its shadow's offset stays fixed to the screen, as it does under
 `canvas.transform`.
 
@@ -86,12 +86,12 @@ so to turn one, draw it inside a `canvas.transform`.
 ## `Capsule`
 
 A capsule is shaped like a pill, a bar with round ends: every point within `radius` of the line
-segment from `start` to `end`. `canvas.capsule(start, end, radius)` draws one. As a collider it fits
-a long, rounded body, such as a standing character or a limb, more closely than a rectangle, whose
-corners would report hits where nothing is drawn. Unlike an `Ellipse`, it can also lie at any angle.
-It can also cover a moving circle's whole path: a capsule from where a ball was last frame to where
-it is now, with the ball's radius, overlaps a wall whenever the ball passed through it, so a fast
-ball can't skip through a thin wall between two frames (see
+segment from `start` to `end`. `canvas.capsule(start, end, radius)` draws one. As a collider, it
+fits a long, rounded body, such as a standing character or a limb, more closely than a rectangle
+does. A rectangle's corners would report hits where nothing is drawn. Unlike an `Ellipse`, it can
+also lie at any angle. It can also cover a moving circle's whole path. Take a capsule from where a
+ball was last frame to where it is now, with the ball's radius: it overlaps a wall whenever the ball
+passed through the wall, so a fast ball can't skip through a thin wall between two frames (see
 [Collisions](collisions.md#moving-shapes)).
 
 - It is placed by its two ends, like a `Line`, so `center()` and `move_to` use the point midway
@@ -133,13 +133,13 @@ Both put their first vertex at `start_angle`, which is straight up unless you gi
   or counter-clockwise, and a point on the outline counts as inside.
 - `center()` is the polygon's centroid, the balance point of its area, and `area()` its area. Both
   are meaningful only for a simple polygon, one whose edges don't cross.
-- `canvas.polygon` places its stroke by `stroke_alignment` along the outline, but centres it on an
-  edge that runs through the inside, such as the edges of a pentagram's inner pentagon, so that
-  every edge is stroked equally thick. Inset shadows don't apply to it.
+- `canvas.polygon` places its stroke by `stroke_alignment` along the outline. On an edge that runs
+  through the inside, such as an edge of a pentagram's inner pentagon, it centres the stroke
+  instead, so that every edge is stroked equally thick. Inset shadows don't apply to it.
 - `corner_radius` rounds every vertex, but not the points where crossing edges meet.
-- The stroke is the costly part to draw, more so the more corners a polygon has, and rounding them
-  multiplies the cost again: on the CPU at `MEDIUM`, a stroked 40-tip star takes about 2 ms a frame,
-  and about 20 ms rounded. Filled only, a polygon costs a fraction of that.
+- The stroke is the costly part to draw. It costs more the more corners a polygon has, and rounding
+  the corners multiplies the cost again: on the CPU at `MEDIUM`, a stroked 40-tip star takes about 2
+  ms a frame, and about 20 ms rounded. Filled only, a polygon costs a fraction of that.
 
 ## `Sector`
 

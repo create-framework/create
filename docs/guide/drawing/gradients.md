@@ -8,8 +8,8 @@ explains how to build one, how it fits each shape, and how it combines with the 
 
 A `Gradient` fills regions and backgrounds: `canvas.fill(gradient)` and
 `canvas.background(gradient)` work like their colour versions. Build a gradient once in `create` and
-keep it as a field (or in a `Style`), since building one does some work up front, which every
-drawing of it then reuses:
+keep it as a field (or in a `Style`): building one does some work up front, and every drawing of it
+then reuses that work:
 
 ```mojo
 # In `create`, building the `sky` and `glow` fields:
@@ -59,7 +59,7 @@ whole circle.
   top-right.
 - A zero `direction`, or a box of no size, paints the first stop.
 - A fade to `TRANSPARENT` stays clean, with no dark fringe.
-- Gradients are dithered on both backends: given a faint, fine grain, which hides the visible steps
+- Gradients are dithered on both backends: they are given a faint, fine grain, which hides the steps
   a smooth blend can otherwise show.
 
 ## Gradients and the rest of the style

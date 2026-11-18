@@ -92,10 +92,11 @@ These three settings apply to everything a render call draws, images included, b
 translucent, with no darker band where the two meet.
 
 - **`canvas.tint(color)`** multiplies every colour of the call by `color`, channel by channel: the
-  fill, a gradient's stops, the stroke, text, the shadow and each pixel of an image. White, the
-  default, is no tint, and the tint's alpha multiplies with `opacity`. Where `fill`, `stroke` and
-  `text_color` set one part each, a tint recolours the whole look at once; scope it with `with
-  canvas.style(tint=...)`. Multiplying can only darken, so a tint can't flash a sprite white.
+  fill, a gradient's stops, the stroke, text, the shadow and each pixel of an image. The default,
+  white, leaves the colours as they are. The tint's alpha multiplies with `opacity`. Where `fill`,
+  `stroke` and `text_color` each set one part, a tint recolours everything the call draws at once;
+  to limit it to a few calls, set it with `with canvas.style(tint=...)`. Multiplying can only
+  darken, so a tint can't flash a sprite white.
 - **`canvas.opacity(a)`**, from 0 to 1, fades the whole call.
 - **`canvas.blend_mode(mode)`** sets how the call combines with what is already drawn:
 

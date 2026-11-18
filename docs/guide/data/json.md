@@ -26,11 +26,11 @@ config.save("config.json")
   value it is, as a `JSONKind`. `values()` gives an array's items or an object's values, `keys()` an
   object's field names, and `items()` its fields as `(name, value)` pairs, as in Python.
 - **A value is part of its document, not a copy of it.** `[]`, `values()` and `items()` copy
-  nothing, so a change made through what they give, such as `config["player"]["speed"] = 3.0`, or
-  `enemy["hp"] = ...` in a loop over `values()`, changes the document. So **`var p =
-  config["player"]` doesn't copy**: a change made through `p` changes `config` too, as in
-  Processing, JavaScript and Python. `.copy()` makes a separate copy, with everything inside it
-  copied too.
+  nothing, so a change made through what they give changes the document:
+  `config["player"]["speed"] = 3.0` does, and so does `enemy["hp"] = ...` in a loop over `values()`.
+  In the same way, **`var p = config["player"]` doesn't copy**: a change made through `p` changes
+  `config` too, as in Processing, JavaScript and Python. `.copy()` makes a separate copy, with
+  everything inside it copied too.
 - **Setting a value stores a copy of it**, so the same value set under two names becomes two
   separate values.
 - `int()` reads a whole number exactly, as long as it fits in a 64-bit `Int`, and raises an error

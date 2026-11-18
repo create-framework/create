@@ -38,11 +38,11 @@ are explained in [Easing](../math/easing.md).
 | `stop()` | Stops and rewinds, so `value()` is the start value again |
 
 `play`, `loop` and `ping_pong` always start from the beginning, so call them once, when the tween
-should start (on a key press, say), rather than every frame, which would keep it stuck at its start.
+should start, such as on a key press. Called every frame, they would keep it stuck at its start.
 
-`loop` jumps back to the start each time round, which shows unless the value wraps round naturally,
-such as an angle making full turns. To go back and forth smoothly, such as a gently pulsing glow,
-use `ping_pong`.
+`loop` jumps back to the start each time round. The jump shows, unless the value wraps round
+naturally, as an angle making full turns does. To go back and forth smoothly, such as a gently
+pulsing glow, use `ping_pong`.
 
 Reading a tween back:
 

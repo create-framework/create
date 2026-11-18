@@ -57,8 +57,8 @@ Each curve's name is made of two parts: *where* the easing happens, and *what ki
 | `ELASTIC` | Wobbles past the end like a spring before settling |
 | `BOUNCE` | Bounces against the end, like a dropped ball |
 
-So `OUT_BACK` arrives quickly, overshoots slightly and settles into place, a lively choice for a
-button popping up, and `OUT_BOUNCE` drops something into place with a bounce. `LINEAR`, with no
+So `OUT_BACK` arrives quickly, overshoots slightly and settles into place, which is a lively choice
+for a button popping up. `OUT_BOUNCE` drops something into place with a bounce. `LINEAR`, with no
 easing at all, is the constant speed you started with.
 
 All 22 curves: `LINEAR`, then `IN_`, `OUT_` and `IN_OUT_` versions of `QUAD`, `CUBIC`, `SINE`,
