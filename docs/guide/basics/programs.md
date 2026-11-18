@@ -108,8 +108,8 @@ def create(mut context: Context, mut canvas: Canvas) raises -> Self:
     return program^
 ```
 
-`run_headless[P](width, height, frames=N)`, which runs a program without a window (for tests), runs
-`create`'s frame and then N `update`s, and returns the last frame as an `Image`. So `frames=0` gives
+`run_headless[P](width, height, frames=N)` runs a program without a window, as tests do. It runs
+`create`'s frame and then N `update`s, and returns the last frame as an `Image`, so `frames=0` gives
 `create`'s frame alone.
 
 ## Parameters and fields
@@ -173,8 +173,8 @@ context.title("Level 1")
 var mode = context.autoscale()  # Autoscale.EXTEND
 ```
 
-`Context`'s only fields are the readings: `time`, `keyboard` and `mouse`. The gamepads are
-`context.gamepad(player)`, a copy, since there can be several.
+`Context`'s only fields are the readings: `time`, `keyboard` and `mouse`. The gamepads are read with
+`context.gamepad(player)` instead, since there can be several; it returns a copy.
 
 Every `run` argument except `backend` can be changed later: `antialiasing` through
 `canvas.antialiasing`, the rest through a setting here. Not every setting is a `run` argument:
@@ -229,12 +229,12 @@ played, and `context.resizable(False)` stops the player from dragging the window
 it. Both show from the frame they are set in, and cost nothing to set every frame, since the window
 is only told when they change.
 
-**Ending the run.** The run ends when the player closes the window, when the program calls
-`context.quit()`, which ends it once the current `update` returns, and, unless told otherwise,
-**when the player presses Escape**. Escape quitting is handy while trying out a sketch, but a game
-usually wants Escape for its own pause menu. `context.quit_on_escape(False)` turns the quitting off,
-so Escape becomes an ordinary key; then give the player another way out, such as a Quit button in
-the menu:
+**Ending the run.** The run ends in three ways: when the player closes the window; when the program
+calls `context.quit()`, once the current `update` returns; and, unless told otherwise, **when the
+player presses Escape**. Escape quitting is handy while trying out a sketch, but a game usually
+wants Escape for its own pause menu. `context.quit_on_escape(False)` turns the quitting off, so
+Escape becomes an ordinary key; then give the player another way out, such as a Quit button in the
+menu:
 
 ```mojo
 # In `create`:
@@ -297,8 +297,8 @@ var player = Image.load("assets/player.png")
 - **Built programs:** the caller's path is baked in at compile time, so a `mojo build` binary finds
   its files from any directory, as long as they stay where they were at build time.
 - **Anything else that takes a path**, such as the standard library's `open()`, `listdir` or
-  `makedirs`, resolves against the working directory. Give it `source_path("...")` to get the same
-  answer Create's loaders do.
+  `makedirs`, resolves against the working directory. Pass it `source_path("...")` to resolve the
+  path the way Create's loaders do.
 - **A path that arrives while the program runs**, such as a command-line argument or typed text, is
   meant relative to the working directory. Make it absolute first with `String(cwd() / path)`, using
   `cwd` from `std.pathlib`.
@@ -306,7 +306,7 @@ var player = Image.load("assets/player.png")
 ## Multiple scenes
 
 A program with a menu, a game and a pause screen keeps each scene as a plain field of the root
-`Program` (not a `Program` itself) and switches between them with an int field and `if`/`elif`:
+`Program` (not a `Program` itself) and switches between them with an `Int` field and `if`/`elif`:
 
 ```mojo
 # From examples/scenes: `Menu` and `Paint` are plain structs.
@@ -322,11 +322,12 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises:
             self.scene = _MENU
 ```
 
-A scene's `update` takes only what it uses (`context` to read input or time, `canvas` to draw), and
-a one-shot reset is a plain `enter(...)` method the parent calls before switching, taking whatever
-that transition carries. There is no scene trait on purpose: it would force one `update`/`enter`
-signature on every scene, and those must vary. Mojo 1.2 has no dynamic trait dispatch either; to
-store different types side by side, use `Variant` from `std.utils` and dispatch with `isa[T]()`. See
+A scene's `update` takes only what it uses: `context` to read input or time, `canvas` to draw. To
+reset a scene when switching to it, give it a plain `enter(...)` method for the parent to call
+first, taking whatever the switch passes on. There is no scene trait, on purpose: a trait would
+force the same `update` and `enter` signatures on every scene, and they need to differ. Mojo 1.2 has
+no dynamic trait dispatch either. To store values of different types side by side, use `Variant`
+from `std.utils`, and check which type it holds with `isa[T]()`. See
 [examples/scenes](../../../examples/scenes/main.mojo).
 
 ## The window's size on the first frame

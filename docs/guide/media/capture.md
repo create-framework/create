@@ -75,8 +75,9 @@ See [examples/capture](../../../examples/capture/main.mojo).
   their own colour, with no fringe. With the autoclear off, a transparent recording starts from
   nothing rather than the screen, whose picture has the background in it.
 - **Only what changed is stored:** each frame after the first holds just the rectangle that changed
-  since the one before, and a frame where nothing changed lengthens the one before instead, so a
-  mostly still scene makes a small file. A transparent recording stores every frame whole.
+  since the one before. A frame where nothing changed isn't stored at all; the one before is shown
+  for longer instead. So a mostly still scene makes a small file. A transparent recording stores
+  every frame whole.
 - **A palette per frame:** a GIF frame holds at most 256 colours. A frame with no more than that is
   stored exactly; one with more is reduced to the 256 that best represent it. `dither=True` hides
   the bands that reduction leaves in smooth gradients by scattering pixels of nearby colours, at the

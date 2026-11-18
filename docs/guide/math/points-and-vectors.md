@@ -59,9 +59,9 @@ A point can be written as a bare pair of numbers wherever a `Point2D` is expecte
 `canvas.circle((0, 0), 20)` works without naming the type. A vector always names its type:
 `Vector2D(1, 2)`. Only points are written as bare pairs, so a pair is never ambiguous.
 
-Mind one consequence: `p + Vector2D(1, 2)` moves `p`, but `p - (1, 2)` subtracts a *point*, since
-the pair can only be a point, and so gives the vector from `(1, 2)` to `p`. To move `p` back, write
-`p - Vector2D(1, 2)`.
+Mind one consequence: `p + Vector2D(1, 2)` moves `p`, but `p - (1, 2)` subtracts a *point*, since a
+pair can only be a point. So it gives the vector from `(1, 2)` to `p`. To move `p` back, write `p -
+Vector2D(1, 2)`.
 
 Common vectors have names: `Vector2D.ZERO` (no movement), `ONE` (`(1, 1)`), and the four directions
 `UP`, `DOWN`, `LEFT` and `RIGHT`, each 1 long. Since y increases upwards, `UP` is `(0, 1)` and

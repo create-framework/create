@@ -39,8 +39,8 @@ did, and `render` turns drawing into pixels.
 3. **Every later frame**, the loop pumps the window's events (from `_window`) and folds them into
    the `Context`'s devices with `apply_events`, ticks `context.time`, then calls `step`, which
    builds a fresh `Canvas` (`context._new_canvas`) and calls `update`.
-4. **A render call records, never paints** (`render`). Each `Canvas` call appends a command, with
-   its style and transform resolved then, to the frame's `Backend`.
+4. **A render call records, never paints** (`render`). Each `Canvas` call appends a command to the
+   frame's `Backend`, carrying the style and transform as they were when the call was made.
 5. **Presenting replays the frame**: on the CPU, the commands are rasterised onto the window's
    pixels; on the GPU, they are tessellated into one vertex buffer and drawn through OpenGL 3.3.
    Pixel reads and captures replay on the CPU either way, so both backends read the same pixels.
@@ -110,10 +110,10 @@ The rules behind it, and what each one buys:
 
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
   `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works
-  without a run loop. So the mapping dials reach `render` as plain values:
-  `context._set_viewport(state, …)` in `core` passes the design size and autoscale in, and
-  `context._new_canvas(state^)` builds the frame. Frame-wide drawing settings live on
-  `_PersistentCanvasState` itself.
+  without a run loop. The settings that map the design onto the window therefore reach `render` as
+  plain values: in `core`, `context._set_viewport(state, …)` passes the design size and autoscale
+  in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing settings live
+  on `_PersistentCanvasState` itself.
 - **`geometry`** depends only on `math`, so collision code (`overlaps`, `contains`) never sees
   `render`; `render` imports it.
 - **`color`** depends only on `math`; `image` and `render` both import it. It sits below `image` so
@@ -121,41 +121,45 @@ The rules behind it, and what each one buys:
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
   through `atof`. Nothing imports it but the root.
 - **`time`** imports nothing from `create`; `core` and `animation` import it. Its run clock,
-  `_run_clock`, is process-wide state that `core` publishes `Context.time` to once a frame, so a
-  playhead keeps time with no argument carrying the clock to it. It is the package's only shared
-  state.
-- **`animation`** holds the playheads: `Tween`, and `Animator` over its asset, `Animation`, as
-  `audio` holds `Playback` beside `Sound`. It is the only package that reads the run clock, so
-  `math` and `image` stay free of time. It imports `math` for the easing curves and `image` for the
-  frames.
-- **`text`** depends only on `_bytes`, `_library` and `_path`. `render`→`text` is nominal, like
-  `render`→`image`: `Style`, `canvas.font` and text layout name `Font`, and `_raster.blit_glyph`
-  takes `_GlyphInfo` by its internal path.
+  `_run_clock`, is process-wide state: once a frame, `core` copies `Context.time` into it, so a
+  playhead can read the time without the clock being passed to it as an argument. It is the
+  package's only shared state.
+- **`animation`** holds the playheads: `Tween`, and `Animator` with the asset it plays, `Animation`.
+  This mirrors `audio`, which holds `Playback` beside the `Sound` it plays. It is the only package
+  that reads the run clock, so `math` and `image` stay free of time. It imports `math` for the
+  easing curves and `image` for the frames.
+- **`text`** depends only on `_bytes`, `_library` and `_path`. `render` uses `text` only by name, as
+  it uses `image`: `Style`, `canvas.font` and text layout refer to the `Font` type, and
+  `_raster.blit_glyph` takes a `_GlyphInfo` by its internal path.
 - **`input`** depends only on `math`; `core` imports it. Its devices are plain state: `core`'s
   `apply_events` folds each window event in through one `_`-prefixed method per kind
   (`keyboard._key_down`, `mouse._button_down`, …), so `input` never sees an `Event` and `_window`
   stays `core`'s alone.
-- **`_path`** is a leaf imported by every package with a public function taking a file path,
-  re-exported by nothing; `core`'s `source_path` is its public face. Such a function is
-  `@always_inline` and passes the path through `_caller_relative` straight from its own body
-  (`call_location` counts exactly those two inlined calls), then hands the absolute path to a
-  `_`-named twin. Library code calls the twin (`Image._load`), never the public function, whose
-  caller would be the library's own file.
+- **`_path`** is a leaf, imported by every package that has a public function taking a file path,
+  and re-exported by nothing; `core`'s `source_path` is its public face. A public function that
+  takes a path is `@always_inline`, and passes the path to `_caller_relative` directly from its own
+  body. `call_location` counts exactly those two inlined calls, so the path resolves against the
+  caller's file. The function then hands the absolute path to a `_`-named twin that does the work.
+  Library code calls the twin (`Image._load`), never the public function: called from the library,
+  the public function would resolve the path against the library's own file.
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
 - **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. A
-  binding opens its library with `load_library("libname", version)`, the soname's version, never
-  `_DLHandle("libname.so")`: the platform's file name and search path are decided there. The
-  versioned name is the runtime package's, so a system without `-devel` packages has it.
-- **`_window`** imports nothing from `create` but `_library`; `core` is its only consumer; nothing
-  re-exports it.
-- **`render`→`image` and `render`→`animation` are nominal:** only `canvas.image`'s overloads and
+  binding opens its library with `load_library("libname", version)`, where `version` is the soname's
+  version, and never with `_DLHandle("libname.so")`. `load_library` decides the platform's file name
+  and search path. It opens the versioned name because the runtime package installs that one, so the
+  library is found even on a system without `-devel` packages.
+- **`_window`** imports nothing from `create` but `_library`. `core` is the only package that uses
+  it, and nothing re-exports it.
+- **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads and
   `canvas.snapshot` name `Image`, and `canvas.image(animator, …)` names `Animator`. A `render`
   function that needs pixels takes a pointer plus width/height, not an image type.
 
 ## Imports and public surface
 
-A program writes `from create import *`. Otherwise import by name from the owning package (`from
-create.geometry import Circle`); a single subpackage star is not a preamble.
+A program writes `from create import *`. Otherwise import by name from the package that owns the
+name (`from create.geometry import Circle`). Starring a single subpackage is no substitute for the
+root import: a subpackage exports only the names it owns, so it leaves out the types its own
+functions take.
 
 - The root has no names of its own: it star-imports the twelve subpackages. Never add a name there;
   add it to the owning subpackage.
@@ -166,10 +170,10 @@ create.geometry import Circle`); a single subpackage star is not a preamble.
 - Public surface is exactly what an `__init__.mojo` lists. A new declaration is internal unless it
   is added to one in the same change: `_module.mojo` for a wholly internal file, `_name` for an
   internal declaration in a public module. Tests reach internals by explicit path.
-- A public type's fields of internal types are `_`-named. Mojo has no private initialiser, so an
-  internal constructor takes only `_`-prefixed keyword-only arguments (`JSON(_document=…,
-  _index=…)`): the keywords mark it as the library's own, even where an internal type shows in the
-  signature.
+- A public type's field whose type is internal has a `_` name. Mojo has no private initialiser, so a
+  constructor meant only for the library takes only `_`-prefixed keyword-only arguments
+  (`JSON(_document=…, _index=…)`). The keywords mark it as the library's own, even though its
+  signature shows an internal type.
 
 ## Package internals
 

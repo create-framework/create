@@ -67,8 +67,8 @@ the position, and the text hangs below it and to its right.
 ## Several lines
 
 A newline (`"\n"`, or `"\r\n"`) in the string starts a new line, the font's line height below the
-last. `text_alignment` places each line on its own from side to side, but the whole block of lines
-up and down: `TOP` aligns the top of the first line, and `BOTTOM` the bottom of the last.
+last. `text_alignment` places each line separately from side to side, but places the block of lines
+as a whole up and down: `TOP` aligns the top of the first line, and `BOTTOM` the bottom of the last.
 `canvas.text_width(string)` is the width of the widest line, and `canvas.text_height(string)` the
 height of the whole block, from the top of the first line's tallest letters to the bottom of the
 last line's lowest:
@@ -89,9 +89,9 @@ canvas.line((corner.x, under), (corner.x + canvas.text_width(caption), under))
 `canvas.text(string, position, width)` also wraps each line so that it is at most `width` units
 wide, breaking it at the last space that fits and dropping the spaces at the break. A word wider
 than `width` on its own is broken between its letters. Newlines still start new lines, and every
-line is still aligned on its own, so `Align.TOP_LEFT` sets ragged-right text hanging from
-`position`. `canvas.text_width(string, width=w)` and `canvas.text_height(string, width=w)` measure
-the wrapped block:
+line is still aligned on its own. So with `Align.TOP_LEFT` the text hangs from `position`, with a
+straight left edge and a ragged right one. `canvas.text_width(string, width=w)` and
+`canvas.text_height(string, width=w)` measure the wrapped block:
 
 ```mojo
 # In `update`: a paragraph in a 300-unit column, a panel behind it.

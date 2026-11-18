@@ -32,8 +32,8 @@ canvas.image(self.animator, self.position, 128, 128)
 ## Making an animation
 
 There are three ways to make an animation. Each takes an `fps=`, the frames per second it plays at,
-12 by default; the rate belongs to the artwork, so it lives on the animation rather than the
-animator.
+which is 12 by default. The rate belongs to the artwork, so it is set on the animation rather than
+the animator.
 
 - A **sprite sheet** is one image holding all the frames side by side in a grid, as many artists
   deliver them. `Animation.from_sheet(sheet, frame_width, frame_height, start=, count=)` cuts the

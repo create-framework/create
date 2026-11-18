@@ -37,8 +37,8 @@ rather than 360 degrees:
 easiest: `TAU / 4` is a quarter turn, and `TAU / 3` a third of one.
 
 Why radians? An angle in radians is the length of the arc it sweeps on a circle of radius 1, so the
-distance round a circle's edge is simply its radius times the angle. A wheel of radius 20 that turns
-by 2 radians has rolled 40 units. Angles in degrees would need a conversion in every such sum.
+distance round a circle's edge is its radius times the angle. A wheel of radius 20 that turns by 2
+radians has rolled 40 units. Angles in degrees would need a conversion in every such sum.
 
 To work in degrees anyway, convert at the edges: `radians(90)` is `PI / 2`, for passing an angle
 written in degrees to Create, and `degrees(PI)` is 180, for showing an angle to a person.

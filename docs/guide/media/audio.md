@@ -61,11 +61,11 @@ var chime = Sound.load("assets/chime.wav")
   its extension. The whole file is decoded at load, to 16-bit samples whatever the file held. It
   raises, naming the path, for a file it can't read or one with no samples.
 - **Synthesizing:** `Sound.from_samples(samples, channels=1, sample_rate=44100)` makes a sound from
-  a list of `Float64` samples, from `-1.0` to `1.0`; any outside that range are cut off at it. With
-  several channels, the samples take turns, one per channel: left, right, left, right. Each such
-  group, one sample for every channel, is called an audio *frame*, which has nothing to do with the
-  frames a program draws. It raises an error unless `channels` and `sample_rate` are positive and
-  the samples make up whole frames.
+  a list of `Float64` samples, from `-1.0` to `1.0`; a sample outside that range is cut off at its
+  end. With several channels, the samples take turns, one per channel: left, right, left, right.
+  Each such group, one sample for every channel, is called an audio *frame*, which has nothing to do
+  with the frames a program draws. It raises an error unless `channels` and `sample_rate` are
+  positive and the samples make up whole frames.
 - **Reading:** `channels()`, `sample_rate()`, `frame_count()` and `duration()`, in seconds, describe
   the sound. `sample(frame, channel=0)` reads one sample back, from `-1.0` to `1.0`, and is `0.0`
   outside the sound, so drawing its waveform needs no checks for running off either end.
@@ -79,7 +79,7 @@ raising an error, so the program still runs.
 `audio.play(sound)` plays a sound once, and `audio.loop(sound)` plays it over and over until
 stopped. Each returns a `Playback`, which stands for that one playing of the sound, so the program
 can pause it, change its volume or stop it later. It is a playhead in the sound, as an `Animator` is
-in an animation, and one sound can be playing several times at once, each with its own `Playback`:
+in an animation. One sound can be playing several times at once, each with its own `Playback`:
 
 ```mojo
 # In `update`, with `audio: Audio`, `music: Sound`, `jump: Sound` and
@@ -117,10 +117,10 @@ the old values.
 
 - **Volume:** `0.0` is silent and `1.0` as recorded; above `1.0` amplifies, and below `0.0` is
   silent too. `audio.volume(v)` is the overall volume, which scales every playback's own: a playback
-  at `0.5` under an overall `0.5` plays at a quarter. Either applies at once, to playbacks already
-  playing.
+  at `0.5` under an overall `0.5` plays at a quarter. A change to either applies at once, even to
+  playbacks already playing.
 - **Speed** plays a sound faster and higher, or slower and lower, as a record sped up or slowed
   down: `2.0` is twice as fast and an octave up. It is kept between `0.01` and `100.0`.
 - **A pause screen** calls `pause_all()` on the way in and `resume_all()` on the way out. Playbacks
   played in between play as usual, so the screen can have sounds of its own; `resume_all` also
-  resumes any playback that was paused on its own before.
+  resumes a playback that had been paused on its own before `pause_all`.

@@ -66,9 +66,9 @@ take a shape's rounded corners into account.
 
 **How exact are they?** Tests involving a `Line` or an `Arc` are exact. A `Bezier` or `Spline` is
 tested as a chain of very short straight lines that follow it to within a ten-thousandth of its
-size. So a crossing is always found, but whether a curve just grazes a shape or just misses it is
-decided only that closely, which is far finer than anything visible. A region's `contains` treats an
-`Arc`, `Bezier` or `Spline` inside it the same way.
+size. So a crossing is always found. Whether a curve just grazes a shape or just misses it is
+decided only to within that distance, which is far finer than anything visible. A region's
+`contains` treats an `Arc`, `Bezier` or `Spline` inside it the same way.
 
 ## Moving shapes
 
@@ -80,7 +80,8 @@ centre on a point; both return the moved shape.
 **Fast objects can skip through thin walls.** A ball moving 30 units a frame can be on one side of a
 10-unit wall in one frame and past it in the next, without its circle ever overlapping the wall. A
 [`Capsule`](shapes.md#capsule) from where the ball was last frame to where it is now, with the
-ball's radius, covers every point the ball passed through, so testing that instead catches the hit:
+ball's radius, covers every point the ball passed through. Testing the capsule instead of the circle
+catches the hit:
 
 ```mojo
 # In `update`, with `position`, `velocity` and `radius` fields:

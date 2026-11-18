@@ -12,8 +12,8 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 - [Mojo](basics/mojo.md): the parts of the Mojo language the examples use: variables and numbers,
   `mut`, structs and traits, lists, optional values, errors, moving with `^`, and `ref`.
 - [Programs](basics/programs.md): how a program runs, `create` and `update`, `run`'s arguments and
-  the CPU or GPU backend, what is a field and what a parameter, what lasts how long, the run's
-  settings, the window and its modes, errors and printing, file paths and scenes.
+  the CPU or GPU backend, which values are fields and which are parameters, how long each lasts, the
+  run's settings, the window and its modes, errors and printing, file paths and scenes.
 - [Coordinates](basics/coordinates.md): where things are on the screen, the three spaces (screen,
   world and local), the camera and following the player with it, and the design size.
 - [Coming from Processing](basics/coming-from-processing.md): what works differently from

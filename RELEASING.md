@@ -20,7 +20,8 @@ where create-cli's `create new` reads it, and its test checks it is there.
 
 **One Mojo minor version.** A `.mojoc` loads only on the compiler that built it, so the recipe
 builds against `mojo-compiler` at the minor version `pixi.toml` pins, and the run requirement allows
-that minor only (`upper_bound='x.x'`). Moving Mojo moves `pixi.toml` and `recipe/` together.
+that minor only (`upper_bound='x.x'`). So a change of Mojo version changes `pixi.toml` and `recipe/`
+together.
 
 ## The release workflow
 
@@ -38,8 +39,8 @@ file breaks that until the setting is updated.
 ## Steps
 
 1. **Bump the version.** Change `version` in `pixi.toml` in a pull request and merge it.
-2. **Tag what merged**, by the remote's `main` rather than whatever is checked out, and create the
-   GitHub release:
+2. **Tag the merged commit**, taken from the remote's `main` rather than whatever is checked out
+   locally, and create the GitHub release:
    ```bash
    git fetch origin
    git tag -a vX.Y.Z -m "Create X.Y.Z" origin/main

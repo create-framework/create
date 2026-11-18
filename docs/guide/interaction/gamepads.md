@@ -27,7 +27,7 @@ the first pad plugged in is player 0, the second player 1, and if player 0's pad
 next pad to connect takes its place.
 
 A player with no pad reads `connected` as `False`, with every stick, trigger and button at zero, so
-a program can read any player without checking first; an empty slot simply does nothing.
+a program can read any player without checking first: an empty slot does nothing.
 `connected_this_frame` and `disconnected_this_frame` are true only in the frame the pad connects or
 disconnects, as `pressed` and `released` are for a button. Use them for a "controller disconnected"
 message, for example. `name` is the pad's name as the system reports it, and still holds it in the
@@ -74,8 +74,8 @@ The other buttons are named for what they are:
 ## Rumble
 
 `context.rumble(seconds)` makes player 0's pad rumble for that long. Optional `low_frequency=` and
-`high_frequency=` set the strengths of the pad's heavy and light motors, from 0 to 1 and both full
-by default, and `player=` picks another pad. A new rumble replaces one that is still running.
+`high_frequency=` set the strengths of the pad's heavy and light motors, from 0 to 1; both are full
+by default. `player=` picks another pad. A new rumble replaces one that is still running.
 
 Rumbling is something the program does to a pad rather than something it reads from one, so it lives
 on the `Context`, not on the `Gamepad` copy. It takes effect when `update` returns.

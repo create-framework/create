@@ -64,15 +64,15 @@ struct Button(Copyable, Drawable, Movable):
 fill before drawing it. See [examples/drawables](../../../examples/drawables/main.mojo).
 
 `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts.
-`DrawTarget` is what `draw_to` draws into, the canvas. To keep drawables of different types in one
-list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple-scenes)).
+`DrawTarget` is what `draw_to` draws into, which is the canvas. To keep drawables of different types
+in one list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple-scenes)).
 
 ## The background
 
-Every frame starts cleared to light gray, `Color(200)`, so a shape drawn in the default style, a
-thin black outline (see [Style](style.md#defaults)), shows up on it. `canvas.background()` paints
-the frame another colour. It paints over everything drawn before it in the frame, so call it before
-anything else you draw:
+Every frame starts cleared to light gray, `Color(200)`. A shape drawn in the default style is a thin
+black outline (see [Style](style.md#defaults)), so it shows up on the gray. `canvas.background()`
+paints the frame another colour. It paints over everything drawn before it in the frame, so call it
+before anything else you draw:
 
 - A translucent `background()` blends over that gray, not over the last frame, so fading trails need
   the autoclear off (below). An opaque one costs nothing extra: it replaces the clear.
@@ -105,10 +105,11 @@ with no arguments (`canvas.antialiasing()`).
 ## Transforms and guards
 
 `with canvas.transform(m):` moves, turns or scales everything drawn inside the block by the matrix
-`m`, built with `translate`, `rotate` and `scale`, and the block's end undoes it. What a matrix is,
-and how matrices combine, is explained in [Matrices](../math/matrices.md). It only works as a `with`
-block, so a transform can't accidentally stay on. `canvas.style(...)`, `canvas.overlay()` and
-`canvas.clip(...)` work the same way; each returns a **guard**, the object the `with` block holds:
+`m`, which is built with `translate`, `rotate` and `scale`. The end of the block undoes it. What a
+matrix is, and how matrices combine, is explained in [Matrices](../math/matrices.md). It only works
+as a `with` block, so a transform can't accidentally stay on. `canvas.style(...)`,
+`canvas.overlay()` and `canvas.clip(...)` work the same way; each returns a **guard**, the object
+the `with` block holds:
 
 ```mojo
 # In `update`:
@@ -134,9 +135,9 @@ starting level; `OFF`, `LOW` and `HIGH` are the others. `canvas.antialiasing(lev
 starting with the whole of the frame it is called in.
 
 It is one setting for both backends. A pixel along an edge is coloured by how much of it the shape
-covers, found by testing several points inside the pixel: on the CPU a grid of them (`LOW` 2x2,
-`MEDIUM` 4x4, `HIGH` 8x8), and on the GPU the graphics card's own multisampling, with as many points
-as the level asks for, or as the driver allows if that is fewer.
+covers, which is found by testing several points inside the pixel. The CPU tests a grid of them
+(`LOW` 2x2, `MEDIUM` 4x4, `HIGH` 8x8). The GPU uses the graphics card's own multisampling, with as
+many points as the level asks for, or fewer if that is all the driver allows.
 
 It smooths shapes and the edge of a rotated or sheared image. Text and an image's own pixels are
 smooth already, and a clip's edge is smoothed like a shape's (see [Clipping](#clipping)). A shape's
@@ -144,8 +145,8 @@ fill and stroke are blended onto the frame together, as one, so no seam shows be
 separate shapes that meet inside a pixel are blended one after the other, each covering only part of
 it, so a faint seam can show where they meet.
 
-`run_headless` defaults to `MEDIUM` too, so a test asserting an edge pixel's exact colour passes
-`antialiasing=Antialiasing.OFF`.
+`run_headless` defaults to `MEDIUM` too, so a test that checks the exact colour of a pixel on an
+edge should pass `antialiasing=Antialiasing.OFF`.
 
 ## Clipping
 

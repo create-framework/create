@@ -126,10 +126,9 @@ else:
     print("Not a key:", setting)
 ```
 
-`key.value()` takes the value out, and is an error, which stops the program, on an empty box, so
-call it only after checking. When there is a sensible fallback, `or_else` does both at once: it
-gives the value if there is one, and the fallback otherwise,
-`Key.from_name(setting).or_else(Key.SPACE)`.
+`key.value()` takes the value out. On an empty box it is an error that stops the program, so call it
+only after checking. When there is a sensible fallback, `or_else` does both at once: it gives the
+value if there is one, and the fallback otherwise: `Key.from_name(setting).or_else(Key.SPACE)`.
 
 ## Errors
 
@@ -215,12 +214,12 @@ The two differ in convenience and clarity, not speed: a program compiles only wh
 neither builds faster.
 
 - **`from create import *`** needs no upkeep: every name in this guide works as written, and a name
-  you start using is already there. But it brings in over a hundred names at once, so a reader can't
+  you start using is already there. But it brings in over a hundred names at once. A reader can't
   tell where a name comes from, and a name of Create's, such as `map` or `Key`, can clash with one
   from another library imported the same way.
 - **Named imports** show where every name comes from and bring in only the ones specified. But the
   list has to be kept up to date, and each new name used is an error until it is added.
 
 A subpackage star, such as `from create.render import *`, is not a middle way. Each subpackage
-exports only the names it defines, so that one brings in `Canvas` but not the `Color` and `Point2D`
-its calls take.
+exports only the names it defines, so `from create.render import *` brings in `Canvas` but not the
+`Color` and `Point2D` that its methods take.

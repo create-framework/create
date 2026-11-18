@@ -99,8 +99,8 @@ else:
 ```
 
 The comparison is between text, as every cell is text, so to find the row whose score is 120, look
-for `"120"`. `table.find_row_indices(column, value)` gives the position of every row that matches,
-in order, as a list, which is empty when none does.
+for `"120"`. `table.find_row_indices(column, value)` gives a list of the positions of every row that
+matches, in order. The list is empty when no row matches.
 
 **Removing a row.** `table.remove_row(index)` removes the row at `index`, and the rows after it move
 up to fill the gap. So to keep only the ten best scores, sort the table and then remove the last row
@@ -117,7 +117,7 @@ cell, `table.add_row(cells)` adds a row from a list of texts, one for each colum
 `table.add_row(["Linus", "80"])`. A table with column names must be given exactly one cell for each
 of its columns, and raises an error otherwise.
 
-**Columns.** `table.columns()` is the list of column names, and `table.has_column(name)` whether
-there is a column of that name, which helps with a file that an older version of the program wrote.
-`table.add_column(name)` adds a column at the end, empty in every row, and
+**Columns.** `table.columns()` is the list of column names, and `table.has_column(name)` is whether
+there is a column of that name. That helps with a file written by an older version of the program,
+which may lack a column. `table.add_column(name)` adds a column at the end, empty in every row, and
 `table.remove_column(name)` removes one from every row, moving the columns after it left by one.

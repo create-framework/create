@@ -8,9 +8,9 @@ page explains how to read back what has been drawn, and how to build an image pi
 
 ## Reading the screen
 
-`canvas.color_at(position)` returns the `Color` at a point, and `canvas.snapshot()` returns an
-`Image` of the screen, or `snapshot(region)` of part of it; both take an optional `scale=`. Both
-read what the frame has drawn **so far**. A colour picker:
+`canvas.color_at(position)` returns the `Color` at a point. `canvas.snapshot()` returns an `Image`
+of the screen, and `snapshot(region)` an image of part of it; both snapshots take an optional
+`scale=`. All three read what the frame has drawn **so far**. A colour picker:
 
 ```mojo
 from create import *
