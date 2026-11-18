@@ -88,6 +88,13 @@ The release procedure is described in [RELEASING.md](RELEASING.md).
   changes, doc churn, or rewriting examples and tests as costs; CONTRIBUTING.md's "Early
   development" says why. If an idea is worse for other reasons, say so.
 - Leave merging to the user unless they ask for it.
+- **Follow the templates when opening an issue or a pull request.** GitHub's web page offers them,
+  but `gh` doesn't. Write an issue from the matching form in
+  [.github/ISSUE_TEMPLATE/](.github/ISSUE_TEMPLATE/) (a bug, a feature, a performance problem or the
+  documentation): each of the form's fields as a heading, and the form's label. Write a pull
+  request's description from [.github/pull_request_template.md](.github/pull_request_template.md),
+  with the checklist items that don't apply deleted. `gh pr create --fill` skips the template, so
+  pass the body with `--body`.
 - Run only the tests a change can reach (`pixi run test render`); CI runs the whole suite.
 - Write Mojo with the `mojo-syntax` skill
   ([.agents/skills/mojo-syntax/](.agents/skills/mojo-syntax/SKILL.md)): Create is on Mojo 1.2, and
