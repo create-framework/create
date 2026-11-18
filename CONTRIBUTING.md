@@ -62,8 +62,9 @@ environment the first time it is used.
    example, which catches a change of the public API. New behaviour gets a test; how tests are
    written is in [tests/README.md](tests/README.md).
 
-5. **Commit** with a [Conventional Commits](#commit-messages) message. The pre-commit hook checks
-   the formatting (`pixi run format` fixes it) and builds a smoke test.
+5. **Commit** with a [Conventional Commits](#commit-messages) message. The pre-commit hook wraps
+   staged Markdown, checks the formatting of staged Mojo (`pixi run format` fixes it) and builds a
+   smoke test.
 
 6. **Push and open a pull request.** CI runs the whole suite on it, and it merges once CI passes
    (see [Workflow](#workflow)).
@@ -82,7 +83,7 @@ pixi run precompile                       # type-check the library into build/cr
 pixi run build-examples                   # type-check every example, benchmark and the template; a warning fails it
 pixi run check-standalone                 # a `mojo build` program, run outside the environment
 pixi run check-package                    # the conda package from recipe/, built and tested as installed
-pixi run format                           # 80 columns, enforced by pre-commit
+pixi run format                           # Mojo at 80 columns, Markdown prose wrapped at 100
 pixi run embed-fonts                      # regenerate text/_noto.mojo after changing a face in text/fonts/
 pixi run reference                        # regenerate docs/reference from the docstrings; commit the result
 pixi run docs                             # the same, then build the documentation site into build/docs/site
@@ -117,8 +118,8 @@ Two tiers of automated checks, and a third run by hand:
 
 | Where | Runs |
 |---|---|
-| `pre-commit` hook (after `pixi run setup`) | Formatting check on staged `.mojo` files, then builds `tests/core/test_smoke.mojo`. Constant cost |
-| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job — and the documentation site (`pixi run docs`), which fails when the committed `docs/reference` is out of date. Linux only |
+| `pre-commit` hook (after `pixi run setup`) | Wraps staged Markdown at 100 columns and restages it, then checks the formatting of staged `.mojo` files and builds `tests/core/test_smoke.mojo`. Constant cost |
+| CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite — a GL test that skips fails the job — and the documentation site (`pixi run docs`), which fails when the committed `docs/reference` is out of date or Markdown isn't wrapped. Linux only |
 | macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI — a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet — so run it before relying on a change that could differ there (windowing, GL, library search) |
 
 Neither tier subsumes the other: building a consumer program type-checks only the `def` bodies it
@@ -127,6 +128,8 @@ reaches (catches API drift, not an uncalled broken function); `mojo precompile` 
 The hook and CI skip their checks when every changed path is inert (`*.md`, `LICENSE`, agent/editor
 config); the allowlist is in `.githooks/_inert.sh`, read by the hook and the workflow alike. The
 documentation site is the exception: Markdown alone can break it, so CI builds it for every change.
+So is wrapping: the hook wraps staged Markdown before its inert skip, and CI checks it with the
+site.
 
 ## Workflow
 
@@ -194,6 +197,10 @@ repo by `pixi run docs`, so a change and its documentation land together.
   constructors, methods and special methods (the dunders); a static method is listed as a
   constructor when it returns `Self`, so write a factory's return type so. A function's overloads
   share one page, and those documented alike one block.
+
+Write Markdown without minding line length: the pre-commit hook wraps prose at 100 columns
+([scripts/wrap_markdown.py](scripts/wrap_markdown.py)), never splitting a word, and leaves code,
+tables, HTML and headings as written. `pixi run format` wraps every page by hand.
 
 A new guide page needs an entry in `nav` in [zensical.toml](zensical.toml). The reference's nav is
 generated: `docs.py` writes the config the site is built from to `build/docs/zensical.toml`, with a

@@ -1,11 +1,20 @@
 #!/bin/sh
-# Fast tier: check formatting, then build one consumer program.
+# Fast tier: wrap staged Markdown, check formatting, then build one consumer
+# program.
 #
 # Constant cost (~1.5s) no matter how many examples exist. Catches consumer-side
 # API drift — trait changes, `run[T]` instantiation, Context/Input/Canvas
 # signatures — which `mojo precompile` cannot see. The library type-check, the
 # full example sweep and the test suite run in CI (.github/workflows/ci.yml).
 set -u
+
+# Markdown is wrapped at 100 columns for the writer, not checked: the staged
+# pages are rewrapped and restaged (scripts/wrap_markdown.py --staged), so this
+# runs before the inert skip below, Markdown being inert to every other check.
+if [ -n "$(git diff --cached --name-only --diff-filter=ACMR -- '*.md')" ]; then
+    pixi run python scripts/wrap_markdown.py --staged \
+        || { echo "Wrapping the staged Markdown failed — commit aborted."; exit 1; }
+fi
 
 # A commit that stages only inert files (see _inert.sh) skips every check below.
 . "$(dirname "$0")/_inert.sh"
