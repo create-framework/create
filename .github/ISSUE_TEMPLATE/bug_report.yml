@@ -1,0 +1,91 @@
+name: Bug report
+description: Something in Create behaves differently from what the user guide or API reference says.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. The smaller the program that shows it, the faster it can be found and fixed.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, such as a wrong drawing, an error, a crash or a frozen window.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What should have happened instead. If the user guide or API reference says so, link the page.
+    validations:
+      required: true
+
+  - type: textarea
+    id: program
+    attributes:
+      label: A program that shows it
+      description: |
+        The shortest complete program you can make that shows the bug. Start it with `from create import *`, so it runs as it is. Attach any image, font or sound it loads, and a screenshot if the bug is something drawn.
+      render: mojo
+      placeholder: |
+        from create import *
+
+
+        @fieldwise_init
+        struct Bug(Program):
+            @staticmethod
+            def create(mut context: Context, mut canvas: Canvas) raises -> Bug:
+                return Bug()
+
+            def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+                canvas.fill(Color.BLUE)
+                canvas.circle((0, 0), 40)
+
+
+        def main() raises:
+            run[Bug]("Bug")
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Terminal output
+      description: The error message or anything else the program printed, copied in full.
+      render: text
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend
+      description: Which renderer shows the bug. If you can, try the program with both `RenderBackend.CPU` and `RenderBackend.GPU`.
+      options:
+        - Both CPU and GPU
+        - CPU only
+        - GPU only
+        - Headless (run_headless)
+        - Not about drawing
+        - Don't know
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Create and Mojo versions
+      description: "`pixi list create mojo`, run in your project, shows both. If you build Create from source, give the commit."
+      placeholder: create 0.3.1, mojo 1.2.0
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Operating system
+      description: The system and version, and on Linux the desktop and whether it runs Wayland or X11. Name the graphics card for a GPU bug.
+      placeholder: Ubuntu 24.04, GNOME on Wayland, Intel UHD 620
+    validations:
+      required: true
