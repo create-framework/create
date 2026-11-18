@@ -75,7 +75,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 
 ## [Maths](math/README.md)
 
-These pages assume no prior knowledge of the mathematics they describe.
+Each page explains its topic from the beginning, assuming only basic school maths.
 
 - [Angles](math/angles.md): radians, which way angles go, and `sin`, `cos` and `atan2`.
 - [Points and vectors](math/points-and-vectors.md): positions and movements, length and direction,

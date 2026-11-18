@@ -74,7 +74,8 @@ page:
 | [random numbers](docs/guide/math/random-numbers.md) | `Random` |
 | [noise](docs/guide/math/noise.md) | `Noise` |
 
-The maths pages are written for readers with no prior knowledge of the mathematics; keep them so.
+The maths pages explain each topic from the beginning, for readers who haven't met it before,
+assuming only basic school maths; keep them so.
 
 A task often spans several (a shadow on a clipped shape is style and drawing); read each it touches,
 and when unsure whether one applies, read it.
