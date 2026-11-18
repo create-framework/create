@@ -202,3 +202,27 @@ can be filled in where it is.
 Create also includes the common maths functions, such as `sqrt`, `sin` and `cos`, so they need
 no import of their own. Anything else from Mojo's standard library is imported from `std`, such as
 `from std.pathlib import cwd` (see [File paths](programs.md#file-paths)).
+
+Instead of the star, a program can import each name it uses from the subpackage that defines it.
+The [API reference](../../reference/README.md) lists every name under its subpackage:
+
+```mojo
+from create.core import Program, Context, run
+from create.render import Canvas
+from create.color import Color
+from create.math import Point2D, sin
+```
+
+The two differ in convenience and clarity, not speed: a program compiles only what it uses, so
+neither builds faster.
+
+- **`from create import *`** needs no upkeep: every name in this guide works as written, and a
+  name you start using is already there. But it brings in over a hundred names at once, so a
+  reader can't tell where a name comes from, and a name of Create's, such as `map` or `Key`, can
+  clash with one from another library imported the same way.
+- **Named imports** show where every name comes from and bring in only the ones specified. But the list has to
+  be kept up to date, and each new name used is an error until it is added.
+
+A subpackage star, such as `from create.render import *`, is not a middle way. Each subpackage
+exports only the names it defines, so that one brings in `Canvas` but not the `Color` and
+`Point2D` its calls take.
