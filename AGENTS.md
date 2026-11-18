@@ -5,7 +5,7 @@
 These apply to every task and are imported below:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): the design ethos, building and testing, the workflow and
-  commit messages, and the code conventions.
+  commit messages, and the prose style.
 - [ARCHITECTURE.md](ARCHITECTURE.md): the module layout, how a frame runs, the layering rules, and
   imports and public surface.
 - From the user guide, [programs](docs/guide/basics/programs.md),
@@ -24,6 +24,16 @@ These apply to every task and are imported below:
 @docs/guide/math/points-and-vectors.md
 
 ## Read when relevant
+
+Each part of the repository has a contributing guide of its own. Read the one for the part a task
+touches; the `AGENTS.md` in its folder imports it, so it also loads when you work there:
+
+| Read | When the task involves |
+|---|---|
+| [src/CONTRIBUTING.md](src/CONTRIBUTING.md) | the library's code: its conventions for values, points and vectors, printing and Mojo |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | the documentation site, the user guide, docstrings and the generated API reference |
+| [examples/CONTRIBUTING.md](examples/CONTRIBUTING.md) | the examples or the project template |
+| [tests/README.md](tests/README.md) | writing or running tests, and how the GPU is covered |
 
 The rest of the [user guide](docs/guide/README.md) describes how the library behaves, which every
 change must keep. Before changing, using or answering questions about one of these areas, read its

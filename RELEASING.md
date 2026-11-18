@@ -15,8 +15,8 @@ README's `pixi add mojo create` installs from.
 check-package` (CI's `linux-package`) builds it with rattler-build, in its own `package`
 environment, and runs [recipe/test.mojo](recipe/test.mojo) against the installed package. It is the
 only check that sees Create as installed rather than as source. Besides the library, the package
-installs the [project template](CONTRIBUTING.md#building-and-testing) to `share/create/template`,
-where create-cli's `create new` reads it, and its test checks it is there.
+installs the [project template](examples/CONTRIBUTING.md#the-project-template) to
+`share/create/template`, where create-cli's `create new` reads it, and its test checks it is there.
 
 **One Mojo minor version.** A `.mojoc` loads only on the compiler that built it, so the recipe
 builds against `mojo-compiler` at the minor version `pixi.toml` pins, and the run requirement allows
