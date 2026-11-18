@@ -6,9 +6,10 @@ sketches but also for small- to medium-sized projects such as 2D games, simulati
 visualisations.
 
 This guide is for anyone working on Create itself: what the project values, how to make a first
-change, and then the reference for building, testing, landing changes and the code's conventions.
-Using Create is covered in the [user guide](docs/guide/README.md), and how its code is organised in
-[ARCHITECTURE.md](ARCHITECTURE.md).
+change, building and testing, how changes land, and how to write. What is specific to the library's
+code, the documentation or the examples has a guide of its own, listed under [Read
+next](#read-next). Using Create is covered in the [user guide](docs/guide/README.md), and how its
+code is organised in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## What we value
 
@@ -55,7 +56,8 @@ environment the first time it is used.
 
 3. **Make the change on a branch**, from an up-to-date `main`: `git switch -c some-change`. Read
    [ARCHITECTURE.md](ARCHITECTURE.md) first for where it belongs and what the package may import,
-   and the package's README if it has one.
+   the package's README if it has one, and the guide for the part you are changing (see [Read
+   next](#read-next)).
 
 4. **Test what the change can reach**: `pixi run test render` runs one subpackage's tests (see
    [Building and testing](#building-and-testing)), and `pixi run build-examples` type-checks every
@@ -103,14 +105,6 @@ edit pays for the ~10 s rebuild.
 `test`, `build-examples` and `check-standalone` work differently. Each one precompiles `src` afresh
 into a temporary package of its own, then builds every file against that package. So their results
 are never stale, and the library is parsed once rather than once for every file.
-
-**The project template.** [template/](template/) is where a new project starts:
-[create-cli](https://github.com/create-framework/create-cli)'s `create new` copies it, a `main.mojo`
-and the `assets/` it loads. The Create package installs the template to `share/create/template`, so
-a new project always starts from the template that matches the installed Create. `create new`
-replaces `{{name}}` in `main.mojo` with the project's name. The placeholder sits inside a string, so
-the file builds as it is. `build-examples` builds the template along with the examples, so a change
-to the API that breaks the template fails CI here, and is fixed in the same pull request.
 
 `mojo format`'s grammar is narrower than the compiler's and will abort a commit: `where` is reserved
 (not usable as a name), and `;` statement separators don't parse.
@@ -181,56 +175,12 @@ refactor(core)!: Rename Context.window_size to Context.design_size
 docs: Move the release process to RELEASING.md
 ```
 
-## Documentation
-
-The documentation site, [create-framework.org](https://create-framework.org/), is built from this
-repo by `pixi run docs`, so a change and its documentation land together.
-[scripts/docs.py](scripts/docs.py) stages its pages:
-
-- **Home** is the [README](README.md), and the **user guide** is
-  [docs/guide/](docs/guide/README.md). Write their links for GitHub, relative to the file: the site
-  keeps links between its pages, copies images in, and points everything else (an example, a source
-  file) at GitHub, at the commit built.
-- The **API reference** is [docs/reference/](docs/reference/README.md), generated from the
-  docstrings by `mojo doc`. It is committed, so it reads on GitHub as well as on the site. Never
-  edit it by hand: after changing a docstring or the public surface, run `pixi run reference` and
-  commit what changed. CI's `linux-docs` regenerates it and fails when the committed copy differs.
-
-How the reference is laid out decides how a docstring should be written:
-
-- **Each subpackage has a page**, headed by the package's own docstring. It lists what the package's
-  `__init__.mojo` imports, grouped into types, traits, functions and constants, in import order
-  within each group. So the public surface and the reference can't disagree.
-- **Each type, trait and function has a page of its own.** The package's page lists it by the first
-  line of its docstring, so write that line to make sense on its own. A constant has no page of its
-  own; it is documented on the package's page.
-- **A type's page groups its members** into constants, fields, constructors, methods and special
-  methods (the dunders). A static method is listed as a constructor only when its signature ends in
-  `-> Self`, so declare a factory's return type as `Self`, not by the type's name.
-- **A function's overloads share one page.** Consecutive overloads with the same documentation are
-  shown as one block of signatures.
-
-Write Markdown without minding line length: the pre-commit hook wraps prose at 100 columns
-([scripts/wrap_markdown.py](scripts/wrap_markdown.py)), never splitting a word, and leaves code,
-tables, HTML and headings as written. `pixi run format` wraps every page by hand.
-
-A new guide page needs an entry in `nav` in [zensical.toml](zensical.toml). The reference's nav is
-generated: `docs.py` writes the config the site is built from to `build/docs/zensical.toml`, with a
-page for every subpackage, type and function added.
-
-The site is published in two versions, picked by a selector in its header: `/latest/`, the newest
-release and what the root redirects to, and `/main/`, under a banner saying it is unreleased.
-[scripts/docs_site.py](scripts/docs_site.py) (`pixi run docs-site`) builds both. It builds the
-release from a worktree of the release's tag, with that tag's own environment and scripts, and then
-adds the version selector. [.github/workflows/docs.yml](.github/workflows/docs.yml) publishes them
-on every push to `main` and after every release. A docs fix after a release reaches `/latest/` with
-the next release.
-
-### Prose style
+## Prose style
 
 The user guide is written for someone new to creative coding as much as for someone who knows
 Processing: [Colours](docs/guide/drawing/colours.md) starts from what red, green and blue are.
-Docstrings and the contributor docs follow the same style.
+Everything else written for Create follows the same style: docstrings, comments, READMEs, the
+contributor docs, commit messages and pull requests.
 
 - **Say what it does, plainly.** Present tense, active voice, and the reader as "you", never "we".
   Prefer the plain word, and leave out "simply", "easily" and "obviously": what is easy for the
@@ -253,65 +203,19 @@ Docstrings and the contributor docs follow the same style.
   fragment opens with a comment saying where it goes, ``# In `update`:``, and what it assumes, ``#
   In `create`, building the `random` field:``. A comment beside a line says what the line does, in
   lowercase and without a full stop: `# red, mostly transparent`.
-- **Links** are relative and written for GitHub (see above). Link a page by its title, and a section
-  by its heading.
+- **Links** are relative and written for GitHub (see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)).
+  Link a page by its title, and a section by its heading.
 - **A section's index page** lists each of its pages as `[Title](page.md): what it covers.`
 
-## Code conventions
+## Read next
 
-### Verbs on values
+The rest is specific to one part of the repository. Read the guide for the part a change touches:
 
-A value type's verb method returns a new value and leaves the receiver as it was: `rect =
-rect.translate(delta)`, `v.normalize()`, `line.split(t)`, `color.with_alpha(a)`. A shape, vector,
-point, colour or matrix is never changed in place by a method; assign a field to change one. The
-types that change in place are those that hold state over time, and their methods act on that state
-(`tween.play()`, `table.sort(...)`): `Tween`, `Animator`, `Audio`, `EditableText`, `Random`,
-`Table`, `PixelBuffer`, `Canvas` and `Context`.
-
-### Locations, displacements and extents
-
-Use `Point2D` for new locations, `Vector2D` for displacements and scalars for extents;
-`canvas.rectangle(position: Point2D, width: Float64, height: Float64)` is the shape to copy. The
-reasons are in [Points and
-vectors](docs/guide/math/points-and-vectors.md#locations-displacements-and-extents), and three rules
-keep them working:
-
-- Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
-  `Point2D` one: a bare tuple already fills a `Point2D` parameter, and `(x, y)` keeps the pairs
-  readable where a run of numbers doesn't.
-- Don't give any type but `Point2D` an `@implicit` tuple constructor. If two types could both be
-  built from a bare tuple, any function overloaded on those two types would be ambiguous when called
-  with a tuple. Locations are the values most worth writing as a tuple, so only `Point2D` gets the
-  shorthand.
-- Don't add `Point2D.__add__(Point2D)`. Adding two locations has no meaning, and refusing it is why
-  `Point2D` is a separate type from `Vector2D`.
-
-### Printing
-
-A public value type implements `Writable` and prints as it would be written in source:
-
-- Positionally for the small maths types and `Color`: `Point2D(1.0, 2.0)`.
-- By name for an `Int`-wrapping enum: `Easing.OUT_BOUNCE` (an unnamed value falls back to
-  `Easing(99)`).
-- In keyword form otherwise, labelled by the constructor's keywords where it has them
-  (`Circle(position=Point2D(0.0, 0.0), radius=5.0)`) and by public field names where it doesn't
-  (`Time`, `Tween`). Private fields are left out.
-
-Resource handles (`Image`, `PixelBuffer`, `Sound`, `Audio`, `Playback`) and shared assets
-(`Animation`) are not printable. A `Font` prints as it is loaded, `Font.load("path")` (with `,
-italic_path="..."` when it has one). `JSON` prints as compact JSON text, its own source form;
-`Table` and `TableRow` are containers and not printable.
-
-### Mojo
-
-Create is on Mojo 1.2, and some older forms are gone or deprecated:
-
-- Don't use `alias`; it is deprecated for `comptime`.
-- Don't use `UnsafePointer`; it is deprecated for `Pointer`.
-- Don't use `fn`; it is removed. Use `def`.
-- Don't hold a raw `Pointer` to `Canvas` outside the guards; use origin-tracked references.
-
-### Tests
-
-Name a test file with the `test_` prefix, or the runner won't find it. The rest is in
-[tests/README.md](tests/README.md).
+- [src/CONTRIBUTING.md](src/CONTRIBUTING.md): the library's code conventions: values and their
+  verbs, points and vectors, printing, and the Mojo version. With it,
+  [ARCHITECTURE.md](ARCHITECTURE.md) for where code belongs, and the package's own README where it
+  has one.
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md): the documentation site, the user guide, and how the
+  API reference is generated from the docstrings.
+- [examples/CONTRIBUTING.md](examples/CONTRIBUTING.md): the examples and the project template.
+- [tests/README.md](tests/README.md): how tests are written and run, and how the GPU is covered.
