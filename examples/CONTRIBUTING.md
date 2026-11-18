@@ -15,6 +15,10 @@ all. `pixi run build-examples` type-checks every example, and a warning fails it
   where it reacts to input: "Hover a row to play its curve."
 - **Show one thing.** An example is named after the feature or area it shows, and leaves out what
   doesn't help show it.
+- **Name it in the plural** when it is named after a feature you can count, as the user guide's
+  pages are: `images`, `tweens`, `polygons`. A name that has no plural keeps its form: a mass noun
+  or an activity (`audio`, `noise`, `typing`, `clipping`), something a program has only one of
+  (`camera`, `window`), or the program itself (`clock`, `logo`, `sidescroller`).
 - **Write it as a program would.** Import with `from create import *`, and use only the public API:
   an example is copied by readers, so it must not lean on anything a program can't reach.
 - **Load assets by relative path**, from the example's own folder: Create resolves a path against
