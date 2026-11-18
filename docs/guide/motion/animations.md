@@ -69,4 +69,4 @@ it is asked. So it slows down and stops with the rest of the game under `context
 `time_paused` (see [Slowing and pausing time](time.md#slowing-and-pausing-time)), unless it is built
 on real time with `Animator(animation, clock=Clock.REAL)`, as a pause menu's own animations must be.
 
-See [examples/animation](../../../examples/animation/main.mojo).
+See [examples/animations](../../../examples/animations/main.mojo).

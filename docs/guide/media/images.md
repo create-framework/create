@@ -50,7 +50,7 @@ def main() raises:
   image not drawn for 120 frames is dropped from the renderer's cache, so drawing a fresh image
   every frame, such as a snapshot, doesn't make memory use keep growing.
 
-See [examples/image](../../../examples/image/main.mojo).
+See [examples/images](../../../examples/images/main.mojo).
 
 ## Drawing into an image
 

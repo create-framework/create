@@ -80,4 +80,4 @@ by default. `player=` picks another pad. A new rumble replaces one that is still
 Rumbling is something the program does to a pad rather than something it reads from one, so it lives
 on the `Context`, not on the `Gamepad` copy. It takes effect when `update` returns.
 
-See [examples/gamepad](../../../examples/gamepad/main.mojo).
+See [examples/gamepads](../../../examples/gamepads/main.mojo).
