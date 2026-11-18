@@ -5,7 +5,8 @@
 is_inert() {
     case "$1" in
         *.md | LICENSE | .gitignore | .git-blame-ignore-revs \
-            | .agents/* | .claude/* | .vscode/* | skills-lock.json) return 0 ;;
+            | .github/ISSUE_TEMPLATE/* | .agents/* | .claude/* | .vscode/* \
+            | skills-lock.json) return 0 ;;
     esac
     return 1
 }

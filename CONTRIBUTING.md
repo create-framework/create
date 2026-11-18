@@ -125,10 +125,11 @@ that breaks a caller, but not a broken function that nothing calls. `mojo precom
 every function in the library, but not how a program uses them, such as `run[T]` with the program's
 own type.
 
-The hook and CI skip their checks when every changed path is inert: `*.md`, `LICENSE`, and agent and
-editor config. The list of inert paths is in `.githooks/_inert.sh`, which the hook and the workflow
-both read. Two checks run for every change anyway, because Markdown alone can break them: CI builds
-the documentation site, and the hook wraps staged Markdown, which CI checks along with the site.
+The hook and CI skip their checks when every changed path is inert: `*.md`, `LICENSE`, the issue
+forms and the agent and editor config. The list of inert paths is in `.githooks/_inert.sh`, which
+the hook and the workflow both read. Two checks run for every change anyway, because Markdown alone
+can break them: CI builds the documentation site, and the hook wraps staged Markdown, which CI
+checks along with the site.
 
 ## Workflow
 
