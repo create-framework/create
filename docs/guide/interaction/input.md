@@ -8,9 +8,9 @@ gamepads. This page explains what they have in common; the [Keyboard](keyboard.m
 
 The devices live on the `Context`: `context.keyboard`, `context.mouse` and
 `context.gamepad(player)`. Before each `update`, the loop records in them everything that happened
-since the last frame, and `update` asks them what it needs to know. Unlike Processing, Create has
-no event callbacks such as `keyPressed()` or `mousePressed()`: a program reads the devices when it
-is ready to, every frame, in the same place it uses the answers.
+since the last frame, and `update` asks them what it needs to know. Unlike Processing, Create has no
+event callbacks such as `keyPressed()` or `mousePressed()`: a program reads the devices when it is
+ready to, every frame, in the same place it uses the answers.
 
 ## Down, pressed and released
 
@@ -72,5 +72,5 @@ Keys, mouse buttons and gamepad buttons are each a type of their own, `Key`, `Mo
 
 Each type can also be looked up by name, which is how key bindings are kept in a settings file:
 `Key.from_name("page_up")`, `MouseButton.from_name("right")`, `GamepadButton.from_name("south")`.
-The names are those of the constants, in upper or lower case, and a name that matches none of
-them gives `None`. `Cursor` has a `from_name` too.
+The names are those of the constants, in upper or lower case, and a name that matches none of them
+gives `None`. `Cursor` has a `from_name` too.

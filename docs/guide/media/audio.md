@@ -1,15 +1,15 @@
 # Audio
 
-Sound effects and music bring a program to life. This page explains how to load a sound from a
-file or make one from scratch, how to play it, and how to control each sound while it plays.
+Sound effects and music bring a program to life. This page explains how to load a sound from a file
+or make one from scratch, how to play it, and how to control each sound while it plays.
 
 ## How sound is stored
 
 Sound is a vibration of the air, and a speaker makes it by moving back and forth. A digital sound
 stores that movement as a long list of numbers called **samples**, each one the speaker's position
-at one instant, from -1 to 1. Played back fast enough, usually 44,100 samples a second (the
-**sample rate**), they make the sound again. A stereo sound has two **channels**, one for each
-speaker, left and right.
+at one instant, from -1 to 1. Played back fast enough, usually 44,100 samples a second (the **sample
+rate**), they make the sound again. A stereo sound has two **channels**, one for each speaker, left
+and right.
 
 ## A first sound
 
@@ -72,15 +72,14 @@ var chime = Sound.load("assets/chime.wav")
 
 ## Playing
 
-An `Audio` is the program's connection to the computer's speakers: build one in `create` and keep
-it as a field. On a computer with no sound output, such as a test server, it plays silently
-rather than raising an error, so the program still runs.
+An `Audio` is the program's connection to the computer's speakers: build one in `create` and keep it
+as a field. On a computer with no sound output, such as a test server, it plays silently rather than
+raising an error, so the program still runs.
 
 `audio.play(sound)` plays a sound once, and `audio.loop(sound)` plays it over and over until
 stopped. Each returns a `Playback`, which stands for that one playing of the sound, so the program
-can pause it, change its volume or stop it later. It is a playhead in the sound, as an `Animator`
-is in an animation, and one sound can be playing several times at once, each with its own
-`Playback`:
+can pause it, change its volume or stop it later. It is a playhead in the sound, as an `Animator` is
+in an animation, and one sound can be playing several times at once, each with its own `Playback`:
 
 ```mojo
 # In `update`, with `audio: Audio`, `music: Sound`, `jump: Sound` and
@@ -94,8 +93,8 @@ if context.keyboard.pressed(Key.M):
         self.music_playback = self.audio.loop(self.music)
 ```
 
-An `Audio` needs nothing each frame. Sound plays separately from the program's frames, so it
-carries on smoothly through a slow frame or a long load.
+An `Audio` needs nothing each frame. Sound plays separately from the program's frames, so it carries
+on smoothly through a slow frame or a long load.
 
 ## Playbacks
 
@@ -112,9 +111,9 @@ playing since. `Playback.NONE` is no playback, for a field before anything plays
 | `speed(playback)`, `speed(playback, s)` | Its speed, `1.0` unless set; `0.0` once stale |
 | `stop_all()`, `pause_all()`, `resume_all()` | The same for every playback at once |
 
-`play` and `loop` take a starting `volume=` and `speed=`, applied before the first sample
-plays. Pass them there rather than setting them right after: by then the first moment may have
-played at the old values.
+`play` and `loop` take a starting `volume=` and `speed=`, applied before the first sample plays.
+Pass them there rather than setting them right after: by then the first moment may have played at
+the old values.
 
 - **Volume:** `0.0` is silent and `1.0` as recorded; above `1.0` amplifies, and below `0.0` is
   silent too. `audio.volume(v)` is the overall volume, which scales every playback's own: a playback

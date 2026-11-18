@@ -1,9 +1,8 @@
 # Gradients
 
 A gradient is a fill that blends smoothly from one colour to another, or through several: a sky
-fading from deep blue to orange at the horizon, or a glow that fades out from its centre. This
-page explains how to build one, how it fits each shape, and how it combines with the rest of the
-style.
+fading from deep blue to orange at the horizon, or a glow that fades out from its centre. This page
+explains how to build one, how it fits each shape, and how it combines with the rest of the style.
 
 ## Filling with a gradient
 
@@ -30,9 +29,9 @@ There are two kinds:
 
 ## Stops
 
-A gradient is a list of **stops**: colours placed at positions from 0, where the gradient starts,
-to 1, where it ends. Between two stops the colour blends from one to the other. Given colours
-alone, as above, the stops are spread evenly; to place them yourself, give each a position:
+A gradient is a list of **stops**: colours placed at positions from 0, where the gradient starts, to
+1, where it ends. Between two stops the colour blends from one to the other. Given colours alone, as
+above, the stops are spread evenly; to place them yourself, give each a position:
 
 ```mojo
 var sunset = Gradient.linear(
@@ -40,8 +39,8 @@ var sunset = Gradient.linear(
 )
 ```
 
-Here the blue blends into purple over the first 70% of the way, and the purple into orange over
-the rest.
+Here the blue blends into purple over the first 70% of the way, and the purple into orange over the
+rest.
 
 ## How a gradient fits a shape
 

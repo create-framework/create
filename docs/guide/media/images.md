@@ -1,7 +1,7 @@
 # Images
 
-An image is a picture loaded from a file, such as a character's sprite, a background or a tile,
-or one the program makes itself. This page explains how to load and draw images, and how to draw
+An image is a picture loaded from a file, such as a character's sprite, a background or a tile, or
+one the program makes itself. This page explains how to load and draw images, and how to draw
 shapes, text and gradients into an image of your own. Building an image one pixel at a time is in
 [Pixels](../drawing/pixels.md#building-an-image-pixel-by-pixel), and animating a sprite sheet in
 [Animations](../motion/animations.md).
@@ -36,9 +36,9 @@ def main() raises:
 
 - **`Image.load(path)`** reads a PNG, JPEG or BMP file. A relative path is relative to the source
   file that makes the call (see [File paths](../basics/programs.md#file-paths)).
-- **`canvas.image(image, position)`** draws the image centred on `position`, like every shape,
-  one unit per image pixel. `canvas.image(image, position, width, height)` stretches it to that
-  size. Either way it is the right way up, even though y increases upwards.
+- **`canvas.image(image, position)`** draws the image centred on `position`, like every shape, one
+  unit per image pixel. `canvas.image(image, position, width, height)` stretches it to that size.
+  Either way it is the right way up, even though y increases upwards.
 - **It is a render call like any other:** the transform turns, scales and mirrors it, the camera
   places it, and the style's `tint`, `opacity`, `blend_mode` and shadow apply (an image casts the
   shadow of its opaque pixels). Fill and stroke don't apply. See [Style](../drawing/style.md).
@@ -54,13 +54,12 @@ See [examples/image](../../../examples/image/main.mojo).
 
 ## Drawing into an image
 
-An **offscreen canvas** is a canvas that draws into an image of its own rather than onto the
-screen. Build one with `Canvas(width, height, scale=1.0, antialiasing=Antialiasing.MEDIUM)`,
-draw into it with every render call and `with` block a frame's canvas has, and read the result
-back with `snapshot`, which gives an `Image`, or `color_at` (see
-[Reading the screen](../drawing/pixels.md#reading-the-screen)). It is the way to draw shapes, text
-and gradients into an image, such as a badge, a label or a texture made once and drawn many
-times:
+An **offscreen canvas** is a canvas that draws into an image of its own rather than onto the screen.
+Build one with `Canvas(width, height, scale=1.0, antialiasing=Antialiasing.MEDIUM)`, draw into it
+with every render call and `with` block a frame's canvas has, and read the result back with
+`snapshot`, which gives an `Image`, or `color_at` (see [Reading the
+screen](../drawing/pixels.md#reading-the-screen)). It is the way to draw shapes, text and gradients
+into an image, such as a badge, a label or a texture made once and drawn many times:
 
 ```mojo
 # In `create`, or anywhere else:
@@ -74,12 +73,12 @@ var icon = badge.snapshot()  # an Image, drawn later with canvas.image(icon, pos
 Build one anywhere, `create` included, and keep it as a field to draw into across frames. See
 [examples/offscreen](../../../examples/offscreen/main.mojo).
 
-- **It starts transparent**, and is never cleared automatically. Its coordinates are the usual
-  ones: the origin at its centre, and y increasing upwards.
-- **It is always drawn on the CPU**, whatever the program's backend, though the `Image` it gives
-  can be drawn by either.
-- **Reading it bakes in the drawing:** each read draws everything drawn since the last read into
-  the canvas's own pixels, and then forgets those drawing calls. So a canvas kept for a long time
+- **It starts transparent**, and is never cleared automatically. Its coordinates are the usual ones:
+  the origin at its centre, and y increasing upwards.
+- **It is always drawn on the CPU**, whatever the program's backend, though the `Image` it gives can
+  be drawn by either.
+- **Reading it bakes in the drawing:** each read draws everything drawn since the last read into the
+  canvas's own pixels, and then forgets those drawing calls. So a canvas kept for a long time
   doesn't keep growing, and what is drawn after a read lands on top of what is there. Read it when
   something has changed, rather than every frame regardless.
 - **`scale` fixes its sharpness:** it is how many pixels the canvas has per unit.

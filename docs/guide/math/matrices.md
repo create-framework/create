@@ -8,10 +8,10 @@ knowledge of matrices.
 
 ## What a matrix does
 
-Imagine drawing a house on a sheet of tracing paper, then sliding the paper, turning it and
-holding it up to a magnifying glass. The house is drawn exactly as before, but it appears
-somewhere else, at an angle, and larger. A matrix is that movement of the tracing paper, written
-as numbers. It takes any point and says where it ends up.
+Imagine drawing a house on a sheet of tracing paper, then sliding the paper, turning it and holding
+it up to a magnifying glass. The house is drawn exactly as before, but it appears somewhere else, at
+an angle, and larger. A matrix is that movement of the tracing paper, written as numbers. It takes
+any point and says where it ends up.
 
 You rarely need to look at the numbers inside a matrix. Create builds them for you:
 
@@ -32,8 +32,8 @@ with canvas.transform(rotate(PI / 4) @ scale(2)):
 ## Combining matrices
 
 `a @ b` combines two matrices into one that does both. **The one on the right happens first.** So
-`translate(100, 0) @ rotate(angle)` first turns the drawing, then moves it, while
-`rotate(angle) @ translate(100, 0)` first moves it, then turns it:
+`translate(100, 0) @ rotate(angle)` first turns the drawing, then moves it, while `rotate(angle) @
+translate(100, 0)` first moves it, then turns it:
 
 ```mojo
 # In `update`:
@@ -45,12 +45,12 @@ with canvas.transform(rotate(angle) @ translate(100, 0)):
 ```
 
 The order matters because turning and scaling always happen round the origin. Turning first spins
-the square round its own centre, which is still at the origin, and then moves it out to
-`(100, 0)`. Moving first takes the square out to `(100, 0)`, and turning then swings it round the
-origin, like a stone on a string.
+the square round its own centre, which is still at the origin, and then moves it out to `(100, 0)`.
+Moving first takes the square out to `(100, 0)`, and turning then swings it round the origin, like a
+stone on a string.
 
-So the usual order for placing something is to read it from right to left: scale it, then turn
-it, then move it into place, `translate(position) @ rotate(angle) @ scale(size)`.
+So the usual order for placing something is to read it from right to left: scale it, then turn it,
+then move it into place, `translate(position) @ rotate(angle) @ scale(size)`.
 
 **Nesting** `canvas.transform` blocks combines them too: a block inside another is changed by both,
 the inner one applying first, as if the two matrices were combined with `@`. That makes it easy to
@@ -81,15 +81,15 @@ var direction = apply(cannon, Vector2D.RIGHT)  # the way the barrel points
 
 `inverse(m)` is the matrix that undoes `m`: it moves every point back to where it started. It
 answers the opposite question, such as where on the turning cannon the mouse is pointing.
-`canvas.to_local(context.mouse.position)` does this for you inside a `canvas.transform` block,
-using the inverse of the current transform and the camera (see
+`canvas.to_local(context.mouse.position)` does this for you inside a `canvas.transform` block, using
+the inverse of the current transform and the camera (see
 [Coordinates](../basics/coordinates.md#screen-world-and-local-space)).
 
 ## Inside a matrix
 
-You don't need this part to use matrices, but it explains what the numbers are. A
-`Matrix[3, 3]` is a grid of nine numbers, three rows of three. A point `(x, y)` is moved by
-multiplying the grid by the column `(x, y, 1)`:
+You don't need this part to use matrices, but it explains what the numbers are. A `Matrix[3, 3]` is
+a grid of nine numbers, three rows of three. A point `(x, y)` is moved by multiplying the grid by
+the column `(x, y, 1)`:
 
 ```text
 | a  b  c |   | x |   | a·x + b·y + c |
@@ -98,10 +98,9 @@ multiplying the grid by the column `(x, y, 1)`:
 ```
 
 The new x is `a·x + b·y + c`, and the new y is `d·x + e·y + f`. The numbers `a`, `b`, `d` and `e`
-turn, scale and shear the point, and `c` and `f` move it. The extra 1, and the bottom row of
-`0 0 1`, are what let a single grid both turn and move a point; that is why a 2D transform is a
-3 by 3 matrix rather than 2 by 2. `@` multiplies two grids, which is how combining two matrices
-works.
+turn, scale and shear the point, and `c` and `f` move it. The extra 1, and the bottom row of `0 0
+1`, are what let a single grid both turn and move a point; that is why a 2D transform is a 3 by 3
+matrix rather than 2 by 2. `@` multiplies two grids, which is how combining two matrices works.
 
 `m[row, column]` reads one number, counting from 0. `Matrix[3, 3](...)` builds a matrix from nine
 numbers, row by row, for a transform the functions above don't build, such as a shear.

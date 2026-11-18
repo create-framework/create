@@ -2,8 +2,8 @@
 
 How Create's source is organised: which package owns what, how a frame travels through them, which
 package may import which, and what makes a name public. Where a package's internals need more
-explaining, a README beside its code goes into the detail; see
-[Package internals](#package-internals).
+explaining, a README beside its code goes into the detail; see [Package
+internals](#package-internals).
 
 ## Module layout
 
@@ -29,8 +29,8 @@ explaining, a README beside its code goes into the detail; see
 
 ## How a frame runs
 
-A program's frame passes through three packages: `core` runs the loop, `input` holds what the
-user did, and `render` turns drawing into pixels.
+A program's frame passes through three packages: `core` runs the loop, `input` holds what the user
+did, and `render` turns drawing into pixels.
 
 1. **`run[P]` starts the run** (`core`). It seeds the `Context` from its arguments, and branches
    once on `backend` into the CPU loop or the GL one; `run_headless` has a loop of each kind too.
@@ -78,8 +78,8 @@ The packages form layers, and a package imports only from the layers below it:
 | Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
 | Internal | `_window`, `_bytes`, `_library`, `_path` | `_window`: `_library`; the others nothing |
 
-The same, as a graph; every arrow points down. The leaves `_bytes`, `_library` and `_path` are
-left out, and so are `audio` and `data`, which import only those leaves and which no package here
+The same, as a graph; every arrow points down. The leaves `_bytes`, `_library` and `_path` are left
+out, and so are `audio` and `data`, which import only those leaves and which no package here
 imports:
 
 ```mermaid
@@ -109,24 +109,25 @@ flowchart TD
 The rules behind it, and what each one buys:
 
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
-  `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works without a run loop. So
-  the mapping dials reach `render` as plain values: `context._set_viewport(state, …)` in `core`
-  passes the design size and autoscale in, and `context._new_canvas(state^)` builds the frame.
-  Frame-wide drawing settings live on `_PersistentCanvasState` itself.
+  `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works
+  without a run loop. So the mapping dials reach `render` as plain values:
+  `context._set_viewport(state, …)` in `core` passes the design size and autoscale in, and
+  `context._new_canvas(state^)` builds the frame. Frame-wide drawing settings live on
+  `_PersistentCanvasState` itself.
 - **`geometry`** depends only on `math`, so collision code (`overlaps`, `contains`) never sees
   `render`; `render` imports it.
 - **`color`** depends only on `math`; `image` and `render` both import it. It sits below `image` so
   that `Image.pixel` can return a `Color` without a `render`↔`image` cycle.
-- **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`,
-  numbers through `atof`. Nothing imports it but the root.
+- **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
+  through `atof`. Nothing imports it but the root.
 - **`time`** imports nothing from `create`; `core` and `animation` import it. Its run clock,
   `_run_clock`, is process-wide state that `core` publishes `Context.time` to once a frame, so a
   playhead keeps time with no argument carrying the clock to it. It is the package's only shared
   state.
 - **`animation`** holds the playheads: `Tween`, and `Animator` over its asset, `Animation`, as
   `audio` holds `Playback` beside `Sound`. It is the only package that reads the run clock, so
-  `math` and `image` stay free of time. It imports `math` for the easing curves and `image` for
-  the frames.
+  `math` and `image` stay free of time. It imports `math` for the easing curves and `image` for the
+  frames.
 - **`text`** depends only on `_bytes`, `_library` and `_path`. `render`→`text` is nominal, like
   `render`→`image`: `Style`, `canvas.font` and text layout name `Font`, and `_raster.blit_glyph`
   takes `_GlyphInfo` by its internal path.
@@ -148,27 +149,27 @@ The rules behind it, and what each one buys:
 - **`_window`** imports nothing from `create` but `_library`; `core` is its only consumer; nothing
   re-exports it.
 - **`render`→`image` and `render`→`animation` are nominal:** only `canvas.image`'s overloads and
-  `canvas.snapshot` name `Image`, and `canvas.image(animator, …)` names `Animator`. A `render` function that needs pixels takes a pointer plus width/height, not
-  an image type.
+  `canvas.snapshot` name `Image`, and `canvas.image(animator, …)` names `Animator`. A `render`
+  function that needs pixels takes a pointer plus width/height, not an image type.
 
 ## Imports and public surface
 
-A program writes `from create import *`. Otherwise import by name from the owning package
-(`from create.geometry import Circle`); a single subpackage star is not a preamble.
+A program writes `from create import *`. Otherwise import by name from the owning package (`from
+create.geometry import Circle`); a single subpackage star is not a preamble.
 
 - The root has no names of its own: it star-imports the twelve subpackages. Never add a name there;
   add it to the owning subpackage.
-- A subpackage exports only what it owns, never a lower layer's symbol. The one exception is
-  `math`, which also re-exports common `std.math` functions (`sqrt`, `sin`, `cos`, `atan2`,
-  `clamp`, `floor`, …) so a sketch has them without a second import, as in Processing. Mojo
-  builtins (`abs`, `min`, `max`, `round`, `pow`) are already in scope and are not re-exported.
+- A subpackage exports only what it owns, never a lower layer's symbol. The one exception is `math`,
+  which also re-exports common `std.math` functions (`sqrt`, `sin`, `cos`, `atan2`, `clamp`,
+  `floor`, …) so a sketch has them without a second import, as in Processing. Mojo builtins (`abs`,
+  `min`, `max`, `round`, `pow`) are already in scope and are not re-exported.
 - Public surface is exactly what an `__init__.mojo` lists. A new declaration is internal unless it
   is added to one in the same change: `_module.mojo` for a wholly internal file, `_name` for an
   internal declaration in a public module. Tests reach internals by explicit path.
 - A public type's fields of internal types are `_`-named. Mojo has no private initialiser, so an
   internal constructor takes only `_`-prefixed keyword-only arguments (`JSON(_document=…,
-  _index=…)`): the keywords mark it as the library's own, even where an internal type shows in
-  the signature.
+  _index=…)`): the keywords mark it as the library's own, even where an internal type shows in the
+  signature.
 
 ## Package internals
 

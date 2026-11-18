@@ -4,15 +4,15 @@ A Create program is a struct that implements the `Program` trait, handed to `run
 [README](../../../README.md#how-a-program-works)'s "Hello, world!" shows a simple one; this page
 explains how a program runs, where its state lives, which settings belong to the run and how long
 each one lasts, the window it runs in, and what to do when something goes wrong. If you know
-Processing, [Coming from Processing](coming-from-processing.md) lists what works differently, and
-if Mojo is new to you, [Mojo](mojo.md) explains the parts of it the examples use.
+Processing, [Coming from Processing](coming-from-processing.md) lists what works differently, and if
+Mojo is new to you, [Mojo](mojo.md) explains the parts of it the examples use.
 
 ## `create` and `update`
 
 `Program` asks for two methods:
 
-- `create(mut context, mut canvas)`, a static method called once when the run starts. It returns
-  the program's initial state, and draws the first frame.
+- `create(mut context, mut canvas)`, a static method called once when the run starts. It returns the
+  program's initial state, and draws the first frame.
 - `update(mut self, mut context, mut canvas)`, called once for every frame after that. It reads
   input, changes the program's state and draws the frame.
 
@@ -47,14 +47,14 @@ def main() raises:
 `@fieldwise_init` writes the struct's constructor from its fields, so use it on program structs.
 Every frame starts cleared to light gray, so a program needs no background call to get a clean
 frame. `canvas.background(...)` paints the frame another colour, and paints over everything drawn
-before it, so call it before anything else you draw (see
-[The canvas](../drawing/canvas.md#the-background)). See
+before it, so call it before anything else you draw (see [The
+canvas](../drawing/canvas.md#the-background)). See
 [examples/sidescroller](../../../examples/sidescroller/main.mojo) for a complete bigger program.
 
 ## Running a program
 
-`run[P](title)` opens a window and runs `P` in it until it quits. Its other arguments are
-keywords with defaults:
+`run[P](title)` opens a window and runs `P` in it until it quits. Its other arguments are keywords
+with defaults:
 
 | Argument | Default | What it sets |
 |---|---|---|
@@ -65,23 +65,23 @@ keywords with defaults:
 | `antialiasing` | `Antialiasing.MEDIUM` | See [The canvas](../drawing/canvas.md#antialiasing) |
 | `autoscale` | `Autoscale.FIT` | How the design size maps onto the window |
 
-Every argument but `backend` is only a starting value, changed later through a setter (see
-[The run's settings](#the-runs-settings)).
+Every argument but `backend` is only a starting value, changed later through a setter (see [The
+run's settings](#the-runs-settings)).
 
-**The backend** is the part of the computer that draws the frames, and it is fixed for the run.
-By default the CPU draws them; `RenderBackend.GPU` draws the same program on the graphics card,
-through OpenGL 3.3, instead. The two draw the same frame, apart from tiny differences along
-smoothed (antialiased) edges:
+**The backend** is the part of the computer that draws the frames, and it is fixed for the run. By
+default the CPU draws them; `RenderBackend.GPU` draws the same program on the graphics card, through
+OpenGL 3.3, instead. The two draw the same frame, apart from tiny differences along smoothed
+(antialiased) edges:
 
 ```mojo
 # In `main`:
 run[Example]("Example", backend=RenderBackend.GPU)
 ```
 
-`RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run
-with a `gpu` argument (`./example gpu`), the CPU otherwise. Other arguments are left for the
-program. [examples/backends](../../../examples/backends/main.mojo) reads it this way, so
-`pixi run example backends` and `pixi run example backends gpu` compare the two.
+`RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run with
+a `gpu` argument (`./example gpu`), the CPU otherwise. Other arguments are left for the program.
+[examples/backends](../../../examples/backends/main.mojo) reads it this way, so `pixi run example
+backends` and `pixi run example backends gpu` compare the two.
 
 ```mojo
 # In `main`:
@@ -96,8 +96,8 @@ window's size on the first frame](#the-windows-size-on-the-first-frame).) In `cr
 `context.frame_count()` is 1 (it is 2 in the first `update`), `context.time` is zero and no key or
 button is down.
 
-`create` has no `self` yet. To draw something that needs the program's fields, build the program
-in a local variable first and draw through it:
+`create` has no `self` yet. To draw something that needs the program's fields, build the program in
+a local variable first and draw through it:
 
 ```mojo
 # In a program with a `draw(mut self, mut canvas: Canvas)` method of its own:
@@ -108,9 +108,9 @@ def create(mut context: Context, mut canvas: Canvas) raises -> Self:
     return program^
 ```
 
-`run_headless[P](width, height, frames=N)`, which runs a program without a window (for tests),
-runs `create`'s frame and then N `update`s, and returns the last frame as an `Image`. So
-`frames=0` gives `create`'s frame alone.
+`run_headless[P](width, height, frames=N)`, which runs a program without a window (for tests), runs
+`create`'s frame and then N `update`s, and returns the last frame as an `Image`. So `frames=0` gives
+`create`'s frame alone.
 
 ## Parameters and fields
 
@@ -118,12 +118,11 @@ What the loop hands `create` and every `update` is a parameter:
 
 - **`Context`** is the run's state and outlives the frame. Its *readings*, the time and the input
   devices, are filled in by the loop before each `update`: it advances `context.time` and records
-  what happened to `context.keyboard`, `context.mouse` and the gamepads
-  (`context.gamepad(player)`). Read them, but don't change them: the loop works out the next
-  frame's readings from them. Input only arrives this way; there are no event callbacks. See
-  [Input](../interaction/input.md).
-- **`Canvas`** is where this frame is drawn. The loop builds a fresh one every frame, so don't
-  keep it in a field; draw on the one each call receives.
+  what happened to `context.keyboard`, `context.mouse` and the gamepads (`context.gamepad(player)`).
+  Read them, but don't change them: the loop works out the next frame's readings from them. Input
+  only arrives this way; there are no event callbacks. See [Input](../interaction/input.md).
+- **`Canvas`** is where this frame is drawn. The loop builds a fresh one every frame, so don't keep
+  it in a field; draw on the one each call receives.
 
 Everything else the program keeps from frame to frame is a field, built in `create`: an `Image`,
 `Font`, `Sound`, `Audio`, `Animator`, `Camera`, `Tween`, `Noise`, a `Table` or `JSON`, or an
@@ -137,11 +136,11 @@ Copies of an asset share its data rather than duplicating it, so keeping one in 
 copying it, is cheap, and nothing needs wrapping in an `ArcPointer` to share it.
 
 An `Animator`, or a `Playback` (what `audio.play` and `audio.loop` return), is a **playhead**: one
-thing's place in an asset, as a record player's needle is its place in a record. Two enemies
-sharing one walk `Animation` each have their own `Animator`, so each can be at its own point in
-the walk. An animator, like a `Tween`, keeps time on its own: it works out its place from the
-run's clock whenever it is asked, so nothing needs to update it each frame. How to drive one is
-in [Animations](../motion/animations.md).
+thing's place in an asset, as a record player's needle is its place in a record. Two enemies sharing
+one walk `Animation` each have their own `Animator`, so each can be at its own point in the walk. An
+animator, like a `Tween`, keeps time on its own: it works out its place from the run's clock
+whenever it is asked, so nothing needs to update it each frame. How to drive one is in
+[Animations](../motion/animations.md).
 
 ## What lasts how long
 
@@ -186,13 +185,13 @@ set them from the program, in `create` for a setting that should hold from the s
 
 Each setting takes effect at one of three points:
 
-- **In the frame it is set in**, wherever in `update` it is set: the canvas settings (see
-  [The canvas](../drawing/canvas.md#settings-that-outlive-the-frame)), and `title`, `resizable`,
+- **In the frame it is set in**, wherever in `update` it is set: the canvas settings (see [The
+  canvas](../drawing/canvas.md#settings-that-outlive-the-frame)), and `title`, `resizable`,
   `cursor`, `lock_mouse` and `text_input`.
 - **From the next frame:** `design_size`, `autoscale` and `window_mode`, which change the frame's
   size or shape, and `time_scale` and `time_paused`, since the frame being drawn already has its
   `delta`. Some desktops report a window's new size a frame later still, after a change of window
-mode.
+  mode.
 - **When `update` returns:** `max_frame_rate`, `quit()` and `rumble()`.
 
 Reading a setting back gives the new value at once, even before it takes effect. Headless runs
@@ -200,8 +199,8 @@ ignore the window settings and `rumble`.
 
 ## The window
 
-A program runs in a window, which `run` opens with the title and size it is given. How the
-window presents itself is its **mode**, set with `run(..., mode=)` or later with
+A program runs in a window, which `run` opens with the title and size it is given. How the window
+presents itself is its **mode**, set with `run(..., mode=)` or later with
 `context.window_mode(mode)`:
 
 | Mode | The window |
@@ -212,9 +211,9 @@ window presents itself is its **mode**, set with `run(..., mode=)` or later with
 | `BORDERLESS` | A window at the design size, with no title bar or border, for a splash screen or a program that draws its own frame |
 
 In `MAXIMIZED` and `FULLSCREEN`, the window is bigger than the design, and the design is scaled up
-to fill it as the [autoscale](coordinates.md#design-size-and-autoscale) mode says. A change of
-mode applies from the next frame, since the frame being drawn was laid out for the window as it
-is. A key that switches in and out of full screen is a few lines:
+to fill it as the [autoscale](coordinates.md#design-size-and-autoscale) mode says. A change of mode
+applies from the next frame, since the frame being drawn was laid out for the window as it is. A key
+that switches in and out of full screen is a few lines:
 
 ```mojo
 # In `update`: F11 switches between a window and the full screen.
@@ -227,15 +226,15 @@ if context.keyboard.pressed(Key.F11):
 
 `context.title(text)` changes the text in the window's title bar, such as to show the level being
 played, and `context.resizable(False)` stops the player from dragging the window's edges to resize
-it. Both show from the frame they are set in, and cost nothing to set every frame, since the
-window is only told when they change.
+it. Both show from the frame they are set in, and cost nothing to set every frame, since the window
+is only told when they change.
 
 **Ending the run.** The run ends when the player closes the window, when the program calls
 `context.quit()`, which ends it once the current `update` returns, and, unless told otherwise,
 **when the player presses Escape**. Escape quitting is handy while trying out a sketch, but a game
-usually wants Escape for its own pause menu. `context.quit_on_escape(False)` turns the quitting
-off, so Escape becomes an ordinary key; then give the player another way out, such as a Quit
-button in the menu:
+usually wants Escape for its own pause menu. `context.quit_on_escape(False)` turns the quitting off,
+so Escape becomes an ordinary key; then give the player another way out, such as a Quit button in
+the menu:
 
 ```mojo
 # In `create`:
@@ -255,19 +254,18 @@ carries on from the line after `run`, if it has any.
 
 **An error ends the run.** `create` and `update` are marked `raises`, so anything inside them may
 raise an error: loading a file that isn't there, reading a JSON field that is missing, or a call
-given a value it can't use. An error that nothing catches leaves `update`, then `run`, then
-`main`, and ends the program: the window closes, and Mojo prints the error's message in the
-terminal the program was started from. Create's errors name what went wrong, and a file's path
-where there is one, so the message is the first place to look. A recording that was running is
-left unfinished, as its `.partial` file (see [Recording](../media/capture.md#recording)).
+given a value it can't use. An error that nothing catches leaves `update`, then `run`, then `main`,
+and ends the program: the window closes, and Mojo prints the error's message in the terminal the
+program was started from. Create's errors name what went wrong, and a file's path where there is
+one, so the message is the first place to look. A recording that was running is left unfinished, as
+its `.partial` file (see [Recording](../media/capture.md#recording)).
 
-An error the program expects, such as a save file that doesn't exist yet the first time a game
-runs, can be caught with `try` and `except`, so the run goes on (see
-[Errors](mojo.md#errors)).
+An error the program expects, such as a save file that doesn't exist yet the first time a game runs,
+can be caught with `try` and `except`, so the run goes on (see [Errors](mojo.md#errors)).
 
 **Printing values.** `print(...)` writes to the terminal, and is the simplest way to see what a
-program is doing. Every value Create gives you prints the way it would be written in code, so
-what you see can be pasted straight back into the program:
+program is doing. Every value Create gives you prints the way it would be written in code, so what
+you see can be pasted straight back into the program:
 
 ```mojo
 # In `update`:
@@ -283,8 +281,8 @@ key is pressed, or draw the value on the screen instead, where it updates in pla
 ## File paths
 
 A relative path given to Create is relative to **the source file that makes the call**, not the
-working directory. So an asset beside the program is named as it sits on disk, and is found
-wherever the program is run from:
+working directory. So an asset beside the program is named as it sits on disk, and is found wherever
+the program is run from:
 
 ```mojo
 # In `create`, in game/main.mojo: opens game/assets/player.png.
@@ -301,9 +299,9 @@ var player = Image.load("assets/player.png")
 - **Anything else that takes a path**, such as the standard library's `open()`, `listdir` or
   `makedirs`, resolves against the working directory. Give it `source_path("...")` to get the same
   answer Create's loaders do.
-- **A path that arrives while the program runs**, such as a command-line argument or typed text,
-  is meant relative to the working directory. Make it absolute first with
-  `String(cwd() / path)`, using `cwd` from `std.pathlib`.
+- **A path that arrives while the program runs**, such as a command-line argument or typed text, is
+  meant relative to the working directory. Make it absolute first with `String(cwd() / path)`, using
+  `cwd` from `std.pathlib`.
 
 ## Multiple scenes
 
@@ -324,12 +322,12 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises:
             self.scene = _MENU
 ```
 
-A scene's `update` takes only what it uses (`context` to read input or time, `canvas` to draw),
-and a one-shot reset is a plain `enter(...)` method the parent calls before switching, taking
-whatever that transition carries. There is no scene trait on purpose: it would force one
-`update`/`enter` signature on every scene, and those must vary. Mojo 1.2 has no dynamic trait
-dispatch either; to store different types side by side, use `Variant` from `std.utils` and
-dispatch with `isa[T]()`. See [examples/scenes](../../../examples/scenes/main.mojo).
+A scene's `update` takes only what it uses (`context` to read input or time, `canvas` to draw), and
+a one-shot reset is a plain `enter(...)` method the parent calls before switching, taking whatever
+that transition carries. There is no scene trait on purpose: it would force one `update`/`enter`
+signature on every scene, and those must vary. Mojo 1.2 has no dynamic trait dispatch either; to
+store different types side by side, use `Variant` from `std.utils` and dispatch with `isa[T]()`. See
+[examples/scenes](../../../examples/scenes/main.mojo).
 
 ## The window's size on the first frame
 

@@ -11,9 +11,9 @@ Many animations come down to a fraction growing from 0 to 1 as time passes: 0 wh
 starts, 1 when it ends, and 0.5 halfway through. Used directly, that fraction moves things at a
 constant speed, from start to end, which looks mechanical.
 
-An easing curve reshapes the fraction. It still starts at 0 and ends at 1, but in between it can
-run slowly at first and then catch up, rush ahead and then slow down, overshoot 1 and come back,
-or bounce. `ease(curve, t)` applies a curve to the fraction `t`:
+An easing curve reshapes the fraction. It still starts at 0 and ends at 1, but in between it can run
+slowly at first and then catch up, rush ahead and then slow down, overshoot 1 and come back, or
+bounce. `ease(curve, t)` applies a curve to the fraction `t`:
 
 ```mojo
 ease(Easing.LINEAR, 0.5)  # 0.5: no change
@@ -66,10 +66,10 @@ All 22 curves: `LINEAR`, then `IN_`, `OUT_` and `IN_OUT_` versions of `QUAD`, `C
 
 ## Values outside 0 to 1
 
-`ease` keeps `t` between 0 and 1 first, so a fraction that runs slightly past the end doesn't
-make the movement fly off.
+`ease` keeps `t` between 0 and 1 first, so a fraction that runs slightly past the end doesn't make
+the movement fly off.
 
-The `BACK` and `ELASTIC` curves, however, leave the range from 0 to 1 *in the middle* of their
-run, on purpose: that is the overshoot. Mostly that is what you want, but take care where a value
-outside 0 to 1 means nothing, such as a colour's alpha, an opacity or a position in a list: clamp
-the eased value first (see [`clamp`](interpolation.md#clamp)).
+The `BACK` and `ELASTIC` curves, however, leave the range from 0 to 1 *in the middle* of their run,
+on purpose: that is the overshoot. Mostly that is what you want, but take care where a value outside
+0 to 1 means nothing, such as a colour's alpha, an opacity or a position in a list: clamp the eased
+value first (see [`clamp`](interpolation.md#clamp)).

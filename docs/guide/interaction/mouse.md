@@ -8,8 +8,8 @@ is in [Input](input.md#down-pressed-and-released).
 ## Buttons
 
 `context.mouse.down()`, `pressed()` and `released()` ask about the left button unless you name
-another: `MouseButton.RIGHT`, `MIDDLE` (pressing the wheel in), or `BACK` and `FORWARD`, the
-side buttons some mice have.
+another: `MouseButton.RIGHT`, `MIDDLE` (pressing the wheel in), or `BACK` and `FORWARD`, the side
+buttons some mice have.
 
 ```mojo
 # In `update`:
@@ -45,9 +45,8 @@ in:
 
 - `camera.to_world(context.mouse.position)` is the point in the world under the pointer, when a
   `Camera` is set.
-- `canvas.to_local(context.mouse.position)`, called inside a `canvas.transform` block, is the
-  point in that block's own coordinates, with the camera and the transform both taken into
-  account.
+- `canvas.to_local(context.mouse.position)`, called inside a `canvas.transform` block, is the point
+  in that block's own coordinates, with the camera and the transform both taken into account.
 
 Then ask the shape whether it holds the point, with `contains`:
 
@@ -71,8 +70,8 @@ the pointer back.
 
 ## The cursor
 
-`context.cursor(...)` sets how the pointer looks, like Processing's `cursor()`. Each `Cursor` is
-the system's own cursor for that purpose, so it looks right on every platform:
+`context.cursor(...)` sets how the pointer looks, like Processing's `cursor()`. Each `Cursor` is the
+system's own cursor for that purpose, so it looks right on every platform:
 
 | Cursor | Use |
 |---|---|

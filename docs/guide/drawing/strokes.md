@@ -6,10 +6,10 @@ against a shape's edge, how its ends look, and how to break it into dashes.
 
 ## Colour and thickness
 
-`canvas.stroke(color, thickness)` sets the stroke's colour and thickness, in units, and switches
-it on. `stroke_enabled(False)` switches it off while remembering both, and `stroke()` with no
-arguments switches it back on. A new style has a black stroke 1 unit thick. In `Style` and
-`canvas.style(...)` the keywords are `stroke=` and `stroke_thickness=`.
+`canvas.stroke(color, thickness)` sets the stroke's colour and thickness, in units, and switches it
+on. `stroke_enabled(False)` switches it off while remembering both, and `stroke()` with no arguments
+switches it back on. A new style has a black stroke 1 unit thick. In `Style` and `canvas.style(...)`
+the keywords are `stroke=` and `stroke_thickness=`.
 
 The stroke has three more settings: where it sits (`stroke_alignment`), how its ends look
 (`stroke_cap`), and whether it is broken into dashes (`stroke_dash`).
@@ -19,8 +19,8 @@ The stroke has three more settings: where it sits (`stroke_alignment`), how its 
 **`stroke_alignment(...)`** decides where a shape's stroke sits against its edge: inside it
 (`StrokeAlign.INSIDE`, the default), centred on it (`StrokeAlign.CENTER`), or outside it
 (`StrokeAlign.OUTSIDE`). Processing always centres the stroke, so a shape stroked there is larger
-than its numbers say by half the stroke's thickness. With `INSIDE`, a shape is exactly as big as
-its numbers say, however thick the stroke.
+than its numbers say by half the stroke's thickness. With `INSIDE`, a shape is exactly as big as its
+numbers say, however thick the stroke.
 
 The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers the whole shape.
 
@@ -47,8 +47,8 @@ The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers
 - A closed curve and a shape's stroke have no ends, unless they are dashed: then every dash has two.
 - A line of zero length draws nothing with `BUTT`, a dot with `ROUND`, and an upright square with
   `SQUARE`.
-- The caps are blended onto the frame together with the stroke, as one, whether it is translucent
-  or not, and are part of its shadow. So segments drawn end to end with `ROUND` caps meet without
+- The caps are blended onto the frame together with the stroke, as one, whether it is translucent or
+  not, and are part of its shadow. So segments drawn end to end with `ROUND` caps meet without
   notches.
 
 ## Dashes
@@ -73,10 +73,9 @@ with canvas.style(stroke=Color.BLACK, fill_enabled=False, stroke_dash=ants):
 ```
 
 **Each dash is a stroke of its own.** `stroke_cap` finishes both its ends, and a dash that runs
-round a corner turns it with a sharp, pointed join. A dot is a dash of no length, so
-`StrokeDash(0, 8)` draws dots under `ROUND`, squares under `SQUARE` and nothing under `BUTT`;
-`DOTTED` is round whatever the cap. Caps that reach into each other overlap, which shows on a
-translucent stroke.
+round a corner turns it with a sharp, pointed join. A dot is a dash of no length, so `StrokeDash(0,
+8)` draws dots under `ROUND`, squares under `SQUARE` and nothing under `BUTT`; `DOTTED` is round
+whatever the cap. Caps that reach into each other overlap, which shows on a translucent stroke.
 
 **Where the pattern starts** depends on the shape, and from there it runs along the outline:
 
@@ -87,14 +86,13 @@ translucent stroke.
 - a sector from its tip, out along its start radius.
 
 `with_offset(offset)` starts the pattern that far into it, so raising the offset a little every
-frame moves the dashes back along the stroke, as the marching ants above do. On a closed outline
-the pattern isn't stretched to fit, so where it comes round to its start a dash can meet a
-shorter one.
+frame moves the dashes back along the stroke, as the marching ants above do. On a closed outline the
+pattern isn't stretched to fit, so where it comes round to its start a dash can meet a shorter one.
 
 A few more details:
 
-- **Lengths are measured along the middle of the stroke**, after `stroke_alignment` has placed
-  it. The fill still meets the stroke's inner edge, so a gap shows what is behind the shape; with
+- **Lengths are measured along the middle of the stroke**, after `stroke_alignment` has placed it.
+  The fill still meets the stroke's inner edge, so a gap shows what is behind the shape; with
   `OUTSIDE` the fill lies under the gaps.
 - **Shadows:** a stroke alone casts its dashes, while a filled shape casts its whole silhouette,
   gaps included.

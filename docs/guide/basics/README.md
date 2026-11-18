@@ -1,7 +1,7 @@
 # Basics
 
-What every Create program is built on: how to set up a project, how a program runs, and where
-things land on the screen. Read these first.
+What every Create program is built on: how to set up a project, how a program runs, and where things
+land on the screen. Read these first.
 
 - [Setup](setup.md): installing Create and starting a project.
 - [Mojo](mojo.md): the parts of the Mojo language the examples use, for readers new to it.

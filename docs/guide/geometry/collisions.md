@@ -1,13 +1,13 @@
 # Collisions
 
 A game needs to know when things touch: when the player reaches a coin, when a ball hits a wall,
-when a laser crosses an enemy. Create's shapes answer this with tests that say yes or no. This
-page explains the three tests, how exact they are, and a few ways to use them.
+when a laser crosses an enemy. Create's shapes answer this with tests that say yes or no. This page
+explains the three tests, how exact they are, and a few ways to use them.
 
 ## The three tests
 
-Three tests answer whether shapes touch. A circle following the mouse turns red against the
-wall and orange on the laser:
+Three tests answer whether shapes touch. A circle following the mouse turns red against the wall and
+orange on the laser:
 
 ```mojo
 from create import *
@@ -61,27 +61,26 @@ def main() raises:
   inside the region. It works one way only: a big circle can contain a small one, but not the other
   way round.
 
-A curve has no inside, so `overlaps` never takes a `Line`; use `intersects` instead. All three
-tests take a shape's rounded corners into account.
+A curve has no inside, so `overlaps` never takes a `Line`; use `intersects` instead. All three tests
+take a shape's rounded corners into account.
 
 **How exact are they?** Tests involving a `Line` or an `Arc` are exact. A `Bezier` or `Spline` is
 tested as a chain of very short straight lines that follow it to within a ten-thousandth of its
 size. So a crossing is always found, but whether a curve just grazes a shape or just misses it is
-decided only that closely, which is far finer than anything visible. A region's `contains` treats
-an `Arc`, `Bezier` or `Spline` inside it the same way.
+decided only that closely, which is far finer than anything visible. A region's `contains` treats an
+`Arc`, `Bezier` or `Spline` inside it the same way.
 
 ## Moving shapes
 
-The shapes are plain values, so a moving thing's collider is usually built fresh each frame, at
-the thing's current position, as the player's circle is in the example above. To move a shape you
-keep in a field, use `translate(delta)`, which moves it by a vector, or `move_to(point)`, which
-puts its centre on a point; both return the moved shape.
+The shapes are plain values, so a moving thing's collider is usually built fresh each frame, at the
+thing's current position, as the player's circle is in the example above. To move a shape you keep
+in a field, use `translate(delta)`, which moves it by a vector, or `move_to(point)`, which puts its
+centre on a point; both return the moved shape.
 
-**Fast objects can skip through thin walls.** A ball moving 30 units a frame can be on one side of
-a 10-unit wall in one frame and past it in the next, without its circle ever overlapping the wall.
-A [`Capsule`](shapes.md#capsule) from where the ball was last frame to where it is now, with the
-ball's radius, covers every point the ball passed through, so testing that instead catches the
-hit:
+**Fast objects can skip through thin walls.** A ball moving 30 units a frame can be on one side of a
+10-unit wall in one frame and past it in the next, without its circle ever overlapping the wall. A
+[`Capsule`](shapes.md#capsule) from where the ball was last frame to where it is now, with the
+ball's radius, covers every point the ball passed through, so testing that instead catches the hit:
 
 ```mojo
 # In `update`, with `position`, `velocity` and `radius` fields:

@@ -1,8 +1,8 @@
 # Text
 
-`canvas.text` draws text, and like a shape it is drawn in the current style and transform. This
-page explains how to choose a font and its size, weight and slant, how text is placed, and how to
-draw text over several lines, or wrapped to fit a column.
+`canvas.text` draws text, and like a shape it is drawn in the current style and transform. This page
+explains how to choose a font and its size, weight and slant, how text is placed, and how to draw
+text over several lines, or wrapped to fit a column.
 
 ## Drawing text
 
@@ -15,8 +15,8 @@ canvas.font_size(32)
 canvas.text("Hello", (0, 0))
 ```
 
-Text has its own colour, set by `text_color`, separate from the fill and the stroke: `fill`
-never colours text. Text is black until you set it.
+Text has its own colour, set by `text_color`, separate from the fill and the stroke: `fill` never
+colours text. Text is black until you set it.
 
 ## Fonts
 
@@ -35,8 +35,8 @@ with canvas.style(font=self.title_font, font_size=48, font_weight=FontWeight.BOL
 
 - `Font.load(path)` reads a TrueType or OpenType file. A relative path is relative to the source
   file that makes the call (see [File paths](../basics/programs.md#file-paths)).
-- A `Font` is kept as a field, like an `Image`: it is a shared asset, cheap to copy, and closed
-  when its last copy goes.
+- A `Font` is kept as a field, like an `Image`: it is a shared asset, cheap to copy, and closed when
+  its last copy goes.
 - With no font set, text is in Noto Sans, which comes with Create, and a character Noto Sans lacks
   is drawn from Noto Sans Symbols instead.
 - Different `text` calls in one frame can use different fonts, and switching fonts costs nothing.
@@ -53,16 +53,16 @@ takes the slant from the best source the font has:
 3. Otherwise, its upright letters, sheared 12°.
 
 Letters drawn from a fallback font slant too, so symbols from Noto Sans Symbols, which has no
-italic, come out sheared. Weights apply to italic text just as to upright text. `text_width`
-ignores the slant, as in CSS, so italic text can stick out slightly past the width it reports.
+italic, come out sheared. Weights apply to italic text just as to upright text. `text_width` ignores
+the slant, as in CSS, so italic text can stick out slightly past the width it reports.
 
 ## Alignment
 
 `canvas.text_alignment(Align.CENTER)`, the default, centres the text on its position, like every
 shape. The other eight values name the point of the text's box that lands on the position: `TOP`,
 `BOTTOM`, `LEFT` and `RIGHT` are the middles of its edges, and `TOP_LEFT`, `TOP_RIGHT`,
-`BOTTOM_LEFT` and `BOTTOM_RIGHT` its corners. So `Align.TOP_LEFT` puts the text's top-left corner
-on the position, and the text hangs below it and to its right.
+`BOTTOM_LEFT` and `BOTTOM_RIGHT` its corners. So `Align.TOP_LEFT` puts the text's top-left corner on
+the position, and the text hangs below it and to its right.
 
 ## Several lines
 
@@ -105,5 +105,4 @@ canvas.text_color(Color.WHITE)
 canvas.text(story, corner, 300)
 ```
 
-Typing text into a program, rather than drawing it, is in
-[Typing](../interaction/typing.md).
+Typing text into a program, rather than drawing it, is in [Typing](../interaction/typing.md).
