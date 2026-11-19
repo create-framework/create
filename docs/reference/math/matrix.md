@@ -41,6 +41,13 @@ The entries, row by row: `Matrix[2, 2](1.0, 2.0, 3.0, 4.0)` has `1.0, 2.0` on to
 
 ```mojo
 @staticmethod
+def __init__(out self, transform: Transform)
+```
+
+The full 3 by 3 matrix of `transform`, its bottom row `0 0 1`. Only a `Matrix[3, 3]` can be built this way.
+
+```mojo
+@staticmethod
 def __init__(out self, *, copy: Self)
 ```
 

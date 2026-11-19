@@ -2,6 +2,7 @@ from std.math import sin, cos, abs, min, max
 
 from .point import Point
 from .vector import Vector
+from .transform import Transform
 
 
 struct Matrix[rows: Int, cols: Int](
@@ -37,6 +38,24 @@ struct Matrix[rows: Int, cols: Int](
         self.data = Array[Float64, Self.rows * Self.cols](fill=0.0)
         for i in range(min(len(values), Self.rows * Self.cols)):
             self.data[i] = values[i]
+
+    def __init__(out self, transform: Transform):
+        """The full 3 by 3 matrix of `transform`, its bottom row `0 0 1`.
+        Only a `Matrix[3, 3]` can be built this way."""
+        comptime assert (
+            Self.rows == 3 and Self.cols == 3
+        ), "Matrix: only a Matrix[3, 3] converts from a Transform"
+        self = Self(
+            transform._xx,
+            transform._xy,
+            transform._x0,
+            transform._yx,
+            transform._yy,
+            transform._y0,
+            0.0,
+            0.0,
+            1.0,
+        )
 
     def __init__(out self, *, copy: Self):
         self.data = Array[Float64, Self.rows * Self.cols](copy=copy.data)
