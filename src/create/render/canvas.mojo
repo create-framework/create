@@ -344,11 +344,11 @@ struct Canvas(DrawTarget, Movable):
         width: Float64,
         height: Float64,
         *,
-        scale: Float64 = 1.0,
+        pixel_scale: Float64 = 1.0,
         antialiasing: Antialiasing = Antialiasing.MEDIUM,
     ) raises:
         """An offscreen canvas of `width` by `height` screen units, with
-        `scale` pixels to the unit — `scale=canvas.scale()` matches the
+        `pixel_scale` pixels to the unit — `pixel_scale=canvas.pixel_scale()` matches the
         window's density.
 
         Screen space as on the frame canvas: origin centred, y up. Always
@@ -362,13 +362,13 @@ struct Canvas(DrawTarget, Movable):
                 + " x "
                 + String(height)
             )
-        if scale <= 0.0:
+        if pixel_scale <= 0.0:
             raise Error(
-                "an offscreen canvas needs a positive scale, got "
-                + String(scale)
+                "an offscreen canvas needs a positive pixel_scale, got "
+                + String(pixel_scale)
             )
-        var pixel_w = Int(width * scale + 0.5)
-        var pixel_h = Int(height * scale + 0.5)
+        var pixel_w = Int(width * pixel_scale + 0.5)
+        var pixel_h = Int(height * pixel_scale + 0.5)
         var state = _PersistentCanvasState()
         state.autoclear = False
         state._backend.antialiasing = antialiasing
@@ -381,13 +381,13 @@ struct Canvas(DrawTarget, Movable):
         width: Int,
         height: Int,
         *,
-        scale: Float64 = 1.0,
+        pixel_scale: Float64 = 1.0,
         antialiasing: Antialiasing = Antialiasing.MEDIUM,
     ) raises:
         self = Canvas(
             Float64(width),
             Float64(height),
-            scale=scale,
+            pixel_scale=pixel_scale,
             antialiasing=antialiasing,
         )
 
@@ -426,7 +426,7 @@ struct Canvas(DrawTarget, Movable):
         asks whether something is on the screen."""
         return Rectangle(Point(0.0, 0.0), self._width, self._height)
 
-    def scale(self) -> Float64:
+    def pixel_scale(self) -> Float64:
         """Window pixels per screen unit: what font size, stroke thickness
         and image size are scaled by."""
         return self._scale
@@ -855,10 +855,10 @@ struct Canvas(DrawTarget, Movable):
     def save_image(
         mut self,
         path: String,
-        scale: Float64 = 1.0,
+        pixel_scale: Float64 = 1.0,
         transparent: Bool = False,
     ) raises:
-        """Save this frame as a PNG at the design size, times `scale`.
+        """Save this frame as a PNG at the design size, times `pixel_scale`.
 
         Window-independent by construction: the size of the file is the space
         the program renders in, never the size of the window, and the letterbox
@@ -870,8 +870,8 @@ struct Canvas(DrawTarget, Movable):
         what the user actually saw.
 
         `transparent` drops the frame's `background`, leaving alpha 0 wherever
-        nothing was rendered. `scale` multiplies the output resolution, so
-        `scale=2.0` gives a 2x export of the identical layout.
+        nothing was rendered. `pixel_scale` multiplies the output resolution, so
+        `pixel_scale=2.0` gives a 2x export of the identical layout.
 
         Deferred, not immediate: the file is written when the frame is
         presented, so it holds the whole frame however early in `update` this
@@ -880,24 +880,25 @@ struct Canvas(DrawTarget, Movable):
 
         An offscreen canvas has no frame to present, so it writes at once,
         what it has drawn so far. Its pixels are already rasterised, so a
-        `scale` other than its own resamples them, and `transparent` keeps
+        `pixel_scale` other than its own resamples them, and `transparent` keeps
         their alpha rather than dropping a `background` it has painted.
 
         A relative `path` is resolved against the directory of the calling
         source file, not the working directory, as `Image.load`'s is.
         """
-        self._save_image(_caller_relative(path), scale, transparent)
+        self._save_image(_caller_relative(path), pixel_scale, transparent)
 
     def _save_image(
-        mut self, path: String, scale: Float64, transparent: Bool
+        mut self, path: String, pixel_scale: Float64, transparent: Bool
     ) raises:
         """`save_image`, to a path already resolved."""
-        if scale <= 0.0:
+        if pixel_scale <= 0.0:
             raise Error(
-                "save_image needs a positive scale, got " + String(scale)
+                "save_image needs a positive pixel_scale, got "
+                + String(pixel_scale)
             )
         if self._offscreen():
-            var mem = self._read_offscreen(self.bounds(), scale)
+            var mem = self._read_offscreen(self.bounds(), pixel_scale)
             mem.save(path, opaque=not transparent)
             return
         var capture = Viewport()
@@ -905,8 +906,8 @@ struct Canvas(DrawTarget, Movable):
         # extended space, which is exactly the area the program drew into.
         capture.autoscale = Autoscale.FIT
         capture.set_design(self._width, self._height)
-        var pw = Int(self._width * scale + 0.5)
-        var ph = Int(self._height * scale + 0.5)
+        var pw = Int(self._width * pixel_scale + 0.5)
+        var ph = Int(self._height * pixel_scale + 0.5)
         capture.set_size(pw, ph)
         self._state._backend.captures.request_image(
             _ImageRequest(
@@ -962,50 +963,53 @@ struct Canvas(DrawTarget, Movable):
         backend.read_frame(seeded=not self._state.autoclear)
         return backend.frame_read.value().pixel(x, y)
 
-    def snapshot(mut self, scale: Float64 = 1.0) raises -> Image:
+    def snapshot(mut self, pixel_scale: Float64 = 1.0) raises -> Image:
         """What this frame has drawn so far, as an `Image` of the whole
-        screen: `width * scale` by `height * scale` pixels.
+        screen: `width * pixel_scale` by `height * pixel_scale` pixels.
 
         Drawn back with `canvas.image(shot, (0, 0), canvas.width(),
         canvas.height())` it lines up with the frame exactly — a feedback
         effect is a snapshot kept as a field and drawn under the next frame.
-        `scale=canvas.scale()` gives the window's own resolution instead.
+        `pixel_scale=canvas.pixel_scale()` gives the window's own resolution instead.
         Everything `color_at` says about what is read applies.
         """
-        return self.snapshot(self.bounds(), scale)
+        return self.snapshot(self.bounds(), pixel_scale)
 
     def snapshot(
-        mut self, region: Rectangle, scale: Float64 = 1.0
+        mut self, region: Rectangle, pixel_scale: Float64 = 1.0
     ) raises -> Image:
         """What this frame has drawn so far inside `region`, as an `Image`
-        of `region.w * scale` by `region.h * scale` pixels.
+        of `region.w * pixel_scale` by `region.h * pixel_scale` pixels.
 
         `region` is in screen space, like `color_at`'s position, so it is always
         upright, and a turned one raises; outside the screen the image is
         transparent.
 
-        On an offscreen canvas `scale=canvas.scale()` reads its pixels as they
-        are; any other scale resamples them, nearest pixel.
+        On an offscreen canvas `pixel_scale=canvas.pixel_scale()` reads its pixels as they
+        are; any other value resamples them, nearest pixel.
         """
-        if scale <= 0.0:
-            raise Error("snapshot needs a positive scale, got " + String(scale))
+        if pixel_scale <= 0.0:
+            raise Error(
+                "snapshot needs a positive pixel_scale, got "
+                + String(pixel_scale)
+            )
         if region.rotation != 0.0:
             raise Error(
                 "snapshot needs an upright region, got " + String(region)
             )
-        var pw = Int(region.width * scale + 0.5)
-        var ph = Int(region.height * scale + 0.5)
+        var pw = Int(region.width * pixel_scale + 0.5)
+        var ph = Int(region.height * pixel_scale + 0.5)
         if pw <= 0 or ph <= 0:
             raise Error(
                 "snapshot needs a region of at least one pixel, got "
                 + String(region)
             )
         if self._offscreen():
-            var mem = self._read_offscreen(region, scale)
+            var mem = self._read_offscreen(region, pixel_scale)
             return Image.from_rgba(pw, ph, mem.data)
         ref backend = self._state._backend
         if (
-            scale == 1.0
+            pixel_scale == 1.0
             and pw == backend.frame_w
             and ph == backend.frame_h
             and region.position == Point(0.0, 0.0)
@@ -1015,11 +1019,11 @@ struct Canvas(DrawTarget, Movable):
             backend.read_frame(seeded=not self._state.autoclear)
             return Image.from_rgba(pw, ph, backend.frame_read.value().data)
         var to_target = mat_translate(
-            (region.width / 2.0 - region.position.x) * scale,
-            (region.height / 2.0 + region.position.y) * scale,
-        ) @ mat_scale(scale, -scale)
+            (region.width / 2.0 - region.position.x) * pixel_scale,
+            (region.height / 2.0 + region.position.y) * pixel_scale,
+        ) @ mat_scale(pixel_scale, -pixel_scale)
         var mem = backend.read(
-            pw, ph, scale, to_target, not self._state.autoclear
+            pw, ph, pixel_scale, to_target, not self._state.autoclear
         )
         return Image.from_rgba(pw, ph, mem.data)
 
@@ -1088,14 +1092,14 @@ struct Canvas(DrawTarget, Movable):
         seconds: _OptionalFloat64 = None,
         frames: Optional[Int] = None,
         fps: Float64 = 30.0,
-        scale: Float64 = 1.0,
+        pixel_scale: Float64 = 1.0,
         dither: Bool = False,
         transparent: Bool = False,
     ) raises:
         """Record the frames from this one on as an animated GIF at `path`.
 
         Each frame is what `save_image` would save: the design size times
-        `scale`, no letterbox, replayed on the CPU, so either backend and
+        `pixel_scale`, no letterbox, replayed on the CPU, so either backend and
         every machine records the same pixels, and a headless run records
         deterministically. Recording starts with the frame this is called
         in, captured whole however early in `update` it was called, and runs
@@ -1156,7 +1160,7 @@ struct Canvas(DrawTarget, Movable):
             seconds,
             frames,
             fps,
-            scale,
+            pixel_scale,
             dither,
             transparent,
         )

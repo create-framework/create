@@ -111,7 +111,9 @@ struct App(Program):
         # the lines below centre sit at negative y.
         var cap = context.max_frame_rate()
         var lines: List[String] = [
-            String(context.autoscale(), "   Scale ", round(canvas.scale(), 2)),
+            String(
+                context.autoscale(), "   Scale ", round(canvas.pixel_scale(), 2)
+            ),
             String(
                 "World ",
                 Int(canvas.width()),

@@ -76,7 +76,7 @@ def test_a_read_is_at_design_size_on_a_bigger_window() raises -> None:
     assert_equal(shot.height(), 100)
     assert_equal(shot.pixel(100, 50), Color.BLUE)
     assert_equal(shot.pixel(5, 5), Color.RED)
-    var sharp = canvas.snapshot(scale=canvas.scale())
+    var sharp = canvas.snapshot(pixel_scale=canvas.pixel_scale())
     assert_equal(sharp.width(), 400)
     assert_equal(sharp.pixel(200, 100), Color.BLUE)
 
@@ -116,7 +116,7 @@ def test_bad_snapshot_arguments_raise() raises -> None:
     var canvas = _canvas(context)
     var raised = False
     try:
-        _ = canvas.snapshot(scale=0.0)
+        _ = canvas.snapshot(pixel_scale=0.0)
     except:
         raised = True
     assert_true(raised, "a zero scale")

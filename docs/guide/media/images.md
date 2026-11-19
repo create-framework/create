@@ -55,9 +55,9 @@ See [examples/images](../../../examples/images/main.mojo).
 ## Drawing into an image
 
 An **offscreen canvas** is a canvas that draws into an image of its own rather than onto the screen.
-Build one with `Canvas(width, height, scale=1.0, antialiasing=Antialiasing.MEDIUM)`. It has every
-render call and `with` block that a frame's canvas has, so draw into it as usual. Then read the
-result back with `snapshot`, which gives an `Image`, or with `color_at` (see [Reading the
+Build one with `Canvas(width, height, pixel_scale=1.0, antialiasing=Antialiasing.MEDIUM)`. It has
+every render call and `with` block that a frame's canvas has, so draw into it as usual. Then read
+the result back with `snapshot`, which gives an `Image`, or with `color_at` (see [Reading the
 screen](../drawing/pixels.md#reading-the-screen)). It is the way to draw shapes, text and gradients
 into an image, such as a badge, a label or a texture made once and drawn many times:
 
@@ -81,15 +81,16 @@ Build one anywhere, `create` included, and keep it as a field to draw into acros
   canvas's own pixels, and then forgets those drawing calls. So a canvas kept for a long time
   doesn't keep growing, and what is drawn after a read lands on top of what is there. Read it when
   something has changed, rather than every frame regardless.
-- **`scale` fixes its sharpness:** it is how many pixels the canvas has per unit.
-  `snapshot(scale=canvas.scale())` reads its pixels as they are, and any other scale resizes them,
-  taking each new pixel from the nearest old one. Choose a fixed scale rather than taking it from
-  the frame's canvas in `create`, where the window's size may not be final yet (see [The window's
-  size on the first frame](../basics/programs.md#the-windows-size-on-the-first-frame)).
+- **`pixel_scale` fixes its sharpness:** it is how many pixels the canvas has per unit.
+  `snapshot(pixel_scale=canvas.pixel_scale())` reads its pixels as they are, and any other scale
+  resizes them, taking each new pixel from the nearest old one. Choose a fixed `pixel_scale` rather
+  than taking it from the frame's canvas in `create`, where the window's size may not be final yet
+  (see [The window's size on the first
+  frame](../basics/programs.md#the-windows-size-on-the-first-frame)).
 - **[`save_image` and `save_screenshot`](capture.md#saving-images) write at once**, since an
   offscreen canvas has no frame to wait for. `save_screenshot` writes the canvas's pixels at its own
-  `scale`, with their alpha, and `save_image` keeps the alpha only with `transparent=True`. The
-  `autoclear` and `letterbox_color` settings have no effect on an offscreen canvas.
+  `pixel_scale`, with their alpha, and `save_image` keeps the alpha only with `transparent=True`.
+  The `autoclear` and `letterbox_color` settings have no effect on an offscreen canvas.
 - **Each one keeps its own caches** of the letters and images drawn into it (the fonts themselves
   are shared). So a few canvases kept for the whole run are cheap, but a new one for every object
   every frame is not.

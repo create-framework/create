@@ -66,12 +66,12 @@ def __init__(
     width: Float64,
     height: Float64,
     *,
-    scale: Float64 = 1,
+    pixel_scale: Float64 = 1,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
 ) raises
 ```
 
-An offscreen canvas of `width` by `height` screen units, with `scale` pixels to the unit — `scale=canvas.scale()` matches the window's density.
+An offscreen canvas of `width` by `height` screen units, with `pixel_scale` pixels to the unit — `pixel_scale=canvas.pixel_scale()` matches the window's density.
 
 Screen space as on the frame canvas: origin centred, y up. Always
 rasterised on the CPU, whatever backend the program runs on; what
@@ -84,7 +84,7 @@ def __init__(
     width: Int,
     height: Int,
     *,
-    scale: Float64 = 1,
+    pixel_scale: Float64 = 1,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
 ) raises
 ```
@@ -115,10 +115,10 @@ def bounds(self) -> Rectangle
 
 The screen as a rectangle in screen space, `left()` to `right()` and `bottom()` to `top()`: centred on the origin, `width()` by `height()`. What `snapshot` and `clip` take, and what `contains` asks whether something is on the screen.
 
-### `scale`
+### `pixel_scale`
 
 ```mojo
-def scale(self) -> Float64
+def pixel_scale(self) -> Float64
 ```
 
 Window pixels per screen unit: what font size, stroke thickness and image size are scaled by.
@@ -441,12 +441,12 @@ is opaque, and blends over what is there otherwise.
 def save_image(
     mut self,
     path: String,
-    scale: Float64 = 1,
+    pixel_scale: Float64 = 1,
     transparent: Bool = False,
 ) raises
 ```
 
-Save this frame as a PNG at the design size, times `scale`.
+Save this frame as a PNG at the design size, times `pixel_scale`.
 
 Window-independent by construction: the size of the file is the space
 the program renders in, never the size of the window, and the letterbox
@@ -458,8 +458,8 @@ for artwork, posters and golden-image tests; use `save_screenshot` for
 what the user actually saw.
 
 `transparent` drops the frame's `background`, leaving alpha 0 wherever
-nothing was rendered. `scale` multiplies the output resolution, so
-`scale=2.0` gives a 2x export of the identical layout.
+nothing was rendered. `pixel_scale` multiplies the output resolution, so
+`pixel_scale=2.0` gives a 2x export of the identical layout.
 
 Deferred, not immediate: the file is written when the frame is
 presented, so it holds the whole frame however early in `update` this
@@ -468,7 +468,7 @@ than here.
 
 An offscreen canvas has no frame to present, so it writes at once,
 what it has drawn so far. Its pixels are already rasterised, so a
-`scale` other than its own resamples them, and `transparent` keeps
+`pixel_scale` other than its own resamples them, and `transparent` keeps
 their alpha rather than dropping a `background` it has painted.
 
 A relative `path` is resolved against the directory of the calling
@@ -504,29 +504,29 @@ one onto the canvas's own pixels, at its own `scale`.
 ### `snapshot`
 
 ```mojo
-def snapshot(mut self, scale: Float64 = 1) raises -> Image
+def snapshot(mut self, pixel_scale: Float64 = 1) raises -> Image
 ```
 
-What this frame has drawn so far, as an `Image` of the whole screen: `width * scale` by `height * scale` pixels.
+What this frame has drawn so far, as an `Image` of the whole screen: `width * pixel_scale` by `height * pixel_scale` pixels.
 
 Drawn back with `canvas.image(shot, (0, 0), canvas.width(),
 canvas.height())` it lines up with the frame exactly — a feedback
 effect is a snapshot kept as a field and drawn under the next frame.
-`scale=canvas.scale()` gives the window's own resolution instead.
+`pixel_scale=canvas.pixel_scale()` gives the window's own resolution instead.
 Everything `color_at` says about what is read applies.
 
 ```mojo
-def snapshot(mut self, region: Rectangle, scale: Float64 = 1) raises -> Image
+def snapshot(mut self, region: Rectangle, pixel_scale: Float64 = 1) raises -> Image
 ```
 
-What this frame has drawn so far inside `region`, as an `Image` of `region.w * scale` by `region.h * scale` pixels.
+What this frame has drawn so far inside `region`, as an `Image` of `region.w * pixel_scale` by `region.h * pixel_scale` pixels.
 
 `region` is in screen space, like `color_at`'s position, so it is always
 upright, and a turned one raises; outside the screen the image is
 transparent.
 
-On an offscreen canvas `scale=canvas.scale()` reads its pixels as they
-are; any other scale resamples them, nearest pixel.
+On an offscreen canvas `pixel_scale=canvas.pixel_scale()` reads its pixels as they
+are; any other value resamples them, nearest pixel.
 
 ### `save_screenshot`
 
@@ -563,7 +563,7 @@ def start_recording(
     seconds: _OptionalFloat64 = None,
     frames: Optional[Int] = None,
     fps: Float64 = 30,
-    scale: Float64 = 1,
+    pixel_scale: Float64 = 1,
     dither: Bool = False,
     transparent: Bool = False,
 ) raises
@@ -572,7 +572,7 @@ def start_recording(
 Record the frames from this one on as an animated GIF at `path`.
 
 Each frame is what `save_image` would save: the design size times
-`scale`, no letterbox, replayed on the CPU, so either backend and
+`pixel_scale`, no letterbox, replayed on the CPU, so either backend and
 every machine records the same pixels, and a headless run records
 deterministically. Recording starts with the frame this is called
 in, captured whole however early in `update` it was called, and runs

@@ -2024,7 +2024,7 @@ def test_stroke_thickness_under_non_uniform_transform_follows_autoscale() raises
     None
 ):
     # scale(3.0, 1.0) makes the transform non-uniform, so _pixel_scale must
-    # fall back to canvas.scale() (the autoscale factor, 2x here) rather than
+    # fall back to canvas.pixel_scale() (the autoscale factor, 2x here) rather than
     # the local transform's own 3x — a 3-unit stroke comes out 6 pixels
     # thick, not 18.
     var m = run_headless[ThickLineUnderNonUniformScale](
@@ -2592,7 +2592,7 @@ struct SaveImage2x(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         _scene(canvas)
-        canvas.save_image(_IMG_2X, scale=2.0)
+        canvas.save_image(_IMG_2X, pixel_scale=2.0)
 
 
 @fieldwise_init

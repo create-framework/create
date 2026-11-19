@@ -25,7 +25,7 @@ comptime _BADGE_SIZE = 80
 def _badge() raises -> Image:
     """A badge drawn offscreen, at twice the design density so it stays
     crisp on a window scaled up to 2x."""
-    var badge = Canvas(_BADGE_SIZE, _BADGE_SIZE, scale=2.0)
+    var badge = Canvas(_BADGE_SIZE, _BADGE_SIZE, pixel_scale=2.0)
     badge.shadow(blur=6)
     badge.fill(Gradient.radial(_BADGE_LIGHT, _BADGE_DARK))
     badge.stroke(_BADGE_RIM, thickness=3)
@@ -34,7 +34,7 @@ def _badge() raises -> Image:
     badge.text_color(_BADGE_TEXT)
     badge.font_size(28)
     badge.text("1st", (0, 0))
-    return badge.snapshot(scale=badge.scale())
+    return badge.snapshot(pixel_scale=badge.pixel_scale())
 
 
 @fieldwise_init

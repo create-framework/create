@@ -143,5 +143,5 @@ of a different shape is the **autoscale** mode, set with `run(..., autoscale=)`,
 
 The design size and autoscale mode set from `create` take effect from the second frame, so to affect
 the very first frame, pass them to `run` instead. Everything scales with the design, including font
-sizes, stroke thicknesses and images: one unit is `canvas.scale()` of the window's pixels. See
+sizes, stroke thicknesses and images: one unit is `canvas.pixel_scale()` of the window's pixels. See
 [examples/window](../../../examples/window/main.mojo).

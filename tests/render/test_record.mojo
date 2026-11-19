@@ -39,7 +39,7 @@ struct Recorder[scenario: Int](Program):
         elif Self.scenario == 4:
             canvas.start_recording(_path(4))
         elif Self.scenario == 5:
-            canvas.start_recording(_path(5), frames=2, scale=0.5)
+            canvas.start_recording(_path(5), frames=2, pixel_scale=0.5)
         elif Self.scenario == 6 or Self.scenario == 7:
             canvas.start_recording(_path(Self.scenario))
         elif Self.scenario == 10:
