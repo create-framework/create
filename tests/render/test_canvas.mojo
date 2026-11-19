@@ -22,7 +22,7 @@ from create.geometry import (
     Sector,
     Triangle,
 )
-from create.math.matrix import identity, rotate, scale, translate
+from create.math.matrix import identity
 from create.math.point import Point
 from create.math.vector import Vector
 from create.render.canvas import _PersistentCanvasState
@@ -262,7 +262,7 @@ struct RotatedRect(Program):
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
-        with canvas.transform(rotate(PI / 4.0)):
+        with canvas.transform(Transform(rotation=PI / 4.0)):
             canvas.rectangle((0.0, 0.0), 20.0, 20.0)
 
 
@@ -405,7 +405,7 @@ struct RotatedRoundedRect(Program):
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
-        with canvas.transform(rotate(PI / 4.0)):
+        with canvas.transform(Transform(rotation=PI / 4.0)):
             canvas.rectangle((0.0, 0.0), 20.0, 20.0, corner_radius=6)
 
 
@@ -574,7 +574,7 @@ struct RotatedRoundedTriangle(Program):
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
-        with canvas.transform(rotate(PI / 4.0)):
+        with canvas.transform(Transform(rotation=PI / 4.0)):
             canvas.triangle(
                 (-20.0, -20.0), (0.0, -20.0), (-20.0, 0.0), corner_radius=6
             )
@@ -664,11 +664,11 @@ struct TransformedImageBlit[transform: Int](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        var m = rotate(PI / 2.0)
+        var m = Transform(rotation=PI / 2.0)
         comptime if Self.transform == _MIRRORED:
-            m = scale(-1.0, 1.0)
+            m = Transform(scale_x=-1.0, scale_y=1.0)
         elif Self.transform == _STRETCHED:
-            m = scale(2.0, 0.5)
+            m = Transform(scale_x=2.0, scale_y=0.5)
         with canvas.transform(m):
             canvas.image(self.image, (0.0, 0.0), 20, 20)
 
@@ -1003,10 +1003,14 @@ struct ShadowFollowsTransform(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.shadow(Color.BLUE, offset=Vector(10, -10), blur=0)
-        with canvas.transform(translate(-40, 0) @ rotate(PI / 2.0)):
+        with canvas.transform(
+            Transform(translation=Vector(-40, 0)) @ Transform(rotation=PI / 2.0)
+        ):
             _red_square(canvas, (0, 0))
         canvas.shadow_follows_transform(True)
-        with canvas.transform(translate(40, 0) @ rotate(PI / 2.0)):
+        with canvas.transform(
+            Transform(translation=Vector(40, 0)) @ Transform(rotation=PI / 2.0)
+        ):
             _red_square(canvas, (0, 0))
 
 
@@ -1632,11 +1636,13 @@ struct TranslucentStar(Program):
         canvas.background(Color.BLACK)
         canvas.fill(Color(255, 255, 255, 128))
         canvas.stroke(Color(255, 255, 255, 128), thickness=5)
-        with canvas.transform(rotate(0.4) @ scale(1.2, 0.8)):
+        with canvas.transform(
+            Transform(rotation=0.4) @ Transform(scale_x=1.2, scale_y=0.8)
+        ):
             canvas.draw(Polygon.star((0.0, 0.0), 40.0, 16.0, 5))
         # Self-crossing too: a pentagram beside it.
         var tips = Polygon.regular((0.0, 0.0), 12.0, 5).vertices.copy()
-        with canvas.transform(translate(30.0, -30.0)):
+        with canvas.transform(Transform(translation=Vector(30.0, -30.0))):
             canvas.polygon(tips[0], tips[2], tips[4], tips[1], tips[3])
 
 
@@ -1673,7 +1679,7 @@ struct RotatedSectorUnderCamera(Program):
         canvas.stroke_enabled(False)
         # The upper right quarter turned a quarter: the upper left, in
         # world space, twice the size on screen, its tip at (-20, 0).
-        with canvas.transform(rotate(PI / 2.0)):
+        with canvas.transform(Transform(rotation=PI / 2.0)):
             canvas.sector((0.0, 0.0), 15.0, 0.0, PI / 2.0)
 
 
@@ -1822,7 +1828,7 @@ struct RotatedCircle(Program):
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         canvas.fill(Color.CYAN)
-        with canvas.transform(rotate(PI / 4.0)):
+        with canvas.transform(Transform(rotation=PI / 4.0)):
             canvas.circle((0.0, 0.0), 20.0)
 
 
@@ -1855,7 +1861,7 @@ struct QuarterTurnRect(Program):
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         canvas.fill(Color.YELLOW)
-        with canvas.transform(rotate(PI / 2.0)):
+        with canvas.transform(Transform(rotation=PI / 2.0)):
             canvas.rectangle((0.0, 0.0), 20.0, 40.0)
 
 
@@ -1960,7 +1966,7 @@ struct ToWorldRoundTrip(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        with canvas.transform(translate(10.0, 20.0)):
+        with canvas.transform(Transform(translation=Vector(10.0, 20.0))):
             var origin = canvas.to_local((10.0, 20.0))
             assert_almost_equal(origin.x, 0.0)
             assert_almost_equal(origin.y, 0.0)
@@ -1968,7 +1974,10 @@ struct ToWorldRoundTrip(Program):
             assert_almost_equal(back.x, 10.0)
             assert_almost_equal(back.y, 20.0)
 
-        with canvas.transform(translate(5.0, -8.0) @ rotate(PI / 3.0)):
+        with canvas.transform(
+            Transform(translation=Vector(5.0, -8.0))
+            @ Transform(rotation=PI / 3.0)
+        ):
             var screen = canvas.to_screen((7.0, -2.0))
             var local = canvas.to_local(screen)
             assert_almost_equal(local.x, 7.0)
@@ -1978,7 +1987,7 @@ struct ToWorldRoundTrip(Program):
         # transform, and back.
         var camera = Camera((5.0, 0.0), zoom=2.0)
         canvas.camera(camera)
-        with canvas.transform(translate(10.0, 20.0)):
+        with canvas.transform(Transform(translation=Vector(10.0, 20.0))):
             var screen = canvas.to_screen((0.0, 0.0))
             assert_almost_equal(screen.x, 10.0)
             assert_almost_equal(screen.y, 40.0)
@@ -2016,14 +2025,14 @@ struct ThickLineUnderNonUniformScale(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.stroke(Color.WHITE, thickness=3)
-        with canvas.transform(scale(3.0, 1.0)):
+        with canvas.transform(Transform(scale_x=3.0, scale_y=1.0)):
             canvas.line((-10.0 / 3.0, 0.0), (10.0 / 3.0, 0.0))
 
 
 def test_stroke_thickness_under_non_uniform_transform_follows_autoscale() raises -> (
     None
 ):
-    # scale(3.0, 1.0) makes the transform non-uniform, so _pixel_scale must
+    # Transform(scale_x=3.0, scale_y=1.0) makes the transform non-uniform, so _pixel_scale must
     # fall back to canvas.pixel_scale() (the autoscale factor, 2x here) rather than
     # the local transform's own 3x — a 3-unit stroke comes out 6 pixels
     # thick, not 18.
@@ -2111,11 +2120,11 @@ struct TransformedText[transform: Int](Program):
         canvas.text_color(Color.WHITE)
         canvas.font_size(24)
         canvas.text_alignment(Align.TOP_LEFT)
-        var m = identity[3]()
+        var m = Transform()
         comptime if Self.transform == _TURNED_TEXT:
-            m = rotate(PI / 2.0)
+            m = Transform(rotation=PI / 2.0)
         elif Self.transform == _STRETCHED_TEXT:
-            m = scale(2.0, 1.0)
+            m = Transform(scale_x=2.0, scale_y=1.0)
         with canvas.transform(m):
             canvas.text("Hi", (0.0, 0.0))
 
@@ -2174,7 +2183,7 @@ struct MeasuredText(Program):
         assert_equal(canvas.text_width(""), 0.0)
         # World units: a doubling transform renders twice the pixels but
         # measures the same.
-        with canvas.transform(scale(2.0, 2.0)):
+        with canvas.transform(Transform(scale_x=2.0, scale_y=2.0)):
             assert_almost_equal(canvas.text_width("Hi"), width, atol=0.5)
         canvas.text("Hi", (0.0, 0.0))
         # Mark where the text should end, in red, below it.
@@ -2910,7 +2919,9 @@ struct TurnedRectangle[how: Int](Program):
         var at = Point(10.0, -5.0)
         comptime if Self.how == 0:
             with canvas.transform(
-                translate(Vector(at)) @ rotate(0.6) @ translate(-Vector(at))
+                Transform(translation=Vector(at))
+                @ Transform(rotation=0.6)
+                @ Transform(translation=-Vector(at))
             ):
                 canvas.rectangle(at, 50.0, 20.0, corner_radius=6)
         elif Self.how == 1:
@@ -3046,7 +3057,9 @@ struct TurnedSquare[way: Int](Program):
             canvas.rectangle((0, 0), 30, 20)
         elif Self.way == _BY_MATRIX:
             with canvas.transform(
-                translate(15, -5) @ rotate(0.5) @ scale(1.5, 0.75)
+                Transform(translation=Vector(15, -5))
+                @ Transform(rotation=0.5)
+                @ Transform(scale_x=1.5, scale_y=0.75)
             ):
                 canvas.rectangle((0, 0), 30, 20)
         else:

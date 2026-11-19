@@ -303,7 +303,7 @@ def test_dotted_draws_round_dots_under_a_butt_cap() raises -> None:
 def test_lengths_scale_with_the_transform() raises -> None:
     var canvas = _canvas()
     canvas.stroke_dash(StrokeDash(10, 10))
-    with canvas.transform(scale(2)):
+    with canvas.transform(Transform(scale=2)):
         canvas.line((-50, 0), (50, 0))
     assert_equal(canvas.color_at((-90, 0)), Color.WHITE)
     assert_equal(canvas.color_at((-70, 0)), Color.TRANSPARENT)

@@ -11,7 +11,7 @@ from create.text.font import (
 from ._blur import blur_alpha
 from ._raster import blit_alpha_mapped, blit_glyph
 from ._image_mapping import mask_mapping
-from create.math.matrix import Matrix
+from create.math.transform import Transform
 from ._paint import TextStyle
 from ._surface import Surface
 
@@ -492,7 +492,7 @@ struct TextRenderer(Movable):
         mut self,
         surf: Surface[o],
         s: String,
-        glyphs: Matrix[3, 3],
+        glyphs: Transform,
         style: TextStyle,
         pixel_scale: Float64,
         blur: Int = 0,

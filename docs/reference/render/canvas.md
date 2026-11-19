@@ -227,7 +227,10 @@ The block restores the transform on exit, including on an early
 return or a raise.
 
 ```mojo
-def transform(mut self, m: Matrix[Int(3), Int(3)]) -> TransformGuard[origin_of(self)]
+def transform(
+    mut self,
+    m: Matrix[Int(3), Int(3)],
+) raises -> TransformGuard[origin_of(self)]
 ```
 
 Apply `m` to everything rendered inside a `with` block.
@@ -238,8 +241,7 @@ with canvas.transform(translate(50.0, 50.0)):
 ```
 
 The matrix pops on exit, including on an early return or a raise.
-`_push_transform` is the same push without that guarantee -- a missed
-pop shifts every later render in the frame, so go through here.
+Raises if `m` isn't affine, as `Transform(m)` does.
 
 ### `style`
 

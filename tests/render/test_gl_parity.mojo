@@ -51,7 +51,6 @@ from create.render._gl_target import _GLTarget
 from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
 from create._window import GLWindow
-from create.math.matrix import rotate
 
 comptime _DESIGN_W = 200
 comptime _DESIGN_H = 150
@@ -282,7 +281,7 @@ def _draw_region(mut canvas: Canvas, kind: Int) raises:
     elif kind == 4:
         canvas.draw(Polygon.star((0, 0), 55, 25, 5))
     elif kind == 5:
-        with canvas.transform(rotate(0.4)):
+        with canvas.transform(Transform(rotation=0.4)):
             canvas.ellipse((0, 0), 100, 50)
     elif kind == 6:
         canvas.capsule((-35, -15), (35, 15), 22)
@@ -585,7 +584,7 @@ struct _Parity(Program):
             with canvas.style():
                 canvas.stroke_enabled(False)
                 canvas.fill(Color(0x60, 0xE0, 0x90))
-                with canvas.transform(rotate(0.5)):
+                with canvas.transform(Transform(rotation=0.5)):
                     canvas.rectangle((30, -70), 40, 20)
         elif self.shape == _SHAPE_ROUNDED_RECT:
             # Filled and stroked, so both the fill's cross decomposition and
@@ -855,7 +854,7 @@ struct _Parity(Program):
             with canvas.style():
                 canvas.fill(Color(0x50, 0xA0, 0xD0))
                 canvas.stroke(Color.BLACK, thickness=6)
-                with canvas.transform(rotate(0.4)):
+                with canvas.transform(Transform(rotation=0.4)):
                     canvas.sector((-40, -55), 110, 0.2, 1.1)
         elif self.shape == _SHAPE_TRANSLUCENT_PAC_MAN:
             # Past a half turn, clockwise, so the tip is round; translucent,
@@ -892,7 +891,10 @@ struct _Parity(Program):
             with canvas.style():
                 canvas.fill(Color(0x50, 0xA0, 0xD0))
                 canvas.stroke(Color.BLACK, thickness=6)
-                with canvas.transform(rotate(0.3) @ scale(1.3, 0.8)):
+                with canvas.transform(
+                    Transform(rotation=0.3)
+                    @ Transform(scale_x=1.3, scale_y=0.8)
+                ):
                     canvas.draw(Polygon.regular((0, 0), 70, 6))
         elif self.shape == _SHAPE_CONCAVE_POLYGON:
             # An L: the stroke rounds off round the reflex corner.
@@ -1006,7 +1008,7 @@ struct _Parity(Program):
                         Color(0xFF, 0x80, 0x20), Color(0x20, 0x80, 0xFF)
                     )
                 )
-                with canvas.transform(rotate(0.6)):
+                with canvas.transform(Transform(rotation=0.6)):
                     canvas.rectangle((0, 0), 120, 70)
         elif self.shape == _SHAPE_TRANSLUCENT_GRADIENT_RECT:
             with canvas.style(stroke_enabled=False):
@@ -1079,7 +1081,7 @@ struct _Parity(Program):
                 stroke_thickness=16,
                 stroke_cap=StrokeCap.ROUND,
             ):
-                with canvas.transform(rotate(0.3)):
+                with canvas.transform(Transform(rotation=0.3)):
                     canvas.line((-70, 0), (70, 0))
         elif self.shape == _SHAPE_SQUARE_CAPPED_LINE:
             with canvas.style(
@@ -1087,7 +1089,7 @@ struct _Parity(Program):
                 stroke_thickness=16,
                 stroke_cap=StrokeCap.SQUARE,
             ):
-                with canvas.transform(rotate(0.3)):
+                with canvas.transform(Transform(rotation=0.3)):
                     canvas.line((-70, 0), (70, 0))
         elif self.shape == _SHAPE_ROUND_CAPPED_BEZIER:
             # Translucent, so a cap painted over its end quad would show as
@@ -1136,7 +1138,7 @@ struct _Parity(Program):
                     )
                 )
             ):
-                with canvas.transform(rotate(0.3)):
+                with canvas.transform(Transform(rotation=0.3)):
                     canvas.line((-60, 0), (60, 0))
         elif (
             self.shape == _SHAPE_BLURRED_ROUND_BEZIER
@@ -1167,12 +1169,12 @@ struct _Parity(Program):
         elif self.shape == _SHAPE_ROTATED_IMAGE:
             # A solid block, so the GPU's linear filter and the CPU's nearest
             # texel agree inside it and only the rim can differ.
-            with canvas.transform(rotate(0.5)):
+            with canvas.transform(Transform(rotation=0.5)):
                 canvas.image(self.block, (20, -10), 40, 40)
         elif self.shape == _SHAPE_BLURRED_ROTATED_IMAGE:
             # Not upright, so both backends blit the same uncached mask.
             with canvas.style(_blurred(Style())):
-                with canvas.transform(rotate(0.5)):
+                with canvas.transform(Transform(rotation=0.5)):
                     canvas.image(self.block, (-20, 10), 30, 30)
         elif self.shape == _SHAPE_ROTATED_TEXT:
             # The same masks as upright text, read bilinearly on both.
@@ -1182,7 +1184,7 @@ struct _Parity(Program):
                 font_size=24,
                 text_alignment=Align.CENTER,
             ):
-                with canvas.transform(rotate(0.5)):
+                with canvas.transform(Transform(rotation=0.5)):
                     canvas.text("parity", (0, 0))
         elif self.shape == _SHAPE_BLURRED_ROTATED_TEXT:
             with canvas.style(
@@ -1194,7 +1196,7 @@ struct _Parity(Program):
                     )
                 )
             ):
-                with canvas.transform(rotate(0.5)):
+                with canvas.transform(Transform(rotation=0.5)):
                     canvas.text("Il", (0, 0))
         else:
             # Scalene (one acute, one obtuse vertex) and stroked, so both

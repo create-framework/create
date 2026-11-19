@@ -6,7 +6,7 @@ from std.testing import (
 )
 from create.render.autoscale import Autoscale
 from create.render._viewport import Viewport
-from create.math.matrix import _apply as apply
+from create.math.transform import Transform
 
 
 def _design(w: Int, h: Int, mode: Autoscale) raises -> Viewport:
@@ -100,8 +100,8 @@ def test_pixel_to_screen_inverts_the_y_axis() raises -> None:
 def test_base_matrix_puts_positive_y_in_lower_rows() raises -> None:
     var v = Viewport()
     v.set_size(1024, 768)
-    var top = apply(v.base_matrix(), 0.0, 100.0)
-    var bottom = apply(v.base_matrix(), 0.0, -100.0)
+    var top = v.base_matrix()._apply_xy(0.0, 100.0)
+    var bottom = v.base_matrix()._apply_xy(0.0, -100.0)
     assert_almost_equal(top[0], 512.0)
     assert_almost_equal(top[1], 284.0)
     assert_true(top[1] < bottom[1])
@@ -110,7 +110,7 @@ def test_base_matrix_puts_positive_y_in_lower_rows() raises -> None:
 def _assert_base_round_trips(v: Viewport, x: Float64, y: Float64) raises:
     """`base_matrix` maps screen to pixels; `pixel_to_screen` is its inverse."""
     var w = v.pixel_to_screen((x, y))
-    var back = apply(v.base_matrix(), w.x, w.y)
+    var back = v.base_matrix()._apply_xy(w.x, w.y)
     assert_almost_equal(back[0], x)
     assert_almost_equal(back[1], y)
 

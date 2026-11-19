@@ -29,7 +29,8 @@ from create.render._command import (
     bezier_command,
     bezier_chain_command,
 )
-from create.math.matrix import _apply as mat_apply, rotate
+from create.math.transform import Transform
+from create.math.vector import Vector
 from create.math.point import Point
 
 
@@ -37,7 +38,7 @@ comptime _W = 100
 comptime _H = 100
 
 
-def _base(width: Int = _W, height: Int = _H) -> Matrix[3, 3]:
+def _base(width: Int = _W, height: Int = _H) -> Transform:
     """The same world-to-pixel mapping a 1:1 frame gets, taken from `Viewport`
     rather than rebuilt, so a change there cannot silently desync these."""
     var v = Viewport()
@@ -162,7 +163,7 @@ def test_circle_samples_pixel_centres() raises -> None:
     # pixel corners instead reaches column 60 and misses nothing on the left.
     # A rotation takes the non-uniform branch, which must agree.
     for turn in range(2):
-        var m = _base() @ rotate(0.3 * Float64(turn))
+        var m = _base() @ Transform(rotation=0.3 * Float64(turn))
         var cmds = List[RenderCommand]()
         cmds.append(clear_command(Color.BLACK))
         cmds.append(circle_command(m, _solid(Color.GREEN), 0.0, 0.0, 10.0))
@@ -176,7 +177,7 @@ def test_circle_samples_pixel_centres() raises -> None:
 
 def _brute_circle(
     mut mem: MemorySurface,
-    m: Matrix[3, 3],
+    m: Transform,
     style: Style,
     cx: Float64,
     cy: Float64,
@@ -191,7 +192,7 @@ def _brute_circle(
     var s = mem.surface()
     var W = s.width
     var H = s.height
-    var p = mat_apply(m, cx, cy)
+    var p = m._apply_xy(cx, cy)
     var pcx = p[0] - 0.5
     var pcy = p[1] - 0.5
     var pr = r * pixel_scale(m, scale)
@@ -332,7 +333,7 @@ def test_bezier_replays_along_the_curve_without_gaps() raises -> None:
     var curve = _s_curve()
     for i in range(1, 200):
         var q = curve.at(Float64(i) / 200.0)
-        var p = mat_apply(_base(), q.x, q.y)
+        var p = _base()._apply_xy(q.x, q.y)
         assert_equal(m.pixel(Int(p[0]), Int(p[1])), Color.WHITE)
     # Beside the curve, and past its ends, stays clear.
     assert_equal(m.pixel(5, 5), Color.BLACK)
@@ -363,7 +364,7 @@ def test_translucent_bezier_composites_each_pixel_once() raises -> None:
     var m = _replay(cmds)
     # The colour one composite gives, read where only one quad reaches.
     var mid = _s_curve().at(0.5)
-    var p = mat_apply(_base(), mid.x, mid.y)
+    var p = _base()._apply_xy(mid.x, mid.y)
     var once = m.pixel(Int(p[0]), Int(p[1]))
     assert_true(once != Color.BLACK and once != Color.WHITE)
     var painted = 0
@@ -397,7 +398,7 @@ def test_translucent_bezier_chain_composites_once_at_the_joint() raises -> None:
         )
     )
     var m = _replay(cmds)
-    var p = mat_apply(_base(), 0.0, 0.0)
+    var p = _base()._apply_xy(0.0, 0.0)
     var once = m.pixel(Int(p[0]), Int(p[1]))
     assert_true(once != Color.BLACK and once != Color.WHITE)
     var painted = 0
@@ -433,7 +434,7 @@ def test_translucent_closed_bezier_chain_has_no_seam() raises -> None:
         )
     )
     var m = _replay(cmds)
-    var mid = mat_apply(_base(), 0.0, -30.0)
+    var mid = _base()._apply_xy(0.0, -30.0)
     var once = m.pixel(Int(mid[0]), Int(mid[1]))
     assert_true(once != Color.BLACK and once != Color.WHITE)
     # Three units out from the seam's corner, along its bisector: inside the
@@ -441,7 +442,7 @@ def test_translucent_closed_bezier_chain_has_no_seam() raises -> None:
     var centroid = Point(0.0, -20.0 / 3.0)
     var outward = (a - centroid).normalize()
     var tip = a + outward * 3.0
-    var q = mat_apply(_base(), tip.x, tip.y)
+    var q = _base()._apply_xy(tip.x, tip.y)
     assert_equal(m.pixel(Int(q[0]), Int(q[1])), once)
     for y in range(_H):
         for x in range(_W):
@@ -592,7 +593,9 @@ def test_a_pre_matrix_relocates_the_whole_replay() raises -> None:
     cmds.append(rect_command(_base(), _solid(Color.RED), 0.0, 0.0, 20.0, 20.0))
     var mem = MemorySurface(_W, _H)
     var backend = Backend()
-    backend.replay(mem.surface(), cmds, 1.0, pre=translate(-30.0, 0.0))
+    backend.replay(
+        mem.surface(), cmds, 1.0, pre=Transform(translation=Vector(-30.0, 0.0))
+    )
     # The rect moved 30 pixels left; the clear, which has no geometry, did not.
     assert_equal(mem.pixel(20, 50), Color.RED)
     assert_equal(mem.pixel(50, 50), Color.BLACK)
@@ -665,7 +668,7 @@ struct RotatedRect(Program):
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
-        with canvas.transform(rotate(_ANGLE)):
+        with canvas.transform(Transform(rotation=_ANGLE)):
             canvas.rectangle((12.0, 6.0), _RECT_W, _RECT_H)
 
 
@@ -679,7 +682,7 @@ def test_a_rotated_rect_replays_identically_to_canvas() raises -> None:
     cmds.append(clear_command(Color.BLACK))
     cmds.append(
         rect_command(
-            _base() @ rotate(_ANGLE),
+            _base() @ Transform(rotation=_ANGLE),
             _solid(Color.RED),
             12.0,
             6.0,
@@ -950,7 +953,15 @@ def test_a_blurred_shadow_turns_with_its_image() raises -> None:
     s.shadow_offset = Vector(40, 0)
     cmds.append(
         image_command(
-            _base() @ rotate(PI / 4.0), s^, 0.0, 0.0, 20.0, 20.0, image, 2, 2
+            _base() @ Transform(rotation=PI / 4.0),
+            s^,
+            0.0,
+            0.0,
+            20.0,
+            20.0,
+            image,
+            2,
+            2,
         )
     )
     backend.replay(mem.surface(), cmds, 1.0)

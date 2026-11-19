@@ -1,4 +1,6 @@
 from create.math.point import Point
+from create.math.transform import Transform
+from create.math.vector import Vector
 from create.math.matrix import (
     Matrix,
     scale as mat_scale,
@@ -34,6 +36,12 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
         """World-to-screen mapping: scale around `position`, then recentre."""
         return mat_scale(self.zoom, self.zoom) @ mat_translate(
             -self.position.x, -self.position.y
+        )
+
+    def _transform(self) -> Transform:
+        """`matrix()` as a `Transform`, for the canvas."""
+        return Transform(scale=self.zoom) @ Transform(
+            translation=Vector(-self.position.x, -self.position.y)
         )
 
     def to_world(self, screen: Point) -> Point:

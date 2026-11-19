@@ -6,9 +6,10 @@ from std.testing import (
 )
 
 from create.geometry.bezier import Bezier
-from create.math.matrix import identity, scale, translate
+from create.math.matrix import identity
 from create.math.point import Point
 from create.math.vector import Vector
+from create.math.transform import Transform
 from create.color.color import Color
 from create.render.style import Style
 from create.render._lower import shape_shadow_mask
@@ -37,7 +38,7 @@ def _s_curve() -> Bezier:
 
 def test_device_points_follow_the_transform() raises -> None:
     var b = _s_curve()
-    var c = bezier_command(scale(2.0, 2.0), Style(), b)
+    var c = bezier_command(Transform(scale_x=2.0, scale_y=2.0), Style(), b)
     var points = bezier_device_points(c, c.transform)
     _assert_point_near(points[0], Point(0.0, 0.0))
     _assert_point_near(points[len(points) - 1], Point(200.0, 0.0))
@@ -45,9 +46,9 @@ def test_device_points_follow_the_transform() raises -> None:
 
 def test_device_points_refine_with_zoom() raises -> None:
     # The same curve drawn larger is flattened into more segments.
-    var c = bezier_command(identity[3](), Style(), _s_curve())
+    var c = bezier_command(Transform(), Style(), _s_curve())
     var near = bezier_device_points(c, c.transform)
-    var far = bezier_device_points(c, scale(8.0, 8.0))
+    var far = bezier_device_points(c, Transform(scale_x=8.0, scale_y=8.0))
     assert_true(len(far) > len(near))
 
 
@@ -66,7 +67,7 @@ def _two_curve_chain() -> List[Point]:
 
 def test_chain_flattens_to_one_polyline() raises -> None:
     var chain = _two_curve_chain()
-    var c = bezier_chain_command(identity[3](), Style(), chain.copy())
+    var c = bezier_chain_command(Transform(), Style(), chain.copy())
     var points = bezier_device_points(c, c.transform)
     var first = Bezier(chain[0], chain[1], chain[2], chain[3]).flatten(0.25)
     var second = Bezier(chain[3], chain[4], chain[5], chain[6]).flatten(0.25)
@@ -80,7 +81,7 @@ def test_chain_flattens_to_one_polyline() raises -> None:
 
 
 def test_chain_stroke_shares_edges_across_the_joint() raises -> None:
-    var c = bezier_chain_command(identity[3](), Style(), _two_curve_chain())
+    var c = bezier_chain_command(Transform(), Style(), _two_curve_chain())
     var corners = stroke_quads(bezier_device_points(c, c.transform), 6.0)
     for q in range(len(corners) // 4 - 1):
         assert_equal(corners[4 * q + 1], corners[4 * (q + 1)])
@@ -126,7 +127,7 @@ def test_straight_polyline_gives_a_straight_band() raises -> None:
 
 
 def test_neighbouring_quads_share_their_joining_edge() raises -> None:
-    var c = bezier_command(identity[3](), Style(), _s_curve())
+    var c = bezier_command(Transform(), Style(), _s_curve())
     var corners = stroke_quads(bezier_device_points(c, c.transform), 6.0)
     var quads = len(corners) // 4
     assert_true(quads > 2)
@@ -158,7 +159,7 @@ def test_repeated_points_are_skipped() raises -> None:
 
 def test_zero_length_gives_no_quads() raises -> None:
     var b = Bezier((5.0, 5.0), (5.0, 5.0), (5.0, 5.0), (5.0, 5.0))
-    var c = bezier_command(identity[3](), Style(), b)
+    var c = bezier_command(Transform(), Style(), b)
     assert_equal(
         len(stroke_quads(bezier_device_points(c, c.transform), 3.0)), 0
     )
@@ -184,7 +185,9 @@ def _mass(pixels: List[UInt8]) -> Int:
 
 def test_an_unblurred_mask_is_the_stroke_itself() raises -> None:
     # Moved in from the edges, so the whole stroke lands on the surface.
-    var c = bezier_command(translate(10.0, 10.0), _stroked(5), _s_curve())
+    var c = bezier_command(
+        Transform(translation=Vector(10.0, 10.0)), _stroked(5), _s_curve()
+    )
     var placed = shape_shadow_mask(c, c.transform, 1.0, 0)
     assert_equal(placed.mask.pad, 0)
     # The same quads filled straight onto a device-sized surface.
@@ -225,7 +228,7 @@ def test_an_unblurred_mask_is_the_stroke_itself() raises -> None:
 
 
 def test_a_blurred_mask_grows_by_the_reach_and_keeps_its_mass() raises -> None:
-    var c = bezier_command(identity[3](), _stroked(5), _s_curve())
+    var c = bezier_command(Transform(), _stroked(5), _s_curve())
     var hard = shape_shadow_mask(c, c.transform, 1.0, 0)
     var soft = shape_shadow_mask(c, c.transform, 1.0, 8)
     var pad = blur_reach(4.0)
@@ -241,7 +244,7 @@ def test_a_blurred_mask_grows_by_the_reach_and_keeps_its_mass() raises -> None:
 def test_an_invisible_stroke_gives_an_empty_mask() raises -> None:
     var s = _stroked(5)
     s.stroke_enabled = False
-    var c = bezier_command(identity[3](), s, _s_curve())
+    var c = bezier_command(Transform(), s, _s_curve())
     var placed = shape_shadow_mask(c, c.transform, 1.0, 8)
     assert_equal(placed.mask.width, 0)
     assert_equal(len(placed.mask.pixels), 0)

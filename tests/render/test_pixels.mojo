@@ -57,7 +57,7 @@ def test_pixel_reads_what_is_drawn_so_far() raises -> None:
 def test_pixel_is_in_screen_space_and_transparent_off_it() raises -> None:
     var context = Context()
     var canvas = _canvas(context)
-    with canvas.transform(translate(50.0, 20.0)):
+    with canvas.transform(Transform(translation=Vector(50.0, 20.0))):
         _square(canvas, (0, 0), Color.BLUE)
         # The transform moves what is drawn, not where a read looks.
         assert_equal(canvas.color_at((50, 20)), Color.BLUE)

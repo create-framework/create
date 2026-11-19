@@ -13,12 +13,14 @@ that scans, because nothing else has rows to walk.
 
 from std.math import abs, max, sqrt
 
-from create.math.matrix import Matrix, scale as mat_scale, translate
+from create.math.vector import Vector
+from create.math.transform import Transform
+from create.math.transform import Transform
 
 from ._paint import Paint
 
 
-def uniform(m: Matrix[3, 3]) -> Bool:
+def uniform(m: Transform) -> Bool:
     """True when `m` is an axis-aligned uniform scale plus a translation — a
     rect stays a rect, a circle stays a circle.
 
@@ -27,17 +29,10 @@ def uniform(m: Matrix[3, 3]) -> Bool:
     rotation, shear, and non-uniform scales fall through to the per-pixel
     inverse mapping.
     """
-    return (
-        m[0, 1] == 0.0
-        and m[1, 0] == 0.0
-        and m[2, 0] == 0.0
-        and m[2, 1] == 0.0
-        and m[2, 2] == 1.0
-        and abs(m[0, 0]) == abs(m[1, 1])
-    )
+    return m._xy == 0.0 and m._yx == 0.0 and abs(m._xx) == abs(m._yy)
 
 
-def pixel_scale(m: Matrix[3, 3], fallback: Float64) -> Float64:
+def pixel_scale(m: Transform, fallback: Float64) -> Float64:
     """Pixels per world unit along `m`.
 
     Stroke thickness, font size and image extents are authored in world
@@ -46,46 +41,46 @@ def pixel_scale(m: Matrix[3, 3], fallback: Float64) -> Float64:
     factor exists.
     """
     if uniform(m):
-        return abs(m[0, 0])
+        return abs(m._xx)
     return fallback
 
 
-def text_pixel_scale(m: Matrix[3, 3], fallback: Float64) -> Float64:
+def text_pixel_scale(m: Transform, fallback: Float64) -> Float64:
     """Pixels per world unit that text is laid out and rasterised at under
     `m`: `pixel_scale` where that has a single factor, and otherwise the
     square root of `m`'s area scale, so a turned, sheared or stretched
     string is rasterised at about the density it lands at rather than at
     the frame's. `fallback` only for a singular `m`."""
     if uniform(m):
-        return abs(m[0, 0])
-    var area = abs(m[0, 0] * m[1, 1] - m[0, 1] * m[1, 0])
+        return abs(m._xx)
+    var area = abs(m._xx * m._yy - m._xy * m._yx)
     if area == 0.0:
         return fallback
     return sqrt(area)
 
 
-def text_upright(m: Matrix[3, 3]) -> Bool:
+def text_upright(m: Transform) -> Bool:
     """True when text under `m` lays out as it is drawn: an axis-aligned
     uniform scale, unmirrored, so glyphs land upright on whole pixels around
     the mapped anchor. Any other `m` lays text out upright first and maps
     the result through `glyph_transform`."""
-    return uniform(m) and m[0, 0] > 0.0 and m[1, 1] < 0.0
+    return uniform(m) and m._xx > 0.0 and m._yy < 0.0
 
 
 def glyph_transform(
-    m: Matrix[3, 3], x: Float64, y: Float64, pixel_scale: Float64
-) -> Matrix[3, 3]:
+    m: Transform, x: Float64, y: Float64, pixel_scale: Float64
+) -> Transform:
     """Where text laid out upright around the origin, at `pixel_scale`
     pixels per unit (device-style: y down), lands under `m` when anchored
     at local `(x, y)`: back to local units about the anchor, then `m`."""
     return (
-        m @ translate(x, y) @ mat_scale(1.0 / pixel_scale, -1.0 / pixel_scale)
+        m
+        @ Transform(translation=Vector(x, y))
+        @ Transform(scale_x=1.0 / pixel_scale, scale_y=-1.0 / pixel_scale)
     )
 
 
-def stroke_thickness_px(
-    paint: Paint, m: Matrix[3, 3], fallback: Float64
-) -> Int:
+def stroke_thickness_px(paint: Paint, m: Transform, fallback: Float64) -> Int:
     """Stroke thickness in framebuffer pixels, never thinner than one."""
     return max(
         Int(paint.stroke_thickness * pixel_scale(m, fallback) + 0.5),

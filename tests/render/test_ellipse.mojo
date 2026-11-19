@@ -119,7 +119,7 @@ def test_ellipse_clips() raises -> None:
 
 def test_turned_ellipse_follows_the_transform() raises -> None:
     var canvas = _canvas()
-    with canvas.transform(rotate(PI / 2.0)):
+    with canvas.transform(Transform(rotation=PI / 2.0)):
         canvas.ellipse((0, 0), 80, 40)
     assert_true(_inked(canvas, (0.5, 38.5)), "width turned upright")
     assert_true(not _inked(canvas, (30.5, 0.5)), "height turned sideways")

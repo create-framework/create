@@ -1,9 +1,6 @@
 from std.math import min
-from create.math.matrix import (
-    Matrix,
-    scale as mat_scale,
-    translate as mat_translate,
-)
+from create.math.transform import Transform
+from create.math.vector import Vector
 from create.math.point import Point
 from .autoscale import Autoscale
 
@@ -113,7 +110,7 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
     def top(self) -> Float64:
         return self.height / 2.0
 
-    def base_matrix(self) -> Matrix[3, 3]:
+    def base_matrix(self) -> Transform:
         """The screen-to-pixel mapping: origin centred, y up.
 
         Anchoring on the framebuffer centre covers all three autoscale modes
@@ -123,9 +120,11 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
         Screen space, not world space: this knows nothing of `Camera`, which
         sits between the two and is `Canvas`'s concern, not `Viewport`'s.
         """
-        return mat_translate(
-            Float64(self.pixel_w) / 2.0, Float64(self.pixel_h) / 2.0
-        ) @ mat_scale(self.scale, -self.scale)
+        return Transform(
+            translation=Vector(
+                Float64(self.pixel_w) / 2.0, Float64(self.pixel_h) / 2.0
+            )
+        ) @ Transform(scale_x=self.scale, scale_y=-self.scale)
 
     def pixel_to_screen(self, pixel: Point) -> Point:
         """Map a window pixel position into screen space.

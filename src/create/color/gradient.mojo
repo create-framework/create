@@ -2,7 +2,7 @@ from std.math import abs, floor, max, min, sqrt
 from std.memory import ArcPointer
 
 from .color import Color, _tinted
-from create.math.matrix import Matrix
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
 
@@ -322,7 +322,7 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return sqrt(u * u + v * v)
 
     def _device_mapping(
-        self, inverse: Matrix[3, 3], center: Point, half: Vector
+        self, inverse: Transform, center: Point, half: Vector
     ) -> _DeviceMapping:
         """`_t_at` in device pixels, for a box centred on `center` with
         half-extents `half` in the shape's own coordinates, and `inverse`
@@ -331,10 +331,10 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         # `inverse`: x along (m00, m01, m02), y along (m10, m11, m12),
         # each measured from the box's centre.
         var lx = SIMD[DType.float64, 4](
-            inverse[0, 0], inverse[0, 1], inverse[0, 2] - center.x, 0.0
+            inverse._xx, inverse._xy, inverse._x0 - center.x, 0.0
         )
         var ly = SIMD[DType.float64, 4](
-            inverse[1, 0], inverse[1, 1], inverse[1, 2] - center.y, 0.0
+            inverse._yx, inverse._yy, inverse._y0 - center.y, 0.0
         )
         var zero = SIMD[DType.float64, 4](0.0)
         if self._kind == _LINEAR:

@@ -29,7 +29,9 @@ spelled out again in the GL shader, so keep the two in step.
 
 from std.math import abs, asin, cos, exp, max, min, sin, sqrt
 
-from create.math.matrix import Matrix, translate
+from create.math.vector import Vector
+from create.math.transform import Transform
+from create.math.transform import Transform
 from create.math.point import Point
 
 from ._command import (
@@ -99,7 +101,7 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
     )
 
 
-def shadow_transform(c: RenderCommand, scale: Float64) -> Matrix[3, 3]:
+def shadow_transform(c: RenderCommand, scale: Float64) -> Transform:
     """`c.transform` moved by the shadow offset.
 
     Screen-fixed by default: the offset becomes a device translation composed
@@ -111,9 +113,9 @@ def shadow_transform(c: RenderCommand, scale: Float64) -> Matrix[3, 3]:
     """
     var o = c.paint.shadow_offset
     if c.paint.shadow_follows_transform:
-        return c.transform @ translate(o.x, o.y)
+        return c.transform @ Transform(translation=Vector(o.x, o.y))
     var sf = pixel_scale(c.transform, scale)
-    return translate(o.x * sf, -o.y * sf) @ c.transform
+    return Transform(translation=Vector(o.x * sf, -o.y * sf)) @ c.transform
 
 
 def shadow_command(c: RenderCommand, scale: Float64) -> RenderCommand:
@@ -194,7 +196,7 @@ def image_shadow_mask[
     so: Origin
 ](
     c: RenderCommand,
-    m: Matrix[3, 3],
+    m: Transform,
     src: Pointer[UInt8, so],
     blur: Int,
 ) -> PlacedMask:
@@ -447,7 +449,7 @@ def blurs_analytically(c: RenderCommand) -> Bool:
 
 
 def local_stroke_thickness(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64
+    c: RenderCommand, m: Transform, scale: Float64
 ) -> Float64:
     """`c`'s stroke as the rasterisers draw it — rounded to whole pixels,
     never under one — back in local units."""

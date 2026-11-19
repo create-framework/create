@@ -9,13 +9,8 @@ from create.color.color import Color
 from create.color.gradient import Gradient
 from create.math.point import Point
 from create.math.vector import Vector
-from create.math.matrix import (
-    _apply as apply,
-    inverse,
-    rotate,
-    scale,
-    translate,
-)
+from create.math.transform import Transform
+from create.math.transform import Transform
 
 
 comptime CENTER = Point(0.0, 0.0)
@@ -202,13 +197,17 @@ def test_prints_as_source() raises -> None:
 def _check_mapping(g: Gradient) raises:
     # A device mapping is `_t_at` seen through the inverse transform, for any
     # transform: compare the two at a few device pixels.
-    var m = translate(50.0, 40.0) @ rotate(0.7) @ scale(3.0, 2.0)
-    var minv = inverse(m)
+    var m = (
+        Transform(translation=Vector(50.0, 40.0))
+        @ Transform(rotation=0.7)
+        @ Transform(scale_x=3.0, scale_y=2.0)
+    )
+    var minv = m.inverse()
     var center = Point(5.0, -2.0)
     var half = Vector(12.0, 7.0)
     var mapping = g._device_mapping(minv, center, half)
     for p in [(0.5, 0.5), (60.5, 10.5), (13.5, 77.5)]:
-        var local = apply(minv, p[0], p[1])
+        var local = minv._apply_xy(p[0], p[1])
         assert_almost_equal(
             mapping.t(p[0], p[1]),
             g._t_at(Point(local[0], local[1]), center, half),
@@ -228,7 +227,9 @@ def test_device_mapping_matches_t_at_radial() raises -> None:
 
 def test_device_mapping_of_a_zero_direction_is_the_first_stop() raises -> None:
     var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.ZERO)
-    var mapping = g._device_mapping(inverse(rotate(0.3)), CENTER, SQUARE)
+    var mapping = g._device_mapping(
+        (Transform(rotation=0.3)).inverse(), CENTER, SQUARE
+    )
     assert_equal(g._sample(mapping.t(7.5, 3.5), 7, 3), Color.RED)
 
 

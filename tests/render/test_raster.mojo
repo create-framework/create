@@ -1,5 +1,7 @@
 from std.math import abs, max, min
 from std.testing import TestSuite, assert_equal, assert_true
+from create.math.vector import Vector
+from create.math.transform import Transform
 from create.color.color import Color
 from create.render._raster import (
     blit_image_mapped,
@@ -14,7 +16,6 @@ from create.render._raster import (
 from create.text.font import _GlyphInfo
 from create.render._surface import MemorySurface, Surface
 from create.render._image_mapping import image_mapping
-from create.math.matrix import rotate, translate
 from create.image.image import Image
 from create.image.pixel_buffer import PixelBuffer
 
@@ -270,7 +271,13 @@ def _turned_blit(grid: Int) raises -> MemorySurface:
         sp.width(),
         sp.height(),
         image_mapping(
-            translate(20.0, 20.0) @ rotate(0.5), 0.0, 0.0, 20.0, 20.0, 2, 2
+            Transform(translation=Vector(20.0, 20.0)) @ Transform(rotation=0.5),
+            0.0,
+            0.0,
+            20.0,
+            20.0,
+            2,
+            2,
         ),
         grid=grid,
     )

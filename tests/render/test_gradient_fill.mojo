@@ -7,7 +7,6 @@ from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
 from create.core.headless import run_headless
-from create.math.matrix import rotate
 
 
 comptime _RED_TO_BLUE = Gradient.linear(Color.RED, Color.BLUE)
@@ -55,7 +54,7 @@ struct Scene[n: Int](Program):
             canvas.circle((0, 0), 40)
         elif Self.n == ROTATED_RECT:
             # A quarter turn counter-clockwise takes "down" to "right".
-            with canvas.transform(rotate(PI / 2.0)):
+            with canvas.transform(Transform(rotation=PI / 2.0)):
                 canvas.rectangle((0, 0), 80, 80)
         elif Self.n == ZERO_DIRECTION:
             canvas.fill(

@@ -29,6 +29,7 @@ from create.render._command import (
 from create.render.style import Style
 from create.render._shadow import shadow_command
 from create.math.vector import Vector
+from create.math.transform import Transform
 from create.render._tessellate import (
     MODE_SHADOW_BOX,
     MODE_SHADOW_EDGES,
@@ -44,7 +45,6 @@ from create.render._tessellate import (
     emit_pieces,
     emit_plain_triangle,
 )
-from create.math.matrix import rotate, scale
 from create.render.autoscale import Autoscale
 from create.color.color import Color
 from create.render._viewport import Viewport
@@ -473,7 +473,7 @@ def test_a_image_turns_with_the_transform() raises -> None:
     emit_image(
         vb,
         image_command(
-            v.base_matrix() @ rotate(PI / 2.0),
+            v.base_matrix() @ Transform(rotation=PI / 2.0),
             _plain(),
             0.0,
             0.0,
@@ -499,7 +499,7 @@ def test_a_mirrored_image_is_mirrored() raises -> None:
     emit_image(
         vb,
         image_command(
-            v.base_matrix() @ scale(-1.0, 1.0),
+            v.base_matrix() @ Transform(scale_x=-1.0, scale_y=1.0),
             _plain(),
             0.0,
             0.0,

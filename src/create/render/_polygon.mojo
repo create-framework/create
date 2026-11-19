@@ -49,7 +49,7 @@ from std.math import atan2, ceil, cos, max, min, nan, sin, sqrt
 from create.math import PI, TAU
 
 from create.geometry import Line, Polygon
-from create.math.matrix import Matrix, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
 
@@ -105,7 +105,7 @@ struct _Edge(Copyable, ImplicitlyCopyable, Movable):
         return self.x0 + self.slope * (y - self.y0)
 
 
-def polygon_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
+def polygon_quads(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """`c` (a `PolygonPayload`) mapped by `m` and tiled into fill and stroke
     quads.
 
@@ -331,14 +331,14 @@ def _emit(
     right: _Edge,
     y_lo: Float64,
     y_hi: Float64,
-    m: Matrix[3, 3],
+    m: Transform,
 ):
     """The trapezoid between `left` and `right` across the slab, mapped by
     `m`, counter-clockwise from its lower left."""
-    var a = Point(mat_apply(m, left.x_at(y_lo), y_lo))
-    var b = Point(mat_apply(m, right.x_at(y_lo), y_lo))
-    var c = Point(mat_apply(m, right.x_at(y_hi), y_hi))
-    var d = Point(mat_apply(m, left.x_at(y_hi), y_hi))
+    var a = Point(m._apply_xy(left.x_at(y_lo), y_lo))
+    var b = Point(m._apply_xy(right.x_at(y_lo), y_lo))
+    var c = Point(m._apply_xy(right.x_at(y_hi), y_hi))
+    var d = Point(m._apply_xy(left.x_at(y_hi), y_hi))
     if cls == _FILL:
         _append_quad(out.fill_quads, a, b, c, d)
     else:

@@ -30,9 +30,10 @@ from create.geometry._fillet import (
     rounded_vertices,
     sector_corner_radii,
 )
-from create.math.matrix import Matrix, rotate, translate
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
+from create.math.transform import Transform
 
 from ._clip import clip_style
 from ._command import (
@@ -53,13 +54,15 @@ from ._transform import pixel_scale
 
 
 def shape_command(
-    r: Rectangle, transform: Matrix[3, 3], style: Style, scale: Float64
+    r: Rectangle, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     """A turned rectangle is the upright one turned about its centre, so its
     gradient, rounding and stroke turn with it, as under `canvas.transform`."""
     if r.rotation != 0.0:
         return rect_command(
-            transform @ translate(Vector(r.position)) @ rotate(r.rotation),
+            transform
+            @ Transform(translation=Vector(r.position))
+            @ Transform(rotation=r.rotation),
             style,
             0.0,
             0.0,
@@ -79,7 +82,7 @@ def shape_command(
 
 
 def shape_command(
-    c: Circle, transform: Matrix[3, 3], style: Style, scale: Float64
+    c: Circle, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     return circle_command(
         transform, style, c.position.x, c.position.y, c.radius
@@ -87,7 +90,7 @@ def shape_command(
 
 
 def shape_command(
-    e: Ellipse, transform: Matrix[3, 3], style: Style, scale: Float64
+    e: Ellipse, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     """The polygon through the ellipse's outline, flattened as finely as a
     circle of its larger radius is drawn, in a multiple of four segments so
@@ -103,7 +106,7 @@ def shape_command(
 
 
 def shape_command(
-    c: Capsule, transform: Matrix[3, 3], style: Style, scale: Float64
+    c: Capsule, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     """The polygon through the capsule's outline, each half circle in half
     the chords a circle of its radius is drawn with, its gradient spanning
@@ -127,7 +130,7 @@ def shape_command(
 
 
 def shape_command(
-    t: Triangle, transform: Matrix[3, 3], style: Style, scale: Float64
+    t: Triangle, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     return triangle_command(
         transform,
@@ -143,7 +146,7 @@ def shape_command(
 
 
 def shape_command(
-    s: Sector, transform: Matrix[3, 3], style: Style, scale: Float64
+    s: Sector, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     """Rounded, the polygon through the sector's outline, its curves
     flattened as finely as circles of their radii are drawn; sharp, a
@@ -180,7 +183,7 @@ def shape_command(
 
 
 def shape_command(
-    p: Polygon, transform: Matrix[3, 3], style: Style, scale: Float64
+    p: Polygon, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     """The polygon through `p.vertices`, every corner rounded by
     `p.corner_radius` with its fillets flattened now, in local space."""
@@ -194,7 +197,7 @@ def shape_command(
 
 
 def shape_command(
-    l: Line, transform: Matrix[3, 3], style: Style, scale: Float64
+    l: Line, transform: Transform, style: Style, scale: Float64
 ) -> RenderCommand:
     return line_command(
         transform, style, l.start.x, l.start.y, l.end.x, l.end.y
@@ -202,7 +205,7 @@ def shape_command(
 
 
 def curves_command(
-    curves: List[Bezier], transform: Matrix[3, 3], style: Style
+    curves: List[Bezier], transform: Transform, style: Style
 ) -> RenderCommand:
     """`curves`, each starting where the last ends, as one stroke. At least
     one curve."""
@@ -221,11 +224,11 @@ struct RegionCapture(DrawTarget):
     `Region` into its clip's command. A region draws as exactly one shape;
     a curve never reaches it, since a curve is not a `Region`."""
 
-    var transform: Matrix[3, 3]
+    var transform: Transform
     var scale: Float64
     var command: Optional[RenderCommand]
 
-    def __init__(out self, transform: Matrix[3, 3], scale: Float64):
+    def __init__(out self, transform: Transform, scale: Float64):
         self.transform = transform
         self.scale = scale
         self.command = None

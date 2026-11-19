@@ -19,7 +19,7 @@ from std.math import ceil, cos, sin, sqrt
 from create.math import PI
 
 from create.geometry.bezier import Bezier
-from create.math.matrix import Matrix, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
 
@@ -54,7 +54,7 @@ curve turns only slightly between segments, so the limit only bites at a
 cusp, where the unclamped miter would shoot off towards infinity."""
 
 
-def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point]:
+def bezier_device_points(c: RenderCommand, m: Transform) -> List[Point]:
     """`c`'s chain of curves (`c` a `CurvesPayload`) mapped by `m` and flattened
     to one polyline of device-space points, the point where one curve meets
     the next appearing once.
@@ -66,7 +66,7 @@ def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point]:
     ref controls = c.payload[CurvesPayload].points
     var mapped = List[Point](capacity=len(controls))
     for p in controls:
-        mapped.append(mat_apply(m, p.x, p.y))
+        mapped.append(m._apply_xy(p.x, p.y))
     var points = List[Point]()
     for i in range(0, len(mapped) - 3, 3):
         var part = Bezier(
@@ -78,10 +78,10 @@ def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point]:
     return points^
 
 
-def device_x_axis(m: Matrix[3, 3]) -> Vector:
+def device_x_axis(m: Transform) -> Vector:
     """The local x axis as `m` maps it, the way a `SQUARE` dot is turned."""
-    var origin = mat_apply(m, 0.0, 0.0)
-    var x = mat_apply(m, 1.0, 0.0)
+    var origin = m._apply_xy(0.0, 0.0)
+    var x = m._apply_xy(1.0, 0.0)
     return Vector(x[0] - origin[0], x[1] - origin[1])
 
 

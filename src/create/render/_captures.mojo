@@ -11,7 +11,7 @@ frame on the CPU, then hands the pixels back here.
 
 from std.math import floor
 
-from create.math.matrix import Matrix
+from create.math.transform import Transform
 
 from ._gif import (
     DISPOSE_BACKGROUND,
@@ -42,7 +42,7 @@ struct _ImageRequest(Movable):
     var scale: Float64
     """The capture's pixel scale — the fallback for commands whose transform
     is not uniform, exactly as the live frame's autoscale factor is."""
-    var rebase: Matrix[3, 3]
+    var rebase: Transform
     """`capture_base @ window_base_inv` — see `replay`'s `pre`."""
     var transparent: Bool
 
@@ -138,7 +138,7 @@ struct _Recording(Movable):
     var height: Int
     var scale: Float64
     """The capture's pixel scale, as `_ImageRequest.scale`."""
-    var capture_base: Matrix[3, 3]
+    var capture_base: Transform
     """Design space to the capture's pixels; composed with each frame's own
     `screen_inv` at present, so a resized window records the same."""
     var fps: Float64
@@ -182,7 +182,7 @@ struct _Recording(Movable):
         out self,
         var writer: GifWriter,
         scale: Float64,
-        capture_base: Matrix[3, 3],
+        capture_base: Transform,
         fps: Float64,
         dither: Bool,
         transparent: Bool,
