@@ -43,8 +43,11 @@ struct Transforms(Program):
         canvas.fill(_HOVERED_SUN if sun_hovered else _SUN)
         canvas.draw(sun)
 
-        # Planet: rotate then translate so it orbits the sun
-        with canvas.transform(rotate(planet_angle) @ translate(160.0, 0.0)):
+        # Planet: turn, then move out along the turned x axis, so it orbits
+        # the sun
+        with canvas.transform():
+            canvas.rotate(planet_angle)
+            canvas.translate(Vector(160, 0))
             # Thin orbit guide rendered in planet's frame before further nesting
             canvas.stroke(_ORBIT, thickness=1)
             canvas.fill_enabled(False)
@@ -55,13 +58,15 @@ struct Transforms(Program):
             canvas.circle((0.0, 0.0), 18.0)
 
             # Moon: orbits the planet
-            with canvas.transform(rotate(moon_angle) @ translate(45.0, 0.0)):
+            with canvas.transform():
+                canvas.rotate(moon_angle)
+                canvas.translate(Vector(45, 0))
                 canvas.fill(_MOON)
                 canvas.circle((0.0, 0.0), 8.0)
 
         # Spinning rect cluster: same transform pattern, different shape.
         # Below and left of centre, so both coordinates are negative.
-        with canvas.transform(translate(-232.0, -165.0)):
+        with canvas.transform(Transform(translation=Vector(-232, -165))):
             canvas.stroke_enabled(False)
             canvas.fill(_HUB)
             canvas.circle((0.0, 0.0), 8.0)
@@ -69,20 +74,20 @@ struct Transforms(Program):
             for i in range(6):
                 var arm_angle = elapsed * 0.9 + Float64(i) * TAU / 6.0
                 # Arm rotates; rect counter-rotates so it stays axis-aligned in world space
-                with canvas.transform(
-                    rotate(arm_angle)
-                    @ translate(70.0, 0.0)
-                    @ rotate(-arm_angle)
-                ):
+                with canvas.transform():
+                    canvas.rotate(arm_angle)
+                    canvas.translate(Vector(70, 0))
+                    canvas.rotate(-arm_angle)
                     var t = (sin(elapsed * 2.0 + Float64(i)) + 1.0) / 2.0
                     canvas.fill(_COOL.lerp(_WARM, t))
                     canvas.rectangle((0.0, 0.0), 36.0, 18.0)
 
         # Rotating triangle fan
-        with canvas.transform(translate(232.0, -165.0)):
+        with canvas.transform(Transform(translation=Vector(232, -165))):
             for i in range(5):
                 var a = elapsed * 0.6 + Float64(i) * TAU / 5.0
-                with canvas.transform(rotate(a)):
+                with canvas.transform():
+                    canvas.rotate(a)
                     canvas.stroke_enabled(False)
                     canvas.fill(_COOL.lerp(_WARM, Float64(i) / 4.0))
                     canvas.triangle((0.0, 0.0), (60.0, 15.0), (60.0, -15.0))

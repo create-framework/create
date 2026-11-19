@@ -82,7 +82,7 @@ struct Capture(Program):
         canvas.background(_BACKGROUND)
 
         with canvas.style(stroke_enabled=False):
-            with canvas.transform(rotate(self.angle)):
+            with canvas.transform(Transform(rotation=self.angle)):
                 canvas.fill(_SQUARE)
                 canvas.rectangle((0, 0), 220, 220)
                 canvas.fill(_DISC)

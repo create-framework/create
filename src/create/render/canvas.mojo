@@ -31,7 +31,6 @@ from create.geometry import (
 from create.math.point import Point
 from create.math.vector import Vector
 from create.math.transform import Transform
-from create.math.matrix import Matrix
 from create.image.image import Image
 from create.animation.animator import Animator
 from ._backend import Backend, _seed
@@ -539,22 +538,6 @@ struct Canvas(DrawTarget, Movable):
         self._push_transform(t)
         return TransformGuard[origin_of(self)](_canvas=self)
 
-    def transform(
-        mut self, m: Matrix[3, 3]
-    ) raises -> TransformGuard[origin_of(self)]:
-        """Apply `m` to everything rendered inside a `with` block.
-
-        ```mojo
-        with canvas.transform(translate(50.0, 50.0)):
-            canvas.rectangle((0, 0), 100, 100)
-        ```
-
-        The matrix pops on exit, including on an early return or a raise.
-        Raises if `m` isn't affine, as `Transform(m)` does.
-        """
-        self._push_transform(Transform(m))
-        return TransformGuard[origin_of(self)](_canvas=self)
-
     def style(
         mut self,
         *,
@@ -698,7 +681,7 @@ struct Canvas(DrawTarget, Movable):
 
     def _sync_transform(mut self):
         self._user_inv = self._user.inverse()
-        var cam_m = self._camera._transform()
+        var cam_m = self._camera.transform()
         self._transform = self._base @ cam_m @ self._user
         self._transform_inv = self._user_inv @ cam_m.inverse() @ self._base_inv
 
@@ -710,7 +693,7 @@ struct Canvas(DrawTarget, Movable):
         For its position in world space, ask the camera:
         `camera.to_world(canvas.to_screen(local))`.
         """
-        return (self._camera._transform() @ self._user).apply(local)
+        return (self._camera.transform() @ self._user).apply(local)
 
     def clip[
         R: Region

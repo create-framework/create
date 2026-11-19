@@ -93,10 +93,14 @@ struct App(Program):
         canvas.shadow(_SQUARE_SHADOW, offset=Vector(14, -14), blur=blur)
         var square = Rectangle((0, 0), 120, 120, corner_radius=14)
         with canvas.style(fill=_SQUARE, stroke_enabled=False):
-            with canvas.transform(translate(170, 110) @ rotate(self.angle)):
+            with canvas.transform(
+                Transform(translation=Vector(170, 110), rotation=self.angle)
+            ):
                 canvas.draw(square)
             with canvas.style(shadow_follows_transform=True):
-                with canvas.transform(translate(430, 110) @ rotate(self.angle)):
+                with canvas.transform(
+                    Transform(translation=Vector(430, 110), rotation=self.angle)
+                ):
                     canvas.draw(square)
 
         # An image casts its alpha, not its box.

@@ -4,18 +4,17 @@
 struct Matrix[rows: Int, cols: Int]
 ```
 
-A fixed-size matrix, row-major, sized at compile time.
+A grid of numbers, `rows` by `cols`, sized when the program is compiled: for linear algebra, such as solving equations or working in more dimensions than two.
 
-Transforms are homogeneous, so the library's 2D transforms are
-`Matrix[3, 3]` — the extra row and column is what lets a translation be a
-multiplication like any other, and so compose into a single matrix.
+A 2D transform, moving, turning or scaling a drawing, is a `Transform`,
+not a `Matrix`. `Matrix[3, 3](transform)` gives a transform's full grid,
+and `Transform(matrix)` converts a 3 by 3 one back.
 
-Build them with the free functions below rather than by hand:
-`identity`, `translate`, `rotate`, `scale`. Compose with
-`@`, which applies right to left — `translate(x, y) @ rotate(a)` rotates
-first, then moves the rotated result. `apply(m, point)` maps a `Point`
-through it, translation included; `apply(m, vector)` maps a `Vector`,
-which a translation does not move.
+`Matrix[2, 2](1, 2, 3, 4)` takes the numbers row by row. `m[row, column]`
+reads or changes one, counting from 0. `a @ b` multiplies two matrices,
+`m.transpose()` swaps rows and columns, `identity[N]()` is the N by N
+matrix that changes nothing when multiplied, and `inverse(m)` the one
+that undoes `m`.
 
 Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 

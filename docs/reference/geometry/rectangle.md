@@ -31,7 +31,7 @@ corner's cut-away is outside. It is clamped to half the shorter side.
 `left()`/`right()`/`bottom()`/`top()` stay the bounding box's.
 
 `rotation` turns the rectangle about `position`, in radians
-counter-clockwise (y is up), as `canvas.transform(rotate(...))` turns
+counter-clockwise (y is up), as `canvas.rotate(...)` turns
 what it draws; `width` and `height` stay its own width and height. Every
 test sees the turned shape, exactly, and `left()`/`right()`/`bottom()`/
 `top()` and `bounds()` are its upright bounding box's. Drawn, it is the

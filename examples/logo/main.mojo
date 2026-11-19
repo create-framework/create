@@ -228,7 +228,9 @@ struct Logo(Program):
             # grows a little too big and shrinks back; IN_OUT_BACK dips below
             # 0 first, which would turn it inside out, so hold it at nothing.
             var size = max(piece.tween.value(), 0.0)
-            with canvas.transform(translate(Vector(piece.home)) @ scale(size)):
+            with canvas.transform(
+                Transform(translation=Vector(piece.home), scale=size)
+            ):
                 canvas.fill(piece.color)
                 canvas.draw(piece.shape)
 

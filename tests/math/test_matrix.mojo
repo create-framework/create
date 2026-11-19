@@ -5,18 +5,7 @@ from std.testing import (
     assert_true,
 )
 from std.math import abs
-from create.math import PI
-from create.math.point import Point
-from create.math.vector import Vector
-from create.math.matrix import (
-    Matrix,
-    identity,
-    translate,
-    rotate,
-    scale,
-    apply,
-    inverse,
-)
+from create.math.matrix import Matrix, identity, inverse
 
 
 def test_zero_init() raises -> None:
@@ -28,9 +17,9 @@ def test_zero_init() raises -> None:
 
 
 def test_compares_by_elements() raises -> None:
-    assert_true(translate(1.0, 2.0) == translate(1.0, 2.0))
-    assert_true(translate(1.0, 2.0) != translate(1.0, 3.0))
-    assert_true(identity[3]() == scale(1.0, 1.0))
+    assert_true(Matrix[2, 2](1, 2, 3, 4) == Matrix[2, 2](1, 2, 3, 4))
+    assert_true(Matrix[2, 2](1, 2, 3, 4) != Matrix[2, 2](1, 2, 3, 5))
+    assert_true(identity[2]() == Matrix[2, 2](1, 0, 0, 1))
 
 
 def test_get_set() raises -> None:
@@ -117,71 +106,6 @@ def test_transpose_non_square() raises -> None:
     assert_equal(t[2, 0], 3.0)
     assert_equal(t[0, 1], 4.0)
     assert_equal(t[2, 1], 6.0)
-
-
-def test_translate_structure() raises -> None:
-    var m = translate(3.0, 4.0)
-    assert_equal(m[0, 2], 3.0)
-    assert_equal(m[1, 2], 4.0)
-    assert_equal(m[0, 0], 1.0)
-    assert_equal(m[1, 1], 1.0)
-    assert_equal(m[2, 2], 1.0)
-    assert_equal(m[0, 1], 0.0)
-    assert_equal(m[1, 0], 0.0)
-
-
-def test_translate_apply() raises -> None:
-    var m = translate(3.0, 4.0)
-    var r = apply(m, Point(1.0, 2.0))
-    assert_almost_equal(r.x, 4.0, atol=1e-9)
-    assert_almost_equal(r.y, 6.0, atol=1e-9)
-
-
-def test_scale_structure() raises -> None:
-    var m = scale(2.0, 3.0)
-    assert_equal(m[0, 0], 2.0)
-    assert_equal(m[1, 1], 3.0)
-    assert_equal(m[2, 2], 1.0)
-    assert_equal(m[0, 1], 0.0)
-    assert_equal(m[1, 0], 0.0)
-
-
-def test_scale_uniform() raises -> None:
-    var m = scale(5.0)
-    assert_equal(m[0, 0], 5.0)
-    assert_equal(m[1, 1], 5.0)
-    assert_equal(m[2, 2], 1.0)
-
-
-def test_scale_apply() raises -> None:
-    var m = scale(2.0, 3.0)
-    var r = apply(m, Point(4.0, 5.0))
-    assert_almost_equal(r.x, 8.0, atol=1e-9)
-    assert_almost_equal(r.y, 15.0, atol=1e-9)
-
-
-def test_rotate_zero() raises -> None:
-    var m = rotate(0.0)
-    assert_almost_equal(m[0, 0], 1.0, atol=1e-9)
-    assert_almost_equal(m[0, 1], 0.0, atol=1e-9)
-    assert_almost_equal(m[1, 0], 0.0, atol=1e-9)
-    assert_almost_equal(m[1, 1], 1.0, atol=1e-9)
-
-
-def test_rotate_90_degrees() raises -> None:
-    # x-axis (1,0) rotated 90° → (0,1)
-    var m = rotate(PI / 2.0)
-    var r = apply(m, Point(1.0, 0.0))
-    assert_almost_equal(r.x, 0.0, atol=1e-9)
-    assert_almost_equal(r.y, 1.0, atol=1e-9)
-
-
-def test_rotate_180_degrees() raises -> None:
-    # (1,0) rotated 180° → (-1,0)
-    var m = rotate(PI)
-    var r = apply(m, Point(1.0, 0.0))
-    assert_almost_equal(r.x, -1.0, atol=1e-9)
-    assert_almost_equal(r.y, 0.0, atol=1e-9)
 
 
 def test_inverse_2x2() raises -> None:
@@ -325,50 +249,6 @@ def test_values_fill_row_by_row() raises -> None:
     assert_equal(m[0, 1], 2.0)
     assert_equal(m[1, 0], 3.0)
     assert_true(m == Matrix[2, 2](1.0, 2.0, 3.0, 4.0))
-
-
-def test_composition_translate_then_scale() raises -> None:
-    # scale @ translate applied to (1,1):
-    # translate(2,3): (1,1) → (3,4)
-    # scale(2,2): (3,4) → (6,8)
-    var t = translate(2.0, 3.0)
-    var s = scale(2.0, 2.0)
-    var composed = s @ t
-    var r = apply(composed, Point(1.0, 1.0))
-    assert_almost_equal(r.x, 6.0, atol=1e-9)
-    assert_almost_equal(r.y, 8.0, atol=1e-9)
-
-
-def test_translate_takes_a_vector() raises -> None:
-    assert_equal(translate(Vector(3.0, -4.0)), translate(3.0, -4.0))
-
-
-def test_apply_moves_a_point_by_the_translation() raises -> None:
-    var m = translate(3.0, 4.0) @ rotate(PI / 2.0)
-    var p = apply(m, Point(1.0, 0.0))
-    assert_almost_equal(p.x, 3.0, atol=1e-9)
-    assert_almost_equal(p.y, 5.0, atol=1e-9)
-
-
-def test_apply_leaves_a_vector_untranslated() raises -> None:
-    """A displacement turns and stretches with the matrix but is not
-    moved by its translation."""
-    var m = translate(3.0, 4.0) @ rotate(PI / 2.0) @ scale(2.0)
-    var v = apply(m, Vector(1.0, 0.0))
-    assert_almost_equal(v.x, 0.0, atol=1e-9)
-    assert_almost_equal(v.y, 2.0, atol=1e-9)
-    assert_equal(apply(translate(5.0, 6.0), Vector(1.0, 2.0)), Vector(1.0, 2.0))
-
-
-def test_apply_agrees_on_the_difference_of_two_points() raises -> None:
-    """Mapping two points and subtracting is mapping their difference."""
-    var m = translate(-7.0, 2.0) @ rotate(0.6) @ scale(1.5, 0.5)
-    var a = Point(1.0, 2.0)
-    var b = Point(-3.0, 0.5)
-    var mapped = apply(m, a) - apply(m, b)
-    var direct = apply(m, a - b)
-    assert_almost_equal(mapped.x, direct.x, atol=1e-9)
-    assert_almost_equal(mapped.y, direct.y, atol=1e-9)
 
 
 def main() raises:
