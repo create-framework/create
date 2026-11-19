@@ -2971,5 +2971,106 @@ def test_snapshot_refuses_a_turned_region() raises -> None:
     assert_true(raised)
 
 
+def _assert_screen(canvas: Canvas, local: Point, x: Float64, y: Float64) raises:
+    var screen = canvas.to_screen(local)
+    assert_almost_equal(screen.x, x, atol=1e-9)
+    assert_almost_equal(screen.y, y, atol=1e-9)
+    var back = canvas.to_local(screen)
+    assert_almost_equal(back.x, local.x, atol=1e-9)
+    assert_almost_equal(back.y, local.y, atol=1e-9)
+
+
+@fieldwise_init
+struct TransformCalls(Program):
+    var _unused: Int
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> TransformCalls:
+        return TransformCalls(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        # A plain call holds for what is drawn after it.
+        canvas.translate(Vector(10, 0))
+        _assert_screen(canvas, (0, 0), 10, 0)
+        # Processing's order: the turn happens about the point moved to.
+        canvas.rotate(PI / 2)
+        _assert_screen(canvas, (1, 0), 10, 1)
+        # A bare guard keeps the transform, and undoes calls inside it.
+        with canvas.transform():
+            _assert_screen(canvas, (1, 0), 10, 1)
+            canvas.scale(2)
+            _assert_screen(canvas, (1, 0), 10, 2)
+            canvas.scale(1, 3)
+            _assert_screen(canvas, (0, 1), 4, 0)
+        _assert_screen(canvas, (1, 0), 10, 1)
+        # A guard with a transform applies it inside the current one.
+        with canvas.transform(Transform(translation=Vector(5, 0))):
+            _assert_screen(canvas, (0, 0), 10, 5)
+        _assert_screen(canvas, (0, 0), 10, 0)
+        # An overlay suspends the calls and restores them.
+        with canvas.overlay():
+            _assert_screen(canvas, (1, 0), 1, 0)
+            canvas.translate(Vector(50, 50))
+        _assert_screen(canvas, (1, 0), 10, 1)
+
+
+def test_transform_calls_compose_and_guards_restore() raises -> None:
+    # Asserted inline in `update`, as `ToWorldRoundTrip` is.
+    _ = run_headless[TransformCalls](100, 100, frames=2)
+
+
+comptime _BY_CALLS = 0
+comptime _BY_MATRIX = 1
+comptime _BY_TRANSFORM = 2
+
+
+@fieldwise_init
+struct TurnedSquare[way: Int](Program):
+    var _unused: Int
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> TurnedSquare[Self.way]:
+        return TurnedSquare[Self.way](0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.BLACK)
+        canvas.fill(Color.WHITE)
+        comptime if Self.way == _BY_CALLS:
+            canvas.translate(Vector(15, -5))
+            canvas.rotate(0.5)
+            canvas.scale(1.5, 0.75)
+            canvas.rectangle((0, 0), 30, 20)
+        elif Self.way == _BY_MATRIX:
+            with canvas.transform(
+                translate(15, -5) @ rotate(0.5) @ scale(1.5, 0.75)
+            ):
+                canvas.rectangle((0, 0), 30, 20)
+        else:
+            with canvas.transform(
+                Transform(
+                    translation=Vector(15, -5),
+                    rotation=0.5,
+                    scale_x=1.5,
+                    scale_y=0.75,
+                )
+            ):
+                canvas.rectangle((0, 0), 30, 20)
+
+
+def test_transform_calls_draw_what_a_matrix_draws() raises -> None:
+    var by_matrix = run_headless[TurnedSquare[_BY_MATRIX]](100, 100)
+    assert_equal(by_matrix.pixel(65, 55), Color.WHITE)  # the square's centre
+    _assert_same_pixels(
+        run_headless[TurnedSquare[_BY_CALLS]](100, 100), by_matrix
+    )
+    _assert_same_pixels(
+        run_headless[TurnedSquare[_BY_TRANSFORM]](100, 100), by_matrix
+    )
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

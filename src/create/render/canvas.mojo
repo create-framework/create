@@ -36,9 +36,11 @@ from create.math.matrix import (
     inverse,
     apply,
     _apply as mat_apply,
+    rotate as mat_rotate,
     scale as mat_scale,
     translate as mat_translate,
 )
+from create.math.transform import Transform
 from create.image.image import Image
 from create.animation.animator import Animator
 from ._backend import Backend, _seed
@@ -476,6 +478,76 @@ struct Canvas(DrawTarget, Movable):
     # used to live here. They are properties of a matrix, not of a frame, and only
     # the replay needs them now — see `_transform.mojo`.
 
+    def translate(mut self, delta: Vector):
+        """Move everything drawn after this, until the end of the frame, by
+        `delta`, as Processing's `translate` does.
+
+        It applies inside whatever transform is already current, so a
+        `rotate` after it turns about the point it moved to. Wrap the
+        drawing in `with canvas.transform():` to undo it when the block
+        ends.
+
+        ```mojo
+        with canvas.transform():
+            canvas.translate(Vector(100, 0))
+            canvas.rotate(PI / 4)
+            canvas.rectangle((0, 0), 40, 40)  # turned about (100, 0)
+        ```
+        """
+        self._apply_transform(mat_translate(delta.x, delta.y))
+
+    def rotate(mut self, angle: Float64):
+        """Turn everything drawn after this, until the end of the frame,
+        counter-clockwise by `angle` radians about the current origin, as
+        Processing's `rotate` does. See `translate`."""
+        self._apply_transform(mat_rotate(angle))
+
+    def scale(mut self, s: Float64):
+        """Make everything drawn after this, until the end of the frame, `s`
+        times as big about the current origin, as Processing's `scale` does.
+        See `translate`."""
+        self._apply_transform(mat_scale(s, s))
+
+    def scale(mut self, sx: Float64, sy: Float64):
+        """Stretch everything drawn after this, until the end of the frame,
+        by `sx` across and `sy` up and down about the current origin. A
+        negative value mirrors. See `translate`."""
+        self._apply_transform(mat_scale(sx, sy))
+
+    def transform(mut self) -> TransformGuard[origin_of(self)]:
+        """Keep the current transform for a `with` block, and restore it when
+        the block ends, as Processing's `pushMatrix` and `popMatrix` do.
+
+        `translate`, `rotate` and `scale` inside the block are undone at its
+        end, so a helper that draws with them doesn't change what its
+        caller draws next.
+
+        ```mojo
+        with canvas.transform():
+            canvas.translate(Vector(self.position))
+            canvas.rotate(self.angle)
+            canvas.rectangle((0, 0), 40, 40)
+        ```
+        """
+        self._push_transform(identity[3]())
+        return TransformGuard[origin_of(self)](_canvas=self)
+
+    def transform(mut self, t: Transform) -> TransformGuard[origin_of(self)]:
+        """Apply `t` to everything drawn inside a `with` block, on top of the
+        current transform, and restore the current transform when the block
+        ends.
+
+        ```mojo
+        with canvas.transform(Transform(translation=Vector(50, 50))):
+            canvas.rectangle((0, 0), 100, 100)
+        ```
+
+        The block restores the transform on exit, including on an early
+        return or a raise.
+        """
+        self._push_transform(Matrix[3, 3](t))
+        return TransformGuard[origin_of(self)](_canvas=self)
+
     def transform(mut self, m: Matrix[3, 3]) -> TransformGuard[origin_of(self)]:
         """Apply `m` to everything rendered inside a `with` block.
 
@@ -617,6 +689,13 @@ struct Canvas(DrawTarget, Movable):
         # apply the outer transform last, so a nested translate would move in
         # the frame of its own children rather than its parent's.
         self._transform_stack.append(self._user)
+        self._user = self._user @ m
+        self._sync_transform()
+
+    def _apply_transform(mut self, m: Matrix[3, 3]):
+        # Like `_push_transform`, composed inside the current transform, but
+        # without a push: it lasts until a guard pops past it or the frame
+        # ends.
         self._user = self._user @ m
         self._sync_transform()
 

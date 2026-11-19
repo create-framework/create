@@ -151,7 +151,80 @@ Screen y of the bottom edge — negative, since y grows upward.
 def top(self) -> Float64
 ```
 
+### `translate`
+
+```mojo
+def translate(mut self, delta: Vector)
+```
+
+Move everything drawn after this, until the end of the frame, by `delta`, as Processing's `translate` does.
+
+It applies inside whatever transform is already current, so a
+`rotate` after it turns about the point it moved to. Wrap the
+drawing in `with canvas.transform():` to undo it when the block
+ends.
+
+```mojo
+with canvas.transform():
+    canvas.translate(Vector(100, 0))
+    canvas.rotate(PI / 4)
+    canvas.rectangle((0, 0), 40, 40)  # turned about (100, 0)
+```
+
+### `rotate`
+
+```mojo
+def rotate(mut self, angle: Float64)
+```
+
+Turn everything drawn after this, until the end of the frame, counter-clockwise by `angle` radians about the current origin, as Processing's `rotate` does. See `translate`.
+
+### `scale`
+
+```mojo
+def scale(mut self, s: Float64)
+```
+
+Make everything drawn after this, until the end of the frame, `s` times as big about the current origin, as Processing's `scale` does. See `translate`.
+
+```mojo
+def scale(mut self, sx: Float64, sy: Float64)
+```
+
+Stretch everything drawn after this, until the end of the frame, by `sx` across and `sy` up and down about the current origin. A negative value mirrors. See `translate`.
+
 ### `transform`
+
+```mojo
+def transform(mut self) -> TransformGuard[origin_of(self)]
+```
+
+Keep the current transform for a `with` block, and restore it when the block ends, as Processing's `pushMatrix` and `popMatrix` do.
+
+`translate`, `rotate` and `scale` inside the block are undone at its
+end, so a helper that draws with them doesn't change what its
+caller draws next.
+
+```mojo
+with canvas.transform():
+    canvas.translate(Vector(self.position))
+    canvas.rotate(self.angle)
+    canvas.rectangle((0, 0), 40, 40)
+```
+
+```mojo
+def transform(mut self, t: Transform) -> TransformGuard[origin_of(self)]
+```
+
+Apply `t` to everything drawn inside a `with` block, on top of the current transform, and restore the current transform when the block ends.
+
+```mojo
+with canvas.transform(Transform(translation=Vector(50, 50))):
+    canvas.rectangle((0, 0), 100, 100)
+```
+
+The block restores the transform on exit, including on an early
+return or a raise.
 
 ```mojo
 def transform(mut self, m: Matrix[Int(3), Int(3)]) -> TransformGuard[origin_of(self)]
