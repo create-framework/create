@@ -30,12 +30,12 @@ comptime _HOLD_SECONDS = 2.5
 """How long the recording keeps the finished logo on screen."""
 
 
-def _corner(row: Int, index: Int) -> Point2D:
+def _corner(row: Int, index: Int) -> Point:
     """Corner `index` along grid line `row`, counting rows down from the apex
     (0) to the base (4)."""
     var step = _SIDE / 4.0
     var height = _SIDE * sqrt(3.0) / 2.0
-    return Point2D(
+    return Point(
         (Float64(index) - Float64(row) / 2.0) * step,
         height / 2.0 - Float64(row) * height / 4.0,
     )
@@ -47,7 +47,7 @@ struct _Piece(Copyable):
 
     var shape: Triangle
     """The triangle around its own centre, placed by the transform."""
-    var home: Point2D
+    var home: Point
     """Where its centre sits, and what it grows from."""
     var color: Color
     var tween: Tween
@@ -59,7 +59,7 @@ struct _Piece(Copyable):
 struct Logo(Program):
     var pieces: List[_Piece]
     var random: Random
-    var point: Point2D
+    var point: Point
     """The chaos game's current position."""
     var layer: Canvas
     """The points so far, transparent between them."""
@@ -130,7 +130,7 @@ struct Logo(Program):
                 duration = _DURATION * 0.6
             pieces.append(
                 _Piece(
-                    shape=triangles[i].translate(-Vector2D(home)),
+                    shape=triangles[i].translate(-Vector(home)),
                     home=home,
                     color=triangle_colors[i],
                     tween=Tween(duration, curve),
@@ -162,7 +162,7 @@ struct Logo(Program):
         var points = _START_RATE / growth * (exp(growth * seconds) - 1.0)
         return min(Int(points), _MAX_POINTS)
 
-    def random_corner(mut self) -> Point2D:
+    def random_corner(mut self) -> Point:
         var pick = self.random.int(0, 3)
         if pick == 0:
             return _corner(0, 0)
@@ -228,9 +228,7 @@ struct Logo(Program):
             # grows a little too big and shrinks back; IN_OUT_BACK dips below
             # 0 first, which would turn it inside out, so hold it at nothing.
             var size = max(piece.tween.value(), 0.0)
-            with canvas.transform(
-                translate(Vector2D(piece.home)) @ scale(size)
-            ):
+            with canvas.transform(translate(Vector(piece.home)) @ scale(size)):
                 canvas.fill(piece.color)
                 canvas.draw(piece.shape)
 

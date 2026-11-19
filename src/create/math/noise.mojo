@@ -1,7 +1,7 @@
 from std.math import floor, clamp
 from std.time import perf_counter_ns
 
-from .point2d import Point2D
+from .point import Point
 from .random import Random
 from .util import lerp
 
@@ -90,7 +90,7 @@ struct Noise(Copyable, Movable, Writable):
         time, say) moves."""
         return self._layered[1](x / self._feature_size, 0.0, 0.0)
 
-    def at(self, position: Point2D) -> Float64:
+    def at(self, position: Point) -> Float64:
         """The field over the plane: terrain, texture, a flow-field angle."""
         return self._layered[2](
             position.x / self._feature_size,
@@ -98,7 +98,7 @@ struct Noise(Copyable, Movable, Writable):
             0.0,
         )
 
-    def at(self, position: Point2D, time: Float64) -> Float64:
+    def at(self, position: Point, time: Float64) -> Float64:
         """The plane field, animated: it evolves smoothly as `time` moves.
         `time` is not divided by `feature_size`; scale it at the call."""
         return self._layered[3](

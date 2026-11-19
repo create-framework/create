@@ -1,4 +1,4 @@
-"""Maths: `Point2D`, `Vector2D` and `Matrix`, `Random` and `Noise`, the easing
+"""Maths: `Point`, `Vector` and `Matrix`, `Random` and `Noise`, the easing
 curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
 """
 from .util import (
@@ -13,8 +13,8 @@ from .util import (
     radians,
 )
 from .easing import Easing, ease
-from .point2d import Point2D
-from .vector2d import Vector2D
+from .point import Point
+from .vector import Vector
 from .matrix import (
     Matrix,
     identity,

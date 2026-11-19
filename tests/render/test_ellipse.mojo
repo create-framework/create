@@ -18,7 +18,7 @@ def _canvas() raises -> Canvas:
     return canvas^
 
 
-def _inked(mut canvas: Canvas, p: Point2D) raises -> Bool:
+def _inked(mut canvas: Canvas, p: Point) raises -> Bool:
     return canvas.color_at(p) != Color.TRANSPARENT
 
 
@@ -61,8 +61,8 @@ def test_stroke_is_as_thick_all_round() raises -> None:
     assert_true(_inked(canvas, (0.5, 16.5)), "stroke along the height")
     assert_true(not _inked(canvas, (0.5, 12.5)), "inside the stroke, height")
     # The point at 45 degrees round, and its inward normal.
-    var on = Point2D(40.0 * cos(PI / 4.0), 20.0 * sin(PI / 4.0))
-    var normal = Vector2D(on.x / 1600.0, on.y / 400.0).normalize()
+    var on = Point(40.0 * cos(PI / 4.0), 20.0 * sin(PI / 4.0))
+    var normal = Vector(on.x / 1600.0, on.y / 400.0).normalize()
     assert_true(_inked(canvas, on - normal * 5.2), "5.2 in, between axes")
     assert_true(not _inked(canvas, on - normal * 7.0), "7 in, between axes")
 

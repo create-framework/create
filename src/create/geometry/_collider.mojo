@@ -1,5 +1,5 @@
 from std.math import min, max
-from create.math import Point2D
+from create.math import Point
 from ._shared import (
     _cross,
     _distance_squared,
@@ -26,32 +26,32 @@ struct _Core[count: Int](Copyable, Movable):
     """A point is one edge of no length, a segment one edge; a polygon
     closes back to its first corner."""
 
-    var corners: Array[Point2D, Self.count]
+    var corners: Array[Point, Self.count]
     var radius: Float64
 
     def __init__(
-        out self, var corners: Array[Point2D, Self.count], radius: Float64
+        out self, var corners: Array[Point, Self.count], radius: Float64
     ):
         self.corners = corners^
         self.radius = radius
 
-    def _edge_end(self, i: Int) -> Point2D:
+    def _edge_end(self, i: Int) -> Point:
         return self.corners[i + 1 if i + 1 < Self.count else 0]
 
-    def _low(self) -> Point2D:
+    def _low(self) -> Point:
         """The bottom-left corner of the polygon's bounds."""
         var low = self.corners[0]
         comptime for i in range(1, Self.count):
-            low = Point2D(
+            low = Point(
                 min(low.x, self.corners[i].x), min(low.y, self.corners[i].y)
             )
         return low
 
-    def _high(self) -> Point2D:
+    def _high(self) -> Point:
         """The top-right corner of the polygon's bounds."""
         var high = self.corners[0]
         comptime for i in range(1, Self.count):
-            high = Point2D(
+            high = Point(
                 max(high.x, self.corners[i].x), max(high.y, self.corners[i].y)
             )
         return high
@@ -69,7 +69,7 @@ struct _Core[count: Int](Copyable, Movable):
                 return True
         return False
 
-    def _holds(self, p: Point2D) -> Bool:
+    def _holds(self, p: Point) -> Bool:
         """Whether `p` is inside a polygon with an inside, edges included:
         on no edge's outer side, whichever way the corners run."""
         var has_negative = False
@@ -80,7 +80,7 @@ struct _Core[count: Int](Copyable, Movable):
             has_positive = has_positive or side > 0
         return not (has_negative and has_positive)
 
-    def _distance_squared_to(self, p: Point2D) -> Float64:
+    def _distance_squared_to(self, p: Point) -> Float64:
         """The squared distance from `p` to the polygon: 0 inside it."""
         comptime if Self.count == 1:
             return _distance_squared(p, self.corners[0])
@@ -88,7 +88,7 @@ struct _Core[count: Int](Copyable, Movable):
             return 0.0
         return self._edge_distance_squared(p)
 
-    def _edge_distance_squared(self, p: Point2D) -> Float64:
+    def _edge_distance_squared(self, p: Point) -> Float64:
         """The squared distance from `p` to the nearest edge."""
         var best = Float64.MAX
         comptime for i in range(Self.edge_count):
@@ -101,7 +101,7 @@ struct _Core[count: Int](Copyable, Movable):
         return best
 
 
-def _segment_distance_squared(p: Point2D, a: Point2D, b: Point2D) -> Float64:
+def _segment_distance_squared(p: Point, a: Point, b: Point) -> Float64:
     """The squared distance from `p` to the segment from `a` to `b`. Beside
     the segment it is the cross product squared over the length squared,
     rounded once, rather than measured to a closest point that has itself

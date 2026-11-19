@@ -23,8 +23,8 @@ from create.geometry import (
     Triangle,
 )
 from create.math.matrix import identity, rotate, scale, translate
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 from create.render.canvas import _PersistentCanvasState
 
 
@@ -891,7 +891,7 @@ def test_style_object_outside_a_with_block_holds() raises -> None:
     assert_equal(m.pixel(50, 50), Color.BLUE)
 
 
-def _red_square(mut canvas: Canvas, position: Point2D):
+def _red_square(mut canvas: Canvas, position: Point):
     """20x20, red, no stroke — the caster in the shadow tests."""
     canvas.fill(Color.RED)
     canvas.stroke_enabled(False)
@@ -910,7 +910,7 @@ struct ShadowSetters(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.shadow(Color.BLUE, offset=Vector2D(10, -10), blur=0)
+        canvas.shadow(Color.BLUE, offset=Vector(10, -10), blur=0)
         _red_square(canvas, (-60, 0))
         canvas.shadow_enabled(False)
         _red_square(canvas, (0, 0))
@@ -938,10 +938,10 @@ struct ShadowParts(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.shadow(Color.BLUE, offset=Vector2D(10, -10), blur=0)
+        canvas.shadow(Color.BLUE, offset=Vector(10, -10), blur=0)
         canvas.shadow_enabled(False)
         # A part without a colour switches it back on in the one it had.
-        canvas.shadow(offset=Vector2D(-10, -10))
+        canvas.shadow(offset=Vector(-10, -10))
         _red_square(canvas, (0, 0))
 
 
@@ -963,7 +963,7 @@ struct ShadowKeywords(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.shadow(Color.GREEN, offset=Vector2D(10, -10), blur=0)
+        canvas.shadow(Color.GREEN, offset=Vector(10, -10), blur=0)
         canvas.shadow_enabled(False)
         with canvas.style(shadow=Color.BLUE, shadow_blur=12):
             _red_square(canvas, (-75, 0))
@@ -1002,7 +1002,7 @@ struct ShadowFollowsTransform(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.shadow(Color.BLUE, offset=Vector2D(10, -10), blur=0)
+        canvas.shadow(Color.BLUE, offset=Vector(10, -10), blur=0)
         with canvas.transform(translate(-40, 0) @ rotate(PI / 2.0)):
             _red_square(canvas, (0, 0))
         canvas.shadow_follows_transform(True)
@@ -1032,7 +1032,7 @@ struct InsetKeyword(Program):
         canvas.background(Color.BLACK)
         with canvas.style(
             shadow=Color.BLUE,
-            shadow_offset=Vector2D(6, -6),
+            shadow_offset=Vector(6, -6),
             shadow_blur=0,
             shadow_inset=True,
         ):
@@ -1181,14 +1181,14 @@ def test_bezier_stays_smooth_under_camera_zoom() raises -> None:
     # it at this zoom; flattened in device pixels they stay within a
     # quarter pixel, so the band follows the curve to well under a pixel.
     var b = _zoomed_curve()
-    var samples = List[Point2D]()
+    var samples = List[Point]()
     for i in range(501):
         var p = b.at(Float64(i) / 500.0)
-        samples.append(Point2D(50.0 + 8.0 * p.x, 50.0 - 8.0 * p.y))
+        samples.append(Point(50.0 + 8.0 * p.x, 50.0 - 8.0 * p.y))
     var checked = 0
     for y in range(100):
         for x in range(100):
-            var centre = Point2D(Float64(x) + 0.5, Float64(y) + 0.5)
+            var centre = Point(Float64(x) + 0.5, Float64(y) + 0.5)
             var nearest = 0
             var distance = Float64.MAX
             for i in range(len(samples)):
@@ -1231,7 +1231,7 @@ def test_an_unstroked_bezier_records_nothing() raises -> None:
     assert_equal(m.pixel(50, 20), Color.BLACK)
 
 
-def _square_corners() -> List[Point2D]:
+def _square_corners() -> List[Point]:
     return [(-30.0, -30.0), (30.0, -30.0), (30.0, 30.0), (-30.0, 30.0)]
 
 
@@ -1668,7 +1668,7 @@ struct RotatedSectorUnderCamera(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.camera(Camera(Point2D(10.0, 0.0), 2.0))
+        canvas.camera(Camera(Point(10.0, 0.0), 2.0))
         canvas.fill(Color.WHITE)
         canvas.stroke_enabled(False)
         # The upper right quarter turned a quarter: the upper left, in
@@ -1917,18 +1917,18 @@ struct GeometryOverloads(Program):
         canvas.draw(Triangle((90.0, 50.0), (80.0, 30.0), (100.0, 30.0)))
 
         canvas.fill(Color.MAGENTA)
-        canvas.rectangle(Point2D(-90.0, -40.0), 20.0, 20.0)
+        canvas.rectangle(Point(-90.0, -40.0), 20.0, 20.0)
 
         canvas.fill(Color.YELLOW)
-        canvas.circle(Point2D(-30.0, -40.0), 10.0)
+        canvas.circle(Point(-30.0, -40.0), 10.0)
 
         canvas.stroke(Color.ORANGE, thickness=3)
-        canvas.line(Point2D(20.0, -40.0), Point2D(40.0, -40.0))
+        canvas.line(Point(20.0, -40.0), Point(40.0, -40.0))
 
         canvas.stroke_enabled(False)
         canvas.fill(Color.LIGHT_GRAY)
         canvas.triangle(
-            Point2D(90.0, -30.0), Point2D(80.0, -50.0), Point2D(100.0, -50.0)
+            Point(90.0, -30.0), Point(80.0, -50.0), Point(100.0, -50.0)
         )
 
 
@@ -1941,10 +1941,10 @@ def test_geometry_overloads_dispatch_correctly() raises -> None:
     assert_equal(m.pixel(90, 80), Color.GREEN)  # circle(Circle)
     assert_equal(m.pixel(150, 80), Color.BLUE)  # line(Line)
     assert_equal(m.pixel(210, 85), Color.CYAN)  # triangle(Triangle)
-    assert_equal(m.pixel(30, 160), Color.MAGENTA)  # rect(Point2D, w, h)
-    assert_equal(m.pixel(90, 160), Color.YELLOW)  # circle(Point2D, r)
-    assert_equal(m.pixel(150, 160), Color.ORANGE)  # line(Point2D, Point2D)
-    assert_equal(m.pixel(210, 165), Color.LIGHT_GRAY)  # triangle(Point2D x3)
+    assert_equal(m.pixel(30, 160), Color.MAGENTA)  # rect(Point, w, h)
+    assert_equal(m.pixel(90, 160), Color.YELLOW)  # circle(Point, r)
+    assert_equal(m.pixel(150, 160), Color.ORANGE)  # line(Point, Point)
+    assert_equal(m.pixel(210, 165), Color.LIGHT_GRAY)  # triangle(Point x3)
     assert_equal(m.pixel(5, 5), Color.BLACK)
 
 
@@ -2405,7 +2405,7 @@ struct AnimatorSized(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.image(self.animator, Point2D(0.0, 0.0), 40, 40)
+        canvas.image(self.animator, Point(0.0, 0.0), 40, 40)
 
 
 def test_animator_sized_overload_scales() raises -> None:
@@ -2419,7 +2419,7 @@ def test_animator_sized_overload_scales() raises -> None:
 
 struct AnimatorEveryOverload(Program):
     """Renders through both `canvas.image(Animator, ...)` overloads,
-    each from a `Float64` tuple, an `Int` tuple and a `Point2D`.
+    each from a `Float64` tuple, an `Int` tuple and a `Point`.
 
     `mojo precompile` type-checks the overloads themselves; these calls check
     that each resolves from every argument form a sketch writes. The
@@ -2446,11 +2446,11 @@ struct AnimatorEveryOverload(Program):
         # own anchor pixel.
         canvas.image(self.animator, (-40.0, 40.0))
         canvas.image(self.animator, (-20, 40))
-        canvas.image(self.animator, Point2D(0.0, 40.0))
+        canvas.image(self.animator, Point(0.0, 40.0))
         # Bottom row: the sized overloads, scaled up to 4x4.
         canvas.image(self.animator, (-40.0, -40.0), 4, 4)
         canvas.image(self.animator, (-20, -40), 4, 4)
-        canvas.image(self.animator, Point2D(0.0, -40.0), 4, 4)
+        canvas.image(self.animator, Point(0.0, -40.0), 4, 4)
 
 
 def test_every_animator_overload_renders_at_its_anchor() raises -> None:
@@ -2458,10 +2458,10 @@ def test_every_animator_overload_renders_at_its_anchor() raises -> None:
     var m = run_headless[AnimatorEveryOverload](100, 100)
     assert_equal(m.pixel(10, 10), Color.RED)  # (a, (Float64, Float64))
     assert_equal(m.pixel(30, 10), Color.RED)  # (a, (Int, Int))
-    assert_equal(m.pixel(50, 10), Color.RED)  # (a, Point2D)
+    assert_equal(m.pixel(50, 10), Color.RED)  # (a, Point)
     assert_equal(m.pixel(10, 90), Color.RED)  # (a, (Float64, Float64), w, h)
     assert_equal(m.pixel(30, 90), Color.RED)  # (a, (Int, Int), w, h)
-    assert_equal(m.pixel(50, 90), Color.RED)  # (a, Point2D, w, h)
+    assert_equal(m.pixel(50, 90), Color.RED)  # (a, Point, w, h)
     # Between the two rows nothing was rendered.
     assert_equal(m.pixel(50, 50), Color.BLACK)
 
@@ -2502,7 +2502,7 @@ struct ShadowedImageEveryOverload(Program):
         with canvas.style(
             Style(
                 shadow=Color.BLUE,
-                shadow_offset=Vector2D(0, -10),
+                shadow_offset=Vector(0, -10),
                 shadow_blur=0.0,
                 shadow_enabled=True,
             )
@@ -2907,10 +2907,10 @@ struct TurnedRectangle[how: Int](Program):
         canvas.background(Color.BLACK)
         canvas.fill(Color.YELLOW)
         canvas.stroke(Color.RED, thickness=3)
-        var at = Point2D(10.0, -5.0)
+        var at = Point(10.0, -5.0)
         comptime if Self.how == 0:
             with canvas.transform(
-                translate(Vector2D(at)) @ rotate(0.6) @ translate(-Vector2D(at))
+                translate(Vector(at)) @ rotate(0.6) @ translate(-Vector(at))
             ):
                 canvas.rectangle(at, 50.0, 20.0, corner_radius=6)
         elif Self.how == 1:

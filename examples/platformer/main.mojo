@@ -74,8 +74,8 @@ struct Game(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Game:
         return Game(
             player=Player(
-                position=Point2D(0.0, _GROUND_TOP + Player.HEIGHT / 2.0),
-                velocity=Vector2D.ZERO,
+                position=Point(0.0, _GROUND_TOP + Player.HEIGHT / 2.0),
+                velocity=Vector.ZERO,
                 jumps_left=Player.JUMPS,
             ),
             platforms=_platforms(),
@@ -88,14 +88,14 @@ struct Game(Program):
         # The world's edges are the game's to enforce, not the player's.
         var half_w = Player.WIDTH / 2.0
         var position = self.player.position
-        self.player.position = Point2D(
+        self.player.position = Point(
             clamp(position.x, _WORLD_LEFT + half_w, _WORLD_RIGHT - half_w),
             position.y,
         )
 
         # Follow the player sideways, and upwards only once it climbs past
         # the lead, so a jump from the ground leaves the view still.
-        self.camera.position = Point2D(
+        self.camera.position = Point(
             self.player.position.x,
             max(0.0, self.player.position.y - _CAMERA_LEAD),
         )

@@ -33,8 +33,8 @@ struct App(Program):
         # from +x because y is up, so the clockwise ring (indigo, like a
         # clock's hand) starts at the top and sweeps negatively.
         var sweep = TAU * self.progress.value()
-        var clockwise = Point2D(-200.0, -20.0)
-        var counter = Point2D(200.0, -20.0)
+        var clockwise = Point(-200.0, -20.0)
+        var counter = Point(200.0, -20.0)
         canvas.stroke(_TRACK, thickness=_RING_THICKNESS)
         canvas.arc(clockwise, _RING_RADIUS, 0.0, TAU)
         canvas.arc(counter, _RING_RADIUS, 0.0, TAU)

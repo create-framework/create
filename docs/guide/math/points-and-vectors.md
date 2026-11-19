@@ -3,17 +3,17 @@
 A position on the screen, and a movement across it, are both written as two numbers, an x and a y,
 measured in Create's [coordinates](../basics/coordinates.md). But they are different things: a
 position says *where*, and a movement says *which way and how far*. Create gives each its own type,
-`Point2D` for positions and `Vector2D` for movements. This page explains what points and vectors
-are, why the two types are kept apart and how to calculate with them. It assumes no prior knowledge
-of vectors.
+`Point` for positions and `Vector` for movements. This page explains what points and vectors are,
+why the two types are kept apart and how to calculate with them. It assumes no prior knowledge of
+vectors.
 
 ## Locations, displacements and extents
 
 Positions, movements and sizes each have their own kind of value:
 
-- A **location** is a `Point2D`: where something is. `canvas.circle(position, radius)` takes one,
-  and `context.mouse.position` is one.
-- A **displacement** is a `Vector2D`: a movement, with a direction and a length, but no particular
+- A **location** is a `Point`: where something is. `canvas.circle(position, radius)` takes one, and
+  `context.mouse.position` is one.
+- A **displacement** is a `Vector`: a movement, with a direction and a length, but no particular
   starting place. "Three units right and four up" is a vector; so is a velocity, such as "100 units
   a second towards the top-right".
 - An **extent** is a plain number: a `width`, a `height` or a `radius`.
@@ -36,8 +36,8 @@ The sums that make sense between points and vectors are the ones that make sense
 
 ```mojo
 # In `create`, building the `position` and `velocity` fields:
-var position = Point2D(0, 0)
-var velocity = Vector2D.from_angle(PI / 4, 100)  # 100 units a second, up and to the right
+var position = Point(0, 0)
+var velocity = Vector.from_angle(PI / 4, 100)  # 100 units a second, up and to the right
 
 # In `update`:
 self.position = self.position + self.velocity * context.time.delta  # a point moved by a vector
@@ -45,25 +45,25 @@ var to_mouse = context.mouse.position - self.position  # point minus point is a 
 ```
 
 Adding two points, on the other hand, means nothing: "the oak tree plus the old well" isn't a place.
-So `Point2D` doesn't allow it, and the mistake is caught when the program is compiled rather than
-showing up as a shape in the wrong place. For the same reason, a `Point2D` has none of the vector
+So `Point` doesn't allow it, and the mistake is caught when the program is compiled rather than
+showing up as a shape in the wrong place. For the same reason, a `Point` has none of the vector
 operations below, such as `magnitude` or `normalize`: a place has no length or direction.
 
-When you really do need to cross between the two, say so with a constructor: `Vector2D(p)` is the
-movement from the origin to the point `p`, and `Point2D(v)` is where the movement `v` takes you from
+When you really do need to cross between the two, say so with a constructor: `Vector(p)` is the
+movement from the origin to the point `p`, and `Point(v)` is where the movement `v` takes you from
 the origin.
 
 ## Writing them
 
-A point can be written as a bare pair of numbers wherever a `Point2D` is expected, so
+A point can be written as a bare pair of numbers wherever a `Point` is expected, so
 `canvas.circle((0, 0), 20)` works without naming the type. A vector always names its type:
-`Vector2D(1, 2)`. Only points are written as bare pairs, so a pair is never ambiguous.
+`Vector(1, 2)`. Only points are written as bare pairs, so a pair is never ambiguous.
 
-Mind one consequence: `p + Vector2D(1, 2)` moves `p`, but `p - (1, 2)` subtracts a *point*, since a
+Mind one consequence: `p + Vector(1, 2)` moves `p`, but `p - (1, 2)` subtracts a *point*, since a
 pair can only be a point. So it gives the vector from `(1, 2)` to `p`. To move `p` back, write `p -
-Vector2D(1, 2)`.
+Vector(1, 2)`.
 
-Common vectors have names: `Vector2D.ZERO` (no movement), `ONE` (`(1, 1)`), and the four directions
+Common vectors have names: `Vector.ZERO` (no movement), `ONE` (`(1, 1)`), and the four directions
 `UP`, `DOWN`, `LEFT` and `RIGHT`, each 1 long. Since y increases upwards, `UP` is `(0, 1)` and
 `DOWN` is `(0, -1)`.
 
@@ -98,7 +98,7 @@ less than 100 apart.
 A vector's direction can also be given as an angle, in radians, counter-clockwise from the positive
 x axis (see [Angles](angles.md)):
 
-- `Vector2D.from_angle(angle, length)` builds a vector pointing at `angle`, `length` long (1 if you
+- `Vector.from_angle(angle, length)` builds a vector pointing at `angle`, `length` long (1 if you
   leave it out). `from_angle(0)` is `RIGHT`, and `from_angle(PI / 2)` is `UP`.
 - `v.angle()` is the angle a vector points at.
 - `v.rotate(angle)` is the vector turned by `angle`, counter-clockwise.
@@ -110,7 +110,7 @@ if context.keyboard.down(Key.LEFT):
 if context.keyboard.down(Key.RIGHT):
     self.heading -= 3 * context.time.delta
 if context.keyboard.down(Key.UP):
-    self.velocity += Vector2D.from_angle(self.heading, 400 * context.time.delta)
+    self.velocity += Vector.from_angle(self.heading, 400 * context.time.delta)
 self.position = self.position + self.velocity * context.time.delta
 ```
 
@@ -123,7 +123,7 @@ player or behind:
 
 ```mojo
 # In `update`, with `heading` and `position` fields and an `enemy`:
-var facing = Vector2D.from_angle(self.heading)
+var facing = Vector.from_angle(self.heading)
 var to_enemy = (enemy.position - self.position).normalize()
 if facing.dot(to_enemy) > 0.7:  # within about 45° either side of straight ahead
     self.spot(enemy)

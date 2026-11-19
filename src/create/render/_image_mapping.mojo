@@ -12,7 +12,7 @@ on which path an image takes and where it lands.
 from std.math import ceil, floor, max, min
 
 from create.math.matrix import Matrix, _apply as mat_apply, inverse
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 
 def upright(m: Matrix[3, 3]) -> Bool:
@@ -54,7 +54,7 @@ def upright_rect(
 
 def image_corners(
     m: Matrix[3, 3], cx: Float64, cy: Float64, w: Float64, h: Float64
-) -> List[Point2D]:
+) -> List[Point]:
     """The device corners of the image centred at `(cx, cy)`, `w` by `h`
     local units: top-left, top-right, bottom-right, bottom-left of the image
     as it is stored, so row 0 is the edge at local `cy + h / 2`."""
@@ -62,10 +62,10 @@ def image_corners(
     var x1 = cx + w / 2.0
     var top = cy + h / 2.0
     var bottom = cy - h / 2.0
-    var out = List[Point2D](capacity=4)
+    var out = List[Point](capacity=4)
     for corner in [(x0, top), (x1, top), (x1, bottom), (x0, bottom)]:
         var p = mat_apply(m, corner[0], corner[1])
-        out.append(Point2D(p[0], p[1]))
+        out.append(Point(p[0], p[1]))
     return out^
 
 
@@ -132,8 +132,8 @@ def image_mapping(
     var lo = corners[0]
     var hi = corners[0]
     for p in corners:
-        lo = Point2D(min(lo.x, p.x), min(lo.y, p.y))
-        hi = Point2D(max(hi.x, p.x), max(hi.y, p.y))
+        lo = Point(min(lo.x, p.x), min(lo.y, p.y))
+        hi = Point(max(hi.x, p.x), max(hi.y, p.y))
     # Device to local, then local to texels: `u` runs right from the left
     # edge, `v` down from the top one.
     var i = inverse(m)
@@ -168,12 +168,12 @@ def mask_mapping(
     var x1 = Float64(x + width)
     var y1 = Float64(y + height)
     var p = mat_apply(a, x0, y0)
-    var lo = Point2D(p[0], p[1])
+    var lo = Point(p[0], p[1])
     var hi = lo
     for corner in [(x1, y0), (x1, y1), (x0, y1)]:
         var q = mat_apply(a, corner[0], corner[1])
-        lo = Point2D(min(lo.x, q[0]), min(lo.y, q[1]))
-        hi = Point2D(max(hi.x, q[0]), max(hi.y, q[1]))
+        lo = Point(min(lo.x, q[0]), min(lo.y, q[1]))
+        hi = Point(max(hi.x, q[0]), max(hi.y, q[1]))
     var i = inverse(a)
     return ImageMapping(
         Int(floor(lo.x)) - 1,

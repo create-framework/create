@@ -31,8 +31,8 @@ from create.geometry._fillet import (
     sector_corner_radii,
 )
 from create.math.matrix import Matrix, rotate, translate
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 from ._clip import clip_style
 from ._command import (
@@ -59,7 +59,7 @@ def shape_command(
     gradient, rounding and stroke turn with it, as under `canvas.transform`."""
     if r.rotation != 0.0:
         return rect_command(
-            transform @ translate(Vector2D(r.position)) @ rotate(r.rotation),
+            transform @ translate(Vector(r.position)) @ rotate(r.rotation),
             style,
             0.0,
             0.0,
@@ -110,7 +110,7 @@ def shape_command(
     its bounds. With no radius there is no inside, and fewer than three
     vertices draw nothing."""
     if c.radius <= 0.0:
-        return polygon_command(transform, style, List[Point2D]())
+        return polygon_command(transform, style, List[Point]())
     var steps = max(
         (circle_segments(c.radius * pixel_scale(transform, scale)) + 1) // 2, 2
     )
@@ -206,7 +206,7 @@ def curves_command(
 ) -> RenderCommand:
     """`curves`, each starting where the last ends, as one stroke. At least
     one curve."""
-    var points = List[Point2D](capacity=3 * len(curves) + 1)
+    var points = List[Point](capacity=3 * len(curves) + 1)
     points.append(curves[0].start)
     for c in curves:
         points.append(c.control1)

@@ -25,7 +25,7 @@ from create.math import PI, TAU
 
 from create.geometry._shared import _normalized_sweep
 from create.math.matrix import Matrix, _apply as mat_apply
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 from ._command import RenderCommand, SectorPayload
 from ._pieces import Pieces
@@ -80,10 +80,10 @@ def sector_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
 
     # Along each ray, from the tip: stroke to `inner`, fill to `middle`,
     # stroke to `outer`. Any stretch may be empty.
-    var tip = List[Point2D]()
-    var inner = List[Point2D]()
-    var middle = List[Point2D]()
-    var outer = List[Point2D]()
+    var tip = List[Point]()
+    var inner = List[Point]()
+    var middle = List[Point]()
+    var outer = List[Point]()
     var lengths = List[Tuple[Float64, Float64, Float64]]()
     for i in range(len(alphas)):
         var alpha = alphas[i]
@@ -100,10 +100,10 @@ def sector_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
             cc = min(max(hole[0], a), d)
         var dx = cos(start + alpha)
         var dy = sin(start + alpha)
-        tip.append(Point2D(mat_apply(m, cx + dx * a, cy + dy * a)))
-        inner.append(Point2D(mat_apply(m, cx + dx * cc, cy + dy * cc)))
-        middle.append(Point2D(mat_apply(m, cx + dx * d, cy + dy * d)))
-        outer.append(Point2D(mat_apply(m, cx + dx * b, cy + dy * b)))
+        tip.append(Point(mat_apply(m, cx + dx * a, cy + dy * a)))
+        inner.append(Point(mat_apply(m, cx + dx * cc, cy + dy * cc)))
+        middle.append(Point(mat_apply(m, cx + dx * d, cy + dy * d)))
+        outer.append(Point(mat_apply(m, cx + dx * b, cy + dy * b)))
         lengths.append((cc - a, d - cc, b - d))
 
     for i in range(len(inner) - 1):
@@ -121,7 +121,7 @@ def sector_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
 
     if t > 0.0 and len(out.fill_quads) == 0 and c.paint._fill_visible():
         out.fill_quads = out.stroke_quads^
-        out.stroke_quads = List[Point2D]()
+        out.stroke_quads = List[Point]()
     return out^
 
 
@@ -234,7 +234,7 @@ def _capsule_distance(beta: Float64, r: Float64, g: Float64) -> Float64:
 
 
 def _append_quad(
-    mut corners: List[Point2D], a: Point2D, b: Point2D, c: Point2D, d: Point2D
+    mut corners: List[Point], a: Point, b: Point, c: Point, d: Point
 ):
     corners.append(a)
     corners.append(b)

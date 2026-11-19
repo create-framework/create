@@ -32,7 +32,7 @@ from std.math import atan2, cos, max, min, sin, sqrt
 from create.math import TAU
 
 from create.math.matrix import Matrix, _apply as mat_apply
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 from ._command import RenderCommand, TrianglePayload
 from ._pieces import Pieces
@@ -49,7 +49,7 @@ def triangle_pieces(
     the fill one convex polygon (none when the stroke leaves no room for
     it), the stroke a ring of quads."""
     var out = Pieces()
-    var fill = List[Point2D]()
+    var fill = List[Point]()
     _tile_triangle(c, m, scale, fill, out.stroke_quads)
     if len(fill) >= 3:
         out.fill_polygons.append(fill^)
@@ -60,8 +60,8 @@ def _tile_triangle(
     c: RenderCommand,
     m: Matrix[3, 3],
     scale: Float64,
-    mut fill: List[Point2D],
-    mut ring: List[Point2D],
+    mut fill: List[Point],
+    mut ring: List[Point],
 ):
     """Append `c`'s fill outline to `fill` and its stroke's quads to
     `ring`, whichever of the two its style shows; the caller keeps what is
@@ -100,7 +100,7 @@ def _tile_triangle(
         # No interior: nothing to fill, and the stroke is the band along
         # the edges there are.
         if t > 0.0:
-            var path = List[Point2D](capacity=4)
+            var path = List[Point](capacity=4)
             for i in range(4):
                 path.append(mat_apply(m, xs[i % 3], ys[i % 3]))
             ring = stroke_quads(path, t * sf)
@@ -138,7 +138,7 @@ def _tile_triangle(
     # The inner edge once it is sharp: the triangle shrunk by `t`, or the
     # incentre alone once the band fills it.
     var k = max((inradius - t) / inradius, 0.0)
-    var sharp_inner = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
+    var sharp_inner = Array[Point, 3](fill=Point(0.0, 0.0))
     for i in range(3):
         sharp_inner[i] = mat_apply(
             m, ix + (xs[i] - ix) * k, iy + (ys[i] - iy) * k
@@ -149,8 +149,8 @@ def _tile_triangle(
         # normal round to the outgoing one's; `outer[i]` and `inner[i]` are
         # its points at the same angles, `inner` only while `t < r`.
         var ck = (inradius - r) / inradius
-        var outer = List[List[Point2D]](capacity=3)
-        var inner = List[List[Point2D]](capacity=3)
+        var outer = List[List[Point]](capacity=3)
+        var inner = List[List[Point]](capacity=3)
         for i in range(3):
             var kx = ix + (xs[i] - ix) * ck
             var ky = iy + (ys[i] - iy) * ck
@@ -160,8 +160,8 @@ def _tile_triangle(
             if a1 < a0:
                 a1 += TAU
             var n = _arc_segments(r * sf, a1 - a0)
-            var o = List[Point2D](capacity=n + 1)
-            var q = List[Point2D](capacity=n + 1)
+            var o = List[Point](capacity=n + 1)
+            var q = List[Point](capacity=n + 1)
             for step in range(n + 1):
                 var a = a0 + (a1 - a0) * Float64(step) / Float64(n)
                 o.append(mat_apply(m, kx + r * cos(a), ky + r * sin(a)))
@@ -227,7 +227,7 @@ def _tile_triangle(
             fill.append(mat_apply(m, xs[i], ys[i]))
         return
     # Sharp: the outer edge is the triangle's own corners.
-    var corners = Array[Point2D, 3](fill=Point2D(0.0, 0.0))
+    var corners = Array[Point, 3](fill=Point(0.0, 0.0))
     for i in range(3):
         corners[i] = mat_apply(m, xs[i], ys[i])
     for i in range(3):
@@ -239,9 +239,7 @@ def _tile_triangle(
     return
 
 
-def _quad(
-    mut corners: List[Point2D], a: Point2D, b: Point2D, c: Point2D, d: Point2D
-):
+def _quad(mut corners: List[Point], a: Point, b: Point, c: Point, d: Point):
     corners.append(a)
     corners.append(b)
     corners.append(c)

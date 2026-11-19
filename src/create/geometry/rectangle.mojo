@@ -1,5 +1,5 @@
 from std.math import cos, min, max, sin
-from create.math import PI, Point2D, Vector2D
+from create.math import PI, Point, Vector
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rect_corner_radius
 from .bezier import _curve_segments
@@ -34,7 +34,7 @@ struct Rectangle(
     `bounds`, `left`/`right`/`bottom`/`top`, `closest_point`, `contains`,
     `move_to`, `translate`.
 
-    Locations are `Point2D` and displacements `Vector2D`, throughout this
+    Locations are `Point` and displacements `Vector`, throughout this
     module; extents are plain scalars, like `Circle`'s radius. Width and
     height are two independent lengths rather than a coordinate pair, so
     they are not grouped: read them as `width`/`height` and pair them however
@@ -68,7 +68,7 @@ struct Rectangle(
     `shadow_follows_transform` is set, as for any turned shape.
     """
 
-    var position: Point2D
+    var position: Point
     var width: Float64
     var height: Float64
     var corner_radius: Float64
@@ -80,7 +80,7 @@ struct Rectangle(
 
     def __init__(
         out self,
-        position: Point2D,
+        position: Point,
         width: Float64,
         height: Float64,
         *,
@@ -95,7 +95,7 @@ struct Rectangle(
 
     def __init__(
         out self,
-        position: Point2D,
+        position: Point,
         width: Int,
         height: Int,
         *,
@@ -137,7 +137,7 @@ struct Rectangle(
             writer.write(", rotation=", self.rotation)
         writer.write(")")
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         return self.position
 
     def area(self) -> Float64:
@@ -151,7 +151,7 @@ struct Rectangle(
         var half = self._half_extents()
         return Rectangle(self.position, 2.0 * half[0], 2.0 * half[1])
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         var r = self._radius()
         if r > 0.0:
             return _rounded_closest(self._inner().closest_point(p), p, r)
@@ -162,12 +162,12 @@ struct Rectangle(
             if abs(q.x) <= half_w and abs(q.y) <= half_h:
                 return p
             return self._from_local(
-                Vector2D(
+                Vector(
                     max(-half_w, min(q.x, half_w)),
                     max(-half_h, min(q.y, half_h)),
                 )
             )
-        return Point2D(
+        return Point(
             max(self.left(), min(p.x, self.right())),
             max(self.bottom(), min(p.y, self.top())),
         )
@@ -184,7 +184,7 @@ struct Rectangle(
     def top(self) -> Float64:
         return self.position.y + self._half_extents()[1]
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         var r = self._radius()
         if r > 0.0:
             return _distance_squared(self._inner().closest_point(p), p) <= r * r
@@ -303,12 +303,12 @@ struct Rectangle(
     def draw_to[T: DrawTarget](self, mut target: T):
         target._rectangle(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         var moved = self.copy()
         moved.position = position
         return moved^
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^
@@ -346,7 +346,7 @@ struct Rectangle(
         flattened."""
         var r = self._radius()
         if r <= 0.0:
-            var corners = List[Point2D](capacity=4)
+            var corners = List[Point](capacity=4)
             for p in self._points():
                 corners.append(p)
             return Polygon(corners^)
@@ -364,15 +364,15 @@ struct Rectangle(
         var half_h = self.height / 2.0 - r
         return (half_w * c + half_h * s + r, half_w * s + half_h * c + r)
 
-    def _to_local(self, p: Point2D) -> Vector2D:
+    def _to_local(self, p: Point) -> Vector:
         """`p` from the centre, in the rectangle's own upright frame."""
         return (p - self.position).rotate(-self.rotation)
 
-    def _from_local(self, v: Vector2D) -> Point2D:
+    def _from_local(self, v: Vector) -> Point:
         """Back from the rectangle's own frame: `_to_local` undone."""
         return self.position + v.rotate(self.rotation)
 
-    def _points(self) -> Array[Point2D, 4]:
+    def _points(self) -> Array[Point, 4]:
         """The corners, counter-clockwise from the upright rectangle's
         bottom left."""
         if self.rotation != 0.0:
@@ -385,13 +385,13 @@ struct Rectangle(
                 self.position - u + v,
             ]
         return [
-            Point2D(self.left(), self.bottom()),
-            Point2D(self.right(), self.bottom()),
-            Point2D(self.right(), self.top()),
-            Point2D(self.left(), self.top()),
+            Point(self.left(), self.bottom()),
+            Point(self.right(), self.bottom()),
+            Point(self.right(), self.top()),
+            Point(self.left(), self.top()),
         ]
 
-    def _holds_strictly(self, p: Point2D) -> Bool:
+    def _holds_strictly(self, p: Point) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary."""
         if self.rotation != 0.0:

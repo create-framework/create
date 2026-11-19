@@ -17,7 +17,7 @@ from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
 from create.color.gradient import Gradient
-from create.math.vector2d import Vector2D
+from create.math.vector import Vector
 from create.text.font import Font, FontWeight
 
 
@@ -40,7 +40,7 @@ struct Paint(Copyable, ImplicitlyCopyable, Movable):
     command is recorded."""
     var blend_mode: BlendMode
     var shadow_color: Color
-    var shadow_offset: Vector2D
+    var shadow_offset: Vector
     var shadow_blur: Float64
     var shadow_spread: Float64
     var shadow_inset: Bool

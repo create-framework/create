@@ -28,7 +28,7 @@ from std.math import abs, ceil, cos, max, min, sin, sqrt
 from create.math import PI
 
 from create.math.matrix import Matrix, inverse, _apply as mat_apply
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 from ._command import (
     CirclePayload,
@@ -582,7 +582,7 @@ def emit_plain_triangle(
     _shade_fill(vb, first, c, ramp_row)
 
 
-def _emit_convex(mut vb: VertexBuffer, corners: List[Point2D], color: Color):
+def _emit_convex(mut vb: VertexBuffer, corners: List[Point], color: Color):
     """The convex polygon `corners` as a fan of triangles."""
     for i in range(1, len(corners) - 1):
         vb.triangle(
@@ -596,7 +596,7 @@ def _emit_convex(mut vb: VertexBuffer, corners: List[Point2D], color: Color):
         )
 
 
-def _emit_quads(mut vb: VertexBuffer, corners: List[Point2D], color: Color):
+def _emit_quads(mut vb: VertexBuffer, corners: List[Point], color: Color):
     """Each quad of `corners`, four corners apiece, as two triangles."""
     for q in range(0, len(corners), 4):
         vb.quad(

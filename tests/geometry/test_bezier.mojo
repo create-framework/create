@@ -18,20 +18,20 @@ from create.geometry import (
     Triangle,
 )
 from create.geometry.spline import Spline
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 
 def _s_curve() -> Bezier:
     return Bezier((0.0, 0.0), (100.0, 100.0), (0.0, 100.0), (100.0, 0.0))
 
 
-def _assert_point_near(p: Point2D, q: Point2D, tol: Float64 = 1e-9) raises:
+def _assert_point_near(p: Point, q: Point, tol: Float64 = 1e-9) raises:
     assert_almost_equal(p.x, q.x, atol=tol)
     assert_almost_equal(p.y, q.y, atol=tol)
 
 
-def _distance_to_segment(p: Point2D, a: Point2D, b: Point2D) -> Float64:
+def _distance_to_segment(p: Point, a: Point, b: Point) -> Float64:
     var ab = b - a
     var len_sq = ab.magnitude_squared()
     if len_sq == 0.0:
@@ -56,7 +56,7 @@ def test_at_straight_curve_is_collinear() raises -> None:
 def test_at_extrapolates() raises -> None:
     # A straight, evenly spaced curve is linear in t, so t = 2 is twice as far.
     var b = Bezier((0.0, 0.0), (1.0, 0.0), (2.0, 0.0), (3.0, 0.0))
-    _assert_point_near(b.at(2.0), Point2D(6.0, 0.0))
+    _assert_point_near(b.at(2.0), Point(6.0, 0.0))
 
 
 def test_tangent_at_ends_points_at_controls() raises -> None:
@@ -172,8 +172,8 @@ def test_flatten_degenerate_curve() raises -> None:
     var b = Bezier((5.0, 5.0), (5.0, 5.0), (5.0, 5.0), (5.0, 5.0))
     var points = b.flatten(0.25)
     assert_equal(len(points), 2)
-    assert_equal(points[0], Point2D(5.0, 5.0))
-    assert_equal(points[1], Point2D(5.0, 5.0))
+    assert_equal(points[0], Point(5.0, 5.0))
+    assert_equal(points[1], Point(5.0, 5.0))
 
 
 def test_length_of_straight_curve() raises -> None:
@@ -231,7 +231,7 @@ def test_at_distance_steps_evenly() raises -> None:
 def test_at_distance_on_degenerate_curve() raises -> None:
     var b = Bezier((5.0, 5.0), (5.0, 5.0), (5.0, 5.0), (5.0, 5.0))
     assert_equal(b.length(), 0.0)
-    assert_equal(b.at_distance(1.0), Point2D(5.0, 5.0))
+    assert_equal(b.at_distance(1.0), Point(5.0, 5.0))
 
 
 def test_beziers_is_itself() raises -> None:
@@ -241,7 +241,7 @@ def test_beziers_is_itself() raises -> None:
     assert_equal(curves[0], b)
 
 
-def _brute_closest(b: Bezier, p: Point2D) -> Point2D:
+def _brute_closest(b: Bezier, p: Point) -> Point:
     var best = b.start
     for i in range(10001):
         var q = b.at(Float64(i) / 10000.0)
@@ -272,7 +272,7 @@ def test_closest_point_matches_brute_force() raises -> None:
         # A loop.
         Bezier((0.0, 0.0), (5.0, 5.0), (-1.0, 5.0), (4.0, 0.0)),
     ]
-    var points: List[Point2D] = [
+    var points: List[Point] = [
         (2.0, 1.0),
         (2.0, 3.0),
         (0.5, 2.5),
@@ -288,7 +288,7 @@ def test_closest_point_matches_brute_force() raises -> None:
 
 def test_closest_point_on_a_collapsed_curve() raises -> None:
     var b = Bezier((1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0))
-    assert_equal(b.closest_point((5.0, 5.0)), Point2D(1.0, 1.0))
+    assert_equal(b.closest_point((5.0, 5.0)), Point(1.0, 1.0))
 
 
 def _hump() -> Bezier:
@@ -300,7 +300,7 @@ def test_intersects_a_point_on_it_and_not_off_it() raises -> None:
     var b = _hump()
     assert_true(b.intersects(b.at(0.37)))
     assert_true(b.intersects(b.start))
-    assert_false(b.intersects(Point2D(2.0, 2.0)))
+    assert_false(b.intersects(Point(2.0, 2.0)))
 
 
 def test_intersects_a_line_crossing_its_bulge() raises -> None:
@@ -353,7 +353,7 @@ def test_intersects_another_bezier() raises -> None:
 
 def test_intersects_a_spline() raises -> None:
     var b = _hump()
-    var s = Spline([Point2D(-1.0, 2.0), Point2D(2.0, 1.5), Point2D(5.0, 2.0)])
+    var s = Spline([Point(-1.0, 2.0), Point(2.0, 1.5), Point(5.0, 2.0)])
     assert_true(b.intersects(s))
     assert_true(s.intersects(b))
 
@@ -378,7 +378,7 @@ def test_intersects_a_region_crossing_its_edge() raises -> None:
     assert_true(b.intersects(Rectangle((2.0, 3.5), 2.0, 2.0)))
     assert_true(b.intersects(Triangle((1.0, 4.0), (3.0, 4.0), (2.0, 2.0))))
     assert_true(b.intersects(Sector((2.0, 5.0), 3.0, -2.0, 1.0)))
-    assert_true(b.intersects(Polygon.regular(Point2D(2.0, 4.0), 1.5, sides=5)))
+    assert_true(b.intersects(Polygon.regular(Point(2.0, 4.0), 1.5, sides=5)))
 
 
 def test_intersects_misses_regions_beside_it() raises -> None:
@@ -386,7 +386,7 @@ def test_intersects_misses_regions_beside_it() raises -> None:
     assert_false(b.intersects(Rectangle((2.0, 1.0), 1.0, 1.0)))
     assert_false(b.intersects(Triangle((1.0, 1.0), (3.0, 1.0), (2.0, 2.0))))
     assert_false(b.intersects(Sector((2.0, 6.0), 2.0, 0.0, PI)))
-    assert_false(b.intersects(Polygon.regular(Point2D(8.0, 0.0), 1.0, sides=6)))
+    assert_false(b.intersects(Polygon.regular(Point(8.0, 0.0), 1.0, sides=6)))
 
 
 def test_intersects_sees_a_rounded_corner() raises -> None:
@@ -403,17 +403,17 @@ def test_intersects_sees_a_rounded_corner() raises -> None:
 
 def test_translate_moves_every_point() raises -> None:
     var b = _s_curve()
-    b = b.translate(Vector2D(10.0, -5.0))
-    assert_equal(b.start, Point2D(10.0, -5.0))
-    assert_equal(b.control1, Point2D(110.0, 95.0))
-    assert_equal(b.control2, Point2D(10.0, 95.0))
-    assert_equal(b.end, Point2D(110.0, -5.0))
+    b = b.translate(Vector(10.0, -5.0))
+    assert_equal(b.start, Point(10.0, -5.0))
+    assert_equal(b.control1, Point(110.0, 95.0))
+    assert_equal(b.control2, Point(10.0, 95.0))
+    assert_equal(b.end, Point(110.0, -5.0))
 
 
 def test_equality() raises -> None:
     assert_true(_s_curve() == _s_curve())
     var other = _s_curve()
-    other.control2 = Point2D(1.0, 1.0)
+    other.control2 = Point(1.0, 1.0)
     assert_true(_s_curve() != other)
 
 
@@ -422,8 +422,8 @@ def test_writes_keyword_form() raises -> None:
     assert_equal(
         String(b),
         (
-            "Bezier(start=Point2D(0.0, 0.0), control1=Point2D(1.0, 2.0),"
-            " control2=Point2D(3.0, 4.0), end=Point2D(5.0, 6.0))"
+            "Bezier(start=Point(0.0, 0.0), control1=Point(1.0, 2.0),"
+            " control2=Point(3.0, 4.0), end=Point(5.0, 6.0))"
         ),
     )
 

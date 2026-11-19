@@ -1,43 +1,43 @@
-# Vector2D
+# Vector
 
 ```mojo
-struct Vector2D
+struct Vector
 ```
 
-A 2D displacement or direction: arithmetic operators, `magnitude`, `normalize`, `dot`, `distance`, `lerp`, the angle helpers `from_angle`, `angle` and `rotate`, the length helpers `with_length` and `limit`, and an explicit constructor from a `Point2D`.
+A 2D displacement or direction: arithmetic operators, `magnitude`, `normalize`, `dot`, `distance`, `lerp`, the angle helpers `from_angle`, `angle` and `rotate`, the length helpers `with_length` and `limit`, and an explicit constructor from a `Point`.
 
-Unlike `Point2D`, a bare tuple does not convert to one implicitly: a
-displacement literal names its type, `rect.translate(Vector2D(3, 4))`.
+Unlike `Point`, a bare tuple does not convert to one implicitly: a
+displacement literal names its type, `rect.translate(Vector(3, 4))`.
 Only one type taking a bare tuple is what keeps `canvas.circle((0, 0), 20)`
 unambiguous, and locations are the literals a program writes most;
 displacements mostly arrive from arithmetic (`b - a`, `vel * dt`), which
-already yields a `Vector2D`.
+already yields a `Vector`.
 
-Crossing to another type is an explicit constructor: `Vector2D(p)` is
-the displacement from the origin to the position `p`, and `Point2D(v)`
+Crossing to another type is an explicit constructor: `Vector(p)` is
+the displacement from the origin to the position `p`, and `Point(v)`
 the reverse. Naming the target type is what
 keeps the conversion visible. `xy` returns the components as a plain
 tuple, to destructure: `var (x, y) = v.xy()`.
 
 Angles are radians counter-clockwise from +x, as everywhere in the
-library (y is up): `Vector2D.from_angle(a) * speed` aims, `v.angle()`
+library (y is up): `Vector.from_angle(a) * speed` aims, `v.angle()`
 reads the heading back, `v.rotate(a)` turns. Like `normalize`, every
 helper returns a new vector and leaves `self` alone.
 
 The direction constants follow the screen's axes, y up: `UP` is
-`Vector2D(0, 1)` and `DOWN` is `Vector2D(0, -1)`, so gravity is
-`Vector2D.DOWN * 9.81`.
+`Vector(0, 1)` and `DOWN` is `Vector(0, -1)`, so gravity is
+`Vector.DOWN * 9.81`.
 
 Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Constants
 
-- `ZERO = Vector2D(SIMD(0), SIMD(0))`
-- `ONE = Vector2D(SIMD(1), SIMD(1))`
-- `UP = Vector2D(SIMD(0), SIMD(1))`
-- `DOWN = Vector2D(SIMD(0), SIMD(-1))`
-- `LEFT = Vector2D(SIMD(-1), SIMD(0))`
-- `RIGHT = Vector2D(SIMD(1), SIMD(0))`
+- `ZERO = Vector(SIMD(0), SIMD(0))`
+- `ONE = Vector(SIMD(1), SIMD(1))`
+- `UP = Vector(SIMD(0), SIMD(1))`
+- `DOWN = Vector(SIMD(0), SIMD(-1))`
+- `LEFT = Vector(SIMD(-1), SIMD(0))`
+- `RIGHT = Vector(SIMD(1), SIMD(0))`
 
 ## Fields
 
@@ -57,7 +57,7 @@ def __init__(out self, t: Tuple[Float64, Float64])
 
 ```mojo
 @staticmethod
-def __init__(out self, p: Point2D)
+def __init__(out self, p: Point)
 ```
 
 The displacement from the origin to `p`.

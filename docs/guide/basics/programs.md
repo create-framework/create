@@ -269,8 +269,8 @@ you see can be pasted straight back into the program:
 
 ```mojo
 # In `update`:
-print(context.mouse.position)  # Point2D(-120.0, 45.5)
-print(Rectangle((0, 0), 100, 50))  # Rectangle(position=Point2D(0.0, 0.0), width=100.0, height=50.0)
+print(context.mouse.position)  # Point(-120.0, 45.5)
+print(Rectangle((0, 0), 100, 50))  # Rectangle(position=Point(0.0, 0.0), width=100.0, height=50.0)
 print(Color.RED)  # Color(255, 0, 0, 255)
 ```
 

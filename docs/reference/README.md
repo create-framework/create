@@ -18,9 +18,9 @@ The input devices `Context` holds: `Keyboard`, `Mouse` and `Gamepad`, and the `K
 
 ## [`create.math`](math/README.md)
 
-Maths: `Point2D`, `Vector2D` and `Matrix`, `Random` and `Noise`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
+Maths: `Point`, `Vector` and `Matrix`, `Random` and `Noise`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
 
-- **Types:** [`Easing`](math/easing.md), [`Point2D`](math/point2d.md), [`Vector2D`](math/vector2d.md), [`Matrix`](math/matrix.md), [`Random`](math/random.md), [`Noise`](math/noise.md)
+- **Types:** [`Easing`](math/easing.md), [`Point`](math/point.md), [`Vector`](math/vector.md), [`Matrix`](math/matrix.md), [`Random`](math/random.md), [`Noise`](math/noise.md)
 - **Functions:** [`lerp`](math/lerp.md), [`map`](math/map.md), [`inverse_lerp`](math/inverse_lerp.md), [`smoothstep`](math/smoothstep.md), [`sign`](math/sign.md), [`fractional_part`](math/fractional_part.md), [`wrap`](math/wrap.md), [`degrees`](math/degrees.md), [`radians`](math/radians.md), [`ease`](math/ease.md), [`identity`](math/identity.md), [`inverse`](math/inverse.md), [`apply`](math/apply.md), [`translate`](math/translate.md), [`rotate`](math/rotate.md), [`scale`](math/scale.md)
 - **Constants:** [`PI`](math/README.md#pi), [`TAU`](math/README.md#tau)
 

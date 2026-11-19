@@ -15,16 +15,16 @@ comptime _HIT = Color(226, 46, 56)
 comptime _SHADOW = Color(0, 0, 0, 170)
 comptime _BALL = Color(98, 104, 168)
 
-comptime _PIE = Point2D(-260.0, -20.0)
+comptime _PIE = Point(-260.0, -20.0)
 comptime _PIE_RADIUS = 190.0
 comptime _POP = 16.0
 """How far the slice under the mouse slides out, in design units."""
 
-comptime _PACMAN = Point2D(240.0, -20.0)
+comptime _PACMAN = Point(240.0, -20.0)
 comptime _CHEW = 4.0
 """How fast the pac-man's mouth works; it shuts every `PI / _CHEW` seconds."""
 
-comptime _BALL_HOME = Point2D(500.0, -280.0)
+comptime _BALL_HOME = Point(500.0, -280.0)
 comptime _RESPAWN = 3.0
 """Seconds an eaten ball stays gone before it is back at `_BALL_HOME`."""
 
@@ -117,9 +117,7 @@ struct App(Program):
             var slice = Sector(_PIE, _PIE_RADIUS, start, -TAU * shares[i])
             if slice.contains(mouse):
                 var middle = start - PI * shares[i]
-                slice = slice.translate(
-                    Vector2D(cos(middle), sin(middle)) * _POP
-                )
+                slice = slice.translate(Vector(cos(middle), sin(middle)) * _POP)
             canvas.fill(_slice_color(i))
             canvas.draw(slice)
             start = slice.end_angle()
@@ -133,7 +131,7 @@ struct App(Program):
             stroke=_HIT if hit else _BACKGROUND,
             stroke_thickness=6,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(8, -12),
+            shadow_offset=Vector(8, -12),
             shadow_blur=20,
         ):
             canvas.draw(pacman)

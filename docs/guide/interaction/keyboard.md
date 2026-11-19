@@ -14,9 +14,9 @@ only in the frame it goes down or comes up:
 # In `update`: walk while an arrow is held, jump once per press of Space.
 var step = 200 * context.time.delta
 if context.keyboard.down(Key.LEFT):
-    self.position = self.position - Vector2D(step, 0)
+    self.position = self.position - Vector(step, 0)
 if context.keyboard.down(Key.RIGHT):
-    self.position = self.position + Vector2D(step, 0)
+    self.position = self.position + Vector(step, 0)
 if context.keyboard.pressed(Key.SPACE):
     self.jump()
 ```

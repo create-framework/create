@@ -245,7 +245,7 @@ def _line_bench():
             var y = rng.float(-500.0, 500.0)
             var len = rng.float(20.0, 80.0)
             var quad = stroke_segment(
-                Point2D(x, y), Point2D(x + len, y + len * 0.3), 6.0
+                Point(x, y), Point(x + len, y + len * 0.3), 6.0
             )
             ref q = quad.value()
             var qx: Array[Float64, 4] = [q[0].x, q[1].x, q[2].x, q[3].x]

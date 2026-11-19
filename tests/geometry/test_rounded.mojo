@@ -16,7 +16,7 @@ from create.geometry import (
     Polygon,
     Sector,
 )
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 
 def _rounded_square() -> Rectangle:
@@ -33,25 +33,25 @@ def _rounded_right_triangle() -> Triangle:
 
 def test_a_rounded_rectangle_leaves_its_corner_cut_away() raises -> None:
     var r = _rounded_square()
-    assert_false(r.contains(Point2D(9.0, 9.0)))
-    assert_true(Rectangle((0.0, 0.0), 20.0, 20.0).contains(Point2D(9.0, 9.0)))
+    assert_false(r.contains(Point(9.0, 9.0)))
+    assert_true(Rectangle((0.0, 0.0), 20.0, 20.0).contains(Point(9.0, 9.0)))
 
 
 def test_a_rounded_rectangle_holds_its_edges_and_fillets() raises -> None:
     var r = _rounded_square()
-    assert_true(r.contains(Point2D(10.0, 0.0)))
-    assert_true(r.contains(Point2D(0.0, -10.0)))
-    assert_true(r.contains(Point2D(6.0, 6.0)))
+    assert_true(r.contains(Point(10.0, 0.0)))
+    assert_true(r.contains(Point(0.0, -10.0)))
+    assert_true(r.contains(Point(6.0, 6.0)))
     # On the fillet itself: boundary-inclusive, like every region.
     var on_arc = 5.0 + 5.0 / sqrt(2.0)
-    assert_true(r.contains(Point2D(on_arc - 1e-9, on_arc - 1e-9)))
+    assert_true(r.contains(Point(on_arc - 1e-9, on_arc - 1e-9)))
 
 
 def test_the_corner_radius_clamps_to_half_the_shorter_side() raises -> None:
     # Radius 100 on a 20x10 rectangle is 5: a stadium.
     var r = Rectangle((0.0, 0.0), 20.0, 10.0, corner_radius=100.0)
-    assert_true(r.contains(Point2D(0.0, 5.0)))
-    assert_false(r.contains(Point2D(9.0, 4.0)))
+    assert_true(r.contains(Point(0.0, 5.0)))
+    assert_false(r.contains(Point(9.0, 4.0)))
     assert_almost_equal(r.area(), 200.0 - (4.0 - PI) * 25.0, atol=1e-9)
 
 
@@ -62,7 +62,7 @@ def test_a_rounded_rectangle_closest_point_lands_on_the_fillet() raises -> None:
     assert_almost_equal(q.y, expected, atol=1e-9)
     # A point inside is its own closest point.
     var inside = _rounded_square().closest_point((1.0, 2.0))
-    assert_equal(inside, Point2D(1.0, 2.0))
+    assert_equal(inside, Point(1.0, 2.0))
 
 
 def test_a_rounded_rectangle_area_loses_its_corners() raises -> None:
@@ -115,14 +115,14 @@ def test_containment_sees_the_rounding_both_ways() raises -> None:
     assert_true(Rectangle((0.0, 0.0), 20.0, 20.0).contains(sharp))
     # And the rounded one fits where its sharp corners would not.
     var frame = Polygon(
-        Point2D(-10.0, -8.0),
-        Point2D(-8.0, -10.0),
-        Point2D(8.0, -10.0),
-        Point2D(10.0, -8.0),
-        Point2D(10.0, 8.0),
-        Point2D(8.0, 10.0),
-        Point2D(-8.0, 10.0),
-        Point2D(-10.0, 8.0),
+        Point(-10.0, -8.0),
+        Point(-8.0, -10.0),
+        Point(8.0, -10.0),
+        Point(10.0, -8.0),
+        Point(10.0, 8.0),
+        Point(8.0, 10.0),
+        Point(-8.0, 10.0),
+        Point(-10.0, 8.0),
     )
     assert_true(frame.contains(_rounded_square()))
     assert_false(frame.contains(Rectangle((0.0, 0.0), 20.0, 20.0)))
@@ -141,7 +141,7 @@ def test_the_outline_polygon_sits_within_the_rounded_rectangle() raises -> None:
 def test_a_zero_radius_rectangle_is_the_sharp_one() raises -> None:
     var r = Rectangle((0.0, 0.0), 20.0, 20.0, corner_radius=0.0)
     assert_equal(r, Rectangle((0.0, 0.0), 20.0, 20.0))
-    assert_true(r.contains(Point2D(10.0, 10.0)))
+    assert_true(r.contains(Point(10.0, 10.0)))
     assert_equal(r.area(), 400.0)
 
 
@@ -150,13 +150,13 @@ def test_a_rounded_rectangle_compares_and_prints_its_radius() raises -> None:
     assert_equal(
         String(Rectangle((0.0, 0.0), 2.0, 3.0, corner_radius=1.0)),
         (
-            "Rectangle(position=Point2D(0.0, 0.0), width=2.0, height=3.0,"
+            "Rectangle(position=Point(0.0, 0.0), width=2.0, height=3.0,"
             " corner_radius=1.0)"
         ),
     )
     assert_equal(
         String(Rectangle((0.0, 0.0), 2.0, 3.0)),
-        "Rectangle(position=Point2D(0.0, 0.0), width=2.0, height=3.0)",
+        "Rectangle(position=Point(0.0, 0.0), width=2.0, height=3.0)",
     )
 
 
@@ -165,14 +165,12 @@ def test_a_rounded_rectangle_compares_and_prints_its_radius() raises -> None:
 
 def test_a_rounded_triangle_leaves_its_corner_cut_away() raises -> None:
     var t = _rounded_right_triangle()
-    assert_false(t.contains(Point2D(0.2, 0.2)))
+    assert_false(t.contains(Point(0.2, 0.2)))
     assert_true(
-        Triangle((0.0, 0.0), (30.0, 0.0), (0.0, 30.0)).contains(
-            Point2D(0.2, 0.2)
-        )
+        Triangle((0.0, 0.0), (30.0, 0.0), (0.0, 30.0)).contains(Point(0.2, 0.2))
     )
-    assert_true(t.contains(Point2D(1.0, 10.0)))
-    assert_true(t.contains(Point2D(0.0, 10.0)))
+    assert_true(t.contains(Point(1.0, 10.0)))
+    assert_true(t.contains(Point(0.0, 10.0)))
 
 
 def test_rounded_triangle_fillets_are_centred_where_drawn() raises -> None:
@@ -252,7 +250,7 @@ def test_a_rounded_triangle_compares_and_prints_its_radius() raises -> None:
     assert_equal(
         String(t),
         (
-            "Triangle(a=Point2D(0.0, 0.0), b=Point2D(1.0, 0.0), c=Point2D(0.0,"
+            "Triangle(a=Point(0.0, 0.0), b=Point(1.0, 0.0), c=Point(0.0,"
             " 1.0), corner_radius=0.5)"
         ),
     )
@@ -263,19 +261,19 @@ def test_a_rounded_triangle_compares_and_prints_its_radius() raises -> None:
 
 def _rounded_square_polygon() -> Polygon:
     return Polygon(
-        Point2D(-10.0, -10.0),
-        Point2D(10.0, -10.0),
-        Point2D(10.0, 10.0),
-        Point2D(-10.0, 10.0),
+        Point(-10.0, -10.0),
+        Point(10.0, -10.0),
+        Point(10.0, 10.0),
+        Point(-10.0, 10.0),
         corner_radius=5.0,
     )
 
 
 def test_a_rounded_polygon_rounds_like_a_rounded_rectangle() raises -> None:
     var p = _rounded_square_polygon()
-    assert_false(p.contains(Point2D(9.0, 9.0)))
-    assert_true(p.contains(Point2D(10.0, 0.0)))
-    assert_true(p.contains(Point2D(6.0, 6.0)))
+    assert_false(p.contains(Point(9.0, 9.0)))
+    assert_true(p.contains(Point(10.0, 0.0)))
+    assert_true(p.contains(Point(6.0, 6.0)))
     assert_almost_equal(p.area(), _rounded_square().area(), atol=0.5)
 
 
@@ -283,9 +281,9 @@ def test_a_rounded_star_loses_its_tips() raises -> None:
     var star = Polygon.star((0.0, 0.0), 50.0, 20.0, 5, corner_radius=5.0)
     var sharp = Polygon.star((0.0, 0.0), 50.0, 20.0, 5)
     # Just inside the top tip.
-    assert_true(sharp.contains(Point2D(0.0, 49.0)))
-    assert_false(star.contains(Point2D(0.0, 49.0)))
-    assert_true(star.contains(Point2D(0.0, 30.0)))
+    assert_true(sharp.contains(Point(0.0, 49.0)))
+    assert_false(star.contains(Point(0.0, 49.0)))
+    assert_true(star.contains(Point(0.0, 30.0)))
 
 
 def test_a_rounded_star_fills_its_notches() raises -> None:
@@ -293,7 +291,7 @@ def test_a_rounded_star_fills_its_notches() raises -> None:
     var sharp = Polygon.star((0.0, 0.0), 50.0, 20.0, 5)
     # Just outside the inner corner between the first two tips.
     var angle = PI / 2.0 + PI / 5.0
-    var p = Point2D(20.5 * cos(angle), 20.5 * sin(angle))
+    var p = Point(20.5 * cos(angle), 20.5 * sin(angle))
     assert_false(sharp.contains(p))
     assert_true(star.contains(p))
 
@@ -301,15 +299,15 @@ def test_a_rounded_star_fills_its_notches() raises -> None:
 def test_each_corner_clamps_on_its_own() raises -> None:
     # A long thin bar: the radius is clamped by the short edges, not lost.
     var bar = Polygon(
-        Point2D(-50.0, -5.0),
-        Point2D(50.0, -5.0),
-        Point2D(50.0, 5.0),
-        Point2D(-50.0, 5.0),
+        Point(-50.0, -5.0),
+        Point(50.0, -5.0),
+        Point(50.0, 5.0),
+        Point(-50.0, 5.0),
         corner_radius=100.0,
     )
-    assert_false(bar.contains(Point2D(49.5, 4.5)))
-    assert_true(bar.contains(Point2D(0.0, 4.9)))
-    assert_true(bar.contains(Point2D(49.9, 0.0)))
+    assert_false(bar.contains(Point(49.5, 4.5)))
+    assert_true(bar.contains(Point(0.0, 4.9)))
+    assert_true(bar.contains(Point(49.9, 0.0)))
 
 
 def test_a_rounded_polygon_tests_against_other_shapes() raises -> None:
@@ -330,17 +328,15 @@ def test_a_rounded_polygon_compares_and_prints_its_radius() raises -> None:
     var rounded = Polygon.regular((0.0, 0.0), 10.0, 4, corner_radius=2.0)
     assert_true(sharp != rounded)
     assert_equal(
-        String(
-            Polygon(Point2D(0.0, 0.0), Point2D(1.0, 0.0), corner_radius=0.5)
-        ),
+        String(Polygon(Point(0.0, 0.0), Point(1.0, 0.0), corner_radius=0.5)),
         (
-            "Polygon(vertices=[Point2D(0.0, 0.0), Point2D(1.0, 0.0)],"
+            "Polygon(vertices=[Point(0.0, 0.0), Point(1.0, 0.0)],"
             " corner_radius=0.5)"
         ),
     )
     assert_equal(
-        String(Polygon(Point2D(0.0, 0.0), Point2D(1.0, 0.0))),
-        "Polygon(vertices=[Point2D(0.0, 0.0), Point2D(1.0, 0.0)])",
+        String(Polygon(Point(0.0, 0.0), Point(1.0, 0.0))),
+        "Polygon(vertices=[Point(0.0, 0.0), Point(1.0, 0.0)])",
     )
 
 
@@ -355,18 +351,18 @@ def test_a_rounded_sector_loses_its_tip_and_arc_ends() raises -> None:
     var s = _rounded_quarter()
     var sharp = Sector((0.0, 0.0), 50.0, 0.0, PI / 2.0)
     # The tip.
-    assert_true(sharp.contains(Point2D(0.5, 0.5)))
-    assert_false(s.contains(Point2D(0.5, 0.5)))
+    assert_true(sharp.contains(Point(0.5, 0.5)))
+    assert_false(s.contains(Point(0.5, 0.5)))
     # The corner where the start radius meets the arc.
-    assert_true(sharp.contains(Point2D(49.5, 0.5)))
-    assert_false(s.contains(Point2D(49.5, 0.5)))
+    assert_true(sharp.contains(Point(49.5, 0.5)))
+    assert_false(s.contains(Point(49.5, 0.5)))
     # And the end radius.
-    assert_false(s.contains(Point2D(0.5, 49.5)))
+    assert_false(s.contains(Point(0.5, 49.5)))
     # The middle, the arc's middle and the radii away from the corners.
-    assert_true(s.contains(Point2D(20.0, 20.0)))
+    assert_true(s.contains(Point(20.0, 20.0)))
     var on_arc = 49.9 / sqrt(2.0)
-    assert_true(s.contains(Point2D(on_arc, on_arc)))
-    assert_true(s.contains(Point2D(25.0, 0.1)))
+    assert_true(s.contains(Point(on_arc, on_arc)))
+    assert_true(s.contains(Point(25.0, 0.1)))
 
 
 def test_a_rounded_sector_stays_inside_the_sharp_one() raises -> None:
@@ -381,7 +377,7 @@ def test_a_rounded_wide_sector_fills_its_notch() raises -> None:
     var s = Sector((0.0, 0.0), 50.0, 0.0, 3.0 * PI / 2.0, corner_radius=8.0)
     var sharp = Sector((0.0, 0.0), 50.0, 0.0, 3.0 * PI / 2.0)
     # In the missing wedge, just past the tip.
-    var p = Point2D(0.5 * cos(-PI / 4.0), 0.5 * sin(-PI / 4.0))
+    var p = Point(0.5 * cos(-PI / 4.0), 0.5 * sin(-PI / 4.0))
     assert_false(sharp.contains(p))
     assert_true(s.contains(p))
     assert_true(s.area() > sharp.area() - 200.0)
@@ -391,10 +387,10 @@ def test_a_clockwise_sector_rounds_the_same() raises -> None:
     var ccw = _rounded_quarter()
     var cw = Sector((0.0, 0.0), 50.0, PI / 2.0, -PI / 2.0, corner_radius=8.0)
     for p in [
-        Point2D(0.5, 0.5),
-        Point2D(49.5, 0.5),
-        Point2D(20.0, 20.0),
-        Point2D(25.0, 0.1),
+        Point(0.5, 0.5),
+        Point(49.5, 0.5),
+        Point(20.0, 20.0),
+        Point(25.0, 0.1),
     ]:
         assert_equal(cw.contains(p), ccw.contains(p))
     assert_almost_equal(cw.area(), ccw.area(), atol=1e-6)
@@ -403,22 +399,22 @@ def test_a_clockwise_sector_rounds_the_same() raises -> None:
 def test_a_half_turn_sector_rounds_only_its_arc_ends() raises -> None:
     var s = Sector((0.0, 0.0), 50.0, 0.0, PI, corner_radius=8.0)
     # The tip runs straight on: nothing to round.
-    assert_true(s.contains(Point2D(0.0, 0.2)))
-    assert_false(s.contains(Point2D(49.5, 0.5)))
-    assert_false(s.contains(Point2D(-49.5, 0.5)))
+    assert_true(s.contains(Point(0.0, 0.2)))
+    assert_false(s.contains(Point(49.5, 0.5)))
+    assert_false(s.contains(Point(-49.5, 0.5)))
 
 
 def test_a_whole_disc_has_no_corners() raises -> None:
     var s = Sector((0.0, 0.0), 10.0, 0.0, TAU, corner_radius=5.0)
-    assert_true(s.contains(Point2D(9.9, 0.0)))
+    assert_true(s.contains(Point(9.9, 0.0)))
     assert_almost_equal(s.area(), PI * 100.0, atol=1e-9)
 
 
 def test_a_rounded_sector_corner_radius_clamps() raises -> None:
     # Far too large: clamped, still a rounded slice holding its middle.
     var s = Sector((0.0, 0.0), 50.0, 0.0, PI / 2.0, corner_radius=1000.0)
-    assert_true(s.contains(Point2D(18.0, 18.0)))
-    assert_false(s.contains(Point2D(49.0, 2.0)))
+    assert_true(s.contains(Point(18.0, 18.0)))
+    assert_false(s.contains(Point(49.0, 2.0)))
     var sharp = Sector((0.0, 0.0), 50.0, 0.0, PI / 2.0)
     for v in s._outline().vertices:
         assert_true(sharp.contains(v))
@@ -446,7 +442,7 @@ def test_a_rounded_sector_compares_and_prints_its_radius() raises -> None:
     assert_equal(
         String(rounded),
         (
-            "Sector(position=Point2D(0.0, 0.0), radius=1.0, start_angle=0.0,"
+            "Sector(position=Point(0.0, 0.0), radius=1.0, start_angle=0.0,"
             " sweep_angle=1.0, corner_radius=0.25)"
         ),
     )

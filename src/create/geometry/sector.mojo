@@ -1,5 +1,5 @@
 from std.math import min, max, sqrt
-from create.math import TAU, Point2D, Vector2D
+from create.math import TAU, Point, Vector
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
@@ -58,7 +58,7 @@ struct Sector(
     may fall either way.
     """
 
-    var position: Point2D
+    var position: Point
     var radius: Float64
     var start_angle: Float64
     var sweep_angle: Float64
@@ -67,7 +67,7 @@ struct Sector(
 
     def __init__(
         out self,
-        position: Point2D,
+        position: Point,
         radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -82,7 +82,7 @@ struct Sector(
 
     def __init__(
         out self,
-        position: Point2D,
+        position: Point,
         radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -128,7 +128,7 @@ struct Sector(
         """`start_angle + sweep_angle`: where the sector ends, as an angle."""
         return self.start_angle + self.sweep_angle
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         return self.position
 
     def area(self) -> Float64:
@@ -148,15 +148,15 @@ struct Sector(
         if self._is_rounded():
             return self._outline().bounds()
         var b = self.arc().bounds()
-        var lo = Point2D(
+        var lo = Point(
             min(b.left(), self.position.x), min(b.bottom(), self.position.y)
         )
-        var hi = Point2D(
+        var hi = Point(
             max(b.right(), self.position.x), max(b.top(), self.position.y)
         )
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         if self._is_rounded():
             return self._outline().closest_point(p)
         if self.contains(p):
@@ -165,14 +165,14 @@ struct Sector(
         # radii or the arc.
         var a = self.arc()
         var best = a.closest_point(p)
-        var ends: Array[Point2D, 2] = [a.at(0.0), a.at(1.0)]
+        var ends: Array[Point, 2] = [a.at(0.0), a.at(1.0)]
         for end in ends:
             var q = _closest_on_segment(p, self.position, end)
             if _distance_squared(p, q) < _distance_squared(p, best):
                 best = q
         return best
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         # The arc is found through `cos` and `sin`, as is its sweep, so both
         # boundaries get an arc's slack: the sector holds its own edge.
         if self._is_rounded():
@@ -222,7 +222,7 @@ struct Sector(
     # line of either radius, or the circle -- cuts it into pieces that are
     # each wholly inside or wholly outside, so the sector holds it exactly
     # when it holds the middle of every piece. A piece that only touches
-    # the boundary is inside, within the slack of `contains(Point2D)`.
+    # the boundary is inside, within the slack of `contains(Point)`.
     def contains(self, l: Line) -> Bool:
         if self._is_rounded():
             return self._outline().contains(l)
@@ -250,7 +250,7 @@ struct Sector(
     def _contains_arc(self, a: Arc) -> Bool:
         if not (self.contains(a.at(0.0)) and self.contains(a.at(1.0))):
             return False
-        var crossings = List[Point2D]()
+        var crossings = List[Point]()
         for radius in self._radii():
             _circle_crossings(radius, a.position, a.radius, crossings)
         var between = self.position - a.position
@@ -266,7 +266,7 @@ struct Sector(
             var h = sqrt(max(0.0, a.radius * a.radius - along * along))
             var u = between * (1.0 / d)
             var mid = a.position + u * along
-            var side = Vector2D(-u.y, u.x) * h
+            var side = Vector(-u.y, u.x) * h
             crossings.append(mid + side)
             crossings.append(mid - side)
         for middle in _arc_middles(a, crossings):
@@ -306,7 +306,7 @@ struct Sector(
             )
         )
 
-    def _contains_polygon[N: Int](self, pts: Array[Point2D, N]) -> Bool:
+    def _contains_polygon[N: Int](self, pts: Array[Point, N]) -> Bool:
         for i in range(N):
             if not self.contains(Line(pts[i], pts[(i + 1) % N])):
                 return False
@@ -399,17 +399,17 @@ struct Sector(
     def draw_to[T: DrawTarget](self, mut target: T):
         target._sector(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         var moved = self.copy()
         moved.position = position
         return moved^
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^
 
-    def _holds_strictly(self, p: Point2D) -> Bool:
+    def _holds_strictly(self, p: Point) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary, which gets its usual slack, taken inward."""
         var reach = self.radius * (1.0 - _RADIUS_EPSILON)

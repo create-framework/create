@@ -50,8 +50,8 @@ from create.math import PI, TAU
 
 from create.geometry import Line, Polygon
 from create.math.matrix import Matrix, _apply as mat_apply
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 from ._command import PolygonPayload, RenderCommand
 from ._pieces import Pieces
@@ -144,7 +144,7 @@ def polygon_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
     var shape = Polygon(polygon.vertices.copy())
     var rim_corners = _rim_corners(rim, shape)
     # Corners that get a whole disc in a rim band, whichever side it is on.
-    var discs = List[Point2D]()
+    var discs = List[Point]()
     if outer != 0.0:
         layers.outer = layers.next()
         _add_rim_band(
@@ -174,7 +174,7 @@ def polygon_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
                 discs.append(corner.position)
     if t > 0.0 and len(seams) > 0:
         layers.seams = layers.next()
-        var ends = List[Point2D]()
+        var ends = List[Point]()
         for p in _ends(seams):
             # Inside a disc of the fill's own band, a seam's adds nothing.
             if not (inner <= -t / 2.0 and p in discs):
@@ -270,7 +270,7 @@ def polygon_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
 
     if t > 0.0 and len(out.fill_quads) == 0 and c.paint._fill_visible():
         out.fill_quads = out.stroke_quads^
-        out.stroke_quads = List[Point2D]()
+        out.stroke_quads = List[Point]()
     return out^
 
 
@@ -335,17 +335,17 @@ def _emit(
 ):
     """The trapezoid between `left` and `right` across the slab, mapped by
     `m`, counter-clockwise from its lower left."""
-    var a = Point2D(mat_apply(m, left.x_at(y_lo), y_lo))
-    var b = Point2D(mat_apply(m, right.x_at(y_lo), y_lo))
-    var c = Point2D(mat_apply(m, right.x_at(y_hi), y_hi))
-    var d = Point2D(mat_apply(m, left.x_at(y_hi), y_hi))
+    var a = Point(mat_apply(m, left.x_at(y_lo), y_lo))
+    var b = Point(mat_apply(m, right.x_at(y_lo), y_lo))
+    var c = Point(mat_apply(m, right.x_at(y_hi), y_hi))
+    var d = Point(mat_apply(m, left.x_at(y_hi), y_hi))
     if cls == _FILL:
         _append_quad(out.fill_quads, a, b, c, d)
     else:
         _append_quad(out.stroke_quads, a, b, c, d)
 
 
-def _add_loop(mut edges: List[_Edge], points: List[Point2D], layer: Int):
+def _add_loop(mut edges: List[_Edge], points: List[Point], layer: Int):
     """Every edge of the closed loop through `points`, level ones left out:
     they never cross a slab, so they never change a count."""
     var n = len(points)
@@ -358,9 +358,9 @@ def _add_loop(mut edges: List[_Edge], points: List[Point2D], layer: Int):
             edges.append(_Edge(b.x, b.y, a.x, a.y, -1, layer))
 
 
-def _ends(lines: List[Line]) -> List[Point2D]:
+def _ends(lines: List[Line]) -> List[Point]:
     """Every end of `lines`, once."""
-    var ends = List[Point2D]()
+    var ends = List[Point]()
     for l in lines:
         for p in [l.start, l.end]:
             if p not in ends:
@@ -371,7 +371,7 @@ def _ends(lines: List[Line]) -> List[Point2D]:
 def _add_band(
     mut edges: List[_Edge],
     lines: List[Line],
-    ends: List[Point2D],
+    ends: List[Point],
     d: Float64,
     sf: Float64,
     layer: Int,
@@ -380,12 +380,12 @@ def _add_band(
     each and a disc at each of `ends`, each wound counter-clockwise so the
     band's count is how many cover a point."""
     var segments = circle_segments(d * sf)
-    var disc = List[Point2D](capacity=segments)
+    var disc = List[Point](capacity=segments)
     for a in ends:
         disc.clear()
         for k in range(segments):
             var angle = TAU * Float64(k) / Float64(segments)
-            disc.append(Point2D(a.x + d * cos(angle), a.y + d * sin(angle)))
+            disc.append(Point(a.x + d * cos(angle), a.y + d * sin(angle)))
         _add_loop(edges, disc, layer)
     for l in lines:
         var a = l.start
@@ -399,11 +399,11 @@ def _add_band(
         # counter-clockwise.
         var nx = dy / length * d
         var ny = -dx / length * d
-        var rectangle: List[Point2D] = [
-            Point2D(a.x + nx, a.y + ny),
-            Point2D(b.x + nx, b.y + ny),
-            Point2D(b.x - nx, b.y - ny),
-            Point2D(a.x - nx, a.y - ny),
+        var rectangle: List[Point] = [
+            Point(a.x + nx, a.y + ny),
+            Point(b.x + nx, b.y + ny),
+            Point(b.x - nx, b.y - ny),
+            Point(a.x - nx, a.y - ny),
         ]
         _add_loop(edges, rectangle, layer)
 
@@ -415,9 +415,9 @@ struct _RimCorner(Copyable, ImplicitlyCopyable, Movable):
     the narrower wedge between them. `known` is false where the corner is
     not two pieces meeting at an angle, and it takes a whole disc."""
 
-    var position: Point2D
-    var a: Vector2D
-    var b: Vector2D
+    var position: Point
+    var a: Vector
+    var b: Vector
     var inside_between: Bool
     var known: Bool
 
@@ -426,7 +426,7 @@ def _rim_corners(rim: List[Line], shape: Polygon) -> List[_RimCorner]:
     """Every end of `rim`, with how the polygon lies about it."""
     var corners = List[_RimCorner]()
     for p in _ends(rim):
-        var directions = List[Vector2D]()
+        var directions = List[Vector]()
         var shortest = Float64.MAX
         for l in rim:
             if l.start == p:
@@ -438,7 +438,7 @@ def _rim_corners(rim: List[Line], shape: Polygon) -> List[_RimCorner]:
             shortest = min(
                 shortest, directions[len(directions) - 1].magnitude()
             )
-        var none = Vector2D(0.0, 0.0)
+        var none = Vector(0.0, 0.0)
         if len(directions) != 2 or shortest <= 0.0:
             corners.append(_RimCorner(p, none, none, False, False))
             continue
@@ -468,7 +468,7 @@ def _add_rim_band(
     the polygon if `outside`, else inside -- and nowhere else that matters:
     along each piece the half of its rectangle on that side, and at each
     corner nothing, a pie, or (where unknown) a whole disc."""
-    var ends = List[Point2D]()
+    var ends = List[Point]()
     for corner in corners:
         if not corner.known:
             ends.append(corner.position)
@@ -480,17 +480,17 @@ def _add_rim_band(
         var length = along.magnitude()
         if length == 0.0:
             continue
-        var n = Vector2D(along.y, -along.x) * (d / length)
+        var n = Vector(along.y, -along.x) * (d / length)
         var middle = l.start + along * 0.5
         var probe = middle + n * (1e-4 * min(length, d) / d)
         if shape.contains(probe) == outside:
             n = -n
-        var half: List[Point2D] = [l.start, l.end, l.end + n, l.start + n]
+        var half: List[Point] = [l.start, l.end, l.end + n, l.start + n]
         if _signed_area2(half) < 0.0:
             half.reverse()
         _add_loop(edges, half, layer)
     var segments = circle_segments(d * sf)
-    var pie = List[Point2D]()
+    var pie = List[Point]()
     for corner in corners:
         if not corner.known:
             continue
@@ -499,10 +499,10 @@ def _add_rim_band(
         if straight or corner.inside_between != outside:
             continue
         # Normals turned away from the other piece, into the wider wedge.
-        var na = Vector2D(-corner.a.y, corner.a.x)
+        var na = Vector(-corner.a.y, corner.a.x)
         if na.dot(corner.b) > 0.0:
             na = -na
-        var nb = Vector2D(-corner.b.y, corner.b.x)
+        var nb = Vector(-corner.b.y, corner.b.x)
         if nb.dot(corner.a) > 0.0:
             nb = -nb
         var start = atan2(na.y, na.x)
@@ -517,7 +517,7 @@ def _add_rim_band(
         for k in range(steps + 1):
             var angle = start + sweep * Float64(k) / Float64(steps)
             pie.append(
-                Point2D(
+                Point(
                     corner.position.x + d * cos(angle),
                     corner.position.y + d * sin(angle),
                 )
@@ -528,7 +528,7 @@ def _add_rim_band(
         _add_loop(edges, pie, layer)
 
 
-def _signed_area2(points: List[Point2D]) -> Float64:
+def _signed_area2(points: List[Point]) -> Float64:
     var n = len(points)
     var sum = 0.0
     for i in range(n):
@@ -569,7 +569,7 @@ def _sort_by(mut edges: List[_Edge], mut keys: List[Float64]):
 
 
 def _append_quad(
-    mut corners: List[Point2D], a: Point2D, b: Point2D, c: Point2D, d: Point2D
+    mut corners: List[Point], a: Point, b: Point, c: Point, d: Point
 ):
     corners.append(a)
     corners.append(b)

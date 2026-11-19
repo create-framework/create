@@ -30,7 +30,7 @@ spelled out again in the GL shader, so keep the two in step.
 from std.math import abs, asin, cos, exp, max, min, sin, sqrt
 
 from create.math.matrix import Matrix, translate
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 from ._command import (
     CirclePayload,
@@ -521,7 +521,7 @@ struct BlurredSilhouette(Copyable, Movable):
         var ring = not sh.paint._fill_visible()
         if sh.payload.isa[RectPayload]() or sh.payload.isa[CirclePayload]():
             self.kind = SIL_RECT
-            var center: Point2D
+            var center: Point
             var hw: Float64
             var hh: Float64
             var r: Float64

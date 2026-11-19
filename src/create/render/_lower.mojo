@@ -18,8 +18,8 @@ its fill the pieces the solid stroke would leave.
 from create.geometry._fillet import rect_corner_radius, rounded_vertices
 from create.math import TAU
 from create.math.matrix import Matrix, _apply as mat_apply
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 from ._command import (
     CirclePayload,
@@ -132,29 +132,29 @@ def _dashed_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
 
 def _eroded_outline(
     c: RenderCommand, m: Matrix[3, 3], scale: Float64
-) -> List[Point2D]:
+) -> List[Point]:
     """The rectangle or circle `c` eroded by its stroke, mapped by `m`: the
     convex fill inside the stroke's inner edge, where each replay's own
     rasteriser stops the fill. Empty when the stroke leaves none."""
     var sf = pixel_scale(m, scale)
     var t = Float64(stroke_thickness_px(c.paint, m, scale)) / sf
-    var local: List[Point2D]
+    var local: List[Point]
     if c.payload.isa[RectPayload]():
         ref rect = c.payload[RectPayload]
         var hw = rect.w / 2.0 - t
         var hh = rect.h / 2.0 - t
         if hw <= 0.0 or hh <= 0.0:
-            return List[Point2D]()
+            return List[Point]()
         var r = max(
             rect_corner_radius(rect.corner_radius, rect.w, rect.h) - t, 0.0
         )
         var x = rect.center.x
         var y = rect.center.y
-        var corners: List[Point2D] = [
-            Point2D(x - hw, y + hh),
-            Point2D(x - hw, y - hh),
-            Point2D(x + hw, y - hh),
-            Point2D(x + hw, y + hh),
+        var corners: List[Point] = [
+            Point(x - hw, y + hh),
+            Point(x - hw, y - hh),
+            Point(x + hw, y - hh),
+            Point(x + hw, y + hh),
         ]
         local = rounded_vertices(
             corners, r, TAU / Float64(circle_segments(r * sf))
@@ -163,18 +163,18 @@ def _eroded_outline(
         ref circle = c.payload[CirclePayload]
         var r = circle.r - t
         if r <= 0.0:
-            return List[Point2D]()
+            return List[Point]()
         var n = circle_segments(r * sf)
-        local = List[Point2D](capacity=n)
+        local = List[Point](capacity=n)
         for i in range(n):
             local.append(
                 circle.center
-                + Vector2D.from_angle(TAU * Float64(i) / Float64(n)) * r
+                + Vector.from_angle(TAU * Float64(i) / Float64(n)) * r
             )
-    var out = List[Point2D](capacity=len(local))
+    var out = List[Point](capacity=len(local))
     for p in local:
         var q = mat_apply(m, p.x, p.y)
-        out.append(Point2D(q[0], q[1]))
+        out.append(Point(q[0], q[1]))
     return out^
 
 
@@ -187,8 +187,8 @@ def _line_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
     ref line = c.payload[LinePayload]
     var p0 = mat_apply(m, line.start.x, line.start.y)
     var p1 = mat_apply(m, line.end.x, line.end.y)
-    var a = Point2D(p0[0], p0[1])
-    var b = Point2D(p1[0], p1[1])
+    var a = Point(p0[0], p0[1])
+    var b = Point(p1[0], p1[1])
     var width = Float64(stroke_thickness_px(c.paint, m, scale))
     var cap = c.paint.stroke_cap
     if cap == StrokeCap.ROUND or a == b:

@@ -7,8 +7,8 @@ from ._text import NO_WRAP
 from .style import Style
 from create.geometry.bezier import Bezier
 from create.math.matrix import Matrix, identity
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 from std.memory import ArcPointer
 from std.utils import Variant
 
@@ -35,7 +35,7 @@ struct RectPayload(Copyable, Movable):
     `corner_radius` (the requested radius, before the replay clamps it to
     what the shape can hold; 0 is sharp)."""
 
-    var center: Point2D
+    var center: Point
     var w: Float64
     var h: Float64
     var corner_radius: Float64
@@ -43,14 +43,14 @@ struct RectPayload(Copyable, Movable):
 
 @fieldwise_init
 struct CirclePayload(Copyable, Movable):
-    var center: Point2D
+    var center: Point
     var r: Float64
 
 
 @fieldwise_init
 struct LinePayload(Copyable, Movable):
-    var start: Point2D
-    var end: Point2D
+    var start: Point
+    var end: Point
 
 
 @fieldwise_init
@@ -71,7 +71,7 @@ struct ImagePayload(Copyable, Movable):
     of caller-owned memory enters the buffer. `image_w` and `image_h` are the
     source's pixel dimensions, which the replay needs to resample."""
 
-    var center: Point2D
+    var center: Point
     var w: Float64
     var h: Float64
     var image: Int
@@ -93,7 +93,7 @@ struct TextPayload(Copyable, Movable):
     """`text` anchored at `position`. Owned, since layout happens at replay,
     in the backend that holds the fonts."""
 
-    var position: Point2D
+    var position: Point
     var text: String
     var style: ArcPointer[TextStyle]
     """Its face, size, weight, slant, alignment and colour, the colour
@@ -137,7 +137,7 @@ struct CurvesPayload(Copyable, Movable):
     `end`; each starts where the one before it ends. Stroke only — a curve
     has no interior."""
 
-    var points: List[Point2D]
+    var points: List[Point]
 
 
 @fieldwise_init
@@ -147,7 +147,7 @@ struct SectorPayload(Copyable, Movable):
     by that many local units, outwards if positive: zero for a render call,
     a shadow's spread or a stroke alignment otherwise."""
 
-    var center: Point2D
+    var center: Point
     var r: Float64
     var start_angle: Float64
     var sweep_angle: Float64
@@ -161,9 +161,9 @@ struct PolygonPayload(Copyable, Movable):
     half-extents a fill gradient spans instead of the vertices' bounds: a
     curved shape flattened to a polygon, whose chords fall short of it."""
 
-    var vertices: List[Point2D]
+    var vertices: List[Point]
     var grow: Float64
-    var gradient_box: Optional[Tuple[Point2D, Vector2D]]
+    var gradient_box: Optional[Tuple[Point, Vector]]
 
 
 comptime RenderPayload = Variant[
@@ -316,7 +316,7 @@ def _grow_triangle(mut g: Array[Float64, _GEOM_SLOTS], d: Float64):
         g[i] = out[i]
 
 
-def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
+def _fill_box(c: RenderCommand) -> Tuple[Point, Vector]:
     """The local box a fill gradient spans: its centre and half-extents.
 
     The shape's own bounds, before the transform, so the gradient moves and
@@ -330,20 +330,18 @@ def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
         ref rect = c.payload[RectPayload]
         return (
             rect.center,
-            Vector2D(
-                rect.w / 2.0 - c.stroke_grow, rect.h / 2.0 - c.stroke_grow
-            ),
+            Vector(rect.w / 2.0 - c.stroke_grow, rect.h / 2.0 - c.stroke_grow),
         )
     if c.payload.isa[ClearPayload]():
         ref clear = c.payload[ClearPayload]
-        return (Point2D(0.0, 0.0), Vector2D(clear.w / 2.0, clear.h / 2.0))
+        return (Point(0.0, 0.0), Vector(clear.w / 2.0, clear.h / 2.0))
     if c.payload.isa[CirclePayload]():
         ref circle = c.payload[CirclePayload]
         var r = circle.r - c.stroke_grow
-        return (circle.center, Vector2D(r, r))
+        return (circle.center, Vector(r, r))
     if c.payload.isa[SectorPayload]():
         ref sector = c.payload[SectorPayload]
-        return (sector.center, Vector2D(sector.r, sector.r))
+        return (sector.center, Vector(sector.r, sector.r))
     var lo_x = Float64.MAX
     var lo_y = Float64.MAX
     var hi_x = -Float64.MAX
@@ -367,10 +365,10 @@ def _fill_box(c: RenderCommand) -> Tuple[Point2D, Vector2D]:
             lo_y = min(lo_y, p.y)
             hi_y = max(hi_y, p.y)
     if lo_x > hi_x:
-        return (Point2D(0.0, 0.0), Vector2D(0.0, 0.0))
+        return (Point(0.0, 0.0), Vector(0.0, 0.0))
     return (
-        Point2D((lo_x + hi_x) / 2.0, (lo_y + hi_y) / 2.0),
-        Vector2D((hi_x - lo_x) / 2.0, (hi_y - lo_y) / 2.0),
+        Point((lo_x + hi_x) / 2.0, (lo_y + hi_y) / 2.0),
+        Vector((hi_x - lo_x) / 2.0, (hi_y - lo_y) / 2.0),
     )
 
 
@@ -416,7 +414,7 @@ def rect_command(
     """A rectangle centred at `(x, y)`, `w` by `h`, in local units, its
     corners rounded by `corner_radius`."""
     return RenderCommand(
-        RectPayload(Point2D(x, y), w, h, corner_radius), transform, style
+        RectPayload(Point(x, y), w, h, corner_radius), transform, style
     )
 
 
@@ -427,7 +425,7 @@ def circle_command(
     cy: Float64,
     r: Float64,
 ) -> RenderCommand:
-    return RenderCommand(CirclePayload(Point2D(cx, cy), r), transform, style)
+    return RenderCommand(CirclePayload(Point(cx, cy), r), transform, style)
 
 
 def sector_command(
@@ -440,7 +438,7 @@ def sector_command(
     sweep: Float64,
 ) -> RenderCommand:
     return RenderCommand(
-        SectorPayload(Point2D(cx, cy), r, start, sweep, 0.0), transform, style
+        SectorPayload(Point(cx, cy), r, start, sweep, 0.0), transform, style
     )
 
 
@@ -453,7 +451,7 @@ def line_command(
     y1: Float64,
 ) -> RenderCommand:
     return RenderCommand(
-        LinePayload(Point2D(x0, y0), Point2D(x1, y1)), transform, style
+        LinePayload(Point(x0, y0), Point(x1, y1)), transform, style
     )
 
 
@@ -491,7 +489,7 @@ def bezier_command(
 
 
 def bezier_chain_command(
-    transform: Matrix[3, 3], style: Style, var points: List[Point2D]
+    transform: Matrix[3, 3], style: Style, var points: List[Point]
 ) -> RenderCommand:
     """A stroke along the joined Béziers whose control points are `points`,
     laid out as `RenderCommand.points` describes: 3n + 1 of them."""
@@ -499,7 +497,7 @@ def bezier_chain_command(
 
 
 def polygon_command(
-    transform: Matrix[3, 3], style: Style, var vertices: List[Point2D]
+    transform: Matrix[3, 3], style: Style, var vertices: List[Point]
 ) -> RenderCommand:
     """A polygon through `vertices`, in order, closed back to the first."""
     return RenderCommand(PolygonPayload(vertices^, 0.0, None), transform, style)
@@ -508,7 +506,7 @@ def polygon_command(
 def rounded_sector_command(
     transform: Matrix[3, 3],
     style: Style,
-    var vertices: List[Point2D],
+    var vertices: List[Point],
     cx: Float64,
     cy: Float64,
     r: Float64,
@@ -522,7 +520,7 @@ def rounded_sector_command(
 def framed_polygon_command(
     transform: Matrix[3, 3],
     style: Style,
-    var vertices: List[Point2D],
+    var vertices: List[Point],
     cx: Float64,
     cy: Float64,
     half_w: Float64,
@@ -533,8 +531,8 @@ def framed_polygon_command(
     rather than the vertices' bounds, which the chords fall short of."""
     var c = polygon_command(transform, style, vertices^)
     c.payload[PolygonPayload].gradient_box = (
-        Point2D(cx, cy),
-        Vector2D(half_w, half_h),
+        Point(cx, cy),
+        Vector(half_w, half_h),
     )
     return c^
 
@@ -558,7 +556,7 @@ def image_command(
     """
     return RenderCommand(
         ImagePayload(
-            Point2D(cx, cy),
+            Point(cx, cy),
             w,
             h,
             image,
@@ -588,7 +586,7 @@ def text_command(
     layout is decided here.
     """
     return RenderCommand(
-        TextPayload(Point2D(x, y), s^, ArcPointer(style._text_style()), wrap),
+        TextPayload(Point(x, y), s^, ArcPointer(style._text_style()), wrap),
         transform,
         style,
     )

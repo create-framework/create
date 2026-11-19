@@ -57,9 +57,9 @@ the inner one applying first, as if the two matrices were combined with `@`. Tha
 a thing made of parts that move together, such as a car whose wheels turn as it drives:
 
 ```mojo
-# In `update`, with a `car_position: Point2D` field: the car moves, and each
+# In `update`, with a `car_position: Point` field: the car moves, and each
 # wheel turns within it.
-with canvas.transform(translate(Vector2D(self.car_position))):
+with canvas.transform(translate(Vector(self.car_position))):
     canvas.rectangle((0, 20), 120, 40)  # the body
     for x in [-40.0, 40.0]:
         with canvas.transform(translate(x, 0) @ rotate(self.wheel_angle)):
@@ -74,10 +74,10 @@ the matrix, and `apply(m, vector)` gives a vector changed by its turning and sca
 is a movement rather than a place, so a translation doesn't move it:
 
 ```mojo
-# In `update`, with `base: Vector2D` and `aim: Float64` fields:
+# In `update`, with `base: Vector` and `aim: Float64` fields:
 var cannon = translate(self.base) @ rotate(self.aim)
-var tip = apply(cannon, Point2D(60, 0))  # the end of a barrel 60 long, pointing along +x
-var direction = apply(cannon, Vector2D.RIGHT)  # the way the barrel points
+var tip = apply(cannon, Point(60, 0))  # the end of a barrel 60 long, pointing along +x
+var direction = apply(cannon, Vector.RIGHT)  # the way the barrel points
 ```
 
 `inverse(m)` is the matrix that undoes `m`: it moves every point back to where it started. It

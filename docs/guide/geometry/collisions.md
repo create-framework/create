@@ -55,8 +55,8 @@ def main() raises:
   `Capsule`, `Triangle`, `Sector`, `Polygon`) share any point. It works both ways round:
   `a.overlaps(b)` and `b.overlaps(a)` always agree.
 - **`curve.intersects(x)`** asks whether a curve (`Line`, `Arc`, `Bezier`, `Spline`) crosses or
-  touches `x`, which can be any shape or a `Point2D`. It is a method of curves only, since crossing
-  is all a curve can do: write `line.intersects(circle)`, not the other way round.
+  touches `x`, which can be any shape or a `Point`. It is a method of curves only, since crossing is
+  all a curve can do: write `line.intersects(circle)`, not the other way round.
 - **`region.contains(x)`** asks whether `x`, which can be a point, region or curve, lies wholly
   inside the region. It works one way only: a big circle can contain a small one, but not the other
   way round.
@@ -89,7 +89,7 @@ var previous = self.position
 self.position = self.position + self.velocity * context.time.delta
 if Capsule(previous, self.position, self.radius).overlaps(self.wall):
     self.position = previous  # stop where it was, before the wall
-    self.velocity = Vector2D.ZERO
+    self.velocity = Vector.ZERO
 ```
 
 ## Distances

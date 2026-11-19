@@ -8,7 +8,7 @@ from create.color.blend_mode import BlendMode
 from create.color.color import Color
 from create.color.gradient import Gradient
 from create.text.font import Font, FontWeight
-from create.math.vector2d import Vector2D
+from create.math.vector import Vector
 from create.math._optional_float64 import _OptionalFloat64
 from ._paint import Paint, TextStyle
 
@@ -87,7 +87,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     var opacity: Float64
     var blend_mode: BlendMode
     var shadow_color: Color
-    var shadow_offset: Vector2D
+    var shadow_offset: Vector
     var shadow_blur: Float64
     var shadow_spread: Float64
     var shadow_inset: Bool
@@ -117,7 +117,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         opacity: _OptionalFloat64 = None,
         blend_mode: BlendMode = BlendMode.NORMAL,
         shadow: Optional[Color] = None,
-        shadow_offset: Optional[Vector2D] = None,
+        shadow_offset: Optional[Vector] = None,
         shadow_blur: _OptionalFloat64 = None,
         shadow_spread: _OptionalFloat64 = None,
         shadow_inset: Optional[Bool] = None,
@@ -146,7 +146,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.opacity = opacity.or_else(1.0)
         self.blend_mode = blend_mode
         self.shadow_color = shadow.or_else(Color(0, 0, 0, 96))
-        self.shadow_offset = shadow_offset.or_else(Vector2D(4, -4))
+        self.shadow_offset = shadow_offset.or_else(Vector(4, -4))
         self.shadow_blur = shadow_blur.or_else(8.0)
         self.shadow_spread = shadow_spread.or_else(0.0)
         self.shadow_inset = shadow_inset.or_else(False)

@@ -20,17 +20,17 @@ comptime _CREAM = Color(240, 236, 222)
 
 @fieldwise_init
 struct Gamepads(Program):
-    var positions: List[Point2D]
+    var positions: List[Point]
     var colors: List[Int]
     var message: String
     var message_until: Float64
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Gamepads:
-        var positions = List[Point2D]()
+        var positions = List[Point]()
         var colors = List[Int]()
         for i in range(_PLAYERS):
-            positions.append(Point2D(Float64(i) * 120 - 180, 0))
+            positions.append(Point(Float64(i) * 120 - 180, 0))
             colors.append(i)
         return Gamepads(positions^, colors^, "", 0)
 
@@ -56,12 +56,12 @@ struct Gamepads(Program):
                 self.colors[i] = (self.colors[i] + 1) % len(palette)
                 context.rumble(0.1, low_frequency=0, high_frequency=1, player=i)
             if pad.pressed(GamepadButton.START):
-                self.positions[i] = Point2D(Float64(i) * 120 - 180, 0)
+                self.positions[i] = Point(Float64(i) * 120 - 180, 0)
 
             canvas.fill(palette[self.colors[i]])
             canvas.circle(self.positions[i], 30 + 20 * pad.left_trigger)
             canvas.text_color(_TEXT)
-            canvas.text(String(i + 1), self.positions[i] + Vector2D(0, 45))
+            canvas.text(String(i + 1), self.positions[i] + Vector(0, 45))
 
         canvas.text_color(_TEXT)
         canvas.text_alignment(Align.LEFT)

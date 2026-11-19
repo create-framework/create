@@ -1,5 +1,5 @@
 from std.math import atan2, ceil, cos, floor, min, max, sin, sqrt
-from create.math import PI, TAU, Point2D, Vector2D
+from create.math import PI, TAU, Point, Vector
 from .arc import Arc
 from .line import Line
 from .polygon import Polygon
@@ -30,7 +30,7 @@ rounded shape's outline polygon. The chords sit inside the arc by at most
 `r * (1 - cos(step / 2))`, about 0.1% of the corner radius."""
 
 
-def _closest_on_segment(p: Point2D, a: Point2D, b: Point2D) -> Point2D:
+def _closest_on_segment(p: Point, a: Point, b: Point) -> Point:
     var ab = b - a
     var len_sq = ab.dot(ab)
     if len_sq == 0.0:
@@ -39,7 +39,7 @@ def _closest_on_segment(p: Point2D, a: Point2D, b: Point2D) -> Point2D:
     return a + ab * t
 
 
-def _orientation(a: Point2D, b: Point2D, c: Point2D) -> Int:
+def _orientation(a: Point, b: Point, c: Point) -> Int:
     var cross = _cross(b - a, c - a)
     if cross > 0.0:
         return 1
@@ -48,7 +48,7 @@ def _orientation(a: Point2D, b: Point2D, c: Point2D) -> Int:
     return 0
 
 
-def _point_on_segment(p: Point2D, a: Point2D, b: Point2D) -> Bool:
+def _point_on_segment(p: Point, a: Point, b: Point) -> Bool:
     if _orientation(a, b, p) != 0:
         return False
     return min(a.x, b.x) <= p.x <= max(a.x, b.x) and min(
@@ -56,7 +56,7 @@ def _point_on_segment(p: Point2D, a: Point2D, b: Point2D) -> Bool:
     ) <= p.y <= max(a.y, b.y)
 
 
-def _segments_meet(a: Point2D, b: Point2D, c: Point2D, d: Point2D) -> Bool:
+def _segments_meet(a: Point, b: Point, c: Point, d: Point) -> Bool:
     """Whether the segment from `a` to `b` meets the one from `c` to `d`,
     touching included, exactly: decided by the signs of cross products. A
     zero-length segment is the point it collapses to."""
@@ -78,12 +78,12 @@ def _segments_meet(a: Point2D, b: Point2D, c: Point2D, d: Point2D) -> Bool:
     return False
 
 
-def _distance_squared(p: Point2D, q: Point2D) -> Float64:
+def _distance_squared(p: Point, q: Point) -> Float64:
     var d = p - q
     return d.dot(d)
 
 
-def _rounded_closest(q: Point2D, p: Point2D, r: Float64) -> Point2D:
+def _rounded_closest(q: Point, p: Point, r: Float64) -> Point:
     """The closest point to `p` on a shape rounded by `r`, given `q`, the
     closest point to `p` on the sharp shape it rounds out from."""
     var d = p - q
@@ -93,7 +93,7 @@ def _rounded_closest(q: Point2D, p: Point2D, r: Float64) -> Point2D:
     return q + d * (r / sqrt(distance_squared))
 
 
-def _cross(a: Vector2D, b: Vector2D) -> Float64:
+def _cross(a: Vector, b: Vector) -> Float64:
     """The cross product of `a` and `b`, exactly zero whenever its two
     products are equal. Written as one subtraction, the compiler may fuse
     it into a multiply-add, which leaves the rounding of the second product
@@ -107,8 +107,8 @@ def _cross(a: Vector2D, b: Vector2D) -> Float64:
     return left - right
 
 
-def _unit(angle: Float64) -> Vector2D:
-    return Vector2D(cos(angle), sin(angle))
+def _unit(angle: Float64) -> Vector:
+    return Vector(cos(angle), sin(angle))
 
 
 def _normalized_sweep(
@@ -122,7 +122,7 @@ def _normalized_sweep(
     return (start_angle, min(sweep_angle, TAU))
 
 
-def _in_sweep(v: Vector2D, start_angle: Float64, sweep_angle: Float64) -> Bool:
+def _in_sweep(v: Vector, start_angle: Float64, sweep_angle: Float64) -> Bool:
     """Whether direction `v` lies within the sweep, edges included, for a
     normalized sweep (`_normalized_sweep`). A zero `v` has no direction and
     counts as inside.
@@ -173,7 +173,7 @@ def _cut_at_line(l: Line, other: Line, mut cuts: List[Float64]):
 
 
 def _cut_at_circle(
-    l: Line, position: Point2D, r: Float64, mut cuts: List[Float64]
+    l: Line, position: Point, r: Float64, mut cuts: List[Float64]
 ):
     """Append the fractions along `l` where its line crosses the circle."""
     var d = l.end - l.start
@@ -187,13 +187,13 @@ def _cut_at_circle(
         cuts.append((-b + root) / len_sq)
 
 
-def _segment_middles(l: Line, var cuts: List[Float64]) -> List[Point2D]:
+def _segment_middles(l: Line, var cuts: List[Float64]) -> List[Point]:
     """The middle of every piece `cuts` leaves of `l`, a cut being a
     fraction along it; those off the segment are pulled back onto it."""
     cuts.append(0.0)
     cuts.append(1.0)
     sort(cuts)
-    var middles = List[Point2D]()
+    var middles = List[Point]()
     for i in range(len(cuts) - 1):
         var t0 = max(0.0, min(cuts[i], 1.0))
         var t1 = max(0.0, min(cuts[i + 1], 1.0))
@@ -203,7 +203,7 @@ def _segment_middles(l: Line, var cuts: List[Float64]) -> List[Point2D]:
 
 
 def _circle_crossings(
-    l: Line, position: Point2D, r: Float64, mut crossings: List[Point2D]
+    l: Line, position: Point, r: Float64, mut crossings: List[Point]
 ):
     """Append where the line through `l` crosses the circle."""
     var d = l.end - l.start
@@ -219,7 +219,7 @@ def _circle_crossings(
         crossings.append(foot - u * half)
 
 
-def _arc_middles(a: Arc, crossings: List[Point2D]) -> List[Point2D]:
+def _arc_middles(a: Arc, crossings: List[Point]) -> List[Point]:
     """The middle of every piece of `a` the points `crossings` on its
     circle leave, cut as angles past the start of its counter-clockwise
     sweep; points off the arc cut nothing."""
@@ -232,7 +232,7 @@ def _arc_middles(a: Arc, crossings: List[Point2D]) -> List[Point2D]:
         if angle < s[1]:
             cuts.append(angle)
     sort(cuts)
-    var middles = List[Point2D]()
+    var middles = List[Point]()
     for i in range(len(cuts) - 1):
         var middle = s[0] + (cuts[i] + cuts[i + 1]) / 2.0
         middles.append(a.position + _unit(middle) * a.radius)
@@ -241,7 +241,7 @@ def _arc_middles(a: Arc, crossings: List[Point2D]) -> List[Point2D]:
 
 def _rounded_outline[
     N: Int
-](inner: Array[Point2D, N], corners: Array[Point2D, N], r: Float64) -> Polygon:
+](inner: Array[Point, N], corners: Array[Point, N], r: Float64) -> Polygon:
     """The convex shape with `corners`, each rounded by `r`, as a polygon.
 
     `inner` is the shape with every edge moved in by `r`: its corners are
@@ -254,7 +254,7 @@ def _rounded_outline[
         var a = corners[i]
         var b = corners[(i + 1) % N]
         area2 += a.x * b.y - b.x * a.y
-    var points = List[Point2D]()
+    var points = List[Point]()
     for k in range(N):
         # Counter-clockwise, so the outward normal is the edge turned right.
         var i = k if area2 > 0.0 else N - 1 - k
@@ -273,7 +273,7 @@ def _rounded_outline[
     return Polygon(points^)
 
 
-def _winds(a: Point2D, b: Point2D, p: Point2D) -> Int:
+def _winds(a: Point, b: Point, p: Point) -> Int:
     """What the edge from `a` to `b` adds to the winding round `p`: +1 up
     across the horizontal through `p` to its right, -1 down, half-open in
     y so a vertex on that line is counted once."""
@@ -285,11 +285,11 @@ def _winds(a: Point2D, b: Point2D, p: Point2D) -> Int:
     return 0
 
 
-def _swapped(p: Point2D) -> Point2D:
-    return Point2D(p.y, p.x)
+def _swapped(p: Point) -> Point:
+    return Point(p.y, p.x)
 
 
-def _closed_outline[N: Int](pts: Array[Point2D, N]) -> List[Line]:
+def _closed_outline[N: Int](pts: Array[Point, N]) -> List[Line]:
     var outline = List[Line](capacity=N)
     for i in range(N):
         outline.append(Line(pts[i], pts[(i + 1) % N]))

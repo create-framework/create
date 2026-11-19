@@ -9,9 +9,9 @@ from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
-from create.math import Point2D
+from create.math import Point
 from .drawable import Curve, DrawTarget
-from create.math import Vector2D
+from create.math import Vector
 
 
 struct Spline(Copyable, Curve, Equatable, Movable, Writable):
@@ -44,13 +44,13 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
     Like `Bezier`, a spline has no interior and is not a region.
     """
 
-    var points: List[Point2D]
+    var points: List[Point]
     var alpha: Float64
     var closed: Bool
 
     def __init__(
         out self,
-        var points: List[Point2D],
+        var points: List[Point],
         alpha: Float64 = 0.5,
         closed: Bool = False,
     ):
@@ -106,8 +106,8 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         for i in range(segments):
             var p1 = p[i]
             var p2 = p[(i + 1) % n]
-            var p0: Point2D
-            var p3: Point2D
+            var p0: Point
+            var p3: Point
             if self.closed:
                 p0 = p[(i - 1 + n) % n]
                 p3 = p[(i + 2) % n]
@@ -119,7 +119,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
             curves.append(self._segment(p0, p1, p2, p3))
         return curves^
 
-    def at(self, t: Float64) -> Point2D:
+    def at(self, t: Float64) -> Point:
         """The point at parameter `t`, clamped to 0..1: a spline has no
         natural continuation past its ends."""
         var curves = self.beziers()
@@ -128,14 +128,14 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         var located = _locate(len(curves), t)
         return curves[located[0]].at(located[1])
 
-    def tangent(self, t: Float64) -> Vector2D:
+    def tangent(self, t: Float64) -> Vector:
         """The derivative with respect to `t` at `t`, clamped to 0..1: the
         direction of travel, with a magnitude that is the speed `t` moves at.
         A joint belongs to the stretch that starts there. Zero when there is
         no curve."""
         var curves = self.beziers()
         if len(curves) == 0:
-            return Vector2D(0.0, 0.0)
+            return Vector(0.0, 0.0)
         var located = _locate(len(curves), t)
         # Each stretch runs its own 0..1 in 1/n of the spline's `t`.
         return curves[located[0]].tangent(located[1]) * Float64(len(curves))
@@ -148,7 +148,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
             total += c.length()
         return total
 
-    def at_distance(self, distance: Float64) -> Point2D:
+    def at_distance(self, distance: Float64) -> Point:
         """The point `distance` along the curve from the first point,
         clamped to the curve's ends. Equal steps in `distance` are equal
         steps along the curve. Measures every stretch per call; sample once
@@ -173,34 +173,34 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         if len(curves) == 0:
             return Rectangle(self._lone_point(), 0.0, 0.0)
         var box = curves[0].bounds()
-        var lo = Point2D(
+        var lo = Point(
             box.position.x - box.width / 2.0, box.position.y - box.height / 2.0
         )
-        var hi = Point2D(
+        var hi = Point(
             box.position.x + box.width / 2.0, box.position.y + box.height / 2.0
         )
         for i in range(1, len(curves)):
             box = curves[i].bounds()
-            lo = Point2D(
+            lo = Point(
                 min(lo.x, box.position.x - box.width / 2.0),
                 min(lo.y, box.position.y - box.height / 2.0),
             )
-            hi = Point2D(
+            hi = Point(
                 max(hi.x, box.position.x + box.width / 2.0),
                 max(hi.y, box.position.y + box.height / 2.0),
             )
         return Rectangle(
-            Point2D((lo.x + hi.x) / 2.0, (lo.y + hi.y) / 2.0),
+            Point((lo.x + hi.x) / 2.0, (lo.y + hi.y) / 2.0),
             hi.x - lo.x,
             hi.y - lo.y,
         )
 
-    def flatten(self, tolerance: Float64) -> List[Point2D]:
+    def flatten(self, tolerance: Float64) -> List[Point]:
         """Points along the curve, from the first point to the last
         inclusive, straying from it by at most `tolerance` between them:
         each stretch's `Bezier.flatten`, joined without repeating the
         point where one stretch meets the next."""
-        var points = List[Point2D]()
+        var points = List[Point]()
         for c in self.beziers():
             var part = c.flatten(tolerance)
             var first = 0 if len(points) == 0 else 1
@@ -208,7 +208,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
                 points.append(part[i])
         return points^
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         """The point on the curve nearest `p`: the nearest of each
         stretch's `Bezier.closest_point`. A spline with no curve gives its
         one point."""
@@ -227,7 +227,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
 
     # A spline meets a shape where one of its stretches does: see
     # `Bezier.intersects` for how closely each follows the curve.
-    def intersects(self, p: Point2D) -> Bool:
+    def intersects(self, p: Point) -> Bool:
         for c in self.beziers():
             if c.intersects(p):
                 return True
@@ -301,15 +301,13 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
                     return True
         return False
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         for i in range(len(moved.points)):
             moved.points[i] = moved.points[i] + delta
         return moved^
 
-    def _segment(
-        self, p0: Point2D, p1: Point2D, p2: Point2D, p3: Point2D
-    ) -> Bezier:
+    def _segment(self, p0: Point, p1: Point, p2: Point, p3: Point) -> Bezier:
         """The stretch from `p1` to `p2` as a Bézier.
 
         Knots are spaced by distance to the power `alpha` (Barry–Goldman), and
@@ -325,18 +323,18 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         var m2 = ((p2 - p1) / d1 - (p3 - p1) / (d1 + d2) + (p3 - p2) / d2) * d1
         return Bezier(p1, p1 + m1 / 3.0, p2 - m2 / 3.0, p2)
 
-    def _lone_point(self) -> Point2D:
+    def _lone_point(self) -> Point:
         """Where a spline with no curve sits: its first point, or the origin
         when it has none."""
         if len(self.points) == 0:
-            return Point2D(0.0, 0.0)
+            return Point(0.0, 0.0)
         return self.points[0]
 
-    def _distinct_points(self) -> List[Point2D]:
+    def _distinct_points(self) -> List[Point]:
         """`points` without consecutive repeats, and, when closed, without a
         last point repeating the first: each would give a stretch of no
         length, and a zero knot interval to divide by."""
-        var p = List[Point2D](capacity=len(self.points))
+        var p = List[Point](capacity=len(self.points))
         for q in self.points:
             if len(p) == 0 or p[len(p) - 1] != q:
                 p.append(q)

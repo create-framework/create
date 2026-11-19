@@ -45,13 +45,13 @@ struct Offscreen(Program):
     strokes painted into it."""
     var strokes: Image
     """The layer as last read, redrawn every frame."""
-    var last_mouse: Point2D
+    var last_mouse: Point
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Offscreen:
         var layer = Canvas(canvas.width(), canvas.height())
         var strokes = layer.snapshot()
-        return Offscreen(_badge(), layer^, strokes^, Point2D(0, 0))
+        return Offscreen(_badge(), layer^, strokes^, Point(0, 0))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if context.keyboard.pressed(Key.C):

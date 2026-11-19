@@ -1,4 +1,4 @@
-from create.math.point2d import Point2D
+from create.math.point import Point
 from create.math.matrix import (
     Matrix,
     scale as mat_scale,
@@ -16,11 +16,11 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
     the default identity camera behaves exactly like no camera at all.
     """
 
-    var position: Point2D
+    var position: Point
     var zoom: Float64
 
     def __init__(
-        out self, position: Point2D = Point2D(0.0, 0.0), zoom: Float64 = 1.0
+        out self, position: Point = Point(0.0, 0.0), zoom: Float64 = 1.0
     ):
         self.position = position
         self.zoom = zoom
@@ -36,20 +36,20 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
             -self.position.x, -self.position.y
         )
 
-    def to_world(self, screen: Point2D) -> Point2D:
+    def to_world(self, screen: Point) -> Point:
         """A screen-space point — `context.mouse.position`, say — into world space.
 
         The inverse of `matrix()`, done in arithmetic rather than through a
         general matrix inverse.
         """
-        return Point2D(
+        return Point(
             screen.x / self.zoom + self.position.x,
             screen.y / self.zoom + self.position.y,
         )
 
-    def to_screen(self, world: Point2D) -> Point2D:
+    def to_screen(self, world: Point) -> Point:
         """A world-space point into screen space."""
-        return Point2D(
+        return Point(
             (world.x - self.position.x) * self.zoom,
             (world.y - self.position.y) * self.zoom,
         )

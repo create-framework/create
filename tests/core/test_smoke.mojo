@@ -3,7 +3,7 @@
 # `mojo precompile` checks the library's own bodies but never a caller, so
 # this checks what only a program can: that a struct conforms to `Program`,
 # that `run[T]` and `run_headless[T]` instantiate with it, and that a call
-# a sketch writes (a tuple for a `Point2D`) resolves.
+# a sketch writes (a tuple for a `Point`) resolves.
 # The pre-commit hook builds this file and the suite runs it. Keep it
 # minimal: it is built on every commit.
 

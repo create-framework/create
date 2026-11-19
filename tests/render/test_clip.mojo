@@ -74,7 +74,7 @@ struct Clipped[scene: Int](Program):
             with canvas.clip(Rectangle((0, 0), 40, 20)):
                 canvas.fill(Gradient.linear(Color.RED, Color.BLUE))
                 canvas.rectangle((0, 0), 100, 60)
-                canvas.shadow(color=Color.BLACK, offset=Vector2D(30, -30))
+                canvas.shadow(color=Color.BLACK, offset=Vector(30, -30))
                 canvas.rectangle((-30, 30), 30, 30)
                 canvas.font_size(40)
                 canvas.text_color(Color.BLACK)
@@ -82,12 +82,12 @@ struct Clipped[scene: Int](Program):
         else:
             var l_shape = Polygon(
                 [
-                    Point2D(-30, -30),
-                    Point2D(30, -30),
-                    Point2D(30, 0),
-                    Point2D(0, 0),
-                    Point2D(0, 30),
-                    Point2D(-30, 30),
+                    Point(-30, -30),
+                    Point(30, -30),
+                    Point(30, 0),
+                    Point(0, 0),
+                    Point(0, 30),
+                    Point(-30, 30),
                 ]
             )
             with canvas.clip(l_shape):

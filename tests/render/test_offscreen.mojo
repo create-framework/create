@@ -18,7 +18,7 @@ def _canvas(scale: Float64 = 1.0) raises -> Canvas:
     return Canvas(100, 60, scale=scale, antialiasing=Antialiasing.OFF)
 
 
-def _square(mut canvas: Canvas, position: Point2D, color: Color):
+def _square(mut canvas: Canvas, position: Point, color: Color):
     with canvas.style(fill=color, stroke_enabled=False):
         canvas.rectangle(position, 20, 20)
 
@@ -67,7 +67,7 @@ def test_a_read_drops_the_commands_it_replayed() raises -> None:
 
 def test_drawing_after_a_read_inside_a_clip_stays_clipped() raises -> None:
     var canvas = _canvas()
-    with canvas.clip(Rectangle(Point2D(-20, 0), 20, 20)):
+    with canvas.clip(Rectangle(Point(-20, 0), 20, 20)):
         _square(canvas, (-20, 0), Color.BLUE)
         assert_equal(canvas.color_at((-20, 0)), Color.BLUE)
         # The clip covers only the left square, so this one draws nothing.
@@ -149,7 +149,7 @@ def test_a_region_snapshot_is_cropped_upright_and_clear_off_it() raises -> None:
     var canvas = _canvas()
     _square(canvas, (40, 20), Color.BLUE)
     # Centred on the square's top-right corner, half past the canvas edge.
-    var shot = canvas.snapshot(Rectangle(Point2D(50, 30), 20, 20))
+    var shot = canvas.snapshot(Rectangle(Point(50, 30), 20, 20))
     assert_equal(shot.width(), 20)
     assert_equal(shot.pixel(5, 15), Color.BLUE, "bottom-left: the square")
     assert_equal(shot.pixel(15, 5), Color.TRANSPARENT, "off the canvas")
@@ -207,7 +207,7 @@ def test_clear_makes_it_transparent_again() raises -> None:
 
 def test_clear_inside_a_clip_keeps_the_clip() raises -> None:
     var canvas = _canvas()
-    with canvas.clip(Rectangle(Point2D(-20, 0), 20, 20)):
+    with canvas.clip(Rectangle(Point(-20, 0), 20, 20)):
         _square(canvas, (-20, 0), Color.BLUE)
         canvas.clear()
         _square(canvas, (20, 0), Color.RED)

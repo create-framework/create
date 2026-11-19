@@ -43,8 +43,8 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ## Fields
 
-- `direction: Vector2D`: `linear` only: which way the colours run, first stop to last.
-- `center: Point2D`: `radial` only: where the first stop sits, in the box's unit space.
+- `direction: Vector`: `linear` only: which way the colours run, first stop to last.
+- `center: Point`: `radial` only: where the first stop sits, in the box's unit space.
 
 ## Constructors
 
@@ -52,7 +52,7 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ```mojo
 @staticmethod
-def linear(first: Color, *rest: Color, *, direction: Vector2D = Vector2D.DOWN) -> Self
+def linear(first: Color, *rest: Color, *, direction: Vector = Vector.DOWN) -> Self
 ```
 
 Evenly spaced colours along `direction`; one colour is a solid.
@@ -62,7 +62,7 @@ Evenly spaced colours along `direction`; one colour is a solid.
 def linear(
     stops: List[Tuple[Float64, Color]],
     *,
-    direction: Vector2D = Vector2D.DOWN,
+    direction: Vector = Vector.DOWN,
 ) -> Self
 ```
 
@@ -76,7 +76,7 @@ def radial(
     first: Color,
     *rest: Color,
     *,
-    center: Point2D = Point2D(SIMD(0), SIMD(0)),
+    center: Point = Point(SIMD(0), SIMD(0)),
 ) -> Self
 ```
 
@@ -87,7 +87,7 @@ Evenly spaced colours out from `center` to the box's edges.
 def radial(
     stops: List[Tuple[Float64, Color]],
     *,
-    center: Point2D = Point2D(SIMD(0), SIMD(0)),
+    center: Point = Point(SIMD(0), SIMD(0)),
 ) -> Self
 ```
 

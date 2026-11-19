@@ -19,7 +19,7 @@ def _canvas() raises -> Canvas:
     return canvas^
 
 
-def _inked(mut canvas: Canvas, p: Point2D) raises -> Bool:
+def _inked(mut canvas: Canvas, p: Point) raises -> Bool:
     return canvas.color_at(p) != Color.TRANSPARENT
 
 
@@ -58,8 +58,8 @@ def test_stroke_is_inset_and_as_thick_round_the_ends() raises -> None:
     assert_true(_inked(canvas, (0.5, 11.5)), "stroke along the side")
     assert_true(not _inked(canvas, (0.5, 7.5)), "inside the stroke, side")
     # Round the end, 45 degrees up from the axis.
-    var outward = Vector2D.from_angle(PI / 4.0, 1.0)
-    var tip = Point2D(30.0, 0.0)
+    var outward = Vector.from_angle(PI / 4.0, 1.0)
+    var tip = Point(30.0, 0.0)
     assert_true(_inked(canvas, tip + outward * 11.5), "stroke round the end")
     assert_true(not _inked(canvas, tip + outward * 7.5), "inside it, the end")
 
@@ -78,9 +78,7 @@ def test_gradient_spans_its_bounds() raises -> None:
     # Left to right over the bounds, x -45..45: red at the round end's tip,
     # blue at the other.
     var canvas = _canvas()
-    canvas.fill(
-        Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.RIGHT)
-    )
+    canvas.fill(Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT))
     canvas.capsule((-30, 0), (30, 0), 15)
     var left = canvas.color_at((-44.5, 0.5))
     var right = canvas.color_at((44.5, 0.5))
@@ -101,7 +99,7 @@ def test_a_point_capsule_covers_its_circle() raises -> None:
     for j in range(a.height()):
         for i in range(a.width()):
             if a.pixel(i, j) != b.pixel(i, j):
-                var d = Point2D(Float64(i) + 0.5, Float64(j) + 0.5).distance(
+                var d = Point(Float64(i) + 0.5, Float64(j) + 0.5).distance(
                     (65.0, 45.0)
                 )
                 assert_true(

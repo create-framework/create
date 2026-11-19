@@ -47,7 +47,7 @@ from create import *
 @fieldwise_init
 struct MyApp(Program):
     var greeting: String
-    var position: Point2D
+    var position: Point
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> MyApp:

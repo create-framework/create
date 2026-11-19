@@ -23,22 +23,16 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Implicit
 
 ## Fields
 
-- `start: Point2D`
-- `control1: Point2D`
-- `control2: Point2D`
-- `end: Point2D`
+- `start: Point`
+- `control1: Point`
+- `control2: Point`
+- `end: Point`
 
 ## Constructors
 
 ```mojo
 @staticmethod
-def __init__(
-    out self,
-    start: Point2D,
-    control1: Point2D,
-    control2: Point2D,
-    end: Point2D,
-)
+def __init__(out self, start: Point, control1: Point, control2: Point, end: Point)
 ```
 
 ## Methods
@@ -52,7 +46,7 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point2D
+def at(self, t: Float64) -> Point
 ```
 
 The point at parameter `t`. Not clamped: outside 0..1 the cubic continues past its endpoints, as `lerp` extrapolates.
@@ -60,7 +54,7 @@ The point at parameter `t`. Not clamped: outside 0..1 the cubic continues past i
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector2D
+def tangent(self, t: Float64) -> Vector
 ```
 
 The derivative at `t`: the direction of travel, with a magnitude that is the curve's speed per unit of `t`. Not normalised — it is zero where the curve stops, e.g. at a cusp or where a control sits on its endpoint.
@@ -68,7 +62,7 @@ The derivative at `t`: the direction of travel, with a magnitude that is the cur
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 The point on the curve nearest `p`.
@@ -82,7 +76,7 @@ a formula.
 ### `intersects`
 
 ```mojo
-def intersects(self, p: Point2D) -> Bool
+def intersects(self, p: Point) -> Bool
 def intersects(self, l: Line) -> Bool
 def intersects(self, a: Arc) -> Bool
 def intersects(self, other: Self) -> Bool
@@ -115,7 +109,7 @@ The tightest axis-aligned rectangle around the curve — around the curve itself
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point2D]
+def flatten(self, tolerance: Float64) -> List[Point]
 ```
 
 Points along the curve, from `start` to `end` inclusive, such that the straight segments between them stray from the curve by at most `tolerance`.
@@ -147,7 +141,7 @@ curve that fits on a screen, but an approximation, not exact.
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point2D
+def at_distance(self, distance: Float64) -> Point
 ```
 
 The point `distance` along the curve from `start`, clamped to the curve's ends.
@@ -160,7 +154,7 @@ entity, not in a tight loop.
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

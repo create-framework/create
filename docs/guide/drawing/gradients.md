@@ -50,7 +50,7 @@ the smallest upright rectangle round the shape before any transform is applied. 
 turns with the shape, and one gradient suits shapes of every size. A sector's box is that of its
 whole circle.
 
-- **A linear gradient** runs along its `direction`, a `Vector2D`, which is `Vector2D.DOWN` (top to
+- **A linear gradient** runs along its `direction`, a `Vector`, which is `Vector.DOWN` (top to
   bottom) unless you give another; only its direction matters, not its length. The gradient's 0
   lands on the box's corner furthest back along the direction, and its 1 on the corner furthest
   ahead, as in CSS, so the gradient covers the whole box.

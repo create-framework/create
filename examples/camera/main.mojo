@@ -26,7 +26,7 @@ comptime _ZOOM_STEP = 1.15
 @fieldwise_init
 struct CameraDemo(Program):
     var camera: Camera
-    var markers: List[Point2D]
+    var markers: List[Point]
     """Where the clicks landed, in world space."""
 
     @staticmethod
@@ -36,9 +36,9 @@ struct CameraDemo(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var pan = _PAN_SPEED * context.time.delta / self.camera.zoom
         if context.keyboard.down(Key.RIGHT):
-            self.camera.position += Vector2D(pan, 0.0)
+            self.camera.position += Vector(pan, 0.0)
         if context.keyboard.down(Key.LEFT):
-            self.camera.position -= Vector2D(pan, 0.0)
+            self.camera.position -= Vector(pan, 0.0)
 
         # Zoom about the cursor: note the world point under it, zoom, then
         # move the camera so that point is back under the cursor.

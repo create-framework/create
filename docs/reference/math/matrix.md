@@ -13,8 +13,8 @@ multiplication like any other, and so compose into a single matrix.
 Build them with the free functions below rather than by hand:
 `identity`, `translate`, `rotate`, `scale`. Compose with
 `@`, which applies right to left — `translate(x, y) @ rotate(a)` rotates
-first, then moves the rotated result. `apply(m, point)` maps a `Point2D`
-through it, translation included; `apply(m, vector)` maps a `Vector2D`,
+first, then moves the rotated result. `apply(m, point)` maps a `Point`
+through it, translation included; `apply(m, vector)` maps a `Vector`,
 which a translation does not move.
 
 Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Writable`.

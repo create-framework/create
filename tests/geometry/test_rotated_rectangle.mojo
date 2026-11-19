@@ -17,8 +17,8 @@ from create.geometry import (
     Sector,
     Triangle,
 )
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 
 def _bar() -> Rectangle:
@@ -44,13 +44,13 @@ def test_rotation_takes_part_in_equality_and_printing() raises -> None:
     assert_equal(
         String(r),
         (
-            "Rectangle(position=Point2D(0.0, 0.0), width=3.0, height=4.0,"
+            "Rectangle(position=Point(0.0, 0.0), width=3.0, height=4.0,"
             " rotation=0.5)"
         ),
     )
     assert_equal(
         String(Rectangle((0.0, 0.0), 3, 4)),
-        "Rectangle(position=Point2D(0.0, 0.0), width=3.0, height=4.0)",
+        "Rectangle(position=Point(0.0, 0.0), width=3.0, height=4.0)",
     )
 
 
@@ -63,10 +63,10 @@ def test_int_constructor_takes_rotation() raises -> None:
 
 def test_contains_the_turned_shape() raises -> None:
     var bar = _bar()
-    assert_true(bar.contains(Point2D(0.0, 19.0)))
-    assert_true(bar.contains(Point2D(4.0, -19.0)))
-    assert_false(bar.contains(Point2D(19.0, 0.0)))
-    assert_false(bar.contains(Point2D(6.0, 0.0)))
+    assert_true(bar.contains(Point(0.0, 19.0)))
+    assert_true(bar.contains(Point(4.0, -19.0)))
+    assert_false(bar.contains(Point(19.0, 0.0)))
+    assert_false(bar.contains(Point(6.0, 0.0)))
 
 
 def test_bounds_and_edges_are_the_bounding_box() raises -> None:
@@ -91,23 +91,23 @@ def test_rounded_bounds_are_pulled_in_at_the_corners() raises -> None:
 
 def test_closest_point_from_outside_lands_on_an_edge() raises -> None:
     var bar = _bar()
-    var q = bar.closest_point(Point2D(20.0, 3.0))
+    var q = bar.closest_point(Point(20.0, 3.0))
     assert_almost_equal(q.x, 5.0)
     assert_almost_equal(q.y, 3.0)
-    var inside = Point2D(1.0, 15.0)
+    var inside = Point(1.0, 15.0)
     assert_equal(bar.closest_point(inside), inside)
 
 
 def test_area_and_center_ignore_the_turn() raises -> None:
     var bar = _bar()
     assert_equal(bar.area(), 400.0)
-    assert_equal(bar.center(), Point2D(0.0, 0.0))
+    assert_equal(bar.center(), Point(0.0, 0.0))
 
 
 def test_move_and_translate_keep_the_turn() raises -> None:
     var bar = _bar()
-    assert_equal(bar.move_to(Point2D(3.0, 4.0)).rotation, PI / 2.0)
-    assert_equal(bar.translate(Vector2D(1.0, 1.0)).rotation, PI / 2.0)
+    assert_equal(bar.move_to(Point(3.0, 4.0)).rotation, PI / 2.0)
+    assert_equal(bar.translate(Vector(1.0, 1.0)).rotation, PI / 2.0)
 
 
 def test_overlaps_rectangle_inside_the_bounds_but_off_the_shape() raises -> (
@@ -174,7 +174,7 @@ def test_contains_shapes_that_fit_only_turned() raises -> None:
         bar.contains(Triangle((-4.9, -19.9), (4.9, -19.9), (0.0, 19.9)))
     )
     assert_true(bar.contains(Sector((0.0, -19.5), 19.0, PI / 2.0 - 0.2, 0.4)))
-    assert_true(bar.contains(Polygon.regular(Point2D(0.0, 0.0), 5.0, sides=6)))
+    assert_true(bar.contains(Polygon.regular(Point(0.0, 0.0), 5.0, sides=6)))
 
 
 def test_turned_rectangle_is_contained_by_its_corners() raises -> None:
@@ -184,7 +184,7 @@ def test_turned_rectangle_is_contained_by_its_corners() raises -> None:
     assert_false(Circle((0.0, 0.0), half - 0.01).contains(d))
     assert_true(Rectangle((0.0, 0.0), 2.0 * half, 2.0 * half).contains(d))
     assert_true(Ellipse((0.0, 0.0), 2.0 * half, 2.1 * half).contains(d))
-    assert_true(Polygon.regular(Point2D(0.0, 0.0), 7.1, sides=4).contains(d))
+    assert_true(Polygon.regular(Point(0.0, 0.0), 7.1, sides=4).contains(d))
 
 
 def test_line_meets_the_turned_shape() raises -> None:
@@ -196,8 +196,8 @@ def test_line_meets_the_turned_shape() raises -> None:
 def test_a_full_turn_is_upright_to_rounding() raises -> None:
     var turned = Rectangle((0.0, 0.0), 40.0, 10.0, rotation=TAU)
     assert_almost_equal(turned.right(), 20.0)
-    assert_true(turned.contains(Point2D(19.0, 4.0)))
-    assert_false(turned.contains(Point2D(4.0, 19.0)))
+    assert_true(turned.contains(Point(19.0, 4.0)))
+    assert_false(turned.contains(Point(4.0, 19.0)))
 
 
 def main() raises:

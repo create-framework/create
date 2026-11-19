@@ -87,7 +87,7 @@ These look like Processing but behave differently, and each one catches people o
 
 | Processing | Create |
 |---|---|
-| `PVector` | `Point2D` for a position, `Vector2D` for a movement (see [Points and vectors](../math/points-and-vectors.md)) |
+| `PVector` | `Point` for a position, `Vector` for a movement (see [Points and vectors](../math/points-and-vectors.md)) |
 | `random(a, b)` | `random.float(a, b)`, on a `Random` field (see [Random numbers](../math/random-numbers.md)) |
 | `noise(x, y)` | `noise.at((x, y))`, on a `Noise` field (see [Noise](../math/noise.md)) |
 | `map`, `lerp`, `constrain` | `map`, `lerp`, `clamp` (see [Interpolation](../math/interpolation.md)) |

@@ -1,5 +1,5 @@
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 from .mouse_button import MouseButton
 
@@ -17,7 +17,7 @@ struct Mouse(Copyable, Movable, Writable):
     reads a frame's events before the `Canvas` (and any `Camera` it sets)
     exists. Convert with `camera.to_world`, or `canvas.to_local` for the
     frame a shape is drawn in. `position` and `press_position` are
-    `Point2D`s because they are locations; `wheel` is a `Vector2D` because
+    `Point`s because they are locations; `wheel` is a `Vector` because
     a scroll is a displacement.
 
     It is the loop's own `Mouse`, not a copy: held buttons persist in it
@@ -25,20 +25,20 @@ struct Mouse(Copyable, Movable, Writable):
     and don't write it.
     """
 
-    var position: Point2D
+    var position: Point
     """Where the pointer is, in screen space."""
     var button: MouseButton
     """The most recent button pressed (`MouseButton.NONE` before any). Kept
     until the next press."""
-    var movement: Vector2D
+    var movement: Vector
     """How far the pointer moved this frame, in screen units, y up: zero on
     a frame it stayed still. It keeps counting where `position` stops — at
     the screen's edge, and while `context.lock_mouse(True)` holds the
     pointer — so it is what a first-person camera or an endless drag
     turns by."""
-    var wheel: Vector2D
+    var wheel: Vector
     """This frame's scroll, zero on a frame without any."""
-    var press_position: Point2D
+    var press_position: Point
     """Where the most recent press happened, in screen space. Captured from
     the press itself, so a move later in the same frame doesn't overwrite
     where a click started, and kept until the next press, so a drag is
@@ -50,11 +50,11 @@ struct Mouse(Copyable, Movable, Writable):
     # need a set for, so a bitmask is enough.
 
     def __init__(out self):
-        self.position = Point2D(0, 0)
+        self.position = Point(0, 0)
         self.button = MouseButton.NONE
-        self.movement = Vector2D(0, 0)
-        self.wheel = Vector2D(0, 0)
-        self.press_position = Point2D(0, 0)
+        self.movement = Vector(0, 0)
+        self.wheel = Vector(0, 0)
+        self.press_position = Point(0, 0)
         self._held = 0
         self._pressed = 0
         self._released = 0
@@ -92,26 +92,26 @@ struct Mouse(Copyable, Movable, Writable):
         a frame, before that frame's events."""
         self._pressed = 0
         self._released = 0
-        self.movement = Vector2D(0, 0)
-        self.wheel = Vector2D(0, 0)
+        self.movement = Vector(0, 0)
+        self.wheel = Vector(0, 0)
 
-    def _move(mut self, position: Point2D, movement: Vector2D = Vector2D.ZERO):
+    def _move(mut self, position: Point, movement: Vector = Vector.ZERO):
         self.position = position
         self.movement += movement
 
-    def _button_down(mut self, button: MouseButton, position: Point2D):
+    def _button_down(mut self, button: MouseButton, position: Point):
         self.button = button
         self.position = position
         self.press_position = position
         self._held |= button._bit()
         self._pressed |= button._bit()
 
-    def _button_up(mut self, button: MouseButton, position: Point2D):
+    def _button_up(mut self, button: MouseButton, position: Point):
         self.position = position
         self._held &= ~button._bit()
         self._released |= button._bit()
 
-    def _scroll(mut self, delta: Vector2D):
+    def _scroll(mut self, delta: Vector):
         # Added up: a fast flick or a trackpad sends several in a frame.
         self.wheel += delta
 

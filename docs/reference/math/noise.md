@@ -66,13 +66,13 @@ def at(self, x: Float64) -> Float64
 The field along a line: a value that wanders smoothly as `x` (a time, say) moves.
 
 ```mojo
-def at(self, position: Point2D) -> Float64
+def at(self, position: Point) -> Float64
 ```
 
 The field over the plane: terrain, texture, a flow-field angle.
 
 ```mojo
-def at(self, position: Point2D, time: Float64) -> Float64
+def at(self, position: Point, time: Float64) -> Float64
 ```
 
 The plane field, animated: it evolves smoothly as `time` moves. `time` is not divided by `feature_size`; scale it at the call.

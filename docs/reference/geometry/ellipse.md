@@ -31,7 +31,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 
 ## Fields
 
-- `position: Point2D`
+- `position: Point`
 - `width: Float64`
 - `height: Float64`
 
@@ -39,9 +39,9 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 
 ```mojo
 @staticmethod
-def __init__(out self, position: Point2D, width: Float64, height: Float64)
+def __init__(out self, position: Point, width: Float64, height: Float64)
 @staticmethod
-def __init__(out self, position: Point2D, width: Int, height: Int)
+def __init__(out self, position: Point, width: Int, height: Int)
 ```
 
 ## Methods
@@ -49,7 +49,7 @@ def __init__(out self, position: Point2D, width: Int, height: Int)
 ### `center`
 
 ```mojo
-def center(self) -> Point2D
+def center(self) -> Point
 ```
 
 ### `area`
@@ -69,13 +69,13 @@ The tightest axis-aligned rectangle around the ellipse.
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 ### `contains`
 
 ```mojo
-def contains(self, p: Point2D) -> Bool
+def contains(self, p: Point) -> Bool
 def contains(self, radius: Rectangle) -> Bool
 ```
 
@@ -139,13 +139,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

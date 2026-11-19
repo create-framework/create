@@ -3,8 +3,8 @@ from std.memory import ArcPointer
 
 from .color import Color, _tinted
 from create.math.matrix import Matrix
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 
 comptime _LINEAR = 0
@@ -13,7 +13,7 @@ comptime _RADIAL = 1
 comptime _DEGENERATE = 1e-9
 """Below this, a direction has no line to run along and a box no extent to
 span: the gradient paints its first stop. Small rather than zero, because
-normalising a vector like `Vector2D(1e-300, 0)` loses precision."""
+normalising a vector like `Vector(1e-300, 0)` loses precision."""
 
 
 def _premultiplied(c: Color) -> SIMD[DType.float64, 4]:
@@ -147,9 +147,9 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     var _ramp: ArcPointer[List[Color]]
     """`_RAMP_SIZE` colours sampled evenly from the stops, built once with
     them, so neither replay walks the stops per pixel."""
-    var direction: Vector2D
+    var direction: Vector
     """`linear` only: which way the colours run, first stop to last."""
-    var center: Point2D
+    var center: Point
     """`radial` only: where the first stop sits, in the box's unit space."""
 
     def __init__(
@@ -157,8 +157,8 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         *,
         _kind: Int,
         var _stops: List[Tuple[Float64, Color]],
-        _direction: Vector2D,
-        _center: Point2D,
+        _direction: Vector,
+        _center: Point,
     ):
         var stops = _stops^
         var floor = 0.0
@@ -187,21 +187,21 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     @staticmethod
     def linear(
-        first: Color, *rest: Color, direction: Vector2D = Vector2D.DOWN
+        first: Color, *rest: Color, direction: Vector = Vector.DOWN
     ) -> Gradient:
         """Evenly spaced colours along `direction`; one colour is a solid."""
         return Gradient(
             _kind=_LINEAR,
             _stops=Gradient._even(first, rest),
             _direction=direction,
-            _center=Point2D(0.0, 0.0),
+            _center=Point(0.0, 0.0),
         )
 
     @staticmethod
     def linear(
         stops: List[Tuple[Float64, Color]],
         *,
-        direction: Vector2D = Vector2D.DOWN,
+        direction: Vector = Vector.DOWN,
     ) -> Gradient:
         """Colours at the given positions along `direction`:
         `Gradient.linear([(0.0, Color.BLUE), (0.7, Color.PURPLE), (1.0, Color.ORANGE)])`.
@@ -210,18 +210,18 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             _kind=_LINEAR,
             _stops=stops.copy(),
             _direction=direction,
-            _center=Point2D(0.0, 0.0),
+            _center=Point(0.0, 0.0),
         )
 
     @staticmethod
     def radial(
-        first: Color, *rest: Color, center: Point2D = Point2D(0.0, 0.0)
+        first: Color, *rest: Color, center: Point = Point(0.0, 0.0)
     ) -> Gradient:
         """Evenly spaced colours out from `center` to the box's edges."""
         return Gradient(
             _kind=_RADIAL,
             _stops=Gradient._even(first, rest),
-            _direction=Vector2D.DOWN,
+            _direction=Vector.DOWN,
             _center=center,
         )
 
@@ -229,14 +229,14 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     def radial(
         stops: List[Tuple[Float64, Color]],
         *,
-        center: Point2D = Point2D(0.0, 0.0),
+        center: Point = Point(0.0, 0.0),
     ) -> Gradient:
         """Colours at the given positions out from `center` to the box's
         edges."""
         return Gradient(
             _kind=_RADIAL,
             _stops=stops.copy(),
-            _direction=Vector2D.DOWN,
+            _direction=Vector.DOWN,
             _center=center,
         )
 
@@ -300,7 +300,7 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             _dithered(a.a, b.a, fraction, d),
         )
 
-    def _t_at(self, local: Point2D, center: Point2D, half: Vector2D) -> Float64:
+    def _t_at(self, local: Point, center: Point, half: Vector) -> Float64:
         """The gradient parameter at `local`, for a box centred on `center`
         with half-extents `half`, all in the shape's own coordinates. 0 for
         a degenerate direction or box, which `_at` maps to the first stop."""
@@ -322,7 +322,7 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return sqrt(u * u + v * v)
 
     def _device_mapping(
-        self, inverse: Matrix[3, 3], center: Point2D, half: Vector2D
+        self, inverse: Matrix[3, 3], center: Point, half: Vector
     ) -> _DeviceMapping:
         """`_t_at` in device pixels, for a box centred on `center` with
         half-extents `half` in the shape's own coordinates, and `inverse`

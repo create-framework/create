@@ -39,7 +39,7 @@ struct App(Program):
             fill_gradient=Gradient.linear(_CREAM, _ROSE),
             stroke_enabled=False,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(0, -10),
+            shadow_offset=Vector(0, -10),
             shadow_blur=16,
         )
         return App(sky, card, 0.0)
@@ -54,7 +54,7 @@ struct App(Program):
             Gradient.linear(
                 _ROSE,
                 _INDIGO,
-                direction=Vector2D.RIGHT,
+                direction=Vector.RIGHT,
             )
         )
         canvas.rectangle((-450, 120), 160, 110)
@@ -73,7 +73,7 @@ struct App(Program):
             Gradient.linear(
                 _CREAM,
                 _RED,
-                direction=Vector2D(1, 1),
+                direction=Vector(1, 1),
             )
         )
         canvas.triangle((-60, 55), (60, 55), (0, 185))
@@ -82,7 +82,7 @@ struct App(Program):
             Gradient.linear(
                 _INDIGO,
                 _RED,
-                direction=Vector2D.RIGHT,
+                direction=Vector.RIGHT,
             )
         )
         canvas.sector((220, 120), 65.0, 0.5, 1.6 * PI)

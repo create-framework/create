@@ -47,7 +47,7 @@ struct App(Program):
         canvas.stroke_enabled(False)
         for column in range(_COLUMNS):
             for row in range(_ROWS):
-                var center = Point2D(
+                var center = Point(
                     canvas.left() + (Float64(column) + 0.5) * cell_w,
                     canvas.bottom() + (Float64(row) + 0.5) * cell_h,
                 )

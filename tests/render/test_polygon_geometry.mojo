@@ -12,7 +12,7 @@ from create.math.matrix import (
     scale,
     translate,
 )
-from create.math.point2d import Point2D
+from create.math.point import Point
 from create.color.color import Color
 from create.render.style import Style
 from create.render._pieces import Pieces
@@ -42,7 +42,7 @@ def _l_shape() -> Polygon:
 
 def _pentagram() -> Polygon:
     """Five self-crossing vertices: the centre is wound twice."""
-    var points = List[Point2D]()
+    var points = List[Point]()
     var p = Polygon.regular((0.0, 0.0), 26.0, 5)
     for i in range(5):
         points.append(p.vertices[(2 * i) % 5])
@@ -73,7 +73,7 @@ def _quads(
     return polygon_quads(c, c.transform, 1.0)
 
 
-def _paint(mut surface: MemorySurface, corners: List[Point2D]):
+def _paint(mut surface: MemorySurface, corners: List[Point]):
     for i in range(0, len(corners), 4):
         var qx = Array[Float64, 4](fill=0.0)
         var qy = Array[Float64, 4](fill=0.0)
@@ -94,7 +94,7 @@ def _painted(q: Pieces) -> MemorySurface:
 
 def _once() -> Color:
     var surface = MemorySurface(1, 1)
-    var corners: List[Point2D] = [
+    var corners: List[Point] = [
         (0.0, 0.0),
         (1.0, 0.0),
         (1.0, 1.0),
@@ -104,14 +104,14 @@ def _once() -> Color:
     return surface.pixel(0, 0)
 
 
-def _distance(lines: List[Line], p: Point2D) -> Float64:
+def _distance(lines: List[Line], p: Point) -> Float64:
     var d = Float64.MAX
     for l in lines:
         d = min(d, p.distance(l.closest_point(p)))
     return d
 
 
-def _area(corners: List[Point2D]) -> Float64:
+def _area(corners: List[Point]) -> Float64:
     var total = 0.0
     for i in range(0, len(corners), 4):
         for k in range(4):
@@ -121,7 +121,7 @@ def _area(corners: List[Point2D]) -> Float64:
     return total / 2.0
 
 
-def _convex(corners: List[Point2D], i: Int) -> Bool:
+def _convex(corners: List[Point], i: Int) -> Bool:
     """Whether the quad at `i` turns one way only, repeated corners aside."""
     var positive = False
     var negative = False
@@ -172,7 +172,7 @@ def _assert_tiles(
         for x in range(_SIZE):
             var color = surface.pixel(x, y)
             assert_true(color.a == 0 or color == once)
-            var p = Point2D(mat_apply(back, Float64(x) + 0.5, Float64(y) + 0.5))
+            var p = Point(mat_apply(back, Float64(x) + 0.5, Float64(y) + 0.5))
             var d = _distance(pieces[0], p)
             if not s.contains(p):
                 d = -d
@@ -199,7 +199,7 @@ def test_polygon_command_records_its_vertices() raises -> None:
     assert_true(c.payload.isa[PolygonPayload]())
     ref polygon = c.payload[PolygonPayload]
     assert_equal(len(polygon.vertices), 6)
-    assert_true(polygon.vertices[3] == Point2D(-4.0, -4.0))
+    assert_true(polygon.vertices[3] == Point(-4.0, -4.0))
     assert_equal(polygon.grow, 0.0)
     assert_false(Bool(polygon.gradient_box))
 
@@ -331,7 +331,7 @@ def test_degenerate_polygons_give_no_quads() raises -> None:
     for p in [
         Polygon((0.0, 0.0), (10.0, 0.0)),
         Polygon((0.0, 0.0), (10.0, 0.0), (20.0, 0.0)),
-        Polygon(List[Point2D]()),
+        Polygon(List[Point]()),
     ]:
         var q = _quads(p, identity[3](), _stroked(2))
         assert_equal(len(q.fill_quads), 0)

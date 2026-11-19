@@ -8,7 +8,7 @@ from create.text.font import _GlyphInfo
 from create.color.gradient import Gradient, _DeviceMapping
 from ._surface import Surface
 from ._image_mapping import ImageMapping
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 
 def _blend_lanes[
@@ -540,7 +540,7 @@ def _edge(
 
 def fill_convex[
     o: Origin[mut=True]
-](s: Surface[o], corners: List[Point2D], c: FillPaint):
+](s: Surface[o], corners: List[Point], c: FillPaint):
     """Fill the convex device polygon `corners`, in order around its edge,
     by pixel centre: `fill_quad` for any number of corners, with the same
     rules — each row's span at its centre line, half-open in x and y, each

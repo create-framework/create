@@ -16,10 +16,10 @@ def _canvas() raises -> Canvas:
     return canvas^
 
 
-def _pixel_centre(i: Int, j: Int) -> Point2D:
+def _pixel_centre(i: Int, j: Int) -> Point:
     """The centre of image pixel `(i, 99 - j)`: `j` counts up from the
     bottom, as y does."""
-    return Point2D(-49.5 + Float64(i), -49.5 + Float64(j))
+    return Point(-49.5 + Float64(i), -49.5 + Float64(j))
 
 
 def test_a_rounded_rectangle_paints_what_it_contains() raises -> None:
@@ -57,15 +57,15 @@ def test_a_rounded_triangle_paints_what_it_contains() raises -> None:
     # The triangle's fillets are drawn as chords, which sit inside the true
     # arc by up to about a quarter pixel at this radius, so centres within
     # half a pixel of the edge may fall either way.
-    var offsets: List[Vector2D] = [
-        Vector2D(0.5, 0.0),
-        Vector2D(-0.5, 0.0),
-        Vector2D(0.0, 0.5),
-        Vector2D(0.0, -0.5),
-        Vector2D(0.35, 0.35),
-        Vector2D(-0.35, 0.35),
-        Vector2D(0.35, -0.35),
-        Vector2D(-0.35, -0.35),
+    var offsets: List[Vector] = [
+        Vector(0.5, 0.0),
+        Vector(-0.5, 0.0),
+        Vector(0.0, 0.5),
+        Vector(0.0, -0.5),
+        Vector(0.35, 0.35),
+        Vector(-0.35, 0.35),
+        Vector(0.35, -0.35),
+        Vector(-0.35, -0.35),
     ]
     # Every other pixel each way is plenty, and the check is slow unoptimised.
     var checked = 0
@@ -93,15 +93,15 @@ def test_a_rounded_star_paints_what_it_contains() raises -> None:
     canvas.draw(star)
     var shot = canvas.snapshot()
     # Fillets are flattened, finer in the geometry than on screen.
-    var offsets: List[Vector2D] = [
-        Vector2D(0.5, 0.0),
-        Vector2D(-0.5, 0.0),
-        Vector2D(0.0, 0.5),
-        Vector2D(0.0, -0.5),
-        Vector2D(0.35, 0.35),
-        Vector2D(-0.35, 0.35),
-        Vector2D(0.35, -0.35),
-        Vector2D(-0.35, -0.35),
+    var offsets: List[Vector] = [
+        Vector(0.5, 0.0),
+        Vector(-0.5, 0.0),
+        Vector(0.0, 0.5),
+        Vector(0.0, -0.5),
+        Vector(0.35, 0.35),
+        Vector(-0.35, 0.35),
+        Vector(0.35, -0.35),
+        Vector(-0.35, -0.35),
     ]
     var checked = 0
     for j in range(0, 100, 2):
@@ -126,15 +126,15 @@ def _assert_sector_paints_what_it_contains(s: Sector) raises:
     canvas.draw(s)
     var shot = canvas.snapshot()
     # Curves are flattened, finer in the geometry than on screen.
-    var offsets: List[Vector2D] = [
-        Vector2D(0.5, 0.0),
-        Vector2D(-0.5, 0.0),
-        Vector2D(0.0, 0.5),
-        Vector2D(0.0, -0.5),
-        Vector2D(0.35, 0.35),
-        Vector2D(-0.35, 0.35),
-        Vector2D(0.35, -0.35),
-        Vector2D(-0.35, -0.35),
+    var offsets: List[Vector] = [
+        Vector(0.5, 0.0),
+        Vector(-0.5, 0.0),
+        Vector(0.0, 0.5),
+        Vector(0.0, -0.5),
+        Vector(0.35, 0.35),
+        Vector(-0.35, 0.35),
+        Vector(0.35, -0.35),
+        Vector(-0.35, -0.35),
     ]
     var checked = 0
     for j in range(0, 100, 2):
@@ -168,7 +168,7 @@ def test_rounded_sectors_paint_what_they_contain() raises -> None:
 
 def test_a_rounded_sector_keeps_its_circle_for_a_gradient() raises -> None:
     var gradient = Gradient.linear(
-        Color.RED, Color.BLUE, direction=Vector2D.RIGHT
+        Color.RED, Color.BLUE, direction=Vector.RIGHT
     )
     var sharp = Canvas(100, 100, antialiasing=Antialiasing.OFF)
     sharp.stroke_enabled(False)
@@ -179,7 +179,7 @@ def test_a_rounded_sector_keeps_its_circle_for_a_gradient() raises -> None:
     rounded.fill(gradient)
     rounded.sector((0.0, 0.0), 45.0, 0.2, 1.2, corner_radius=8.0)
     # Away from the corners, the same colour: both span the whole circle.
-    for p in [Point2D(20.0, 15.0), Point2D(30.0, 25.0), Point2D(12.0, 30.0)]:
+    for p in [Point(20.0, 15.0), Point(30.0, 25.0), Point(12.0, 30.0)]:
         assert_equal(rounded.color_at(p), sharp.color_at(p))
 
 
@@ -232,10 +232,10 @@ def test_the_style_rounds_shapes_built_from_numbers() raises -> None:
     )
     shapes.draw(
         Polygon(
-            Point2D(-45.0, -45.0),
-            Point2D(-5.0, -45.0),
-            Point2D(-5.0, -10.0),
-            Point2D(-45.0, -10.0),
+            Point(-45.0, -45.0),
+            Point(-5.0, -45.0),
+            Point(-5.0, -10.0),
+            Point(-45.0, -10.0),
             corner_radius=8,
         )
     )

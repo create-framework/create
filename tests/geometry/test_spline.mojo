@@ -9,32 +9,32 @@ from std.math import pow
 from create.geometry.bezier import Bezier
 from create.geometry import Arc, Circle, Line, Rectangle
 from create.geometry.spline import Spline
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 
-def _zigzag() -> List[Point2D]:
+def _zigzag() -> List[Point]:
     # Unevenly spaced, so the alphas give visibly different curves.
     return [(0.0, 0.0), (10.0, 40.0), (15.0, 38.0), (80.0, -20.0), (90.0, 30.0)]
 
 
-def _assert_point_near(p: Point2D, q: Point2D, tol: Float64 = 1e-9) raises:
+def _assert_point_near(p: Point, q: Point, tol: Float64 = 1e-9) raises:
     assert_almost_equal(p.x, q.x, atol=tol)
     assert_almost_equal(p.y, q.y, atol=tol)
 
 
-def _blend(a: Point2D, b: Point2D, wa: Float64, wb: Float64) -> Point2D:
-    return Point2D(a.x * wa + b.x * wb, a.y * wa + b.y * wb)
+def _blend(a: Point, b: Point, wa: Float64, wb: Float64) -> Point:
+    return Point(a.x * wa + b.x * wb, a.y * wa + b.y * wb)
 
 
 def _barry_goldman(
-    p0: Point2D,
-    p1: Point2D,
-    p2: Point2D,
-    p3: Point2D,
+    p0: Point,
+    p1: Point,
+    p2: Point,
+    p3: Point,
     alpha: Float64,
     u: Float64,
-) -> Point2D:
+) -> Point:
     """The Catmull-Rom point a fraction `u` of the way from `p1` to `p2`,
     straight from the pyramid of interpolations, as the reference the Bézier
     conversion must reproduce."""
@@ -51,9 +51,7 @@ def _barry_goldman(
     return _blend(b1, b2, (t2 - t) / (t2 - t1), (t - t1) / (t2 - t1))
 
 
-def _uniform(
-    p0: Point2D, p1: Point2D, p2: Point2D, p3: Point2D, u: Float64
-) -> Point2D:
+def _uniform(p0: Point, p1: Point, p2: Point, p3: Point, u: Float64) -> Point:
     """The textbook uniform Catmull-Rom matrix form."""
     var u2 = u * u
     var u3 = u2 * u
@@ -69,7 +67,7 @@ def _uniform(
         + (2.0 * p0.y - 5.0 * p1.y + 4.0 * p2.y - p3.y) * u2
         + (-p0.y + 3.0 * p1.y - 3.0 * p2.y + p3.y) * u3
     )
-    return Point2D(x, y)
+    return Point(x, y)
 
 
 def test_open_segments_run_between_neighbouring_points() raises -> None:
@@ -145,7 +143,7 @@ def test_tangent_direction_is_continuous_at_joints() raises -> None:
 
 
 def test_too_few_points_give_no_curves() raises -> None:
-    assert_equal(len(Spline(List[Point2D]()).beziers()), 0)
+    assert_equal(len(Spline(List[Point]()).beziers()), 0)
     assert_equal(len(Spline([(1.0, 2.0)]).beziers()), 0)
     assert_equal(
         len(Spline([(1.0, 2.0), (1.0, 2.0)], closed=True).beziers()),
@@ -252,10 +250,10 @@ def test_bounds_contain_every_point_on_the_curve() raises -> None:
     for closed in [False, True]:
         var s = Spline(_zigzag(), closed=closed)
         var b = s.bounds()
-        var lo = Point2D(
+        var lo = Point(
             b.position.x - b.width / 2.0, b.position.y - b.height / 2.0
         )
-        var hi = Point2D(
+        var hi = Point(
             b.position.x + b.width / 2.0, b.position.y + b.height / 2.0
         )
         for k in range(201):
@@ -280,19 +278,19 @@ def test_flatten_runs_end_to_end_without_repeats() raises -> None:
 
 def test_no_curve_sits_at_its_one_point() raises -> None:
     var one = Spline([(3.0, 4.0)])
-    assert_equal(one.at(0.5), Point2D(3.0, 4.0))
-    assert_equal(one.at_distance(1.0), Point2D(3.0, 4.0))
+    assert_equal(one.at(0.5), Point(3.0, 4.0))
+    assert_equal(one.at_distance(1.0), Point(3.0, 4.0))
     assert_equal(one.length(), 0.0)
     assert_equal(len(one.flatten(0.25)), 0)
-    assert_equal(one.bounds().position, Point2D(3.0, 4.0))
-    var none = Spline(List[Point2D]())
-    assert_equal(none.at(0.5), Point2D(0.0, 0.0))
-    assert_equal(none.tangent(0.5), Vector2D(0.0, 0.0))
+    assert_equal(one.bounds().position, Point(3.0, 4.0))
+    var none = Spline(List[Point]())
+    assert_equal(none.at(0.5), Point(0.0, 0.0))
+    assert_equal(none.tangent(0.5), Vector(0.0, 0.0))
 
 
 def test_closest_point_is_the_nearest_stretch() raises -> None:
     var s = Spline(_zigzag())
-    var p = Point2D(1.5, 0.0)
+    var p = Point(1.5, 0.0)
     var q = s.closest_point(p)
     var best = s.at(0.0)
     for c in s.beziers():
@@ -312,15 +310,15 @@ def test_closest_point_on_the_spline_is_itself() raises -> None:
 
 
 def test_closest_point_without_a_curve_is_the_lone_point() raises -> None:
-    var s = Spline([Point2D(2.0, 3.0)])
-    assert_equal(s.closest_point((0.0, 0.0)), Point2D(2.0, 3.0))
+    var s = Spline([Point(2.0, 3.0)])
+    assert_equal(s.closest_point((0.0, 0.0)), Point(2.0, 3.0))
 
 
 def test_intersects_a_point_on_any_stretch() raises -> None:
     var s = Spline(_zigzag())
     assert_true(s.intersects(s.at(0.1)))
     assert_true(s.intersects(s.at(0.9)))
-    assert_false(s.intersects(Point2D(50.0, 60.0)))
+    assert_false(s.intersects(Point(50.0, 60.0)))
 
 
 def test_intersects_a_line_and_an_arc() raises -> None:
@@ -338,10 +336,10 @@ def test_intersects_a_line_and_an_arc() raises -> None:
 
 def test_intersects_another_spline() raises -> None:
     var s = Spline(_zigzag())
-    var flat = Spline([Point2D(0.0, 10.0), Point2D(90.0, 10.0)])
+    var flat = Spline([Point(0.0, 10.0), Point(90.0, 10.0)])
     assert_true(s.intersects(flat))
     assert_true(flat.intersects(s))
-    var high = Spline([Point2D(0.0, 90.0), Point2D(90.0, 90.0)])
+    var high = Spline([Point(0.0, 90.0), Point(90.0, 90.0)])
     assert_false(s.intersects(high))
     assert_false(high.intersects(s))
 
@@ -356,7 +354,7 @@ def test_intersects_regions_on_any_stretch() raises -> None:
 
 def test_translate_moves_every_point() raises -> None:
     var s = Spline([(0.0, 0.0), (1.0, 2.0)], alpha=0.0, closed=True)
-    s = s.translate(Vector2D(3.0, -1.0))
+    s = s.translate(Vector(3.0, -1.0))
     assert_true(s == Spline([(3.0, -1.0), (4.0, 1.0)], alpha=0.0, closed=True))
 
 
@@ -373,7 +371,7 @@ def test_write_to() raises -> None:
     assert_equal(
         String(Spline([(0.0, 0.0), (1.0, 2.0)])),
         (
-            "Spline(points=[Point2D(0.0, 0.0), Point2D(1.0, 2.0)],"
+            "Spline(points=[Point(0.0, 0.0), Point(1.0, 2.0)],"
             " alpha=0.5, closed=False)"
         ),
     )

@@ -47,7 +47,7 @@ def _sprite() raises -> Image:
     var middle = Float64(_SPRITE_CELLS - 1) / 2.0
     for y in range(_SPRITE_CELLS):
         for x in range(_SPRITE_CELLS):
-            var offset = Vector2D(Float64(x) - middle, middle - Float64(y))
+            var offset = Vector(Float64(x) - middle, middle - Float64(y))
             var distance = offset.magnitude()
             if distance <= middle + 0.5:
                 # Indigo to rose to red round the ring, darker inside.
@@ -67,7 +67,7 @@ struct Images(Program):
     var pictures: List[Image]
     """The same picture from each format in `_formats()`."""
     var sprite: Image
-    var position: Point2D
+    var position: Point
     var tint: Int
     """Which of `_tints()` the sprite is drawn with."""
 
@@ -79,7 +79,7 @@ struct Images(Program):
         return Images(
             pictures=pictures^,
             sprite=_sprite(),
-            position=Point2D(0, -170),
+            position=Point(0, -170),
             tint=0,
         )
 
@@ -98,7 +98,7 @@ struct Images(Program):
         # Kept on screen, measured from the edges since the origin is the
         # middle of the screen.
         var half = _SPRITE_SIZE / 2.0
-        self.position = Point2D(
+        self.position = Point(
             clamp(x, canvas.left() + half, canvas.right() - half),
             clamp(y, canvas.bottom() + half, canvas.top() - half),
         )
@@ -111,7 +111,7 @@ struct Images(Program):
         var reading = String("Hover a picture to read its pixels")
         for i in range(len(self.pictures)):
             ref picture = self.pictures[i]
-            var center = Point2D(Float64(i - 1) * 300.0, _ROW_Y)
+            var center = Point(Float64(i - 1) * 300.0, _ROW_Y)
             canvas.image(picture, center, _SIZE, _SIZE)
             with canvas.style(text_color=_HINT, font_size=18):
                 canvas.text(
@@ -151,7 +151,7 @@ struct Images(Program):
                 )
                 with canvas.style(fill=color, stroke=_TEXT, stroke_thickness=2):
                     canvas.rectangle(
-                        context.mouse.position + Vector2D(30, 30), 36, 36
+                        context.mouse.position + Vector(30, 30), 36, 36
                     )
 
         with canvas.style(text_color=_TEXT, font_size=18):

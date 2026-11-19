@@ -15,31 +15,31 @@ types that change in place are those that hold state over time, and their method
 
 ## Locations, displacements and extents
 
-Use `Point2D` for new locations, `Vector2D` for displacements and scalars for extents;
-`canvas.rectangle(position: Point2D, width: Float64, height: Float64)` is the shape to copy. The
+Use `Point` for new locations, `Vector` for displacements and scalars for extents;
+`canvas.rectangle(position: Point, width: Float64, height: Float64)` is the shape to copy. The
 reasons are in [Points and
 vectors](../docs/guide/math/points-and-vectors.md#locations-displacements-and-extents), and three
 rules keep them working:
 
 - Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
-  `Point2D` one: a bare tuple already fills a `Point2D` parameter, and `(x, y)` keeps the pairs
-  readable where a run of numbers doesn't.
-- Don't give any type but `Point2D` an `@implicit` tuple constructor. If two types could both be
-  built from a bare tuple, any function overloaded on those two types would be ambiguous when called
-  with a tuple. Locations are the values most worth writing as a tuple, so only `Point2D` gets the
+  `Point` one: a bare tuple already fills a `Point` parameter, and `(x, y)` keeps the pairs readable
+  where a run of numbers doesn't.
+- Don't give any type but `Point` an `@implicit` tuple constructor. If two types could both be built
+  from a bare tuple, any function overloaded on those two types would be ambiguous when called with
+  a tuple. Locations are the values most worth writing as a tuple, so only `Point` gets the
   shorthand.
-- Don't add `Point2D.__add__(Point2D)`. Adding two locations has no meaning, and refusing it is why
-  `Point2D` is a separate type from `Vector2D`.
+- Don't add `Point.__add__(Point)`. Adding two locations has no meaning, and refusing it is why
+  `Point` is a separate type from `Vector`.
 
 ## Printing
 
 A public value type implements `Writable` and prints as it would be written in source:
 
-- Positionally for the small maths types and `Color`: `Point2D(1.0, 2.0)`.
+- Positionally for the small maths types and `Color`: `Point(1.0, 2.0)`.
 - By name for an `Int`-wrapping enum: `Easing.OUT_BOUNCE` (an unnamed value falls back to
   `Easing(99)`).
 - In keyword form otherwise, labelled by the constructor's keywords where it has them
-  (`Circle(position=Point2D(0.0, 0.0), radius=5.0)`) and by public field names where it doesn't
+  (`Circle(position=Point(0.0, 0.0), radius=5.0)`) and by public field names where it doesn't
   (`Time`, `Tween`). Private fields are left out.
 
 Resource handles (`Image`, `PixelBuffer`, `Sound`, `Audio`, `Playback`) and shared assets

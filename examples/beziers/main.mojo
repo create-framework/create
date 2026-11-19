@@ -24,7 +24,7 @@ comptime _CONTROL = Color(176, 172, 162)
 
 @fieldwise_init
 struct App(Program):
-    var handles: List[Point2D]
+    var handles: List[Point]
     """`start`, `control1`, `control2`, `end`, in the order `Bezier`
     takes them."""
 
@@ -87,7 +87,7 @@ struct App(Program):
             stroke_thickness=12,
             stroke_cap=StrokeCap.ROUND,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(6, -10),
+            shadow_offset=Vector(6, -10),
             shadow_blur=18,
         ):
             canvas.draw(curve)

@@ -77,7 +77,7 @@ last line's lowest:
 # In `update`: a two-line caption hanging from the top-left corner,
 # and a line under it.
 var caption = "Level 1\nThe caves"
-var corner = Point2D(canvas.left() + 20, canvas.top() - 20)
+var corner = Point(canvas.left() + 20, canvas.top() - 20)
 canvas.text_alignment(Align.TOP_LEFT)
 canvas.text(caption, corner)
 var under = corner.y - canvas.text_height(caption) - 4
@@ -97,7 +97,7 @@ straight left edge and a ragged right one. `canvas.text_width(string, width=w)` 
 # In `update`: a paragraph in a 300-unit column, a panel behind it.
 var story = "The caves run deeper than the old maps show, and nobody who went down came back."
 canvas.text_alignment(Align.TOP_LEFT)
-var corner = Point2D(canvas.left() + 20, canvas.top() - 20)
+var corner = Point(canvas.left() + 20, canvas.top() - 20)
 var height = canvas.text_height(story, width=300)
 canvas.fill(Color(0, 0, 0, 160))
 canvas.rectangle((corner.x + 150, corner.y - height / 2), 300, height)

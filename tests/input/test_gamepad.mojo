@@ -19,7 +19,7 @@ from create._window.event import (
     GamepadRemoved,
     FocusLost,
 )
-from create.math.vector2d import Vector2D
+from create.math.vector import Vector
 
 
 def _frame(mut context: Context, var events: List[Event]):
@@ -31,7 +31,7 @@ def test_no_gamepad_reads_disconnected_and_idle() raises -> None:
     var pad = context.gamepad()
     assert_false(pad.connected)
     assert_false(pad.down(GamepadButton.SOUTH))
-    assert_equal(pad.left_stick, Vector2D.ZERO)
+    assert_equal(pad.left_stick, Vector.ZERO)
     assert_equal(pad.button, GamepadButton.NONE)
     assert_false(pad.down(GamepadButton.NONE))
     assert_false(context.gamepad(3).connected)
@@ -113,7 +113,7 @@ def test_stick_inside_dead_zone_reads_zero() raises -> None:
             Event(GamepadAxisMoved(1, 3, 0.1)),
         ],
     )
-    assert_equal(context.gamepad().right_stick, Vector2D.ZERO)
+    assert_equal(context.gamepad().right_stick, Vector.ZERO)
 
 
 def test_stick_rescales_past_dead_zone() raises -> None:
@@ -262,7 +262,7 @@ def test_prints_keyword_form() raises -> None:
         (
             "Gamepad(connected=False, connected_this_frame=False,"
             " disconnected_this_frame=False, name='',"
-            " left_stick=Vector2D(0.0, 0.0), right_stick=Vector2D(0.0, 0.0),"
+            " left_stick=Vector(0.0, 0.0), right_stick=Vector(0.0, 0.0),"
             " left_trigger=0.0, right_trigger=0.0, button=GamepadButton.NONE)"
         ),
     )

@@ -10,12 +10,12 @@ Buttons follow the vocabulary every device shares: *down* is held right now,
 *pressed*/*released* are the edges, true only in the frame the button
 went down or came up. Name buttons through `GamepadButton`.
 
-Sticks are `Vector2D`s in screen orientation — y up, like every other
+Sticks are `Vector`s in screen orientation — y up, like every other
 direction in the library — inside the unit circle, so
 `position += pad.left_stick * speed * context.time.delta` moves at
 `speed` at full tilt and never faster on a diagonal. Each has a radial
 dead zone of `STICK_DEAD_ZONE`, rescaled so the stick still eases up
-from zero past it: a resting stick reads exactly `Vector2D.ZERO` rather
+from zero past it: a resting stick reads exactly `Vector.ZERO` rather
 than drifting. Triggers are 0 (released) to 1 (pulled all the way), and
 also buttons, `GamepadButton.LEFT_TRIGGER`/`RIGHT_TRIGGER`, so "fire on
 pull" is `pad.pressed(GamepadButton.RIGHT_TRIGGER)`: down from
@@ -43,8 +43,8 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `connected_this_frame: Bool`
 - `disconnected_this_frame: Bool`
 - `name: String`
-- `left_stick: Vector2D`
-- `right_stick: Vector2D`
+- `left_stick: Vector`
+- `right_stick: Vector`
 - `left_trigger: Float64`
 - `right_trigger: Float64`
 - `button: GamepadButton`

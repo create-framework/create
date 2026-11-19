@@ -25,12 +25,12 @@ if context.mouse.down(MouseButton.RIGHT):  # the right button is held
 
 `context.mouse` holds:
 
-- `position`: where the pointer is, as a `Point2D`.
-- `press_position`: where the most recent press happened, also a `Point2D`. It is handy for
-  dragging, where what matters is how far the pointer has moved since the button went down.
-- `movement`: how far the pointer moved this frame, as a `Vector2D`, with y increasing upwards like
+- `position`: where the pointer is, as a `Point`.
+- `press_position`: where the most recent press happened, also a `Point`. It is handy for dragging,
+  where what matters is how far the pointer has moved since the button went down.
+- `movement`: how far the pointer moved this frame, as a `Vector`, with y increasing upwards like
   everything else.
-- `wheel`: how far the wheel scrolled this frame, as a `Vector2D`. Most wheels only scroll up and
+- `wheel`: how far the wheel scrolled this frame, as a `Vector`. Most wheels only scroll up and
   down, in `wheel.y`; touchpads and tilting wheels also scroll sideways, in `wheel.x`.
 
 The positions are in screen space, in the same units as everything else, measured from the centre of

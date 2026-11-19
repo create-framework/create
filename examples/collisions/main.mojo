@@ -16,7 +16,7 @@ comptime _GUIDE = Color(176, 172, 162)
 comptime _TEXT = Color(240, 236, 222)
 
 
-def _reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point2D):
+def _reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point):
     """A line from the mouse to the nearest point of `shape`, and a dot
     there. Any shape answers `closest_point`, so one function serves all."""
     var nearest = shape.closest_point(mouse)

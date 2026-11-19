@@ -1,5 +1,5 @@
 from std.math import min, max, sqrt
-from create.math import PI, Point2D, Vector2D
+from create.math import PI, Point, Vector
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import triangle_corner_radius
 from .bezier import _curve_segments
@@ -56,17 +56,17 @@ struct Triangle(
     edge beside it; one thin corner limits all three.
     """
 
-    var a: Point2D
-    var b: Point2D
-    var c: Point2D
+    var a: Point
+    var b: Point
+    var c: Point
     var corner_radius: Float64
     """How far each corner is rounded; 0 is sharp."""
 
     def __init__(
         out self,
-        a: Point2D,
-        b: Point2D,
-        c: Point2D,
+        a: Point,
+        b: Point,
+        c: Point,
         *,
         corner_radius: _OptionalFloat64 = 0.0,
     ):
@@ -92,8 +92,8 @@ struct Triangle(
             writer.write(", corner_radius=", self.corner_radius)
         writer.write(")")
 
-    def center(self) -> Point2D:
-        return Point2D(
+    def center(self) -> Point:
+        return Point(
             (self.a.x + self.b.x + self.c.x) / 3.0,
             (self.a.y + self.b.y + self.c.y) / 3.0,
         )
@@ -121,17 +121,17 @@ struct Triangle(
         rounding pulls it in."""
         var r = self._radius()
         var t = self._inner() if r > 0.0 else self
-        var lo = Point2D(
+        var lo = Point(
             min(min(t.a.x, t.b.x), t.c.x) - r,
             min(min(t.a.y, t.b.y), t.c.y) - r,
         )
-        var hi = Point2D(
+        var hi = Point(
             max(max(t.a.x, t.b.x), t.c.x) + r,
             max(max(t.a.y, t.b.y), t.c.y) + r,
         )
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         var r = self._radius()
         if r > 0.0:
             return _rounded_closest(self._inner().closest_point(p), p, r)
@@ -149,7 +149,7 @@ struct Triangle(
             return p2
         return p3
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         var r = self._radius()
         if r > 0.0:
             return _distance_squared(self._inner().closest_point(p), p) <= r * r
@@ -216,7 +216,7 @@ struct Triangle(
         var pts = self._points()
         for i in range(3):
             var e = pts[(i + 1) % 3] - pts[i]
-            var normal = Vector2D(-e.y, e.x)
+            var normal = Vector(-e.y, e.x)
             if not (
                 self.contains(a._furthest_along(normal))
                 and self.contains(a._furthest_along(-normal))
@@ -288,10 +288,10 @@ struct Triangle(
     def draw_to[T: DrawTarget](self, mut target: T):
         target._triangle(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         return self.translate(position - self.center())
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.a = moved.a + delta
         moved.b = moved.b + delta
@@ -331,7 +331,7 @@ struct Triangle(
         var lb = sqrt(_distance_squared(self.c, self.a))
         var lc = sqrt(_distance_squared(self.a, self.b))
         var perimeter = la + lb + lc
-        var incentre = Point2D(
+        var incentre = Point(
             (self.a.x * la + self.b.x * lb + self.c.x * lc) / perimeter,
             (self.a.y * la + self.b.y * lb + self.c.y * lc) / perimeter,
         )
@@ -348,10 +348,10 @@ struct Triangle(
             self._inner()._points(), self._points(), self._radius()
         )
 
-    def _points(self) -> Array[Point2D, 3]:
+    def _points(self) -> Array[Point, 3]:
         return [self.a, self.b, self.c]
 
-    def _holds_strictly(self, p: Point2D) -> Bool:
+    def _holds_strictly(self, p: Point) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary."""
         var d1 = _orientation(self.a, self.b, p)

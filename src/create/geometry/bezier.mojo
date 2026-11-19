@@ -8,10 +8,10 @@ from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
-from create.math import Point2D
+from create.math import Point
 from .drawable import Curve, DrawTarget
 from .spline import Spline
-from create.math import Vector2D
+from create.math import Vector
 
 comptime _MAX_FLATTEN_SEGMENTS = 1024
 """Upper bound on `flatten`'s segment count, so a huge curve at a tiny
@@ -134,17 +134,17 @@ struct Bezier(
     controls do.
     """
 
-    var start: Point2D
-    var control1: Point2D
-    var control2: Point2D
-    var end: Point2D
+    var start: Point
+    var control1: Point
+    var control2: Point
+    var end: Point
 
     def __init__(
         out self,
-        start: Point2D,
-        control1: Point2D,
-        control2: Point2D,
-        end: Point2D,
+        start: Point,
+        control1: Point,
+        control2: Point,
+        end: Point,
     ):
         self.start = start
         self.control1 = control1
@@ -178,7 +178,7 @@ struct Bezier(
             ")",
         )
 
-    def at(self, t: Float64) -> Point2D:
+    def at(self, t: Float64) -> Point:
         """The point at parameter `t`. Not clamped: outside 0..1 the cubic
         continues past its endpoints, as `lerp` extrapolates."""
         var mt = 1.0 - t
@@ -186,7 +186,7 @@ struct Bezier(
         var w1 = 3.0 * mt * mt * t
         var w2 = 3.0 * mt * t * t
         var w3 = t * t * t
-        return Point2D(
+        return Point(
             w0 * self.start.x
             + w1 * self.control1.x
             + w2 * self.control2.x
@@ -197,7 +197,7 @@ struct Bezier(
             + w3 * self.end.y,
         )
 
-    def tangent(self, t: Float64) -> Vector2D:
+    def tangent(self, t: Float64) -> Vector:
         """The derivative at `t`: the direction of travel, with a magnitude
         that is the curve's speed per unit of `t`. Not normalised — it is
         zero where the curve stops, e.g. at a cusp or where a control sits
@@ -208,13 +208,13 @@ struct Bezier(
         var c = self.end - self.control2
         return (a * (mt * mt) + b * (2.0 * mt * t) + c * (t * t)) * 3.0
 
-    def _acceleration(self, t: Float64) -> Vector2D:
+    def _acceleration(self, t: Float64) -> Vector:
         """The second derivative at `t`."""
         var a = (self.control2 - self.control1) - (self.control1 - self.start)
         var b = (self.end - self.control2) - (self.control2 - self.control1)
         return (a * (1.0 - t) + b * t) * 6.0
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         """The point on the curve nearest `p`.
 
         Samples the curve at even steps in `t`, then refines every sample
@@ -277,7 +277,7 @@ struct Bezier(
     # most misses cheaply. A crossing is always found, since the segments
     # meet the curve at their ends; a near miss or a graze is decided to
     # within that tolerance.
-    def intersects(self, p: Point2D) -> Bool:
+    def intersects(self, p: Point) -> Bool:
         var q = self.closest_point(p)
         return q.distance(p) <= _ON_CURVE_PRECISION * self._size()
 
@@ -396,12 +396,12 @@ struct Bezier(
             self.start.y, self.control1.y, self.control2.y, self.end.y
         )
         return Rectangle(
-            Point2D((xs[0] + xs[1]) / 2.0, (ys[0] + ys[1]) / 2.0),
+            Point((xs[0] + xs[1]) / 2.0, (ys[0] + ys[1]) / 2.0),
             xs[1] - xs[0],
             ys[1] - ys[0],
         )
 
-    def flatten(self, tolerance: Float64) -> List[Point2D]:
+    def flatten(self, tolerance: Float64) -> List[Point]:
         """Points along the curve, from `start` to `end` inclusive, such that
         the straight segments between them stray from the curve by at most
         `tolerance`.
@@ -417,7 +417,7 @@ struct Bezier(
         if tolerance > 0.0 and m > 0.0:
             n = Int(ceil(sqrt(0.75 * m / tolerance)))
             n = max(1, min(n, _MAX_FLATTEN_SEGMENTS))
-        var points = List[Point2D](capacity=n + 1)
+        var points = List[Point](capacity=n + 1)
         points.append(self.start)
         for i in range(1, n):
             points.append(self.at(Float64(i) / Float64(n)))
@@ -438,7 +438,7 @@ struct Bezier(
         """
         return self._length_to(1.0)
 
-    def at_distance(self, distance: Float64) -> Point2D:
+    def at_distance(self, distance: Float64) -> Point:
         """The point `distance` along the curve from `start`, clamped to
         the curve's ends.
 
@@ -492,7 +492,7 @@ struct Bezier(
                 )
         return total * half
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.start = moved.start + delta
         moved.control1 = moved.control1 + delta

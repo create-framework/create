@@ -7,8 +7,8 @@ from std.testing import (
 )
 from create.color.color import Color
 from create.color.gradient import Gradient
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 from create.math.matrix import (
     _apply as apply,
     inverse,
@@ -18,8 +18,8 @@ from create.math.matrix import (
 )
 
 
-comptime CENTER = Point2D(0.0, 0.0)
-comptime SQUARE = Vector2D(10.0, 10.0)
+comptime CENTER = Point(0.0, 0.0)
+comptime SQUARE = Vector(10.0, 10.0)
 
 
 def test_colours_are_spaced_evenly() raises -> None:
@@ -90,66 +90,64 @@ def test_fade_to_transparent_is_not_grey() raises -> None:
 
 def test_default_direction_runs_top_to_bottom() raises -> None:
     var g = Gradient.linear(Color.RED, Color.BLUE)
-    assert_almost_equal(g._t_at(Point2D(0.0, 10.0), CENTER, SQUARE), 0.0)
-    assert_almost_equal(g._t_at(Point2D(0.0, -10.0), CENTER, SQUARE), 1.0)
-    assert_almost_equal(g._t_at(Point2D(7.0, 0.0), CENTER, SQUARE), 0.5)
+    assert_almost_equal(g._t_at(Point(0.0, 10.0), CENTER, SQUARE), 0.0)
+    assert_almost_equal(g._t_at(Point(0.0, -10.0), CENTER, SQUARE), 1.0)
+    assert_almost_equal(g._t_at(Point(7.0, 0.0), CENTER, SQUARE), 0.5)
 
 
 def test_direction_need_not_be_unit() raises -> None:
-    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D(5.0, 0.0))
-    assert_almost_equal(g._t_at(Point2D(-10.0, 3.0), CENTER, SQUARE), 0.0)
-    assert_almost_equal(g._t_at(Point2D(10.0, 3.0), CENTER, SQUARE), 1.0)
+    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector(5.0, 0.0))
+    assert_almost_equal(g._t_at(Point(-10.0, 3.0), CENTER, SQUARE), 0.0)
+    assert_almost_equal(g._t_at(Point(10.0, 3.0), CENTER, SQUARE), 1.0)
 
 
 def test_diagonal_reaches_the_far_corners() raises -> None:
-    var half = Vector2D(40.0, 10.0)
-    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D(1.0, 1.0))
-    assert_almost_equal(g._t_at(Point2D(-40.0, -10.0), CENTER, half), 0.0)
-    assert_almost_equal(g._t_at(Point2D(40.0, 10.0), CENTER, half), 1.0)
+    var half = Vector(40.0, 10.0)
+    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector(1.0, 1.0))
+    assert_almost_equal(g._t_at(Point(-40.0, -10.0), CENTER, half), 0.0)
+    assert_almost_equal(g._t_at(Point(40.0, 10.0), CENTER, half), 1.0)
     # The other two corners fall strictly inside.
-    var t = g._t_at(Point2D(40.0, -10.0), CENTER, half)
+    var t = g._t_at(Point(40.0, -10.0), CENTER, half)
     assert_true(t > 0.0 and t < 1.0)
 
 
 def test_box_placement_follows_the_center() raises -> None:
-    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.RIGHT)
-    var c = Point2D(100.0, 50.0)
-    assert_almost_equal(g._t_at(Point2D(90.0, 50.0), c, SQUARE), 0.0)
-    assert_almost_equal(g._t_at(Point2D(110.0, 50.0), c, SQUARE), 1.0)
+    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT)
+    var c = Point(100.0, 50.0)
+    assert_almost_equal(g._t_at(Point(90.0, 50.0), c, SQUARE), 0.0)
+    assert_almost_equal(g._t_at(Point(110.0, 50.0), c, SQUARE), 1.0)
 
 
 def test_radial_reaches_the_box_edges() raises -> None:
-    var half = Vector2D(20.0, 10.0)
+    var half = Vector(20.0, 10.0)
     var g = Gradient.radial(Color.WHITE, Color.BLACK)
     assert_almost_equal(g._t_at(CENTER, CENTER, half), 0.0)
-    assert_almost_equal(g._t_at(Point2D(20.0, 0.0), CENTER, half), 1.0)
-    assert_almost_equal(g._t_at(Point2D(0.0, -10.0), CENTER, half), 1.0)
+    assert_almost_equal(g._t_at(Point(20.0, 0.0), CENTER, half), 1.0)
+    assert_almost_equal(g._t_at(Point(0.0, -10.0), CENTER, half), 1.0)
 
 
 def test_radial_center_moves_in_unit_space() raises -> None:
     var g = Gradient.radial(Color.WHITE, Color.BLACK, center=(0.5, -0.5))
-    assert_almost_equal(g._t_at(Point2D(5.0, -5.0), CENTER, SQUARE), 0.0)
+    assert_almost_equal(g._t_at(Point(5.0, -5.0), CENTER, SQUARE), 0.0)
     # Its size stays put: one half-extent away is the last stop.
-    assert_almost_equal(g._t_at(Point2D(15.0, -5.0), CENTER, SQUARE), 1.0)
+    assert_almost_equal(g._t_at(Point(15.0, -5.0), CENTER, SQUARE), 1.0)
 
 
 def test_zero_direction_paints_the_first_stop() raises -> None:
-    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.ZERO)
-    var t = g._t_at(Point2D(10.0, -10.0), CENTER, SQUARE)
+    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.ZERO)
+    var t = g._t_at(Point(10.0, -10.0), CENTER, SQUARE)
     assert_equal(g._at(t), Color.RED)
 
 
 def test_zero_box_paints_the_first_stop() raises -> None:
-    var flat = Vector2D(0.0, 10.0)
-    var across = Gradient.linear(
-        Color.RED, Color.BLUE, direction=Vector2D.RIGHT
-    )
+    var flat = Vector(0.0, 10.0)
+    var across = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT)
     assert_equal(
-        across._at(across._t_at(Point2D(0.0, 5.0), CENTER, flat)), Color.RED
+        across._at(across._t_at(Point(0.0, 5.0), CENTER, flat)), Color.RED
     )
     var radial = Gradient.radial(Color.RED, Color.BLUE)
     assert_equal(
-        radial._at(radial._t_at(Point2D(0.0, 5.0), CENTER, flat)), Color.RED
+        radial._at(radial._t_at(Point(0.0, 5.0), CENTER, flat)), Color.RED
     )
 
 
@@ -176,7 +174,7 @@ def test_equality() raises -> None:
     var a = Gradient.linear(Color.RED, Color.BLUE)
     assert_true(a == Gradient.linear([(0.0, Color.RED), (1.0, Color.BLUE)]))
     assert_true(
-        a != Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.UP)
+        a != Gradient.linear(Color.RED, Color.BLUE, direction=Vector.UP)
     )
     assert_true(a != Gradient.radial(Color.RED, Color.BLUE))
     # A copy shares its stops and compares equal.
@@ -189,14 +187,14 @@ def test_prints_as_source() raises -> None:
         String(Gradient.linear(Color.RED, Color.BLUE)),
         (
             "Gradient.linear([(0.0, Color(255, 0, 0, 255)), (1.0, Color(0, 0,"
-            " 255, 255))], direction=Vector2D(0.0, -1.0))"
+            " 255, 255))], direction=Vector(0.0, -1.0))"
         ),
     )
     assert_equal(
         String(Gradient.radial(Color.WHITE, center=(0.5, 0.0))),
         (
             "Gradient.radial([(0.0, Color(255, 255, 255, 255))],"
-            " center=Point2D(0.5, 0.0))"
+            " center=Point(0.5, 0.0))"
         ),
     )
 
@@ -206,21 +204,21 @@ def _check_mapping(g: Gradient) raises:
     # transform: compare the two at a few device pixels.
     var m = translate(50.0, 40.0) @ rotate(0.7) @ scale(3.0, 2.0)
     var minv = inverse(m)
-    var center = Point2D(5.0, -2.0)
-    var half = Vector2D(12.0, 7.0)
+    var center = Point(5.0, -2.0)
+    var half = Vector(12.0, 7.0)
     var mapping = g._device_mapping(minv, center, half)
     for p in [(0.5, 0.5), (60.5, 10.5), (13.5, 77.5)]:
         var local = apply(minv, p[0], p[1])
         assert_almost_equal(
             mapping.t(p[0], p[1]),
-            g._t_at(Point2D(local[0], local[1]), center, half),
+            g._t_at(Point(local[0], local[1]), center, half),
             atol=1e-9,
         )
 
 
 def test_device_mapping_matches_t_at_linear() raises -> None:
     _check_mapping(
-        Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D(1.0, -2.0))
+        Gradient.linear(Color.RED, Color.BLUE, direction=Vector(1.0, -2.0))
     )
 
 
@@ -229,7 +227,7 @@ def test_device_mapping_matches_t_at_radial() raises -> None:
 
 
 def test_device_mapping_of_a_zero_direction_is_the_first_stop() raises -> None:
-    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.ZERO)
+    var g = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.ZERO)
     var mapping = g._device_mapping(inverse(rotate(0.3)), CENTER, SQUARE)
     assert_equal(g._sample(mapping.t(7.5, 3.5), 7, 3), Color.RED)
 

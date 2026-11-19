@@ -1,5 +1,5 @@
 from std.math import min, max
-from create.math import PI, TAU, Point2D, Vector2D
+from create.math import PI, TAU, Point, Vector
 from create.math._optional_float64 import _OptionalFloat64
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
@@ -60,21 +60,21 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     fillet may fall either way.
     """
 
-    var vertices: List[Point2D]
+    var vertices: List[Point]
     var corner_radius: Float64
     """How far each corner is rounded; 0 is sharp."""
 
     def __init__(
-        out self, *vertices: Point2D, corner_radius: _OptionalFloat64 = 0.0
+        out self, *vertices: Point, corner_radius: _OptionalFloat64 = 0.0
     ):
-        self.vertices = List[Point2D](capacity=len(vertices))
+        self.vertices = List[Point](capacity=len(vertices))
         for v in vertices:
             self.vertices.append(v)
         self.corner_radius = corner_radius.or_else(0.0)
 
     def __init__(
         out self,
-        var vertices: List[Point2D],
+        var vertices: List[Point],
         *,
         corner_radius: _OptionalFloat64 = 0.0,
     ):
@@ -83,7 +83,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
 
     @staticmethod
     def regular(
-        position: Point2D,
+        position: Point,
         radius: Float64,
         sides: Int,
         start_angle: Float64 = TAU / 4.0,
@@ -94,7 +94,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
         `position` with radius `radius`, the first at `start_angle` (radians
         counter-clockwise from +x; straight up by default), the rest
         following counter-clockwise."""
-        var vertices = List[Point2D](capacity=max(sides, 0))
+        var vertices = List[Point](capacity=max(sides, 0))
         for i in range(sides):
             var angle = start_angle + TAU * Float64(i) / Float64(sides)
             vertices.append(position + _unit(angle) * radius)
@@ -102,7 +102,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
 
     @staticmethod
     def regular(
-        position: Point2D,
+        position: Point,
         radius: Int,
         sides: Int,
         start_angle: Float64 = TAU / 4.0,
@@ -119,7 +119,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
 
     @staticmethod
     def star(
-        position: Point2D,
+        position: Point,
         radius: Float64,
         inner_radius: Float64,
         tips: Int,
@@ -131,7 +131,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
         first at `start_angle` (straight up by default), and between each two
         tips a vertex on `inner_radius`, halfway round. The outline does not
         cross itself, so it is a simple polygon."""
-        var vertices = List[Point2D](capacity=max(2 * tips, 0))
+        var vertices = List[Point](capacity=max(2 * tips, 0))
         for i in range(2 * tips):
             var angle = start_angle + PI * Float64(i) / Float64(tips)
             vertices.append(
@@ -142,7 +142,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
 
     @staticmethod
     def star(
-        position: Point2D,
+        position: Point,
         radius: Int,
         inner_radius: Int,
         tips: Int,
@@ -179,14 +179,14 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             writer.write(", corner_radius=", self.corner_radius)
         writer.write(")")
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         """The centroid of the enclosed area; with no area, the mean of the
         vertices (the origin for none)."""
         if self._is_rounded():
             return self._outline().center()
         var n = len(self.vertices)
         if n == 0:
-            return Point2D(0.0, 0.0)
+            return Point(0.0, 0.0)
         var area2 = self._signed_area2()
         if area2 == 0.0:
             var sx = 0.0
@@ -194,7 +194,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             for v in self.vertices:
                 sx += v.x
                 sy += v.y
-            return Point2D(sx / Float64(n), sy / Float64(n))
+            return Point(sx / Float64(n), sy / Float64(n))
         var cx = 0.0
         var cy = 0.0
         for i in range(n):
@@ -203,7 +203,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             var cross = a.x * b.y - b.x * a.y
             cx += (a.x + b.x) * cross
             cy += (a.y + b.y) * cross
-        return Point2D(cx / (3.0 * area2), cy / (3.0 * area2))
+        return Point(cx / (3.0 * area2), cy / (3.0 * area2))
 
     def _signed_area2(self) -> Float64:
         """Twice the signed area by the shoelace formula: positive for
@@ -227,15 +227,15 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
         if self._is_rounded():
             return self._outline().bounds()
         if len(self.vertices) == 0:
-            return Rectangle(Point2D(0.0, 0.0), 0.0, 0.0)
+            return Rectangle(Point(0.0, 0.0), 0.0, 0.0)
         var lo = self.vertices[0]
         var hi = self.vertices[0]
         for v in self.vertices:
-            lo = Point2D(min(lo.x, v.x), min(lo.y, v.y))
-            hi = Point2D(max(hi.x, v.x), max(hi.y, v.y))
+            lo = Point(min(lo.x, v.x), min(lo.y, v.y))
+            hi = Point(max(hi.x, v.x), max(hi.y, v.y))
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         """`p` itself when inside, else the nearest point on an edge. A
         polygon with no vertices has no points, and returns `p`."""
         if self._is_rounded():
@@ -250,7 +250,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
                 best = q
         return best
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         if self._is_rounded():
             return self._outline().contains(p)
         for i in range(len(self.vertices)):
@@ -434,10 +434,10 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     def draw_to[T: DrawTarget](self, mut target: T):
         target._polygon(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         return self.translate(position - self.center())
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         for i in range(len(moved.vertices)):
             moved.vertices[i] = moved.vertices[i] + delta
@@ -471,7 +471,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
                 return True
         return False
 
-    def _winding(self, p: Point2D) -> Int:
+    def _winding(self, p: Point) -> Int:
         """How many times the edges wind counter-clockwise round `p`,
         clockwise counting negative. Each edge counts where it crosses the
         horizontal through `p` to its right, half-open in y so a vertex on
@@ -484,7 +484,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             w += _winds(e.start, e.end, p)
         return w
 
-    def _wound_beside(self, i: Int, p: Point2D) -> Bool:
+    def _wound_beside(self, i: Int, p: Point) -> Bool:
         """Whether the polygon is wound on both sides of edge `i` at `p`,
         a point on it but on no edge crossing it. The windings just either
         side are exact: rays from there cross the same edges as the ray
@@ -512,7 +512,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
                 right += _winds(a, b, q)
         return right != 0 and right + along != 0
 
-    def _rim(self, lines: List[Line], arcs: List[Arc]) -> List[Point2D]:
+    def _rim(self, lines: List[Line], arcs: List[Arc]) -> List[Point]:
         """The middles of the edge pieces with the outside on one side,
         each edge cut where another edge, one of `lines` or a circle of
         `arcs` crosses it -- so each piece lies wholly inside or wholly
@@ -525,7 +525,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
         with this polygon would read it as held strictly. Running along is
         decided exactly, as `_cut_at_line` decides it, which also cut the
         edge at the line's ends."""
-        var rim = List[Point2D]()
+        var rim = List[Point]()
         for i in range(len(self.vertices)):
             var e = self._edge(i)
             var cuts = List[Float64]()
@@ -555,7 +555,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
             var d = e.end - e.start
             if e.start == e.end:
                 continue
-            var cuts = List[Point2D]()
+            var cuts = List[Point]()
             for j in range(n):
                 var other = self._edge(j)
                 if j == i or not e.intersects(other):
@@ -606,7 +606,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
                 start = end
         return (rim^, seams^)
 
-    def _holds_strictly(self, p: Point2D) -> Bool:
+    def _holds_strictly(self, p: Point) -> Bool:
         """Whether everything close round `p` is inside: `p` inside and
         off the boundary, which an edge through it is only when the
         outside lies along one side of it."""
@@ -625,7 +625,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     def _contains_arc(self, a: Arc) -> Bool:
         if not (self.contains(a.at(0.0)) and self.contains(a.at(1.0))):
             return False
-        var crossings = List[Point2D]()
+        var crossings = List[Point]()
         for i in range(len(self.vertices)):
             _circle_crossings(self._edge(i), a.position, a.radius, crossings)
         for middle in _arc_middles(a, crossings):
@@ -634,7 +634,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
         return True
 
 
-def _runs_along(e: Line, middle: Point2D, lines: List[Line]) -> Bool:
+def _runs_along(e: Line, middle: Point, lines: List[Line]) -> Bool:
     """Whether the piece of `e` with middle `middle` lies on one of
     `lines`: `e` runs along its line, by the exact test `_cut_at_line`
     makes, and the middle falls between its ends."""

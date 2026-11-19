@@ -6,7 +6,7 @@ struct Rectangle
 
 A rectangle, upright unless turned by `rotation`: `center`, `area`, `bounds`, `left`/`right`/`bottom`/`top`, `closest_point`, `contains`, `move_to`, `translate`.
 
-Locations are `Point2D` and displacements `Vector2D`, throughout this
+Locations are `Point` and displacements `Vector`, throughout this
 module; extents are plain scalars, like `Circle`'s radius. Width and
 height are two independent lengths rather than a coordinate pair, so
 they are not grouped: read them as `width`/`height` and pair them however
@@ -43,7 +43,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 
 ## Fields
 
-- `position: Point2D`
+- `position: Point`
 - `width: Float64`
 - `height: Float64`
 - `corner_radius: Float64`: How far each corner is rounded, in the units of `width`/`height`; 0 is sharp.
@@ -55,7 +55,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 @staticmethod
 def __init__(
     out self,
-    position: Point2D,
+    position: Point,
     width: Float64,
     height: Float64,
     *,
@@ -65,7 +65,7 @@ def __init__(
 @staticmethod
 def __init__(
     out self,
-    position: Point2D,
+    position: Point,
     width: Int,
     height: Int,
     *,
@@ -79,7 +79,7 @@ def __init__(
 ### `center`
 
 ```mojo
-def center(self) -> Point2D
+def center(self) -> Point
 ```
 
 ### `area`
@@ -99,7 +99,7 @@ The tightest axis-aligned rectangle around this one: upright, itself, sharp, sin
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 ### `left`
@@ -129,7 +129,7 @@ def top(self) -> Float64
 ### `contains`
 
 ```mojo
-def contains(self, p: Point2D) -> Bool
+def contains(self, p: Point) -> Bool
 def contains(self, other: Self) -> Bool
 def contains(self, c: Circle) -> Bool
 def contains(self, t: Triangle) -> Bool
@@ -172,13 +172,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods
