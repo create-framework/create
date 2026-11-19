@@ -213,8 +213,8 @@ def test_fractional_sizes_round_once_scaled() raises -> None:
     """World-unit sizes become whole pixels only at the device: 1.5 units
     at 2 pixels a unit is exactly 3 pixels."""
     var s = Style(stroke_thickness=1.5, font_size=13.5)
-    assert_equal(stroke_thickness_px(s._paint(), scale(2.0), 2.0), 3)
-    assert_equal(stroke_thickness_px(s._paint(), scale(1.0), 1.0), 2)
+    assert_equal(stroke_thickness_px(s._paint(), Transform(scale=2.0), 2.0), 3)
+    assert_equal(stroke_thickness_px(s._paint(), Transform(scale=1.0), 1.0), 2)
     assert_equal(_pixel_size(s._text_style(), 2.0), 27)
 
 

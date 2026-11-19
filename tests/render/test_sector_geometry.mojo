@@ -1,17 +1,11 @@
 from std.math import sqrt
+from create.math.vector import Vector
+from create.math.transform import Transform
 from create.math import PI, TAU
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create.geometry import Line, Sector
-from create.math.matrix import (
-    Matrix,
-    _apply as mat_apply,
-    identity,
-    inverse,
-    rotate,
-    scale,
-    translate,
-)
+from create.math.transform import Transform
 from create.math.point import Point
 from create.color.color import Color
 from create.render.style import Style
@@ -40,13 +34,18 @@ def _sectors() -> List[Sector]:
     ]
 
 
-def _device(m: Matrix[3, 3]) -> Matrix[3, 3]:
+def _device(m: Transform) -> Transform:
     """`m` moved to the middle of the test surface."""
-    return translate(Float64(_SIZE) / 2.0, Float64(_SIZE) / 2.0) @ m
+    return (
+        Transform(
+            translation=Vector(Float64(_SIZE) / 2.0, Float64(_SIZE) / 2.0)
+        )
+        @ m
+    )
 
 
 def _quads(
-    s: Sector, m: Matrix[3, 3], style: Style = Style(), grow: Float64 = 0.0
+    s: Sector, m: Transform, style: Style = Style(), grow: Float64 = 0.0
 ) -> Pieces:
     var c = sector_command(
         m,
@@ -104,7 +103,7 @@ def _signed_distance(s: Sector, p: Point) -> Float64:
 
 
 def _assert_tiles(
-    s: Sector, m: Matrix[3, 3], style: Style = Style(), grow: Float64 = 0.0
+    s: Sector, m: Transform, style: Style = Style(), grow: Float64 = 0.0
 ) raises:
     """Quads convex, painted at most once, and covering the sector grown by
     `grow`: each pixel centre more than a pixel from an edge is painted
@@ -120,8 +119,8 @@ def _assert_tiles(
     var fill = MemorySurface(_SIZE, _SIZE)
     _paint(fill, q.fill_quads)
     var once = _once()
-    var back = inverse(device)
-    var pixel_units = 1.0 / sqrt(abs(m[0, 0] * m[1, 1] - m[0, 1] * m[1, 0]))
+    var back = device.inverse()
+    var pixel_units = 1.0 / sqrt(abs(m._xx * m._yy - m._xy * m._yx))
     var near = 1.5 * pixel_units
     var t = 0.0
     if (
@@ -136,7 +135,7 @@ def _assert_tiles(
         for x in range(_SIZE):
             var color = surface.pixel(x, y)
             assert_true(color.a == 0 or color == once)
-            var p = Point(mat_apply(back, Float64(x) + 0.5, Float64(y) + 0.5))
+            var p = Point(back._apply_xy(Float64(x) + 0.5, Float64(y) + 0.5))
             var d = _signed_distance(s, p)
             if abs(d + grow) > near:
                 assert_equal(color.a != 0, d >= -grow)
@@ -165,7 +164,7 @@ def _stroked(thickness: Float64) -> Style:
 
 
 def test_sector_command_records_its_geometry() raises -> None:
-    var c = sector_command(identity[3](), Style(), 1.0, 2.0, 3.0, 0.5, -1.0)
+    var c = sector_command(Transform(), Style(), 1.0, 2.0, 3.0, 0.5, -1.0)
     assert_true(c.payload.isa[SectorPayload]())
     ref sector = c.payload[SectorPayload]
     assert_equal(sector.center, Point(1.0, 2.0))
@@ -178,22 +177,22 @@ def test_sector_command_records_its_geometry() raises -> None:
 def test_fill_only_tiles_the_sector() raises -> None:
     var style = Style(fill=Color.RED, stroke_enabled=False)
     for s in _sectors():
-        var q = _quads(s, identity[3](), style)
+        var q = _quads(s, Transform(), style)
         assert_equal(len(q.stroke_quads), 0)
-        _assert_tiles(s, identity[3](), style)
+        _assert_tiles(s, Transform(), style)
 
 
 def test_fill_and_stroke_tile_the_sector_once() raises -> None:
     for s in _sectors():
-        _assert_tiles(s, identity[3](), _stroked(3))
-        _assert_tiles(s, identity[3](), _stroked(9))
+        _assert_tiles(s, Transform(), _stroked(3))
+        _assert_tiles(s, Transform(), _stroked(9))
 
 
 def test_stroke_is_as_thick_as_asked() raises -> None:
     # A quarter sector with a 5-unit stroke: the fill starts 5 in from
     # both straight edges and stops 5 short of the arc.
     var s = Sector((0.0, 0.0), 24.0, 0.0, PI / 2.0)
-    var q = _quads(s, identity[3](), _stroked(5))
+    var q = _quads(s, Transform(), _stroked(5))
     var lo = Float64.MAX
     var hi = 0.0
     for p in q.fill_quads:
@@ -205,13 +204,15 @@ def test_stroke_is_as_thick_as_asked() raises -> None:
 
 def test_transformed_sectors_tile_once() raises -> None:
     for s in _sectors():
-        _assert_tiles(s, rotate(0.7) @ scale(1.2), _stroked(3))
-        _assert_tiles(s, scale(1.3, 0.6), _stroked(3))
+        _assert_tiles(
+            s, Transform(rotation=0.7) @ Transform(scale=1.2), _stroked(3)
+        )
+        _assert_tiles(s, Transform(scale_x=1.3, scale_y=0.6), _stroked(3))
 
 
 def test_non_uniform_scale_gives_an_elliptical_sector() raises -> None:
     var s = Sector((0.0, 0.0), 24.0, 0.0, TAU)
-    var q = _quads(s, scale(1.5, 0.5), _stroked(2))
+    var q = _quads(s, Transform(scale_x=1.5, scale_y=0.5), _stroked(2))
     var wide = 0.0
     var tall = 0.0
     for p in q.stroke_quads:
@@ -224,35 +225,37 @@ def test_non_uniform_scale_gives_an_elliptical_sector() raises -> None:
 def test_stroke_wider_than_the_radius_leaves_one_colour() raises -> None:
     # Fill visible: the fill wins the whole sector, as a circle's does.
     var s = Sector((0.0, 0.0), 10.0, 0.0, 2.0)
-    var q = _quads(s, identity[3](), _stroked(10))
+    var q = _quads(s, Transform(), _stroked(10))
     assert_true(len(q.fill_quads) > 0)
     assert_equal(len(q.stroke_quads), 0)
-    _assert_tiles(s, identity[3](), _stroked(10))
+    _assert_tiles(s, Transform(), _stroked(10))
     # Fill off: the stroke does.
     var style = _stroked(10)
     style.fill_enabled = False
-    q = _quads(s, identity[3](), style)
+    q = _quads(s, Transform(), style)
     assert_equal(len(q.fill_quads), 0)
     assert_true(len(q.stroke_quads) > 0)
-    _assert_tiles(s, identity[3](), style)
+    _assert_tiles(s, Transform(), style)
 
 
 def test_grown_sectors_tile_their_minkowski_sum() raises -> None:
     # Round the tip and the arc's ends into the missing wedge, with the
     # stroke an inset band of the grown shape.
     for s in _sectors():
-        _assert_tiles(s, identity[3](), _stroked(3), 4.0)
-        _assert_tiles(s, rotate(0.7) @ scale(1.1), _stroked(3), 3.0)
+        _assert_tiles(s, Transform(), _stroked(3), 4.0)
+        _assert_tiles(
+            s, Transform(rotation=0.7) @ Transform(scale=1.1), _stroked(3), 3.0
+        )
 
 
 def test_shrunk_sectors_tile_their_erosion() raises -> None:
     for s in _sectors():
-        _assert_tiles(s, identity[3](), _stroked(3), -4.0)
+        _assert_tiles(s, Transform(), _stroked(3), -4.0)
 
 
 def test_an_stroke_only_sector_masks_only_its_ring() raises -> None:
     var style = Style(stroke=Color.RED, stroke_thickness=4)
-    var c = sector_command(identity[3](), style, 0.0, 0.0, 20.0, 0.0, TAU)
+    var c = sector_command(Transform(), style, 0.0, 0.0, 20.0, 0.0, TAU)
     var placed = shape_shadow_mask(c, c.transform, 1.0, 0)
     # The device pixels whose lower-left corners are (0, 0) and (-19, 0).
     var row = (0 - placed.y) * placed.mask.width
@@ -266,13 +269,11 @@ def test_a_grown_stroke_only_sector_is_a_ring() raises -> None:
     var style = _stroked(10)
     style.fill_enabled = False
     for s in _sectors():
-        _assert_tiles(s, identity[3](), style, 3.0)
+        _assert_tiles(s, Transform(), style, 3.0)
 
 
 def test_shrunk_to_nothing_gives_no_quads() raises -> None:
-    var q = _quads(
-        Sector((0.0, 0.0), 10.0, 0.0, 1.0), identity[3](), grow=-10.0
-    )
+    var q = _quads(Sector((0.0, 0.0), 10.0, 0.0, 1.0), Transform(), grow=-10.0)
     assert_equal(len(q.fill_quads), 0)
     assert_equal(len(q.stroke_quads), 0)
 
@@ -282,7 +283,7 @@ def test_degenerate_sectors_give_no_quads() raises -> None:
         Sector((0.0, 0.0), 0.0, 0.0, 1.0),
         Sector((0.0, 0.0), 10.0, 1.0, 0.0),
     ]:
-        var q = _quads(s, identity[3](), _stroked(2))
+        var q = _quads(s, Transform(), _stroked(2))
         assert_equal(len(q.fill_quads), 0)
         assert_equal(len(q.stroke_quads), 0)
 

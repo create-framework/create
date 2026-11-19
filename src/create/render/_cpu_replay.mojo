@@ -11,13 +11,8 @@ rasteriser in `_raster.mojo` knows about any of them.
 from std.collections import Dict, Optional
 from std.math import max, min, abs, sqrt, ceil, floor
 
-from create.math.matrix import (
-    Matrix,
-    identity,
-    inverse,
-    _apply as mat_apply,
-    scale as mat_scale,
-)
+from create.math.transform import Transform
+from create.math.transform import Transform
 
 from ._command import (
     CirclePayload,
@@ -85,7 +80,7 @@ from create.color.color import Color
 
 
 def device_bounds(
-    m: Matrix[3, 3],
+    m: Transform,
     lx0: Float64,
     ly0: Float64,
     lx1: Float64,
@@ -100,10 +95,10 @@ def device_bounds(
     not the edge midpoints: under a rotation the midpoints are no longer the
     extremes, and scanning between them clips the shape.
     """
-    var p0 = mat_apply(m, lx0, ly0)
-    var p1 = mat_apply(m, lx1, ly0)
-    var p2 = mat_apply(m, lx1, ly1)
-    var p3 = mat_apply(m, lx0, ly1)
+    var p0 = m._apply_xy(lx0, ly0)
+    var p1 = m._apply_xy(lx1, ly0)
+    var p2 = m._apply_xy(lx1, ly1)
+    var p3 = m._apply_xy(lx0, ly1)
     var x_min = max(Int(min(min(p0[0], p1[0]), min(p2[0], p3[0]))), 0)
     var x_max = min(Int(max(max(p0[0], p1[0]), max(p2[0], p3[0]))) + 1, width)
     var y_min = max(Int(min(min(p0[1], p1[1]), min(p2[1], p3[1]))), 0)
@@ -111,7 +106,7 @@ def device_bounds(
     return (x_min, y_min, x_max, y_max)
 
 
-def _fill_paint(c: RenderCommand, m: Matrix[3, 3]) -> FillPaint:
+def _fill_paint(c: RenderCommand, m: Transform) -> FillPaint:
     """What `c`'s fill paints, for a command mapped to device pixels by `m`:
     its colour, or its gradient placed over its `_fill_box`."""
     if not c.paint.fill_gradient:
@@ -119,13 +114,13 @@ def _fill_paint(c: RenderCommand, m: Matrix[3, 3]) -> FillPaint:
     ref gradient = c.paint.fill_gradient.value()
     var box = _fill_box(c)
     return FillPaint(
-        gradient, gradient._device_mapping(inverse(m), box[0], box[1])
+        gradient, gradient._device_mapping(m.inverse(), box[0], box[1])
     )
 
 
 def _blurred_shadow[
     o: Origin[mut=True]
-](s: Surface[o], sh: RenderCommand, scale: Float64, m: Matrix[3, 3]):
+](s: Surface[o], sh: RenderCommand, scale: Float64, m: Transform):
     """Paint the shadow command `sh` blurred, pixel by pixel.
 
     Coverage is sampled at pixel centres in the silhouette's local frame, so
@@ -144,14 +139,14 @@ def _blurred_shadow[
         s.width,
         s.height,
     )
-    var minv = inverse(m)
+    var minv = m.inverse()
     var color = sh.paint.shadow_color
     var full = Float64(color.a)
     for py in range(b[1], b[3]):
         var row = py * s.width * 4
         var run = -1
         for px in range(b[0], b[2]):
-            var l = mat_apply(minv, Float64(px) + 0.5, Float64(py) + 0.5)
+            var l = minv._apply_xy(Float64(px) + 0.5, Float64(py) + 0.5)
             var a = Int(full * shape.coverage(l[0], l[1]) + 0.5)
             if a >= Int(color.a):
                 if run < 0:
@@ -174,8 +169,8 @@ def _inset_shadow[
     s: Surface[o],
     c: RenderCommand,
     scale: Float64,
-    m: Matrix[3, 3],
-    sm: Matrix[3, 3],
+    m: Transform,
+    sm: Transform,
     blur: Int,
 ):
     """Paint `c`'s inset shadow over it: the shadow colour wherever the
@@ -193,8 +188,8 @@ def _inset_shadow[
     var soft = BlurredSilhouette(cut, c.paint.shadow_blur)
     var lb = interior.bounds()
     var b = device_bounds(m, lb[0], lb[1], lb[2], lb[3], s.width, s.height)
-    var minv = inverse(m)
-    var sminv = inverse(sm)
+    var minv = m.inverse()
+    var sminv = sm.inverse()
     var color = c.paint.shadow_color
     var full = Float64(color.a)
     for py in range(b[1], b[3]):
@@ -204,9 +199,9 @@ def _inset_shadow[
             var x = Float64(px) + 0.5
             var y = Float64(py) + 0.5
             var a = 0
-            var l = mat_apply(minv, x, y)
+            var l = minv._apply_xy(x, y)
             if interior.contains(l[0], l[1]):
-                var ls = mat_apply(sminv, x, y)
+                var ls = sminv._apply_xy(x, y)
                 var cov: Float64
                 if blur > 0:
                     cov = soft.coverage(ls[0], ls[1])
@@ -675,7 +670,7 @@ struct CpuReplay(Movable):
         clips: List[_Clip],
         antialiasing: Antialiasing,
         scale: Float64,
-        pre: Matrix[3, 3] = identity[3](),
+        pre: Transform = Transform(),
         skip_letterbox: Bool = False,
         skip_clear: Bool = False,
     ) raises:
@@ -733,7 +728,7 @@ struct CpuReplay(Movable):
         clips: List[_Clip],
         s: Surface[o],
         scale: Float64,
-        pre: Matrix[3, 3],
+        pre: Transform,
     ) raises -> List[_ClipRows]:
         """Every clip of the frame as the rows of `s` it keeps, in id order.
 
@@ -754,7 +749,7 @@ struct CpuReplay(Movable):
                 s.px, s.width * grid, s.height * grid
             )._recording_into(recorder)
             var region = clips[i].region.copy()
-            self._one(res, fine, region, scale * g, mat_scale(g) @ pre)
+            self._one(res, fine, region, scale * g, Transform(scale=g) @ pre)
             var own = _ClipRows(runs, s.width, s.height, clips[i].invert, grid)
             _ = runs^
             var parent = clips[i].parent
@@ -772,7 +767,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        pre: Matrix[3, 3],
+        pre: Transform,
     ) raises:
         """Replay `c` onto `s`, its stroke aligned first: the one place, so
         its shadows and the shape itself see the same geometry. Copies `c`
@@ -791,7 +786,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        pre: Matrix[3, 3],
+        pre: Transform,
     ) raises:
         # The one place the pre-matrix is composed, so no per-kind helper has
         # to remember to do it.
@@ -856,7 +851,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        m: Matrix[3, 3],
+        m: Transform,
     ) raises:
         """Draw the shape `c`, antialiased at `antialiasing`.
 
@@ -879,7 +874,7 @@ struct CpuReplay(Movable):
             s.px, s.width * grid, s.height * grid
         )._recording_into(recorder)
         var g = Float64(grid)
-        self._shape_pixels(fine, c, scale * g, mat_scale(g) @ m)
+        self._shape_pixels(fine, c, scale * g, Transform(scale=g) @ m)
         var scratch = self._coverage^
         self._coverage = CoverageScratch()
         composite_coverage(s, runs, grid, _fill_paint(c, m), scratch)
@@ -893,7 +888,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        m: Matrix[3, 3],
+        m: Transform,
     ) raises:
         """Draw the shape `c` by pixel centres: a rectangle or a circle by
         its own rasteriser, a plain triangle in one pass, every other kind
@@ -906,9 +901,9 @@ struct CpuReplay(Movable):
         elif is_plain_triangle(c):
             if c.paint._fill_visible():
                 ref g = c.payload[TrianglePayload].corners
-                var p1 = mat_apply(m, g[0], g[1])
-                var p2 = mat_apply(m, g[2], g[3])
-                var p3 = mat_apply(m, g[4], g[5])
+                var p1 = m._apply_xy(g[0], g[1])
+                var p2 = m._apply_xy(g[2], g[3])
+                var p3 = m._apply_xy(g[4], g[5])
                 fill_triangle(
                     s,
                     p1[0],
@@ -938,13 +933,7 @@ struct CpuReplay(Movable):
 
     def _rect[
         o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
+    ](mut self, s: Surface[o], c: RenderCommand, scale: Float64, m: Transform,):
         var W = s.width
         ref rect = c.payload[RectPayload]
         var x = rect.center.x
@@ -962,8 +951,8 @@ struct CpuReplay(Movable):
             # world y to the larger pixel row. Rounded corners take the
             # general path below, which splits each row into fill and stroke
             # so a translucent rectangle composites once.
-            var p0 = mat_apply(m, lx0, ly0)
-            var p1 = mat_apply(m, lx1, ly1)
+            var p0 = m._apply_xy(lx0, ly0)
+            var p1 = m._apply_xy(lx1, ly1)
             var x0 = Int(min(p0[0], p1[0]))
             var y0 = Int(min(p0[1], p1[1]))
             var iw = Int(abs(p1[0] - p0[0]))
@@ -993,8 +982,8 @@ struct CpuReplay(Movable):
             # and sharp once the stroke is wider than they are); stroke
             # either side of the inner span, fill inside it, so a
             # translucent rectangle composites once.
-            var p0 = mat_apply(m, lx0, ly0)
-            var p1 = mat_apply(m, lx1, ly1)
+            var p0 = m._apply_xy(lx0, ly0)
+            var p1 = m._apply_xy(lx1, ly1)
             var x0 = Float64(Int(min(p0[0], p1[0])))
             var y0 = Float64(Int(min(p0[1], p1[1])))
             var iw = Float64(Int(abs(p1[0] - p0[0])))
@@ -1074,11 +1063,11 @@ struct CpuReplay(Movable):
             # per-pixel test — an edge pixel may land one column off — which
             # this phase's exactness policy accepts and `test_gl_parity.mojo`
             # gates.
-            var minv = inverse(m)
+            var minv = m.inverse()
             var b = device_bounds(m, lx0, ly0, lx1, ly1, s.width, s.height)
             var sw_f = c.paint.stroke_thickness
-            var step_x = minv[0, 0]
-            var step_y = minv[1, 0]
+            var step_x = minv._xx
+            var step_y = minv._yx
             var inv_step_x = 1.0 / step_x if step_x != 0.0 else 0.0
             var inv_step_y = 1.0 / step_y if step_y != 0.0 else 0.0
             if r_local <= 0.0:
@@ -1087,8 +1076,8 @@ struct CpuReplay(Movable):
                 var fill_col = _fill_paint(c, m)
                 var stroke_col = c.paint.stroke_color
                 for row in range(b[1], b[3]):
-                    var local0 = mat_apply(
-                        minv, Float64(b[0]) + 0.5, Float64(row) + 0.5
+                    var local0 = minv._apply_xy(
+                        Float64(b[0]) + 0.5, Float64(row) + 0.5
                     )
                     var A = local0[0]
                     var B = local0[1]
@@ -1183,8 +1172,8 @@ struct CpuReplay(Movable):
                 var inner_r = r_local - sw_f
                 var inner_r2 = inner_r * inner_r if inner_r > 0.0 else 0.0
                 for row in range(b[1], b[3]):
-                    var local0 = mat_apply(
-                        minv, Float64(b[0]) + 0.5, Float64(row) + 0.5
+                    var local0 = minv._apply_xy(
+                        Float64(b[0]) + 0.5, Float64(row) + 0.5
                     )
                     var A0 = local0[0]
                     var B0 = local0[1]
@@ -1274,13 +1263,7 @@ struct CpuReplay(Movable):
 
     def _circle[
         o: Origin[mut=True]
-    ](
-        mut self,
-        s: Surface[o],
-        c: RenderCommand,
-        scale: Float64,
-        m: Matrix[3, 3],
-    ):
+    ](mut self, s: Surface[o], c: RenderCommand, scale: Float64, m: Transform,):
         var W = s.width
         var H = s.height
         ref circle = c.payload[CirclePayload]
@@ -1294,7 +1277,7 @@ struct CpuReplay(Movable):
         if uniform(m):
             # A uniform scale keeps a circle a circle, so it stays a distance
             # test — just in pixels rather than world units.
-            var p = mat_apply(m, cx, cy)
+            var p = m._apply_xy(cx, cy)
             # Pixel centres sit at +0.5, so moving the centre back by half a
             # pixel lets the row spans test integer columns and rows.
             var pcx = p[0] - 0.5
@@ -1346,10 +1329,10 @@ struct CpuReplay(Movable):
             # above (outer span, then a shrunk inner span for the fill,
             # flanked by up to two stroke spans). Not bit-exact with the old
             # per-pixel walk, which this phase's exactness policy accepts.
-            var minv = inverse(m)
+            var minv = m.inverse()
             var b = device_bounds(m, cx - r, cy - r, cx + r, cy + r, W, H)
-            var step_x = minv[0, 0]
-            var step_y = minv[1, 0]
+            var step_x = minv._xx
+            var step_y = minv._yx
             var fill_enabled = c.paint._fill_visible()
             var stroke_enabled = c.paint._stroke_visible()
             var fill_col = _fill_paint(c, m)
@@ -1358,8 +1341,8 @@ struct CpuReplay(Movable):
             var a = step_x * step_x + step_y * step_y
             var inv_2a = 1.0 / (2.0 * a)
             for row in range(b[1], b[3]):
-                var local0 = mat_apply(
-                    minv, Float64(b[0]) + 0.5, Float64(row) + 0.5
+                var local0 = minv._apply_xy(
+                    Float64(b[0]) + 0.5, Float64(row) + 0.5
                 )
                 var dx0 = local0[0] - cx
                 var dy0 = local0[1] - cy
@@ -1403,7 +1386,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        m: Matrix[3, 3],
+        m: Transform,
     ) raises:
         ref image = c.payload[ImagePayload]
         if image.image not in res.images:
@@ -1458,7 +1441,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        m: Matrix[3, 3],
+        m: Transform,
         blur: Int,
     ) raises:
         """The silhouette command `c` blurred by `blur` device pixels, from
@@ -1519,7 +1502,7 @@ struct CpuReplay(Movable):
         s: Surface[o],
         c: RenderCommand,
         scale: Float64,
-        m: Matrix[3, 3],
+        m: Transform,
         blur: Int = 0,
     ) raises:
         # Upright, only the anchor is mapped and the layout happens in pixel
@@ -1530,7 +1513,7 @@ struct CpuReplay(Movable):
         ref text = c.payload[TextPayload]
         var wrap = text.wrap_pixels(sf)
         if text_upright(m):
-            var p = mat_apply(m, text.position.x, text.position.y)
+            var p = m._apply_xy(text.position.x, text.position.y)
             res.text[].render(
                 s, text.text, p[0], p[1], text.style[], sf, blur, wrap
             )

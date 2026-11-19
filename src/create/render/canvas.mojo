@@ -30,17 +30,8 @@ from create.geometry import (
 )
 from create.math.point import Point
 from create.math.vector import Vector
-from create.math.matrix import (
-    Matrix,
-    identity,
-    inverse,
-    apply,
-    _apply as mat_apply,
-    rotate as mat_rotate,
-    scale as mat_scale,
-    translate as mat_translate,
-)
 from create.math.transform import Transform
+from create.math.matrix import Matrix
 from create.image.image import Image
 from create.animation.animator import Animator
 from ._backend import Backend, _seed
@@ -148,10 +139,10 @@ struct OverlayGuard[origin: Origin[mut=True]](Movable):
 
     var _canvas: Pointer[Canvas, Self.origin]
     var _saved_camera: Camera
-    var _saved_user: Matrix[3, 3]
-    var _saved_user_inv: Matrix[3, 3]
-    var _saved_transform: Matrix[3, 3]
-    var _saved_transform_inv: Matrix[3, 3]
+    var _saved_user: Transform
+    var _saved_user_inv: Transform
+    var _saved_transform: Transform
+    var _saved_transform_inv: Transform
 
     def __init__(out self, *, ref[Self.origin] _canvas: Canvas):
         self._saved_camera = _canvas._camera
@@ -160,8 +151,8 @@ struct OverlayGuard[origin: Origin[mut=True]](Movable):
         self._saved_transform = _canvas._transform
         self._saved_transform_inv = _canvas._transform_inv
         _canvas._camera = Camera()
-        _canvas._user = identity[3]()
-        _canvas._user_inv = identity[3]()
+        _canvas._user = Transform()
+        _canvas._user_inv = Transform()
         _canvas._transform = _canvas._base.copy()
         _canvas._transform_inv = _canvas._base_inv.copy()
         self._canvas = Pointer(to=_canvas)
@@ -296,8 +287,8 @@ struct Canvas(DrawTarget, Movable):
     # Style is per-frame, not carried in `_state`: carrying one across would
     # only preserve a forgotten setting. A reusable style is a `Style` field.
     var _style: Style
-    var _base: Matrix[3, 3]
-    var _base_inv: Matrix[3, 3]
+    var _base: Transform
+    var _base_inv: Transform
     # Camera is per-frame too, and for the same reason as style: it resets to
     # identity every frame, so `render` sets one explicitly each time it wants
     # one rather than it leaking from the last frame that set it.
@@ -307,11 +298,11 @@ struct Canvas(DrawTarget, Movable):
     # world to screen. Rendering uses the full product; `to_local`/`to_screen`
     # stop at screen space, the space of `context.mouse.position` and `color_at`, so a
     # program never sees the window's pixel mapping it did not ask for.
-    var _user: Matrix[3, 3]
-    var _user_inv: Matrix[3, 3]
-    var _transform: Matrix[3, 3]
-    var _transform_inv: Matrix[3, 3]
-    var _transform_stack: List[Matrix[3, 3]]
+    var _user: Transform
+    var _user_inv: Transform
+    var _transform: Transform
+    var _transform_inv: Transform
+    var _transform_stack: List[Transform]
 
     def __init__(out self, *, var _state: _PersistentCanvasState):
         """Adopt the carried-over state and this frame's mapping, and open
@@ -324,15 +315,15 @@ struct Canvas(DrawTarget, Movable):
         self._state = state^
         self._style = Style()
         self._base = self._view.base_matrix()
-        self._base_inv = inverse(self._base)
+        self._base_inv = self._base.inverse()
         self._camera = Camera()
         # The stack starts empty, so the base mapping is the current transform;
         # user transforms compose on top of it.
-        self._user = identity[3]()
-        self._user_inv = identity[3]()
+        self._user = Transform()
+        self._user_inv = Transform()
         self._transform = self._base
         self._transform_inv = self._base_inv
-        self._transform_stack = List[Matrix[3, 3]]()
+        self._transform_stack = List[Transform]()
         self._state._backend.begin_frame(self._base, self._width, self._height)
         # Recorded here rather than by the loop so both loops get it from one
         # place, and so a program's own `background()` can coalesce with it.
@@ -494,25 +485,25 @@ struct Canvas(DrawTarget, Movable):
             canvas.rectangle((0, 0), 40, 40)  # turned about (100, 0)
         ```
         """
-        self._apply_transform(mat_translate(delta.x, delta.y))
+        self._apply_transform(Transform(translation=Vector(delta.x, delta.y)))
 
     def rotate(mut self, angle: Float64):
         """Turn everything drawn after this, until the end of the frame,
         counter-clockwise by `angle` radians about the current origin, as
         Processing's `rotate` does. See `translate`."""
-        self._apply_transform(mat_rotate(angle))
+        self._apply_transform(Transform(rotation=angle))
 
     def scale(mut self, s: Float64):
         """Make everything drawn after this, until the end of the frame, `s`
         times as big about the current origin, as Processing's `scale` does.
         See `translate`."""
-        self._apply_transform(mat_scale(s, s))
+        self._apply_transform(Transform(scale_x=s, scale_y=s))
 
     def scale(mut self, sx: Float64, sy: Float64):
         """Stretch everything drawn after this, until the end of the frame,
         by `sx` across and `sy` up and down about the current origin. A
         negative value mirrors. See `translate`."""
-        self._apply_transform(mat_scale(sx, sy))
+        self._apply_transform(Transform(scale_x=sx, scale_y=sy))
 
     def transform(mut self) -> TransformGuard[origin_of(self)]:
         """Keep the current transform for a `with` block, and restore it when
@@ -529,7 +520,7 @@ struct Canvas(DrawTarget, Movable):
             canvas.rectangle((0, 0), 40, 40)
         ```
         """
-        self._push_transform(identity[3]())
+        self._push_transform(Transform())
         return TransformGuard[origin_of(self)](_canvas=self)
 
     def transform(mut self, t: Transform) -> TransformGuard[origin_of(self)]:
@@ -545,10 +536,12 @@ struct Canvas(DrawTarget, Movable):
         The block restores the transform on exit, including on an early
         return or a raise.
         """
-        self._push_transform(Matrix[3, 3](t))
+        self._push_transform(t)
         return TransformGuard[origin_of(self)](_canvas=self)
 
-    def transform(mut self, m: Matrix[3, 3]) -> TransformGuard[origin_of(self)]:
+    def transform(
+        mut self, m: Matrix[3, 3]
+    ) raises -> TransformGuard[origin_of(self)]:
         """Apply `m` to everything rendered inside a `with` block.
 
         ```mojo
@@ -557,10 +550,9 @@ struct Canvas(DrawTarget, Movable):
         ```
 
         The matrix pops on exit, including on an early return or a raise.
-        `_push_transform` is the same push without that guarantee -- a missed
-        pop shifts every later render in the frame, so go through here.
+        Raises if `m` isn't affine, as `Transform(m)` does.
         """
-        self._push_transform(m)
+        self._push_transform(Transform(m))
         return TransformGuard[origin_of(self)](_canvas=self)
 
     def style(
@@ -683,7 +675,7 @@ struct Canvas(DrawTarget, Movable):
         """
         return StyleGuard[origin_of(self)](_canvas=self, _style=style)
 
-    def _push_transform(mut self, m: Matrix[3, 3]):
+    def _push_transform(mut self, m: Transform):
         # Parent first, then child: a point is mapped by the innermost matrix
         # before the ones it nests inside. Composing the other way round would
         # apply the outer transform last, so a nested translate would move in
@@ -692,7 +684,7 @@ struct Canvas(DrawTarget, Movable):
         self._user = self._user @ m
         self._sync_transform()
 
-    def _apply_transform(mut self, m: Matrix[3, 3]):
+    def _apply_transform(mut self, m: Transform):
         # Like `_push_transform`, composed inside the current transform, but
         # without a push: it lasts until a guard pops past it or the frame
         # ends.
@@ -705,10 +697,10 @@ struct Canvas(DrawTarget, Movable):
             self._sync_transform()
 
     def _sync_transform(mut self):
-        self._user_inv = inverse(self._user)
-        var cam_m = self._camera.matrix()
+        self._user_inv = self._user.inverse()
+        var cam_m = self._camera._transform()
         self._transform = self._base @ cam_m @ self._user
-        self._transform_inv = self._user_inv @ inverse(cam_m) @ self._base_inv
+        self._transform_inv = self._user_inv @ cam_m.inverse() @ self._base_inv
 
     def to_screen(self, local: Point) -> Point:
         """A point in the current transform's frame, in screen space: through
@@ -718,7 +710,7 @@ struct Canvas(DrawTarget, Movable):
         For its position in world space, ask the camera:
         `camera.to_world(canvas.to_screen(local))`.
         """
-        return apply(self._camera.matrix() @ self._user, local)
+        return (self._camera._transform() @ self._user).apply(local)
 
     def clip[
         R: Region
@@ -754,7 +746,7 @@ struct Canvas(DrawTarget, Movable):
         then the transform. So `canvas.to_local(context.mouse.position)` picks
         in the frame a shape is drawn in, with or without a camera.
         """
-        return apply(self._user_inv, self._camera.to_world(screen))
+        return self._user_inv.apply(self._camera.to_world(screen))
 
     def camera(mut self, camera: Camera):
         """Set the active camera. Applies to every render call and every nested
@@ -1026,7 +1018,7 @@ struct Canvas(DrawTarget, Movable):
         """
         if self._offscreen():
             self._state._backend.bake(self._scale)
-            var p = mat_apply(self._base, position.x, position.y)
+            var p = self._base._apply_xy(position.x, position.y)
             ref target = self._state._backend.target.value()
             var px = Int(floor(p[0]))
             var py = Int(floor(p[1]))
@@ -1097,10 +1089,12 @@ struct Canvas(DrawTarget, Movable):
             # so the two share one replay.
             backend.read_frame(seeded=not self._state.autoclear)
             return Image.from_rgba(pw, ph, backend.frame_read.value().data)
-        var to_target = mat_translate(
-            (region.width / 2.0 - region.position.x) * pixel_scale,
-            (region.height / 2.0 + region.position.y) * pixel_scale,
-        ) @ mat_scale(pixel_scale, -pixel_scale)
+        var to_target = Transform(
+            translation=Vector(
+                (region.width / 2.0 - region.position.x) * pixel_scale,
+                (region.height / 2.0 + region.position.y) * pixel_scale,
+            )
+        ) @ Transform(scale_x=pixel_scale, scale_y=-pixel_scale)
         var mem = backend.read(
             pw, ph, pixel_scale, to_target, not self._state.autoclear
         )
@@ -1125,10 +1119,12 @@ struct Canvas(DrawTarget, Movable):
             # The whole canvas at its own density: the pixels as they are.
             mem.data = target.data.copy()
             return mem^
-        var to_target = mat_translate(
-            (region.width / 2.0 - region.position.x) * scale,
-            (region.height / 2.0 + region.position.y) * scale,
-        ) @ mat_scale(scale, -scale)
+        var to_target = Transform(
+            translation=Vector(
+                (region.width / 2.0 - region.position.x) * scale,
+                (region.height / 2.0 + region.position.y) * scale,
+            )
+        ) @ Transform(scale_x=scale, scale_y=-scale)
         _seed(mem, target, self._base, to_target)
         return mem^
 

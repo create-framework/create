@@ -2,14 +2,9 @@ from std.collections import Optional
 from std.math import max, min, ceil, floor
 from std.memory import unsafe_memcpy
 
-from create.math.matrix import (
-    Matrix,
-    identity,
-    inverse,
-    _apply as mat_apply,
-    scale as mat_scale,
-    translate as mat_translate,
-)
+from create.math.transform import Transform
+from create.math.transform import Transform
+from create.math.vector import Vector
 
 from ._command import RenderCommand
 from ._gl_backend import GLRenderer
@@ -21,25 +16,25 @@ from ._cpu_replay import CpuReplay
 from .antialiasing import Antialiasing
 
 
-def _design_pixels(width: Int, height: Int) -> Matrix[3, 3]:
+def _design_pixels(width: Int, height: Int) -> Transform:
     """Screen space to the pixels of a `width` x `height` design-size
     image: origin centred and y up to origin top-left and y down."""
-    return mat_translate(
-        Float64(width) / 2.0, Float64(height) / 2.0
-    ) @ mat_scale(1.0, -1.0)
+    return Transform(
+        translation=Vector(Float64(width) / 2.0, Float64(height) / 2.0)
+    ) @ Transform(scale_x=1.0, scale_y=-1.0)
 
 
 def _clear_off_screen(
     mut mem: MemorySurface,
-    to_target: Matrix[3, 3],
+    to_target: Transform,
     width: Float64,
     height: Float64,
 ):
     """Make every pixel of `mem` whose centre is off the `width` x
     `height` screen transparent. A clear paints the whole target, and a
     read's target may reach past the screen, where the frame has nothing."""
-    var a = mat_apply(to_target, -width / 2.0, height / 2.0)
-    var b = mat_apply(to_target, width / 2.0, -height / 2.0)
+    var a = to_target._apply_xy(-width / 2.0, height / 2.0)
+    var b = to_target._apply_xy(width / 2.0, -height / 2.0)
     # Pixels whose centre `i + 0.5` lies in `[lo, hi)`.
     var x0 = max(Int(ceil(min(a[0], b[0]) - 0.5)), 0)
     var x1 = min(Int(ceil(max(a[0], b[0]) - 0.5)), mem.width)
@@ -59,17 +54,17 @@ def _clear_off_screen(
 def _seed(
     mut mem: MemorySurface,
     last: MemorySurface,
-    last_from_screen: Matrix[3, 3],
-    to_target: Matrix[3, 3],
+    last_from_screen: Transform,
+    to_target: Transform,
 ):
     """Fill `mem` from the pixels `last`, placed by `last_from_screen`
     (screen space to `last`'s pixels), each pixel the one under its centre:
     so a read with the autoclear off starts from what the frame itself
     started from, and an offscreen canvas is read at any scale."""
-    var to_last = last_from_screen @ inverse(to_target)
+    var to_last = last_from_screen @ to_target.inverse()
     for y in range(mem.height):
         for x in range(mem.width):
-            var p = mat_apply(to_last, Float64(x) + 0.5, Float64(y) + 0.5)
+            var p = to_last._apply_xy(Float64(x) + 0.5, Float64(y) + 0.5)
             var lx = Int(floor(p[0]))
             var ly = Int(floor(p[1]))
             if lx < 0 or ly < 0 or lx >= last.width or ly >= last.height:
@@ -105,7 +100,7 @@ struct Backend(Movable):
     var captures: Captures
     """The `save_image`, `save_screenshot` and recording requests filed by
     the canvas, serviced at present."""
-    var screen_inv: Matrix[3, 3]
+    var screen_inv: Transform
     """This frame's window-pixel-to-screen mapping, the inverse of the base
     every command's transform starts from; set by `begin_frame`. A read
     composes it in front of its own screen-to-target mapping, as a capture
@@ -144,7 +139,7 @@ struct Backend(Movable):
         self.buffer = CommandBuffer()
         self.resources = Resources()
         self.captures = Captures()
-        self.screen_inv = identity[3]()
+        self.screen_inv = Transform()
         self.screen_w = 0.0
         self.screen_h = 0.0
         self.frame_w = 0
@@ -239,7 +234,7 @@ struct Backend(Movable):
             _seed(
                 mem,
                 seed.value(),
-                inverse(self.screen_inv),
+                self.screen_inv.inverse(),
                 recording.capture_base,
             )
             _force_opaque(mem.data)
@@ -261,11 +256,11 @@ struct Backend(Movable):
             self.captures.recording.value().canvas = mem^
 
     def begin_frame(
-        mut self, screen: Matrix[3, 3], width: Float64, height: Float64
+        mut self, screen: Transform, width: Float64, height: Float64
     ):
         """Note the frame's screen-to-window mapping and extent, for reads
         and for keeping the finished frame."""
-        self.screen_inv = inverse(screen)
+        self.screen_inv = screen.inverse()
         self.screen_w = width
         self.screen_h = height
         self.frame_w = Int(width + 0.5)
@@ -277,7 +272,7 @@ struct Backend(Movable):
         width: Int,
         height: Int,
         scale: Float64,
-        to_target: Matrix[3, 3],
+        to_target: Transform,
         seeded: Bool,
     ) raises -> MemorySurface:
         """The frame so far, `width` x `height` pixels, placed by
@@ -333,14 +328,14 @@ struct Backend(Movable):
         """Sample the finished frame on `s` (window pixels) down or up to
         design size, nearest pixel, into `last_frame`."""
         var mem = MemorySurface(self.frame_w, self.frame_h)
-        var to_window = inverse(self.screen_inv)
-        var from_design = to_window @ inverse(
-            _design_pixels(self.frame_w, self.frame_h)
+        var to_window = self.screen_inv.inverse()
+        var from_design = (
+            to_window @ (_design_pixels(self.frame_w, self.frame_h)).inverse()
         )
         for y in range(self.frame_h):
             for x in range(self.frame_w):
-                var p = mat_apply(
-                    from_design, Float64(x) + 0.5, Float64(y) + 0.5
+                var p = from_design._apply_xy(
+                    Float64(x) + 0.5, Float64(y) + 0.5
                 )
                 var wx = Int(floor(p[0]))
                 var wy = Int(floor(p[1]))
@@ -478,7 +473,7 @@ struct Backend(Movable):
         s: Surface[o],
         cmds: List[RenderCommand],
         scale: Float64,
-        pre: Matrix[3, 3] = identity[3](),
+        pre: Transform = Transform(),
         skip_letterbox: Bool = False,
         skip_clear: Bool = False,
     ) raises:

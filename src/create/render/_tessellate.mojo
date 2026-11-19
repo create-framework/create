@@ -27,7 +27,7 @@ where the ring has to follow a rotated edge.
 from std.math import abs, ceil, cos, max, min, sin, sqrt
 from create.math import PI
 
-from create.math.matrix import Matrix, inverse, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 
 from ._command import (
@@ -203,7 +203,7 @@ struct VertexBuffer(Movable):
 
 def _mapped_quad(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     x0: Float64,
     y0: Float64,
     x1: Float64,
@@ -215,16 +215,16 @@ def _mapped_quad(
     All four corners go through `m`, so a rotated box stays a rotated box
     rather than being re-derived as an axis-aligned device rect.
     """
-    var a = mat_apply(m, x0, y0)
-    var b = mat_apply(m, x1, y0)
-    var c = mat_apply(m, x1, y1)
-    var d = mat_apply(m, x0, y1)
+    var a = m._apply_xy(x0, y0)
+    var b = m._apply_xy(x1, y0)
+    var c = m._apply_xy(x1, y1)
+    var d = m._apply_xy(x0, y1)
     vb.quad(a[0], a[1], b[0], b[1], c[0], c[1], d[0], d[1], color)
 
 
 def _corner_fan(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     ccx: Float64,
     ccy: Float64,
     r: Float64,
@@ -240,18 +240,18 @@ def _corner_fan(
     `span` is a parameter here rather than the quarter turn this used to
     hardcode."""
     var step = span / Float64(n)
-    var centre = mat_apply(m, ccx, ccy)
+    var centre = m._apply_xy(ccx, ccy)
     for i in range(n):
         var a0 = angle0 + Float64(i) * step
         var a1 = angle0 + Float64(i + 1) * step
-        var p0 = mat_apply(m, ccx + cos(a0) * r, ccy + sin(a0) * r)
-        var p1 = mat_apply(m, ccx + cos(a1) * r, ccy + sin(a1) * r)
+        var p0 = m._apply_xy(ccx + cos(a0) * r, ccy + sin(a0) * r)
+        var p1 = m._apply_xy(ccx + cos(a1) * r, ccy + sin(a1) * r)
         vb.triangle(centre[0], centre[1], p0[0], p0[1], p1[0], p1[1], color)
 
 
 def _corner_ring_fan(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     ccx: Float64,
     ccy: Float64,
     r_outer: Float64,
@@ -270,16 +270,16 @@ def _corner_ring_fan(
     for i in range(n):
         var a0 = angle0 + Float64(i) * step
         var a1 = angle0 + Float64(i + 1) * step
-        var o0 = mat_apply(m, ccx + cos(a0) * r_outer, ccy + sin(a0) * r_outer)
-        var o1 = mat_apply(m, ccx + cos(a1) * r_outer, ccy + sin(a1) * r_outer)
-        var i0 = mat_apply(m, ccx + cos(a0) * r_inner, ccy + sin(a0) * r_inner)
-        var i1 = mat_apply(m, ccx + cos(a1) * r_inner, ccy + sin(a1) * r_inner)
+        var o0 = m._apply_xy(ccx + cos(a0) * r_outer, ccy + sin(a0) * r_outer)
+        var o1 = m._apply_xy(ccx + cos(a1) * r_outer, ccy + sin(a1) * r_outer)
+        var i0 = m._apply_xy(ccx + cos(a0) * r_inner, ccy + sin(a0) * r_inner)
+        var i1 = m._apply_xy(ccx + cos(a1) * r_inner, ccy + sin(a1) * r_inner)
         vb.quad(i0[0], i0[1], o0[0], o0[1], o1[0], o1[1], i1[0], i1[1], color)
 
 
 def _rounded_rect_fill(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     x0: Float64,
     y0: Float64,
     x1: Float64,
@@ -307,7 +307,7 @@ def _rounded_rect_fill(
 
 def _rounded_rect_ring(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     x0: Float64,
     y0: Float64,
     x1: Float64,
@@ -352,7 +352,9 @@ def _shade_fill(
         return
     ref gradient = c.paint.fill_gradient.value()
     var box = _fill_box(c)
-    var mapping = gradient._device_mapping(inverse(c.transform), box[0], box[1])
+    var mapping = gradient._device_mapping(
+        c.transform.inverse(), box[0], box[1]
+    )
     for i in range(first, vb.count()):
         var at = i * _VERTEX_FLOATS
         var x = Float64(vb.data[at])
@@ -508,7 +510,7 @@ def emit_circle(
         fill_c = c.paint.stroke_color
         fill_r = r
 
-    var centre = mat_apply(m, cx, cy)
+    var centre = m._apply_xy(cx, cy)
     # The fan first, then the ring, so the fan's vertices are one run for
     # `_shade_fill`.
     var first = vb.count()
@@ -516,8 +518,8 @@ def emit_circle(
         for i in range(n):
             var a0 = Float64(i) * step
             var a1 = Float64(i + 1) * step
-            var p0 = mat_apply(m, cx + cos(a0) * fill_r, cy + sin(a0) * fill_r)
-            var p1 = mat_apply(m, cx + cos(a1) * fill_r, cy + sin(a1) * fill_r)
+            var p0 = m._apply_xy(cx + cos(a0) * fill_r, cy + sin(a0) * fill_r)
+            var p1 = m._apply_xy(cx + cos(a1) * fill_r, cy + sin(a1) * fill_r)
             vb.triangle(
                 centre[0], centre[1], p0[0], p0[1], p1[0], p1[1], fill_c
             )
@@ -531,10 +533,10 @@ def emit_circle(
             var s0 = sin(a0)
             var c1 = cos(a1)
             var s1 = sin(a1)
-            var o0 = mat_apply(m, cx + c0 * r, cy + s0 * r)
-            var o1 = mat_apply(m, cx + c1 * r, cy + s1 * r)
-            var i0 = mat_apply(m, cx + c0 * inner, cy + s0 * inner)
-            var i1 = mat_apply(m, cx + c1 * inner, cy + s1 * inner)
+            var o0 = m._apply_xy(cx + c0 * r, cy + s0 * r)
+            var o1 = m._apply_xy(cx + c1 * r, cy + s1 * r)
+            var i0 = m._apply_xy(cx + c0 * inner, cy + s0 * inner)
+            var i1 = m._apply_xy(cx + c1 * inner, cy + s1 * inner)
             vb.quad(
                 i0[0],
                 i0[1],
@@ -574,9 +576,9 @@ def emit_plain_triangle(
         return
     var m = c.transform
     ref g = c.payload[TrianglePayload].corners
-    var p1 = mat_apply(m, g[0], g[1])
-    var p2 = mat_apply(m, g[2], g[3])
-    var p3 = mat_apply(m, g[4], g[5])
+    var p1 = m._apply_xy(g[0], g[1])
+    var p2 = m._apply_xy(g[2], g[3])
+    var p3 = m._apply_xy(g[4], g[5])
     var first = vb.count()
     vb.triangle(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], c.paint.fill_color)
     _shade_fill(vb, first, c, ramp_row)
@@ -629,7 +631,7 @@ def _fillet_arc_span(
 
 def _rounded_triangle_fill(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     cx: Float64,
     cy: Float64,
     f0: Tuple[
@@ -650,7 +652,7 @@ def _rounded_triangle_fill(
     discs, cheap here because every vertex is mapped individually anyway. Full
     size, not inset — the fill is unaffected by whether a stroke is
     rendered, exactly as the unrounded triangle's own fill is."""
-    var centre = mat_apply(m, cx, cy)
+    var centre = m._apply_xy(cx, cy)
     var tx0 = f0[2]
     var ty0 = f0[3]
     var tx1 = f0[4]
@@ -679,8 +681,8 @@ def _rounded_triangle_fill(
     hy.append(ty5)
     for i in range(6):
         var j = (i + 1) % 6
-        var pa = mat_apply(m, hx[i], hy[i])
-        var pb = mat_apply(m, hx[j], hy[j])
+        var pa = m._apply_xy(hx[i], hy[i])
+        var pb = m._apply_xy(hx[j], hy[j])
         vb.triangle(centre[0], centre[1], pa[0], pa[1], pb[0], pb[1], color)
 
     var span0 = _fillet_arc_span(f0)
@@ -842,7 +844,7 @@ def emit_glyph(
 
 def emit_mapped_glyph(
     mut vb: VertexBuffer,
-    m: Matrix[3, 3],
+    m: Transform,
     x: Float64,
     y: Float64,
     w: Float64,
@@ -857,10 +859,10 @@ def emit_mapped_glyph(
     upright layout, its four corners mapped onto the device by `m`
     (`glyph_transform`). The atlas's linear filter is the CPU's bilinear
     read of the mask."""
-    var a = mat_apply(m, x, y)
-    var b = mat_apply(m, x + w, y)
-    var c = mat_apply(m, x + w, y + h)
-    var d = mat_apply(m, x, y + h)
+    var a = m._apply_xy(x, y)
+    var b = m._apply_xy(x + w, y)
+    var c = m._apply_xy(x + w, y + h)
+    var d = m._apply_xy(x, y + h)
     vb.push(a[0], a[1], u0, v0, color, MODE_MASK)
     vb.push(b[0], b[1], u1, v0, color, MODE_MASK)
     vb.push(c[0], c[1], u1, v1, color, MODE_MASK)
@@ -872,7 +874,7 @@ def emit_mapped_glyph(
 def _emit_region(
     mut vb: VertexBuffer,
     region: InsetRegion,
-    m: Matrix[3, 3],
+    m: Transform,
     sf: Float64,
     stroke_inset: Float64,
     color: Color,
@@ -897,9 +899,9 @@ def _emit_region(
         return
     var r = region.radius
     if r <= 0.0:
-        var p1 = mat_apply(m, g[0], g[1])
-        var p2 = mat_apply(m, g[2], g[3])
-        var p3 = mat_apply(m, g[4], g[5])
+        var p1 = m._apply_xy(g[0], g[1])
+        var p2 = m._apply_xy(g[2], g[3])
+        var p3 = m._apply_xy(g[4], g[5])
         vb.triangle(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], color)
         return
     _rounded_triangle_fill(
@@ -945,11 +947,11 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     var first = vb.count()
     var stroke_inset = thickness if c.paint._stroke_visible() else 0.0
     _emit_region(vb, interior, m, sf, stroke_inset, c.paint.shadow_color)
-    var sminv = inverse(sm)
+    var sminv = sm.inverse()
     ref g = shape.outer
     for i in range(first, vb.count()):
         var at = i * _VERTEX_FLOATS
-        var l = mat_apply(sminv, Float64(vb.data[at]), Float64(vb.data[at + 1]))
+        var l = sminv._apply_xy(Float64(vb.data[at]), Float64(vb.data[at + 1]))
         var x = l[0]
         var y = l[1]
         if shape.kind == SIL_RECT:
@@ -1020,7 +1022,7 @@ def emit_blurred_shadow(
         var i = t if t < 3 else (0 if t == 3 else t - 2)
         var x = xs[i]
         var y = ys[i]
-        var p = mat_apply(m, x, y)
+        var p = m._apply_xy(x, y)
         if shape.kind == SIL_RECT:
             vb.push(
                 p[0],

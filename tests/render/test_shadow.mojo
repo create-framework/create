@@ -8,16 +8,10 @@ from std.testing import (
     assert_true,
 )
 
-from create.math.matrix import (
-    Matrix,
-    _apply as apply,
-    identity,
-    rotate,
-    scale,
-    translate,
-)
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
+from create.math.transform import Transform
 from create.geometry.bezier import Bezier
 from create.color.color import Color
 from create.render.style import Style
@@ -64,20 +58,22 @@ def _shadowed() -> Style:
     return s^
 
 
-def _device() -> Matrix[3, 3]:
+def _device() -> Transform:
     """A window base like the canvas builds: scale 2, y flipped."""
-    return translate(100.0, 100.0) @ scale(2.0, -2.0)
+    return Transform(translation=Vector(100.0, 100.0)) @ Transform(
+        scale_x=2.0, scale_y=-2.0
+    )
 
 
-def _moved(m: Matrix[3, 3], s: Matrix[3, 3]) -> Tuple[Float64, Float64]:
+def _moved(m: Transform, s: Transform) -> Tuple[Float64, Float64]:
     """Where the local origin lands under `s`, relative to under `m`."""
-    var a = apply(m, 0.0, 0.0)
-    var b = apply(s, 0.0, 0.0)
+    var a = m._apply_xy(0.0, 0.0)
+    var b = s._apply_xy(0.0, 0.0)
     return (b[0] - a[0], b[1] - a[1])
 
 
 def test_screen_fixed_offset_ignores_rotation() raises -> None:
-    var m = _device() @ rotate(PI / 2.0)
+    var m = _device() @ Transform(rotation=PI / 2.0)
     var c = rect_command(m, _shadowed(), 0.0, 0.0, 10.0, 10.0)
     # A rotated transform has no single pixel scale, so the length comes from
     # the frame's autoscale factor, as stroke thickness does.
@@ -88,7 +84,7 @@ def test_screen_fixed_offset_ignores_rotation() raises -> None:
 
 
 def test_follows_transform_offset_turns_with_the_shape() raises -> None:
-    var m = _device() @ rotate(PI / 2.0)
+    var m = _device() @ Transform(rotation=PI / 2.0)
     var s = _shadowed()
     s.shadow_follows_transform = True
     var c = rect_command(m, s, 0.0, 0.0, 10.0, 10.0)
@@ -100,27 +96,25 @@ def test_follows_transform_offset_turns_with_the_shape() raises -> None:
 
 def test_only_render_calls_that_paint_cast_a_shadow() raises -> None:
     var s = _shadowed()
-    assert_true(casts_outer_shadow(rect_command(identity[3](), s, 0, 0, 1, 1)))
+    assert_true(casts_outer_shadow(rect_command(Transform(), s, 0, 0, 1, 1)))
     assert_false(casts_outer_shadow(clear_command(Color.RED)))
     s.fill_enabled = False
     s.stroke_enabled = False
-    assert_false(casts_outer_shadow(rect_command(identity[3](), s, 0, 0, 1, 1)))
+    assert_false(casts_outer_shadow(rect_command(Transform(), s, 0, 0, 1, 1)))
     var off = _shadowed()
     off.shadow_enabled = False
-    assert_false(
-        casts_outer_shadow(rect_command(identity[3](), off, 0, 0, 1, 1))
-    )
+    assert_false(casts_outer_shadow(rect_command(Transform(), off, 0, 0, 1, 1)))
     var inset = _shadowed()
     inset.shadow_inset = True
     assert_false(
-        casts_outer_shadow(rect_command(identity[3](), inset, 0, 0, 1, 1))
+        casts_outer_shadow(rect_command(Transform(), inset, 0, 0, 1, 1))
     )
 
 
 def test_filled_shape_casts_one_filled_layer() raises -> None:
     var s = _shadowed()
     s.shadow_color = Color(0, 0, 0, 100)
-    var c = rect_command(identity[3](), s, 0.0, 0.0, 10.0, 6.0)
+    var c = rect_command(Transform(), s, 0.0, 0.0, 10.0, 6.0)
     var sh = shadow_command(c, 1.0)
     assert_true(sh.paint.fill_enabled)
     assert_equal(sh.paint.fill_color, Color(0, 0, 0, 100))
@@ -133,7 +127,7 @@ def test_filled_shape_casts_one_filled_layer() raises -> None:
 
 def test_stroke_only_shape_casts_its_ring() raises -> None:
     var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
-    var c = circle_command(identity[3](), s, 0.0, 0.0, 10.0)
+    var c = circle_command(Transform(), s, 0.0, 0.0, 10.0)
     var sh = shadow_command(c, 1.0)
     assert_false(sh.paint.fill_enabled)
     assert_true(sh.paint.stroke_enabled)
@@ -150,7 +144,7 @@ def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
     s.stroke_thickness = 3
     s.shadow_spread = 1.0
     var curve = Bezier((0.0, 0.0), (10.0, 20.0), (20.0, -20.0), (30.0, 0.0))
-    var c = bezier_command(identity[3](), s, curve)
+    var c = bezier_command(Transform(), s, curve)
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
     assert_false(sh.paint.fill_enabled)
@@ -163,7 +157,7 @@ def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
     for i in range(len(controls)):
         assert_equal(cast[i], controls[i])
     s.stroke_enabled = False
-    assert_false(casts_outer_shadow(bezier_command(identity[3](), s, curve)))
+    assert_false(casts_outer_shadow(bezier_command(Transform(), s, curve)))
 
 
 def test_a_bezier_chain_casts_every_curve() raises -> None:
@@ -178,7 +172,7 @@ def test_a_bezier_chain_casts_every_curve() raises -> None:
         (50.0, -20.0),
         (0.0, 0.0),
     ]
-    var c = bezier_chain_command(identity[3](), s, chain.copy())
+    var c = bezier_chain_command(Transform(), s, chain.copy())
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
     ref cast = sh.payload[CurvesPayload].points
@@ -191,20 +185,20 @@ def test_spread_grows_each_kind() raises -> None:
     var s = _shadowed()
     s.stroke_enabled = False
     s.shadow_spread = 2.0
-    var r = shadow_command(rect_command(identity[3](), s, 0, 0, 10, 6), 1.0)
+    var r = shadow_command(rect_command(Transform(), s, 0, 0, 10, 6), 1.0)
     assert_equal(r.payload[RectPayload].w, 14.0)
     assert_equal(r.payload[RectPayload].h, 10.0)
     assert_equal(r.payload[RectPayload].corner_radius, 2.0)
-    var c = shadow_command(circle_command(identity[3](), s, 0, 0, 5), 1.0)
+    var c = shadow_command(circle_command(Transform(), s, 0, 0, 5), 1.0)
     assert_equal(c.payload[CirclePayload].r, 7.0)
-    var l = shadow_command(line_command(identity[3](), s, 0, 0, 5, 0), 1.0)
+    var l = shadow_command(line_command(Transform(), s, 0, 0, 5, 0), 1.0)
     assert_equal(l.paint.stroke_thickness, 5)
 
 
 def test_negative_spread_never_inverts_a_shape() raises -> None:
     var s = _shadowed()
     s.shadow_spread = -20.0
-    var r = shadow_command(rect_command(identity[3](), s, 0, 0, 10, 6), 1.0)
+    var r = shadow_command(rect_command(Transform(), s, 0, 0, 10, 6), 1.0)
     assert_equal(r.payload[RectPayload].w, 0.0)
     assert_equal(r.payload[RectPayload].h, 0.0)
 
@@ -214,7 +208,7 @@ def test_triangle_grows_every_edge_by_the_spread() raises -> None:
     s.stroke_enabled = False
     s.shadow_spread = 1.0
     # Right isosceles triangle, legs along the axes.
-    var c = triangle_command(identity[3](), s, 0, 0, 10, 0, 0, 10)
+    var c = triangle_command(Transform(), s, 0, 0, 10, 0, 0, 10)
     var sh = shadow_command(c, 1.0)
     # The right-angle vertex moves out one unit along both axes.
     ref triangle = sh.payload[TrianglePayload]
@@ -229,7 +223,7 @@ def test_triangle_silhouette_is_the_shape_its_stroke_is_inset_in() raises -> (
     var s = _shadowed()
     s.stroke_thickness = 2
     s.shadow_spread = 0.0
-    var c = triangle_command(identity[3](), s, 0, 0, 10, 0, 0, 10)
+    var c = triangle_command(Transform(), s, 0, 0, 10, 0, 0, 10)
     var sh = shadow_command(c, 1.0)
     # The stroke is an inset ring, so its outer edge is the triangle's.
     for i in range(6):
@@ -244,7 +238,7 @@ def test_a_sector_casts_its_grown_silhouette() raises -> None:
     # rides along for `sector_quads` to grow it exactly.
     var s = _shadowed()
     s.shadow_spread = 2.0
-    var c = sector_command(identity[3](), s, 0.0, 0.0, 10.0, 0.5, -4.0)
+    var c = sector_command(Transform(), s, 0.0, 0.0, 10.0, 0.5, -4.0)
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
     assert_true(sh.paint.fill_enabled)
@@ -262,7 +256,7 @@ def test_a_sector_casts_its_grown_silhouette() raises -> None:
 def test_an_stroke_only_sector_casts_its_ring() raises -> None:
     var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
     s.shadow_spread = 1.0
-    var c = sector_command(identity[3](), s, 0.0, 0.0, 10.0, 0.0, 1.0)
+    var c = sector_command(Transform(), s, 0.0, 0.0, 10.0, 0.0, 1.0)
     var sh = shadow_command(c, 1.0)
     assert_false(sh.paint.fill_enabled)
     assert_equal(sh.paint.stroke_color, s.shadow_color)
@@ -270,14 +264,14 @@ def test_an_stroke_only_sector_casts_its_ring() raises -> None:
     assert_equal(sh.payload[SectorPayload].grow, 1.0)
     s.stroke_enabled = False
     assert_false(
-        casts_outer_shadow(sector_command(identity[3](), s, 0, 0, 10, 0, 1))
+        casts_outer_shadow(sector_command(Transform(), s, 0, 0, 10, 0, 1))
     )
 
 
 def test_a_sector_casts_no_inset_shadow() raises -> None:
     var s = _shadowed()
     s.shadow_inset = True
-    var c = sector_command(identity[3](), s, 0.0, 0.0, 10.0, 0.0, 1.0)
+    var c = sector_command(Transform(), s, 0.0, 0.0, 10.0, 0.0, 1.0)
     assert_false(casts_inset_shadow(c))
     assert_false(casts_outer_shadow(c))
 
@@ -291,7 +285,7 @@ def test_a_polygon_casts_its_grown_silhouette() raises -> None:
     # rides along for `polygon_quads` to grow it exactly.
     var s = _shadowed()
     s.shadow_spread = 2.0
-    var c = polygon_command(identity[3](), s, _square())
+    var c = polygon_command(Transform(), s, _square())
     assert_true(casts_outer_shadow(c))
     var sh = shadow_command(c, 1.0)
     assert_true(sh.paint.fill_enabled)
@@ -307,29 +301,27 @@ def test_a_polygon_casts_its_grown_silhouette() raises -> None:
 def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
     var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
     s.shadow_spread = 1.0
-    var c = polygon_command(identity[3](), s, _square())
+    var c = polygon_command(Transform(), s, _square())
     var sh = shadow_command(c, 1.0)
     assert_false(sh.paint.fill_enabled)
     assert_equal(sh.paint.stroke_color, s.shadow_color)
     assert_equal(sh.paint.stroke_thickness, 5)
     assert_equal(sh.payload[PolygonPayload].grow, 1.0)
     s.stroke_enabled = False
-    assert_false(
-        casts_outer_shadow(polygon_command(identity[3](), s, _square()))
-    )
+    assert_false(casts_outer_shadow(polygon_command(Transform(), s, _square())))
 
 
 def test_a_polygon_casts_no_inset_shadow() raises -> None:
     var s = _shadowed()
     s.shadow_inset = True
-    var c = polygon_command(identity[3](), s, _square())
+    var c = polygon_command(Transform(), s, _square())
     assert_false(casts_inset_shadow(c))
     assert_false(casts_outer_shadow(c))
 
 
 def test_text_shadow_recolours_the_glyphs() raises -> None:
     var s = _shadowed()
-    var c = text_command(identity[3](), s, 0.0, 0.0, "hi")
+    var c = text_command(Transform(), s, 0.0, 0.0, "hi")
     var sh = shadow_command(c, 1.0)
     assert_equal(sh.payload[TextPayload].style[].text_color, s.shadow_color)
     assert_equal(sh.payload[TextPayload].text, "hi")
@@ -340,7 +332,7 @@ def test_text_shadow_recolours_the_glyphs() raises -> None:
 
 def test_image_shadow_is_a_silhouette() raises -> None:
     var s = _shadowed()
-    var c = image_command(identity[3](), s, 0, 0, 4, 4, 7, 4, 4)
+    var c = image_command(Transform(), s, 0, 0, 4, 4, 7, 4, 4)
     assert_false(c.payload[ImagePayload].silhouette)
     var sh = shadow_command(c, 1.0)
     assert_true(sh.payload[ImagePayload].silhouette)
@@ -426,7 +418,7 @@ def _blurred_line(
         stroke_cap=cap,
         shadow_blur=blur,
     )
-    var sh = shadow_command(line_command(identity[3](), s, 0, 0, 20, 0), 1.0)
+    var sh = shadow_command(line_command(Transform(), s, 0, 0, 20, 0), 1.0)
     return BlurredSilhouette(sh, thickness)
 
 
@@ -505,9 +497,9 @@ def test_a_square_line_shadow_reaches_the_corner() raises -> None:
 
 def test_a_butt_line_of_no_length_casts_nothing() raises -> None:
     var s = Style(stroke=Color.BLACK, stroke_thickness=6, shadow_blur=4)
-    assert_false(casts_outer_shadow(line_command(identity[3](), s, 5, 5, 5, 5)))
+    assert_false(casts_outer_shadow(line_command(Transform(), s, 5, 5, 5, 5)))
     s.stroke_cap = StrokeCap.ROUND
-    assert_true(casts_outer_shadow(line_command(identity[3](), s, 5, 5, 5, 5)))
+    assert_true(casts_outer_shadow(line_command(Transform(), s, 5, 5, 5, 5)))
 
 
 def _mask_mass(cap: StrokeCap) -> Int:
@@ -515,11 +507,11 @@ def _mask_mass(cap: StrokeCap) -> Int:
         stroke=Color.BLACK, stroke_thickness=8, stroke_cap=cap, shadow_blur=4
     )
     var c = bezier_command(
-        identity[3](),
+        Transform(),
         s,
         Bezier(Point(10, 10), Point(20, 30), Point(40, 30), Point(50, 10)),
     )
-    var mask = shape_shadow_mask(c, identity[3](), 1.0, 0)
+    var mask = shape_shadow_mask(c, Transform(), 1.0, 0)
     var total = 0
     for a in mask.mask.pixels:
         total += Int(a)

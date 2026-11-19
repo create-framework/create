@@ -6,9 +6,10 @@ from ._paint import Paint, TextStyle
 from ._text import NO_WRAP
 from .style import Style
 from create.geometry.bezier import Bezier
-from create.math.matrix import Matrix, identity
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
+from create.math.transform import Transform
 from std.memory import ArcPointer
 from std.utils import Variant
 
@@ -207,7 +208,7 @@ struct RenderCommand(Copyable, Movable):
     """
 
     var payload: RenderPayload
-    var transform: Matrix[3, 3]
+    var transform: Transform
     var paint: Paint
     """The style's fill, stroke, shadow and blend mode, resolved at record
     time with its tint and opacity folded in. A later `canvas.fill()` cannot
@@ -224,7 +225,7 @@ struct RenderCommand(Copyable, Movable):
     def __init__(
         out self,
         var payload: RenderPayload,
-        transform: Matrix[3, 3],
+        transform: Transform,
         style: Style,
     ):
         self.payload = payload^
@@ -378,11 +379,11 @@ def clear_command(color: Color) -> RenderCommand:
     var s = Style()
     s.fill_color = color
     s.fill_enabled = True
-    return RenderCommand(ClearPayload(0.0, 0.0), identity[3](), s)
+    return RenderCommand(ClearPayload(0.0, 0.0), Transform(), s)
 
 
 def clear_command(
-    gradient: Gradient, screen: Matrix[3, 3], w: Float64, h: Float64
+    gradient: Gradient, screen: Transform, w: Float64, h: Float64
 ) -> RenderCommand:
     """Paint the whole framebuffer with `gradient`, spread over the `w` x `h`
     screen-space area centred on the origin — the design area — which
@@ -403,7 +404,7 @@ def _clear_is_opaque(c: RenderCommand) -> Bool:
 
 
 def rect_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     x: Float64,
     y: Float64,
@@ -419,7 +420,7 @@ def rect_command(
 
 
 def circle_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     cx: Float64,
     cy: Float64,
@@ -429,7 +430,7 @@ def circle_command(
 
 
 def sector_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     cx: Float64,
     cy: Float64,
@@ -443,7 +444,7 @@ def sector_command(
 
 
 def line_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     x0: Float64,
     y0: Float64,
@@ -456,7 +457,7 @@ def line_command(
 
 
 def triangle_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     x1: Float64,
     y1: Float64,
@@ -479,7 +480,7 @@ def triangle_command(
 
 
 def bezier_command(
-    transform: Matrix[3, 3], style: Style, curve: Bezier
+    transform: Transform, style: Style, curve: Bezier
 ) -> RenderCommand:
     return bezier_chain_command(
         transform,
@@ -489,7 +490,7 @@ def bezier_command(
 
 
 def bezier_chain_command(
-    transform: Matrix[3, 3], style: Style, var points: List[Point]
+    transform: Transform, style: Style, var points: List[Point]
 ) -> RenderCommand:
     """A stroke along the joined Béziers whose control points are `points`,
     laid out as `RenderCommand.points` describes: 3n + 1 of them."""
@@ -497,14 +498,14 @@ def bezier_chain_command(
 
 
 def polygon_command(
-    transform: Matrix[3, 3], style: Style, var vertices: List[Point]
+    transform: Transform, style: Style, var vertices: List[Point]
 ) -> RenderCommand:
     """A polygon through `vertices`, in order, closed back to the first."""
     return RenderCommand(PolygonPayload(vertices^, 0.0, None), transform, style)
 
 
 def rounded_sector_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     var vertices: List[Point],
     cx: Float64,
@@ -518,7 +519,7 @@ def rounded_sector_command(
 
 
 def framed_polygon_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     var vertices: List[Point],
     cx: Float64,
@@ -538,7 +539,7 @@ def framed_polygon_command(
 
 
 def image_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     cx: Float64,
     cy: Float64,
@@ -571,7 +572,7 @@ def image_command(
 
 
 def text_command(
-    transform: Matrix[3, 3],
+    transform: Transform,
     style: Style,
     x: Float64,
     y: Float64,
@@ -603,4 +604,4 @@ def letterbox_command(
     var s = Style()
     s.fill_color = color
     s.fill_enabled = True
-    return RenderCommand(LetterboxPayload(cx0, cy0, cx1, cy1), identity[3](), s)
+    return RenderCommand(LetterboxPayload(cx0, cy0, cx1, cy1), Transform(), s)

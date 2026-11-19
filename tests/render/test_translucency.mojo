@@ -74,13 +74,13 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
     elif kind == 1:
         canvas.rectangle((0, 0), 40, 40, corner_radius=8)
     elif kind == 2:
-        with canvas.transform(rotate(0.4)):
+        with canvas.transform(Transform(rotation=0.4)):
             canvas.rectangle((0, 0), 40, 40)
     elif kind == 3:
-        with canvas.transform(rotate(0.4)):
+        with canvas.transform(Transform(rotation=0.4)):
             canvas.rectangle((0, 0), 40, 40, corner_radius=8)
     elif kind == 4:
-        with canvas.transform(scale(2.0, 1.0)):
+        with canvas.transform(Transform(scale_x=2.0, scale_y=1.0)):
             canvas.rectangle((0, 0), 30, 40, corner_radius=8)
     elif kind == 5:
         canvas.fill(Gradient.linear(Color.RED, Color.RED))
@@ -88,7 +88,7 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
     elif kind == 6:
         canvas.circle((0, 0), 20)
     elif kind == 7:
-        with canvas.transform(scale(2.0, 1.0)):
+        with canvas.transform(Transform(scale_x=2.0, scale_y=1.0)):
             canvas.circle((0, 0), 20)
     elif kind == 8:
         canvas.triangle((-20, -20), (20, -20), (0, 20))
@@ -105,8 +105,8 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.stroke(Color.RED, 10)
         canvas.triangle((-30, -25), (30, -25), (0, 25), corner_radius=3)
     elif kind == 13:
-        var shear = identity[3]()
-        shear[0, 1] = 0.6
+        var shear = Transform()
+        shear._xy = 0.6
         with canvas.transform(shear):
             canvas.triangle((-20, -20), (20, -20), (0, 20))
     elif kind == 14:
@@ -125,12 +125,12 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
     elif kind == 19:
         canvas.stroke(Color.RED, 14)
         canvas.stroke_cap(StrokeCap.ROUND)
-        with canvas.transform(rotate(0.3)):
+        with canvas.transform(Transform(rotation=0.3)):
             canvas.line((-50, 0), (50, 0))
     elif kind == 20:
         canvas.stroke(Color.RED, 14)
         canvas.stroke_cap(StrokeCap.SQUARE)
-        with canvas.transform(rotate(0.3)):
+        with canvas.transform(Transform(rotation=0.3)):
             canvas.line((-50, 0), (50, 0))
     elif kind == 21:
         canvas.stroke(Color.RED, 14)
@@ -159,7 +159,7 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.circle((0, 0), 20)
     elif kind == 28:
         canvas.stroke_alignment(StrokeAlign.OUTSIDE)
-        with canvas.transform(scale(2.0, 1.0)):
+        with canvas.transform(Transform(scale_x=2.0, scale_y=1.0)):
             canvas.circle((0, 0), 20)
     elif kind == 29:
         canvas.stroke_alignment(StrokeAlign.OUTSIDE)
@@ -172,7 +172,7 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.draw(Polygon.star((0, 0), 30, 13, 5, corner_radius=4))
     elif kind == 32:
         canvas.stroke_alignment(StrokeAlign.OUTSIDE)
-        with canvas.transform(rotate(0.4)):
+        with canvas.transform(Transform(rotation=0.4)):
             canvas.rectangle((0, 0), 40, 40, corner_radius=8)
     elif kind == 33:
         canvas.stroke_alignment(StrokeAlign.CENTER)
@@ -188,7 +188,7 @@ def _draw(mut canvas: Canvas, kind: Int) raises:
         canvas.ellipse((0, 0), 80, 40)
     elif kind == 37:
         canvas.stroke_alignment(StrokeAlign.OUTSIDE)
-        with canvas.transform(rotate(0.5)):
+        with canvas.transform(Transform(rotation=0.5)):
             canvas.ellipse((0, 0), 70, 36)
     elif kind == 38:
         canvas.capsule((-35, -10), (35, 10), 16)
@@ -290,7 +290,7 @@ struct WideRect(Program):
         canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         # Stretched, so the general path; 20 units wide is 40 pixels.
-        with canvas.transform(scale(2.0, 1.0)):
+        with canvas.transform(Transform(scale_x=2.0, scale_y=1.0)):
             canvas.rectangle((0, 0), 20, 20, corner_radius=4)
 
 

@@ -10,7 +10,7 @@ inset shadows, pixel reads and captures all see the same geometry, and no
 rasteriser knows about alignment.
 """
 
-from create.math.matrix import Matrix
+from create.math.transform import Transform
 
 from ._command import (
     CirclePayload,
@@ -25,7 +25,7 @@ from ._shadow import local_stroke_thickness
 from .stroke_align import StrokeAlign
 
 
-def stroke_offset(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Float64:
+def stroke_offset(c: RenderCommand, m: Transform, scale: Float64) -> Float64:
     """How far `c`'s stroke moves out past its edge, in local units: 0 when
     nothing is to align — `INSIDE`, no visible stroke, or a kind without an
     inside. A fraction of the stroke as the rasterisers draw it under the

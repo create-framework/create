@@ -11,23 +11,15 @@ on which path an image takes and where it lands.
 
 from std.math import ceil, floor, max, min
 
-from create.math.matrix import Matrix, _apply as mat_apply, inverse
+from create.math.transform import Transform
 from create.math.point import Point
 
 
-def upright(m: Matrix[3, 3]) -> Bool:
+def upright(m: Transform) -> Bool:
     """True when `m` maps an image onto an upright, unmirrored device rect:
     an axis-aligned scale (y flipped, as device rows run down) plus a
     translation. The scale may differ between the axes."""
-    return (
-        m[0, 1] == 0.0
-        and m[1, 0] == 0.0
-        and m[2, 0] == 0.0
-        and m[2, 1] == 0.0
-        and m[2, 2] == 1.0
-        and m[0, 0] > 0.0
-        and m[1, 1] < 0.0
-    )
+    return m._xy == 0.0 and m._yx == 0.0 and m._xx > 0.0 and m._yy < 0.0
 
 
 @fieldwise_init
@@ -41,19 +33,19 @@ struct UprightRect(Copyable, ImplicitlyCopyable, Movable):
 
 
 def upright_rect(
-    m: Matrix[3, 3], cx: Float64, cy: Float64, w: Float64, h: Float64
+    m: Transform, cx: Float64, cy: Float64, w: Float64, h: Float64
 ) -> UprightRect:
     """The device rect of the image centred at `(cx, cy)`, `w` by `h` local
     units, under an `upright` `m`: at least a pixel each way, centred on the
     mapped anchor truncated to a pixel."""
-    var p = mat_apply(m, cx, cy)
-    var dw = max(Int(w * m[0, 0] + 0.5), 1)
-    var dh = max(Int(h * -m[1, 1] + 0.5), 1)
+    var p = m._apply_xy(cx, cy)
+    var dw = max(Int(w * m._xx + 0.5), 1)
+    var dh = max(Int(h * -m._yy + 0.5), 1)
     return UprightRect(Int(p[0]) - dw // 2, Int(p[1]) - dh // 2, dw, dh)
 
 
 def image_corners(
-    m: Matrix[3, 3], cx: Float64, cy: Float64, w: Float64, h: Float64
+    m: Transform, cx: Float64, cy: Float64, w: Float64, h: Float64
 ) -> List[Point]:
     """The device corners of the image centred at `(cx, cy)`, `w` by `h`
     local units: top-left, top-right, bottom-right, bottom-left of the image
@@ -64,7 +56,7 @@ def image_corners(
     var bottom = cy - h / 2.0
     var out = List[Point](capacity=4)
     for corner in [(x0, top), (x1, top), (x1, bottom), (x0, bottom)]:
-        var p = mat_apply(m, corner[0], corner[1])
+        var p = m._apply_xy(corner[0], corner[1])
         out.append(Point(p[0], p[1]))
     return out^
 
@@ -115,7 +107,7 @@ struct ImageMapping(Copyable, ImplicitlyCopyable, Movable):
 
 
 def image_mapping(
-    m: Matrix[3, 3],
+    m: Transform,
     cx: Float64,
     cy: Float64,
     w: Float64,
@@ -126,7 +118,7 @@ def image_mapping(
     """The `source_width` x `source_height` image centred at `(cx, cy)`,
     `w` by `h` local units, mapped onto the device by `m`. A zero extent or
     a singular `m` covers nothing."""
-    if w <= 0.0 or h <= 0.0 or m[0, 0] * m[1, 1] - m[0, 1] * m[1, 0] == 0.0:
+    if w <= 0.0 or h <= 0.0 or m._xx * m._yy - m._xy * m._yx == 0.0:
         return ImageMapping.empty()
     var corners = image_corners(m, cx, cy, w, h)
     var lo = corners[0]
@@ -136,7 +128,7 @@ def image_mapping(
         hi = Point(max(hi.x, p.x), max(hi.y, p.y))
     # Device to local, then local to texels: `u` runs right from the left
     # edge, `v` down from the top one.
-    var i = inverse(m)
+    var i = m.inverse()
     var su = Float64(source_width) / w
     var sv = Float64(source_height) / h
     return ImageMapping(
@@ -144,46 +136,46 @@ def image_mapping(
         Int(floor(lo.y)),
         Int(ceil(hi.x)),
         Int(ceil(hi.y)),
-        (i[0, 2] - cx + w / 2.0) * su,
-        i[0, 0] * su,
-        i[0, 1] * su,
-        (cy + h / 2.0 - i[1, 2]) * sv,
-        -i[1, 0] * sv,
-        -i[1, 1] * sv,
+        (i._x0 - cx + w / 2.0) * su,
+        i._xx * su,
+        i._xy * su,
+        (cy + h / 2.0 - i._y0) * sv,
+        -i._yx * sv,
+        -i._yy * sv,
     )
 
 
 def mask_mapping(
-    a: Matrix[3, 3], x: Int, y: Int, width: Int, height: Int
+    a: Transform, x: Int, y: Int, width: Int, height: Int
 ) -> ImageMapping:
     """A `width` x `height` mask placed at `(x, y)` in a space that `a` maps
     onto the device, texel `(tx, ty)` covering `[x + tx, x + tx + 1)` by
     `[y + ty, y + ty + 1)` there, as a laid-out glyph is. The bounds reach a
     pixel past the mapped corners, for a bilinear sample's spill. A singular
     `a` covers nothing."""
-    if a[0, 0] * a[1, 1] - a[0, 1] * a[1, 0] == 0.0:
+    if a._xx * a._yy - a._xy * a._yx == 0.0:
         return ImageMapping.empty()
     var x0 = Float64(x)
     var y0 = Float64(y)
     var x1 = Float64(x + width)
     var y1 = Float64(y + height)
-    var p = mat_apply(a, x0, y0)
+    var p = a._apply_xy(x0, y0)
     var lo = Point(p[0], p[1])
     var hi = lo
     for corner in [(x1, y0), (x1, y1), (x0, y1)]:
-        var q = mat_apply(a, corner[0], corner[1])
+        var q = a._apply_xy(corner[0], corner[1])
         lo = Point(min(lo.x, q[0]), min(lo.y, q[1]))
         hi = Point(max(hi.x, q[0]), max(hi.y, q[1]))
-    var i = inverse(a)
+    var i = a.inverse()
     return ImageMapping(
         Int(floor(lo.x)) - 1,
         Int(floor(lo.y)) - 1,
         Int(ceil(hi.x)) + 1,
         Int(ceil(hi.y)) + 1,
-        i[0, 2] - x0,
-        i[0, 0],
-        i[0, 1],
-        i[1, 2] - y0,
-        i[1, 0],
-        i[1, 1],
+        i._x0 - x0,
+        i._xx,
+        i._xy,
+        i._y0 - y0,
+        i._yx,
+        i._yy,
     )

@@ -31,7 +31,7 @@ local units.
 from std.math import atan2, cos, max, min, sin, sqrt
 from create.math import TAU
 
-from create.math.matrix import Matrix, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 
 from ._command import RenderCommand, TrianglePayload
@@ -42,9 +42,7 @@ from ._tessellate import _arc_segments
 from ._transform import stroke_thickness_px, pixel_scale
 
 
-def triangle_pieces(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64
-) -> Pieces:
+def triangle_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """`c`'s fill and stroke (`c` a `TrianglePayload`) as device pieces:
     the fill one convex polygon (none when the stroke leaves no room for
     it), the stroke a ring of quads."""
@@ -58,7 +56,7 @@ def triangle_pieces(
 
 def _tile_triangle(
     c: RenderCommand,
-    m: Matrix[3, 3],
+    m: Transform,
     scale: Float64,
     mut fill: List[Point],
     mut ring: List[Point],
@@ -102,7 +100,7 @@ def _tile_triangle(
         if t > 0.0:
             var path = List[Point](capacity=4)
             for i in range(4):
-                path.append(mat_apply(m, xs[i % 3], ys[i % 3]))
+                path.append(m._apply_xy(xs[i % 3], ys[i % 3]))
             ring = stroke_quads(path, t * sf)
         return
 
@@ -140,8 +138,8 @@ def _tile_triangle(
     var k = max((inradius - t) / inradius, 0.0)
     var sharp_inner = Array[Point, 3](fill=Point(0.0, 0.0))
     for i in range(3):
-        sharp_inner[i] = mat_apply(
-            m, ix + (xs[i] - ix) * k, iy + (ys[i] - iy) * k
+        sharp_inner[i] = m._apply_xy(
+            ix + (xs[i] - ix) * k, iy + (ys[i] - iy) * k
         )
 
     if r > 0.0:
@@ -164,11 +162,11 @@ def _tile_triangle(
             var q = List[Point](capacity=n + 1)
             for step in range(n + 1):
                 var a = a0 + (a1 - a0) * Float64(step) / Float64(n)
-                o.append(mat_apply(m, kx + r * cos(a), ky + r * sin(a)))
+                o.append(m._apply_xy(kx + r * cos(a), ky + r * sin(a)))
                 if t > 0.0 and t < r:
                     q.append(
-                        mat_apply(
-                            m, kx + (r - t) * cos(a), ky + (r - t) * sin(a)
+                        m._apply_xy(
+                            kx + (r - t) * cos(a), ky + (r - t) * sin(a)
                         )
                     )
             outer.append(o^)
@@ -224,12 +222,12 @@ def _tile_triangle(
 
     if t == 0.0:
         for i in range(3):
-            fill.append(mat_apply(m, xs[i], ys[i]))
+            fill.append(m._apply_xy(xs[i], ys[i]))
         return
     # Sharp: the outer edge is the triangle's own corners.
     var corners = Array[Point, 3](fill=Point(0.0, 0.0))
     for i in range(3):
-        corners[i] = mat_apply(m, xs[i], ys[i])
+        corners[i] = m._apply_xy(xs[i], ys[i])
     for i in range(3):
         var j = (i + 1) % 3
         _quad(ring, corners[i], corners[j], sharp_inner[j], sharp_inner[i])

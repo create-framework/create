@@ -76,26 +76,21 @@ def _report(label: String, t0: Int, t1: Int, reps: Int = _REPS):
     print(label + _round(per) + " ms")
 
 
-def _base_matrix() -> Matrix[3, 3]:
+def _base_matrix() -> Transform:
     """The base mapping: y-up world space to top-down device pixels."""
-    var m = identity[3]()
-    m[0, 0] = 1.0
-    m[1, 1] = -1.0
-    m[0, 2] = Float64(_W) / 2.0
-    m[1, 2] = Float64(_H) / 2.0
-    return m^
+    return Transform(
+        translation=Vector(Float64(_W) / 2.0, Float64(_H) / 2.0),
+        scale_x=1.0,
+        scale_y=-1.0,
+    )
 
 
-def _rotated_matrix() -> Matrix[3, 3]:
+def _rotated_matrix() -> Transform:
     """A 45-degree rotation, so shapes fall onto the non-uniform replay path."""
-    var m = identity[3]()
-    m[0, 0] = 0.7071
-    m[0, 1] = -0.7071
-    m[1, 0] = 0.7071
-    m[1, 1] = 0.7071
-    m[0, 2] = Float64(_W) / 2.0
-    m[1, 2] = Float64(_H) / 2.0
-    return m^
+    return Transform(
+        translation=Vector(Float64(_W) / 2.0, Float64(_H) / 2.0),
+        rotation=PI / 4.0,
+    )
 
 
 def _fill_bench():
@@ -138,9 +133,7 @@ def _shape_style(alpha: Bool) -> Style:
     return st^
 
 
-def _shapes_bench(
-    m: Matrix[3, 3], mut be: Backend, mut mem: MemorySurface
-) raises:
+def _shapes_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
     for kind in range(3):
         for alpha in range(2):
             var st = _shape_style(alpha == 1)
@@ -183,7 +176,7 @@ def _shapes_bench(
 
 
 def _rotated_bench(
-    rot: Matrix[3, 3], mut be: Backend, mut mem: MemorySurface
+    rot: Transform, mut be: Backend, mut mem: MemorySurface
 ) raises:
     var st = _shape_style(True)
     var t0 = perf_counter_ns()
@@ -255,9 +248,7 @@ def _line_bench():
     _report("2000 thick alpha lines        ", t0, t1)
 
 
-def _text_bench(
-    m: Matrix[3, 3], mut be: Backend, mut mem: MemorySurface
-) raises:
+def _text_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
     var st = _shape_style(False)
     var t0 = perf_counter_ns()
     for _ in range(_REPS):
@@ -278,7 +269,7 @@ def _text_bench(
 
 
 def _frame_bench(
-    m: Matrix[3, 3],
+    m: Transform,
     mut be: Backend,
     mut mem: MemorySurface,
     label: String = "gpu frame (record+present)",
@@ -318,7 +309,7 @@ def _frame_bench(
 
 
 def _antialiasing_bench(
-    m: Matrix[3, 3], mut be: Backend, mut mem: MemorySurface
+    m: Transform, mut be: Backend, mut mem: MemorySurface
 ) raises:
     """The `gpu`-shaped frame and a few large stroked circles at every
     antialiasing level: many small shapes are all edge, large ones mostly

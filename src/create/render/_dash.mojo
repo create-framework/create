@@ -28,7 +28,7 @@ from create.geometry._fillet import (
     triangle_corner_radius,
 )
 from create.math import TAU
-from create.math.matrix import Matrix, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
 
@@ -69,7 +69,7 @@ piece per pixel or less."""
 
 
 def dashed_stroke(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64
+    c: RenderCommand, m: Transform, scale: Float64
 ) -> StrokePieces:
     """The dashes of `c`'s stroke (`c.paint._stroke_dashed()`) mapped by the
     device matrix `m`, as convex device pieces."""
@@ -214,8 +214,8 @@ def _add_dash(
         out.caps.append(polygon.copy())
 
 
-def _mapped(m: Matrix[3, 3], p: Point) -> Point:
-    var q = mat_apply(m, p.x, p.y)
+def _mapped(m: Transform, p: Point) -> Point:
+    var q = m._apply_xy(p.x, p.y)
     return Point(q[0], q[1])
 
 

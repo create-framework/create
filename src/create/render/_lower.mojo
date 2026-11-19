@@ -17,7 +17,7 @@ its fill the pieces the solid stroke would leave.
 
 from create.geometry._fillet import rect_corner_radius, rounded_vertices
 from create.math import TAU
-from create.math.matrix import Matrix, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
 
@@ -74,7 +74,7 @@ def is_plain_triangle(c: RenderCommand) -> Bool:
     )
 
 
-def shape_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
+def shape_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """`c` (`is_lowered`) mapped by the device matrix `m` and cut into
     convex pieces, keeping only the parts its paint shows. `scale` is the
     fallback pixel scale for a transform that is not uniform."""
@@ -109,7 +109,7 @@ def shape_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
     return out^
 
 
-def _dashed_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
+def _dashed_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """`c`'s pieces with its stroke dashed: the fill the solid stroke would
     leave, and the dashes along that stroke's middle."""
     var out: Pieces
@@ -131,7 +131,7 @@ def _dashed_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
 
 
 def _eroded_outline(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64
+    c: RenderCommand, m: Transform, scale: Float64
 ) -> List[Point]:
     """The rectangle or circle `c` eroded by its stroke, mapped by `m`: the
     convex fill inside the stroke's inner edge, where each replay's own
@@ -173,20 +173,20 @@ def _eroded_outline(
             )
     var out = List[Point](capacity=len(local))
     for p in local:
-        var q = mat_apply(m, p.x, p.y)
+        var q = m._apply_xy(p.x, p.y)
         out.append(Point(q[0], q[1]))
     return out^
 
 
-def _line_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
+def _line_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """A line's stroke: `stroke_segment`'s one quad, or `stroke_pieces`
     for a round cap or a line of no length. A line has no interior."""
     var out = Pieces()
     if not c.paint._stroke_visible():
         return out^
     ref line = c.payload[LinePayload]
-    var p0 = mat_apply(m, line.start.x, line.start.y)
-    var p1 = mat_apply(m, line.end.x, line.end.y)
+    var p0 = m._apply_xy(line.start.x, line.start.y)
+    var p1 = m._apply_xy(line.end.x, line.end.y)
     var a = Point(p0[0], p0[1])
     var b = Point(p1[0], p1[1])
     var width = Float64(stroke_thickness_px(c.paint, m, scale))
@@ -203,7 +203,7 @@ def _line_pieces(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
 
 
 def shape_shadow_mask(
-    c: RenderCommand, m: Matrix[3, 3], scale: Float64, blur: Int
+    c: RenderCommand, m: Transform, scale: Float64, blur: Int
 ) -> PlacedMask:
     """The shadow command `c` (`is_lowered`, one colour) mapped by `m`,
     lowered, rasterised into an alpha mask and blurred by `blur` device

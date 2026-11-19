@@ -24,7 +24,7 @@ from std.math import asin, atan, atan2, cos, max, min, sin, sqrt
 from create.math import PI, TAU
 
 from create.geometry._shared import _normalized_sweep
-from create.math.matrix import Matrix, _apply as mat_apply
+from create.math.transform import Transform
 from create.math.point import Point
 
 from ._command import RenderCommand, SectorPayload
@@ -33,7 +33,7 @@ from ._tessellate import _arc_segments
 from ._transform import stroke_thickness_px, pixel_scale
 
 
-def sector_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
+def sector_quads(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """`c` (a `SectorPayload`) mapped by `m` and tiled into fill and stroke
     quads.
 
@@ -100,10 +100,10 @@ def sector_quads(c: RenderCommand, m: Matrix[3, 3], scale: Float64) -> Pieces:
             cc = min(max(hole[0], a), d)
         var dx = cos(start + alpha)
         var dy = sin(start + alpha)
-        tip.append(Point(mat_apply(m, cx + dx * a, cy + dy * a)))
-        inner.append(Point(mat_apply(m, cx + dx * cc, cy + dy * cc)))
-        middle.append(Point(mat_apply(m, cx + dx * d, cy + dy * d)))
-        outer.append(Point(mat_apply(m, cx + dx * b, cy + dy * b)))
+        tip.append(Point(m._apply_xy(cx + dx * a, cy + dy * a)))
+        inner.append(Point(m._apply_xy(cx + dx * cc, cy + dy * cc)))
+        middle.append(Point(m._apply_xy(cx + dx * d, cy + dy * d)))
+        outer.append(Point(m._apply_xy(cx + dx * b, cy + dy * b)))
         lengths.append((cc - a, d - cc, b - d))
 
     for i in range(len(inner) - 1):

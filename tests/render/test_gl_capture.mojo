@@ -160,7 +160,9 @@ struct RecordFrames[path: StaticString, transparent: Bool = False](Program):
         return Self(0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        with canvas.transform(translate(Float64(context.frame_count()), 0.0)):
+        with canvas.transform(
+            Transform(translation=Vector(Float64(context.frame_count()), 0.0))
+        ):
             _scene(canvas)
 
 

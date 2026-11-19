@@ -36,7 +36,7 @@ translucent one is a full-drawable quad in the batch, which blends, and an
 from std.collections import Dict, Optional
 from std.memory import unsafe_memcpy
 
-from create.math.matrix import _apply as mat_apply
+from create.math.transform import Transform
 
 from ._command import (
     CirclePayload,
@@ -1129,7 +1129,7 @@ struct GLRenderer(Movable):
         var upright = text_upright(m)
         ref anchor = c.payload[TextPayload].position
         var glyphs = glyph_transform(m, anchor.x, anchor.y, sf)
-        var p = mat_apply(m, anchor.x, anchor.y)
+        var p = m._apply_xy(anchor.x, anchor.y)
         if not upright:
             p = (0.0, 0.0)
         var placed = text.layout(
