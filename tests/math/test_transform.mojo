@@ -9,7 +9,7 @@ from create.math import PI
 from create.math.point import Point
 from create.math.vector import Vector
 from create.math.transform import Transform
-from create.math.matrix import Matrix, translate, rotate, scale, apply
+from create.math.matrix import Matrix
 
 
 def assert_matrix_close(
@@ -33,8 +33,9 @@ def test_default_is_identity() raises:
 
 def test_constructor_scales_then_rotates_then_translates() raises:
     var t = Transform(translation=Vector(3, 4), rotation=PI / 2, scale=2)
+    # a quarter turn of a doubled grid: (x, y) to (-2y, 2x), then moved
     assert_matrix_close(
-        Matrix[3, 3](t), translate(3, 4) @ rotate(PI / 2) @ scale(2)
+        Matrix[3, 3](t), Matrix[3, 3](0, -2, 3, 2, 0, 4, 0, 0, 1)
     )
     # (1, 0) scaled to (2, 0), turned to (0, 2), moved to (3, 6)
     assert_point_close(t.apply(Point(1, 0)), Point(3, 6))
@@ -44,9 +45,23 @@ def test_constructor_with_two_scales() raises:
     var t = Transform(
         translation=Vector(-1, 5), rotation=0.3, scale_x=2, scale_y=-0.5
     )
-    assert_matrix_close(
-        Matrix[3, 3](t), translate(-1, 5) @ rotate(0.3) @ scale(2, -0.5)
+    var parts = (
+        Transform(translation=Vector(-1, 5))
+        @ Transform(rotation=0.3)
+        @ Transform(scale_x=2, scale_y=-0.5)
     )
+    assert_matrix_close(Matrix[3, 3](t), Matrix[3, 3](parts))
+    # (1, 0) stretched to (2, 0); (0, 1) squashed and mirrored to (0, -0.5)
+    var stretched = Transform(scale_x=2, scale_y=-0.5)
+    assert_point_close(stretched.apply(Point(1, 0)), Point(2, 0))
+    assert_point_close(stretched.apply(Point(0, 1)), Point(0.0, -0.5))
+
+
+def test_rotation_turns_counter_clockwise() raises:
+    assert_point_close(
+        Transform(rotation=PI / 2).apply(Point(1, 0)), Point(0, 1)
+    )
+    assert_point_close(Transform(rotation=PI).apply(Point(1, 0)), Point(-1, 0))
 
 
 def test_compose_applies_right_first() raises:
@@ -66,14 +81,28 @@ def test_compose_matches_matrix_product() raises:
     assert_matrix_close(Matrix[3, 3](a @ b), Matrix[3, 3](a) @ Matrix[3, 3](b))
 
 
-def test_apply_matches_matrix_apply() raises:
+def test_apply_matches_the_matrix() raises:
     var t = Transform(translation=Vector(2, -3), rotation=1.1, scale=1.5)
     var m = Matrix[3, 3](t)
-    assert_point_close(t.apply(Point(4, 5)), apply(m, Point(4, 5)))
+    var p = t.apply(Point(4, 5))
+    assert_almost_equal(p.x, m[0, 0] * 4 + m[0, 1] * 5 + m[0, 2], atol=1e-9)
+    assert_almost_equal(p.y, m[1, 0] * 4 + m[1, 1] * 5 + m[1, 2], atol=1e-9)
     var v = t.apply(Vector(4, 5))
-    var expected = apply(m, Vector(4, 5))
-    assert_almost_equal(v.x, expected.x, atol=1e-9)
-    assert_almost_equal(v.y, expected.y, atol=1e-9)
+    assert_almost_equal(v.x, m[0, 0] * 4 + m[0, 1] * 5, atol=1e-9)
+    assert_almost_equal(v.y, m[1, 0] * 4 + m[1, 1] * 5, atol=1e-9)
+
+
+def test_apply_agrees_on_the_difference_of_two_points() raises:
+    # mapping two points and subtracting is mapping their difference
+    var t = Transform(
+        translation=Vector(-7, 2), rotation=0.6, scale_x=1.5, scale_y=0.5
+    )
+    var a = Point(1, 2)
+    var b = Point(-3.0, 0.5)
+    var mapped = t.apply(a) - t.apply(b)
+    var direct = t.apply(a - b)
+    assert_almost_equal(mapped.x, direct.x, atol=1e-9)
+    assert_almost_equal(mapped.y, direct.y, atol=1e-9)
 
 
 def test_apply_vector_ignores_translation() raises:

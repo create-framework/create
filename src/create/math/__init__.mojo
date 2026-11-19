@@ -16,15 +16,7 @@ from .easing import Easing, ease
 from .point import Point
 from .vector import Vector
 from .transform import Transform
-from .matrix import (
-    Matrix,
-    identity,
-    inverse,
-    apply,
-    translate,
-    rotate,
-    scale,
-)
+from .matrix import Matrix, identity, inverse
 from .random import Random
 from .noise import Noise
 from .constants import PI, TAU

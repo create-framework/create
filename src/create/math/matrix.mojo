@@ -1,25 +1,24 @@
-from std.math import sin, cos, abs, min, max
+from std.math import abs, min, max
 
-from .point import Point
-from .vector import Vector
 from .transform import Transform
 
 
 struct Matrix[rows: Int, cols: Int](
     Copyable, Equatable, ImplicitlyCopyable, Movable, Writable
 ):
-    """A fixed-size matrix, row-major, sized at compile time.
+    """A grid of numbers, `rows` by `cols`, sized when the program is
+    compiled: for linear algebra, such as solving equations or working in
+    more dimensions than two.
 
-    Transforms are homogeneous, so the library's 2D transforms are
-    `Matrix[3, 3]` — the extra row and column is what lets a translation be a
-    multiplication like any other, and so compose into a single matrix.
+    A 2D transform, moving, turning or scaling a drawing, is a `Transform`,
+    not a `Matrix`. `Matrix[3, 3](transform)` gives a transform's full grid,
+    and `Transform(matrix)` converts a 3 by 3 one back.
 
-    Build them with the free functions below rather than by hand:
-    `identity`, `translate`, `rotate`, `scale`. Compose with
-    `@`, which applies right to left — `translate(x, y) @ rotate(a)` rotates
-    first, then moves the rotated result. `apply(m, point)` maps a `Point`
-    through it, translation included; `apply(m, vector)` maps a `Vector`,
-    which a translation does not move.
+    `Matrix[2, 2](1, 2, 3, 4)` takes the numbers row by row. `m[row, column]`
+    reads or changes one, counting from 0. `a @ b` multiplies two matrices,
+    `m.transpose()` swaps rows and columns, `identity[N]()` is the N by N
+    matrix that changes nothing when multiplied, and `inverse(m)` the one
+    that undoes `m`.
     """
 
     var data: Array[Float64, Self.rows * Self.cols]
@@ -117,90 +116,20 @@ struct Matrix[rows: Int, cols: Int](
 
 
 def identity[N: Int]() -> Matrix[N, N]:
-    """The N x N transform that changes nothing — the start of a composition."""
+    """The N by N matrix that changes nothing when multiplied by: ones along
+    its diagonal, zeros everywhere else."""
     var m = Matrix[N, N]()
     comptime for i in range(N):
         m[i, i] = 1.0
     return m^
 
 
-def translate(dx: Float64, dy: Float64) -> Matrix[3, 3]:
-    """Move by `(dx, dy)` in world units. `dy` is up, since y grows upward."""
-    var m = identity[3]()
-    m[0, 2] = dx
-    m[1, 2] = dy
-    return m^
-
-
-def translate(delta: Vector) -> Matrix[3, 3]:
-    """Move by `delta` in world units, as `shape.translate(delta)` does."""
-    return translate(delta.x, delta.y)
-
-
-def rotate(angle: Float64) -> Matrix[3, 3]:
-    """Turn by `angle` radians about the origin, counter-clockwise — the
-    mathematical convention, which holds here because y grows upward. Use
-    `radians(d)` for an angle written in degrees."""
-    var m = identity[3]()
-    var c = cos(angle)
-    var s = sin(angle)
-    m[0, 0] = c
-    m[0, 1] = -s
-    m[1, 0] = s
-    m[1, 1] = c
-    return m^
-
-
-def scale(sx: Float64, sy: Float64) -> Matrix[3, 3]:
-    """Scale each axis about the origin. Negative values mirror."""
-    var m = identity[3]()
-    m[0, 0] = sx
-    m[1, 1] = sy
-    return m^
-
-
-def scale(s: Float64) -> Matrix[3, 3]:
-    """Scale both axes by the same factor."""
-    return scale(s, s)
-
-
-def apply(m: Matrix[3, 3], point: Point) -> Point:
-    """`point` mapped through `m`, translation included."""
-    var p = _apply(m, point.x, point.y)
-    return Point(p[0], p[1])
-
-
-def apply(m: Matrix[3, 3], vector: Vector) -> Vector:
-    """`vector` mapped through `m`'s rotation, scale and shear, but not its
-    translation: a displacement, unlike a position, is the same wherever it
-    starts. So a velocity turns with a `rotate` and stretches with a `scale`,
-    and a `translate` leaves it as it is. Meant for the affine matrices
-    `translate`, `rotate` and `scale` build; a projective bottom row is
-    ignored."""
-    return Vector(
-        m[0, 0] * vector.x + m[0, 1] * vector.y,
-        m[1, 0] * vector.x + m[1, 1] * vector.y,
-    )
-
-
-def _apply(m: Matrix[3, 3], x: Float64, y: Float64) -> Tuple[Float64, Float64]:
-    """Transform a 2D point by `m`, dividing through by the homogeneous w.
-
-    The scalar form the rasterisers call per vertex; `apply` is the public
-    one, taking a `Point`."""
-    var ox = m[0, 0] * x + m[0, 1] * y + m[0, 2]
-    var oy = m[1, 0] * x + m[1, 1] * y + m[1, 2]
-    var ow = m[2, 0] * x + m[2, 1] * y + m[2, 2]
-    return (ox / ow, oy / ow)
-
-
 def inverse[N: Int](m: Matrix[N, N]) -> Matrix[N, N]:
-    """The transform that undoes `m` — Gauss-Jordan with partial pivoting.
+    """The matrix that undoes `m`: `inverse(m) @ m` is the identity.
 
-    Mapping a point back out of a transformed frame is what this is for, which
-    is how `canvas.to_local` maps a mouse position into the current transform.
-    A singular matrix (a zero scale, say) has no inverse and the result is
-    meaningless rather than an error.
+    Found by Gauss-Jordan elimination with partial pivoting. A singular
+    matrix, one that squashes some direction to nothing, has no inverse, and
+    the result holds meaningless numbers rather than raising an error.
     """
     var aug = Matrix[N, N * 2]()
     for r in range(N):

@@ -92,7 +92,9 @@ struct App(Program):
 
         # A rotating rectangle: the transform is baked per vertex, so a rotated
         # stroke ring has to follow the shape rather than stay axis-aligned.
-        with canvas.transform(translate(-230, 0) @ rotate(self.angle)):
+        with canvas.transform(
+            Transform(translation=Vector(-230, 0), rotation=self.angle)
+        ):
             with canvas.style(
                 fill=_CREAM,
                 stroke=Color.BLACK,

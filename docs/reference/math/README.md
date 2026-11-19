@@ -10,7 +10,7 @@ Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, the ea
 | [`Point`](point.md) | A location in world space: `distance`, `lerp`, the affine operators, and an explicit constructor from a `Vector` for crossing between the two. |
 | [`Vector`](vector.md) | A 2D displacement or direction: arithmetic operators, `magnitude`, `normalize`, `dot`, `distance`, `lerp`, the angle helpers `from_angle`, `angle` and `rotate`, the length helpers `with_length` and `limit`, and an explicit constructor from a `Point`. |
 | [`Transform`](transform.md) | A change of position applied to points: moving, turning, scaling, mirroring and shearing, or any combination of them. |
-| [`Matrix`](matrix.md) | A fixed-size matrix, row-major, sized at compile time. |
+| [`Matrix`](matrix.md) | A grid of numbers, `rows` by `cols`, sized when the program is compiled: for linear algebra, such as solving equations or working in more dimensions than two. |
 | [`Random`](random.md) | A seeded pseudo-random generator: `.float()`, `.int()`, `.bool()`. |
 | [`Noise`](noise.md) | Smooth pseudo-random values: `.at(x)`, `.at(position)` and `.at(position, time)`, each in `[0.0, 1.0]`. |
 
@@ -28,12 +28,8 @@ Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, the ea
 | [`degrees`](degrees.md) | `radians` in degrees. Rotations take radians, so this is for display. |
 | [`radians`](radians.md) | `degrees` in radians, for feeding `rotate` an angle written in degrees. |
 | [`ease`](ease.md) | Reshape the fraction `t` by `curve`. |
-| [`identity`](identity.md) | The N x N transform that changes nothing — the start of a composition. |
-| [`inverse`](inverse.md) | The transform that undoes `m` — Gauss-Jordan with partial pivoting. |
-| [`apply`](apply.md) | `point` mapped through `m`, translation included. |
-| [`translate`](translate.md) | Move by `(dx, dy)` in world units. `dy` is up, since y grows upward. |
-| [`rotate`](rotate.md) | Turn by `angle` radians about the origin, counter-clockwise — the mathematical convention, which holds here because y grows upward. Use `radians(d)` for an angle written in degrees. |
-| [`scale`](scale.md) | Scale each axis about the origin. Negative values mirror. |
+| [`identity`](identity.md) | The N by N matrix that changes nothing when multiplied by: ones along its diagonal, zeros everywhere else. |
+| [`inverse`](inverse.md) | The matrix that undoes `m`: `inverse(m) @ m` is the identity. |
 
 ## Constants
 

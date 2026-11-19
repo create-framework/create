@@ -1,11 +1,6 @@
 from create.math.point import Point
 from create.math.transform import Transform
 from create.math.vector import Vector
-from create.math.matrix import (
-    Matrix,
-    scale as mat_scale,
-    translate as mat_translate,
-)
 
 
 struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -32,14 +27,9 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
             "Camera(position=", self.position, ", zoom=", self.zoom, ")"
         )
 
-    def matrix(self) -> Matrix[3, 3]:
-        """World-to-screen mapping: scale around `position`, then recentre."""
-        return mat_scale(self.zoom, self.zoom) @ mat_translate(
-            -self.position.x, -self.position.y
-        )
-
-    def _transform(self) -> Transform:
-        """`matrix()` as a `Transform`, for the canvas."""
+    def transform(self) -> Transform:
+        """The camera as a `Transform` from world space to screen space: it
+        moves `position` to the origin, then zooms about it by `zoom`."""
         return Transform(scale=self.zoom) @ Transform(
             translation=Vector(-self.position.x, -self.position.y)
         )
@@ -47,7 +37,7 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
     def to_world(self, screen: Point) -> Point:
         """A screen-space point — `context.mouse.position`, say — into world space.
 
-        The inverse of `matrix()`, done in arithmetic rather than through a
+        The inverse of `transform()`, done in arithmetic rather than through a
         general matrix inverse.
         """
         return Point(

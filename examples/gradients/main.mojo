@@ -91,7 +91,9 @@ struct App(Program):
 
         # The card turns, and its gradient turns with it.
         with canvas.style(self.card):
-            with canvas.transform(translate(-250, -140) @ rotate(self.angle)):
+            with canvas.transform(
+                Transform(translation=Vector(-250, -140), rotation=self.angle)
+            ):
                 canvas.rectangle((0, 0), 220, 130, corner_radius=18)
 
         # A fade to transparent: a glow over whatever is behind it.

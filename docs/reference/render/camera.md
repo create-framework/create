@@ -28,13 +28,13 @@ def __init__(out self, position: Point = Point(SIMD(0), SIMD(0)), zoom: Float64 
 
 ## Methods
 
-### `matrix`
+### `transform`
 
 ```mojo
-def matrix(self) -> Matrix[Int(3), Int(3)]
+def transform(self) -> Transform
 ```
 
-World-to-screen mapping: scale around `position`, then recentre.
+The camera as a `Transform` from world space to screen space: it moves `position` to the origin, then zooms about it by `zoom`.
 
 ### `to_world`
 
@@ -44,7 +44,7 @@ def to_world(self, screen: Point) -> Point
 
 A screen-space point — `context.mouse.position`, say — into world space.
 
-The inverse of `matrix()`, done in arithmetic rather than through a
+The inverse of `transform()`, done in arithmetic rather than through a
 general matrix inverse.
 
 ### `to_screen`
