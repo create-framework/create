@@ -68,7 +68,7 @@ page:
 | [tables](docs/guide/data/tables.md) | `Table` and `TableRow` (CSV/TSV): reading, saving, finding, counting and removing rows and columns |
 | [json](docs/guide/data/json.md) | `JSON`, `JSONKind`: reading, editing, building a document, missing fields |
 | [angles](docs/guide/math/angles.md) | radians, `PI`/`TAU`, `sin`/`cos`/`atan2`, `degrees`/`radians` |
-| [matrices](docs/guide/math/matrices.md) | `Matrix`, `translate`/`rotate`/`scale`, `@`, `apply`, `inverse` |
+| [transforms](docs/guide/math/transforms.md) | `Transform`, `canvas.translate`/`rotate`/`scale`, `with canvas.transform()`, `@`, `apply`, `inverse`, and `Matrix` |
 | [interpolation](docs/guide/math/interpolation.md) | `lerp`, `inverse_lerp`, `map`, `clamp`, `smoothstep`, `wrap` and the other scalar helpers |
 | [easing](docs/guide/math/easing.md) | `Easing`/`ease` |
 | [random numbers](docs/guide/math/random-numbers.md) | `Random` |
