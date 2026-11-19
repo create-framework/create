@@ -11,6 +11,13 @@ comptime _GRAB_RADIUS = 18.0
 """How close, in design units, a click must land to pick up a point."""
 
 comptime _SPEED = 260.0
+
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _CURVE = Color(98, 104, 168, 170)
+comptime _SHADOW = Color(0, 0, 0, 160)
+comptime _DOT = Color(226, 46, 56)
+comptime _POINT = Color(240, 236, 222)
 """How fast the dot travels along the curve, in design units per second."""
 
 
@@ -90,14 +97,14 @@ struct App(Program):
             self.travelled = 0.0
         var dot = spline.at_distance(self.travelled)
 
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
 
         # Translucent, so any joint painted twice would show as a brighter
         # seam; there is none, closed or not.
         with canvas.style(
-            stroke=Color(98, 104, 168, 170),
+            stroke=_CURVE,
             stroke_thickness=14,
-            shadow=Color(0, 0, 0, 160),
+            shadow=_SHADOW,
             shadow_offset=Vector2D(6, -10),
             shadow_blur=18,
         ):
@@ -105,15 +112,12 @@ struct App(Program):
 
         canvas.stroke_enabled(False)
         if len(self.points) > 0:
-            canvas.fill(Color(226, 46, 56))
+            canvas.fill(_DOT)
             canvas.circle(dot, 13)
 
-        for i in range(len(self.points)):
-            if i == self.dragging:
-                canvas.fill(Color(240, 236, 222))
-            else:
-                canvas.fill(Color(240, 236, 222))
-            canvas.circle(self.points[i], 9)
+        canvas.fill(_POINT)
+        for point in self.points:
+            canvas.circle(point, 9)
 
         var kind: String
         if self.alpha == 0.0:
@@ -122,7 +126,7 @@ struct App(Program):
             kind = "centripetal"
         else:
             kind = "chordal"
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text(
@@ -134,7 +138,7 @@ struct App(Program):
                 ")",
                 ", closed" if self.closed else "",
             ),
-            (0, 362),
+            (0, canvas.top() - 38),
         )
         canvas.font_size(18)
         canvas.text(
@@ -142,7 +146,7 @@ struct App(Program):
                 "Click to add a point, drag to move, right-click to remove;"
                 " C closes the curve; 1, 2 and 3 set alpha"
             ),
-            (0, 322),
+            (0, canvas.top() - 78),
         )
 
 

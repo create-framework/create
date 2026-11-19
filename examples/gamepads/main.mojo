@@ -10,6 +10,13 @@ comptime _PLAYERS = 4
 comptime _SPEED = 300.0
 comptime _MESSAGE_SECONDS = 3.0
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _RED = Color(226, 46, 56)
+comptime _INDIGO = Color(98, 104, 168)
+comptime _ROSE = Color(201, 140, 150)
+comptime _CREAM = Color(240, 236, 222)
+
 
 @fieldwise_init
 struct Gamepads(Program):
@@ -28,13 +35,8 @@ struct Gamepads(Program):
         return Gamepads(positions^, colors^, "", 0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(Color(40, 40, 44))
-        var palette = [
-            Color(226, 46, 56),
-            Color(98, 104, 168),
-            Color(201, 140, 150),
-            Color(240, 236, 222),
-        ]
+        canvas.background(_BACKGROUND)
+        var palette = [_RED, _INDIGO, _ROSE, _CREAM]
 
         for i in range(_PLAYERS):
             var pad = context.gamepad(i)
@@ -58,10 +60,10 @@ struct Gamepads(Program):
 
             canvas.fill(palette[self.colors[i]])
             canvas.circle(self.positions[i], 30 + 20 * pad.left_trigger)
-            canvas.text_color(Color(240, 236, 222))
+            canvas.text_color(_TEXT)
             canvas.text(String(i + 1), self.positions[i] + Vector2D(0, 45))
 
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.text_alignment(Align.LEFT)
         var connected = 0
         for i in range(_PLAYERS):

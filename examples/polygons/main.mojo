@@ -9,6 +9,15 @@ from create import *
 
 comptime _BACKGROUND = Color(40, 40, 44)
 """Light enough for the U's shadow to show against it."""
+comptime _TEXT = Color(240, 236, 222)
+comptime _HOVERED = Color(240, 236, 222)
+comptime _STAR = Color(201, 140, 150)
+comptime _U = Color(98, 104, 168, 150)
+comptime _HOVERED_U = Color(240, 236, 222, 190)
+comptime _U_OUTLINE = Color(240, 236, 222)
+comptime _HIT = Color(226, 46, 56)
+comptime _SHADOW = Color(0, 0, 0, 170)
+comptime _PENTAGRAM = Color(201, 140, 150)
 
 comptime _SPIN = 0.6
 """How fast the stars turn, in radians per second."""
@@ -87,7 +96,7 @@ struct App(Program):
             var x = -500.0 + 200.0 * Float64(sides - 3)
             var shape = Polygon.regular((x, 170), 70, sides)
             if shape.contains(mouse):
-                canvas.fill(Color(240, 236, 222))
+                canvas.fill(_HOVERED)
             else:
                 canvas.fill(_side_color(sides))
             canvas.draw(shape)
@@ -106,9 +115,9 @@ struct App(Program):
                 start_angle=TAU / 4.0 + direction * turn,
             )
             if star.contains(mouse):
-                canvas.fill(Color(240, 236, 222))
+                canvas.fill(_HOVERED)
             else:
-                canvas.fill(Color(201, 140, 150))
+                canvas.fill(_STAR)
             canvas.draw(star)
 
         # A concave U from literal vertices, translucent and shadowed. Its
@@ -125,14 +134,14 @@ struct App(Program):
             (60, 20),
         )
         var hit = u.overlaps(self.pentagram)
-        var fill = Color(98, 104, 168, 150)
+        var fill = _U
         if u.contains(mouse):
-            fill = Color(240, 236, 222, 190)
+            fill = _HOVERED_U
         with canvas.style(
             fill=fill,
-            stroke=Color(226, 46, 56) if hit else Color(240, 236, 222),
+            stroke=_HIT if hit else _U_OUTLINE,
             stroke_thickness=6,
-            shadow=Color(0, 0, 0, 170),
+            shadow=_SHADOW,
             shadow_offset=Vector2D(10, -14),
             shadow_blur=24,
         ):
@@ -141,23 +150,23 @@ struct App(Program):
         # Translucent, so the stroke shows every edge, the crossing ones
         # through the middle too, while the middle is filled just once.
         with canvas.style(
-            fill=Color(201, 140, 150, 90),
-            stroke=Color(201, 140, 150),
+            fill=_PENTAGRAM.with_alpha(90),
+            stroke=_PENTAGRAM,
             stroke_thickness=3,
         ):
             canvas.draw(self.pentagram)
 
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
-        canvas.text("Polygons", (0, 362))
+        canvas.text("Polygons", (0, canvas.top() - 38))
         canvas.font_size(18)
         canvas.text(
             "Hover the shapes; Up and Down change the stars' inner radius"
             + " ("
             + String(Int(self.inner_ratio * 100.0 + 0.5))
             + "%); drag the pentagram onto the U",
-            (0, 322),
+            (0, canvas.top() - 78),
         )
 
 

@@ -8,6 +8,12 @@ from create import *
 
 comptime _BACKGROUND = Color(40, 40, 44)
 """Light enough for the pac-man's shadow to show against it."""
+comptime _TEXT = Color(240, 236, 222)
+comptime _PACMAN_BODY = Color(250, 200, 40)
+comptime _HOVERED = Color(240, 236, 222)
+comptime _HIT = Color(226, 46, 56)
+comptime _SHADOW = Color(0, 0, 0, 170)
+comptime _BALL = Color(98, 104, 168)
 
 comptime _PIE = Point2D(-260.0, -20.0)
 comptime _PIE_RADIUS = 190.0
@@ -118,15 +124,15 @@ struct App(Program):
             canvas.draw(slice)
             start = slice.end_angle()
 
-        var body = Color(250, 200, 40)
+        var body = _PACMAN_BODY
         if pacman.contains(mouse):
-            body = Color(240, 236, 222)
+            body = _HOVERED
         var hit = not eaten and pacman.overlaps(self.ball)
         with canvas.style(
             fill=body,
-            stroke=Color(226, 46, 56) if hit else _BACKGROUND,
+            stroke=_HIT if hit else _BACKGROUND,
             stroke_thickness=6,
-            shadow=Color(0, 0, 0, 170),
+            shadow=_SHADOW,
             shadow_offset=Vector2D(8, -12),
             shadow_blur=20,
         ):
@@ -134,17 +140,17 @@ struct App(Program):
 
         if self.respawn_in == 0.0:
             canvas.stroke_enabled(False)
-            canvas.fill(Color(98, 104, 168))
+            canvas.fill(_BALL)
             canvas.draw(self.ball)
 
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
-        canvas.text("Sectors", (0, 362))
+        canvas.text("Sectors", (0, canvas.top() - 38))
         canvas.font_size(18)
         canvas.text(
             "Hover the pie and the pac-man; feed it the ball",
-            (0, 322),
+            (0, canvas.top() - 78),
         )
 
 

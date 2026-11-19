@@ -1,5 +1,9 @@
 from create import *
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _INK = Color(201, 140, 150)
+comptime _HINT = Color(176, 172, 162)
+
 
 @fieldwise_init
 struct Paint:
@@ -22,11 +26,11 @@ struct Paint:
         self.back_pressed = context.mouse.pressed(MouseButton.RIGHT)
 
         if self._entering:
-            canvas.background(Color(40, 40, 44))
+            canvas.background(_BACKGROUND)
             self._entering = False
 
         if context.mouse.down(MouseButton.LEFT):
-            with canvas.style(fill=Color(201, 140, 150), stroke_enabled=False):
+            with canvas.style(fill=_INK, stroke_enabled=False):
                 canvas.circle(context.mouse.position, 14.0)
 
         # Align.BOTTOM anchors the text box's bottom edge at y, so it grows
@@ -34,7 +38,7 @@ struct Paint:
         # Align.CENTER would hang half the line below the margin, its
         # descenders against canvas.bottom() and the letterbox clip.
         with canvas.style(
-            text_color=Color(176, 172, 162),
+            text_color=_HINT,
             font_size=18,
             text_alignment=Align.BOTTOM,
         ):

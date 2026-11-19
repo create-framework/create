@@ -15,6 +15,9 @@ from create import *
 comptime _BACKGROUND = Color(40, 40, 44)
 comptime _TEXT = Color(240, 236, 222)
 comptime _HINT = Color(176, 172, 162)
+comptime _INDIGO = Color(98, 104, 168)
+comptime _ROSE = Color(201, 140, 150)
+comptime _RED = Color(226, 46, 56)
 comptime _SIZE = 220.0
 """How big each loaded picture is drawn, in design units."""
 comptime _ROW_Y = 120.0
@@ -49,13 +52,11 @@ def _sprite() raises -> Image:
             if distance <= middle + 0.5:
                 # Indigo to rose to red round the ring, darker inside.
                 var turn = offset.angle() / TAU + 0.5
-                var color = Color(98, 104, 168).lerp(
-                    Color(201, 140, 150), turn * 2.0
-                ) if turn < 0.5 else Color(201, 140, 150).lerp(
-                    Color(226, 46, 56), turn * 2.0 - 1.0
-                )
+                var color = _INDIGO.lerp(
+                    _ROSE, turn * 2.0
+                ) if turn < 0.5 else _ROSE.lerp(_RED, turn * 2.0 - 1.0)
                 if distance < middle / 2.0:
-                    color = color.lerp(Color(40, 40, 44), 0.45)
+                    color = color.lerp(_BACKGROUND, 0.45)
                 buffer.set(x, y, color)
     # The buffer is handed over, not copied: it can't be used after this.
     return Image(buffer^)

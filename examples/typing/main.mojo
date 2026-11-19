@@ -6,6 +6,12 @@ Type the phrase shown; Enter moves on once it is right.
 
 from create import *
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _HINT = Color(176, 172, 162)
+comptime _TYPED = Color(240, 236, 222)
+comptime _MISTAKE = Color(226, 46, 56)
+comptime _SELECTION = Color(70, 90, 140)
+
 
 def characters(text: String) -> List[String]:
     """`text` split into characters, not bytes: an accented letter is two
@@ -50,7 +56,7 @@ struct TypingTest(Program):
             + " of "
             + String(len(self.phrases))
         )
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
         var target = characters(self.phrases[self.phrase])
         var finished = self.typed.text == self.phrases[self.phrase]
 
@@ -72,7 +78,7 @@ struct TypingTest(Program):
         canvas.font_size(28)
         canvas.text_alignment(Align.LEFT)
         var left = -canvas.text_width(self.phrases[self.phrase]) / 2
-        canvas.text_color(Color(176, 172, 162))
+        canvas.text_color(_HINT)
         canvas.text(self.phrases[self.phrase], (left, 60))
 
         # The selection's highlight goes behind the letters it covers.
@@ -80,27 +86,25 @@ struct TypingTest(Program):
         if selected:
             var start = left + canvas.text_width(self.typed.before_selection())
             var width = canvas.text_width(selected)
-            with canvas.style(fill=Color(70, 90, 140), stroke_enabled=False):
+            with canvas.style(fill=_SELECTION, stroke_enabled=False):
                 canvas.rectangle((start + width / 2, 0), width, 36)
 
         var x = left
         var typed = characters(self.typed.text)
         for i in range(len(typed)):
             var right = i < len(target) and typed[i] == target[i]
-            canvas.text_color(
-                Color(240, 236, 222) if right else Color(226, 46, 56)
-            )
+            canvas.text_color(_TYPED if right else _MISTAKE)
             canvas.text(typed[i], (x, 0))
             x += canvas.text_width(typed[i])
 
         if not finished and Int(context.time.elapsed * 2) % 2 == 0:
             var caret_x = left + canvas.text_width(self.typed.before_caret())
-            canvas.stroke(Color(240, 236, 222), thickness=2)
+            canvas.stroke(_TYPED, thickness=2)
             canvas.line((caret_x, -16), (caret_x, 16))
 
         canvas.font_size(20)
         canvas.text_alignment(Align.CENTER)
-        canvas.text_color(Color(176, 172, 162))
+        canvas.text_color(_HINT)
         if finished:
             canvas.text(self.result, (0, -80))
             canvas.text("Enter for the next phrase", (0, -120))

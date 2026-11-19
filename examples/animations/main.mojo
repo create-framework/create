@@ -24,6 +24,10 @@ comptime _SCALE_STEP = 0.25
 comptime _MIN_SCALE = 0.25
 comptime _MAX_SCALE = 2.0
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _GROUND_COLOR = Color(30, 30, 33)
+comptime _HINT = Color(176, 172, 162)
+
 
 @fieldwise_init
 struct Game(Program):
@@ -105,14 +109,14 @@ struct Game(Program):
         var margin = Float64(_SIZE) / 2.0
         self.x = clamp(self.x, canvas.left() + margin, canvas.right() - margin)
 
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
 
         canvas.stroke_enabled(False)
 
         # The ground runs from its surface all the way to the bottom edge, so
         # it never floats over the background however tall the window is.
         var height = _GROUND - canvas.bottom()
-        canvas.fill(Color(30, 30, 33))
+        canvas.fill(_GROUND_COLOR)
         canvas.rectangle(
             (0.0, canvas.bottom() + height / 2.0), canvas.right() * 2.0, height
         )
@@ -126,7 +130,7 @@ struct Game(Program):
             _SIZE,
         )
 
-        canvas.text_color(Color(176, 172, 162))
+        canvas.text_color(_HINT)
         canvas.text_alignment(Align.TOP)
         canvas.font_size(20)
         canvas.text(

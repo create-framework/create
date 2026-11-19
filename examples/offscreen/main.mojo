@@ -9,6 +9,15 @@ C clears the layer.
 
 from create import *
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _HINT = Color(176, 172, 162)
+comptime _ORBIT = Color(62, 62, 68)
+comptime _PAINT_FROM = Color(98, 104, 168)
+comptime _PAINT_TO = Color(201, 140, 150)
+comptime _BADGE_LIGHT = Color(236, 196, 202)
+comptime _BADGE_DARK = Color(170, 90, 104)
+comptime _BADGE_RIM = Color(90, 40, 50)
+comptime _BADGE_TEXT = Color(60, 20, 30)
 
 comptime _BADGE_SIZE = 80
 
@@ -18,11 +27,11 @@ def _badge() raises -> Image:
     crisp on a window scaled up to 2x."""
     var badge = Canvas(_BADGE_SIZE, _BADGE_SIZE, scale=2.0)
     badge.shadow(blur=6)
-    badge.fill(Gradient.radial(Color(236, 196, 202), Color(170, 90, 104)))
-    badge.stroke(Color(90, 40, 50), thickness=3)
+    badge.fill(Gradient.radial(_BADGE_LIGHT, _BADGE_DARK))
+    badge.stroke(_BADGE_RIM, thickness=3)
     badge.circle((0, 0), 32)
     badge.shadow_enabled(False)
-    badge.text_color(Color(60, 20, 30))
+    badge.text_color(_BADGE_TEXT)
     badge.font_size(28)
     badge.text("1st", (0, 0))
     return badge.snapshot(scale=badge.scale())
@@ -54,8 +63,8 @@ struct Offscreen(Program):
                 context.mouse.position if context.mouse.pressed() else self.last_mouse
             )
             with self.layer.style(
-                stroke=Color(98, 104, 168).lerp(
-                    Color(201, 140, 150),
+                stroke=_PAINT_FROM.lerp(
+                    _PAINT_TO,
                     0.5 + 0.5 * sin(context.time.elapsed * 2.0),
                 ),
                 stroke_thickness=12,
@@ -68,9 +77,9 @@ struct Offscreen(Program):
         self.last_mouse = context.mouse.position
 
         # The frame under the layer, redrawn and cleared every frame.
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
         var t = context.time.elapsed
-        with canvas.style(fill=Color(62, 62, 68), stroke_enabled=False):
+        with canvas.style(fill=_ORBIT, stroke_enabled=False):
             canvas.circle((cos(t) * 200, sin(t * 1.3) * 120), 40)
 
         canvas.image(self.strokes, (0, 0), canvas.width(), canvas.height())
@@ -78,7 +87,7 @@ struct Offscreen(Program):
             self.badge, context.mouse.position, _BADGE_SIZE, _BADGE_SIZE
         )
 
-        with canvas.style(text_color=Color(176, 172, 162), font_size=18):
+        with canvas.style(text_color=_HINT, font_size=18):
             canvas.text("Drag to paint, C to clear", (0, canvas.bottom() + 30))
 
 

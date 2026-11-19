@@ -85,7 +85,7 @@ struct Collisions(Program):
             canvas.draw(self.arc)
 
         with canvas.style(
-            fill=Color(240, 236, 222, 60), stroke=_TEXT, stroke_thickness=2
+            fill=_TEXT.with_alpha(60), stroke=_TEXT, stroke_thickness=2
         ):
             canvas.draw(self.probe)
 
@@ -101,14 +101,14 @@ struct Collisions(Program):
         with canvas.style(
             text_color=_TEXT, font_size=30, text_alignment=Align.TOP
         ):
-            canvas.text("Collisions", (0, 362))
+            canvas.text("Collisions", (0, canvas.top() - 38))
         with canvas.style(
             text_color=_TEXT, font_size=18, text_alignment=Align.TOP
         ):
             canvas.text(
                 "Regions light up as they overlap the circle, curves as they"
                 + " cross it; lines run to each shape's closest point",
-                (0, 322),
+                (0, canvas.top() - 78),
             )
 
 

@@ -6,6 +6,12 @@ mouse.
 
 from create import *
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _RED = Color(226, 46, 56)
+comptime _ROSE = Color(201, 140, 150)
+comptime _INDIGO = Color(98, 104, 168)
+
 
 @fieldwise_init
 struct Pixels(Program):
@@ -16,7 +22,7 @@ struct Pixels(Program):
         return Pixels(None)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
         if self.last:
             # The last frame, 1% larger, faded by a translucent background:
             # a trail that drifts outwards.
@@ -26,15 +32,11 @@ struct Pixels(Program):
                 canvas.width() * 1.01,
                 canvas.height() * 1.01,
             )
-            canvas.background(Color(40, 40, 44, 30))
+            canvas.background(_BACKGROUND.with_alpha(30))
 
         var t = context.time.elapsed
         canvas.stroke_enabled(False)
-        var colors: List[Color] = [
-            Color(226, 46, 56),
-            Color(201, 140, 150),
-            Color(98, 104, 168),
-        ]
+        var colors = [_RED, _ROSE, _INDIGO]
         for i in range(3):
             var angle = t * (0.7 + 0.3 * Float64(i)) + Float64(i) * 2.1
             canvas.fill(colors[i])
@@ -45,9 +47,9 @@ struct Pixels(Program):
 
         var under = canvas.color_at(context.mouse.position)
         canvas.fill(under)
-        canvas.stroke(Color(240, 236, 222))
+        canvas.stroke(_TEXT)
         canvas.rectangle((0, canvas.bottom() + 40), 60, 40)
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.text(String(under), (0, canvas.bottom() + 80))
 
 

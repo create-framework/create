@@ -8,6 +8,13 @@ from create import *
 comptime _LINES = 24
 comptime _LINE_HEIGHT = 28.0
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _PANEL = Color(30, 30, 33)
+comptime _TEXT = Color(240, 236, 222)
+comptime _STRIPE = Color(98, 104, 168)
+comptime _OTHER_STRIPE = Color(201, 140, 150)
+comptime _FOG = Color(0, 0, 0, 140)
+
 
 @fieldwise_init
 struct Clipping(Program):
@@ -22,15 +29,15 @@ struct Clipping(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
         var t = context.time.elapsed
 
         # A list scrolling through a panel: rows enter and leave at its edges.
-        canvas.fill(Color(30, 30, 33))
+        canvas.fill(_PANEL)
         canvas.draw(self.panel)
         with canvas.clip(self.panel):
             var scroll = (t * 40.0) % (_LINES * _LINE_HEIGHT)
-            canvas.text_color(Color(240, 236, 222))
+            canvas.text_color(_TEXT)
             for i in range(_LINES * 2):
                 var y = 200.0 - Float64(i) * _LINE_HEIGHT + scroll
                 canvas.text(
@@ -42,15 +49,12 @@ struct Clipping(Program):
             canvas.stroke_enabled(False)
             with canvas.transform(translate(200.0, 0.0) @ rotate(t * 0.5)):
                 for i in range(-10, 11):
-                    canvas.fill(
-                        Color(98, 104, 168) if i % 2
-                        == 0 else Color(201, 140, 150)
-                    )
+                    canvas.fill(_STRIPE if i % 2 == 0 else _OTHER_STRIPE)
                     canvas.rectangle((Float64(i) * 24, 0), 24, 500)
 
         # Fog with a hole in it, wherever the mouse is.
         with canvas.clip(Circle(context.mouse.position, 120), invert=True):
-            canvas.background(Color(0, 0, 0, 140))
+            canvas.background(_FOG)
 
 
 def main() raises:

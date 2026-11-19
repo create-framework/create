@@ -27,6 +27,12 @@ comptime _DESIGN_W = 800
 comptime _DESIGN_H = 500
 comptime _RECORD_SECONDS = 10.0
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _SQUARE = Color(98, 104, 168)
+comptime _DISC = Color(201, 140, 150)
+comptime _RECORDING = Color(226, 46, 56)
+
 
 @fieldwise_init
 struct Capture(Program):
@@ -73,36 +79,34 @@ struct Capture(Program):
             canvas.cancel_recording()
             self.saved = ""
 
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
 
         with canvas.style(stroke_enabled=False):
             with canvas.transform(rotate(self.angle)):
-                canvas.fill(Color(98, 104, 168))
+                canvas.fill(_SQUARE)
                 canvas.rectangle((0, 0), 220, 220)
-                canvas.fill(Color(201, 140, 150))
+                canvas.fill(_DISC)
                 canvas.circle((0, 0), 70)
 
         with canvas.style(
-            text_color=Color(240, 236, 222),
+            text_color=_TEXT,
             font_size=24,
             text_alignment=Align.TOP,
         ):
             canvas.text(
                 "S: screenshot   I: image   R: record   Shift: transparent",
-                (0, 220),
+                (0, canvas.top() - 30),
             )
-        with canvas.style(text_color=Color(240, 236, 222), font_size=20):
+        with canvas.style(text_color=_TEXT, font_size=20):
             if canvas.recording():
                 var label = String("Recording; R to stop, X to discard")
                 # Drawn like everything else, so it is in the recording too.
                 var dot = -canvas.text_width(label) / 2.0 - 16.0
-                with canvas.style(
-                    fill=Color(226, 46, 56), stroke_enabled=False
-                ):
-                    canvas.circle((dot, -200), 8)
-                canvas.text(label, (0, -200))
+                with canvas.style(fill=_RECORDING, stroke_enabled=False):
+                    canvas.circle((dot, canvas.bottom() + 50), 8)
+                canvas.text(label, (0, canvas.bottom() + 50))
             elif self.saved:
-                canvas.text("Wrote " + self.saved, (0, -200))
+                canvas.text("Wrote " + self.saved, (0, canvas.bottom() + 50))
 
 
 def main() raises:
