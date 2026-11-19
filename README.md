@@ -13,16 +13,15 @@
 with a structured, modular API, so it works not only for quick sketches but also for small- to
 medium-sized projects such as 2D games, simulations and visualisations.
 
-The API currently covers: drawing shapes, curves, text and images with fills, strokes, gradients and
-shadows; animating them with tweens and animators; reading keyboard, mouse and gamepad inputs;
-testing collisions between shapes; playing sounds; and loading data from CSV and JSON. Every program
-runs on the CPU or through OpenGL. The [user guide](https://create-framework.org/latest/guide/)
-covers each area in turn, and the [API reference](https://create-framework.org/latest/reference/)
-lists every type and function, package by package.
+With **Create**, you can draw shapes, text and images and style them with fills, strokes, gradients
+and shadows. You can animate objects, play sounds, load CSV and JSON data, and read input from
+keyboards, mice and gamepads. **Create** also provides mathematical helpers for working with
+geometry as well as scalars, vectors and matrices. It renders on the CPU by default but can also use
+the GPU through [OpenGL](https://www.opengl.org/).
 
 ## Example programs
 
-The GIF below shows an example program running. First it generates a [Sierpiński
+The GIF below shows an example program running. First, it generates a [Sierpiński
 triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method
 (also known as the [chaos game](https://en.wikipedia.org/wiki/Chaos_game)). Then coloured triangles
 grow into place on top of it, forming the **Create** logo.
@@ -35,7 +34,7 @@ grow into place on top of it, forming the **Create** logo.
 
 You can run the program yourself from the root of this repo using `pixi run example logo` (`logo`
 being the name of this specific example). The other programs under [examples/](examples/) can be run
-the same way. Run `pixi run example` with no name to list them all.
+the same way. Run `pixi run example` with no name to list them.
 
 ## How a program works
 
@@ -56,8 +55,8 @@ struct MyApp(Program):
         return MyApp("Hello, world!", (0, 0))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        # Called once per frame: handle input, modify state and draw to the screen
         canvas.font_size(48)
+        # Called once per frame: handle input, modify state and draw to the screen
         canvas.text(self.greeting, self.position)
 
 def main() raises:
@@ -77,14 +76,13 @@ If you don't already have it, install [pixi](https://pixi.sh):
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 
-The [create-cli](https://github.com/create-framework/create-cli) makes creating and running projects
-very easy. Running this command installs it to `~/.pixi/bin`:
+Now, install the [create-cli](https://github.com/create-framework/create-cli):
 
 ```sh
 pixi global install create-cli --channel https://prefix.dev/create-framework/create
 ```
 
-When it is installed, you can make your first project and run it like this:
+Create and run your first project:
 
 ```sh
 create new my-project
@@ -98,9 +96,9 @@ For more installation options, see [setup.md](docs/guide/basics/setup.md) in the
 
 ## Documentation
 
-The [user guide](https://create-framework.org/latest/guide/) and [API
-reference](https://create-framework.org/latest/reference/) are the main pieces of documentation for
-users of **Create**. They are published together at
+The [user guide](https://create-framework.org/latest/guide/) explains how to use **Create**, topic
+by topic, while the [API reference](https://create-framework.org/latest/reference/) lists every type
+and function, package by package. They are published together at
 [create-framework.org](https://create-framework.org/) for the latest release as well as for the head
 of `main`.
 
@@ -120,7 +118,7 @@ contributors:
 |----------|--------|
 | Linux (x86-64) | Supported, used day to day |
 | Windows through WSL2 | Supported, used day to day |
-| macOS on Apple silicon | Built and tested by a CI workflow run on demand, not on every change; little use on a real desktop yet |
+| macOS on Apple silicon | Built and tested by a CI workflow on demand, not on every change; little use on a real desktop yet |
 
 Intel Macs and native Windows are not supported: Mojo doesn't run on either. Every dependency, Mojo
 included, comes from [pixi](https://pixi.sh), so `pixi run` is all a supported machine needs. A
