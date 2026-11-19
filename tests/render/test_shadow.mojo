@@ -16,8 +16,8 @@ from create.math.matrix import (
     scale,
     translate,
 )
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 from create.geometry.bezier import Bezier
 from create.color.color import Color
 from create.render.style import Style
@@ -60,7 +60,7 @@ from create.render.stroke_cap import StrokeCap
 
 def _shadowed() -> Style:
     var s = Style(fill=Color.WHITE, shadow_enabled=True)
-    s.shadow_offset = Vector2D(4, -4)
+    s.shadow_offset = Vector(4, -4)
     return s^
 
 
@@ -169,7 +169,7 @@ def test_bezier_casts_its_stroke_even_when_filled() raises -> None:
 def test_a_bezier_chain_casts_every_curve() raises -> None:
     var s = _shadowed()
     s.stroke_enabled = True
-    var chain: List[Point2D] = [
+    var chain: List[Point] = [
         (0.0, 0.0),
         (10.0, 20.0),
         (20.0, 20.0),
@@ -282,7 +282,7 @@ def test_a_sector_casts_no_inset_shadow() raises -> None:
     assert_false(casts_outer_shadow(c))
 
 
-def _square() -> List[Point2D]:
+def _square() -> List[Point]:
     return [(-10.0, -10.0), (10.0, -10.0), (10.0, 10.0), (-10.0, 10.0)]
 
 
@@ -517,9 +517,7 @@ def _mask_mass(cap: StrokeCap) -> Int:
     var c = bezier_command(
         identity[3](),
         s,
-        Bezier(
-            Point2D(10, 10), Point2D(20, 30), Point2D(40, 30), Point2D(50, 10)
-        ),
+        Bezier(Point(10, 10), Point(20, 30), Point(40, 30), Point(50, 10)),
     )
     var mask = shape_shadow_mask(c, identity[3](), 1.0, 0)
     var total = 0

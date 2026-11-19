@@ -24,7 +24,7 @@ def test_default_style_matches_a_fresh_frame() raises -> None:
     assert_equal(s.opacity, 1.0)
     assert_true(s.blend_mode == BlendMode.NORMAL)
     assert_equal(s.shadow_color, Color(0, 0, 0, 96))
-    assert_equal(s.shadow_offset, Vector2D(4, -4))
+    assert_equal(s.shadow_offset, Vector(4, -4))
     assert_equal(s.shadow_blur, 8.0)
     assert_equal(s.shadow_spread, 0.0)
     assert_false(s.shadow_inset)
@@ -52,7 +52,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
         opacity=0.5,
         blend_mode=BlendMode.ADD,
         shadow=Color.RED,
-        shadow_offset=Vector2D(1, 2),
+        shadow_offset=Vector(1, 2),
         shadow_blur=3.0,
         shadow_spread=-1.0,
         shadow_inset=True,
@@ -77,7 +77,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     assert_equal(s.opacity, 0.5)
     assert_true(s.blend_mode == BlendMode.ADD)
     assert_equal(s.shadow_color, Color.RED)
-    assert_equal(s.shadow_offset, Vector2D(1, 2))
+    assert_equal(s.shadow_offset, Vector(1, 2))
     assert_equal(s.shadow_blur, 3.0)
     assert_equal(s.shadow_spread, -1.0)
     assert_true(s.shadow_inset)
@@ -88,7 +88,7 @@ def test_each_keyword_lands_in_its_field() raises -> None:
 def test_naming_a_part_switches_its_property_on() raises -> None:
     assert_true(Style(fill=Color.RED).fill_enabled)
     assert_true(Style(shadow=Color.RED).shadow_enabled)
-    assert_true(Style(shadow_offset=Vector2D(1, 2)).shadow_enabled)
+    assert_true(Style(shadow_offset=Vector(1, 2)).shadow_enabled)
     assert_true(Style(shadow_blur=12).shadow_enabled)
     assert_true(Style(shadow_spread=0).shadow_enabled)
     assert_true(Style(shadow_inset=False).shadow_enabled)
@@ -117,7 +117,7 @@ def test_style_writes_constructor_keywords() raises -> None:
             " font_weight=FontWeight.REGULAR, font_italic=False,"
             " text_alignment=Align.CENTER, tint=Color(255, 255, 255, 255),"
             " opacity=1.0, blend_mode=BlendMode.NORMAL, shadow=Color(0, 0, 0,"
-            " 96), shadow_offset=Vector2D(4.0, -4.0), shadow_blur=8.0,"
+            " 96), shadow_offset=Vector(4.0, -4.0), shadow_blur=8.0,"
             " shadow_spread=0.0, shadow_inset=False,"
             " shadow_follows_transform=False, shadow_enabled=False)"
         ),

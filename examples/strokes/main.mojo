@@ -37,18 +37,18 @@ def _alignment_name(alignment: StrokeAlign) -> String:
 
 @fieldwise_init
 struct App(Program):
-    var drawing: List[List[Point2D]]
+    var drawing: List[List[Point]]
     """The mouse strokes, one list of points per drag."""
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        return App(drawing=List[List[Point2D]]())
+        return App(drawing=List[List[Point]]())
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if context.keyboard.pressed(Key.SPACE):
             self.drawing.clear()
         if context.mouse.pressed():
-            self.drawing.append(List[Point2D]())
+            self.drawing.append(List[Point]())
         if context.mouse.down() and len(self.drawing) > 0:
             var points = 0
             for stroke in self.drawing:
@@ -72,8 +72,8 @@ struct App(Program):
         ]
         for i in range(3):
             var x = (Float64(i) - 1.0) * _COLUMN
-            var start = Point2D(x - 120, 300)
-            var end = Point2D(x + 120, 300)
+            var start = Point(x - 120, 300)
+            var end = Point(x + 120, 300)
             with canvas.style(
                 stroke=_STROKE, stroke_thickness=36, stroke_cap=caps[i]
             ):

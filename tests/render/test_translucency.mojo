@@ -319,7 +319,7 @@ struct FadedImageShadow(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.opacity(0.5)
-        canvas.shadow(color=Color.GREEN, offset=Vector2D(40, 0), blur=0)
+        canvas.shadow(color=Color.GREEN, offset=Vector(40, 0), blur=0)
         canvas.image(Image.solid(20, 20, Color(255, 0, 0)), (0, 0))
 
 
@@ -341,9 +341,7 @@ struct TintedImageShadow(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.shadow(
-            color=Color(200, 200, 200), offset=Vector2D(40, 0), blur=0
-        )
+        canvas.shadow(color=Color(200, 200, 200), offset=Vector(40, 0), blur=0)
         with canvas.style(tint=Color(255, 128, 0)):
             canvas.image(Image.solid(20, 20, Color(200, 100, 255)), (0, 0))
 

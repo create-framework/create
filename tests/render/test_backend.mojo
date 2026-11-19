@@ -30,7 +30,7 @@ from create.render._command import (
     bezier_chain_command,
 )
 from create.math.matrix import _apply as mat_apply, rotate
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 
 comptime _W = 100
@@ -380,7 +380,7 @@ def test_translucent_bezier_composites_each_pixel_once() raises -> None:
 def test_translucent_bezier_chain_composites_once_at_the_joint() raises -> None:
     # Two curves meeting smoothly at the origin: one stroke, so the joint
     # composites once like everywhere else.
-    var chain: List[Point2D] = [
+    var chain: List[Point] = [
         (-45.0, -20.0),
         (-30.0, 40.0),
         (-10.0, 40.0),
@@ -410,17 +410,17 @@ def test_translucent_bezier_chain_composites_once_at_the_joint() raises -> None:
     assert_true(painted > 0)
 
 
-def _straight(a: Point2D, b: Point2D) -> Bezier:
+def _straight(a: Point, b: Point) -> Bezier:
     return Bezier(a, a + (b - a) / 3.0, b - (b - a) / 3.0, b)
 
 
 def test_translucent_closed_bezier_chain_has_no_seam() raises -> None:
     # A triangle of straight curves, closing at a sharp corner: mitred like
     # the other two, so no notch outside it and no double blend inside.
-    var a = Point2D(-40.0, -30.0)
-    var b = Point2D(40.0, -30.0)
-    var apex = Point2D(0.0, 40.0)
-    var chain: List[Point2D] = [a]
+    var a = Point(-40.0, -30.0)
+    var b = Point(40.0, -30.0)
+    var apex = Point(0.0, 40.0)
+    var chain: List[Point] = [a]
     for side in [_straight(a, b), _straight(b, apex), _straight(apex, a)]:
         chain.append(side.control1)
         chain.append(side.control2)
@@ -438,7 +438,7 @@ def test_translucent_closed_bezier_chain_has_no_seam() raises -> None:
     assert_true(once != Color.BLACK and once != Color.WHITE)
     # Three units out from the seam's corner, along its bisector: inside the
     # mitre, outside both butt ends.
-    var centroid = Point2D(0.0, -20.0 / 3.0)
+    var centroid = Point(0.0, -20.0 / 3.0)
     var outward = (a - centroid).normalize()
     var tip = a + outward * 3.0
     var q = mat_apply(_base(), tip.x, tip.y)
@@ -708,7 +708,7 @@ def _shadowed(fill: Color, shadow: Color) -> Style:
     var s = _solid(fill)
     s.shadow_enabled = True
     s.shadow_color = shadow
-    s.shadow_offset = Vector2D(10, -10)
+    s.shadow_offset = Vector(10, -10)
     s.shadow_blur = 0.0
     return s^
 
@@ -824,7 +824,7 @@ def test_bezier_casts_its_stroke_at_the_offset() raises -> None:
 def _blurred(fill: Color, blur: Float64) -> Style:
     """White ink blurred by `blur`, thrown 60 units right of its shape."""
     var s = _shadowed(fill, Color.WHITE)
-    s.shadow_offset = Vector2D(60, 0)
+    s.shadow_offset = Vector(60, 0)
     s.shadow_blur = blur
     return s^
 
@@ -913,7 +913,7 @@ def _blurred_image_frame(
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     var s = _blurred(Color.GREEN, 8.0)
-    s.shadow_offset = Vector2D(40, 0)
+    s.shadow_offset = Vector(40, 0)
     cmds.append(image_command(_base(), s^, -10.0, 0.0, 20.0, 20.0, image, 2, 2))
     backend.replay(mem.surface(), cmds, 1.0)
 
@@ -947,7 +947,7 @@ def test_a_blurred_shadow_turns_with_its_image() raises -> None:
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     var s = _blurred(Color.GREEN, 4.0)
-    s.shadow_offset = Vector2D(40, 0)
+    s.shadow_offset = Vector(40, 0)
     cmds.append(
         image_command(
             _base() @ rotate(PI / 4.0), s^, 0.0, 0.0, 20.0, 20.0, image, 2, 2
@@ -967,7 +967,7 @@ def test_a_blurred_text_shadow_is_softer_than_a_hard_one() raises -> None:
     var hard = _shadowed(Color.GREEN, Color.RED)
     hard.text_color = Color.GREEN
     hard.font_size = 40
-    hard.shadow_offset = Vector2D(0, 0)
+    hard.shadow_offset = Vector(0, 0)
     var soft = hard.copy()
     soft.shadow_blur = 8.0
     var a = List[RenderCommand]()
@@ -999,7 +999,7 @@ def test_a_blurred_bezier_shadow_fades_past_the_stroke() raises -> None:
     hard.stroke_enabled = True
     hard.stroke_color = Color.GREEN
     hard.stroke_thickness = 4
-    hard.shadow_offset = Vector2D(0, 0)
+    hard.shadow_offset = Vector(0, 0)
     var soft = hard.copy()
     soft.shadow_blur = 8.0
     var a = List[RenderCommand]()
@@ -1030,7 +1030,7 @@ def test_a_blurred_bezier_shadow_fades_past_the_stroke() raises -> None:
     assert_equal(mb.pixel(_W - 3, _H - 3), Color.BLACK)
 
 
-def _inset(fill: Color, offset: Vector2D, blur: Float64 = 0.0) -> Style:
+def _inset(fill: Color, offset: Vector, blur: Float64 = 0.0) -> Style:
     """`fill` with a red inset shadow thrown by `offset`."""
     var s = _shadowed(fill, Color.RED)
     s.shadow_inset = True
@@ -1046,7 +1046,7 @@ def test_an_inset_shadow_bands_the_edges_the_offset_leaves() raises -> None:
     cmds.append(clear_command(Color.BLACK))
     cmds.append(
         rect_command(
-            _base(), _inset(Color.WHITE, Vector2D(4, -4)), 0.0, 0.0, 40.0, 40.0
+            _base(), _inset(Color.WHITE, Vector(4, -4)), 0.0, 0.0, 40.0, 40.0
         )
     )
     var m = _replay(cmds)
@@ -1065,7 +1065,7 @@ def test_an_inset_shadow_bands_the_edges_the_offset_leaves() raises -> None:
 
 def test_an_inset_shadow_stays_inside_the_stroke() raises -> None:
     for blur in [0.0, 8.0]:
-        var s = _inset(Color.WHITE, Vector2D(4, -4), blur)
+        var s = _inset(Color.WHITE, Vector(4, -4), blur)
         s.stroke_enabled = True
         s.stroke_color = Color.BLUE
         s.stroke_thickness = 3
@@ -1095,7 +1095,7 @@ def test_a_blurred_inset_shadow_fades_inwards() raises -> None:
     cmds.append(
         rect_command(
             _base(),
-            _inset(Color.BLACK, Vector2D(4, -4), 8.0),
+            _inset(Color.BLACK, Vector(4, -4), 8.0),
             0.0,
             0.0,
             60.0,
@@ -1118,7 +1118,7 @@ def test_a_blurred_inset_shadow_fades_inwards() raises -> None:
 
 
 def test_spread_shrinks_an_inset_silhouette_all_round() raises -> None:
-    var s = _inset(Color.WHITE, Vector2D(0, 0))
+    var s = _inset(Color.WHITE, Vector(0, 0))
     s.shadow_spread = 5.0
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
@@ -1134,11 +1134,11 @@ def test_spread_shrinks_an_inset_silhouette_all_round() raises -> None:
 def test_circles_and_triangles_take_inset_shadows_inside_only() raises -> None:
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
-    var cs = _inset(Color.WHITE, Vector2D(6, -6))
+    var cs = _inset(Color.WHITE, Vector(6, -6))
     # Unfilled: an inset shadow paints anyway.
     cs.fill_enabled = False
     cmds.append(circle_command(_base(), cs, -25.0, 25.0, 20.0))
-    var ts = _inset(Color.WHITE, Vector2D(6, -6))
+    var ts = _inset(Color.WHITE, Vector(6, -6))
     cmds.append(
         triangle_command(
             _base(), ts, 5.0, -45.0, 45.0, -45.0, 25.0, -5.0, corner_radius=4.0
@@ -1167,7 +1167,7 @@ def test_circles_and_triangles_take_inset_shadows_inside_only() raises -> None:
 
 
 def test_lines_ignore_inset() raises -> None:
-    var s = _inset(Color.WHITE, Vector2D(4, -4))
+    var s = _inset(Color.WHITE, Vector(4, -4))
     s.stroke_enabled = True
     s.stroke_color = Color.WHITE
     s.stroke_thickness = 6
@@ -1181,7 +1181,7 @@ def test_lines_ignore_inset() raises -> None:
 
 
 def test_beziers_ignore_inset() raises -> None:
-    var s = _inset(Color.WHITE, Vector2D(4, -4))
+    var s = _inset(Color.WHITE, Vector(4, -4))
     s.stroke_enabled = True
     s.stroke_color = Color.WHITE
     s.stroke_thickness = 6

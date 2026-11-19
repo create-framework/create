@@ -114,12 +114,10 @@ def test_alignment_leaves_a_stroke_off_shape_alone() raises -> None:
 
 
 def _gradient_at(
-    kind: Int, alignment: StrokeAlign, position: Point2D
+    kind: Int, alignment: StrokeAlign, position: Point
 ) raises -> Color:
     var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
-    canvas.fill(
-        Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.RIGHT)
-    )
+    canvas.fill(Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT))
     canvas.stroke(Color.WHITE, 6)
     canvas.stroke_alignment(alignment)
     if kind == _RECT:
@@ -138,8 +136,8 @@ def test_a_gradient_stays_where_the_shape_is() raises -> None:
         for i in range(3):
             var x = -4.5 + 7.0 * Float64(i)
             assert_equal(
-                _gradient_at(kind, StrokeAlign.OUTSIDE, Point2D(x, 0)),
-                _gradient_at(kind, StrokeAlign.INSIDE, Point2D(x, 0)),
+                _gradient_at(kind, StrokeAlign.OUTSIDE, Point(x, 0)),
+                _gradient_at(kind, StrokeAlign.INSIDE, Point(x, 0)),
             )
 
 
@@ -150,7 +148,7 @@ def _ring_shadow(alignment: StrokeAlign) raises -> Canvas:
     canvas.fill_enabled(False)
     canvas.stroke(Color.WHITE, 6)
     canvas.stroke_alignment(alignment)
-    canvas.shadow(color=Color.GREEN, offset=Vector2D(50, 0), blur=0)
+    canvas.shadow(color=Color.GREEN, offset=Vector(50, 0), blur=0)
     canvas.rectangle((-30, 0), 40, 40)
     return canvas^
 

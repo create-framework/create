@@ -13,7 +13,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Shape`.
 ### `center`
 
 ```mojo
-def center(self) -> Point2D
+def center(self) -> Point
 ```
 
 ### `area`
@@ -25,7 +25,7 @@ def area(self) -> Float64
 ### `contains`
 
 ```mojo
-def contains(self, p: Point2D) -> Bool
+def contains(self, p: Point) -> Bool
 ```
 
 Whether `p` is inside, its boundary included.
@@ -33,7 +33,7 @@ Whether `p` is inside, its boundary included.
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 The region moved so its `position` (or, without one, its `center()`) is at `position`; this one is unchanged.

@@ -28,7 +28,7 @@ from create.render._command import (
 )
 from create.render.style import Style
 from create.render._shadow import shadow_command
-from create.math.vector2d import Vector2D
+from create.math.vector import Vector
 from create.render._tessellate import (
     MODE_SHADOW_BOX,
     MODE_SHADOW_EDGES,
@@ -559,7 +559,7 @@ def _blurred(var s: Style) -> Style:
     """`s` casting an unshifted shadow with blur 8: sigma 4, so the shape
     parameters are local units times 1/4 and the quad reaches 16 past."""
     s.shadow_enabled = True
-    s.shadow_offset = Vector2D(0, 0)
+    s.shadow_offset = Vector(0, 0)
     s.shadow_blur = 8.0
     return s^
 

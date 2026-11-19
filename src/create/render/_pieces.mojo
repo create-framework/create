@@ -18,7 +18,7 @@ per frame.
 from std.math import ceil, floor
 
 from create.color.color import Color
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 from ._blur import BlurredMask, blur_alpha
 from ._curve import StrokePieces
@@ -37,16 +37,16 @@ struct Pieces(Movable):
     the style hides.
     """
 
-    var fill_quads: List[Point2D]
-    var fill_polygons: List[List[Point2D]]
-    var stroke_quads: List[Point2D]
-    var stroke_polygons: List[List[Point2D]]
+    var fill_quads: List[Point]
+    var fill_polygons: List[List[Point]]
+    var stroke_quads: List[Point]
+    var stroke_polygons: List[List[Point]]
 
     def __init__(out self):
-        self.fill_quads = List[Point2D]()
-        self.fill_polygons = List[List[Point2D]]()
-        self.stroke_quads = List[Point2D]()
-        self.stroke_polygons = List[List[Point2D]]()
+        self.fill_quads = List[Point]()
+        self.fill_polygons = List[List[Point]]()
+        self.stroke_quads = List[Point]()
+        self.stroke_polygons = List[List[Point]]()
 
     def has_fill(self) -> Bool:
         return len(self.fill_quads) > 0 or len(self.fill_polygons) > 0
@@ -74,8 +74,8 @@ def fill_pieces[
     o: Origin[mut=True]
 ](
     s: Surface[o],
-    quads: List[Point2D],
-    polygons: List[List[Point2D]],
+    quads: List[Point],
+    polygons: List[List[Point]],
     paint: FillPaint,
 ):
     """Fill one part of a shape's pieces: each quad with `fill_quad`, each
@@ -120,8 +120,8 @@ def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
     every pixel centre falls where it would on the device and the mask holds
     the same pixels the pieces paint there. No pieces give an empty mask.
     """
-    var lo = Point2D(Float64.MAX, Float64.MAX)
-    var hi = Point2D(-Float64.MAX, -Float64.MAX)
+    var lo = Point(Float64.MAX, Float64.MAX)
+    var hi = Point(-Float64.MAX, -Float64.MAX)
     _extend(lo, hi, pieces.fill_quads)
     _extend(lo, hi, pieces.stroke_quads)
     for polygon in pieces.fill_polygons:
@@ -138,7 +138,7 @@ def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
     # Filled white on a scratch surface, so the mask is the same pixels the
     # hard pieces paint; only its alpha is kept.
     var scratch = MemorySurface(width, height)
-    var shift = Point2D(Float64(x0), Float64(y0))
+    var shift = Point(Float64(x0), Float64(y0))
     var s = scratch.surface()
     fill_pieces(
         s,
@@ -160,22 +160,22 @@ def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
     return PlacedMask(mask^, x0 - pad, y0 - pad)
 
 
-def _extend(mut lo: Point2D, mut hi: Point2D, points: List[Point2D]):
+def _extend(mut lo: Point, mut hi: Point, points: List[Point]):
     """Grow the box `lo`..`hi` to hold `points`."""
     for p in points:
-        lo = Point2D(min(lo.x, p.x), min(lo.y, p.y))
-        hi = Point2D(max(hi.x, p.x), max(hi.y, p.y))
+        lo = Point(min(lo.x, p.x), min(lo.y, p.y))
+        hi = Point(max(hi.x, p.x), max(hi.y, p.y))
 
 
-def _shifted(points: List[Point2D], by: Point2D) -> List[Point2D]:
-    var out = List[Point2D](capacity=len(points))
+def _shifted(points: List[Point], by: Point) -> List[Point]:
+    var out = List[Point](capacity=len(points))
     for p in points:
-        out.append(Point2D(p.x - by.x, p.y - by.y))
+        out.append(Point(p.x - by.x, p.y - by.y))
     return out^
 
 
-def _shifted(polygons: List[List[Point2D]], by: Point2D) -> List[List[Point2D]]:
-    var out = List[List[Point2D]](capacity=len(polygons))
+def _shifted(polygons: List[List[Point]], by: Point) -> List[List[Point]]:
+    var out = List[List[Point]](capacity=len(polygons))
     for polygon in polygons:
         out.append(_shifted(polygon, by))
     return out^

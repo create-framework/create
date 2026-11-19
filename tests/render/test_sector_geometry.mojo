@@ -12,7 +12,7 @@ from create.math.matrix import (
     scale,
     translate,
 )
-from create.math.point2d import Point2D
+from create.math.point import Point
 from create.color.color import Color
 from create.render.style import Style
 from create.render._pieces import Pieces
@@ -61,7 +61,7 @@ def _quads(
     return sector_quads(c, c.transform, 1.0)
 
 
-def _paint(mut surface: MemorySurface, corners: List[Point2D]):
+def _paint(mut surface: MemorySurface, corners: List[Point]):
     for i in range(0, len(corners), 4):
         var qx = Array[Float64, 4](fill=0.0)
         var qy = Array[Float64, 4](fill=0.0)
@@ -82,7 +82,7 @@ def _painted(q: Pieces) -> MemorySurface:
 
 def _once() -> Color:
     var surface = MemorySurface(1, 1)
-    var corners: List[Point2D] = [
+    var corners: List[Point] = [
         (0.0, 0.0),
         (1.0, 0.0),
         (1.0, 1.0),
@@ -92,7 +92,7 @@ def _once() -> Color:
     return surface.pixel(0, 0)
 
 
-def _signed_distance(s: Sector, p: Point2D) -> Float64:
+def _signed_distance(s: Sector, p: Point) -> Float64:
     """How far `p` lies inside the sector's edge; negative outside."""
     if not s.contains(p):
         return -p.distance(s.closest_point(p))
@@ -136,7 +136,7 @@ def _assert_tiles(
         for x in range(_SIZE):
             var color = surface.pixel(x, y)
             assert_true(color.a == 0 or color == once)
-            var p = Point2D(mat_apply(back, Float64(x) + 0.5, Float64(y) + 0.5))
+            var p = Point(mat_apply(back, Float64(x) + 0.5, Float64(y) + 0.5))
             var d = _signed_distance(s, p)
             if abs(d + grow) > near:
                 assert_equal(color.a != 0, d >= -grow)
@@ -144,7 +144,7 @@ def _assert_tiles(
                 assert_equal(fill.pixel(x, y).a != 0, d >= t - grow)
 
 
-def _convex(corners: List[Point2D], i: Int) -> Bool:
+def _convex(corners: List[Point], i: Int) -> Bool:
     """Whether the quad at `i` turns one way only, repeated corners aside."""
     var positive = False
     var negative = False
@@ -168,7 +168,7 @@ def test_sector_command_records_its_geometry() raises -> None:
     var c = sector_command(identity[3](), Style(), 1.0, 2.0, 3.0, 0.5, -1.0)
     assert_true(c.payload.isa[SectorPayload]())
     ref sector = c.payload[SectorPayload]
-    assert_equal(sector.center, Point2D(1.0, 2.0))
+    assert_equal(sector.center, Point(1.0, 2.0))
     assert_equal(sector.r, 3.0)
     assert_equal(sector.start_angle, 0.5)
     assert_equal(sector.sweep_angle, -1.0)
@@ -198,7 +198,7 @@ def test_stroke_is_as_thick_as_asked() raises -> None:
     var hi = 0.0
     for p in q.fill_quads:
         lo = min(lo, min(p.x, p.y))
-        hi = max(hi, p.distance(Point2D(0.0, 0.0)))
+        hi = max(hi, p.distance(Point(0.0, 0.0)))
     assert_true(abs(lo - 5.0) < 1e-9)
     assert_true(abs(hi - 19.0) < 1e-9)
 

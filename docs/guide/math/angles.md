@@ -56,8 +56,8 @@ for i in range(12):
     canvas.circle((cos(angle) * 150, sin(angle) * 150), 8)
 ```
 
-`Vector2D.from_angle(angle, length)` does the same and gives a vector, which is usually the more
-convenient form: `Vector2D.from_angle(angle, 150)` (see [Points and
+`Vector.from_angle(angle, length)` does the same and gives a vector, which is usually the more
+convenient form: `Vector.from_angle(angle, 150)` (see [Points and
 vectors](points-and-vectors.md#angles)).
 
 Moving the angle with the time makes something go round in a circle:
@@ -65,7 +65,7 @@ Moving the angle with the time makes something go round in a circle:
 ```mojo
 # In `update`: a moon circling the origin once every 4 seconds.
 var angle = context.time.elapsed * TAU / 4
-canvas.circle(Point2D(0, 0) + Vector2D.from_angle(angle, 200), 20)
+canvas.circle(Point(0, 0) + Vector.from_angle(angle, 200), 20)
 ```
 
 `sin` on its own swings smoothly between -1 and 1 as its angle grows, which makes it handy for
@@ -74,7 +74,7 @@ anything that should rise and fall, such as a bobbing or pulsing motion:
 ```mojo
 # In `update`: a coin bobbing 10 units up and down, once a second.
 var bob = sin(context.time.elapsed * TAU) * 10
-canvas.image(self.coin, self.position + Vector2D(0, bob))
+canvas.image(self.coin, self.position + Vector(0, bob))
 ```
 
 ## From a direction to an angle
@@ -86,7 +86,7 @@ canvas.image(self.coin, self.position + Vector2D(0, bob))
 # In `update`: turn a turret to face the mouse.
 var to_mouse = context.mouse.position - self.turret
 var angle = atan2(to_mouse.y, to_mouse.x)
-with canvas.transform(translate(Vector2D(self.turret)) @ rotate(angle)):
+with canvas.transform(translate(Vector(self.turret)) @ rotate(angle)):
     canvas.rectangle((30, 0), 60, 12)  # the barrel, pointing along +x before turning
 ```
 

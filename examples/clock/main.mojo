@@ -17,7 +17,7 @@ comptime _HAND = Color(240, 236, 222)
 comptime _SECONDS = Color(226, 46, 56)
 comptime _HINT = Color(176, 172, 162)
 
-comptime _CENTER = Point2D(-230.0, 0.0)
+comptime _CENTER = Point(-230.0, 0.0)
 comptime _RADIUS = 200.0
 comptime _TEXT_X = 260.0
 
@@ -66,7 +66,7 @@ def _clock_angle(fraction: Float64) -> Float64:
 
 def _hand(fraction: Float64, length: Float64) -> Line:
     var angle = _clock_angle(fraction)
-    return Line(_CENTER, _CENTER + Vector2D.from_angle(angle, length))
+    return Line(_CENTER, _CENTER + Vector.from_angle(angle, length))
 
 
 def _two_digits(value: Int) -> String:
@@ -102,7 +102,7 @@ struct Clock(Program):
         # Sixty ticks, every fifth longer and heavier: the hours.
         for i in range(60):
             var hour_mark = i % 5 == 0
-            var direction = Vector2D.from_angle(_clock_angle(Float64(i) / 60))
+            var direction = Vector.from_angle(_clock_angle(Float64(i) / 60))
             var inner = _RADIUS * (0.82 if hour_mark else 0.9)
             with canvas.style(
                 stroke=_HAND if hour_mark else _TRACK,

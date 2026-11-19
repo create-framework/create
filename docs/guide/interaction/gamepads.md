@@ -35,7 +35,7 @@ frame the pad disconnects.
 
 ## Sticks
 
-The sticks, `left_stick` and `right_stick`, are `Vector2D`s, with **y increasing upwards** like
+The sticks, `left_stick` and `right_stick`, are `Vector`s, with **y increasing upwards** like
 everything else in Create, and never longer than 1: pushed fully in any direction, a stick's length
 is 1.
 

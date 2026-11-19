@@ -14,11 +14,11 @@ from create.geometry import (
     Sector,
     Triangle,
 )
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 
-def _assert_point_near(p: Point2D, q: Point2D, tol: Float64 = 1e-9) raises:
+def _assert_point_near(p: Point, q: Point, tol: Float64 = 1e-9) raises:
     assert_almost_equal(p.x, q.x, atol=tol)
     assert_almost_equal(p.y, q.y, atol=tol)
 
@@ -27,7 +27,7 @@ def test_prints_in_keyword_form() raises -> None:
     assert_equal(
         String(Sector((1.0, 2.0), 10, 0.5, -1.5)),
         (
-            "Sector(position=Point2D(1.0, 2.0), radius=10.0, start_angle=0.5,"
+            "Sector(position=Point(1.0, 2.0), radius=10.0, start_angle=0.5,"
             " sweep_angle=-1.5)"
         ),
     )
@@ -40,7 +40,7 @@ def test_equality() raises -> None:
 
 def test_center_is_the_tip() raises -> None:
     var s = Sector((3, 4), 10, 0.0, PI / 2.0)
-    assert_equal(s.center(), Point2D(3.0, 4.0))
+    assert_equal(s.center(), Point(3.0, 4.0))
     assert_almost_equal(s.end_angle(), PI / 2.0)
 
 
@@ -64,111 +64,111 @@ def test_bounds_take_in_the_tip() raises -> None:
 
 def test_contains_below_a_half_turn() raises -> None:
     var s = Sector((0, 0), 10, 0.0, PI / 2.0)
-    assert_true(s.contains(Point2D(3.0, 3.0)))
-    assert_true(not s.contains(Point2D(-3.0, 3.0)))
-    assert_true(not s.contains(Point2D(3.0, -3.0)))
-    assert_true(not s.contains(Point2D(8.0, 8.0)))
+    assert_true(s.contains(Point(3.0, 3.0)))
+    assert_true(not s.contains(Point(-3.0, 3.0)))
+    assert_true(not s.contains(Point(3.0, -3.0)))
+    assert_true(not s.contains(Point(8.0, 8.0)))
     # Directly opposite the slice: not mistaken for inside.
-    assert_true(not s.contains(Point2D(-3.0, -3.0)))
+    assert_true(not s.contains(Point(-3.0, -3.0)))
 
 
 def test_contains_a_clockwise_sweep() raises -> None:
     var s = Sector((0, 0), 10, 0.0, -PI / 2.0)
-    assert_true(s.contains(Point2D(3.0, -3.0)))
-    assert_true(not s.contains(Point2D(3.0, 3.0)))
+    assert_true(s.contains(Point(3.0, -3.0)))
+    assert_true(not s.contains(Point(3.0, 3.0)))
 
 
 def test_contains_a_half_turn() raises -> None:
     var s = Sector((0, 0), 10, 0.0, PI)
-    assert_true(s.contains(Point2D(0.0, 5.0)))
-    assert_true(s.contains(Point2D(-5.0, 0.0)))
-    assert_true(s.contains(Point2D(5.0, 0.0)))
-    assert_true(not s.contains(Point2D(0.0, -0.001)))
+    assert_true(s.contains(Point(0.0, 5.0)))
+    assert_true(s.contains(Point(-5.0, 0.0)))
+    assert_true(s.contains(Point(5.0, 0.0)))
+    assert_true(not s.contains(Point(0.0, -0.001)))
 
 
 def test_contains_just_past_a_half_turn() raises -> None:
     var s = Sector((0, 0), 10, 0.0, PI + 0.1)
-    assert_true(s.contains(Point2D(-5.0, -0.1)))
-    assert_true(not s.contains(Point2D(-5.0, -1.0)))
-    assert_true(not s.contains(Point2D(0.0, -5.0)))
+    assert_true(s.contains(Point(-5.0, -0.1)))
+    assert_true(not s.contains(Point(-5.0, -1.0)))
+    assert_true(not s.contains(Point(0.0, -5.0)))
 
 
 def test_three_quarters_leave_out_one_quadrant() raises -> None:
     # From +x round to -y: all but the lower right quadrant.
     var s = Sector((0, 0), 10, 0.0, 1.5 * PI)
-    assert_true(s.contains(Point2D(3.0, 3.0)))
-    assert_true(s.contains(Point2D(-3.0, 3.0)))
-    assert_true(s.contains(Point2D(-3.0, -3.0)))
-    assert_true(not s.contains(Point2D(3.0, -3.0)))
+    assert_true(s.contains(Point(3.0, 3.0)))
+    assert_true(s.contains(Point(-3.0, 3.0)))
+    assert_true(s.contains(Point(-3.0, -3.0)))
+    assert_true(not s.contains(Point(3.0, -3.0)))
     # Its boundary radii are inside.
-    assert_true(s.contains(Point2D(5.0, 0.0)))
-    assert_true(s.contains(Point2D(0.0, -5.0)))
+    assert_true(s.contains(Point(5.0, 0.0)))
+    assert_true(s.contains(Point(0.0, -5.0)))
 
 
 def test_contains_the_boundary() raises -> None:
     var s = Sector((1, 2), 10, 0.3, 1.2)
-    assert_true(s.contains(Point2D(1.0, 2.0)))
+    assert_true(s.contains(Point(1.0, 2.0)))
     assert_true(s.contains(s.arc().at(0.0)))
     assert_true(s.contains(s.arc().at(0.5)))
     assert_true(s.contains(s.arc().at(1.0)))
-    assert_true(s.contains(Point2D(1, 2).lerp(s.arc().at(1.0), 0.5)))
+    assert_true(s.contains(Point(1, 2).lerp(s.arc().at(1.0), 0.5)))
 
 
 def test_a_full_turn_is_the_disc() raises -> None:
     var s = Sector((0, 0), 10, 1.0, -TAU)
-    assert_true(s.contains(Point2D(-7.0, -7.0)))
-    assert_true(s.contains(Point2D(0.0, -10.0)))
-    assert_true(not s.contains(Point2D(0.0, -10.001)))
+    assert_true(s.contains(Point(-7.0, -7.0)))
+    assert_true(s.contains(Point(0.0, -10.0)))
+    assert_true(not s.contains(Point(0.0, -10.001)))
 
 
 def test_closest_point_inside_is_itself() raises -> None:
     var s = Sector((0, 0), 10, 0.0, PI / 2.0)
-    assert_equal(s.closest_point((2.0, 3.0)), Point2D(2.0, 3.0))
+    assert_equal(s.closest_point((2.0, 3.0)), Point(2.0, 3.0))
 
 
 def test_closest_point_beyond_the_arc() raises -> None:
     var s = Sector((0, 0), 10, 0.0, PI / 2.0)
-    _assert_point_near(s.closest_point((0.0, 20.0)), Point2D(0.0, 10.0))
+    _assert_point_near(s.closest_point((0.0, 20.0)), Point(0.0, 10.0))
     _assert_point_near(s.closest_point((30.0, 30.0)), s.arc().at(0.5))
 
 
 def test_closest_point_beside_a_radius() raises -> None:
     var s = Sector((0, 0), 10, 0.0, PI / 2.0)
-    _assert_point_near(s.closest_point((4.0, -3.0)), Point2D(4.0, 0.0))
-    _assert_point_near(s.closest_point((-3.0, 6.0)), Point2D(0.0, 6.0))
+    _assert_point_near(s.closest_point((4.0, -3.0)), Point(4.0, 0.0))
+    _assert_point_near(s.closest_point((-3.0, 6.0)), Point(0.0, 6.0))
 
 
 def test_closest_point_in_the_missing_wedge() raises -> None:
     # Three quarters, missing the lower right: the nearer of the two radii
     # bounding it, along +x and -y.
     var s = Sector((0, 0), 10, 0.0, 1.5 * PI)
-    _assert_point_near(s.closest_point((3.0, -1.0)), Point2D(3.0, 0.0))
-    _assert_point_near(s.closest_point((1.0, -3.0)), Point2D(0.0, -3.0))
+    _assert_point_near(s.closest_point((3.0, -1.0)), Point(3.0, 0.0))
+    _assert_point_near(s.closest_point((1.0, -3.0)), Point(0.0, -3.0))
 
 
 def test_zero_radius_is_the_tip() raises -> None:
     var s = Sector((4, 5), 0, 0.0, PI)
-    assert_true(s.contains(Point2D(4.0, 5.0)))
-    assert_true(not s.contains(Point2D(4.0, 5.001)))
+    assert_true(s.contains(Point(4.0, 5.0)))
+    assert_true(not s.contains(Point(4.0, 5.001)))
     assert_equal(s.area(), 0.0)
-    _assert_point_near(s.closest_point((10.0, 10.0)), Point2D(4.0, 5.0))
+    _assert_point_near(s.closest_point((10.0, 10.0)), Point(4.0, 5.0))
 
 
 def test_zero_sweep_is_one_radius() raises -> None:
     var s = Sector((0, 0), 10, PI / 2.0, 0.0)
-    assert_true(s.contains(Point2D(0.0, 5.0)))
-    assert_true(not s.contains(Point2D(0.1, 5.0)))
-    assert_true(not s.contains(Point2D(0.0, -5.0)))
+    assert_true(s.contains(Point(0.0, 5.0)))
+    assert_true(not s.contains(Point(0.1, 5.0)))
+    assert_true(not s.contains(Point(0.0, -5.0)))
     assert_equal(s.area(), 0.0)
-    _assert_point_near(s.closest_point((3.0, 5.0)), Point2D(0.0, 5.0))
+    _assert_point_near(s.closest_point((3.0, 5.0)), Point(0.0, 5.0))
 
 
 def test_move_to_and_translate_move_the_tip() raises -> None:
     var s = Sector((0, 0), 5, 0.0, 1.0)
     s = s.move_to((3.0, 4.0))
-    assert_equal(s.position, Point2D(3.0, 4.0))
-    s = s.translate(Vector2D(1.0, -1.0))
-    assert_equal(s.position, Point2D(4.0, 3.0))
+    assert_equal(s.position, Point(3.0, 4.0))
+    s = s.translate(Vector(1.0, -1.0))
+    assert_equal(s.position, Point(4.0, 3.0))
 
 
 def _assert_overlap(a: Sector, b: Circle, expected: Bool) raises:
@@ -307,8 +307,8 @@ def test_a_line_across_the_missing_wedge_is_not_contained() raises -> None:
     # Both ends inside the three-quarter sector, the middle in the missing
     # lower right quadrant.
     var s = Sector((0, 0), 10, 0.0, 1.5 * PI)
-    assert_true(s.contains(Point2D(5.0, 1.0)))
-    assert_true(s.contains(Point2D(-1.0, -5.0)))
+    assert_true(s.contains(Point(5.0, 1.0)))
+    assert_true(s.contains(Point(-1.0, -5.0)))
     assert_true(not s.contains(Line((5, 1), (-1, -5))))
     # Round the other side of the tip, it is.
     assert_true(s.contains(Line((5, 1), (-1, 1))))
@@ -403,7 +403,7 @@ def _sampled_contains(s: Sector, l: Line, n: Int) -> Bool:
 def _sampled_contains(s: Sector, c: Circle, n: Int) -> Bool:
     for i in range(n):
         var angle = TAU * Float64(i) / Float64(n)
-        var p = Point2D(
+        var p = Point(
             c.position.x + c.radius * cos(angle),
             c.position.y + c.radius * sin(angle),
         )
@@ -429,8 +429,8 @@ def test_contains_agrees_with_sampling_for_lines() raises -> None:
                 for x1 in range(-10, 11, 4):
                     for y1 in range(-10, 11, 4):
                         var l = Line(
-                            Point2D(Float64(x0) + 0.5, Float64(y0) + 0.25),
-                            Point2D(Float64(x1) + 0.5, Float64(y1) + 0.25),
+                            Point(Float64(x0) + 0.5, Float64(y0) + 0.25),
+                            Point(Float64(x1) + 0.5, Float64(y1) + 0.25),
                         )
                         var sampled = _sampled_contains(s, l, 100)
                         if sampled != s.contains(l):
@@ -444,7 +444,7 @@ def test_contains_agrees_with_sampling_for_circles() raises -> None:
             for y in range(-9, 10, 3):
                 for r in range(1, 5):
                     var c = Circle(
-                        Point2D(Float64(x) + 0.25, Float64(y) + 0.5),
+                        Point(Float64(x) + 0.25, Float64(y) + 0.5),
                         Float64(r) * 0.9,
                     )
                     var sampled = _sampled_contains(s, c, 180)

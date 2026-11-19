@@ -34,7 +34,7 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Movable`
 
 ## Fields
 
-- `points: List[Point2D]`
+- `points: List[Point]`
 - `alpha: Float64`
 - `closed: Bool`
 
@@ -44,7 +44,7 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Movable`
 @staticmethod
 def __init__(
     out self,
-    var points: List[Point2D],
+    var points: List[Point],
     alpha: Float64 = 0.5,
     closed: Bool = False,
 )
@@ -74,7 +74,7 @@ first; fewer than two distinct points give no curves.
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point2D
+def at(self, t: Float64) -> Point
 ```
 
 The point at parameter `t`, clamped to 0..1: a spline has no natural continuation past its ends.
@@ -82,7 +82,7 @@ The point at parameter `t`, clamped to 0..1: a spline has no natural continuatio
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector2D
+def tangent(self, t: Float64) -> Vector
 ```
 
 The derivative with respect to `t` at `t`, clamped to 0..1: the direction of travel, with a magnitude that is the speed `t` moves at. A joint belongs to the stretch that starts there. Zero when there is no curve.
@@ -98,7 +98,7 @@ The distance along the curve from the first point to the last, as each stretch's
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point2D
+def at_distance(self, distance: Float64) -> Point
 ```
 
 The point `distance` along the curve from the first point, clamped to the curve's ends. Equal steps in `distance` are equal steps along the curve. Measures every stretch per call; sample once per frame per entity, not in a tight loop.
@@ -114,7 +114,7 @@ The tightest axis-aligned rectangle around the curve. A spline with no curve giv
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point2D]
+def flatten(self, tolerance: Float64) -> List[Point]
 ```
 
 Points along the curve, from the first point to the last inclusive, straying from it by at most `tolerance` between them: each stretch's `Bezier.flatten`, joined without repeating the point where one stretch meets the next.
@@ -122,7 +122,7 @@ Points along the curve, from the first point to the last inclusive, straying fro
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 The point on the curve nearest `p`: the nearest of each stretch's `Bezier.closest_point`. A spline with no curve gives its one point.
@@ -130,7 +130,7 @@ The point on the curve nearest `p`: the nearest of each stretch's `Bezier.closes
 ### `intersects`
 
 ```mojo
-def intersects(self, p: Point2D) -> Bool
+def intersects(self, p: Point) -> Bool
 def intersects(self, l: Line) -> Bool
 def intersects(self, a: Arc) -> Bool
 def intersects(self, b: Bezier) -> Bool
@@ -147,7 +147,7 @@ def intersects(self, other: Self) -> Bool
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

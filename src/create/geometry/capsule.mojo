@@ -1,5 +1,5 @@
 from std.math import atan2, min, sqrt
-from create.math import PI, Point2D, Vector2D
+from create.math import PI, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
 from .drawable import Curve, DrawTarget, Region
@@ -47,16 +47,16 @@ struct Capsule(
     tested as its outline, as everywhere. `radius` is assumed non-negative.
     """
 
-    var start: Point2D
-    var end: Point2D
+    var start: Point
+    var end: Point
     var radius: Float64
 
-    def __init__(out self, start: Point2D, end: Point2D, radius: Float64):
+    def __init__(out self, start: Point, end: Point, radius: Float64):
         self.start = start
         self.end = end
         self.radius = radius
 
-    def __init__(out self, start: Point2D, end: Point2D, radius: Int):
+    def __init__(out self, start: Point, end: Point, radius: Int):
         self = Capsule(start, end, Float64(radius))
 
     def __eq__(self, other: Capsule) -> Bool:
@@ -80,7 +80,7 @@ struct Capsule(
             ")",
         )
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         return self._spine().midpoint()
 
     def area(self) -> Float64:
@@ -98,7 +98,7 @@ struct Capsule(
             abs(self.end.y - self.start.y) + 2.0 * self.radius,
         )
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         var q = self._spine().closest_point(p)
         var d = p - q
         var distance_squared = d.dot(d)
@@ -106,7 +106,7 @@ struct Capsule(
             return p
         return q + d * (self.radius / sqrt(distance_squared))
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         return _distance_squared(self._spine().closest_point(p), p) <= (
             self.radius * self.radius
         )
@@ -206,10 +206,10 @@ struct Capsule(
     def draw_to[T: DrawTarget](self, mut target: T):
         target._capsule(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         return self.translate(position - self.center())
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.start = moved.start + delta
         moved.end = moved.end + delta
@@ -230,18 +230,18 @@ struct Capsule(
         region holds the capsule when it holds both."""
         return [Circle(self.start, self.radius), Circle(self.end, self.radius)]
 
-    def _direction(self) -> Vector2D:
+    def _direction(self) -> Vector:
         """The unit direction from `start` to `end`, +x when they meet."""
         var along = self.end - self.start
         var length = along.magnitude()
         if length == 0.0:
-            return Vector2D(1.0, 0.0)
+            return Vector(1.0, 0.0)
         return along * (1.0 / length)
 
     def _sides(self) -> List[Line]:
         """The two straight edges, counter-clockwise round the capsule."""
         var u = self._direction()
-        var n = Vector2D(-u.y, u.x) * self.radius
+        var n = Vector(-u.y, u.x) * self.radius
         return [
             Line(self.start - n, self.end - n),
             Line(self.end + n, self.start + n),
@@ -257,13 +257,13 @@ struct Capsule(
             Arc(self.start, self.radius, angle + PI / 2.0, PI),
         ]
 
-    def _vertices(self, steps: Int) -> List[Point2D]:
+    def _vertices(self, steps: Int) -> List[Point]:
         """The capsule's outline as a polygon, counter-clockwise: each half
         circle in `steps` chords, its ends on the straight edges. With the
         ends meeting, the circle once round."""
         var u = self._direction()
         var angle = atan2(u.y, u.x)
-        var points = List[Point2D](capacity=2 * steps + 2)
+        var points = List[Point](capacity=2 * steps + 2)
         for i in range(steps + 1):
             var t = angle - PI / 2.0 + PI * Float64(i) / Float64(steps)
             points.append(self.end + _unit(t) * self.radius)
@@ -274,7 +274,7 @@ struct Capsule(
             points.append(self.start + _unit(t) * self.radius)
         return points^
 
-    def _holds_strictly(self, p: Point2D) -> Bool:
+    def _holds_strictly(self, p: Point) -> Bool:
         """Whether everything close round `p` is inside: inside, and off the
         boundary."""
         return _distance_squared(self._spine().closest_point(p), p) < (
@@ -289,7 +289,7 @@ struct Capsule(
 # them is perpendicular to both; for a segment and a circle's arc or an
 # ellipse, those are the curve's points facing straight across the
 # segment, which each function tries alongside the ends.
-def _spine_distance(l: Line, p: Point2D) -> Float64:
+def _spine_distance(l: Line, p: Point) -> Float64:
     return sqrt(_distance_squared(l.closest_point(p), p))
 
 
@@ -302,7 +302,7 @@ def _spine_distance(l: Line, other: Line) -> Float64:
     )
 
 
-def _across(l: Line, p: Point2D) -> Float64:
+def _across(l: Line, p: Point) -> Float64:
     """The distance from `p` straight across to the segment, or the
     largest `Float64` when the perpendicular foot falls off it."""
     var along = l.end - l.start
@@ -328,7 +328,7 @@ def _spine_distance(l: Line, a: Arc) -> Float64:
     var along = l.end - l.start
     var length = along.magnitude()
     if length > 0.0:
-        var n = Vector2D(-along.y, along.x) * (a.radius / length)
+        var n = Vector(-along.y, along.x) * (a.radius / length)
         for k in range(2):
             var p = a.position + (n if k == 0 else -n)
             if a._spans(p):
@@ -355,7 +355,7 @@ def _spine_distance(l: Line, e: Ellipse) -> Float64:
     # points across it, `(a^2 nx, b^2 ny)` scaled onto the curve.
     var reach = sqrt(a * a * along.y * along.y + b * b * along.x * along.x)
     if reach > 0.0:
-        var offset = Vector2D(-a * a * along.y, b * b * along.x) * (1.0 / reach)
+        var offset = Vector(-a * a * along.y, b * b * along.x) * (1.0 / reach)
         for k in range(2):
             best = min(
                 best, _across(l, e.position + (offset if k == 0 else -offset))

@@ -1,7 +1,7 @@
 from std.math import sin, cos, abs, min, max
 
-from .point2d import Point2D
-from .vector2d import Vector2D
+from .point import Point
+from .vector import Vector
 
 
 struct Matrix[rows: Int, cols: Int](
@@ -16,8 +16,8 @@ struct Matrix[rows: Int, cols: Int](
     Build them with the free functions below rather than by hand:
     `identity`, `translate`, `rotate`, `scale`. Compose with
     `@`, which applies right to left — `translate(x, y) @ rotate(a)` rotates
-    first, then moves the rotated result. `apply(m, point)` maps a `Point2D`
-    through it, translation included; `apply(m, vector)` maps a `Vector2D`,
+    first, then moves the rotated result. `apply(m, point)` maps a `Point`
+    through it, translation included; `apply(m, vector)` maps a `Vector`,
     which a translation does not move.
     """
 
@@ -113,7 +113,7 @@ def translate(dx: Float64, dy: Float64) -> Matrix[3, 3]:
     return m^
 
 
-def translate(delta: Vector2D) -> Matrix[3, 3]:
+def translate(delta: Vector) -> Matrix[3, 3]:
     """Move by `delta` in world units, as `shape.translate(delta)` does."""
     return translate(delta.x, delta.y)
 
@@ -145,20 +145,20 @@ def scale(s: Float64) -> Matrix[3, 3]:
     return scale(s, s)
 
 
-def apply(m: Matrix[3, 3], point: Point2D) -> Point2D:
+def apply(m: Matrix[3, 3], point: Point) -> Point:
     """`point` mapped through `m`, translation included."""
     var p = _apply(m, point.x, point.y)
-    return Point2D(p[0], p[1])
+    return Point(p[0], p[1])
 
 
-def apply(m: Matrix[3, 3], vector: Vector2D) -> Vector2D:
+def apply(m: Matrix[3, 3], vector: Vector) -> Vector:
     """`vector` mapped through `m`'s rotation, scale and shear, but not its
     translation: a displacement, unlike a position, is the same wherever it
     starts. So a velocity turns with a `rotate` and stretches with a `scale`,
     and a `translate` leaves it as it is. Meant for the affine matrices
     `translate`, `rotate` and `scale` build; a projective bottom row is
     ignored."""
-    return Vector2D(
+    return Vector(
         m[0, 0] * vector.x + m[0, 1] * vector.y,
         m[1, 0] * vector.x + m[1, 1] * vector.y,
     )
@@ -168,7 +168,7 @@ def _apply(m: Matrix[3, 3], x: Float64, y: Float64) -> Tuple[Float64, Float64]:
     """Transform a 2D point by `m`, dividing through by the homogeneous w.
 
     The scalar form the rasterisers call per vertex; `apply` is the public
-    one, taking a `Point2D`."""
+    one, taking a `Point`."""
     var ox = m[0, 0] * x + m[0, 1] * y + m[0, 2]
     var oy = m[1, 0] * x + m[1, 1] * y + m[1, 2]
     var ow = m[2, 0] * x + m[2, 1] * y + m[2, 2]

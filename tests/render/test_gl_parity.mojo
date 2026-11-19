@@ -192,7 +192,7 @@ def _shadowed(var s: Style) -> Style:
     """`s` casting a hard, opaque shadow down-right."""
     s.shadow_enabled = True
     s.shadow_color = _SHADOW_INK
-    s.shadow_offset = Vector2D(8, -8)
+    s.shadow_offset = Vector(8, -8)
     s.shadow_blur = 0.0
     return s^
 
@@ -978,7 +978,7 @@ struct _Parity(Program):
                     Gradient.linear(
                         Color(0xFF, 0xE0, 0x40),
                         Color(0xC0, 0x20, 0x80),
-                        direction=Vector2D(1, 1),
+                        direction=Vector(1, 1),
                     )
                 )
                 canvas.rectangle((0, 0), 150, 100, corner_radius=18)
@@ -1014,7 +1014,7 @@ struct _Parity(Program):
                     Gradient.linear(
                         Color(0xFF, 0x40, 0x40, 0xF0),
                         Color(0xFF, 0x40, 0x40, 0x30),
-                        direction=Vector2D.RIGHT,
+                        direction=Vector.RIGHT,
                     )
                 )
                 canvas.rectangle((0, 0), 160, 100)
@@ -1044,7 +1044,7 @@ struct _Parity(Program):
                     Gradient.linear(
                         Color(0x40, 0xFF, 0x40),
                         Color(0x20, 0x20, 0xC0),
-                        direction=Vector2D.RIGHT,
+                        direction=Vector.RIGHT,
                     )
                 )
                 canvas.sector((0, 0), 65.0, 0.4, 4.8)
@@ -1061,7 +1061,7 @@ struct _Parity(Program):
                     Gradient.linear(
                         Color(0x40, 0xFF, 0x40),
                         Color(0x20, 0x20, 0xC0),
-                        direction=Vector2D.RIGHT,
+                        direction=Vector.RIGHT,
                     )
                 )
                 canvas.sector((0, 0), 65.0, 0.4, 1.8, corner_radius=12)

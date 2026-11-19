@@ -1,14 +1,14 @@
 # create.math
 
-Maths: `Point2D`, `Vector2D` and `Matrix`, `Random` and `Noise`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
+Maths: `Point`, `Vector` and `Matrix`, `Random` and `Noise`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
 
 ## Types
 
 | Type | Description |
 |---|---|
 | [`Easing`](easing.md) | Which curve `ease` applies. A `Tween` stores one as a field. |
-| [`Point2D`](point2d.md) | A location in world space: `distance`, `lerp`, the affine operators, and an explicit constructor from a `Vector2D` for crossing between the two. |
-| [`Vector2D`](vector2d.md) | A 2D displacement or direction: arithmetic operators, `magnitude`, `normalize`, `dot`, `distance`, `lerp`, the angle helpers `from_angle`, `angle` and `rotate`, the length helpers `with_length` and `limit`, and an explicit constructor from a `Point2D`. |
+| [`Point`](point.md) | A location in world space: `distance`, `lerp`, the affine operators, and an explicit constructor from a `Vector` for crossing between the two. |
+| [`Vector`](vector.md) | A 2D displacement or direction: arithmetic operators, `magnitude`, `normalize`, `dot`, `distance`, `lerp`, the angle helpers `from_angle`, `angle` and `rotate`, the length helpers `with_length` and `limit`, and an explicit constructor from a `Point`. |
 | [`Matrix`](matrix.md) | A fixed-size matrix, row-major, sized at compile time. |
 | [`Random`](random.md) | A seeded pseudo-random generator: `.float()`, `.int()`, `.bool()`. |
 | [`Noise`](noise.md) | Smooth pseudo-random values: `.at(x)`, `.at(position)` and `.at(position, time)`, each in `[0.0, 1.0]`. |

@@ -49,7 +49,7 @@ struct App(Program):
             font_size=56,
             font_weight=FontWeight.BOLD,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(3, -3),
+            shadow_offset=Vector(3, -3),
             shadow_blur=blur / 4.0,
         ):
             canvas.text("Shadows", (0, canvas.top() - 70))
@@ -59,7 +59,7 @@ struct App(Program):
             fill=Color.WHITE,
             stroke_enabled=False,
             shadow=_CARD_SHADOW,
-            shadow_offset=Vector2D(0, -10),
+            shadow_offset=Vector(0, -10),
             shadow_blur=blur * 1.5,
         ):
             canvas.rectangle((-330, 60), 380, 220, corner_radius=18)
@@ -74,7 +74,7 @@ struct App(Program):
             fill=_FIELD,
             stroke=_FIELD_EDGE,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(3, -4),
+            shadow_offset=Vector(3, -4),
             shadow_blur=blur / 2.0,
             shadow_inset=True,
         ):
@@ -90,7 +90,7 @@ struct App(Program):
         # The same turning square twice. On the left the shadow is fixed to
         # the screen, as under a light overhead; on the right it turns with
         # the square.
-        canvas.shadow(_SQUARE_SHADOW, offset=Vector2D(14, -14), blur=blur)
+        canvas.shadow(_SQUARE_SHADOW, offset=Vector(14, -14), blur=blur)
         var square = Rectangle((0, 0), 120, 120, corner_radius=14)
         with canvas.style(fill=_SQUARE, stroke_enabled=False):
             with canvas.transform(translate(170, 110) @ rotate(self.angle)):

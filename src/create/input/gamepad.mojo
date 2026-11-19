@@ -1,4 +1,4 @@
-from create.math.vector2d import Vector2D
+from create.math.vector import Vector
 from .gamepad_button import GamepadButton
 
 # SDL's axis numbering, as `GamepadAxisMoved` carries it.
@@ -17,12 +17,12 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     *pressed*/*released* are the edges, true only in the frame the button
     went down or came up. Name buttons through `GamepadButton`.
 
-    Sticks are `Vector2D`s in screen orientation — y up, like every other
+    Sticks are `Vector`s in screen orientation — y up, like every other
     direction in the library — inside the unit circle, so
     `position += pad.left_stick * speed * context.time.delta` moves at
     `speed` at full tilt and never faster on a diagonal. Each has a radial
     dead zone of `STICK_DEAD_ZONE`, rescaled so the stick still eases up
-    from zero past it: a resting stick reads exactly `Vector2D.ZERO` rather
+    from zero past it: a resting stick reads exactly `Vector.ZERO` rather
     than drifting. Triggers are 0 (released) to 1 (pulled all the way), and
     also buttons, `GamepadButton.LEFT_TRIGGER`/`RIGHT_TRIGGER`, so "fire on
     pull" is `pad.pressed(GamepadButton.RIGHT_TRIGGER)`: down from
@@ -55,8 +55,8 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     # The product name, e.g. "Xbox Series X Controller" — for showing, not
     # for telling layouts apart. Empty when SDL knows none.
     var name: String
-    var left_stick: Vector2D
-    var right_stick: Vector2D
+    var left_stick: Vector
+    var right_stick: Vector
     var left_trigger: Float64
     var right_trigger: Float64
     # The most recent button pressed, compared against `GamepadButton`
@@ -66,8 +66,8 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     var _id: Int
     # Stick positions as reported, before the dead zone, y up. The dead zone
     # needs both axes of a stick and each event brings one.
-    var _left_raw: Vector2D
-    var _right_raw: Vector2D
+    var _left_raw: Vector
+    var _right_raw: Vector
     # 26 buttons and the two triggers, one bit each.
     var _held_buttons: Int
     var _pressed_buttons: Int
@@ -78,14 +78,14 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.connected_this_frame = False
         self.disconnected_this_frame = False
         self.name = ""
-        self.left_stick = Vector2D.ZERO
-        self.right_stick = Vector2D.ZERO
+        self.left_stick = Vector.ZERO
+        self.right_stick = Vector.ZERO
         self.left_trigger = 0.0
         self.right_trigger = 0.0
         self.button = GamepadButton.NONE
         self._id = -1
-        self._left_raw = Vector2D.ZERO
-        self._right_raw = Vector2D.ZERO
+        self._left_raw = Vector.ZERO
+        self._right_raw = Vector.ZERO
         self._held_buttons = 0
         self._pressed_buttons = 0
         self._released_buttons = 0
@@ -176,13 +176,13 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.right_stick = _dead_zone(self._right_raw)
 
 
-def _dead_zone(raw: Vector2D) -> Vector2D:
+def _dead_zone(raw: Vector) -> Vector:
     """`raw` with the inner `STICK_DEAD_ZONE` cut out and the rest stretched
     back over 0..1, capped at the unit circle — a square-gated stick reaches
     past it on the diagonals."""
     var length = raw.magnitude()
     if length <= Gamepad.STICK_DEAD_ZONE:
-        return Vector2D.ZERO
+        return Vector.ZERO
     var scaled = min(
         (length - Gamepad.STICK_DEAD_ZONE) / (1.0 - Gamepad.STICK_DEAD_ZONE),
         1.0,

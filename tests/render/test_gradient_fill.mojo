@@ -47,7 +47,7 @@ struct Scene[n: Int](Program):
             canvas.rectangle((0, 0), 80, 80)
         elif Self.n == RECT_RIGHT:
             canvas.fill(
-                Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.RIGHT)
+                Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT)
             )
             canvas.rectangle((0, 0), 80, 80)
         elif Self.n == RADIAL_CIRCLE:
@@ -59,7 +59,7 @@ struct Scene[n: Int](Program):
                 canvas.rectangle((0, 0), 80, 80)
         elif Self.n == ZERO_DIRECTION:
             canvas.fill(
-                Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.ZERO)
+                Gradient.linear(Color.RED, Color.BLUE, direction=Vector.ZERO)
             )
             canvas.rectangle((0, 0), 80, 80)
         elif Self.n == STROKED:
@@ -82,7 +82,7 @@ struct Scene[n: Int](Program):
             canvas.fill(Gradient.linear(Color(100, 0, 0), Color(100, 0, 0)))
             canvas.rectangle((0, 0), 80, 80)
         elif Self.n == SHADOWED:
-            canvas.shadow(Color.GREEN, offset=Vector2D(10, -10), blur=0)
+            canvas.shadow(Color.GREEN, offset=Vector(10, -10), blur=0)
             canvas.rectangle((0, 0), 60, 60)
         elif Self.n == HALF_OPACITY:
             canvas.opacity(0.5)
@@ -115,7 +115,7 @@ struct LaidOut[extend: Bool](Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(
-            Gradient.linear(Color.RED, Color.BLUE, direction=Vector2D.RIGHT)
+            Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT)
         )
 
 

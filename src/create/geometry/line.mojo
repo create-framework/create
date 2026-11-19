@@ -1,5 +1,5 @@
 from std.math import min, max, sqrt
-from create.math import Point2D, Vector2D
+from create.math import Point, Vector
 from .bezier import Bezier
 from .spline import Spline
 from .drawable import Curve, DrawTarget
@@ -40,10 +40,10 @@ struct Line(
     still "intersect" the collapsed line if it coincides with it).
     """
 
-    var start: Point2D
-    var end: Point2D
+    var start: Point
+    var end: Point
 
-    def __init__(out self, start: Point2D, end: Point2D):
+    def __init__(out self, start: Point, end: Point):
         self.start = start
         self.end = end
 
@@ -59,19 +59,19 @@ struct Line(
     def length(self) -> Float64:
         return sqrt(_distance_squared(self.end, self.start))
 
-    def at(self, t: Float64) -> Point2D:
+    def at(self, t: Float64) -> Point:
         """The point at parameter `t`: `start` at 0, `end` at 1, and
         proportional to distance in between. Not clamped: outside 0..1 it
         carries on along the line, as `lerp` extrapolates."""
         return self.start.lerp(self.end, t)
 
-    def tangent(self, t: Float64) -> Vector2D:
+    def tangent(self, t: Float64) -> Vector:
         """The derivative at `t`: `end - start`, the same everywhere — the
         direction of travel, with the line's length as its magnitude. Zero
         for a zero-length line."""
         return self.end - self.start
 
-    def at_distance(self, distance: Float64) -> Point2D:
+    def at_distance(self, distance: Float64) -> Point:
         """The point `distance` along the line from `start`, clamped to the
         line's ends. Exact, and as cheap as `at`."""
         var total = self.length()
@@ -91,15 +91,15 @@ struct Line(
     def bounds(self) -> Rectangle:
         """The tightest axis-aligned rectangle around the line: the box its
         two ends span, zero-width or zero-height when it is axis-aligned."""
-        var lo = Point2D(
+        var lo = Point(
             min(self.start.x, self.end.x), min(self.start.y, self.end.y)
         )
-        var hi = Point2D(
+        var hi = Point(
             max(self.start.x, self.end.x), max(self.start.y, self.end.y)
         )
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def flatten(self, tolerance: Float64) -> List[Point2D]:
+    def flatten(self, tolerance: Float64) -> List[Point]:
         """`start` and `end`: a line is already straight, whatever the
         tolerance."""
         return [self.start, self.end]
@@ -134,7 +134,7 @@ struct Line(
     # shapes, so they flatten themselves and test the segments (see
     # `Bezier.intersects`); a `Line` or `Arc` hands a test against one back
     # to it.
-    def intersects(self, p: Point2D) -> Bool:
+    def intersects(self, p: Point) -> Bool:
         return _point_on_segment(p, self.start, self.end)
 
     def intersects(self, a: Arc) -> Bool:
@@ -178,19 +178,19 @@ struct Line(
     def intersects(self, t: Triangle) -> Bool:
         return _overlaps(self, t)
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         return _closest_on_segment(p, self.start, self.end)
 
-    def midpoint(self) -> Point2D:
+    def midpoint(self) -> Point:
         return self.start.lerp(self.end, 0.5)
 
     def draw_to[T: DrawTarget](self, mut target: T):
         target._line(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         return self.translate(position - self.midpoint())
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.start = moved.start + delta
         moved.end = moved.end + delta

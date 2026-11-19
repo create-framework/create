@@ -12,7 +12,7 @@ from std.math import (
 )
 from create.math import PI, TAU
 
-from create.math import Point2D
+from create.math import Point
 
 
 def rect_corner_radius(radius: Float64, w: Float64, h: Float64) -> Float64:
@@ -128,8 +128,8 @@ def corner_fillet(
 
 
 def rounded_vertices(
-    vertices: List[Point2D], radius: Float64, max_step: Float64
-) -> List[Point2D]:
+    vertices: List[Point], radius: Float64, max_step: Float64
+) -> List[Point]:
     """The closed outline through `vertices` with every corner rounded by
     `radius`, its fillets flattened into points at most `max_step` radians
     apart.
@@ -144,7 +144,7 @@ def rounded_vertices(
     var n = len(vertices)
     if radius <= 0.0 or n < 3:
         return vertices.copy()
-    var out = List[Point2D](capacity=n * 4)
+    var out = List[Point](capacity=n * 4)
     for i in range(n):
         var v = vertices[i]
         var before = vertices[(i + n - 1) % n]
@@ -161,10 +161,10 @@ def rounded_vertices(
 
 
 def _append_corner(
-    mut out: List[Point2D],
-    v: Point2D,
-    before: Point2D,
-    after: Point2D,
+    mut out: List[Point],
+    v: Point,
+    before: Point,
+    after: Point,
     r: Float64,
     max_step: Float64,
 ):
@@ -177,7 +177,7 @@ def _append_corner(
     if abs(sweep) < 1e-9:
         out.append(v)
         return
-    _append_arc(out, Point2D(f[0], f[1]), r, f[6], sweep, max_step)
+    _append_arc(out, Point(f[0], f[1]), r, f[6], sweep, max_step)
 
 
 def _shorter(sweep: Float64) -> Float64:
@@ -190,8 +190,8 @@ def _shorter(sweep: Float64) -> Float64:
 
 
 def _append_arc(
-    mut out: List[Point2D],
-    center: Point2D,
+    mut out: List[Point],
+    center: Point,
     r: Float64,
     start: Float64,
     sweep: Float64,
@@ -202,7 +202,7 @@ def _append_arc(
     var steps = max(Int(ceil(abs(sweep) / max_step)), 1)
     for k in range(steps + 1):
         var a = start + sweep * Float64(k) / Float64(steps)
-        out.append(Point2D(center.x + r * cos(a), center.y + r * sin(a)))
+        out.append(Point(center.x + r * cos(a), center.y + r * sin(a)))
 
 
 def sector_corner_radii(
@@ -236,14 +236,14 @@ def sector_corner_radii(
 
 
 def rounded_sector_vertices(
-    position: Point2D,
+    position: Point,
     r: Float64,
     start: Float64,
     sweep: Float64,
     radius: Float64,
     fillet_step: Float64,
     arc_step: Float64,
-) -> List[Point2D]:
+) -> List[Point]:
     """The outline of the sector at `position` with radius `r`, from
     `start` round by `sweep`, its tip and both ends of its arc rounded by
     `radius` (clamped by `sector_corner_radii`): the fillets at most
@@ -260,10 +260,10 @@ def rounded_sector_vertices(
     var u0 = (cos(start), sin(start))
     var end_angle = start + sweep
     var u1 = (cos(end_angle), sin(end_angle))
-    var out = List[Point2D]()
+    var out = List[Point]()
     # The tip, from the end radius round to the start one.
-    var on_end = Point2D(position.x + r * u1[0], position.y + r * u1[1])
-    var on_start = Point2D(position.x + r * u0[0], position.y + r * u0[1])
+    var on_end = Point(position.x + r * u1[0], position.y + r * u1[1])
+    var on_start = Point(position.x + r * u0[0], position.y + r * u0[1])
     if tip_r > 0.0:
         _append_corner(out, position, on_end, on_start, tip_r, fillet_step)
     else:
@@ -273,7 +273,7 @@ def rounded_sector_vertices(
     var offset = atan2(end_r, along) if end_r > 0.0 else 0.0
     if end_r > 0.0:
         # Into the sector: the start radius turned towards the sweep.
-        var c = Point2D(
+        var c = Point(
             position.x + along * u0[0] - side * end_r * u0[1],
             position.y + along * u0[1] + side * end_r * u0[0],
         )
@@ -293,7 +293,7 @@ def rounded_sector_vertices(
         arc_step,
     )
     if end_r > 0.0:
-        var c = Point2D(
+        var c = Point(
             position.x + along * u1[0] + side * end_r * u1[1],
             position.y + along * u1[1] - side * end_r * u1[0],
         )

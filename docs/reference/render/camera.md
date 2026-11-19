@@ -16,14 +16,14 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 
 ## Fields
 
-- `position: Point2D`
+- `position: Point`
 - `zoom: Float64`
 
 ## Constructors
 
 ```mojo
 @staticmethod
-def __init__(out self, position: Point2D = Point2D(SIMD(0), SIMD(0)), zoom: Float64 = 1)
+def __init__(out self, position: Point = Point(SIMD(0), SIMD(0)), zoom: Float64 = 1)
 ```
 
 ## Methods
@@ -39,7 +39,7 @@ World-to-screen mapping: scale around `position`, then recentre.
 ### `to_world`
 
 ```mojo
-def to_world(self, screen: Point2D) -> Point2D
+def to_world(self, screen: Point) -> Point
 ```
 
 A screen-space point — `context.mouse.position`, say — into world space.
@@ -50,7 +50,7 @@ general matrix inverse.
 ### `to_screen`
 
 ```mojo
-def to_screen(self, world: Point2D) -> Point2D
+def to_screen(self, world: Point) -> Point
 ```
 
 A world-space point into screen space.

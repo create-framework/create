@@ -37,9 +37,9 @@ var travelled = wrap(context.time.elapsed * 100, self.path.length())
 canvas.circle(self.path.at_distance(travelled), 8)
 ```
 
-`tangent(t)` is the direction the curve is heading at `t`, as a `Vector2D`, so something moving
-along a curve can be turned to face the way it is going, with `tangent(t).angle()`. Its length is
-the curve's speed at that point rather than 1; use `.normalize()` for a direction of length 1.
+`tangent(t)` is the direction the curve is heading at `t`, as a `Vector`, so something moving along
+a curve can be turned to face the way it is going, with `tangent(t).angle()`. Its length is the
+curve's speed at that point rather than 1; use `.normalize()` for a direction of length 1.
 
 Curves also convert to simpler forms:
 

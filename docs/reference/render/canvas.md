@@ -194,7 +194,7 @@ def style(
     opacity: _OptionalFloat64 = None,
     blend_mode: Optional[BlendMode] = None,
     shadow: Optional[Color] = None,
-    shadow_offset: Optional[Vector2D] = None,
+    shadow_offset: Optional[Vector] = None,
     shadow_blur: _OptionalFloat64 = None,
     shadow_spread: _OptionalFloat64 = None,
     shadow_inset: Optional[Bool] = None,
@@ -236,7 +236,7 @@ with canvas.style(self.label_style):
 ### `to_screen`
 
 ```mojo
-def to_screen(self, local: Point2D) -> Point2D
+def to_screen(self, local: Point) -> Point
 ```
 
 A point in the current transform's frame, in screen space: through the transform, then the camera (none inside `overlay`). Where something drawn at `local` lands on screen.
@@ -273,7 +273,7 @@ Closes on exit, including on an early return or a raise.
 ### `to_local`
 
 ```mojo
-def to_local(self, screen: Point2D) -> Point2D
+def to_local(self, screen: Point) -> Point
 ```
 
 A screen-space point — `context.mouse.position`, say — in the current transform's frame: back through the camera (none inside `overlay`), then the transform. So `canvas.to_local(context.mouse.position)` picks in the frame a shape is drawn in, with or without a camera.
@@ -477,7 +477,7 @@ source file, not the working directory, as `Image.load`'s is.
 ### `color_at`
 
 ```mojo
-def color_at(mut self, position: Point2D) raises -> Color
+def color_at(mut self, position: Point) raises -> Color
 ```
 
 The colour at `position` in what this frame has drawn so far.
@@ -657,7 +657,7 @@ Whether a recording started by `start_recording` is in progress.
 ```mojo
 def rectangle(
     mut self,
-    position: Point2D,
+    position: Point,
     width: Float64,
     height: Float64,
     *,
@@ -671,7 +671,7 @@ Draw the `width` by `height` rectangle centred on `position`, its corners rounde
 ```mojo
 def rectangle(
     mut self,
-    position: Point2D,
+    position: Point,
     width: Int,
     height: Int,
     *,
@@ -683,14 +683,14 @@ def rectangle(
 ### `circle`
 
 ```mojo
-def circle(mut self, position: Point2D, radius: Float64)
-def circle(mut self, position: Point2D, radius: Int)
+def circle(mut self, position: Point, radius: Float64)
+def circle(mut self, position: Point, radius: Int)
 ```
 
 ### `ellipse`
 
 ```mojo
-def ellipse(mut self, position: Point2D, width: Float64, height: Float64)
+def ellipse(mut self, position: Point, width: Float64, height: Float64)
 ```
 
 Draw the axis-aligned ellipse centred on `position`, `width` wide and `height` high: an `Ellipse`, filling the rectangle `rectangle(position, width, height)` would draw. Turn one with `transform`.
@@ -705,13 +705,13 @@ costs what a `bezier`'s does. With `width == height` it covers what
 `circle(position, width / 2)` does, to within its flattening.
 
 ```mojo
-def ellipse(mut self, position: Point2D, width: Int, height: Int)
+def ellipse(mut self, position: Point, width: Int, height: Int)
 ```
 
 ### `capsule`
 
 ```mojo
-def capsule(mut self, start: Point2D, end: Point2D, radius: Float64)
+def capsule(mut self, start: Point, end: Point, radius: Float64)
 ```
 
 Draw the capsule round the segment from `start` to `end`: every point within `radius` of it, a `Capsule`, its ends half discs.
@@ -726,7 +726,7 @@ blurred drop shadow costs what a `bezier`'s does. A zero `radius` draws
 nothing.
 
 ```mojo
-def capsule(mut self, start: Point2D, end: Point2D, radius: Int)
+def capsule(mut self, start: Point, end: Point, radius: Int)
 ```
 
 ### `sector`
@@ -734,7 +734,7 @@ def capsule(mut self, start: Point2D, end: Point2D, radius: Int)
 ```mojo
 def sector(
     mut self,
-    position: Point2D,
+    position: Point,
     radius: Float64,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -759,7 +759,7 @@ a stroked `polygon` of its flattened outline does.
 ```mojo
 def sector(
     mut self,
-    position: Point2D,
+    position: Point,
     radius: Int,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -771,7 +771,7 @@ def sector(
 ### `polygon`
 
 ```mojo
-def polygon(mut self, *vertices: Point2D, *, corner_radius: _OptionalFloat64 = None)
+def polygon(mut self, *vertices: Point, *, corner_radius: _OptionalFloat64 = None)
 ```
 
 Draw the polygon through `vertices`, closed back to the first.
@@ -790,11 +790,7 @@ rounded corner adds vertices, and so cost. A `Polygon` value is drawn
 with `draw`.
 
 ```mojo
-def polygon(
-    mut self,
-    var vertices: List[Point2D],
-    corner_radius: _OptionalFloat64 = None,
-)
+def polygon(mut self, var vertices: List[Point], corner_radius: _OptionalFloat64 = None)
 ```
 
 Draw the polygon through `vertices`, a list built at run time: otherwise as the variadic `polygon`, and like `spline`'s `points`.
@@ -802,7 +798,7 @@ Draw the polygon through `vertices`, a list built at run time: otherwise as the 
 ### `line`
 
 ```mojo
-def line(mut self, start: Point2D, end: Point2D)
+def line(mut self, start: Point, end: Point)
 ```
 
 Stroke the line from `start` to `end` in the stroke colour and thickness, its ends finished as `stroke_cap` says. A line has no interior, so `fill` never applies; a line of no length is a dot under `StrokeCap.ROUND` or `SQUARE` and nothing under `BUTT`.
@@ -810,7 +806,7 @@ Stroke the line from `start` to `end` in the stroke colour and thickness, its en
 ### `bezier`
 
 ```mojo
-def bezier(mut self, start: Point2D, control1: Point2D, control2: Point2D, end: Point2D)
+def bezier(mut self, start: Point, control1: Point, control2: Point, end: Point)
 ```
 
 Stroke the cubic Bézier from `start` to `end`, shaped by the two controls, in the stroke colour and thickness.
@@ -831,7 +827,7 @@ like an image's), and on the GPU costs one extra draw call.
 ```mojo
 def spline(
     mut self,
-    var points: List[Point2D],
+    var points: List[Point],
     alpha: Float64 = 0.5,
     closed: Bool = False,
 )
@@ -856,7 +852,7 @@ points draw nothing.
 ```mojo
 def arc(
     mut self,
-    position: Point2D,
+    position: Point,
     radius: Float64,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -878,7 +874,7 @@ draws nothing.
 ```mojo
 def arc(
     mut self,
-    position: Point2D,
+    position: Point,
     radius: Int,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -890,9 +886,9 @@ def arc(
 ```mojo
 def triangle(
     mut self,
-    a: Point2D,
-    b: Point2D,
-    c: Point2D,
+    a: Point,
+    b: Point,
+    c: Point,
     *,
     corner_radius: _OptionalFloat64 = None,
 )
@@ -903,7 +899,7 @@ Draw the triangle through `a`, `b` and `c`, its corners rounded by `corner_radiu
 ### `image`
 
 ```mojo
-def image(mut self, image: Image, position: Point2D)
+def image(mut self, image: Image, position: Point)
 ```
 
 Render `image` at its own pixel size.
@@ -914,11 +910,11 @@ they used to differ by now lives inside `blit_image`, where the replay
 can take it without the record site having to know.
 
 ```mojo
-def image(mut self, image: Image, position: Point2D, width: Float64, height: Float64)
+def image(mut self, image: Image, position: Point, width: Float64, height: Float64)
 ```
 
 ```mojo
-def image(mut self, animator: Animator, position: Point2D)
+def image(mut self, animator: Animator, position: Point)
 ```
 
 Render the animator's current frame, centred at `position`.
@@ -927,12 +923,12 @@ Render the animator's current frame, centred at `position`.
 def image(
     mut self,
     animator: Animator,
-    position: Point2D,
+    position: Point,
     width: Float64,
     height: Float64,
 )
-def image(mut self, image: Image, position: Point2D, width: Int, height: Int)
-def image(mut self, animator: Animator, position: Point2D, width: Int, height: Int)
+def image(mut self, image: Image, position: Point, width: Int, height: Int)
+def image(mut self, animator: Animator, position: Point, width: Int, height: Int)
 ```
 
 ### `text_color`
@@ -1016,7 +1012,7 @@ Applies to shapes, text and images, never to `background`.
 def shadow(
     mut self,
     color: Optional[Color] = None,
-    offset: Optional[Vector2D] = None,
+    offset: Optional[Vector] = None,
     blur: _OptionalFloat64 = None,
     spread: _OptionalFloat64 = None,
     inset: Optional[Bool] = None,
@@ -1045,7 +1041,7 @@ combines with what is beneath it by the style's `blend_mode`, like
 the shape itself.
 
 ```mojo
-canvas.shadow(Color(0, 0, 0, 96), offset=Vector2D(6, -6), blur=12)
+canvas.shadow(Color(0, 0, 0, 96), offset=Vector(6, -6), blur=12)
 canvas.rectangle((0, 0), 120, 80)
 ```
 
@@ -1210,7 +1206,7 @@ Raises only if the default font has to be loaded and cannot be.
 ### `text`
 
 ```mojo
-def text(mut self, text: String, position: Point2D)
+def text(mut self, text: String, position: Point)
 ```
 
 Draw `text` at `position` in the current text style, anchored by `text_alignment`.
@@ -1220,7 +1216,7 @@ is aligned on its own, and the alignment's top and bottom are those
 of the whole block (see `text_height`).
 
 ```mojo
-def text(mut self, text: String, position: Point2D, width: Float64)
+def text(mut self, text: String, position: Point, width: Float64)
 ```
 
 Draw `text` at `position` as `text(text, position)` does, wrapped onto as many lines as keep each at most `width` units wide.

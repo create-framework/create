@@ -70,7 +70,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `opacity: Float64`
 - `blend_mode: BlendMode`
 - `shadow_color: Color`
-- `shadow_offset: Vector2D`
+- `shadow_offset: Vector`
 - `shadow_blur: Float64`
 - `shadow_spread: Float64`
 - `shadow_inset: Bool`
@@ -104,7 +104,7 @@ def __init__(
     opacity: _OptionalFloat64 = None,
     blend_mode: BlendMode = BlendMode.NORMAL,
     shadow: Optional[Color] = None,
-    shadow_offset: Optional[Vector2D] = None,
+    shadow_offset: Optional[Vector] = None,
     shadow_blur: _OptionalFloat64 = None,
     shadow_spread: _OptionalFloat64 = None,
     shadow_inset: Optional[Bool] = None,

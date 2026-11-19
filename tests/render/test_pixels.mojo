@@ -36,7 +36,7 @@ def _present(
     return context._new_canvas(state^)
 
 
-def _square(mut canvas: Canvas, position: Point2D, color: Color):
+def _square(mut canvas: Canvas, position: Point, color: Color):
     with canvas.style(fill=color, stroke_enabled=False):
         canvas.rectangle(position, 20, 20)
 

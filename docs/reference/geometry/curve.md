@@ -16,7 +16,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Shape`.
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point2D
+def at(self, t: Float64) -> Point
 ```
 
 The point at parameter `t`.
@@ -24,7 +24,7 @@ The point at parameter `t`.
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector2D
+def tangent(self, t: Float64) -> Vector
 ```
 
 The derivative at `t`: the direction of travel, with the speed per unit of `t` as its magnitude.
@@ -40,7 +40,7 @@ The distance along the curve from start to end.
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point2D
+def at_distance(self, distance: Float64) -> Point
 ```
 
 The point `distance` along the curve from its start, clamped to its ends.
@@ -48,7 +48,7 @@ The point `distance` along the curve from its start, clamped to its ends.
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point2D]
+def flatten(self, tolerance: Float64) -> List[Point]
 ```
 
 Points along the curve, start to end, whose straight segments stray from it by at most `tolerance`.

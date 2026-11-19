@@ -5,7 +5,7 @@ from std.testing import TestSuite, assert_equal, assert_almost_equal
 
 from create import *
 from create.core.headless import run_headless
-from create.math.point2d import Point2D
+from create.math.point import Point
 
 
 @fieldwise_init
@@ -48,7 +48,7 @@ struct PannedCameraRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.camera(Camera(Point2D(20.0, 0.0), 1.0))
+        canvas.camera(Camera(Point(20.0, 0.0), 1.0))
         canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
@@ -74,7 +74,7 @@ struct ZoomedCameraRect(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.camera(Camera(Point2D(0.0, 0.0), 2.0))
+        canvas.camera(Camera(Point(0.0, 0.0), 2.0))
         canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         canvas.rectangle((0.0, 0.0), 20.0, 20.0)
@@ -100,7 +100,7 @@ struct OverlayIgnoresCamera(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.camera(Camera(Point2D(50.0, 0.0), 1.0))
+        canvas.camera(Camera(Point(50.0, 0.0), 1.0))
         canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         with canvas.overlay():
@@ -127,7 +127,7 @@ struct OverlayRestoresCamera(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
-        canvas.camera(Camera(Point2D(20.0, 0.0), 1.0))
+        canvas.camera(Camera(Point(20.0, 0.0), 1.0))
         canvas.stroke_enabled(False)
         canvas.fill(Color.RED)
         with canvas.overlay():
@@ -143,8 +143,8 @@ def test_overlay_restores_the_camera_on_exit() raises -> None:
 
 
 def test_to_world_and_to_screen_round_trip() raises -> None:
-    var camera = Camera(Point2D(10.0, -5.0), 2.0)
-    var screen = Point2D(30.0, 40.0)
+    var camera = Camera(Point(10.0, -5.0), 2.0)
+    var screen = Point(30.0, 40.0)
     var world = camera.to_world(screen)
     var back = camera.to_screen(world)
     assert_almost_equal(back.x, screen.x)
@@ -152,17 +152,17 @@ def test_to_world_and_to_screen_round_trip() raises -> None:
 
 
 def test_to_world_accounts_for_position_and_zoom() raises -> None:
-    var camera = Camera(Point2D(100.0, 0.0), 2.0)
+    var camera = Camera(Point(100.0, 0.0), 2.0)
     # Screen origin maps to the camera's own world position.
-    var world = camera.to_world(Point2D(0.0, 0.0))
+    var world = camera.to_world(Point(0.0, 0.0))
     assert_almost_equal(world.x, 100.0)
     assert_almost_equal(world.y, 0.0)
 
 
 def test_camera_writes_keyword_form() raises -> None:
     assert_equal(
-        String(Camera(Point2D(1.0, 2.0), 1.5)),
-        "Camera(position=Point2D(1.0, 2.0), zoom=1.5)",
+        String(Camera(Point(1.0, 2.0), 1.5)),
+        "Camera(position=Point(1.0, 2.0), zoom=1.5)",
     )
 
 

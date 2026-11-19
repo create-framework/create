@@ -31,7 +31,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 
 ## Fields
 
-- `position: Point2D`
+- `position: Point`
 - `radius: Float64`
 - `start_angle: Float64`
 - `sweep_angle: Float64`
@@ -43,7 +43,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 @staticmethod
 def __init__(
     out self,
-    position: Point2D,
+    position: Point,
     radius: Float64,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -53,7 +53,7 @@ def __init__(
 @staticmethod
 def __init__(
     out self,
-    position: Point2D,
+    position: Point,
     radius: Int,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -75,7 +75,7 @@ def end_angle(self) -> Float64
 ### `center`
 
 ```mojo
-def center(self) -> Point2D
+def center(self) -> Point
 ```
 
 ### `area`
@@ -103,13 +103,13 @@ The tightest axis-aligned rectangle around the sector: its arc's, widened to tak
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 ### `contains`
 
 ```mojo
-def contains(self, p: Point2D) -> Bool
+def contains(self, p: Point) -> Bool
 def contains(self, radius: Rectangle) -> Bool
 def contains(self, t: Triangle) -> Bool
 def contains(self, c: Circle) -> Bool
@@ -152,13 +152,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

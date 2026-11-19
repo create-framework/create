@@ -125,13 +125,13 @@ def test_a_style_block_scopes_the_dash() raises -> None:
 
 def test_a_line_is_cut_into_its_dashes() raises -> None:
     var pieces = dash_path(
-        [Point2D(0, 0), Point2D(100, 0)],
+        [Point(0, 0), Point(100, 0)],
         False,
         [10.0, 10.0],
         0.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     # Five dashes, a quad each: [0, 10], [20, 30], ... [80, 90].
     assert_equal(len(pieces.quads), 20)
@@ -142,13 +142,13 @@ def test_a_line_is_cut_into_its_dashes() raises -> None:
 
 def test_the_offset_starts_inside_the_pattern() raises -> None:
     var pieces = dash_path(
-        [Point2D(0, 0), Point2D(100, 0)],
+        [Point(0, 0), Point(100, 0)],
         False,
         [10.0, 10.0],
         5.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     # [0, 5], [15, 25], ... [95, 100].
     assert_equal(len(pieces.quads), 24)
@@ -158,22 +158,22 @@ def test_the_offset_starts_inside_the_pattern() raises -> None:
 
 def test_a_negative_offset_wraps() raises -> None:
     var forward = dash_path(
-        [Point2D(0, 0), Point2D(100, 0)],
+        [Point(0, 0), Point(100, 0)],
         False,
         [10.0, 10.0],
         15.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     var back = dash_path(
-        [Point2D(0, 0), Point2D(100, 0)],
+        [Point(0, 0), Point(100, 0)],
         False,
         [10.0, 10.0],
         -5.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     assert_equal(len(forward.quads), len(back.quads))
     for i in range(len(back.quads)):
@@ -182,13 +182,13 @@ def test_a_negative_offset_wraps() raises -> None:
 
 def test_a_dash_round_a_corner_is_one_mitred_strip() raises -> None:
     var pieces = dash_path(
-        [Point2D(0, 0), Point2D(10, 0), Point2D(10, 10)],
+        [Point(0, 0), Point(10, 0), Point(10, 10)],
         False,
         [15.0, 100.0],
         0.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     # Two quads sharing the mitred corner (11, -1)-(9, 1).
     assert_equal(len(pieces.quads), 8)
@@ -198,66 +198,66 @@ def test_a_dash_round_a_corner_is_one_mitred_strip() raises -> None:
 
 def test_dots_are_dashes_of_no_length() raises -> None:
     var round = dash_path(
-        [Point2D(0, 0), Point2D(40, 0)],
+        [Point(0, 0), Point(40, 0)],
         False,
         [0.0, 10.0],
         0.0,
         4.0,
         StrokeCap.ROUND,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     # At 0, 10, 20, 30 and 40.
     assert_equal(len(round.caps), 5)
     var butt = dash_path(
-        [Point2D(0, 0), Point2D(40, 0)],
+        [Point(0, 0), Point(40, 0)],
         False,
         [0.0, 10.0],
         0.0,
         4.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     assert_equal(len(butt.quads) + len(butt.caps), 0)
 
 
 def test_a_square_dot_turns_with_the_path() raises -> None:
     var pieces = dash_path(
-        [Point2D(0, 0), Point2D(0, 40)],
+        [Point(0, 0), Point(0, 40)],
         False,
         [0.0, 100.0],
         0.0,
         4.0,
         StrokeCap.SQUARE,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     assert_equal(len(pieces.quads), 4)
     # Lined up with the path, which runs up y: its first corner is behind
     # and to the right of the dot.
-    assert_equal(pieces.quads[0], Point2D(2, -2))
+    assert_equal(pieces.quads[0], Point(2, -2))
 
 
 def test_a_pattern_too_fine_to_see_is_solid() raises -> None:
     var pieces = dash_path(
-        [Point2D(0, 0), Point2D(100, 0)],
+        [Point(0, 0), Point(100, 0)],
         False,
         [0.25, 0.25],
         0.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     assert_equal(len(pieces.quads), 4)
 
 
 def test_a_closed_path_runs_back_to_its_start() raises -> None:
     var pieces = dash_path(
-        [Point2D(0, 0), Point2D(0, -10), Point2D(10, -10), Point2D(10, 0)],
+        [Point(0, 0), Point(0, -10), Point(10, -10), Point(10, 0)],
         True,
         [5.0, 5.0],
         0.0,
         2.0,
         StrokeCap.BUTT,
-        Vector2D(1, 0),
+        Vector(1, 0),
     )
     # A dash on each half of each of the four sides.
     assert_equal(len(pieces.quads), 16)
@@ -377,7 +377,7 @@ def test_a_dashed_region_casts_a_dashed_ring() raises -> None:
     var canvas = _canvas()
     canvas.fill_enabled(False)
     canvas.stroke_dash(StrokeDash(10, 10))
-    canvas.shadow(Color.BLUE, Vector2D(0, -20), blur=0)
+    canvas.shadow(Color.BLUE, Vector(0, -20), blur=0)
     canvas.line((-100, 30), (100, 30))
     assert_equal(canvas.color_at((-95, 10)), Color.BLUE)
     assert_equal(canvas.color_at((-85, 10)), Color.TRANSPARENT)
@@ -386,7 +386,7 @@ def test_a_dashed_region_casts_a_dashed_ring() raises -> None:
 def test_a_filled_dashed_shape_casts_its_silhouette() raises -> None:
     var canvas = _canvas()
     canvas.stroke_dash(StrokeDash(10, 10))
-    canvas.shadow(Color.BLUE, Vector2D(100, 0), blur=0)
+    canvas.shadow(Color.BLUE, Vector(100, 0), blur=0)
     canvas.rectangle((-60, 0), 80, 80)
     # Under a gap of the stroke, offset by the shadow's 100.
     assert_equal(canvas.color_at((2, 23)), Color.BLUE)
@@ -396,7 +396,7 @@ def test_a_blurred_shadow_of_a_dashed_circle_renders() raises -> None:
     var canvas = _canvas()
     canvas.fill_enabled(False)
     canvas.stroke_dash(StrokeDash.DOTTED)
-    canvas.shadow(Color.BLACK, Vector2D(0, 0), blur=6)
+    canvas.shadow(Color.BLACK, Vector(0, 0), blur=6)
     canvas.circle((0, 0), 40)
     # The blur reaches a little past the ring.
     assert_true(canvas.color_at((44, 0)).a > 0)

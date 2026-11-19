@@ -14,7 +14,7 @@ internals](#package-internals).
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
-| `math` | `src/create/math/` | `Point2D`, `Vector2D`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
+| `math` | `src/create/math/` | `Point`, `Vector`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Shape`/`Region`/`Curve` and `Drawable`/`DrawTarget` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
 | `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer` |

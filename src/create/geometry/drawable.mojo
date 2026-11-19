@@ -32,8 +32,8 @@ from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
-from create.math import Point2D
-from create.math import Vector2D
+from create.math import Point
+from create.math import Vector
 
 
 trait Drawable:
@@ -57,11 +57,11 @@ trait Shape(Copyable, Deinitable, Drawable):
         """The tightest axis-aligned rectangle around the shape."""
         ...
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         """The point of the shape nearest `p`: `p` itself inside a region."""
         ...
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         """The shape moved by `delta`; this one is unchanged."""
         ...
 
@@ -71,17 +71,17 @@ trait Region(Shape):
     `Triangle`, `Sector` and `Polygon`, the region types of `overlaps` and `contains`, and what
     `canvas.clip` takes. A curve has no inside, so it is not one."""
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         ...
 
     def area(self) -> Float64:
         ...
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         """Whether `p` is inside, its boundary included."""
         ...
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         """The region moved so its `position` (or, without one, its
         `center()`) is at `position`; this one is unchanged."""
         ...
@@ -95,11 +95,11 @@ trait Curve(Shape):
     `t` runs from 0 at the start to 1 at the end; only on a `Line` and an
     `Arc` is it proportional to distance, which `at_distance` always is."""
 
-    def at(self, t: Float64) -> Point2D:
+    def at(self, t: Float64) -> Point:
         """The point at parameter `t`."""
         ...
 
-    def tangent(self, t: Float64) -> Vector2D:
+    def tangent(self, t: Float64) -> Vector:
         """The derivative at `t`: the direction of travel, with the speed
         per unit of `t` as its magnitude."""
         ...
@@ -108,12 +108,12 @@ trait Curve(Shape):
         """The distance along the curve from start to end."""
         ...
 
-    def at_distance(self, distance: Float64) -> Point2D:
+    def at_distance(self, distance: Float64) -> Point:
         """The point `distance` along the curve from its start, clamped to
         its ends."""
         ...
 
-    def flatten(self, tolerance: Float64) -> List[Point2D]:
+    def flatten(self, tolerance: Float64) -> List[Point]:
         """Points along the curve, start to end, whose straight segments
         stray from it by at most `tolerance`."""
         ...

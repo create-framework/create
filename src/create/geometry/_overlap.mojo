@@ -1,4 +1,4 @@
-from create.math import Point2D
+from create.math import Point
 from .capsule import Capsule, _spine_distance
 from .circle import Circle
 from .ellipse import Ellipse, _UNIT_CIRCLE
@@ -36,7 +36,7 @@ from .triangle import Triangle
 # -- a zero-size rectangle, a zero-radius circle, a collinear or fully
 # degenerate triangle -- remain exact rather than reporting a false
 # overlap.
-def _polygon_overlaps_sector[N: Int](pts: Array[Point2D, N], s: Sector) -> Bool:
+def _polygon_overlaps_sector[N: Int](pts: Array[Point, N], s: Sector) -> Bool:
     """Whether the sector holds a vertex of the polygon, or an edge of the
     polygon crosses the sector's boundary. With the polygon holding the
     sector's tip, which the caller tests, that is every way to overlap."""
@@ -83,7 +83,7 @@ def _regions_overlap(a: Sector, b: Sector) -> Bool:
     return b._boundary_meets(a.arc())
 
 
-def _edges_meet_polygon[N: Int](pts: Array[Point2D, N], p: Polygon) -> Bool:
+def _edges_meet_polygon[N: Int](pts: Array[Point, N], p: Polygon) -> Bool:
     """Whether an edge of the straight-edged region with corners `pts`
     meets `p`: reaches into it, or crosses one of its edges."""
     for i in range(N):

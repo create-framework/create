@@ -21,16 +21,16 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyabl
 
 ## Fields
 
-- `position: Point2D`
+- `position: Point`
 - `radius: Float64`
 
 ## Constructors
 
 ```mojo
 @staticmethod
-def __init__(out self, position: Point2D, radius: Float64)
+def __init__(out self, position: Point, radius: Float64)
 @staticmethod
-def __init__(out self, position: Point2D, radius: Int)
+def __init__(out self, position: Point, radius: Int)
 ```
 
 ## Methods
@@ -38,7 +38,7 @@ def __init__(out self, position: Point2D, radius: Int)
 ### `center`
 
 ```mojo
-def center(self) -> Point2D
+def center(self) -> Point
 ```
 
 ### `area`
@@ -64,13 +64,13 @@ The tightest axis-aligned rectangle around the circle.
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 ### `contains`
 
 ```mojo
-def contains(self, p: Point2D) -> Bool
+def contains(self, p: Point) -> Bool
 def contains(self, other: Self) -> Bool
 def contains(self, radius: Rectangle) -> Bool
 def contains(self, t: Triangle) -> Bool
@@ -113,13 +113,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

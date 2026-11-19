@@ -7,11 +7,11 @@ from std.testing import (
 from std.math import abs, ceil
 from create.math import PI, TAU
 from create.geometry import Arc, Circle, Line, Rectangle, Triangle
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 
-def _assert_point_near(p: Point2D, q: Point2D, tol: Float64 = 1e-9) raises:
+def _assert_point_near(p: Point, q: Point, tol: Float64 = 1e-9) raises:
     assert_almost_equal(p.x, q.x, atol=tol)
     assert_almost_equal(p.y, q.y, atol=tol)
 
@@ -20,7 +20,7 @@ def test_prints_in_keyword_form() raises -> None:
     assert_equal(
         String(Arc((1.0, 2.0), 10, 0.5, -1.5)),
         (
-            "Arc(position=Point2D(1.0, 2.0), radius=10.0, start_angle=0.5,"
+            "Arc(position=Point(1.0, 2.0), radius=10.0, start_angle=0.5,"
             " sweep_angle=-1.5)"
         ),
     )
@@ -39,20 +39,20 @@ def test_end_angle() raises -> None:
 
 def test_at_runs_counter_clockwise_for_a_positive_sweep() raises -> None:
     var a = Arc((0, 0), 10, 0.0, PI / 2.0)
-    _assert_point_near(a.at(0.0), Point2D(10.0, 0.0))
-    _assert_point_near(a.at(1.0), Point2D(0.0, 10.0))
+    _assert_point_near(a.at(0.0), Point(10.0, 0.0))
+    _assert_point_near(a.at(1.0), Point(0.0, 10.0))
 
 
 def test_at_runs_clockwise_for_a_negative_sweep() raises -> None:
     var a = Arc((0, 0), 10, 0.0, -PI / 2.0)
-    _assert_point_near(a.at(1.0), Point2D(0.0, -10.0))
+    _assert_point_near(a.at(1.0), Point(0.0, -10.0))
     assert_true(a.at(0.5).y < 0.0)
 
 
 def test_sweep_past_a_turn_is_a_full_circle() raises -> None:
     var a = Arc((0, 0), 1, 0.0, 3.0 * TAU)
     assert_almost_equal(a.length(), TAU)
-    _assert_point_near(a.at(0.5), Point2D(-1.0, 0.0))
+    _assert_point_near(a.at(0.5), Point(-1.0, 0.0))
 
 
 def test_length() raises -> None:
@@ -66,13 +66,13 @@ def test_tangent_is_constant_speed_along_travel() raises -> None:
         assert_almost_equal(a.tangent(t).magnitude(), a.length(), atol=1e-9)
     # Clockwise from (10, 0): heading straight down.
     _assert_point_near(
-        Point2D(0, 0) + a.tangent(0.0).normalize(), Point2D(0.0, -1.0)
+        Point(0, 0) + a.tangent(0.0).normalize(), Point(0.0, -1.0)
     )
 
 
 def test_at_distance_is_exact_and_clamped() raises -> None:
     var a = Arc((0, 0), 2, 0.0, PI)
-    _assert_point_near(a.at_distance(PI), Point2D(0.0, 2.0))
+    _assert_point_near(a.at_distance(PI), Point(0.0, 2.0))
     _assert_point_near(a.at_distance(-1.0), a.at(0.0))
     _assert_point_near(a.at_distance(100.0), a.at(1.0))
 
@@ -109,7 +109,7 @@ def test_bounds_of_a_full_circle() raises -> None:
     var b = Arc((1, 2), 3, 0.3, TAU).bounds()
     assert_almost_equal(b.width, 6.0)
     assert_almost_equal(b.height, 6.0)
-    _assert_point_near(b.center(), Point2D(1.0, 2.0))
+    _assert_point_near(b.center(), Point(1.0, 2.0))
 
 
 def test_flatten_stays_within_tolerance() raises -> None:
@@ -119,7 +119,7 @@ def test_flatten_stays_within_tolerance() raises -> None:
     _assert_point_near(points[len(points) - 1], a.at(1.0))
     for i in range(len(points) - 1):
         var mid = points[i].lerp(points[i + 1], 0.5)
-        assert_true(100.0 - mid.distance(Point2D(0, 0)) <= 0.25 + 1e-9)
+        assert_true(100.0 - mid.distance(Point(0, 0)) <= 0.25 + 1e-9)
 
 
 def test_flatten_of_a_collapsed_arc_gives_two_points() raises -> None:
@@ -158,14 +158,14 @@ def test_beziers_of_a_collapsed_arc_are_none() raises -> None:
 
 def test_closest_point_within_the_sweep_is_radial() raises -> None:
     var a = Arc((0, 0), 10, 0.0, PI)
-    _assert_point_near(a.closest_point((0.0, 3.0)), Point2D(0.0, 10.0))
-    _assert_point_near(a.closest_point((0.0, 30.0)), Point2D(0.0, 10.0))
+    _assert_point_near(a.closest_point((0.0, 3.0)), Point(0.0, 10.0))
+    _assert_point_near(a.closest_point((0.0, 30.0)), Point(0.0, 10.0))
 
 
 def test_closest_point_outside_the_sweep_is_the_nearer_end() raises -> None:
     var a = Arc((0, 0), 10, 0.0, PI / 2.0)
-    _assert_point_near(a.closest_point((5.0, -20.0)), Point2D(10.0, 0.0))
-    _assert_point_near(a.closest_point((-20.0, 5.0)), Point2D(0.0, 10.0))
+    _assert_point_near(a.closest_point((5.0, -20.0)), Point(10.0, 0.0))
+    _assert_point_near(a.closest_point((-20.0, 5.0)), Point(0.0, 10.0))
 
 
 def test_closest_point_from_the_centre_is_the_start() raises -> None:
@@ -177,22 +177,22 @@ def test_closest_point_on_an_edge_direction() raises -> None:
     # Straight out along the end edge: within the sweep despite `cos`/`sin`
     # rounding the edge direction.
     var a = Arc((0, 0), 10, 0.0, PI / 2.0)
-    _assert_point_near(a.closest_point((0.0, 4.0)), Point2D(0.0, 10.0))
+    _assert_point_near(a.closest_point((0.0, 4.0)), Point(0.0, 10.0))
 
 
 def test_zero_radius_is_the_centre() raises -> None:
     var a = Arc((4, 5), 0, 0.0, PI)
-    _assert_point_near(a.at(0.5), Point2D(4.0, 5.0))
-    _assert_point_near(a.closest_point((100.0, 0.0)), Point2D(4.0, 5.0))
+    _assert_point_near(a.at(0.5), Point(4.0, 5.0))
+    _assert_point_near(a.closest_point((100.0, 0.0)), Point(4.0, 5.0))
     assert_equal(a.length(), 0.0)
 
 
 def test_move_to_and_translate_move_the_centre() raises -> None:
     var a = Arc((0, 0), 5, 0.0, 1.0)
     a = a.move_to((3.0, 4.0))
-    assert_equal(a.position, Point2D(3.0, 4.0))
-    a = a.translate(Vector2D(1.0, -1.0))
-    assert_equal(a.position, Point2D(4.0, 3.0))
+    assert_equal(a.position, Point(3.0, 4.0))
+    a = a.translate(Vector(1.0, -1.0))
+    assert_equal(a.position, Point(4.0, 3.0))
 
 
 def _assert_meets(a: Arc, l: Line, expected: Bool) raises:
@@ -209,10 +209,10 @@ def test_intersects_point_on_the_arc() raises -> None:
 
 def test_intersects_point_off_the_arc() raises -> None:
     var a = Arc((0, 0), 10, 0.0, PI / 2.0)
-    assert_true(not a.intersects(Point2D(0.0, 0.0)))
-    assert_true(not a.intersects(Point2D(10.001, 0.0)))
+    assert_true(not a.intersects(Point(0.0, 0.0)))
+    assert_true(not a.intersects(Point(10.001, 0.0)))
     # On the circle, but outside the sweep.
-    assert_true(not a.intersects(Point2D(0.0, -10.0)))
+    assert_true(not a.intersects(Point(0.0, -10.0)))
 
 
 def test_intersects_line_crossing_once_and_twice() raises -> None:
@@ -244,7 +244,7 @@ def test_intersects_tangent_line() raises -> None:
 
 def test_intersects_line_ending_on_the_arc() raises -> None:
     var a = Arc((3, -2), 7, 0.4, 1.9)
-    _assert_meets(a, Line(a.at(0.6), a.at(0.6) + Vector2D(50, 50)), True)
+    _assert_meets(a, Line(a.at(0.6), a.at(0.6) + Vector(50, 50)), True)
     _assert_meets(a, Line(a.at(1.0), a.position), True)
 
 

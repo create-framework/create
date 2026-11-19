@@ -23,7 +23,7 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Implicit
 
 ## Fields
 
-- `position: Point2D`
+- `position: Point`
 - `radius: Float64`
 - `start_angle: Float64`
 - `sweep_angle: Float64`
@@ -34,7 +34,7 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Implicit
 @staticmethod
 def __init__(
     out self,
-    position: Point2D,
+    position: Point,
     radius: Float64,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -42,7 +42,7 @@ def __init__(
 @staticmethod
 def __init__(
     out self,
-    position: Point2D,
+    position: Point,
     radius: Int,
     start_angle: Float64,
     sweep_angle: Float64,
@@ -62,7 +62,7 @@ def end_angle(self) -> Float64
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point2D
+def at(self, t: Float64) -> Point
 ```
 
 The point at parameter `t`: 0 at the start, 1 at the end, and proportional to distance along the arc in between. Not clamped: outside 0..1 it carries on round the circle.
@@ -70,7 +70,7 @@ The point at parameter `t`: 0 at the start, 1 at the end, and proportional to di
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector2D
+def tangent(self, t: Float64) -> Vector
 ```
 
 The derivative at `t`: the direction of travel, with a magnitude that is the arc's length (the speed per unit of `t`, the same everywhere). Zero for a collapsed arc.
@@ -86,7 +86,7 @@ The distance along the arc from start to end. Exact.
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point2D
+def at_distance(self, distance: Float64) -> Point
 ```
 
 The point `distance` along the arc from its start, clamped to the arc's ends. An arc has constant speed, so this is `at` with `t` scaled: exact, and as cheap as `at`.
@@ -110,7 +110,7 @@ The tightest axis-aligned rectangle around the arc: its two ends, widened to eac
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point2D]
+def flatten(self, tolerance: Float64) -> List[Point]
 ```
 
 Points along the arc, from start to end inclusive, such that the straight segments between them stray from the arc by at most `tolerance`.
@@ -129,7 +129,7 @@ The arc as cubic Béziers, each ending where the next starts, in pieces of at mo
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 The point on the arc nearest `p`: straight out from the centre when `p` lies within the sweep, otherwise the nearer end. From the centre itself every point is as near, and the start is returned.
@@ -137,7 +137,7 @@ The point on the arc nearest `p`: straight out from the centre when `p` lies wit
 ### `intersects`
 
 ```mojo
-def intersects(self, p: Point2D) -> Bool
+def intersects(self, p: Point) -> Bool
 def intersects(self, l: Line) -> Bool
 def intersects(self, other: Self) -> Bool
 def intersects(self, c: Circle) -> Bool
@@ -160,13 +160,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

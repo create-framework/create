@@ -20,8 +20,8 @@ from create.math import PI
 
 from create.geometry.bezier import Bezier
 from create.math.matrix import Matrix, _apply as mat_apply
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 from ._command import CurvesPayload, RenderCommand
 from .stroke_cap import StrokeCap
@@ -54,7 +54,7 @@ curve turns only slightly between segments, so the limit only bites at a
 cusp, where the unclamped miter would shoot off towards infinity."""
 
 
-def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point2D]:
+def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point]:
     """`c`'s chain of curves (`c` a `CurvesPayload`) mapped by `m` and flattened
     to one polyline of device-space points, the point where one curve meets
     the next appearing once.
@@ -64,10 +64,10 @@ def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point2D]:
     size it will actually be drawn.
     """
     ref controls = c.payload[CurvesPayload].points
-    var mapped = List[Point2D](capacity=len(controls))
+    var mapped = List[Point](capacity=len(controls))
     for p in controls:
         mapped.append(mat_apply(m, p.x, p.y))
-    var points = List[Point2D]()
+    var points = List[Point]()
     for i in range(0, len(mapped) - 3, 3):
         var part = Bezier(
             mapped[i], mapped[i + 1], mapped[i + 2], mapped[i + 3]
@@ -78,16 +78,16 @@ def bezier_device_points(c: RenderCommand, m: Matrix[3, 3]) -> List[Point2D]:
     return points^
 
 
-def device_x_axis(m: Matrix[3, 3]) -> Vector2D:
+def device_x_axis(m: Matrix[3, 3]) -> Vector:
     """The local x axis as `m` maps it, the way a `SQUARE` dot is turned."""
     var origin = mat_apply(m, 0.0, 0.0)
     var x = mat_apply(m, 1.0, 0.0)
-    return Vector2D(x[0] - origin[0], x[1] - origin[1])
+    return Vector(x[0] - origin[0], x[1] - origin[1])
 
 
 def stroke_segment(
-    a: Point2D, b: Point2D, width: Float64, cap: StrokeCap = StrokeCap.BUTT
-) -> Optional[Array[Point2D, 4]]:
+    a: Point, b: Point, width: Float64, cap: StrokeCap = StrokeCap.BUTT
+) -> Optional[Array[Point, 4]]:
     """The one quad of `stroke_pieces([a, b], width, cap)`, without a list:
     `a`-`b` pushed out by half the width along its normal, left edge first,
     and lengthened by half the width at both ends under `SQUARE`. None when
@@ -103,8 +103,8 @@ def stroke_segment(
         start = _pushed_out(a, b, width / 2.0)
         end = _pushed_out(b, a, width / 2.0)
         d = end - start
-    var offset = Vector2D(-d.y, d.x) / d.magnitude() * (width / 2.0)
-    var corners: Array[Point2D, 4] = [
+    var offset = Vector(-d.y, d.x) / d.magnitude() * (width / 2.0)
+    var corners: Array[Point, 4] = [
         start + offset,
         end + offset,
         end - offset,
@@ -119,28 +119,28 @@ struct StrokePieces(Movable):
     its edge. No two pieces overlap, so a translucent stroke composites
     once."""
 
-    var quads: List[Point2D]
-    var caps: List[List[Point2D]]
+    var quads: List[Point]
+    var caps: List[List[Point]]
 
     def __init__(out self):
-        self.quads = List[Point2D]()
-        self.caps = List[List[Point2D]]()
+        self.quads = List[Point]()
+        self.caps = List[List[Point]]()
 
-    def take_quads(deinit self) -> List[Point2D]:
+    def take_quads(deinit self) -> List[Point]:
         """The quads alone, moved out; for a stroke with no caps."""
         return self.quads^
 
 
-def stroke_quads(points: List[Point2D], width: Float64) -> List[Point2D]:
+def stroke_quads(points: List[Point], width: Float64) -> List[Point]:
     """`stroke_pieces` with butt ends, which are quads alone."""
     return stroke_pieces(points, width, StrokeCap.BUTT).take_quads()
 
 
 def stroke_pieces(
-    points: List[Point2D],
+    points: List[Point],
     width: Float64,
     cap: StrokeCap,
-    axis: Vector2D = Vector2D(1.0, 0.0),
+    axis: Vector = Vector(1.0, 0.0),
 ) -> StrokePieces:
     """The `width`-thick band along the polyline `points`, as quads (four
     corners each, in order around the quad's edge, quad after quad) and the
@@ -162,7 +162,7 @@ def stroke_pieces(
     At a cusp the miter is clamped to `MITER_LIMIT`, which lets the two
     quads either side overlap slightly there.
     """
-    var path = List[Point2D](capacity=len(points))
+    var path = List[Point](capacity=len(points))
     for p in points:
         if len(path) == 0 or path[len(path) - 1] != p:
             path.append(p)
@@ -183,16 +183,16 @@ def stroke_pieces(
     if not closed and cap == StrokeCap.SQUARE:
         path[0] = _pushed_out(path[0], path[1], half)
         path[n - 1] = _pushed_out(path[n - 1], path[n - 2], half)
-    var normals = List[Vector2D](capacity=segments)
+    var normals = List[Vector](capacity=segments)
     for i in range(segments):
         var d = path[(i + 1) % n] - path[i]
-        normals.append(Vector2D(-d.y, d.x) / d.magnitude())
+        normals.append(Vector(-d.y, d.x) / d.magnitude())
 
     # Each vertex's offset to the band's left edge; the right edge is its
     # negation. A joint's offset lies along the bisector of its two
     # normals, long enough that both neighbouring edges stay `half` away;
     # an open end's is its one segment's normal.
-    var offsets = List[Vector2D](capacity=n)
+    var offsets = List[Vector](capacity=n)
     for j in range(n):
         if not closed and j == 0:
             offsets.append(normals[0] * half)
@@ -215,7 +215,7 @@ def stroke_pieces(
     return out^
 
 
-def _pushed_out(end: Point2D, inner: Point2D, half: Float64) -> Point2D:
+def _pushed_out(end: Point, inner: Point, half: Float64) -> Point:
     """`end` moved `half` further from `inner`, along the segment: a square
     cap's lengthening, shared so `stroke_segment` matches `stroke_pieces`."""
     var d = end - inner
@@ -223,8 +223,8 @@ def _pushed_out(end: Point2D, inner: Point2D, half: Float64) -> Point2D:
 
 
 def _half_disc(
-    center: Point2D, from_offset: Vector2D, half: Float64
-) -> List[Point2D]:
+    center: Point, from_offset: Vector, half: Float64
+) -> List[Point]:
     """The half disc of radius `half` about `center`, from
     `center + from_offset` round to `center - from_offset`, bulging a
     quarter turn on from `from_offset` (counter-clockwise, x right and y
@@ -232,8 +232,8 @@ def _half_disc(
     `stroke_pieces` passes them, that is away from the band. The two ends
     are those exact values, so the base is the end quad's own edge."""
     var steps = max(circle_segments(half) // 2, 2)
-    var across = Vector2D(-from_offset.y, from_offset.x)
-    var corners = List[Point2D](capacity=steps + 1)
+    var across = Vector(-from_offset.y, from_offset.x)
+    var corners = List[Point](capacity=steps + 1)
     corners.append(center + from_offset)
     for i in range(1, steps):
         var angle = PI * Float64(i) / Float64(steps)
@@ -244,32 +244,32 @@ def _half_disc(
 
 def _add_dot(
     mut out: StrokePieces,
-    center: Point2D,
+    center: Point,
     half: Float64,
     cap: StrokeCap,
-    axis: Vector2D,
+    axis: Vector,
 ):
     """A stroke of no length: a disc under `ROUND`, a square of side
     `2 * half` along `axis` under `SQUARE`, nothing under `BUTT`."""
     if cap == StrokeCap.ROUND:
         var steps = circle_segments(half)
-        var disc = List[Point2D](capacity=steps)
+        var disc = List[Point](capacity=steps)
         for i in range(steps):
             var angle = 2.0 * PI * Float64(i) / Float64(steps)
-            disc.append(center + Vector2D(cos(angle), sin(angle)) * half)
+            disc.append(center + Vector(cos(angle), sin(angle)) * half)
         out.caps.append(disc^)
     elif cap == StrokeCap.SQUARE:
         var length = axis.magnitude()
-        var along = Vector2D(1.0, 0.0) if length == 0.0 else axis / length
+        var along = Vector(1.0, 0.0) if length == 0.0 else axis / length
         along = along * half
-        var across = Vector2D(-along.y, along.x)
+        var across = Vector(-along.y, along.x)
         out.quads.append(center - along - across)
         out.quads.append(center + along - across)
         out.quads.append(center + along + across)
         out.quads.append(center - along + across)
 
 
-def _miter(before: Vector2D, after: Vector2D, half: Float64) -> Vector2D:
+def _miter(before: Vector, after: Vector, half: Float64) -> Vector:
     """The offset to the left edge at a joint between segments with unit
     normals `before` and `after`, clamped to `MITER_LIMIT` half-widths."""
     var bisector = before + after

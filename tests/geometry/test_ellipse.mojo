@@ -21,19 +21,19 @@ from create.geometry import (
     Spline,
     Triangle,
 )
-from create.math import PI, TAU, Point2D, Vector2D, cos, sin, sqrt
+from create.math import PI, TAU, Point, Vector, cos, sin, sqrt
 
-comptime _E = Ellipse(Point2D(10.0, 5.0), 40.0, 20.0)
+comptime _E = Ellipse(Point(10.0, 5.0), 40.0, 20.0)
 """20 across either side of (10, 5), 10 up and down."""
 
 
 def test_measures() raises -> None:
-    assert_equal(_E.center(), Point2D(10.0, 5.0))
+    assert_equal(_E.center(), Point(10.0, 5.0))
     assert_almost_equal(_E.area(), PI * 20.0 * 10.0, atol=1e-9)
     assert_equal(_E.bounds(), Rectangle((10.0, 5.0), 40.0, 20.0))
     assert_equal(
         String(_E),
-        "Ellipse(position=Point2D(10.0, 5.0), width=40.0, height=20.0)",
+        "Ellipse(position=Point(10.0, 5.0), width=40.0, height=20.0)",
     )
     assert_equal(Ellipse((0.0, 0.0), 4, 2), Ellipse((0.0, 0.0), 4.0, 2.0))
     assert_true(_E != Ellipse((10.0, 5.0), 40.0, 21.0))
@@ -50,18 +50,18 @@ def test_contains_points_boundary_included() raises -> None:
 
 
 def test_moves() raises -> None:
-    var moved = _E.translate(Vector2D(1.0, -2.0))
-    assert_equal(moved.position, Point2D(11.0, 3.0))
-    assert_equal(_E.position, Point2D(10.0, 5.0))
-    assert_equal(_E.move_to((0.0, 0.0)).position, Point2D(0.0, 0.0))
+    var moved = _E.translate(Vector(1.0, -2.0))
+    assert_equal(moved.position, Point(11.0, 3.0))
+    assert_equal(_E.position, Point(10.0, 5.0))
+    assert_equal(_E.move_to((0.0, 0.0)).position, Point(0.0, 0.0))
 
 
-def _brute_closest(e: Ellipse, p: Point2D) -> Point2D:
-    var best = Point2D(0.0, 0.0)
+def _brute_closest(e: Ellipse, p: Point) -> Point:
+    var best = Point(0.0, 0.0)
     var best_distance = Float64.MAX
     for i in range(20000):
         var t = TAU * Float64(i) / 20000.0
-        var q = e.position + Vector2D(
+        var q = e.position + Vector(
             e.width / 2.0 * cos(t), e.height / 2.0 * sin(t)
         )
         var d = q.distance(p)
@@ -72,8 +72,8 @@ def _brute_closest(e: Ellipse, p: Point2D) -> Point2D:
 
 
 def test_closest_point_is_nearest_on_the_curve() raises -> None:
-    assert_equal(_E.closest_point((12.0, 6.0)), Point2D(12.0, 6.0))
-    var queries: List[Point2D] = [
+    assert_equal(_E.closest_point((12.0, 6.0)), Point(12.0, 6.0))
+    var queries: List[Point] = [
         (50.0, 30.0),
         (-40.0, 5.0),
         (10.0, -40.0),
@@ -84,7 +84,7 @@ def test_closest_point_is_nearest_on_the_curve() raises -> None:
         var q = _E.closest_point(p)
         var expected = _brute_closest(_E, p)
         assert_almost_equal(q.distance(p), expected.distance(p), atol=1e-4)
-        var u = Vector2D((q.x - 10.0) / 20.0, (q.y - 5.0) / 10.0)
+        var u = Vector((q.x - 10.0) / 20.0, (q.y - 5.0) / 10.0)
         assert_almost_equal(u.magnitude(), 1.0, atol=1e-12)
 
 
@@ -92,7 +92,7 @@ def test_tall_ellipse_closest_point() raises -> None:
     # Taller than wide: the axes swap inside the solve.
     var e = Ellipse((0.0, 0.0), 10.0, 40.0)
     var q = e.closest_point((20.0, 30.0))
-    var expected = _brute_closest(e, Point2D(20.0, 30.0))
+    var expected = _brute_closest(e, Point(20.0, 30.0))
     assert_almost_equal(
         q.distance((20.0, 30.0)), expected.distance((20.0, 30.0)), atol=1e-4
     )
@@ -164,17 +164,17 @@ def test_against_straight_edged_shapes() raises -> None:
     )
     assert_false(t.contains(_E))
     var square = Polygon(
-        Point2D(-10.0, -5.0),
-        Point2D(30.0, -5.0),
-        Point2D(30.0, 15.0),
-        Point2D(-10.0, 15.0),
+        Point(-10.0, -5.0),
+        Point(30.0, -5.0),
+        Point(30.0, 15.0),
+        Point(-10.0, 15.0),
     )
     assert_true(square.contains(_E))
     assert_true(square.overlaps(_E))
     assert_false(_E.contains(square))
     assert_false(
         Polygon(
-            Point2D(29.0, 14.0), Point2D(31.0, 14.0), Point2D(31.0, 16.0)
+            Point(29.0, 14.0), Point(31.0, 14.0), Point(31.0, 16.0)
         ).overlaps(_E)
     )
 
@@ -223,7 +223,7 @@ def test_curves_meet_it() raises -> None:
         ).intersects(_E)
     )
     var spline = Spline(
-        [Point2D(-30.0, 30.0), Point2D(10.0, 5.0), Point2D(50.0, 30.0)]
+        [Point(-30.0, 30.0), Point(10.0, 5.0), Point(50.0, 30.0)]
     )
     assert_true(spline.intersects(_E))
 
@@ -234,7 +234,7 @@ def test_flat_ellipse_is_its_bounds() raises -> None:
     assert_equal(flat.area(), 0.0)
     assert_true(flat.contains((10.0, 0.0)))
     assert_false(flat.contains((0.0, 0.01)))
-    assert_equal(flat.closest_point((5.0, 3.0)), Point2D(5.0, 0.0))
+    assert_equal(flat.closest_point((5.0, 3.0)), Point(5.0, 0.0))
     var c = Circle((0.0, 5.0), 5.0)
     assert_equal(flat.overlaps(c), segment.overlaps(c))
     assert_true(flat.overlaps(Ellipse((0.0, 2.0), 4.0, 4.0)))

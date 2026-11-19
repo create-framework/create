@@ -22,19 +22,19 @@ from create.geometry import (
     Spline,
     Triangle,
 )
-from create.math import PI, TAU, Point2D, Vector2D
+from create.math import PI, TAU, Point, Vector
 
-comptime _C = Capsule(Point2D(0.0, 0.0), Point2D(20.0, 0.0), 5.0)
+comptime _C = Capsule(Point(0.0, 0.0), Point(20.0, 0.0), 5.0)
 """Along the x axis from 0 to 20, 5 round."""
 
 
 def test_measures() raises -> None:
-    assert_equal(_C.center(), Point2D(10.0, 0.0))
+    assert_equal(_C.center(), Point(10.0, 0.0))
     assert_almost_equal(_C.area(), 200.0 + 25.0 * PI, atol=1e-9)
     assert_equal(_C.bounds(), Rectangle((10.0, 0.0), 30.0, 10.0))
     assert_equal(
         String(_C),
-        "Capsule(start=Point2D(0.0, 0.0), end=Point2D(20.0, 0.0), radius=5.0)",
+        "Capsule(start=Point(0.0, 0.0), end=Point(20.0, 0.0), radius=5.0)",
     )
     assert_equal(
         Capsule((0.0, 0.0), (1.0, 1.0), 2), Capsule((0.0, 0.0), (1.0, 1.0), 2.0)
@@ -54,14 +54,14 @@ def test_contains_points_boundary_included() raises -> None:
 
 
 def test_closest_point_and_moves() raises -> None:
-    assert_equal(_C.closest_point((12.0, 1.0)), Point2D(12.0, 1.0))
-    assert_equal(_C.closest_point((10.0, 10.0)), Point2D(10.0, 5.0))
-    assert_equal(_C.closest_point((30.0, 0.0)), Point2D(25.0, 0.0))
+    assert_equal(_C.closest_point((12.0, 1.0)), Point(12.0, 1.0))
+    assert_equal(_C.closest_point((10.0, 10.0)), Point(10.0, 5.0))
+    assert_equal(_C.closest_point((30.0, 0.0)), Point(25.0, 0.0))
     var moved = _C.move_to((0.0, 0.0))
-    assert_equal(moved.start, Point2D(-10.0, 0.0))
-    assert_equal(moved.end, Point2D(10.0, 0.0))
-    assert_equal(_C.translate(Vector2D(1.0, 2.0)).start, Point2D(1.0, 2.0))
-    assert_equal(_C.start, Point2D(0.0, 0.0))
+    assert_equal(moved.start, Point(-10.0, 0.0))
+    assert_equal(moved.end, Point(10.0, 0.0))
+    assert_equal(_C.translate(Vector(1.0, 2.0)).start, Point(1.0, 2.0))
+    assert_equal(_C.start, Point(0.0, 0.0))
 
 
 def test_against_circles() raises -> None:
@@ -149,14 +149,14 @@ def test_against_triangles() raises -> None:
 def test_against_polygons() raises -> None:
     # A square with a notch cut down from its top to y = 2 over x 8..12.
     var notched = Polygon(
-        Point2D(-10.0, -10.0),
-        Point2D(30.0, -10.0),
-        Point2D(30.0, 10.0),
-        Point2D(12.0, 10.0),
-        Point2D(12.0, 2.0),
-        Point2D(8.0, 2.0),
-        Point2D(8.0, 10.0),
-        Point2D(-10.0, 10.0),
+        Point(-10.0, -10.0),
+        Point(30.0, -10.0),
+        Point(30.0, 10.0),
+        Point(12.0, 10.0),
+        Point(12.0, 2.0),
+        Point(8.0, 2.0),
+        Point(8.0, 10.0),
+        Point(-10.0, 10.0),
     )
     assert_true(notched.overlaps(_C))
     # Both ends and both sides' ends are inside, but the top bulges into
@@ -169,7 +169,7 @@ def test_against_polygons() raises -> None:
     assert_false(_C.contains(Polygon.regular((10.0, 0.0), 5.5, sides=6)))
     assert_false(
         _C.overlaps(
-            Polygon(Point2D(0.0, 6.0), Point2D(20.0, 6.0), Point2D(10.0, 9.0))
+            Polygon(Point(0.0, 6.0), Point(20.0, 6.0), Point(10.0, 9.0))
         )
     )
 
@@ -225,7 +225,7 @@ def test_curves_meet_it() raises -> None:
     )
     assert_true(
         Spline(
-            [Point2D(-10.0, 20.0), Point2D(10.0, 0.0), Point2D(30.0, 20.0)]
+            [Point(-10.0, 20.0), Point(10.0, 0.0), Point(30.0, 20.0)]
         ).intersects(_C)
     )
 

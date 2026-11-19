@@ -32,18 +32,18 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Movable`, `Region
 
 ## Fields
 
-- `vertices: List[Point2D]`
+- `vertices: List[Point]`
 - `corner_radius: Float64`: How far each corner is rounded; 0 is sharp.
 
 ## Constructors
 
 ```mojo
 @staticmethod
-def __init__(out self, *vertices: Point2D, *, corner_radius: _OptionalFloat64 = SIMD(0))
+def __init__(out self, *vertices: Point, *, corner_radius: _OptionalFloat64 = SIMD(0))
 @staticmethod
 def __init__(
     out self,
-    var vertices: List[Point2D],
+    var vertices: List[Point],
     *,
     corner_radius: _OptionalFloat64 = SIMD(0),
 )
@@ -54,7 +54,7 @@ def __init__(
 ```mojo
 @staticmethod
 def regular(
-    position: Point2D,
+    position: Point,
     radius: Float64,
     sides: Int,
     start_angle: Float64 = 1.5707963267948966,
@@ -68,7 +68,7 @@ A regular polygon of `sides` vertices on the circle around `position` with radiu
 ```mojo
 @staticmethod
 def regular(
-    position: Point2D,
+    position: Point,
     radius: Int,
     sides: Int,
     start_angle: Float64 = 1.5707963267948966,
@@ -82,7 +82,7 @@ def regular(
 ```mojo
 @staticmethod
 def star(
-    position: Point2D,
+    position: Point,
     radius: Float64,
     inner_radius: Float64,
     tips: Int,
@@ -97,7 +97,7 @@ A star of `tips` points about `position`: its tips on `radius`, the first at `st
 ```mojo
 @staticmethod
 def star(
-    position: Point2D,
+    position: Point,
     radius: Int,
     inner_radius: Int,
     tips: Int,
@@ -112,7 +112,7 @@ def star(
 ### `center`
 
 ```mojo
-def center(self) -> Point2D
+def center(self) -> Point
 ```
 
 The centroid of the enclosed area; with no area, the mean of the vertices (the origin for none).
@@ -134,7 +134,7 @@ The tightest axis-aligned rectangle around the polygon; a zero-size one at the o
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 `p` itself when inside, else the nearest point on an edge. A polygon with no vertices has no points, and returns `p`.
@@ -142,7 +142,7 @@ def closest_point(self, p: Point2D) -> Point2D
 ### `contains`
 
 ```mojo
-def contains(self, p: Point2D) -> Bool
+def contains(self, p: Point) -> Bool
 def contains(self, l: Line) -> Bool
 ```
 
@@ -185,13 +185,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

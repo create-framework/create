@@ -22,7 +22,7 @@ comptime _PENTAGRAM = Color(201, 140, 150)
 comptime _SPIN = 0.6
 """How fast the stars turn, in radians per second."""
 
-comptime _PENTAGRAM_HOME = Point2D(520.0, -80.0)
+comptime _PENTAGRAM_HOME = Point(520.0, -80.0)
 
 
 def _side_color(sides: Int) -> Color:
@@ -37,7 +37,7 @@ def _side_color(sides: Int) -> Color:
     return colors[(sides - 3) % len(colors)]
 
 
-def _pentagram(position: Point2D, r: Float64) -> Polygon:
+def _pentagram(position: Point, r: Float64) -> Polygon:
     """Five vertices joined every second one, so the edges cross; under the
     nonzero rule the middle, wound twice, is still inside."""
     var tips = Polygon.regular(position, r, 5).vertices.copy()
@@ -55,7 +55,7 @@ struct App(Program):
 
     var dragging: Bool
 
-    var grab: Vector2D
+    var grab: Vector
     """From the mouse to the pentagram's first vertex, while dragging."""
 
     @staticmethod
@@ -64,7 +64,7 @@ struct App(Program):
             inner_ratio=0.45,
             pentagram=_pentagram(_PENTAGRAM_HOME, 55),
             dragging=False,
-            grab=Vector2D(0, 0),
+            grab=Vector(0, 0),
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -142,7 +142,7 @@ struct App(Program):
             stroke=_HIT if hit else _U_OUTLINE,
             stroke_thickness=6,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(10, -14),
+            shadow_offset=Vector(10, -14),
             shadow_blur=24,
         ):
             canvas.draw(u)

@@ -22,14 +22,14 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Implicit
 
 ## Fields
 
-- `start: Point2D`
-- `end: Point2D`
+- `start: Point`
+- `end: Point`
 
 ## Constructors
 
 ```mojo
 @staticmethod
-def __init__(out self, start: Point2D, end: Point2D)
+def __init__(out self, start: Point, end: Point)
 ```
 
 ## Methods
@@ -43,7 +43,7 @@ def length(self) -> Float64
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point2D
+def at(self, t: Float64) -> Point
 ```
 
 The point at parameter `t`: `start` at 0, `end` at 1, and proportional to distance in between. Not clamped: outside 0..1 it carries on along the line, as `lerp` extrapolates.
@@ -51,7 +51,7 @@ The point at parameter `t`: `start` at 0, `end` at 1, and proportional to distan
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector2D
+def tangent(self, t: Float64) -> Vector
 ```
 
 The derivative at `t`: `end - start`, the same everywhere — the direction of travel, with the line's length as its magnitude. Zero for a zero-length line.
@@ -59,7 +59,7 @@ The derivative at `t`: `end - start`, the same everywhere — the direction of t
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point2D
+def at_distance(self, distance: Float64) -> Point
 ```
 
 The point `distance` along the line from `start`, clamped to the line's ends. Exact, and as cheap as `at`.
@@ -83,7 +83,7 @@ The tightest axis-aligned rectangle around the line: the box its two ends span, 
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point2D]
+def flatten(self, tolerance: Float64) -> List[Point]
 ```
 
 `start` and `end`: a line is already straight, whatever the tolerance.
@@ -100,7 +100,7 @@ The line as one cubic Bézier, its controls at the thirds, so it traces the line
 
 ```mojo
 def intersects(self, other: Self) -> Bool
-def intersects(self, p: Point2D) -> Bool
+def intersects(self, p: Point) -> Bool
 def intersects(self, a: Arc) -> Bool
 def intersects(self, b: Bezier) -> Bool
 def intersects(self, s: Spline) -> Bool
@@ -116,13 +116,13 @@ def intersects(self, t: Triangle) -> Bool
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 ### `midpoint`
 
 ```mojo
-def midpoint(self) -> Point2D
+def midpoint(self) -> Point
 ```
 
 ### `draw_to`
@@ -134,13 +134,13 @@ def draw_to[T: DrawTarget](self, mut target: T)
 ### `move_to`
 
 ```mojo
-def move_to(self, position: Point2D) -> Self
+def move_to(self, position: Point) -> Self
 ```
 
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 ## Special methods

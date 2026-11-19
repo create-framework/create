@@ -49,11 +49,11 @@ def test_draw_matches_polygons() raises -> None:
     var named = _canvas()
     drawn.draw(
         Polygon(
-            Point2D(-40.0, -30.0),
-            Point2D(40.0, -30.0),
-            Point2D(0.0, 10.0),
-            Point2D(30.0, 40.0),
-            Point2D(-30.0, 40.0),
+            Point(-40.0, -30.0),
+            Point(40.0, -30.0),
+            Point(0.0, 10.0),
+            Point(30.0, 40.0),
+            Point(-30.0, 40.0),
             corner_radius=3.0,
         )
     )
@@ -71,11 +71,9 @@ def test_draw_matches_polygons() raises -> None:
 def test_polygon_takes_a_list() raises -> None:
     var listed = _canvas()
     var named = _canvas()
-    var vertices = List[Point2D]()
+    var vertices = List[Point]()
     for i in range(5):
-        vertices.append(
-            Point2D(Vector2D.from_angle(TAU * Float64(i) / 5.0, 40.0))
-        )
+        vertices.append(Point(Vector.from_angle(TAU * Float64(i) / 5.0, 40.0)))
     listed.polygon(vertices.copy(), corner_radius=3.0)
     named.draw(Polygon(vertices^, corner_radius=3.0))
     _assert_same(listed, named, "polygon list")
@@ -90,11 +88,11 @@ def test_draw_matches_lines_and_curves() raises -> None:
     named.bezier((-50.0, 0.0), (-20.0, 40.0), (20.0, -40.0), (50.0, 0.0))
     drawn.draw(Arc((0.0, 10.0), 30.0, 0.0, PI))
     named.arc((0.0, 10.0), 30.0, 0.0, PI)
-    var points: List[Point2D] = [
-        Point2D(-50.0, 40.0),
-        Point2D(-10.0, 30.0),
-        Point2D(20.0, 45.0),
-        Point2D(50.0, 35.0),
+    var points: List[Point] = [
+        Point(-50.0, 40.0),
+        Point(-10.0, 30.0),
+        Point(20.0, 45.0),
+        Point(50.0, 35.0),
     ]
     drawn.draw(Spline(points.copy()))
     named.spline(points^)

@@ -23,7 +23,7 @@ comptime _POINT = Color(240, 236, 222)
 
 @fieldwise_init
 struct App(Program):
-    var points: List[Point2D]
+    var points: List[Point]
     """What the curve passes through, in order."""
 
     var alpha: Float64
@@ -56,7 +56,7 @@ struct App(Program):
             travelled=0.0,
         )
 
-    def _point_under(self, position: Point2D) -> Int:
+    def _point_under(self, position: Point) -> Int:
         for i in range(len(self.points)):
             if (position - self.points[i]).magnitude() <= _GRAB_RADIUS:
                 return i
@@ -105,7 +105,7 @@ struct App(Program):
             stroke=_CURVE,
             stroke_thickness=14,
             shadow=_SHADOW,
-            shadow_offset=Vector2D(6, -10),
+            shadow_offset=Vector(6, -10),
             shadow_blur=18,
         ):
             canvas.draw(spline)

@@ -1,5 +1,5 @@
 from std.math import sqrt
-from create.math import PI, Point2D, Vector2D
+from create.math import PI, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
 from .drawable import Curve, DrawTarget, Region
@@ -38,14 +38,14 @@ struct Circle(
     remain exact rather than always-false. `radius` is assumed non-negative.
     """
 
-    var position: Point2D
+    var position: Point
     var radius: Float64
 
-    def __init__(out self, position: Point2D, radius: Float64):
+    def __init__(out self, position: Point, radius: Float64):
         self.position = position
         self.radius = radius
 
-    def __init__(out self, position: Point2D, radius: Int):
+    def __init__(out self, position: Point, radius: Int):
         self = Circle(position, Float64(radius))
 
     def __eq__(self, other: Circle) -> Bool:
@@ -59,7 +59,7 @@ struct Circle(
             "Circle(position=", self.position, ", radius=", self.radius, ")"
         )
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         return self.position
 
     def area(self) -> Float64:
@@ -72,7 +72,7 @@ struct Circle(
         """The tightest axis-aligned rectangle around the circle."""
         return Rectangle(self.position, self.diameter(), self.diameter())
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         var d = p - self.position
         var distance_squared = d.dot(d)
         if (
@@ -82,7 +82,7 @@ struct Circle(
             return p
         return self.position + d * (self.radius / sqrt(distance_squared))
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         return _distance_squared(p, self.position) <= self.radius * self.radius
 
     # A `Circle`, `Capsule`, `Rectangle` or `Triangle`, rounded or not, or
@@ -185,12 +185,12 @@ struct Circle(
     def draw_to[T: DrawTarget](self, mut target: T):
         target._circle(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         var moved = self.copy()
         moved.position = position
         return moved^
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^

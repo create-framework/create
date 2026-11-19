@@ -21,9 +21,9 @@ struct Player(Copyable, Drawable, Movable):
     comptime JUMP_HOLD = 1080.0  # units/s^2, against gravity while W is held
     comptime JUMPS = 2  # one from the ground, one in the air
 
-    var position: Point2D
+    var position: Point
     """The middle of the body, as every shape is placed."""
-    var velocity: Vector2D
+    var velocity: Vector
     var jumps_left: Int
 
     def feet(self) -> Float64:
@@ -50,7 +50,7 @@ struct Player(Copyable, Drawable, Movable):
         var gravity = Self.GRAVITY
         if context.keyboard.down(Key.W) and rise > 0:
             gravity += Self.JUMP_HOLD
-        self.velocity = Vector2D(run, rise + gravity * dt)
+        self.velocity = Vector(run, rise + gravity * dt)
 
         var feet_before = self.feet()
         self.position = self.position + self.velocity * dt
@@ -76,10 +76,8 @@ struct Player(Copyable, Drawable, Movable):
                 and self.feet() <= top
                 and abs(self.position.x - platform.position.x) < reach
             ):
-                self.position = Point2D(
-                    self.position.x, top + Self.HEIGHT / 2.0
-                )
-                self.velocity = Vector2D(self.velocity.x, 0.0)
+                self.position = Point(self.position.x, top + Self.HEIGHT / 2.0)
+                self.velocity = Vector(self.velocity.x, 0.0)
                 self.jumps_left = Self.JUMPS
                 return True
         return False

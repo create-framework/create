@@ -24,7 +24,7 @@ struct Picker(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Picker:
         var spectrum = Gradient.linear(
             Color.RED, Color.YELLOW, Color.GREEN, Color.BLUE,
-            direction=Vector2D.RIGHT,
+            direction=Vector.RIGHT,
         )
         return Picker(spectrum)
 
@@ -85,8 +85,8 @@ var board = Image(buffer^)
 
 Pixels are counted in **image coordinates**, which work differently from the rest of Create: the
 origin is the image's top-left pixel, y increases *downwards*, and x and y are whole numbers
-(`Int`), one per pixel. This is the one place a position is two numbers rather than a `Point2D`,
-since a pixel of an image is not a point on the screen. Reading off the image gives transparent, and
+(`Int`), one per pixel. This is the one place a position is two numbers rather than a `Point`, since
+a pixel of an image is not a point on the screen. Reading off the image gives transparent, and
 writing off it does nothing.
 
 Shapes, text and gradients go into an image through an offscreen `Canvas` instead (see [Drawing into

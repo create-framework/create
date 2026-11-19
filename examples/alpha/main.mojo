@@ -15,7 +15,7 @@ comptime _HINT = Color(176, 172, 162)
 comptime _RED = Color(226, 46, 56)
 comptime _ROSE = Color(201, 140, 150)
 comptime _INDIGO = Color(98, 104, 168)
-comptime _CARD = Point2D(200.0, 20.0)
+comptime _CARD = Point(200.0, 20.0)
 
 
 @fieldwise_init
@@ -53,11 +53,11 @@ struct App(Program):
                 stroke_thickness=6,
             ):
                 canvas.rectangle(_CARD, 220.0, 170.0, corner_radius=18)
-            canvas.image(self.logo, _CARD + Vector2D(0, 20), 100, 100)
+            canvas.image(self.logo, _CARD + Vector(0, 20), 100, 100)
             with canvas.style(text_color=_TEXT, font_size=22):
                 canvas.text(
                     String("Opacity ", round(opacity, 2)),
-                    _CARD - Vector2D(0, 55),
+                    _CARD - Vector(0, 55),
                 )
 
         with canvas.style(text_color=_HINT, font_size=18):

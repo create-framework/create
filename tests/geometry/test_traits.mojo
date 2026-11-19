@@ -20,14 +20,14 @@ from create.geometry import (
     Spline,
     Triangle,
 )
-from create.math import PI, Point2D, Vector2D
+from create.math import PI, Point, Vector
 
 
 # Each helper is generic over one trait, so every shape below reaching it
 # is checked by the compiler to conform, and the result is checked here.
 def _moves_with_its_bounds[S: Shape](shape: S) raises:
     var before = shape.bounds()
-    var moved = shape.translate(Vector2D(3.0, -2.0))
+    var moved = shape.translate(Vector(3.0, -2.0))
     var after = moved.bounds()
     # A verb returns a new shape and leaves this one where it was.
     assert_equal(shape.bounds().position, before.position)
@@ -35,7 +35,7 @@ def _moves_with_its_bounds[S: Shape](shape: S) raises:
     assert_almost_equal(after.position.y, before.position.y - 2.0, atol=1e-9)
     assert_almost_equal(after.width, before.width, atol=1e-9)
     assert_almost_equal(after.height, before.height, atol=1e-9)
-    var far = Point2D(100.0, 100.0)
+    var far = Point(100.0, 100.0)
     assert_true(after.contains(moved.closest_point(far)))
 
 
@@ -69,14 +69,14 @@ def test_every_shape_moves_with_its_bounds() raises -> None:
     _moves_with_its_bounds(Capsule((0.0, 0.0), (4.0, 3.0), 1.0))
     _moves_with_its_bounds(Triangle((0.0, 0.0), (4.0, 0.0), (1.0, 3.0)))
     _moves_with_its_bounds(Sector((0.0, 0.0), 3.0, 0.0, PI / 2.0))
-    _moves_with_its_bounds(Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=5))
+    _moves_with_its_bounds(Polygon.regular(Point(0.0, 0.0), 2.0, sides=5))
     _moves_with_its_bounds(Line((0.0, 0.0), (4.0, 3.0)))
     _moves_with_its_bounds(Arc((0.0, 0.0), 2.0, 0.0, PI))
     _moves_with_its_bounds(
         Bezier((0.0, 0.0), (0.0, 4.0), (4.0, 4.0), (4.0, 0.0))
     )
     _moves_with_its_bounds(
-        Spline([Point2D(0.0, 0.0), Point2D(2.0, 3.0), Point2D(5.0, 1.0)])
+        Spline([Point(0.0, 0.0), Point(2.0, 3.0), Point(5.0, 1.0)])
     )
 
 
@@ -86,7 +86,7 @@ def test_every_region_holds_its_center() raises -> None:
     _holds_its_center(Ellipse((1.0, 1.0), 6.0, 2.0))
     _holds_its_center(Capsule((0.0, 0.0), (4.0, 3.0), 1.0))
     _holds_its_center(Triangle((0.0, 0.0), (4.0, 0.0), (1.0, 3.0)))
-    _holds_its_center(Polygon.regular(Point2D(0.0, 0.0), 2.0, sides=5))
+    _holds_its_center(Polygon.regular(Point(0.0, 0.0), 2.0, sides=5))
     # A sector's center() is its tip, on its boundary; move_to places it.
     _holds_its_center(Sector((0.0, 0.0), 3.0, 0.0, PI / 2.0))
 
@@ -96,7 +96,7 @@ def test_every_curve_runs_end_to_end() raises -> None:
     _runs_end_to_end(Arc((0.0, 0.0), 2.0, 0.0, PI))
     _runs_end_to_end(Bezier((0.0, 0.0), (0.0, 4.0), (4.0, 4.0), (4.0, 0.0)))
     _runs_end_to_end(
-        Spline([Point2D(0.0, 0.0), Point2D(2.0, 3.0), Point2D(5.0, 1.0)])
+        Spline([Point(0.0, 0.0), Point(2.0, 3.0), Point(5.0, 1.0)])
     )
 
 
@@ -109,13 +109,11 @@ def test_regions_contain_a_curve_wholly_inside() raises -> None:
     var arc = Arc((0.0, 0.0), 2.0, 0.0, PI)
     assert_true(Circle((0.0, 0.0), 2.1).contains(arc))
     assert_equal(Circle((0.0, -1.0), 2.5).contains(arc), False)
-    var spline = Spline(
-        [Point2D(-1.0, 0.0), Point2D(0.0, 1.0), Point2D(1.0, 0.0)]
-    )
+    var spline = Spline([Point(-1.0, 0.0), Point(0.0, 1.0), Point(1.0, 0.0)])
     assert_true(
         Triangle((-4.0, -1.0), (4.0, -1.0), (0.0, 4.0)).contains(spline)
     )
-    assert_true(Polygon.regular(Point2D(0.0, 0.0), 3.0, sides=6).contains(arc))
+    assert_true(Polygon.regular(Point(0.0, 0.0), 3.0, sides=6).contains(arc))
     assert_true(Sector((0.0, 0.0), 3.0, 0.0, PI).contains(arc))
     assert_equal(Sector((0.0, 0.0), 3.0, 0.0, PI / 2.0).contains(arc), False)
 
@@ -125,14 +123,14 @@ def test_a_concave_polygon_rejects_a_curve_across_its_notch() raises -> None:
     # ends sit in the arms, its middle crosses the notch.
     var u = Polygon(
         [
-            Point2D(-3.0, -2.0),
-            Point2D(3.0, -2.0),
-            Point2D(3.0, 4.0),
-            Point2D(1.0, 4.0),
-            Point2D(1.0, 0.0),
-            Point2D(-1.0, 0.0),
-            Point2D(-1.0, 4.0),
-            Point2D(-3.0, 4.0),
+            Point(-3.0, -2.0),
+            Point(3.0, -2.0),
+            Point(3.0, 4.0),
+            Point(1.0, 4.0),
+            Point(1.0, 0.0),
+            Point(-1.0, 0.0),
+            Point(-1.0, 4.0),
+            Point(-3.0, 4.0),
         ]
     )
     var across = Bezier((-2.0, 1.0), (-2.0, 3.0), (2.0, 3.0), (2.0, 1.0))

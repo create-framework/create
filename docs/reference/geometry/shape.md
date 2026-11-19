@@ -21,7 +21,7 @@ The tightest axis-aligned rectangle around the shape.
 ### `closest_point`
 
 ```mojo
-def closest_point(self, p: Point2D) -> Point2D
+def closest_point(self, p: Point) -> Point
 ```
 
 The point of the shape nearest `p`: `p` itself inside a region.
@@ -29,7 +29,7 @@ The point of the shape nearest `p`: `p` itself inside a region.
 ### `translate`
 
 ```mojo
-def translate(self, delta: Vector2D) -> Self
+def translate(self, delta: Vector) -> Self
 ```
 
 The shape moved by `delta`; this one is unchanged.

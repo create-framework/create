@@ -1,5 +1,5 @@
 from std.math import cos, sin, sqrt
-from create.math import PI, TAU, Point2D, Vector2D
+from create.math import PI, TAU, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
 from .drawable import Curve, DrawTarget, Region
@@ -52,7 +52,7 @@ def _ellipse_root(r0: Float64, z0: Float64, z1: Float64, g: Float64) -> Float64:
     return s
 
 
-def _closest_on_ellipse(a: Float64, b: Float64, p: Point2D) -> Point2D:
+def _closest_on_ellipse(a: Float64, b: Float64, p: Point) -> Point:
     """The point of the curve `x^2/a^2 + y^2/b^2 = 1` nearest `p`, both
     relative to the ellipse's centre, from inside or out; `a` and `b` are
     positive. Accurate to rounding: the closest point's one unknown is the
@@ -92,7 +92,7 @@ def _closest_on_ellipse(a: Float64, b: Float64, p: Point2D) -> Point2D:
         else:
             x0 = a
             x1 = 0.0
-    return Point2D(x0 if p.x >= 0.0 else -x0, x1 if p.y >= 0.0 else -x1)
+    return Point(x0 if p.x >= 0.0 else -x0, x1 if p.y >= 0.0 else -x1)
 
 
 struct Ellipse(
@@ -123,16 +123,16 @@ struct Ellipse(
     its own outline, as everywhere.
     """
 
-    var position: Point2D
+    var position: Point
     var width: Float64
     var height: Float64
 
-    def __init__(out self, position: Point2D, width: Float64, height: Float64):
+    def __init__(out self, position: Point, width: Float64, height: Float64):
         self.position = position
         self.width = width
         self.height = height
 
-    def __init__(out self, position: Point2D, width: Int, height: Int):
+    def __init__(out self, position: Point, width: Int, height: Int):
         self = Ellipse(position, Float64(width), Float64(height))
 
     def __eq__(self, other: Ellipse) -> Bool:
@@ -156,7 +156,7 @@ struct Ellipse(
             ")",
         )
 
-    def center(self) -> Point2D:
+    def center(self) -> Point:
         return self.position
 
     def area(self) -> Float64:
@@ -166,14 +166,14 @@ struct Ellipse(
         """The tightest axis-aligned rectangle around the ellipse."""
         return Rectangle(self.position, self.width, self.height)
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         if self._is_flat():
             return self.bounds().closest_point(p)
         if self.contains(p):
             return p
         return self._closest_on_boundary(p)
 
-    def contains(self, p: Point2D) -> Bool:
+    def contains(self, p: Point) -> Bool:
         if self._is_flat():
             return self.bounds().contains(p)
         var q = self._to_unit(p)
@@ -309,12 +309,12 @@ struct Ellipse(
     def draw_to[T: DrawTarget](self, mut target: T):
         target._ellipse(self)
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         var moved = self.copy()
         moved.position = position
         return moved^
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^
@@ -323,27 +323,27 @@ struct Ellipse(
         """Whether the ellipse has collapsed to a segment or a point."""
         return self.width <= 0.0 or self.height <= 0.0
 
-    def _closest_on_boundary(self, p: Point2D) -> Point2D:
+    def _closest_on_boundary(self, p: Point) -> Point:
         """The point of the curve nearest `p`, from inside or out. Not
         flat."""
         var near = _closest_on_ellipse(
             self.width / 2.0,
             self.height / 2.0,
-            Point2D(p.x - self.position.x, p.y - self.position.y),
+            Point(p.x - self.position.x, p.y - self.position.y),
         )
-        return self.position + Vector2D(near)
+        return self.position + Vector(near)
 
-    def _vertices(self, segments: Int) -> List[Point2D]:
+    def _vertices(self, segments: Int) -> List[Point]:
         """`segments` points on the curve, evenly spaced in the angle of
         `(cos t, sin t)` and counter-clockwise from the right end of the
         width: the outline polygon's vertices. A multiple of four lands one
         on each end of both axes, so their bounds are the ellipse's."""
         var a = self.width / 2.0
         var b = self.height / 2.0
-        var points = List[Point2D](capacity=segments)
+        var points = List[Point](capacity=segments)
         for i in range(segments):
             var t = TAU * Float64(i) / Float64(segments)
-            points.append(self.position + Vector2D(a * cos(t), b * sin(t)))
+            points.append(self.position + Vector(a * cos(t), b * sin(t)))
         return points^
 
     def _outline(self) -> Polygon:
@@ -355,8 +355,8 @@ struct Ellipse(
     # translation and a scale along each axis, so it keeps a line a line,
     # an axis-aligned rectangle one, and an axis-aligned ellipse one. Only
     # for an ellipse that is not flat, and a sharp shape.
-    def _to_unit(self, p: Point2D) -> Point2D:
-        return Point2D(
+    def _to_unit(self, p: Point) -> Point:
+        return Point(
             (p.x - self.position.x) * 2.0 / self.width,
             (p.y - self.position.y) * 2.0 / self.height,
         )
@@ -377,7 +377,7 @@ struct Ellipse(
         )
 
     def _to_unit(self, p: Polygon) -> Polygon:
-        var vertices = List[Point2D](capacity=len(p.vertices))
+        var vertices = List[Point](capacity=len(p.vertices))
         for v in p.vertices:
             vertices.append(self._to_unit(v))
         return Polygon(vertices^)
@@ -390,5 +390,5 @@ struct Ellipse(
         )
 
 
-comptime _UNIT_CIRCLE = Circle(Point2D(0.0, 0.0), 1.0)
+comptime _UNIT_CIRCLE = Circle(Point(0.0, 0.0), 1.0)
 """Where `Ellipse._to_unit` takes its ellipse."""

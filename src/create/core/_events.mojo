@@ -30,8 +30,8 @@ from create._window.event import (
     TextInput,
 )
 
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 
 from create.core.context import Context
 from create.input.gamepad_button import GamepadButton
@@ -97,7 +97,7 @@ def apply_events(
             )
         elif event.isa[MouseWheel]():
             var e = event[MouseWheel]
-            context.mouse._scroll(Vector2D(e.x, e.y))
+            context.mouse._scroll(Vector(e.x, e.y))
         elif event.isa[GamepadAdded]():
             ref added = event[GamepadAdded]
             context._gamepads._connect(added.id, added.name)
@@ -123,6 +123,6 @@ def apply_events(
 
 def _to_screen(
     view: Viewport, x: Float64, y: Float64, px_per_point: Float64
-) -> Point2D:
+) -> Point:
     """A pointer position from SDL's window coordinates into screen space."""
-    return view.pixel_to_screen(Point2D(x * px_per_point, y * px_per_point))
+    return view.pixel_to_screen(Point(x * px_per_point, y * px_per_point))

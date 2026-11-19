@@ -43,9 +43,9 @@ starting number called the **seed**. The same seed always gives the same numbers
 ```mojo
 # In `create`: the same 60 stars, in the same places, every time the program runs.
 var random = Random(7)
-var stars = List[Point2D]()
+var stars = List[Point]()
 for _ in range(60):
-    stars.append(Point2D(random.float(-640, 640), random.float(0, 360)))
+    stars.append(Point(random.float(-640, 640), random.float(0, 360)))
 ```
 
 A fixed seed is useful when a random result should be repeatable: a level generated from a seed the

@@ -1,8 +1,8 @@
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 from create.input.mouse import Mouse
 from create.input.mouse_button import MouseButton
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 from create.core.context import Context
 from create.core._events import apply_events
 from create.render._viewport import Viewport
@@ -100,7 +100,7 @@ def test_mouse_released_button() raises -> None:
 
 def test_new_frame_clears_wheel_and_edge_buttons() raises -> None:
     var mouse = Mouse()
-    mouse.wheel = Vector2D(3.0, -2.0)
+    mouse.wheel = Vector(3.0, -2.0)
     mouse._pressed |= 1 << 1
     mouse._released |= 1 << 2
     mouse._new_frame()
@@ -121,22 +121,22 @@ def test_new_frame_leaves_held_state_alone() raises -> None:
 
 def test_set_mouse_records_the_position() raises -> None:
     var mouse = Mouse()
-    mouse._move(Point2D(12.5, -30.25))
+    mouse._move(Point(12.5, -30.25))
     assert_equal(mouse.position.x, 12.5)
     assert_equal(mouse.position.y, -30.25)
 
 
 def test_mouse_is_a_position_and_the_wheel_a_displacement() raises -> None:
     # The split this type distinction exists for: a drag is the difference
-    # between two locations, which is a Vector2D, while the wheel already is
+    # between two locations, which is a Vector, while the wheel already is
     # one.
     var mouse = Mouse()
-    mouse.press_position = Point2D(10.0, 20.0)
-    mouse._move(Point2D(13.0, 24.0))
-    var drag: Vector2D = mouse.position - mouse.press_position
-    assert_equal(drag, Vector2D(3.0, 4.0))
+    mouse.press_position = Point(10.0, 20.0)
+    mouse._move(Point(13.0, 24.0))
+    var drag: Vector = mouse.position - mouse.press_position
+    assert_equal(drag, Vector(3.0, 4.0))
     assert_equal(mouse.press_position + drag, mouse.position)
-    mouse.wheel = Vector2D(0.0, -1.0)
+    mouse.wheel = Vector(0.0, -1.0)
     assert_equal(mouse.wheel.magnitude(), 1.0)
 
 
@@ -148,17 +148,17 @@ def test_wheel_adds_up_a_frames_scrolls() raises -> None:
         MouseWheel(1.0, 0.0),
     ]
     _ = apply_events(events, Viewport(), context)
-    assert_equal(context.mouse.wheel, Vector2D(1.0, 0.75))
+    assert_equal(context.mouse.wheel, Vector(1.0, 0.75))
 
     _ = apply_events([], Viewport(), context)
-    assert_equal(context.mouse.wheel, Vector2D(0.0, 0.0))
+    assert_equal(context.mouse.wheel, Vector(0.0, 0.0))
 
 
 def test_position_keeps_its_fraction() raises -> None:
     var context = Context()
     var events: List[Event] = [MouseMoved(10.5, 20.25)]
     _ = apply_events(events, Viewport(), context)
-    assert_equal(context.mouse.position, Point2D(10.5, -20.25))
+    assert_equal(context.mouse.position, Point(10.5, -20.25))
 
 
 def test_focus_lost_releases_held_buttons() raises -> None:
@@ -180,10 +180,10 @@ def test_movement_adds_up_a_frames_motion_y_up() raises -> None:
         MouseMoved(14.0, 16.0, 1.0, 0.0),
     ]
     _ = apply_events(events, Viewport(), context)
-    assert_equal(context.mouse.movement, Vector2D(4.0, 4.0))
+    assert_equal(context.mouse.movement, Vector(4.0, 4.0))
 
     _ = apply_events([], Viewport(), context)
-    assert_equal(context.mouse.movement, Vector2D(0.0, 0.0))
+    assert_equal(context.mouse.movement, Vector(0.0, 0.0))
 
 
 def test_movement_counts_where_the_position_stops() raises -> None:
@@ -192,8 +192,8 @@ def test_movement_counts_where_the_position_stops() raises -> None:
     var context = Context()
     var events: List[Event] = [MouseMoved(0.0, 0.0, 5.0, 0.0)]
     _ = apply_events(events, Viewport(), context)
-    assert_equal(context.mouse.position, Point2D(0.0, 0.0))
-    assert_equal(context.mouse.movement, Vector2D(5.0, 0.0))
+    assert_equal(context.mouse.position, Point(0.0, 0.0))
+    assert_equal(context.mouse.movement, Vector(5.0, 0.0))
 
 
 def test_mouse_button_from_name() raises -> None:

@@ -1,5 +1,5 @@
 from std.math import acos, ceil, cos, min, max, sin, sqrt, tan
-from create.math import TAU, Point2D, Vector2D
+from create.math import TAU, Point, Vector
 from .bezier import Bezier, _curve_segments
 from .spline import Spline
 from .drawable import Curve, DrawTarget
@@ -43,14 +43,14 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
     point.
     """
 
-    var position: Point2D
+    var position: Point
     var radius: Float64
     var start_angle: Float64
     var sweep_angle: Float64
 
     def __init__(
         out self,
-        position: Point2D,
+        position: Point,
         radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -62,7 +62,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     def __init__(
         out self,
-        position: Point2D,
+        position: Point,
         radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -101,28 +101,28 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         """The signed sweep, clamped to a full turn either way."""
         return max(-TAU, min(self.sweep_angle, TAU))
 
-    def _point_at_angle(self, angle: Float64) -> Point2D:
+    def _point_at_angle(self, angle: Float64) -> Point:
         return self.position + _unit(angle) * self.radius
 
-    def at(self, t: Float64) -> Point2D:
+    def at(self, t: Float64) -> Point:
         """The point at parameter `t`: 0 at the start, 1 at the end, and
         proportional to distance along the arc in between. Not clamped:
         outside 0..1 it carries on round the circle."""
         return self._point_at_angle(self.start_angle + self._sweep() * t)
 
-    def tangent(self, t: Float64) -> Vector2D:
+    def tangent(self, t: Float64) -> Vector:
         """The derivative at `t`: the direction of travel, with a magnitude
         that is the arc's length (the speed per unit of `t`, the same
         everywhere). Zero for a collapsed arc."""
         var sweep = self._sweep()
         var angle = self.start_angle + sweep * t
-        return Vector2D(-sin(angle), cos(angle)) * (self.radius * sweep)
+        return Vector(-sin(angle), cos(angle)) * (self.radius * sweep)
 
     def length(self) -> Float64:
         """The distance along the arc from start to end. Exact."""
         return self.radius * abs(self._sweep())
 
-    def at_distance(self, distance: Float64) -> Point2D:
+    def at_distance(self, distance: Float64) -> Point:
         """The point `distance` along the arc from its start, clamped to the
         arc's ends. An arc has constant speed, so this is `at` with `t`
         scaled: exact, and as cheap as `at`."""
@@ -151,19 +151,19 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         var s = _normalized_sweep(self.start_angle, self.sweep_angle)
         var a = self.at(0.0)
         var b = self.at(1.0)
-        var lo = Point2D(min(a.x, b.x), min(a.y, b.y))
-        var hi = Point2D(max(a.x, b.x), max(a.y, b.y))
-        if _in_sweep(Vector2D(1.0, 0.0), s[0], s[1]):
+        var lo = Point(min(a.x, b.x), min(a.y, b.y))
+        var hi = Point(max(a.x, b.x), max(a.y, b.y))
+        if _in_sweep(Vector(1.0, 0.0), s[0], s[1]):
             hi.x = self.position.x + self.radius
-        if _in_sweep(Vector2D(0.0, 1.0), s[0], s[1]):
+        if _in_sweep(Vector(0.0, 1.0), s[0], s[1]):
             hi.y = self.position.y + self.radius
-        if _in_sweep(Vector2D(-1.0, 0.0), s[0], s[1]):
+        if _in_sweep(Vector(-1.0, 0.0), s[0], s[1]):
             lo.x = self.position.x - self.radius
-        if _in_sweep(Vector2D(0.0, -1.0), s[0], s[1]):
+        if _in_sweep(Vector(0.0, -1.0), s[0], s[1]):
             lo.y = self.position.y - self.radius
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def flatten(self, tolerance: Float64) -> List[Point2D]:
+    def flatten(self, tolerance: Float64) -> List[Point]:
         """Points along the arc, from start to end inclusive, such that the
         straight segments between them stray from the arc by at most
         `tolerance`.
@@ -179,7 +179,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
             var widest = 2.0 * acos(1.0 - tolerance / self.radius)
             n = Int(ceil(sweep / widest))
             n = max(1, min(n, _MAX_ARC_FLATTEN_SEGMENTS))
-        var points = List[Point2D](capacity=n + 1)
+        var points = List[Point](capacity=n + 1)
         for i in range(n + 1):
             points.append(self.at(Float64(i) / Float64(n)))
         return points^
@@ -210,15 +210,15 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
             curves.append(
                 Bezier(
                     start,
-                    start + Vector2D(-sin(a0), cos(a0)) * reach,
-                    end - Vector2D(-sin(a1), cos(a1)) * reach,
+                    start + Vector(-sin(a0), cos(a0)) * reach,
+                    end - Vector(-sin(a1), cos(a1)) * reach,
                     end,
                 )
             )
             start = end
         return curves^
 
-    def closest_point(self, p: Point2D) -> Point2D:
+    def closest_point(self, p: Point) -> Point:
         """The point on the arc nearest `p`: straight out from the centre
         when `p` lies within the sweep, otherwise the nearer end. From the
         centre itself every point is as near, and the start is returned."""
@@ -232,7 +232,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         var b = self.at(1.0)
         return a if _distance_squared(p, a) <= _distance_squared(p, b) else b
 
-    def _furthest_along(self, direction: Vector2D) -> Point2D:
+    def _furthest_along(self, direction: Vector) -> Point:
         """The point on the arc furthest in `direction`: straight out that
         way from the centre when the sweep reaches it, otherwise the end
         further that way. A zero `direction` gives the start."""
@@ -246,14 +246,14 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         var b = self.at(1.0)
         return a if (a - b).dot(direction) >= 0.0 else b
 
-    def _spans(self, p: Point2D) -> Bool:
+    def _spans(self, p: Point) -> Bool:
         """Whether the direction from the centre to `p` lies within the
         sweep, however far `p` is from the circle."""
         var s = _normalized_sweep(self.start_angle, self.sweep_angle)
         return _in_sweep(p - self.position, s[0], s[1])
 
     # The `intersects` family is documented above `Line.intersects`.
-    def intersects(self, p: Point2D) -> Bool:
+    def intersects(self, p: Point) -> Bool:
         var off = abs((p - self.position).magnitude() - self.radius)
         return off <= _RADIUS_EPSILON * self.radius and self._spans(p)
 
@@ -312,7 +312,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         var h = sqrt(max(0.0, self.radius * self.radius - along * along))
         var u = between * (1.0 / d)
         var mid = self.position + u * along
-        var side = Vector2D(-u.y, u.x) * h
+        var side = Vector(-u.y, u.x) * h
         var p = mid + side
         var q = mid - side
         return (self._spans(p) and other._spans(p)) or (
@@ -382,12 +382,12 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         # exactly, so a non-uniform scale draws the arc of an ellipse.
         target._curves(self.beziers())
 
-    def move_to(self, position: Point2D) -> Self:
+    def move_to(self, position: Point) -> Self:
         var moved = self.copy()
         moved.position = position
         return moved^
 
-    def translate(self, delta: Vector2D) -> Self:
+    def translate(self, delta: Vector) -> Self:
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^

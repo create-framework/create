@@ -29,7 +29,7 @@ from create import *
 
 @fieldwise_init
 struct Mover(Program):
-    var position: Point2D
+    var position: Point
     var size: Float64
 
     @staticmethod
@@ -40,9 +40,9 @@ struct Mover(Program):
         canvas.background(Color.WHITE)
         var step = 200 * context.time.delta
         if context.keyboard.down(Key.RIGHT):  # held: moves every frame
-            self.position = self.position + Vector2D(step, 0)
+            self.position = self.position + Vector(step, 0)
         if context.keyboard.down(Key.LEFT):
-            self.position = self.position - Vector2D(step, 0)
+            self.position = self.position - Vector(step, 0)
         if context.keyboard.pressed(Key.SPACE):  # once per press, however long held
             self.size = 80 if self.size == 40 else 40
         if context.mouse.pressed():  # the left button by default

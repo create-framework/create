@@ -26,7 +26,7 @@ from create.render._command import (
     bezier_chain_command,
 )
 from create.geometry.bezier import Bezier
-from create.math.point2d import Point2D
+from create.math.point import Point
 from create.math.matrix import identity, translate, rotate
 
 
@@ -43,7 +43,7 @@ def test_rect_packs_centre_and_extent() raises -> None:
     var c = rect_command(identity[3](), Style(), 1.0, 2.0, 3.0, 4.0)
     assert_true(c.payload.isa[RectPayload]())
     ref rect = c.payload[RectPayload]
-    assert_equal(rect.center, Point2D(1.0, 2.0))
+    assert_equal(rect.center, Point(1.0, 2.0))
     assert_equal(rect.w, 3.0)
     assert_equal(rect.h, 4.0)
     assert_equal(rect.corner_radius, 0.0)
@@ -52,15 +52,15 @@ def test_rect_packs_centre_and_extent() raises -> None:
 def test_circle_packs_centre_and_radius() raises -> None:
     var c = circle_command(identity[3](), Style(), -5.0, 6.0, 7.0)
     assert_true(c.payload.isa[CirclePayload]())
-    assert_equal(c.payload[CirclePayload].center, Point2D(-5.0, 6.0))
+    assert_equal(c.payload[CirclePayload].center, Point(-5.0, 6.0))
     assert_equal(c.payload[CirclePayload].r, 7.0)
 
 
 def test_line_packs_both_endpoints() raises -> None:
     var c = line_command(identity[3](), Style(), 1.0, 2.0, 3.0, 4.0)
     assert_true(c.payload.isa[LinePayload]())
-    assert_equal(c.payload[LinePayload].start, Point2D(1.0, 2.0))
-    assert_equal(c.payload[LinePayload].end, Point2D(3.0, 4.0))
+    assert_equal(c.payload[LinePayload].start, Point(1.0, 2.0))
+    assert_equal(c.payload[LinePayload].end, Point(3.0, 4.0))
 
 
 def test_triangle_packs_all_three_vertices() raises -> None:
@@ -85,7 +85,7 @@ def test_bezier_is_a_chain_of_one() raises -> None:
 
 
 def test_bezier_chain_keeps_its_points() raises -> None:
-    var points: List[Point2D] = [
+    var points: List[Point] = [
         (0.0, 0.0),
         (1.0, 1.0),
         (2.0, 1.0),
@@ -120,7 +120,7 @@ def test_text_owns_its_string() raises -> None:
     var c = text_command(identity[3](), Style(), 8.0, 9.0, s^)
     assert_true(c.payload.isa[TextPayload]())
     assert_equal(c.payload[TextPayload].text, "hello")
-    assert_equal(c.payload[TextPayload].position, Point2D(8.0, 9.0))
+    assert_equal(c.payload[TextPayload].position, Point(8.0, 9.0))
 
 
 def test_clear_carries_its_colour_in_the_fill() raises -> None:
@@ -144,7 +144,7 @@ def test_the_transform_is_kept_whole_not_applied() raises -> None:
     # rotated rectangle, which is the whole reason the matrix travels along.
     var m = rotate(0.5) @ translate(100.0, 200.0)
     var c = rect_command(m, Style(), 0.0, 0.0, 10.0, 10.0)
-    assert_equal(c.payload[RectPayload].center, Point2D(0.0, 0.0))
+    assert_equal(c.payload[RectPayload].center, Point(0.0, 0.0))
     for r in range(3):
         for col in range(3):
             assert_equal(c.transform[r, col], m[r, col])

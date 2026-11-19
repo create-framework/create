@@ -30,10 +30,10 @@ struct Button(Copyable, Drawable, Movable):
         target.draw(self.icon)
 
 
-def button(position: Point2D) -> Button:
+def button(position: Point) -> Button:
     return Button(
         Rectangle(position, 220, 90, corner_radius=36),
-        Circle(position - Vector2D(65, 0), 22),
+        Circle(position - Vector(65, 0), 22),
     )
 
 

@@ -28,8 +28,8 @@ from create.geometry import (
     Sector,
     Triangle,
 )
-from create.math.point2d import Point2D
-from create.math.vector2d import Vector2D
+from create.math.point import Point
+from create.math.vector import Vector
 from create.math.matrix import (
     Matrix,
     identity,
@@ -424,7 +424,7 @@ struct Canvas(DrawTarget, Movable):
         and `bottom()` to `top()`: centred on the origin, `width()` by
         `height()`. What `snapshot` and `clip` take, and what `contains`
         asks whether something is on the screen."""
-        return Rectangle(Point2D(0.0, 0.0), self._width, self._height)
+        return Rectangle(Point(0.0, 0.0), self._width, self._height)
 
     def scale(self) -> Float64:
         """Window pixels per screen unit: what font size, stroke thickness
@@ -514,7 +514,7 @@ struct Canvas(DrawTarget, Movable):
         opacity: _OptionalFloat64 = None,
         blend_mode: Optional[BlendMode] = None,
         shadow: Optional[Color] = None,
-        shadow_offset: Optional[Vector2D] = None,
+        shadow_offset: Optional[Vector] = None,
         shadow_blur: _OptionalFloat64 = None,
         shadow_spread: _OptionalFloat64 = None,
         shadow_inset: Optional[Bool] = None,
@@ -631,7 +631,7 @@ struct Canvas(DrawTarget, Movable):
         self._transform = self._base @ cam_m @ self._user
         self._transform_inv = self._user_inv @ inverse(cam_m) @ self._base_inv
 
-    def to_screen(self, local: Point2D) -> Point2D:
+    def to_screen(self, local: Point) -> Point:
         """A point in the current transform's frame, in screen space: through
         the transform, then the camera (none inside `overlay`). Where
         something drawn at `local` lands on screen.
@@ -669,7 +669,7 @@ struct Canvas(DrawTarget, Movable):
             _canvas=self, _region=capture.command.take(), _invert=invert
         )
 
-    def to_local(self, screen: Point2D) -> Point2D:
+    def to_local(self, screen: Point) -> Point:
         """A screen-space point — `context.mouse.position`, say — in the current
         transform's frame: back through the camera (none inside `overlay`),
         then the transform. So `canvas.to_local(context.mouse.position)` picks
@@ -922,7 +922,7 @@ struct Canvas(DrawTarget, Movable):
             )
         )
 
-    def color_at(mut self, position: Point2D) raises -> Color:
+    def color_at(mut self, position: Point) raises -> Color:
         """The colour at `position` in what this frame has drawn so far.
 
         `position` is in screen space, whatever the camera or transform —
@@ -1008,7 +1008,7 @@ struct Canvas(DrawTarget, Movable):
             scale == 1.0
             and pw == backend.frame_w
             and ph == backend.frame_h
-            and region.position == Point2D(0.0, 0.0)
+            and region.position == Point(0.0, 0.0)
         ):
             # The whole screen at design size is what `color_at` reads,
             # so the two share one replay.
@@ -1037,7 +1037,7 @@ struct Canvas(DrawTarget, Movable):
         if (
             pw == target.width
             and ph == target.height
-            and region.position == Point2D(0.0, 0.0)
+            and region.position == Point(0.0, 0.0)
         ):
             # The whole canvas at its own density: the pixels as they are.
             mem.data = target.data.copy()
@@ -1242,7 +1242,7 @@ struct Canvas(DrawTarget, Movable):
 
     def rectangle(
         mut self,
-        position: Point2D,
+        position: Point,
         width: Float64,
         height: Float64,
         *,
@@ -1265,7 +1265,7 @@ struct Canvas(DrawTarget, Movable):
 
     def rectangle(
         mut self,
-        position: Point2D,
+        position: Point,
         width: Int,
         height: Int,
         *,
@@ -1280,13 +1280,13 @@ struct Canvas(DrawTarget, Movable):
             rotation=rotation,
         )
 
-    def circle(mut self, position: Point2D, radius: Float64):
+    def circle(mut self, position: Point, radius: Float64):
         self.draw(Circle(position, radius))
 
-    def circle(mut self, position: Point2D, radius: Int):
+    def circle(mut self, position: Point, radius: Int):
         self.circle(position, Float64(radius))
 
-    def ellipse(mut self, position: Point2D, width: Float64, height: Float64):
+    def ellipse(mut self, position: Point, width: Float64, height: Float64):
         """Draw the axis-aligned ellipse centred on `position`, `width` wide and
         `height` high: an `Ellipse`, filling the rectangle
         `rectangle(position, width, height)` would draw. Turn one with
@@ -1303,10 +1303,10 @@ struct Canvas(DrawTarget, Movable):
         """
         self.draw(Ellipse(position, width, height))
 
-    def ellipse(mut self, position: Point2D, width: Int, height: Int):
+    def ellipse(mut self, position: Point, width: Int, height: Int):
         self.ellipse(position, Float64(width), Float64(height))
 
-    def capsule(mut self, start: Point2D, end: Point2D, radius: Float64):
+    def capsule(mut self, start: Point, end: Point, radius: Float64):
         """Draw the capsule round the segment from `start` to `end`: every
         point within `radius` of it, a `Capsule`, its ends half discs.
 
@@ -1321,12 +1321,12 @@ struct Canvas(DrawTarget, Movable):
         """
         self.draw(Capsule(start, end, radius))
 
-    def capsule(mut self, start: Point2D, end: Point2D, radius: Int):
+    def capsule(mut self, start: Point, end: Point, radius: Int):
         self.capsule(start, end, Float64(radius))
 
     def sector(
         mut self,
-        position: Point2D,
+        position: Point,
         radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -1360,7 +1360,7 @@ struct Canvas(DrawTarget, Movable):
 
     def sector(
         mut self,
-        position: Point2D,
+        position: Point,
         radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -1376,7 +1376,7 @@ struct Canvas(DrawTarget, Movable):
         )
 
     def polygon(
-        mut self, *vertices: Point2D, corner_radius: _OptionalFloat64 = None
+        mut self, *vertices: Point, corner_radius: _OptionalFloat64 = None
     ):
         """Draw the polygon through `vertices`, closed back to the first.
 
@@ -1393,14 +1393,14 @@ struct Canvas(DrawTarget, Movable):
         rounded corner adds vertices, and so cost. A `Polygon` value is drawn
         with `draw`.
         """
-        var points = List[Point2D](capacity=len(vertices))
+        var points = List[Point](capacity=len(vertices))
         for v in vertices:
             points.append(v)
         self.polygon(points^, corner_radius=corner_radius)
 
     def polygon(
         mut self,
-        var vertices: List[Point2D],
+        var vertices: List[Point],
         corner_radius: _OptionalFloat64 = None,
     ):
         """Draw the polygon through `vertices`, a list built at run time:
@@ -1412,7 +1412,7 @@ struct Canvas(DrawTarget, Movable):
             )
         )
 
-    def line(mut self, start: Point2D, end: Point2D):
+    def line(mut self, start: Point, end: Point):
         """Stroke the line from `start` to `end` in the stroke colour and
         thickness, its ends finished as `stroke_cap` says. A line has no
         interior, so `fill` never applies; a line of no length is a dot under
@@ -1421,10 +1421,10 @@ struct Canvas(DrawTarget, Movable):
 
     def bezier(
         mut self,
-        start: Point2D,
-        control1: Point2D,
-        control2: Point2D,
-        end: Point2D,
+        start: Point,
+        control1: Point,
+        control2: Point,
+        end: Point,
     ):
         """Stroke the cubic Bézier from `start` to `end`, shaped by the two
         controls, in the stroke colour and thickness.
@@ -1444,7 +1444,7 @@ struct Canvas(DrawTarget, Movable):
 
     def spline(
         mut self,
-        var points: List[Point2D],
+        var points: List[Point],
         alpha: Float64 = 0.5,
         closed: Bool = False,
     ):
@@ -1467,7 +1467,7 @@ struct Canvas(DrawTarget, Movable):
 
     def arc(
         mut self,
-        position: Point2D,
+        position: Point,
         radius: Float64,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -1490,7 +1490,7 @@ struct Canvas(DrawTarget, Movable):
 
     def arc(
         mut self,
-        position: Point2D,
+        position: Point,
         radius: Int,
         start_angle: Float64,
         sweep_angle: Float64,
@@ -1499,9 +1499,9 @@ struct Canvas(DrawTarget, Movable):
 
     def triangle(
         mut self,
-        a: Point2D,
-        b: Point2D,
-        c: Point2D,
+        a: Point,
+        b: Point,
+        c: Point,
         *,
         corner_radius: _OptionalFloat64 = None,
     ):
@@ -1576,7 +1576,7 @@ struct Canvas(DrawTarget, Movable):
             curves_command(curves, self._transform, self._style)
         )
 
-    def image(mut self, image: Image, position: Point2D):
+    def image(mut self, image: Image, position: Point):
         """Render `image` at its own pixel size.
 
         The same command as the sized overload: at a pixel scale of 1 the two
@@ -1591,7 +1591,7 @@ struct Canvas(DrawTarget, Movable):
     def image(
         mut self,
         image: Image,
-        position: Point2D,
+        position: Point,
         width: Float64,
         height: Float64,
     ):
@@ -1615,14 +1615,14 @@ struct Canvas(DrawTarget, Movable):
             )
         )
 
-    def image(mut self, animator: Animator, position: Point2D):
+    def image(mut self, animator: Animator, position: Point):
         """Render the animator's current frame, centred at `position`."""
         self.image(animator.animation().frame(animator.frame_index()), position)
 
     def image(
         mut self,
         animator: Animator,
-        position: Point2D,
+        position: Point,
         width: Float64,
         height: Float64,
     ):
@@ -1633,13 +1633,11 @@ struct Canvas(DrawTarget, Movable):
             height,
         )
 
-    def image(
-        mut self, image: Image, position: Point2D, width: Int, height: Int
-    ):
+    def image(mut self, image: Image, position: Point, width: Int, height: Int):
         self.image(image, position, Float64(width), Float64(height))
 
     def image(
-        mut self, animator: Animator, position: Point2D, width: Int, height: Int
+        mut self, animator: Animator, position: Point, width: Int, height: Int
     ):
         self.image(animator, position, Float64(width), Float64(height))
 
@@ -1707,7 +1705,7 @@ struct Canvas(DrawTarget, Movable):
     def shadow(
         mut self,
         color: Optional[Color] = None,
-        offset: Optional[Vector2D] = None,
+        offset: Optional[Vector] = None,
         blur: _OptionalFloat64 = None,
         spread: _OptionalFloat64 = None,
         inset: Optional[Bool] = None,
@@ -1738,7 +1736,7 @@ struct Canvas(DrawTarget, Movable):
         the shape itself.
 
         ```mojo
-        canvas.shadow(Color(0, 0, 0, 96), offset=Vector2D(6, -6), blur=12)
+        canvas.shadow(Color(0, 0, 0, 96), offset=Vector(6, -6), blur=12)
         canvas.rectangle((0, 0), 120, 80)
         ```
         """
@@ -1920,7 +1918,7 @@ struct Canvas(DrawTarget, Movable):
         )
         return Float64(pixels) / scale
 
-    def text(mut self, text: String, position: Point2D):
+    def text(mut self, text: String, position: Point):
         """Draw `text` at `position` in the current text style, anchored by
         `text_alignment`.
 
@@ -1930,7 +1928,7 @@ struct Canvas(DrawTarget, Movable):
         """
         self._text(text, position, NO_WRAP)
 
-    def text(mut self, text: String, position: Point2D, width: Float64):
+    def text(mut self, text: String, position: Point, width: Float64):
         """Draw `text` at `position` as `text(text, position)` does, wrapped
         onto as many lines as keep each at most `width` units wide.
 
@@ -1943,7 +1941,7 @@ struct Canvas(DrawTarget, Movable):
         """
         self._text(text, position, max(width, 0.0))
 
-    def _text(mut self, text: String, position: Point2D, wrap: Float64):
+    def _text(mut self, text: String, position: Point, wrap: Float64):
         if self._style.text_color.a == 0:
             return
         # Deferred whole. Nothing about the layout is decided here: the

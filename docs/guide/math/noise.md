@@ -15,15 +15,15 @@ from create import *
 
 @fieldwise_init
 struct Hills(Program):
-    var stars: List[Point2D]
+    var stars: List[Point]
     var noise: Noise
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Hills:
         var random = Random(7)
-        var stars = List[Point2D]()
+        var stars = List[Point]()
         for _ in range(60):
-            stars.append(Point2D(random.float(-640, 640), random.float(0, 360)))
+            stars.append(Point(random.float(-640, 640), random.float(0, 360)))
         return Hills(stars^, Noise(7, feature_size=300))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -36,7 +36,7 @@ struct Hills(Program):
         canvas.stroke(Color(60, 140, 80), 6)
         var x = canvas.left()
         while x < canvas.right():
-            var height = self.noise.at(Point2D(x + scroll, 0)) * 300
+            var height = self.noise.at(Point(x + scroll, 0)) * 300
             canvas.line((x, canvas.bottom()), (x, canvas.bottom() + height))
             x += 6
 

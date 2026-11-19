@@ -32,7 +32,7 @@ needed, so `canvas.circle((0, 0), 40)` works as it is.
 # In `update`: a ring of `count` dots, `count` being an Int.
 for i in range(count):
     var angle = TAU * Float64(i) / Float64(count)  # Int to Float64 for the sum
-    canvas.circle(Point2D(0, 0) + Vector2D.from_angle(angle, 150), 8)
+    canvas.circle(Point(0, 0) + Vector.from_angle(angle, 150), 8)
 ```
 
 Text is a `String`, written in double quotes. `+` joins strings, and `String(value)` turns a value
@@ -46,7 +46,7 @@ into text, which is how a number reaches the screen: `canvas.text("Score: " + St
 value it was called on:
 
 ```mojo
-def distance_to_mouse(position: Point2D, context: Context) -> Float64:
+def distance_to_mouse(position: Point, context: Context) -> Float64:
     return position.distance(context.mouse.position)
 ```
 
@@ -64,19 +64,19 @@ Every Create program is one:
 ```mojo
 @fieldwise_init
 struct Game(Program):
-    var player: Point2D
+    var player: Point
     var score: Int
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Self:
-        return Self(Point2D(0, 0), 0)
+        return Self(Point(0, 0), 0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.score += 1
 ```
 
 - **`@fieldwise_init`** writes the struct's constructor for you, taking one value for each field, in
-  the order the fields are listed: `Game(Point2D(0, 0), 0)`.
+  the order the fields are listed: `Game(Point(0, 0), 0)`.
 - **`(Program)`** after the name says that the struct conforms to the `Program` **trait**, a promise
   that it has the methods `Program` asks for, `create` and `update`. `run` accepts only a type that
   keeps that promise. Create has a few other traits, such as `Drawable` for a type that
@@ -97,7 +97,7 @@ start an empty one and `append` to it:
 ```mojo
 var names: List[String] = ["Ada", "Grace"]
 names.append("Alan")
-var stars = List[Point2D]()  # empty, to fill later
+var stars = List[Point]()  # empty, to fill later
 for name in names:
     print(name)
 ```
@@ -107,8 +107,8 @@ from 0. `for i in range(10)` counts `i` from 0 up to 9, which is the usual way t
 number of times.
 
 A **tuple** is a few values written together in round brackets, such as `(10, 20)`. Wherever Create
-expects a `Point2D`, a pair of numbers is read as one, which is why `canvas.circle((0, 0), 20)`
-needs no `Point2D(...)` around the position (see [Points and
+expects a `Point`, a pair of numbers is read as one, which is why `canvas.circle((0, 0), 20)` needs
+no `Point(...)` around the position (see [Points and
 vectors](../math/points-and-vectors.md#writing-them)).
 
 ## Optional values
@@ -209,7 +209,7 @@ Instead of the star, a program can import each name it uses from the subpackage 
 from create.core import Program, Context, run
 from create.render import Canvas
 from create.color import Color
-from create.math import Point2D, sin
+from create.math import Point, sin
 ```
 
 The two differ in convenience and clarity, not speed: a program compiles only what it uses, so
@@ -224,4 +224,4 @@ neither builds faster.
 
 A subpackage star, such as `from create.render import *`, is not a middle way. Each subpackage
 exports only the names it defines, so `from create.render import *` brings in `Canvas` but not the
-`Color` and `Point2D` that its methods take.
+`Color` and `Point` that its methods take.

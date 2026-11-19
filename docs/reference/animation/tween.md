@@ -30,7 +30,7 @@ definition is four numbers -- so there is no asset to hold by `ArcPointer`
 and every entity simply owns its own.
 
 **Tweening something that is not a number.** `Tween(duration)` runs 0 to 1,
-which is exactly what `Vector2D.lerp` and `Color.lerp` take, so one scalar
+which is exactly what `Vector.lerp` and `Color.lerp` take, so one scalar
 tween drives a position or a colour without a second type:
 
 ```mojo
@@ -80,7 +80,7 @@ def __init__(
 )
 ```
 
-A tween from 0 to 1 -- the fraction `Vector2D.lerp` and `Color.lerp` take, and the form to reach for when animating anything that is not a plain number.
+A tween from 0 to 1 -- the fraction `Vector.lerp` and `Color.lerp` take, and the form to reach for when animating anything that is not a plain number.
 
 ## Methods
 
