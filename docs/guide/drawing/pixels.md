@@ -10,7 +10,7 @@ page explains how to read back what has been drawn and how to build an image pix
 
 `canvas.color_at(position)` returns the `Color` at a point. `canvas.snapshot()` returns an `Image`
 of the screen, and `snapshot(region)` an image of part of it; both snapshots take an optional
-`scale=`. All three read what the frame has drawn **so far**. A colour picker:
+`pixel_scale=`. All three read what the frame has drawn **so far**. A colour picker:
 
 ```mojo
 from create import *
@@ -50,10 +50,11 @@ again on the CPU, as [`save_image`](../media/capture.md#saving-images) does. See
   `canvas.color_at(context.mouse.position)` reads the colour under the mouse as it is. A snapshot's
   region is always upright, and a turned `Rectangle` raises an error. Reading off the screen gives
   transparent.
-- **A snapshot is sized by the design:** it is the design size times `scale` (1 by default), without
-  the letterbox bars. So `snapshot()` drawn back with `canvas.image(shot, (0, 0), canvas.width(),
-  canvas.height())` lines up exactly, which is how a feedback effect works: each frame draws the
-  last one back in, slightly changed. `scale=canvas.scale()` gives the window's own pixels instead.
+- **A snapshot is sized by the design:** it is the design size times `pixel_scale` (1 by default),
+  without the letterbox bars. So `snapshot()` drawn back with `canvas.image(shot, (0, 0),
+  canvas.width(), canvas.height())` lines up exactly, which is how a feedback effect works: each
+  frame draws the last one back in, slightly changed. `pixel_scale=canvas.pixel_scale()` gives the
+  window's own pixels instead.
 - **Many reads cost one:** the frame is drawn again only when something new has been drawn since the
   last read, so many `color_at` calls in a row cost the same as one. Drawing the frame again takes
   about as long as drawing a frame on the CPU, which is fine for picking a colour, a snapshot or a

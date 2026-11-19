@@ -14,8 +14,10 @@ comptime _IMAGE = "/tmp/mojo_create_test_offscreen_image.png"
 comptime _SHOT = "/tmp/mojo_create_test_offscreen_shot.png"
 
 
-def _canvas(scale: Float64 = 1.0) raises -> Canvas:
-    return Canvas(100, 60, scale=scale, antialiasing=Antialiasing.OFF)
+def _canvas(pixel_scale: Float64 = 1.0) raises -> Canvas:
+    return Canvas(
+        100, 60, pixel_scale=pixel_scale, antialiasing=Antialiasing.OFF
+    )
 
 
 def _square(mut canvas: Canvas, position: Point, color: Color):
@@ -78,9 +80,9 @@ def test_drawing_after_a_read_inside_a_clip_stays_clipped() raises -> None:
 
 
 def test_scale_sets_the_pixel_density() raises -> None:
-    var canvas = _canvas(scale=2.0)
+    var canvas = _canvas(pixel_scale=2.0)
     assert_equal(canvas.width(), 100, "the size stays in screen units")
-    assert_equal(canvas.scale(), 2.0)
+    assert_equal(canvas.pixel_scale(), 2.0)
     ref target = canvas._state._backend.target.value()
     assert_equal(target.width, 200)
     assert_equal(target.height, 120)
@@ -102,7 +104,7 @@ def test_bad_sizes_and_scales_raise() raises -> None:
     with assert_raises(contains="size"):
         _ = Canvas(100, -1)
     with assert_raises(contains="scale"):
-        _ = Canvas(100, 60, scale=0.0)
+        _ = Canvas(100, 60, pixel_scale=0.0)
 
 
 def test_it_antialiases_by_default() raises -> None:
@@ -125,9 +127,9 @@ def test_a_snapshot_is_the_whole_canvas() raises -> None:
 
 
 def test_a_snapshot_at_its_own_scale_is_its_pixels() raises -> None:
-    var canvas = _canvas(scale=2.0)
+    var canvas = _canvas(pixel_scale=2.0)
     _square(canvas, (-20, 0), Color.BLUE)
-    var shot = canvas.snapshot(scale=canvas.scale())
+    var shot = canvas.snapshot(pixel_scale=canvas.pixel_scale())
     assert_equal(shot.width(), 200)
     assert_equal(shot.height(), 120)
     ref target = canvas._state._backend.target.value()
@@ -137,7 +139,7 @@ def test_a_snapshot_at_its_own_scale_is_its_pixels() raises -> None:
 
 
 def test_a_snapshot_at_another_scale_resamples() raises -> None:
-    var canvas = _canvas(scale=2.0)
+    var canvas = _canvas(pixel_scale=2.0)
     _square(canvas, (-20, 0), Color.BLUE)
     var shot = canvas.snapshot()
     assert_equal(shot.width(), 100)
@@ -167,7 +169,7 @@ def test_a_snapshot_keeps_drawing_after_it() raises -> None:
 
 
 def test_save_image_and_save_screenshot_write_at_once() raises -> None:
-    var canvas = _canvas(scale=2.0)
+    var canvas = _canvas(pixel_scale=2.0)
     _square(canvas, (-20, 0), Color.BLUE)
     canvas.save_image(_IMAGE, transparent=True)
     canvas.save_screenshot(_SHOT)
