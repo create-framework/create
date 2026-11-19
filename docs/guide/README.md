@@ -80,7 +80,8 @@ Each page explains its topic from the beginning, assuming only basic school math
 - [Angles](math/angles.md): radians, which way angles go, and `sin`, `cos` and `atan2`.
 - [Points and vectors](math/points-and-vectors.md): positions and movements, length and direction,
   and the dot product.
-- [Matrices](math/matrices.md): moving, turning and scaling with matrices, and combining them.
+- [Transforms](math/transforms.md): moving, turning and scaling what you draw, combining transforms,
+  and matrices.
 - [Interpolation](math/interpolation.md): `lerp`, `map`, `clamp`, `smoothstep` and other helpers.
 - [Easing](math/easing.md): easing curves, and how to read their names.
 - [Random numbers](math/random-numbers.md): getting them, and seeds that repeat them.

@@ -149,6 +149,7 @@ Some things reset every frame, some last until a `with` block ends, and some las
 | What | Lasts | Where it is explained |
 |---|---|---|
 | Style (`fill`, `stroke`, `font`, …) and `camera`, set with a plain call | Until the end of the frame | [Style](../drawing/style.md), [Coordinates](coordinates.md#the-camera) |
+| The transform set with `canvas.translate`, `rotate` and `scale` | Until the end of the frame, or of the `with canvas.transform():` block around it | [Transforms](../math/transforms.md#transforming-what-you-draw) |
 | Anything set by a `with` block: `canvas.style(...)`, `transform`, `overlay`, `clip` | Until the block ends | [The canvas](../drawing/canvas.md#transforms-and-guards) |
 | The canvas settings: `autoclear`, `letterbox_color`, `antialiasing` | Until changed; each applies to the whole frame it is set in | [The canvas](../drawing/canvas.md#settings-that-outlive-the-frame) |
 | The run's settings on `Context`: `title`, `design_size`, `cursor`, … | Until changed; when each takes effect is [below](#when-a-change-applies) | [The run's settings](#the-runs-settings) |

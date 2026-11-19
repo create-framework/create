@@ -104,27 +104,32 @@ with no arguments (`canvas.antialiasing()`).
 
 ## Transforms and guards
 
-`with canvas.transform(m):` moves, turns or scales everything drawn inside the block by the matrix
-`m`, which is built with `translate`, `rotate` and `scale`. The end of the block undoes it. What a
-matrix is, and how matrices combine, is explained in [Matrices](../math/matrices.md). `transform`
-only works as a `with` block, so a transform can't accidentally stay on. `canvas.style(...)`,
-`canvas.overlay()` and `canvas.clip(...)` work the same way; each returns a **guard**, the object
-the `with` block holds:
+`canvas.translate(delta)`, `canvas.rotate(angle)` and `canvas.scale(s)` move, turn and scale
+everything drawn after them, each applying inside the ones before it, as in Processing. Like the
+style, what they set lasts until the end of the frame. `with canvas.transform():` keeps the
+transform as it is for a block, and puts it back when the block ends, so a transform set inside it
+applies only to the block. `canvas.style(...)`, `canvas.overlay()` and `canvas.clip(...)` work the
+same way; each returns a **guard**, the object the `with` block holds:
 
 ```mojo
 # In `update`:
-with canvas.transform(translate(100, 0) @ rotate(context.time.elapsed)):
+with canvas.transform():
+    canvas.translate(Vector(100, 0))
+    canvas.rotate(context.time.elapsed)
     canvas.rectangle((0, 0), 60, 60)  # spins about (100, 0)
 canvas.rectangle((0, 0), 60, 60)  # upright again
 ```
 
-`a @ b` combines two matrices, and the one on the right applies first: above, the square is turned
-about its own centre, then moved to `(100, 0)`. Blocks nest, each one's transform applying inside
-the one around it.
+`with canvas.transform(t):` does the same, and also applies the `Transform` `t` for the block. What
+a transform is, the order the calls apply in and how transforms combine are explained in
+[Transforms](../math/transforms.md). Blocks nest, each one's transform applying inside the one
+around it.
 
-Calling style setters directly in `update` is fine, since style resets every frame. A helper
-function that changes the style should wrap its drawing in `with canvas.style():` (no arguments), so
-its changes don't leak into what its caller draws next.
+Calling the style setters or the transform calls directly in `update` is fine, since both reset
+every frame. A helper function that changes either should wrap its drawing in `with canvas.style():`
+or `with canvas.transform():` (no arguments), so its changes don't leak into what its caller draws
+next. On an offscreen canvas, which has no frames, they last until a guard around them ends, or for
+as long as the canvas is kept.
 
 ## Antialiasing
 

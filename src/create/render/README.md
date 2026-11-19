@@ -144,7 +144,7 @@ stops at record time. Everything a replay needs comes from three pieces in
 - **The ramp:** `_RAMP_SIZE` (256) colours sampled from the stops at construction, behind an
   `ArcPointer` with the stops, so copying a `Gradient` (and the `Style` or `Paint` holding one) is a
   refcount.
-- **The device mapping:** `_device_mapping(inverse(m), center, half)`, with the box from
+- **The device mapping:** `_device_mapping(m.inverse(), center, half)`, with the box from
   `_fill_box(c)`. The parameter (linear) or the position whose length it is (radial) is **affine in
   device pixels** — the whole design rests on that.
 - **The sample:** `_sample(t, x, y)` reads linearly between two ramp entries and adds the 4x4 Bayer
@@ -389,11 +389,11 @@ image that isn't upright has its edge antialiased on the same grid inside `blit_
 Images).
 
 - **Record at `grid`×.** `_shape` replays the command through the kind's own rasteriser
-  (`_shape_pixels`) onto a recording surface `grid` times wider and taller, with `mat_scale(grid)`
-  in front of the device matrix and `scale × grid` as the fallback pixel scale. So every rasteriser
-  samples at sample centres instead of pixel centres, stroke thickness and curve flattening refine
-  with it, and no rasteriser knows. Each run is `(row, lo, hi, key)`, the key `_color_key(color)` or
-  `GRADIENT_KEY`, so fill and stroke stay apart.
+  (`_shape_pixels`) onto a recording surface `grid` times wider and taller, with
+  `Transform(scale=grid)` in front of the device transform and `scale × grid` as the fallback pixel
+  scale. So every rasteriser samples at sample centres instead of pixel centres, stroke thickness
+  and curve flattening refine with it, and no rasteriser knows. Each run is `(row, lo, hi, key)`,
+  the key `_color_key(color)` or `GRADIENT_KEY`, so fill and stroke stay apart.
 - **Composite once** (`composite_coverage`): runs are bucketed by pixel row; each adds its coverage
   changes (partial samples at either end, `grid` between) to a difference array per paint and notes
   the columns it touches. The sorted touched columns split the row into stretches of constant
@@ -607,8 +607,9 @@ Both replays handle a command's shadow around the command itself, in the command
   position (`MODE_INSET_BOX`/`MODE_INSET_EDGES`). A hard inset on the GPU uses a steep sigma (1/64
   px), not a step.
 
-The offset is one matrix (`shadow_transform`). A screen-fixed offset composes a device translation
-after the command transform; one that follows the transform composes `translate(offset)` before it.
+The offset is one transform (`shadow_transform`). A screen-fixed offset composes a device
+translation after the command transform; one that follows the transform composes
+`Transform(translation=offset)` before it.
 
 Parity (`test_gl_parity.mojo`) needed no extra tolerance for blurred cases: both backends evaluate
 the same coverage formulas at pixel centres.

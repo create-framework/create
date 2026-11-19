@@ -72,7 +72,7 @@ nav = [
       "guide/math/index.md",
       "guide/math/angles.md",
       "guide/math/points-and-vectors.md",
-      "guide/math/matrices.md",
+      "guide/math/transforms.md",
       "guide/math/interpolation.md",
       "guide/math/easing.md",
       "guide/math/random-numbers.md",

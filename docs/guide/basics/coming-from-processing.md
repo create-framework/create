@@ -63,7 +63,8 @@ These look like Processing but behave differently, and each one catches people o
 | `stroke(c)`, `strokeWeight(w)`, `noStroke()` | `canvas.stroke(c, w)`, `canvas.stroke_enabled(False)` |
 | `color(r, g, b)`, `colorMode(HSB)` | `Color(r, g, b)`, `Color.hsv(h, s, v)` (see [Colours](../drawing/colours.md)) |
 | `lerpColor(a, b, t)` | `a.lerp(b, t)` |
-| `pushMatrix()`, `translate`, `rotate`, `popMatrix()` | `with canvas.transform(translate(x, y) @ rotate(a)):` (see [Transforms](../drawing/canvas.md#transforms-and-guards)) |
+| `translate(x, y)`, `rotate(a)`, `scale(s)` | `canvas.translate(Vector(x, y))`, `canvas.rotate(a)`, `canvas.scale(s)`, in the same order (see [Transforms](../math/transforms.md)) |
+| `pushMatrix()` / `popMatrix()` | `with canvas.transform():` |
 | `push()` / `pop()` for style | `with canvas.style(...):` |
 | `textSize`, `textFont`, `textAlign` | `canvas.font_size`, `canvas.font`, `canvas.text_alignment` (see [Text](../drawing/text.md)) |
 | `createFont`, `loadFont` | `Font.load(path)` |

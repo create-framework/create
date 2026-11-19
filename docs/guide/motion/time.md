@@ -22,7 +22,7 @@ self.position = self.position + self.velocity * context.time.delta  # velocity i
 
 `context.time.elapsed` is the seconds since the run started. Use it for what is worked out afresh
 from the time every frame rather than moved a step at a time, such as an angle that keeps turning:
-`rotate(context.time.elapsed)`.
+`canvas.rotate(context.time.elapsed)`.
 
 ## The run's clock
 

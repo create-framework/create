@@ -86,7 +86,9 @@ canvas.image(self.coin, self.position + Vector(0, bob))
 # In `update`: turn a turret to face the mouse.
 var to_mouse = context.mouse.position - self.turret
 var angle = atan2(to_mouse.y, to_mouse.x)
-with canvas.transform(translate(Vector(self.turret)) @ rotate(angle)):
+with canvas.transform():
+    canvas.translate(Vector(self.turret))
+    canvas.rotate(angle)
     canvas.rectangle((30, 0), 60, 12)  # the barrel, pointing along +x before turning
 ```
 
