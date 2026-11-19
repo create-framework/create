@@ -5,6 +5,10 @@ clockwise and one counter-clockwise.
 from create import *
 
 comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _TRACK = Color(62, 62, 68)
+comptime _CLOCKWISE = Color(98, 104, 168)
+comptime _COUNTER = Color(201, 140, 150)
 
 comptime _RING_RADIUS = 140.0
 comptime _RING_THICKNESS = 18
@@ -31,22 +35,22 @@ struct App(Program):
         var sweep = TAU * self.progress.value()
         var clockwise = Point2D(-200.0, -20.0)
         var counter = Point2D(200.0, -20.0)
-        canvas.stroke(Color(62, 62, 68), thickness=_RING_THICKNESS)
+        canvas.stroke(_TRACK, thickness=_RING_THICKNESS)
         canvas.arc(clockwise, _RING_RADIUS, 0.0, TAU)
         canvas.arc(counter, _RING_RADIUS, 0.0, TAU)
-        canvas.stroke(Color(98, 104, 168))
+        canvas.stroke(_CLOCKWISE)
         canvas.arc(clockwise, _RING_RADIUS, PI / 2.0, -sweep)
-        canvas.stroke(Color(201, 140, 150))
+        canvas.stroke(_COUNTER)
         canvas.arc(counter, _RING_RADIUS, PI / 2.0, sweep)
 
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
-        canvas.text("Arcs", (0, 362))
+        canvas.text("Arcs", (0, canvas.top() - 38))
         canvas.font_size(18)
         canvas.text(
             "One tween, swept clockwise and counter-clockwise from the top",
-            (0, 322),
+            (0, canvas.top() - 78),
         )
 
 

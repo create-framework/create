@@ -7,6 +7,12 @@ from create import *
 comptime _COLUMNS = 80
 comptime _ROWS = 60
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _WATER = Color(44, 46, 84)
+comptime _GRASS = Color(240, 236, 222)
+comptime _WANDERER = Color(226, 46, 56)
+
 
 @fieldwise_init
 struct App(Program):
@@ -31,15 +37,13 @@ struct App(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
         var t = context.time.elapsed
 
         # A grid of cells shaded from deep water to pale grass. Anchored to the
         # edge methods, so the field fills whatever the canvas reports.
         var cell_w = (canvas.right() - canvas.left()) / Float64(_COLUMNS)
         var cell_h = (canvas.top() - canvas.bottom()) / Float64(_ROWS)
-        var low = Color(44, 46, 84)
-        var high = Color(240, 236, 222)
         canvas.stroke_enabled(False)
         for column in range(_COLUMNS):
             for row in range(_ROWS):
@@ -50,16 +54,16 @@ struct App(Program):
                 var height = self.terrain.at(center, time=t * 0.3)
                 # Layered octaves average towards 0.5, so stretch the middle
                 # of the range across the whole gradient.
-                canvas.fill(low.lerp(high, smoothstep(0.3, 0.7, height)))
+                canvas.fill(_WATER.lerp(_GRASS, smoothstep(0.3, 0.7, height)))
                 canvas.rectangle(center, cell_w, cell_h)
 
         # The same range as Random.float(), so lerp turns it into a position.
         var x = lerp(canvas.left() + 40, canvas.right() - 40, self.wobble.at(t))
-        canvas.fill(Color(226, 46, 56))
-        canvas.stroke(Color(240, 236, 222), thickness=3)
+        canvas.fill(_WANDERER)
+        canvas.stroke(_TEXT, thickness=3)
         canvas.circle((x, 0), 24)
 
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(16)
         canvas.text_alignment(Align.BOTTOM_LEFT)
         canvas.text(

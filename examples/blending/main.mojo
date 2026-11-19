@@ -13,6 +13,11 @@ Space cycles the modes.
 from create import *
 
 comptime _BARS = 8
+comptime _TEXT = Color(240, 236, 222)
+comptime _PANEL = Color(0, 0, 0, 180)
+comptime _RED = Color(226, 46, 56)
+comptime _ROSE = Color(201, 140, 150)
+comptime _INDIGO = Color(98, 104, 168)
 
 
 def _next_mode(mode: BlendMode) -> BlendMode:
@@ -65,11 +70,7 @@ struct App(Program):
         var center_x = 0.55 * canvas.right() * sin(t * 0.5)
         # Not pure primaries: with every channel at 0 or 255, SCREEN and ADD
         # give identical results.
-        var colors = [
-            Color(226, 46, 56),
-            Color(201, 140, 150),
-            Color(98, 104, 168),
-        ]
+        var colors = [_RED, _ROSE, _INDIGO]
         with canvas.style(blend_mode=self.mode):
             for i in range(3):
                 var angle = t * 0.8 + Float64(i) * 2.0 * PI / 3.0
@@ -80,9 +81,9 @@ struct App(Program):
                 )
 
         # A plain panel behind the label, so it reads over any bar.
-        canvas.fill(Color(0, 0, 0, 180))
+        canvas.fill(_PANEL)
         canvas.rectangle((0.0, canvas.bottom() + 60.0), 360.0, 100.0)
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(28)
         canvas.text(String(self.mode), (0.0, canvas.bottom() + 75.0))
         canvas.font_size(18)

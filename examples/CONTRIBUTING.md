@@ -21,6 +21,16 @@ all. `pixi run build-examples` type-checks every example, and a warning fails it
   (`camera`, `window`), or the program itself (`clock`, `logo`, `platformer`).
 - **Write it as a program would.** Import with `from create import *`, and use only the public API:
   an example is copied by readers, so it must not lean on anything a program can't reach.
+- **Write it the way the guide teaches.** An example is copied more often than the guide is read, so
+  the code around the feature is kept small but is as idiomatic as the feature itself: move by
+  `context.time.delta`, place things against the edges with `canvas.left()`, `canvas.top()` and the
+  like, use `Point2D` for locations and `Vector2D` for movements, and reach for the library's
+  helpers (`lerp`, `clamp`, `ease`, `contains`) rather than writing the maths out.
+- **Name the numbers.** The colours, and the speeds and sizes a reader might tune, are `comptime`
+  constants at the top of the file, named by what they are for: `comptime _BACKGROUND = Color(40,
+  40, 44)`, `comptime _PAN_SPEED = 300.0`. Colours taken in turn, such as a pie chart's slices, are
+  a list returned by a function named for them (`_slice_color(i)`). A value used for both drawing
+  and logic is kept once, such as a `Rectangle` field that is drawn and tested with `contains`.
 - **Load assets by relative path**, from the example's own folder: Create resolves a path against
   the source file that names it.
 - Comments and the docstring follow the [prose style](../CONTRIBUTING.md#prose-style).

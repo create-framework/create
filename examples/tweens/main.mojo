@@ -5,6 +5,14 @@ Hover a row to play its curve.
 
 from create import *
 
+comptime _BACKGROUND = Color(40, 40, 44)
+comptime _TEXT = Color(240, 236, 222)
+comptime _HINT = Color(176, 172, 162)
+comptime _TRACK = Color(62, 62, 68)
+comptime _ACTIVE_TRACK = Color(90, 90, 98)
+comptime _DOT = Color(98, 104, 168)
+comptime _ACTIVE_LABEL = Color(226, 46, 56)
+
 comptime _ROW_SPACING = 70.0
 comptime _TOP_ROW = 250.0
 comptime _TRACK_START = -360.0
@@ -53,23 +61,21 @@ struct App(Program):
             self.hovered = hovered
             self.clock.ping_pong()
 
-        canvas.background(Color(40, 40, 44))
+        canvas.background(_BACKGROUND)
 
-        canvas.text_color(Color(240, 236, 222))
+        canvas.text_color(_TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
-        canvas.text("Easing and tweens", (0, 362))
+        canvas.text("Easing and tweens", (0, canvas.top() - 38))
         canvas.font_size(18)
-        canvas.text_color(Color(176, 172, 162))
-        canvas.text("Hover over a curve to play it", (0, 318))
+        canvas.text_color(_HINT)
+        canvas.text("Hover over a curve to play it", (0, canvas.top() - 82))
 
         canvas.text_alignment(Align.LEFT)
         for i in range(len(self.curves)):
             var y = _row_y(i)
             var active = i == self.hovered
-            canvas.stroke(
-                Color(90, 90, 98) if active else Color(62, 62, 68), thickness=3
-            )
+            canvas.stroke(_ACTIVE_TRACK if active else _TRACK, thickness=3)
             canvas.line((_TRACK_START, y), (_TRACK_END, y))
 
             # A resting row sits at the start of its track. OUT_BACK and
@@ -78,13 +84,11 @@ struct App(Program):
             var t = 0.0
             if active:
                 t = ease(self.curves[i], self.clock.progress())
-            with canvas.style(fill=Color(98, 104, 168), stroke_enabled=False):
+            with canvas.style(fill=_DOT, stroke_enabled=False):
                 canvas.circle((lerp(_TRACK_START, _TRACK_END, t), y), 11)
 
-            canvas.text_color(
-                Color(226, 46, 56) if active else Color(176, 172, 162)
-            )
-            canvas.text(String(self.curves[i]), (-614.0, y))
+            canvas.text_color(_ACTIVE_LABEL if active else _HINT)
+            canvas.text(String(self.curves[i]), (canvas.left() + 26, y))
 
 
 def _row_y(i: Int) -> Float64:
