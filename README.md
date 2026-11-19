@@ -20,7 +20,7 @@ runs on the CPU or through OpenGL. The [user guide](https://create-framework.org
 covers each area in turn, and the [API reference](https://create-framework.org/latest/reference/)
 lists every type and function, package by package.
 
-## Example Programs
+## Example programs
 
 The GIF below shows an example program running. First it generates a [Sierpiński
 triangle](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle) using the random midpoint method
@@ -37,7 +37,7 @@ You can run the program yourself from the root of this repo using `pixi run exam
 being the name of this specific example). The other programs under [examples/](examples/) can be run
 the same way. Run `pixi run example` with no name to list them all.
 
-## How a Program Works
+## How a program works
 
 Below is a small "Hello, world!" program, which can be run from the repo root using `pixi run
 example hello`:
@@ -69,7 +69,7 @@ starts the run loop. `create` is called once when the run starts, to set the ini
 the first frame; `update` is called for every frame after that, to handle input, change the state
 and draw. For more details, read [programs.md](docs/guide/basics/programs.md) in the user guide.
 
-## Installation and Setup
+## Installation and setup
 
 If you don't already have it, install [pixi](https://pixi.sh):
 
@@ -114,7 +114,7 @@ contributors:
   testing, and how changes land.
 - [Architecture](ARCHITECTURE.md): how the source is organised, and which package may import which.
 
-## Supported Platforms
+## Supported platforms
 
 | Platform | Status |
 |----------|--------|
