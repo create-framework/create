@@ -18,7 +18,7 @@ from .theme import (
     TypeStyle,
     CornerRadii,
     Spacing,
-    StateOpacities,
+    StateLayers,
     FocusRing,
 )
 from .button import ButtonVariant, ButtonStyle

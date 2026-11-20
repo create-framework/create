@@ -13,13 +13,13 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`ThemeGuard`](themeguard.md) | Ends the `ui.theme` block it was made for, on scope exit. Only `ui.theme` builds one. |
 | [`WidgetStyleGuard`](widgetstyleguard.md) | Ends the `ui.style` block it was made for, on scope exit. Only `ui.style` builds one. |
 | [`PanelGuard`](panelguard.md) | Ends the `ui.panel` block it was made for, on scope exit. Only `ui.panel` builds one. |
-| [`Theme`](theme.md) | The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, state opacities and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it. |
+| [`Theme`](theme.md) | The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, state layers and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it. |
 | [`ColorScheme`](colorscheme.md) | The colours of a theme, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. |
 | [`Typography`](typography.md) | The theme's kinds of text: `title` for headings, `body` for running text and `label` for the text on widgets, such as a button's. |
 | [`TypeStyle`](typestyle.md) | How one kind of text looks: its size, its weight and its font, or the canvas's default font when `font` is `None`. |
 | [`CornerRadii`](cornerradii.md) | How round the theme's corners are, from `small`, such as a checkbox's, to `large`, such as a panel's. |
 | [`Spacing`](spacing.md) | The theme's gaps, from `small`, between a label and its widget, to `large`, between groups of widgets. |
-| [`StateOpacities`](stateopacities.md) | How strongly a widget shows its state. A hovered, focused, pressed or dragged widget draws its content colour over itself at that opacity; a disabled one draws its content and its fill at the `disabled_` ones. |
+| [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`ButtonVariant`](buttonvariant.md) | Which of the theme's colours a button is drawn in. |
 | [`ButtonStyle`](buttonstyle.md) | How one button looks, where it differs from its variant. Every field left unset is worked out from the theme when the button is drawn. |

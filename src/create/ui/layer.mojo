@@ -19,14 +19,7 @@ from .label import LabelStyle
 from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextFieldResult, TextFieldStyle
-from .theme import (
-    ColorScheme,
-    FocusRing,
-    Theme,
-    TypeStyle,
-    _contrast,
-    _readable_on,
-)
+from .theme import ColorScheme, FocusRing, Theme, TypeStyle, _readable_on
 from .panel import PanelStyle
 from .ui import UI, _Hit, _Styles
 
@@ -39,13 +32,6 @@ comptime _HANDLE_SHADOW = Color(0, 0, 0, 70)
 
 comptime _PANEL_SHADOW = Color(0, 0, 0, 60)
 """The shadow a panel casts with `shadow=True`."""
-
-comptime _HOVERED_CONTRAST = 1.4
-comptime _PRESSED_CONTRAST = 1.8
-"""The least contrast a hovered or pressed widget has with itself at rest.
-A dark tint on a light colour changes it less visibly than a light tint on a
-dark one, so where the theme's opacity falls short of these, the state layer
-is drawn stronger, and every widget shows its state about as clearly."""
 
 
 @fieldwise_init
@@ -555,7 +541,7 @@ struct UILayer[
             colors.on_surface_variant
         )
         if off:
-            var states = theme.state_opacities
+            var states = theme.state_layers
             # the field's own colours, faded: the theme's text colour by
             # default, and a transparent one stays transparent
             text_color = _faded(text_color, states.disabled_content)
@@ -566,14 +552,8 @@ struct UILayer[
                 container = _faded(colors.on_surface, states.disabled_container)
             outline = _faded(colors.on_surface, states.disabled_container)
         elif state.hovered and not state.focused and container.a > 0:
-            container = container.lerp(
-                colors.on_surface,
-                _state_opacity(
-                    container,
-                    colors.on_surface,
-                    theme.state_opacities.hovered,
-                    _HOVERED_CONTRAST,
-                ),
+            container = _stepped(
+                container, colors.on_surface, theme.state_layers.hovered
             )
         var shape = Rectangle(
             rect.position,
@@ -759,7 +739,7 @@ struct UILayer[
         if off:
             # Material's disabled look: everything in the text colour,
             # faded, whatever the variant
-            var states = theme.state_opacities
+            var states = theme.state_layers
             content = _faded(colors.on_surface, states.disabled_content)
             if container.a > 0:
                 container = _faded(colors.on_surface, states.disabled_container)
@@ -770,6 +750,14 @@ struct UILayer[
             rect.position, rect.width, rect.height, corner_radius=radius
         )
         ref recorder = self._ui[]._recorder
+        # a hovered or pressed button steps its lightness towards its text
+        var step = 0.0
+        if state.pressed:
+            step = theme.state_layers.pressed
+        elif state.hovered:
+            step = theme.state_layers.hovered
+        if step > 0 and container.a > 0:
+            container = _stepped(container, content, step)
         if container.a > 0 or outline:
             recorder.style = Style(
                 fill=container,
@@ -777,24 +765,6 @@ struct UILayer[
                 stroke=outline.or_else(Color.TRANSPARENT),
                 stroke_thickness=thickness,
                 stroke_enabled=Bool(outline),
-            )
-            recorder.draw(shape)
-        var layer_opacity = 0.0
-        # what the state layer is drawn over: the fill, or the surface
-        # showing through a button without one
-        var base = container if container.a > 0 else colors.surface
-        if state.pressed:
-            layer_opacity = _state_opacity(
-                base, content, theme.state_opacities.pressed, _PRESSED_CONTRAST
-            )
-        elif state.hovered:
-            layer_opacity = _state_opacity(
-                base, content, theme.state_opacities.hovered, _HOVERED_CONTRAST
-            )
-        if layer_opacity > 0:
-            recorder.style = Style(
-                fill=content.with_alpha(UInt8(layer_opacity * 255 + 0.5)),
-                stroke_enabled=False,
             )
             if state.pressed and container.a > 0:
                 # pressed in: a soft shadow along the inside of the top edge
@@ -804,6 +774,15 @@ struct UILayer[
                 recorder.style.shadow_spread = 0
                 recorder.style.shadow_inset = True
                 recorder.style.shadow_enabled = True
+            recorder.draw(shape)
+        if step > 0 and container.a == 0:
+            # no fill to step: a layer of the text colour, as strong as the
+            # step would be over the surface beneath
+            var opacity = _layer_opacity(colors.surface, content, step)
+            recorder.style = Style(
+                fill=content.with_alpha(UInt8(opacity * 255 + 0.5)),
+                stroke_enabled=False,
+            )
             recorder.draw(shape)
         self._ring_around(shape, state, off, style.focus_ring)
         recorder.text(
@@ -908,7 +887,7 @@ struct UILayer[
         )
         var handle = style.handle_color.or_else(colors.primary)
         if off:
-            var states = theme.state_opacities
+            var states = theme.state_layers
             active = _faded(colors.on_surface, states.disabled_content)
             inactive = _faded(colors.on_surface, states.disabled_container)
             # solid, so the track doesn't show through it
@@ -933,25 +912,9 @@ struct UILayer[
         var tint = _readable_on(handle)
         var shown = handle
         if dragging:
-            shown = handle.lerp(
-                tint,
-                _state_opacity(
-                    handle,
-                    tint,
-                    theme.state_opacities.dragged,
-                    _PRESSED_CONTRAST,
-                ),
-            )
+            shown = _stepped(handle, tint, theme.state_layers.dragged)
         elif state.hovered:
-            shown = handle.lerp(
-                tint,
-                _state_opacity(
-                    handle,
-                    tint,
-                    theme.state_opacities.hovered,
-                    _HOVERED_CONTRAST,
-                ),
-            )
+            shown = _stepped(handle, tint, theme.state_layers.hovered)
         recorder.style = Style(
             fill=shown,
             stroke=style.handle_outline_color.or_else(Color.TRANSPARENT),
@@ -1000,7 +963,7 @@ struct UILayer[
         var label_color = style.label_color.or_else(self._ui[]._content_color())
         if off:
             var faded = _faded(
-                colors.on_surface, theme.state_opacities.disabled_content
+                colors.on_surface, theme.state_layers.disabled_content
             )
             accent = faded
             check = colors.surface
@@ -1008,21 +971,15 @@ struct UILayer[
             label_color = faded
         # a hovered or pressed box is tinted, as a button is: a ticked one
         # towards its tick, an empty one with the text colour inside it
-        var opacity = 0.0
-        var least_contrast = 1.0
+        var step = 0.0
         if state.pressed:
-            opacity = theme.state_opacities.pressed
-            least_contrast = _PRESSED_CONTRAST
+            step = theme.state_layers.pressed
         elif state.hovered:
-            opacity = theme.state_opacities.hovered
-            least_contrast = _HOVERED_CONTRAST
+            step = theme.state_layers.hovered
         if checked:
             var fill = accent
-            if opacity > 0:
-                fill = accent.lerp(
-                    check,
-                    _state_opacity(accent, check, opacity, least_contrast),
-                )
+            if step > 0:
+                fill = _stepped(accent, check, step)
             recorder.style = Style(fill=fill, stroke_enabled=False)
             recorder.draw(box)
             recorder.style = Style(
@@ -1035,10 +992,8 @@ struct UILayer[
             recorder.draw(Line(corner, centre + Vector(5.0, 5.0)))
         else:
             var layer = 0.0
-            if opacity > 0:
-                layer = _state_opacity(
-                    colors.surface, colors.on_surface, opacity, least_contrast
-                )
+            if step > 0:
+                layer = _layer_opacity(colors.surface, colors.on_surface, step)
             recorder.style = Style(
                 fill=colors.on_surface.with_alpha(UInt8(layer * 255 + 0.5)),
                 fill_enabled=layer > 0,
@@ -1247,21 +1202,30 @@ def _text_style(type: TypeStyle, color: Color, alignment: Align) -> Style:
     )
 
 
-def _state_opacity(
-    base: Color, content: Color, opacity: Float64, least_contrast: Float64
-) -> Float64:
-    """The opacity to draw a state layer of `content` over `base` at: the
-    theme's `opacity`, raised until the result contrasts with `base` by at
-    least `least_contrast`, and to no more than 0.5."""
-    if _contrast(base, base.lerp(content, opacity)) >= least_contrast:
-        return opacity
-    var low = opacity
-    var high = 0.5
-    if _contrast(base, base.lerp(content, high)) < least_contrast:
-        return high
-    for _ in range(12):
+def _stepped(base: Color, toward: Color, step: Float64) -> Color:
+    """`base` with its OKLCH lightness moved `step` towards `toward`'s,
+    keeping its chroma and hue: a hovered or pressed widget's colour. A step
+    of lightness looks like the same change on any colour, so every widget
+    shows its state about as clearly, a pale fill as much as a dark one."""
+    var at = base.to_oklch()
+    var target = toward.to_oklch()[0]
+    var lightness = at[0] + step if target > at[0] else at[0] - step
+    return Color.oklch(lightness, at[1], at[2]).with_alpha(base.a)
+
+
+def _layer_opacity(base: Color, layer: Color, step: Float64) -> Float64:
+    """The opacity at which `layer`, drawn over `base`, moves its OKLCH
+    lightness by `step`: for a widget with no fill of its own, such as an
+    outlined button, whose state is a translucent layer over the surface."""
+    var start = base.to_oklch()[0]
+    var reach = abs(layer.to_oklch()[0] - start)
+    if reach <= step:
+        return 1.0
+    var low = 0.0
+    var high = 1.0
+    for _ in range(16):
         var middle = (low + high) / 2
-        if _contrast(base, base.lerp(content, middle)) >= least_contrast:
+        if abs(base.lerp(layer, middle).to_oklch()[0] - start) >= step:
             high = middle
         else:
             low = middle
