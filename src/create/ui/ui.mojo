@@ -21,6 +21,8 @@ struct _Hit(Copyable, ImplicitlyCopyable, Movable):
     var id: UInt64
     var rect: Rectangle
     var to_local: Transform
+    var focusable: Bool
+    """Whether Tab can move focus to it: not while it is disabled."""
 
     def contains(self, screen: Point) -> Bool:
         return self.rect.contains(self.to_local.apply(screen))
@@ -66,8 +68,9 @@ struct UI(Movable):
     rather than a click: only then is a focus ring drawn."""
     var _focused_takes_typing: Bool
     """Whether the focused widget takes typed text, as a text field does."""
-    var _key_cleared_focus: Bool
-    """Whether a key took focus away this frame."""
+    var _key_used: Bool
+    """Whether a key was the UI's this frame: Tab moving focus, Escape
+    taking it away, or a key acting on the focused widget."""
 
     def __init__(out self, theme: Theme = Theme.light()):
         """A UI drawn in `theme`, the light theme unless given."""
@@ -84,7 +87,7 @@ struct UI(Movable):
         self._focused = None
         self._focus_visible = False
         self._focused_takes_typing = False
-        self._key_cleared_focus = False
+        self._key_used = False
 
     def theme(self) -> Theme:
         """The theme the widgets are drawn in."""
@@ -108,10 +111,13 @@ struct UI(Movable):
         return Bool(self._hot) or Bool(self._held)
 
     def wants_keyboard(self) -> Bool:
-        """Whether the keyboard is the UI's this frame: a widget that takes
-        typing has focus, or a key took focus away from a widget this frame,
-        such as Escape leaving a text field. A game checks it before reading
-        keys itself, so typing a name with W in it doesn't move the player.
+        """Whether the keyboard is the UI's this frame. It is while a widget
+        that takes typing has focus, and while a widget has focus from the
+        keyboard, Tab say, rather than from a click, since the keys then act
+        on it: Enter and Space press a button, the arrows move a slider. It
+        is also in the frame a key moved or took away focus, such as Escape
+        leaving a text field. A game checks it before reading keys itself,
+        so typing a name with W in it doesn't move the player.
 
         ```mojo
         # In `update`, before or after the UI's `with` block:
@@ -120,8 +126,9 @@ struct UI(Movable):
         ```
         """
         return (
-            Bool(self._focused) and self._focused_takes_typing
-        ) or self._key_cleared_focus
+            Bool(self._focused)
+            and (self._focused_takes_typing or self._focus_visible)
+        ) or self._key_used
 
     def screen(
         mut self, mut context: Context, mut canvas: Canvas
@@ -194,7 +201,7 @@ struct UI(Movable):
                     break
             if not mouse.down() and not mouse.released():
                 self._held = None
-            self._key_cleared_focus = False
+            self._key_used = False
             if self._focused:
                 var still_there = False
                 for hit in self._last_hits:
@@ -205,10 +212,41 @@ struct UI(Movable):
                     self._clear_focus()  # its widget wasn't called last frame
                 elif keyboard.pressed(Key.ESCAPE):
                     self._clear_focus()
-                    self._key_cleared_focus = True
+                    self._key_used = True
             if mouse.pressed() and not self._hot:
                 self._clear_focus()  # a click on no widget
+            if keyboard.typed(Key.TAB):
+                self._tab(
+                    backwards=keyboard.down(Key.LEFT_SHIFT)
+                    or keyboard.down(Key.RIGHT_SHIFT)
+                )
         self._recorder.commands.clear()
+
+    def _tab(mut self, backwards: Bool):
+        """Move focus to the next widget Tab can reach, in the order they were
+        called last frame, or the previous one `backwards`; from no focus, to
+        the first or the last. The order wraps round."""
+        var order = List[UInt64]()
+        for hit in self._last_hits:
+            if hit.focusable:
+                order.append(hit.id)
+        if not order:
+            return
+        var at = -1
+        if self._focused:
+            for i in range(len(order)):
+                if order[i] == self._focused.value():
+                    at = i
+                    break
+        var next: Int
+        if at == -1:
+            next = len(order) - 1 if backwards else 0
+        elif backwards:
+            next = (at - 1 + len(order)) % len(order)
+        else:
+            next = (at + 1) % len(order)
+        self._focus(order[next], visible=True)
+        self._key_used = True
 
     def _focus(mut self, id: UInt64, visible: Bool, takes_typing: Bool = False):
         self._focused = id
