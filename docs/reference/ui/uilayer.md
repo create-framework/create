@@ -4,7 +4,7 @@
 struct UILayer[ui_origin: MutOrigin, context_origin: MutOrigin, canvas_origin: MutOrigin]
 ```
 
-The handle a `with self.ui.screen(context, canvas) as ui:` block gets: every widget is a method on it.
+The handle a `with self.ui.screen(context, canvas) as ui:` or `ui.world` block gets: every widget is a method on it.
 
 It points at the `UI`, the context and the canvas, so a widget needs none
 of them passed, and the block can still use them, and the program's other
