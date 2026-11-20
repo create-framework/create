@@ -62,6 +62,7 @@ def button(
     *,
     variant: ButtonVariant = ButtonVariant.FILLED,
     style: ButtonStyle = ButtonStyle(container_color=Optional(None), content_color=Optional(None), outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), corner_radius=_OptionalFloat64(None), text_style=Optional(None)),
+    disabled: Bool = False,
     id: _WidgetKey = None,
 ) raises -> Bool
 ```
@@ -114,6 +115,7 @@ def slider(
     *,
     step: _OptionalFloat64 = None,
     style: SliderStyle = SliderStyle(active_track_color=Optional(None), inactive_track_color=Optional(None), handle_color=Optional(None), handle_outline_color=Optional(None), handle_shadow=False, track_thickness=_OptionalFloat64(None), handle_radius=_OptionalFloat64(None)),
+    disabled: Bool = False,
     id: _WidgetKey = None,
 ) raises -> Bool
 ```
@@ -141,6 +143,7 @@ def checkbox(
     rect: Rectangle,
     *,
     style: CheckboxStyle = CheckboxStyle(box_color=Optional(None), check_color=Optional(None), outline_color=Optional(None), label_color=Optional(None), text_style=Optional(None)),
+    disabled: Bool = False,
     id: _WidgetKey = None,
 ) raises -> Bool
 ```
@@ -151,6 +154,21 @@ A box against the left edge of `rect`, ticked while `checked` is `True`, with `l
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 if ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32)):
     self.save_settings()
+```
+
+### `disabled`
+
+```mojo
+def disabled(self, condition: Bool = True) raises -> DisabledGuard[ui_origin]
+```
+
+Disable every widget inside a `with` block while `condition` is true: they are drawn faded, don't react to the pointer, and return `False`. With `condition` false, the block's widgets work as usual, so a section can be switched on and off without an `if` around each widget.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+with ui.disabled(not self.online):
+    if ui.button("Find a game", Rectangle((0, 0), 200, 48)):
+        ...
 ```
 
 ## Special methods

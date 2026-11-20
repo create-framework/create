@@ -22,7 +22,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), `IDGuard`, `Theme` with its tokens (`ColorScheme`, `Typography`, …), and the widgets' styles (`ButtonStyle`, `ButtonVariant`, `LabelStyle`, `SliderStyle`, `CheckboxStyle`); widget IDs from call sites, and the recorder that draws a layer in call order |
+| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), `IDGuard`, `DisabledGuard`, `Theme` with its tokens (`ColorScheme`, `Typography`, …), and the widgets' styles (`ButtonStyle`, `ButtonVariant`, `LabelStyle`, `SliderStyle`, `CheckboxStyle`); widget IDs from call sites, and the recorder that draws a layer in call order |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
