@@ -17,3 +17,6 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`Spacing`](spacing.md) | The theme's gaps, from `small`, between a label and its widget, to `large`, between groups of widgets. |
 | [`StateOpacities`](stateopacities.md) | How strongly a widget shows its state. A hovered, focused, pressed or dragged widget draws its content colour over itself at that opacity; a disabled one draws its content and its fill at the `disabled_` ones. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard or a gamepad: its `thickness`, and the `gap` between it and the widget. |
+| [`ButtonVariant`](buttonvariant.md) | Which of the theme's colours a button is drawn in. |
+| [`ButtonStyle`](buttonstyle.md) | How one button looks, where it differs from its variant. Every field left unset is worked out from the theme when the button is drawn. |
+| [`LabelStyle`](labelstyle.md) | How a label's text looks, where it differs from the theme: the theme's `on_surface` colour and `body` text unless given. |

@@ -16,7 +16,24 @@ from create.geometry import (
     Sector,
     Triangle,
 )
+from create.image import Image
+from create.math import Point
 from create.render import Canvas, Style
+
+
+@fieldwise_init
+struct _Text(Copyable, Movable):
+    var text: String
+    var position: Point
+
+
+@fieldwise_init
+struct _Picture(Copyable, Movable):
+    var image: Image
+    var position: Point
+    var width: Float64
+    var height: Float64
+
 
 comptime _Shape = Variant[
     Rectangle,
@@ -28,6 +45,8 @@ comptime _Shape = Variant[
     Polygon,
     Line,
     List[Bezier],
+    _Text,
+    _Picture,
 ]
 
 
@@ -77,6 +96,26 @@ struct _Recorder(DrawTarget, Movable):
     def _curves(mut self, curves: List[Bezier]):
         self.commands.append(_DrawCommand(_Shape(curves.copy()), self.style))
 
+    def text(mut self, text: String, position: Point, style: Style):
+        """Record `text`, drawn at `position` in `style`'s text settings."""
+        self.commands.append(_DrawCommand(_Shape(_Text(text, position)), style))
+
+    def image(
+        mut self,
+        image: Image,
+        position: Point,
+        width: Float64,
+        height: Float64,
+        style: Style,
+    ):
+        """Record `image`, centred at `position` and stretched to `width` by
+        `height`."""
+        self.commands.append(
+            _DrawCommand(
+                _Shape(_Picture(image, position, width, height)), style
+            )
+        )
+
     def replay(mut self, mut canvas: Canvas):
         """Draw every recorded command onto `canvas`, in order, and empty the
         list, keeping its memory for the next layer."""
@@ -99,6 +138,17 @@ struct _Recorder(DrawTarget, Movable):
                     canvas._polygon(shape[Polygon])
                 elif shape.isa[Line]():
                     canvas._line(shape[Line])
+                elif shape.isa[_Text]():
+                    ref text = shape[_Text]
+                    canvas.text(text.text, text.position)
+                elif shape.isa[_Picture]():
+                    ref picture = shape[_Picture]
+                    canvas.image(
+                        picture.image,
+                        picture.position,
+                        picture.width,
+                        picture.height,
+                    )
                 else:
                     canvas._curves(shape[List[Bezier]])
         self.commands.clear()

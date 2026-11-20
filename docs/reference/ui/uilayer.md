@@ -52,6 +52,56 @@ for player in self.players:
         ...
 ```
 
+### `button`
+
+```mojo
+def button(
+    self,
+    text: String,
+    rect: Rectangle,
+    *,
+    variant: ButtonVariant = ButtonVariant.FILLED,
+    style: ButtonStyle = ButtonStyle(container_color=Optional(None), content_color=Optional(None), outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), corner_radius=_OptionalFloat64(None), text_style=Optional(None)),
+    id: _WidgetKey = None,
+) raises -> Bool
+```
+
+A button showing `text`, filling `rect`. Returns whether it was clicked this frame: pressed and released with the pointer over it.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+if ui.button("Play", Rectangle((0, 0), 160, 48)):
+    self.start()
+```
+
+### `label`
+
+```mojo
+def label(
+    self,
+    text: String,
+    rect: Rectangle,
+    *,
+    alignment: Align = Align.CENTER,
+    style: LabelStyle = LabelStyle(color=Optional(None), text_style=Optional(None)),
+) raises
+```
+
+Text placed in `rect`, by `alignment`: in its centre unless given, against its left edge with `Align.LEFT`, and so on. It reacts to nothing, so the pointer passes through it to what is beneath.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+ui.label("Volume", Rectangle((0, 40), 240, 24), alignment=Align.LEFT)
+```
+
+### `image`
+
+```mojo
+def image(self, image: Image, rect: Rectangle) raises
+```
+
+`image` stretched to fill `rect`. Like a label, it reacts to nothing.
+
 ## Special methods
 
 ### `__enter__`
