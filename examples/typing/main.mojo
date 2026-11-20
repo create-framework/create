@@ -1,5 +1,7 @@
-"""A typing test: `context.keyboard.text` and `EditableText` take what is typed,
-accented letters included, and the result is scored in words per minute.
+"""A typing test: a `text_field` takes what is typed, accented letters
+included, and the result is scored in words per minute. The field draws only
+its caret and selection; the test draws the letters itself, red where they
+are wrong.
 
 Type the phrase shown; Enter moves on once it is right.
 """
@@ -11,6 +13,7 @@ comptime _HINT = Color(176, 172, 162)
 comptime _TYPED = Color(240, 236, 222)
 comptime _MISTAKE = Color(226, 46, 56)
 comptime _SELECTION = Color(70, 90, 140)
+comptime _SIZE = 28.0
 
 
 def characters(text: String) -> List[String]:
@@ -24,9 +27,13 @@ def characters(text: String) -> List[String]:
 
 @fieldwise_init
 struct TypingTest(Program):
+    var ui: UI
     var phrases: List[String]
     var phrase: Int
-    var typed: EditableText
+    var typed: String
+    var selection_start: Int
+    """Where typing lands, in characters: the start of the selection, as
+    the field left it last frame."""
     var started_at: Float64
     var keystrokes: Int
     var mistakes: Int
@@ -35,13 +42,15 @@ struct TypingTest(Program):
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> TypingTest:
         return TypingTest(
+            ui=UI(),
             phrases=[
                 "the quick brown fox jumps over the lazy dog",
                 "a café naïve enough to serve crème brûlée",
                 "sphinx of black quartz, judge my vow",
             ],
             phrase=0,
-            typed=EditableText(),
+            typed="",
+            selection_start=0,
             started_at=0,
             keystrokes=0,
             mistakes=0,
@@ -58,49 +67,62 @@ struct TypingTest(Program):
         )
         canvas.background(_BACKGROUND)
         var target = characters(self.phrases[self.phrase])
-        var finished = self.typed.text == self.phrases[self.phrase]
-
-        if finished:
-            if context.keyboard.pressed(Key.ENTER):
-                self.phrase = (self.phrase + 1) % len(self.phrases)
-                self.typed.text = ""
-                self.result = ""
-        else:
+        var finished = self.typed == self.phrases[self.phrase]
+        if finished and context.keyboard.pressed(Key.ENTER):
+            self.phrase = (self.phrase + 1) % len(self.phrases)
+            self.typed = ""
+            self.result = ""
+            self.selection_start = 0
+            finished = False
+            target = characters(self.phrases[self.phrase])
+        if not finished:
             self.count_keystrokes(context, target)
-            # Typed text, Backspace, Delete, the arrows, Shift to select,
-            # word moves and copy/paste, all in one.
-            self.typed.update(context)
-            if self.typed.text == self.phrases[self.phrase]:
-                self.result = self.score(len(target), context.time.elapsed)
 
         # Both lines start at the same left edge, so each typed letter sits
         # under the one it should match.
-        canvas.font_size(28)
+        canvas.font_size(_SIZE)
         canvas.text_alignment(Align.LEFT)
         var left = -canvas.text_width(self.phrases[self.phrase]) / 2
         canvas.text_color(_HINT)
         canvas.text(self.phrases[self.phrase], (left, 60))
 
-        # The selection's highlight goes behind the letters it covers.
-        var selected = self.typed.selected_text()
-        if selected:
-            var start = left + canvas.text_width(self.typed.before_selection())
-            var width = canvas.text_width(selected)
-            with canvas.style(fill=_SELECTION, stroke_enabled=False):
-                canvas.rectangle((start + width / 2, 0), width, 36)
+        # The field does the editing: typed text, Backspace, Delete, the
+        # arrows, Shift to select, word moves and copy/paste. It starts at
+        # the same left edge and measures in the same font, so its caret and
+        # selection fall between the letters drawn below; it draws nothing
+        # else. Taking focus every frame keeps typing going to it, even
+        # after a click elsewhere. Wide enough that it never scrolls.
+        var width = canvas.right() - left
+        with self.ui.screen(context, canvas) as ui:
+            var field = ui.text_field(
+                self.typed,
+                Rectangle(Point(left + width / 2, 0), width, 40.0),
+                style=TextFieldStyle(
+                    container_color=Color.TRANSPARENT,
+                    outline_thickness=0,
+                    text_color=Color.TRANSPARENT,
+                    caret_color=_TYPED,
+                    selection_color=_SELECTION,
+                    padding=0,
+                    text_style=TypeStyle(_SIZE, FontWeight.REGULAR, None),
+                ),
+                take_focus=not finished,
+                disabled=finished,
+            )
+            self.selection_start = len(characters(field.before_selection()))
+        if not finished and self.typed == self.phrases[self.phrase]:
+            self.result = self.score(len(target), context.time.elapsed)
+            finished = True
 
+        # Drawn after the field's layer, so the letters sit over the
+        # selection's highlight.
         var x = left
-        var typed = characters(self.typed.text)
+        var typed = characters(self.typed)
         for i in range(len(typed)):
             var right = i < len(target) and typed[i] == target[i]
             canvas.text_color(_TYPED if right else _MISTAKE)
             canvas.text(typed[i], (x, 0))
             x += canvas.text_width(typed[i])
-
-        if not finished and Int(context.time.elapsed * 2) % 2 == 0:
-            var caret_x = left + canvas.text_width(self.typed.before_caret())
-            canvas.stroke(_TYPED, thickness=2)
-            canvas.line((caret_x, -16), (caret_x, 16))
 
         canvas.font_size(20)
         canvas.text_alignment(Align.CENTER)
@@ -117,12 +139,12 @@ struct TypingTest(Program):
         var typed = characters(context.keyboard.text)
         if not typed:
             return
-        if not self.typed.text:
+        if not self.typed:
             self.started_at = context.time.elapsed
             self.keystrokes = 0
             self.mistakes = 0
         # Typing replaces a selection, so it lands where the selection starts.
-        var position = len(characters(self.typed.before_selection()))
+        var position = self.selection_start
         for i in range(len(typed)):
             self.keystrokes += 1
             var at = position + i

@@ -434,8 +434,12 @@ struct UILayer[
         )
         if off:
             var states = theme.state_opacities
-            text_color = _faded(colors.on_surface, states.disabled_content)
-            placeholder_color = text_color
+            # the field's own colours, faded: the theme's text colour by
+            # default, and a transparent one stays transparent
+            text_color = _faded(text_color, states.disabled_content)
+            placeholder_color = _faded(
+                placeholder_color, states.disabled_content
+            )
             if container.a > 0:
                 container = _faded(colors.on_surface, states.disabled_container)
             outline = _faded(colors.on_surface, states.disabled_container)
@@ -1115,7 +1119,8 @@ def _clamp01(t: Float64) -> Float64:
 
 
 def _faded(color: Color, opacity: Float64) -> Color:
-    return color.with_alpha(UInt8(opacity * 255 + 0.5))
+    """`color` at `opacity` of its own alpha."""
+    return color.with_alpha(UInt8(Float64(color.a) * opacity + 0.5))
 
 
 struct DisabledGuard[origin: Origin[mut=True]](Movable):
