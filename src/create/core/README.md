@@ -16,7 +16,6 @@ the [user guide](../../../docs/guide/README.md) covers using it,
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor; sent before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |
 | `_events.mojo` | `apply_events`: the one `Event` fold, into `context.keyboard`, `context.mouse` and the gamepads, through each device's per-event methods |
 | `context.mojo` | The run state the loop owns and the program reads: `Context`. Its `time` reading is `create.time`'s `Time`, and its devices (`keyboard`, `mouse`, `_gamepads`) are `create.input`'s |
-| `editable_text.mojo` | `EditableText`, a consumer of `Context` rather than run state: it replays `keyboard._strokes` and reaches the clipboard, which is why it sits in `core` and not `input` |
 
 ## Rules
 
@@ -92,7 +91,7 @@ clipboard is the mirror alone.
 
 **Typing is also kept in order.** Beside its sets, `Keyboard` records each key-down (with the
 layout's keycode as its label, and the modifiers then held) and each text event as a `_Stroke`,
-cleared with the edges, which is what `EditableText` replays.
+cleared with the edges, which is what a `text_field`'s editing (`ui`'s `_TextBuffer`) replays.
 
 **Rumble flows the other way.** `context.rumble` queues a request addressed by SDL's id; both
 windowed loops send the queue after presenting (`_finish_frame`), and `_advance_frame` empties it,

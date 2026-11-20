@@ -10,8 +10,8 @@ A value type's verb method returns a new value and leaves the receiver as it was
 rect.translate(delta)`, `v.normalize()`, `line.split(t)`, `color.with_alpha(a)`. A shape, vector,
 point, colour or matrix is never changed in place by a method; assign a field to change one. The
 types that change in place are those that hold state over time, and their methods act on that state
-(`tween.play()`, `table.sort(...)`): `Tween`, `Animator`, `Audio`, `EditableText`, `Random`,
-`Table`, `PixelBuffer`, `Canvas` and `Context`.
+(`tween.play()`, `table.sort(...)`): `Tween`, `Animator`, `Audio`, `UI`, `Random`, `Table`,
+`PixelBuffer`, `Canvas` and `Context`.
 
 ## Locations, displacements and extents
 

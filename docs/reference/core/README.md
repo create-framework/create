@@ -1,6 +1,6 @@
 # create.core
 
-The run: the `Program` trait, `run` and `run_headless`, the run's state (`Context`) and its settings (`WindowMode`, `Cursor`), text entry (`EditableText`) and `source_path`.
+The run: the `Program` trait, `run` and `run_headless`, the run's state (`Context`) and its settings (`WindowMode`, `Cursor`), and `source_path`.
 
 ## Types
 
@@ -9,7 +9,6 @@ The run: the `Program` trait, `run` and `run_headless`, the run's state (`Contex
 | [`Context`](context.md) | The run's state: everything that outlives a frame. |
 | [`WindowMode`](windowmode.md) | How the window presents itself: `run`'s `mode`, and `context.window_mode`'s value. |
 | [`Cursor`](cursor.md) | The mouse cursor over the window: `context.cursor`'s value. |
-| [`EditableText`](editabletext.md) | A line of text being typed into, with a caret and a selection: the state of a text field, without its look. |
 
 ## Traits
 

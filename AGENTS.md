@@ -53,7 +53,7 @@ page:
 | [pixels](docs/guide/drawing/pixels.md) | `color_at`, `snapshot`, `PixelBuffer`, `image.pixel` |
 | [input](docs/guide/interaction/input.md) | what all devices share: `down`/`pressed`/`released`, focus loss, `from_name` |
 | [keyboard](docs/guide/interaction/keyboard.md) | `Key`, keys by position, modifiers, key bindings |
-| [typing](docs/guide/interaction/typing.md) | `keyboard.text`, `typed`, `text_input`, `EditableText`, the clipboard |
+| [typing](docs/guide/interaction/typing.md) | `keyboard.text`, `typed`, `text_input`, `text_field`, the clipboard |
 | [mouse](docs/guide/interaction/mouse.md) | `Mouse`, `MouseButton`, picking under the pointer, `lock_mouse`, `Cursor` |
 | [gamepads](docs/guide/interaction/gamepads.md) | `Gamepad`, `GamepadButton`, sticks, triggers, rumble |
 | [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |

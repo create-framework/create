@@ -173,8 +173,9 @@ def text_input(mut self, enabled: Bool)
 
 Take typed text, or stop.
 
-On by default, so `context.keyboard.text` and an `EditableText` work
-with no setup. Taking text is also what opens an input method's
+On by default, so `context.keyboard.text` works with no setup. A
+`text_field` switches it on while it has focus and off when it loses
+it. Taking text is also what opens an input method's
 composition window as the user types, and an on-screen keyboard on a
 handheld or tablet — so a game played on letter keys switches it off,
 and back on while a text field is in use. Keys are read the same
