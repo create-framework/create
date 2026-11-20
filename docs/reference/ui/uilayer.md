@@ -168,6 +168,40 @@ if ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32)):
     self.save_settings()
 ```
 
+### `text_field`
+
+```mojo
+def text_field[text_origin: MutOrigin](
+    self,
+    ref[ui_origin] text: String,
+    rect: Rectangle,
+    *,
+    placeholder: String = "",
+    max_length: Optional[Int] = None,
+    style: TextFieldStyle = TextFieldStyle(container_color=Optional(None), outline_color=Optional(None), focused_outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), text_color=Optional(None), placeholder_color=Optional(None), caret_color=Optional(None), selection_color=Optional(None), corner_radius=_OptionalFloat64(None), padding=_OptionalFloat64(None), text_style=Optional(None)),
+    take_focus: Bool = False,
+    disabled: Bool = False,
+    id: _WidgetKey = None,
+) raises -> TextFieldResult[ui_origin, context_origin, text_origin]
+```
+
+A field for typing into `text`, filling `rect`. Clicking it gives it focus and places the caret; while it has focus, typing and the editing keys change `text`, and Enter submits it.
+
+Returns a `TextFieldResult`: whether the text changed, as a `Bool`,
+`submitted` for Enter, and the caret and selection. `placeholder` is
+shown in a fainter colour while `text` is empty, and `max_length`
+caps how many characters typing and pasting can bring it to.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
+# with a `name: String` field:
+var field = ui.text_field(
+    self.name, Rectangle((0, 0), 320, 40), placeholder="Your name"
+)
+if field.submitted:
+    self.start_game(self.name)
+```
+
 ### `disabled`
 
 ```mojo

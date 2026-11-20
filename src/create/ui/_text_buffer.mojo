@@ -45,6 +45,12 @@ struct _TextBuffer(Copyable, Movable):
     var _anchor: Int
     """Byte offset of the selection's other end: the selection runs between
     it and the caret, and is empty when they meet."""
+    var scroll: Float64
+    """How far the text is scrolled left, so the caret stays inside a field
+    narrower than its text."""
+    var last_change: Float64
+    """When the text or caret last changed, in run seconds: the caret shows
+    steadily for a moment after, rather than blinking while typing."""
 
     def __init__(
         out self, text: String = "", *, max_length: Optional[Int] = None
@@ -54,6 +60,8 @@ struct _TextBuffer(Copyable, Movable):
         self.max_length = max_length
         self._caret = text.byte_length()
         self._anchor = self._caret
+        self.scroll = 0
+        self.last_change = 0
 
     # ------------------------------------------------------------- update
 

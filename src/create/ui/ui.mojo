@@ -9,6 +9,7 @@ from create.math import Point, Transform
 from create.render import Canvas
 from ._id import _mix, _site
 from ._recorder import _Recorder
+from ._text_buffer import _TextBuffer
 from .layer import UILayer
 from .theme import Theme
 
@@ -23,6 +24,8 @@ struct _Hit(Copyable, ImplicitlyCopyable, Movable):
     var to_local: Transform
     var focusable: Bool
     """Whether Tab can move focus to it: not while it is disabled."""
+    var takes_typing: Bool
+    """Whether it takes typed text, as a text field does."""
 
     def contains(self, screen: Point) -> Bool:
         return self.rect.contains(self.to_local.apply(screen))
@@ -68,6 +71,11 @@ struct UI(Movable):
     rather than a click: only then is a focus ring drawn."""
     var _focused_takes_typing: Bool
     """Whether the focused widget takes typed text, as a text field does."""
+    var _buffers: Dict[UInt64, _TextBuffer]
+    """Each text field's text, caret and selection, under its ID."""
+    var _typing_was: Bool
+    """Whether a widget that takes typing had focus when `text_input` was
+    last switched: the UI switches it only when that changes."""
     var _key_used: Bool
     """Whether a key was the UI's this frame: Tab moving focus, Escape
     taking it away, or a key acting on the focused widget."""
@@ -88,6 +96,8 @@ struct UI(Movable):
         self._focus_visible = False
         self._focused_takes_typing = False
         self._key_used = False
+        self._buffers = {}
+        self._typing_was = False
 
     def theme(self) -> Theme:
         """The theme the widgets are drawn in."""
@@ -142,9 +152,7 @@ struct UI(Movable):
             ...
         ```
         """
-        self._begin_layer(
-            context.frame_count(), context.mouse, context.keyboard
-        )
+        self._begin_layer(context)
         return UILayer(
             _ui=self,
             _context=context,
@@ -173,9 +181,7 @@ struct UI(Movable):
                 self.open_chest()
         ```
         """
-        self._begin_layer(
-            context.frame_count(), context.mouse, context.keyboard
-        )
+        self._begin_layer(context)
         return UILayer(
             _ui=self,
             _context=context,
@@ -184,9 +190,12 @@ struct UI(Movable):
             _view=canvas._current_view(),
         )
 
-    def _begin_layer(mut self, frame: Int, mouse: Mouse, keyboard: Keyboard):
+    def _begin_layer(mut self, mut context: Context):
         """Start a layer, resetting the per-frame state when it is the first
         layer of a new frame."""
+        var frame = context.frame_count()
+        ref mouse = context.mouse
+        ref keyboard = context.keyboard
         if frame != self._frame:
             self._frame = frame
             self._site_counts.clear()
@@ -220,22 +229,24 @@ struct UI(Movable):
                     backwards=keyboard.down(Key.LEFT_SHIFT)
                     or keyboard.down(Key.RIGHT_SHIFT)
                 )
+            self._drop_unseen_buffers()
+            self._sync_text_input(context)
         self._recorder.commands.clear()
 
     def _tab(mut self, backwards: Bool):
         """Move focus to the next widget Tab can reach, in the order they were
         called last frame, or the previous one `backwards`; from no focus, to
         the first or the last. The order wraps round."""
-        var order = List[UInt64]()
+        var order = List[_Hit]()
         for hit in self._last_hits:
             if hit.focusable:
-                order.append(hit.id)
+                order.append(hit)
         if not order:
             return
         var at = -1
         if self._focused:
             for i in range(len(order)):
-                if order[i] == self._focused.value():
+                if order[i].id == self._focused.value():
                     at = i
                     break
         var next: Int
@@ -245,13 +256,44 @@ struct UI(Movable):
             next = (at - 1 + len(order)) % len(order)
         else:
             next = (at + 1) % len(order)
-        self._focus(order[next], visible=True)
+        self._focus(
+            order[next].id, visible=True, takes_typing=order[next].takes_typing
+        )
         self._key_used = True
 
     def _focus(mut self, id: UInt64, visible: Bool, takes_typing: Bool = False):
         self._focused = id
         self._focus_visible = visible
         self._focused_takes_typing = takes_typing
+
+    def _sync_text_input(mut self, mut context: Context):
+        """Switch `context.text_input` on when a widget that takes typing
+        gains focus, and off when it loses it, and leave it alone otherwise,
+        so a program that turns typing on for its own use keeps it."""
+        var typing = Bool(self._focused) and self._focused_takes_typing
+        if typing != self._typing_was:
+            context.text_input(typing)
+            self._typing_was = typing
+
+    def _drop_unseen_buffers(mut self):
+        """Forget the text fields not called last frame: their text is the
+        program's, and only the caret and selection go."""
+        if not self._buffers:
+            return
+        var gone = List[UInt64]()
+        for id in self._buffers.keys():
+            var seen = False
+            for hit in self._last_hits:
+                if hit.id == id:
+                    seen = True
+                    break
+            if not seen:
+                gone.append(id)
+        for id in gone:
+            try:
+                _ = self._buffers.pop(id)
+            except:
+                pass  # listed from the keys a moment ago: always there
 
     def _clear_focus(mut self):
         self._focused = None
