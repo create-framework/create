@@ -78,6 +78,19 @@ def test_matmul_values() raises -> None:
     assert_equal(r[1, 1], 50.0)
 
 
+def test_matmul_above_the_unroll_limit() raises -> None:
+    # 5 by 5 by 5 is past the size `@` unrolls, so this takes its loop.
+    var m = Matrix[5, 5]()
+    for r in range(5):
+        for c in range(5):
+            m[r, c] = Float64(r * 5 + c)
+    assert_true(m @ identity[5]() == m)
+    assert_true(identity[5]() @ m == m)
+    var twice = m @ m
+    assert_equal(twice[0, 0], 150.0)  # 0*0 + 1*5 + 2*10 + 3*15 + 4*20
+    assert_equal(twice[4, 4], 1590.0)  # 20*4 + 21*9 + 22*14 + 23*19 + 24*24
+
+
 def test_transpose_square() raises -> None:
     var m = Matrix[2, 2]()
     m[0, 0] = 1.0

@@ -2,6 +2,9 @@ from std.math import abs, min, max
 
 from .transform import Transform
 
+# The most multiply-adds `@` unrolls: a 4 by 4 product.
+comptime _UNROLL_LIMIT = 64
+
 
 struct Matrix[rows: Int, cols: Int](
     Copyable, Equatable, ImplicitlyCopyable, Movable, Writable
@@ -59,9 +62,11 @@ struct Matrix[rows: Int, cols: Int](
     def __init__(out self, *, copy: Self):
         self.data = Array[Float64, Self.rows * Self.cols](copy=copy.data)
 
+    @always_inline
     def __getitem__(self, r: Int, c: Int) -> Float64:
         return self.data[r * Self.cols + c]
 
+    @always_inline
     def __setitem__(mut self, r: Int, c: Int, val: Float64):
         self.data[r * Self.cols + c] = val
 
@@ -69,12 +74,23 @@ struct Matrix[rows: Int, cols: Int](
         P: Int
     ](self, rhs: Matrix[Self.cols, P]) -> Matrix[Self.rows, P]:
         var result = Matrix[Self.rows, P]()
-        for r in range(Self.rows):
-            for p in range(P):
-                var s = 0.0
-                for k in range(Self.cols):
-                    s += self[r, k] * rhs[k, p]
-                result[r, p] = s
+        # Unrolled when small enough, which is most of the time: a loop costs
+        # several times the arithmetic of a 3 by 3 product. A large product
+        # keeps the loop, so it doesn't compile into thousands of lines.
+        comptime if Self.rows * P * Self.cols <= _UNROLL_LIMIT:
+            comptime for r in range(Self.rows):
+                comptime for p in range(P):
+                    var s = 0.0
+                    comptime for k in range(Self.cols):
+                        s += self[r, k] * rhs[k, p]
+                    result[r, p] = s
+        else:
+            for r in range(Self.rows):
+                for p in range(P):
+                    var s = 0.0
+                    for k in range(Self.cols):
+                        s += self[r, k] * rhs[k, p]
+                    result[r, p] = s
         return result^
 
     def transpose(self) -> Matrix[Self.cols, Self.rows]:
