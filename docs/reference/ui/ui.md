@@ -76,3 +76,29 @@ Open a layer drawn in screen space, on top of everything drawn before its block 
 with self.ui.screen(context, canvas) as ui:
     ...
 ```
+
+### `world`
+
+```mojo
+def world(
+    mut self,
+    mut context: Context,
+    mut canvas: Canvas,
+) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
+```
+
+Open a layer drawn in the space that is current when the block opens, the camera and any transform included: for a button above a chest, a health bar over an enemy, or a label that turns with a ship.
+
+Its widgets move and zoom with the camera, and the pointer is taken
+into the same space to find what is under it. They are drawn when the
+block ends, beneath whatever is drawn after it, so where the block
+sits decides what covers what.
+
+```mojo
+# In `update`, with `ui: UI`, `camera: Camera` and `chest: Point`
+# fields:
+canvas.camera(self.camera)
+with self.ui.world(context, canvas) as ui:
+    if ui.button("Open", Rectangle(self.chest + Vector(0, 40), 80, 32)):
+        self.open_chest()
+```

@@ -9,6 +9,7 @@ from create.image import Image
 from create.math import Point, Transform, Vector
 from create.math._optional_float64 import _OptionalFloat64
 from create.render import Align, Canvas, StrokeCap, Style
+from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
 from ._key import _WidgetKey
 from .button import ButtonStyle, ButtonVariant
@@ -49,8 +50,8 @@ struct UILayer[
     context_origin: Origin[mut=True],
     canvas_origin: Origin[mut=True],
 ](ImplicitlyCopyable):
-    """The handle a `with self.ui.screen(context, canvas) as ui:` block gets:
-    every widget is a method on it.
+    """The handle a `with self.ui.screen(context, canvas) as ui:` or
+    `ui.world` block gets: every widget is a method on it.
 
     It points at the `UI`, the context and the canvas, so a widget needs none
     of them passed, and the block can still use them, and the program's other
@@ -65,6 +66,9 @@ struct UILayer[
     var _frame: Int
     var _to_local: Transform
     """Takes a screen point into the layer's space."""
+    var _view: Optional[_View]
+    """For a `world` layer, the camera and transform it draws through; a
+    `screen` layer has none and draws in screen space."""
 
     def __init__(
         out self,
@@ -73,19 +77,25 @@ struct UILayer[
         ref[Self.context_origin] _context: Context,
         ref[Self.canvas_origin] _canvas: Canvas,
         _frame: Int,
+        _view: Optional[_View] = None,
     ):
         self._ui = Pointer(to=_ui)
         self._context = Pointer(to=_context)
         self._canvas = Pointer(to=_canvas)
         self._frame = _frame
-        self._to_local = Transform()
+        self._view = _view
+        self._to_local = _view.value().to_local() if _view else Transform()
 
     def __enter__(self) -> Self:
         return self
 
     def __exit__(self) raises:
-        with self._canvas[].overlay():
-            self._ui[]._recorder.replay(self._canvas[])
+        if self._view:
+            with _ViewGuard(_canvas=self._canvas[], _view=self._view.value()):
+                self._ui[]._recorder.replay(self._canvas[])
+        else:
+            with self._canvas[].overlay():
+                self._ui[]._recorder.replay(self._canvas[])
 
     def draw[D: Drawable](self, shape: D, style: Style) raises:
         """Draw `shape` in `style`, in order with the layer's widgets: above
@@ -609,7 +619,8 @@ struct UILayer[
                 + String(self._context[].frame_count())
                 + ", but opened in frame "
                 + String(self._frame)
-                + "; open a new layer with `ui.screen` every frame"
+                + "; open a new layer with `ui.screen` or `ui.world` every"
+                + " frame"
             )
 
     def _widget_id(

@@ -7,7 +7,7 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | Type | Description |
 |---|---|
 | [`UI`](ui.md) | The state of a program's widgets, kept from frame to frame under each widget's ID. |
-| [`UILayer`](uilayer.md) | The handle a `with self.ui.screen(context, canvas) as ui:` block gets: every widget is a method on it. |
+| [`UILayer`](uilayer.md) | The handle a `with self.ui.screen(context, canvas) as ui:` or `ui.world` block gets: every widget is a method on it. |
 | [`IDGuard`](idguard.md) | Takes the key `ui.id` added off the widget IDs again, on scope exit. Only `ui.id` builds one. |
 | [`DisabledGuard`](disabledguard.md) | Ends the `ui.disabled` block it was made for, on scope exit. Only `ui.disabled` builds one. |
 | [`Theme`](theme.md) | The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, state opacities and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it. |
