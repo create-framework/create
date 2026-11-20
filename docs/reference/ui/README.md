@@ -20,3 +20,5 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`ButtonVariant`](buttonvariant.md) | Which of the theme's colours a button is drawn in. |
 | [`ButtonStyle`](buttonstyle.md) | How one button looks, where it differs from its variant. Every field left unset is worked out from the theme when the button is drawn. |
 | [`LabelStyle`](labelstyle.md) | How a label's text looks, where it differs from the theme: the theme's `on_surface` colour and `body` text unless given. |
+| [`SliderStyle`](sliderstyle.md) | How one slider looks, where it differs from the theme. Every field left unset is worked out from the theme when the slider is drawn. |
+| [`CheckboxStyle`](checkboxstyle.md) | How one checkbox looks, where it differs from the theme. Every field left unset is worked out from the theme when the checkbox is drawn. |

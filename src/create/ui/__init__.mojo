@@ -16,3 +16,5 @@ from .theme import (
 )
 from .button import ButtonVariant, ButtonStyle
 from .label import LabelStyle
+from .slider import SliderStyle
+from .checkbox import CheckboxStyle
