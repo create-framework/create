@@ -15,8 +15,8 @@ held — what an editing key like Backspace acts on.
 
 `text` is what those keys wrote, as characters rather than keys: shift,
 the keyboard layout and any IME already applied. A text field appends
-`text` and handles Backspace and the arrows through `typed`; an
-`EditableText` does both.
+`text` and handles Backspace and the arrows through `typed`, as a
+`text_field` does.
 
 It is the loop's own `Keyboard`, not a copy: held keys persist in it
 from frame to frame, and only the edges and `text` clear. So read it

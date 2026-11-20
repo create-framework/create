@@ -10,7 +10,7 @@ internals](#package-internals).
 | Module | Path | Responsibility |
 |---|---|---|
 | root | `src/create/__init__.mojo` | The preamble: star-imports all thirteen subpackages below |
-| `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `EditableText`, `source_path` |
+| `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
@@ -22,7 +22,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), `IDGuard`, `DisabledGuard`, `Theme` with its tokens (`ColorScheme`, `Typography`, …), and the widgets' styles (`ButtonStyle`, `ButtonVariant`, `LabelStyle`, `SliderStyle`, `CheckboxStyle`, `TextFieldStyle`), and `TextFieldResult`; widget IDs from call sites, and the recorder that draws a layer in call order |
+| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), `IDGuard`, `DisabledGuard`, `Theme` with its tokens (`ColorScheme`, `Typography`, …), and the widgets' styles (`ButtonStyle`, `ButtonVariant`, `LabelStyle`, `SliderStyle`, `CheckboxStyle`, `TextFieldStyle`), and `TextFieldResult`; widget IDs from call sites, the recorder that draws a layer in call order, and the text editing behind `text_field` (`_TextBuffer`) |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |

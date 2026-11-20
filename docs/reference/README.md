@@ -4,9 +4,9 @@ This is the complete API reference for Create, one page per subpackage. How impo
 
 ## [`create.core`](core/README.md)
 
-The run: the `Program` trait, `run` and `run_headless`, the run's state (`Context`) and its settings (`WindowMode`, `Cursor`), text entry (`EditableText`) and `source_path`.
+The run: the `Program` trait, `run` and `run_headless`, the run's state (`Context`) and its settings (`WindowMode`, `Cursor`), and `source_path`.
 
-- **Types:** [`Context`](core/context.md), [`WindowMode`](core/windowmode.md), [`Cursor`](core/cursor.md), [`EditableText`](core/editabletext.md)
+- **Types:** [`Context`](core/context.md), [`WindowMode`](core/windowmode.md), [`Cursor`](core/cursor.md)
 - **Traits:** [`Program`](core/program.md)
 - **Functions:** [`source_path`](core/source_path.md), [`run`](core/run.md), [`run_headless`](core/run_headless.md)
 
