@@ -299,10 +299,15 @@ struct Spacing(Copyable, ImplicitlyCopyable, Movable, Writable):
 
 
 @fieldwise_init
-struct StateOpacities(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """How strongly a widget shows its state. A hovered, focused, pressed or
-    dragged widget draws its content colour over itself at that opacity; a
-    disabled one draws its content and its fill at the `disabled_` ones."""
+struct StateLayers(Copyable, ImplicitlyCopyable, Movable, Writable):
+    """How strongly a widget shows its state.
+
+    A hovered, focused, pressed or dragged widget moves its OKLCH lightness
+    by that step towards its text colour: 0.09 is a clear but quiet change,
+    and the same step looks like the same change on any colour. A disabled
+    widget instead fades, its content to `disabled_content` of its opacity
+    and its fill to `disabled_container`.
+    """
 
     var hovered: Float64
     var focused: Float64
@@ -312,10 +317,10 @@ struct StateOpacities(Copyable, ImplicitlyCopyable, Movable, Writable):
     var disabled_container: Float64
 
     def __init__(out self):
-        self.hovered = 0.12
-        self.focused = 0.12
-        self.pressed = 0.22
-        self.dragged = 0.22
+        self.hovered = 0.09
+        self.focused = 0.09
+        self.pressed = 0.16
+        self.dragged = 0.16
         self.disabled_content = 0.38
         self.disabled_container = 0.12
 
@@ -341,7 +346,7 @@ struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
 @fieldwise_init
 struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The design tokens every widget draws from: colours, kinds of text,
-    corner radii, gaps, state opacities and the focus ring. A widget's look
+    corner radii, gaps, state layers and the focus ring. A widget's look
     is worked out from these when it is drawn, so changing a token changes
     every widget that uses it.
 
@@ -355,7 +360,7 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     var typography: Typography
     var corner_radii: CornerRadii
     var spacing: Spacing
-    var state_opacities: StateOpacities
+    var state_layers: StateLayers
     var focus_ring: FocusRing
 
     @staticmethod
@@ -438,6 +443,6 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
             typography=Typography(),
             corner_radii=CornerRadii(),
             spacing=Spacing(),
-            state_opacities=StateOpacities(),
+            state_layers=StateLayers(),
             focus_ring=FocusRing(),
         )

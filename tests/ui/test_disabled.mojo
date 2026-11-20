@@ -101,7 +101,7 @@ def test_a_disabled_button_is_drawn_faded() raises -> None:
         _ = layer.button("OK", _A, disabled=True)
     var colors = ui.theme().colors
     var expected = colors.surface.lerp(
-        colors.on_surface, ui.theme().state_opacities.disabled_container
+        colors.on_surface, ui.theme().state_layers.disabled_container
     )
     var pixel = canvas.color_at(_A.position + Vector(40.0, 0.0))
     assert_true(abs(Int(pixel.r) - Int(expected.r)) <= 2)

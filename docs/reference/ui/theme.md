@@ -4,7 +4,7 @@
 struct Theme
 ```
 
-The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, state opacities and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it.
+The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, state layers and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it.
 
 ```mojo
 # In `create`, building the `ui` field:
@@ -19,7 +19,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `typography: Typography`
 - `corner_radii: CornerRadii`
 - `spacing: Spacing`
-- `state_opacities: StateOpacities`
+- `state_layers: StateLayers`
 - `focus_ring: FocusRing`
 
 ## Constructors
