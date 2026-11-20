@@ -3,7 +3,7 @@ frame, `UILayer`, the handle a `with` block gets to draw widgets with, and
 `Theme`, the design tokens they draw from.
 """
 from .ui import UI
-from .layer import UILayer, IDGuard
+from .layer import UILayer, IDGuard, DisabledGuard
 from .theme import (
     Theme,
     ColorScheme,

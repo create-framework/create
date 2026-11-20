@@ -133,6 +133,7 @@ struct UILayer[
         *,
         variant: ButtonVariant = ButtonVariant.FILLED,
         style: ButtonStyle = ButtonStyle(),
+        disabled: Bool = False,
         id: _WidgetKey = None,
     ) raises -> Bool:
         """A button showing `text`, filling `rect`. Returns whether it was
@@ -150,6 +151,7 @@ struct UILayer[
             rect,
             variant,
             style,
+            disabled,
         )
 
     def label(
@@ -198,6 +200,7 @@ struct UILayer[
         *,
         step: _OptionalFloat64 = None,
         style: SliderStyle = SliderStyle(),
+        disabled: Bool = False,
         id: _WidgetKey = None,
     ) raises -> Bool:
         """A slider across `rect` that sets `value` between `min` and `max`.
@@ -222,6 +225,7 @@ struct UILayer[
             rect,
             step._value,
             style,
+            disabled,
         )
 
     @always_inline
@@ -232,6 +236,7 @@ struct UILayer[
         rect: Rectangle,
         *,
         style: CheckboxStyle = CheckboxStyle(),
+        disabled: Bool = False,
         id: _WidgetKey = None,
     ) raises -> Bool:
         """A box against the left edge of `rect`, ticked while `checked` is
@@ -250,6 +255,7 @@ struct UILayer[
             checked,
             rect,
             style,
+            disabled,
         )
 
     # ----------------------------------------------------------- internals
@@ -261,8 +267,10 @@ struct UILayer[
         rect: Rectangle,
         variant: ButtonVariant,
         style: ButtonStyle,
+        disabled: Bool,
     ) raises -> Bool:
-        var state = self._interact(id, rect)
+        var off = self._disabled(disabled)
+        var state = self._interact(id, rect, off)
         ref theme = self._ui[]._theme
         ref colors = theme.colors
         var container: Color
@@ -288,6 +296,15 @@ struct UILayer[
         var thickness = style.outline_thickness.or_else(1.0)
         if style.outline_thickness and not outline:
             outline = colors.outline
+        if off:
+            # Material's disabled look: everything in the text colour,
+            # faded, whatever the variant
+            var states = theme.state_opacities
+            content = _faded(colors.on_surface, states.disabled_content)
+            if container.a > 0:
+                container = _faded(colors.on_surface, states.disabled_container)
+            if outline:
+                outline = _faded(colors.on_surface, states.disabled_container)
         var radius = style.corner_radius.or_else(rect.height / 2)
         var shape = Rectangle(
             rect.position, rect.width, rect.height, corner_radius=radius
@@ -348,8 +365,10 @@ struct UILayer[
         rect: Rectangle,
         step: Optional[Float64],
         style: SliderStyle,
+        disabled: Bool,
     ) raises -> Bool:
-        var state = self._interact(id, rect)
+        var off = self._disabled(disabled)
+        var state = self._interact(id, rect, off)
         ref ui = self._ui[]
         ref theme = ui._theme
         ref colors = theme.colors
@@ -386,6 +405,14 @@ struct UILayer[
             colors.secondary_container
         )
         var handle = style.handle_color.or_else(colors.primary)
+        if off:
+            var states = theme.state_opacities
+            active = _faded(colors.on_surface, states.disabled_content)
+            inactive = _faded(colors.on_surface, states.disabled_container)
+            # solid, so the track doesn't show through it
+            handle = colors.surface.lerp(
+                colors.on_surface, states.disabled_content
+            )
         ref recorder = ui._recorder
         recorder.style = Style(
             stroke=inactive,
@@ -446,8 +473,10 @@ struct UILayer[
         mut checked: Bool,
         rect: Rectangle,
         style: CheckboxStyle,
+        disabled: Bool,
     ) raises -> Bool:
-        var state = self._interact(id, rect)
+        var off = self._disabled(disabled)
+        var state = self._interact(id, rect, off)
         if state.clicked:
             checked = not checked
         ref theme = self._ui[]._theme
@@ -461,6 +490,16 @@ struct UILayer[
         ref recorder = self._ui[]._recorder
         var accent = style.box_color.or_else(colors.primary)
         var check = style.check_color.or_else(colors.on_primary)
+        var outline = style.outline_color.or_else(colors.on_surface_variant)
+        var label_color = style.label_color.or_else(colors.on_surface)
+        if off:
+            var faded = _faded(
+                colors.on_surface, theme.state_opacities.disabled_content
+            )
+            accent = faded
+            check = colors.surface
+            outline = faded
+            label_color = faded
         # a hovered or pressed box is tinted, as a button is: a ticked one
         # towards its tick, an empty one with the text colour inside it
         var opacity = 0.0
@@ -497,7 +536,7 @@ struct UILayer[
             recorder.style = Style(
                 fill=colors.on_surface.with_alpha(UInt8(layer * 255 + 0.5)),
                 fill_enabled=layer > 0,
-                stroke=style.outline_color.or_else(colors.on_surface_variant),
+                stroke=outline,
                 stroke_thickness=2,
             )
             recorder.draw(box)
@@ -507,18 +546,25 @@ struct UILayer[
             text_left,
             _text_style(
                 style.text_style.or_else(theme.typography.body),
-                style.label_color.or_else(colors.on_surface),
+                label_color,
                 Align.LEFT,
             ),
         )
         return state.clicked
 
-    def _interact(self, id: UInt64, rect: Rectangle) -> _Interaction:
+    def _interact(
+        self, id: UInt64, rect: Rectangle, disabled: Bool
+    ) -> _Interaction:
         """Record that the widget `id` can be pointed at in `rect`, and work
-        out what the pointer did to it."""
+        out what the pointer did to it. A disabled widget still covers what
+        is beneath it, but nothing it does counts."""
         ref ui = self._ui[]
         ref mouse = self._context[].mouse
         ui._hits.append(_Hit(id, rect, self._to_local))
+        if disabled:
+            if ui._held and ui._held.value() == id:
+                ui._held = None  # disabled while held: let go of it
+            return _Interaction(False, False, False)
         # while another widget is held, this one doesn't react to the pointer
         var free = not ui._held or ui._held.value() == id
         var hovered = Bool(ui._hot) and ui._hot.value() == id and free
@@ -530,6 +576,30 @@ struct UILayer[
             clicked = hovered
             ui._held = None
         return _Interaction(hovered, held and hovered and not clicked, clicked)
+
+    def _disabled(self, disabled: Bool) -> Bool:
+        """Whether a widget given `disabled` is disabled: by its own keyword,
+        or by a `ui.disabled` block around it."""
+        return disabled or self._ui[]._disabled_depth > 0
+
+    def disabled(
+        self, condition: Bool = True
+    ) raises -> DisabledGuard[Self.ui_origin]:
+        """Disable every widget inside a `with` block while `condition` is
+        true: they are drawn faded, don't react to the pointer, and return
+        `False`. With `condition` false, the block's widgets work as usual,
+        so a section can be switched on and off without an `if` around each
+        widget.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        with ui.disabled(not self.online):
+            if ui.button("Find a game", Rectangle((0, 0), 200, 48)):
+                ...
+        ```
+        """
+        self._check_frame()
+        return DisabledGuard(_ui=self._ui[], _active=condition)
 
     def _check_frame(self) raises:
         """Raise when the handle is used after the frame it was opened in."""
@@ -634,3 +704,28 @@ def _state_opacity(
 
 def _clamp01(t: Float64) -> Float64:
     return 0.0 if t < 0 else (1.0 if t > 1 else t)
+
+
+def _faded(color: Color, opacity: Float64) -> Color:
+    return color.with_alpha(UInt8(opacity * 255 + 0.5))
+
+
+struct DisabledGuard[origin: Origin[mut=True]](Movable):
+    """Ends the `ui.disabled` block it was made for, on scope exit. Only
+    `ui.disabled` builds one."""
+
+    var _ui: Pointer[UI, Self.origin]
+    var _active: Bool
+
+    def __init__(out self, *, ref[Self.origin] _ui: UI, _active: Bool):
+        if _active:
+            _ui._disabled_depth += 1
+        self._ui = Pointer(to=_ui)
+        self._active = _active
+
+    def __enter__(mut self):
+        pass
+
+    def __exit__(mut self):
+        if self._active:
+            self._ui[]._disabled_depth -= 1

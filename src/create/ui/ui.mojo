@@ -57,6 +57,8 @@ struct UI(Movable):
     """The topmost widget under the pointer this frame."""
     var _held: Optional[UInt64]
     """The widget the left button went down on, until it comes up."""
+    var _disabled_depth: Int
+    """How many `ui.disabled` blocks that disable are open."""
 
     def __init__(out self, theme: Theme = Theme.light()):
         """A UI drawn in `theme`, the light theme unless given."""
@@ -69,6 +71,7 @@ struct UI(Movable):
         self._last_hits = []
         self._hot = None
         self._held = None
+        self._disabled_depth = 0
 
     def theme(self) -> Theme:
         """The theme the widgets are drawn in."""
@@ -118,6 +121,7 @@ struct UI(Movable):
             self._frame = frame
             self._site_counts.clear()
             self._keys.clear()
+            self._disabled_depth = 0
             swap(self._last_hits, self._hits)
             self._hits.clear()
             self._hot = None
