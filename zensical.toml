@@ -45,6 +45,12 @@ nav = [
       "guide/interaction/mouse.md",
       "guide/interaction/gamepads.md",
     ] },
+    { "User interface" = [
+      "guide/ui/index.md",
+      "guide/ui/widgets.md",
+      "guide/ui/focus.md",
+      "guide/ui/themes.md",
+    ] },
     { "Motion" = [
       "guide/motion/index.md",
       "guide/motion/time.md",

@@ -44,6 +44,15 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
   locking the mouse and the cursor.
 - [Gamepads](interaction/gamepads.md): players, sticks, triggers, buttons and rumble.
 
+## [User interface](ui/README.md)
+
+- [Widgets](ui/widgets.md): the `UI` and its layers, buttons, sliders, checkboxes, labels and
+  images, how widgets are told apart, drawing your own things among them, and disabled widgets.
+- [Focus and navigation](ui/focus.md): focus, Tab and the keys, gamepads, focus rings, keeping the
+  game's input apart from the UI's, and several `UI`s.
+- [Themes and styling](ui/themes.md): themes and their colours, a theme from one colour, styling one
+  widget or a block, panels, and how widgets show their state.
+
 ## [Motion](motion/README.md)
 
 - [Time](motion/time.md): moving by time, frames and the frame rate, slowing and pausing time, and
