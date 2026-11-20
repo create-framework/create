@@ -4,8 +4,8 @@ from std.reflection import SourceLocation
 
 from create.core import Context
 from create.geometry import Rectangle
-from create.input import Key, Keyboard, Mouse
-from create.math import Point, Transform
+from create.input import Gamepad, GamepadButton, Key, Keyboard, Mouse
+from create.math import Point, Transform, Vector
 from create.render import Canvas
 from ._id import _mix, _site
 from ._recorder import _Recorder
@@ -26,9 +26,16 @@ struct _Hit(Copyable, ImplicitlyCopyable, Movable):
     """Whether Tab can move focus to it: not while it is disabled."""
     var takes_typing: Bool
     """Whether it takes typed text, as a text field does."""
+    var adjusts: Bool
+    """Whether left and right on a gamepad change it, as they step a
+    slider, rather than move focus away from it."""
 
     def contains(self, screen: Point) -> Bool:
         return self.rect.contains(self.to_local.apply(screen))
+
+    def centre(self) -> Point:
+        """Its rectangle's centre, on the screen."""
+        return self.to_local.inverse().apply(self.rect.position)
 
 
 struct UI(Movable):
@@ -82,12 +89,34 @@ struct UI(Movable):
     var _typing_was: Bool
     """Whether a widget that takes typing had focus when `text_input` was
     last switched: the UI switches it only when that changes."""
+    var _player: Optional[Int]
+    """The one gamepad that drives this UI, or `None` for any."""
+    var _focus_from_gamepad: Bool
+    """Whether focus came from a gamepad: it then doesn't claim the keyboard,
+    so two split-screen UIs with their own pads keep their own focus."""
+    var _stick_was: Vector
+    """Which way the left stick pointed last frame, so a push moves focus
+    once rather than every frame."""
+    var _pad_move: Vector
+    """This frame's push on the d-pad or the left stick: up, down, left or
+    right, or zero."""
     var _key_used: Bool
     """Whether a key was the UI's this frame: Tab moving focus, Escape
     taking it away, or a key acting on the focused widget."""
 
-    def __init__(out self, theme: Theme = Theme.light()):
-        """A UI drawn in `theme`, the light theme unless given."""
+    def __init__(
+        out self,
+        theme: Theme = Theme.light(),
+        *,
+        player: Optional[Int] = None,
+    ):
+        """A UI drawn in `theme`, the light theme unless given. Any gamepad
+        moves its focus unless `player` names one, as each player's menu in a
+        split-screen game would."""
+        self._player = player
+        self._focus_from_gamepad = False
+        self._stick_was = Vector.ZERO
+        self._pad_move = Vector.ZERO
         self._theme = theme
         self._frame = -1
         self._site_counts = {}
@@ -131,8 +160,8 @@ struct UI(Movable):
     def wants_keyboard(self) -> Bool:
         """Whether the keyboard is the UI's this frame. It is while a widget
         that takes typing has focus, and while a widget has focus from the
-        keyboard, Tab say, rather than from a click, since the keys then act
-        on it: Enter and Space press a button, the arrows move a slider. It
+        keyboard, Tab say, rather than from a click or a gamepad, since the
+        keys then act on it: Enter and Space press a button, the arrows move a slider. It
         is also in the frame a key moved or took away focus, such as Escape
         leaving a text field. A game checks it before reading keys itself,
         so typing a name with W in it doesn't move the player.
@@ -143,10 +172,7 @@ struct UI(Movable):
             context.quit()
         ```
         """
-        return (
-            Bool(self._focused)
-            and (self._focused_takes_typing or self._focus_visible)
-        ) or self._key_used
+        return self._holds_keys() or self._key_used
 
     def screen(
         mut self, mut context: Context, mut canvas: Canvas
@@ -247,6 +273,12 @@ struct UI(Movable):
                     backwards=keyboard.down(Key.LEFT_SHIFT)
                     or keyboard.down(Key.RIGHT_SHIFT)
                 )
+            var push = self._pad_push(context)
+            self._pad_move = push
+            if self._pad_pressed(context, GamepadButton.EAST):
+                self._clear_focus()  # back out, as Escape does
+            elif push != Vector.ZERO and not self._steps_focused(push):
+                self._move_focus(push)
             self._drop_unseen_buffers()
             self._sync_text_input(context)
         self._sync_claims(context)
@@ -281,17 +313,108 @@ struct UI(Movable):
         )
         self._key_used = True
 
-    def _focus(mut self, id: UInt64, visible: Bool, takes_typing: Bool = False):
+    def _focus(
+        mut self,
+        id: UInt64,
+        visible: Bool,
+        takes_typing: Bool = False,
+        from_gamepad: Bool = False,
+    ):
         self._focused = id
         self._focus_visible = visible
         self._focused_takes_typing = takes_typing
+        self._focus_from_gamepad = from_gamepad
 
     def _holds_keys(self) -> Bool:
         """Whether this UI's focus takes keys: from the keyboard or code, or
-        on a widget that takes typing."""
+        on a widget that takes typing. Focus from a gamepad doesn't."""
         return Bool(self._focused) and (
-            self._focus_visible or self._focused_takes_typing
+            (self._focus_visible and not self._focus_from_gamepad)
+            or self._focused_takes_typing
         )
+
+    def _pads(self, context: Context) -> List[Gamepad]:
+        """The gamepads that drive this UI: its player's, or every one."""
+        if self._player:
+            return [context.gamepad(self._player.value())]
+        return context._gamepads._slots.copy()
+
+    def _pad_pressed(self, context: Context, button: GamepadButton) -> Bool:
+        """Whether `button` went down this frame on a pad that drives this
+        UI."""
+        for pad in self._pads(context):
+            if pad.connected and pad.pressed(button):
+                return True
+        return False
+
+    def _pad_push(mut self, context: Context) -> Vector:
+        """This frame's push on the d-pad, or the left stick tipped past
+        halfway: up, down, left or right, once per push."""
+        if self._pad_pressed(context, GamepadButton.DPAD_UP):
+            return Vector.UP
+        if self._pad_pressed(context, GamepadButton.DPAD_DOWN):
+            return Vector.DOWN
+        if self._pad_pressed(context, GamepadButton.DPAD_LEFT):
+            return Vector.LEFT
+        if self._pad_pressed(context, GamepadButton.DPAD_RIGHT):
+            return Vector.RIGHT
+        var stick = Vector.ZERO
+        for pad in self._pads(context):
+            if pad.connected and pad.left_stick.magnitude() > 0.5:
+                var s = pad.left_stick
+                if abs(s.x) > abs(s.y):
+                    stick = Vector.RIGHT if s.x > 0 else Vector.LEFT
+                else:
+                    stick = Vector.UP if s.y > 0 else Vector.DOWN
+                break
+        var push = stick if stick != self._stick_was else Vector.ZERO
+        self._stick_was = stick
+        return push
+
+    def _steps_focused(self, push: Vector) -> Bool:
+        """Whether `push` changes the focused widget rather than moving
+        focus: left or right on a slider."""
+        if not self._focused or push.y != 0:
+            return False
+        for hit in self._last_hits:
+            if hit.id == self._focused.value():
+                return hit.adjusts
+        return False
+
+    def _move_focus(mut self, direction: Vector):
+        """Move focus to the nearest widget in `direction`, judged from where
+        the widgets were drawn last frame; from no focus, to the first one.
+        A widget straight ahead beats a nearer one off to the side."""
+        var at = Optional[Point](None)
+        for hit in self._last_hits:
+            if self._focused and hit.id == self._focused.value():
+                at = hit.centre()
+        var best = -1
+        var best_score = 0.0
+        for i in range(len(self._last_hits)):
+            ref hit = self._last_hits[i]
+            if not hit.focusable:
+                continue
+            if not at:
+                best = i  # nothing focused: the first that can be
+                break
+            var offset = hit.centre() - at.value()
+            var ahead = offset.dot(direction)
+            if ahead <= 1:
+                continue
+            var aside = abs(offset.x * direction.y - offset.y * direction.x)
+            var score = ahead + 2 * aside
+            if best == -1 or score < best_score:
+                best = i
+                best_score = score
+        if best != -1:
+            ref hit = self._last_hits[best]
+            self._focus(
+                hit.id,
+                visible=True,
+                takes_typing=hit.takes_typing,
+                from_gamepad=True,
+            )
 
     def _sync_claims(self, mut context: Context):
         """Claim the keyboard while this UI's focus takes keys, and the mouse
@@ -339,6 +462,7 @@ struct UI(Movable):
     def _clear_focus(mut self):
         self._focused = None
         self._focus_visible = False
+        self._focus_from_gamepad = False
         self._focused_takes_typing = False
 
     def _widget_id(

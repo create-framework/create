@@ -24,10 +24,12 @@ Implements `Deinitable`, `Movable`.
 def __init__(
     out self,
     theme: Theme = Theme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
+    *,
+    player: Optional[Int] = None,
 )
 ```
 
-A UI drawn in `theme`, the light theme unless given.
+A UI drawn in `theme`, the light theme unless given. Any gamepad moves its focus unless `player` names one, as each player's menu in a split-screen game would.
 
 ## Methods
 
@@ -65,7 +67,7 @@ if context.mouse.pressed() and not self.ui.wants_mouse():
 def wants_keyboard(self) -> Bool
 ```
 
-Whether the keyboard is the UI's this frame. It is while a widget that takes typing has focus, and while a widget has focus from the keyboard, Tab say, rather than from a click, since the keys then act on it: Enter and Space press a button, the arrows move a slider. It is also in the frame a key moved or took away focus, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player.
+Whether the keyboard is the UI's this frame. It is while a widget that takes typing has focus, and while a widget has focus from the keyboard, Tab say, rather than from a click or a gamepad, since the keys then act on it: Enter and Space press a button, the arrows move a slider. It is also in the frame a key moved or took away focus, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player.
 
 ```mojo
 # In `update`, before or after the UI's `with` block:

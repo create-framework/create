@@ -5,7 +5,7 @@ from std.reflection import SourceLocation, call_location
 from create.color import Color
 from create.core import Context
 from create.geometry import Circle, Drawable, Line, Rectangle
-from create.input import Key
+from create.input import GamepadButton, Key
 from create.image import Image
 from create.math import Point, Transform, Vector
 from create.math._optional_float64 import _OptionalFloat64
@@ -707,7 +707,7 @@ struct UILayer[
         disabled: Bool,
     ) raises -> Bool:
         var off = self._disabled(disabled)
-        var state = self._interact(id, rect, off, take_focus)
+        var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
         ref theme = ui._theme
         ref colors = theme.colors
@@ -735,23 +735,39 @@ struct UILayer[
             if new_value != value:
                 value = new_value
                 changed = True
-        if self._keys_act(state.focused) and max != min:
+        var keys = self._keys_act(state.focused)
+        var pad = state.focused and ui._focus_visible and ui._pad_move.x != 0
+        if (keys or pad) and max != min:
             ref keyboard = self._context[].keyboard
             # a step, or a twentieth of the range
-            var size = step.value() if step else (max - min) / 20
+            var size = abs(step.value() if step else (max - min) / 20)
+            if max < min:
+                size = -size  # steps count from `min` towards `max`
             var low = min if min < max else max
             var high = max if min < max else min
+            # Steps land on the grid of steps counted from `min`, so they
+            # don't gather floating-point error: 1.0 stepped down by 0.05
+            # twice is 0.9, not 0.8999999999999999.
+            var steps_from_min = (value - min) / size
             var moved = value
-            if keyboard.typed(Key.RIGHT) or keyboard.typed(Key.UP):
-                moved = value + size if max > min else value - size
+            var towards_max = 0
+            if pad:
+                towards_max = 1 if ui._pad_move.x > 0 else -1
+            elif keyboard.typed(Key.RIGHT) or keyboard.typed(Key.UP):
+                towards_max = 1
             elif keyboard.typed(Key.LEFT) or keyboard.typed(Key.DOWN):
-                moved = value - size if max > min else value + size
+                towards_max = -1
+            if towards_max != 0:
+                var at = Float64(round(steps_from_min))
+                var next = at + Float64(towards_max)
+                moved = min + next * size
             elif keyboard.pressed(Key.HOME):
                 moved = min
             elif keyboard.pressed(Key.END):
                 moved = max
             if moved != value:
-                self._ui[]._key_used = True
+                if keys:
+                    self._ui[]._key_used = True
                 moved = low if moved < low else (
                     high if moved > high else moved
                 )
@@ -925,6 +941,7 @@ struct UILayer[
         disabled: Bool,
         take_focus: Bool,
         takes_typing: Bool = False,
+        adjusts: Bool = False,
     ) -> _Interaction:
         """Record that the widget `id` can be pointed at in `rect`, and work
         out what the pointer did to it. A disabled widget still covers what
@@ -932,7 +949,7 @@ struct UILayer[
         ref ui = self._ui[]
         ref mouse = self._context[].mouse
         ui._hits.append(
-            _Hit(id, rect, self._to_local, not disabled, takes_typing)
+            _Hit(id, rect, self._to_local, not disabled, takes_typing, adjusts)
         )
         if disabled:
             if ui._held and ui._held.value() == id:
@@ -968,6 +985,12 @@ struct UILayer[
             if keyboard.pressed(Key.ENTER) or keyboard.pressed(Key.SPACE):
                 activated = True
                 ui._key_used = True
+        if (
+            focused
+            and ui._focus_visible
+            and ui._pad_pressed(self._context[], GamepadButton.SOUTH)
+        ):
+            activated = True
         return _Interaction(
             hovered,
             held and hovered and not clicked,
@@ -978,9 +1001,15 @@ struct UILayer[
 
     def _keys_act(self, focused: Bool) -> Bool:
         """Whether keys act on a widget: it has focus from the keyboard or
-        code, not a click, so a game's own keys still work after a button is
-        clicked."""
-        return focused and self._ui[]._focus_visible and self._keyboard_free()
+        code, not a click or a gamepad, so a game's own keys still work after
+        a button is clicked or reached with a pad."""
+        ref ui = self._ui[]
+        return (
+            focused
+            and ui._focus_visible
+            and not ui._focus_from_gamepad
+            and self._keyboard_free()
+        )
 
     def _keyboard_free(self) -> Bool:
         """Whether no other UI holds the keyboard."""

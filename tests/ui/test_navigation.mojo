@@ -144,6 +144,20 @@ def test_arrows_move_the_focused_slider() raises -> None:
     assert_equal(p.value, 0.0)
 
 
+def test_arrow_steps_land_exactly_on_the_steps() raises -> None:
+    var p = _Panel()
+    p.value = 1.0
+    p.frame()
+    for _ in range(4):
+        p.key(Key.TAB)
+    p.key(Key.LEFT)
+    p.key(Key.LEFT)
+    assert_equal(p.value, 0.9)  # not 0.8999999999999999
+    p.value = 0.53  # off the grid, as a drag can leave it
+    p.key(Key.RIGHT)
+    assert_almost_equal(p.value, 0.6)  # the next step after the nearest
+
+
 def test_keys_do_not_act_on_focus_from_a_click() raises -> None:
     var p = _Panel()
     var at = Point(-120, 40)

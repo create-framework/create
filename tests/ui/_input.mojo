@@ -23,3 +23,14 @@ def release(mut context: Context, position: Point):
 
 def press_key(mut context: Context, key: Key):
     context.keyboard._key_down(key)
+
+
+def connect_pad(mut context: Context, id: Int = 1):
+    context._gamepads._connect(id, "Test pad")
+
+
+def press_pad(mut context: Context, button: GamepadButton, id: Int = 1):
+    """Press and let go of `button` within the frame: its press reads this
+    frame, and nothing stays held."""
+    context._gamepads._button_down(id, button)
+    context._gamepads._button_up(id, button)
