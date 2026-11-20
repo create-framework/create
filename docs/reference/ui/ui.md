@@ -65,7 +65,7 @@ if context.mouse.pressed() and not self.ui.wants_mouse():
 def wants_keyboard(self) -> Bool
 ```
 
-Whether the keyboard is the UI's this frame: a widget that takes typing has focus, or a key took focus away from a widget this frame, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player.
+Whether the keyboard is the UI's this frame. It is while a widget that takes typing has focus, and while a widget has focus from the keyboard, Tab say, rather than from a click, since the keys then act on it: Enter and Space press a button, the arrows move a slider. It is also in the frame a key moved or took away focus, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player.
 
 ```mojo
 # In `update`, before or after the UI's `with` block:

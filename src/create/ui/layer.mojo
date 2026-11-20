@@ -5,6 +5,7 @@ from std.reflection import SourceLocation, call_location
 from create.color import Color
 from create.core import Context
 from create.geometry import Circle, Drawable, Line, Rectangle
+from create.input import Key
 from create.image import Image
 from create.math import Point, Transform, Vector
 from create.math._optional_float64 import _OptionalFloat64
@@ -44,6 +45,8 @@ struct _Interaction(Copyable, ImplicitlyCopyable, Movable):
     var clicked: Bool
     """Released over it, after being pressed on it."""
     var focused: Bool
+    var activated: Bool
+    """Enter or Space pressed while it has focus from the keyboard."""
 
 
 struct UILayer[
@@ -381,7 +384,7 @@ struct UILayer[
                 Align.CENTER,
             ),
         )
-        return state.clicked
+        return state.clicked or state.activated
 
     def _slider(
         self,
@@ -424,6 +427,29 @@ struct UILayer[
             if new_value != value:
                 value = new_value
                 changed = True
+        if self._keys_act(state.focused) and max != min:
+            ref keyboard = self._context[].keyboard
+            # a step, or a twentieth of the range
+            var size = step.value() if step else (max - min) / 20
+            var low = min if min < max else max
+            var high = max if min < max else min
+            var moved = value
+            if keyboard.typed(Key.RIGHT) or keyboard.typed(Key.UP):
+                moved = value + size if max > min else value - size
+            elif keyboard.typed(Key.LEFT) or keyboard.typed(Key.DOWN):
+                moved = value - size if max > min else value + size
+            elif keyboard.pressed(Key.HOME):
+                moved = min
+            elif keyboard.pressed(Key.END):
+                moved = max
+            if moved != value:
+                self._ui[]._key_used = True
+                moved = low if moved < low else (
+                    high if moved > high else moved
+                )
+                if moved != value:
+                    value = moved
+                    changed = True
         var t = 0.0
         if max != min:
             t = _clamp01((value - min) / (max - min))
@@ -506,7 +532,7 @@ struct UILayer[
     ) raises -> Bool:
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
-        if state.clicked:
+        if state.clicked or state.activated:
             checked = not checked
         ref theme = self._ui[]._theme
         ref colors = theme.colors
@@ -579,7 +605,7 @@ struct UILayer[
                 Align.LEFT,
             ),
         )
-        return state.clicked
+        return state.clicked or state.activated
 
     def _interact(
         self, id: UInt64, rect: Rectangle, disabled: Bool, take_focus: Bool
@@ -589,7 +615,7 @@ struct UILayer[
         is beneath it, but nothing it does counts."""
         ref ui = self._ui[]
         ref mouse = self._context[].mouse
-        ui._hits.append(_Hit(id, rect, self._to_local))
+        ui._hits.append(_Hit(id, rect, self._to_local, not disabled))
         if disabled:
             if ui._held and ui._held.value() == id:
                 ui._held = None  # disabled while held: let go of it
@@ -597,7 +623,7 @@ struct UILayer[
                 ui._clear_focus()  # a disabled widget can't keep focus
             if ui._hot and ui._hot.value() == id and mouse.pressed():
                 ui._clear_focus()  # a click on it is a click on no widget
-            return _Interaction(False, False, False, False)
+            return _Interaction(False, False, False, False, False)
         if take_focus:
             ui._focus(id, visible=True)
         # while another widget is held, this one doesn't react to the pointer
@@ -611,12 +637,26 @@ struct UILayer[
         if held and mouse.released():
             clicked = hovered
             ui._held = None
+        var focused = Bool(ui._focused) and ui._focused.value() == id
+        var activated = False
+        if self._keys_act(focused):
+            ref keyboard = self._context[].keyboard
+            if keyboard.pressed(Key.ENTER) or keyboard.pressed(Key.SPACE):
+                activated = True
+                ui._key_used = True
         return _Interaction(
             hovered,
             held and hovered and not clicked,
             clicked,
-            Bool(ui._focused) and ui._focused.value() == id,
+            focused,
+            activated,
         )
+
+    def _keys_act(self, focused: Bool) -> Bool:
+        """Whether keys act on a widget: it has focus from the keyboard or
+        code, not a click, so a game's own keys still work after a button is
+        clicked."""
+        return focused and self._ui[]._focus_visible
 
     def _disabled(self, disabled: Bool) -> Bool:
         """Whether a widget given `disabled` is disabled: by its own keyword,
