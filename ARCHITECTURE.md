@@ -197,4 +197,6 @@ Where a package's internals need explaining, its README does so:
   and how each feature (gradients, curves, clips, shadows, text, …) reaches them.
 - [`src/create/core/README.md`](src/create/core/README.md): the run loops, their order at startup,
   and how events, the window's settings and the clipboard flow.
+- [`src/create/ui/README.md`](src/create/ui/README.md): how a frame goes, hit-testing, widget IDs,
+  focus and the device claims, and how styles and state colours are resolved.
 - [`tests/README.md`](tests/README.md): how tests are written and run, and how the GPU is covered.
