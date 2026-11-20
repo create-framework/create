@@ -87,20 +87,6 @@ def autoscale(mut self, mode: Autoscale)
 
 Choose how the design size maps onto the window — see `Autoscale`.
 
-### `quit_on_escape`
-
-```mojo
-def quit_on_escape(self) -> Bool
-```
-
-Whether Escape stops the run loop. `True` unless set.
-
-```mojo
-def quit_on_escape(mut self, enabled: Bool)
-```
-
-Whether Escape stops the run loop. On by default.
-
 ### `title`
 
 ```mojo

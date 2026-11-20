@@ -162,10 +162,9 @@ So set the frame's style in `update`, every frame, and the lasting settings once
 
 `Context`'s settings belong to the run, not the drawing: `design_size`, `autoscale`, `title`,
 `window_mode`, `resizable`, `cursor` (see [The cursor](../interaction/mouse.md#the-cursor)),
-`lock_mouse`, `text_input`, `quit_on_escape`, `max_frame_rate` (see
-[Frames](../motion/time.md#frames)), `time_scale` and `time_paused` (see [Slowing and pausing
-time](../motion/time.md#slowing-and-pausing-time)). Like the canvas setters, they are methods, each
-read back with no arguments:
+`lock_mouse`, `text_input`, `max_frame_rate` (see [Frames](../motion/time.md#frames)), `time_scale`
+and `time_paused` (see [Slowing and pausing time](../motion/time.md#slowing-and-pausing-time)). Like
+the canvas setters, they are methods, each read back with no arguments:
 
 ```mojo
 # In `create`:
@@ -179,8 +178,8 @@ var mode = context.autoscale()  # Autoscale.EXTEND
 
 Every `run` argument except `backend` can be changed later: `antialiasing` through
 `canvas.antialiasing`, the rest through a setting here. Not every setting is a `run` argument:
-`cursor`, `quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` have no argument, so
-set them from the program, in `create` for a setting that should hold from the start.
+`cursor`, `max_frame_rate`, `time_scale` and `time_paused` have no argument, so set them from the
+program, in `create` for a setting that should hold from the start.
 
 ## When a change applies
 
@@ -230,17 +229,20 @@ played, and `context.resizable(False)` stops the player from dragging the window
 it. Both show from the frame they are set in, and cost nothing to set every frame, since the window
 is only told when they change.
 
-**Ending the run.** The run ends in three ways: when the player closes the window; when the program
-calls `context.quit()`, once the current `update` returns; and, unless told otherwise, **when the
-player presses Escape**. Escape quitting is handy while trying out a sketch, but a game usually
-wants Escape for its own pause menu. `context.quit_on_escape(False)` turns the quitting off, so
-Escape becomes an ordinary key; then give the player another way out, such as a Quit button in the
-menu:
+**Ending the run.** The run ends in two ways: when the player closes the window, and when the
+program calls `context.quit()`, once the current `update` returns. Escape is an ordinary key, so a
+program that should quit on it says so, and is free to pick another key, or to use Escape for a
+pause menu instead:
 
 ```mojo
-# In `create`:
-context.quit_on_escape(False)
+# In `update`: Escape quits.
+if context.keyboard.pressed(Key.ESCAPE):
+    context.quit()
+```
 
+A game with a pause menu gives the player a way out from it, such as a Quit button:
+
+```mojo
 # In `update`:
 if context.keyboard.pressed(Key.ESCAPE):
     self.paused = not self.paused
