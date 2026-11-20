@@ -65,7 +65,6 @@ struct Context(Copyable, Movable):
     before `update` and carried between frames, like `keyboard`."""
     var _gamepads: _Gamepads
     var _autoscale: Autoscale
-    var _quit_on_escape: Bool
     var _title: String
     var _resizable: Bool
     var _cursor: Cursor
@@ -93,7 +92,6 @@ struct Context(Copyable, Movable):
         self.mouse = Mouse()
         self._gamepads = _Gamepads()
         self._autoscale = Autoscale.FIT
-        self._quit_on_escape = True
         self._title = ""
         self._resizable = True
         self._cursor = Cursor.ARROW
@@ -141,14 +139,6 @@ struct Context(Copyable, Movable):
         """Choose how the design size maps onto the window — see
         `Autoscale`."""
         self._autoscale = mode
-
-    def quit_on_escape(self) -> Bool:
-        """Whether Escape stops the run loop. `True` unless set."""
-        return self._quit_on_escape
-
-    def quit_on_escape(mut self, enabled: Bool):
-        """Whether Escape stops the run loop. On by default."""
-        self._quit_on_escape = enabled
 
     def title(self) -> String:
         """The window's title: `run`'s `title` unless set."""

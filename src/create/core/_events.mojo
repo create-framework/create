@@ -67,8 +67,6 @@ def apply_events(
         elif event.isa[KeyDown]():
             ref down = event[KeyDown]
             var key = Key(down.scancode)
-            if key == Key.ESCAPE and context._quit_on_escape:
-                quit = True
             context.keyboard._key_down(key, down.keycode)
         elif event.isa[KeyUp]():
             context.keyboard._key_up(Key(event[KeyUp].scancode))

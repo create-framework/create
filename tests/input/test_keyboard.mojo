@@ -363,5 +363,14 @@ def test_focus_lost_releases_held_keys() raises -> None:
     assert_false(context.keyboard.released(Key.D))
 
 
+def test_escape_is_an_ordinary_key() raises -> None:
+    var context = Context()
+    var events = List[Event]()
+    events.append(KeyDown(Key.ESCAPE.value))
+    var quit = apply_events(events, Viewport(), context)
+    assert_false(quit)
+    assert_true(context.keyboard.pressed(Key.ESCAPE))
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
