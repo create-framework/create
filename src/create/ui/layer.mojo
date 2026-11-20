@@ -19,8 +19,16 @@ from .label import LabelStyle
 from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextFieldResult, TextFieldStyle
-from .theme import FocusRing, Theme, TypeStyle, _contrast, _readable_on
-from .ui import UI, _Hit
+from .theme import (
+    ColorScheme,
+    FocusRing,
+    Theme,
+    TypeStyle,
+    _contrast,
+    _readable_on,
+)
+from .panel import PanelStyle
+from .ui import UI, _Hit, _Styles
 
 
 comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
@@ -28,6 +36,9 @@ comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
 
 comptime _HANDLE_SHADOW = Color(0, 0, 0, 70)
 """The shadow a slider's handle casts with `handle_shadow=True`."""
+
+comptime _PANEL_SHADOW = Color(0, 0, 0, 60)
+"""The shadow a panel casts with `shadow=True`."""
 
 comptime _HOVERED_CONTRAST = 1.4
 comptime _PRESSED_CONTRAST = 1.8
@@ -135,7 +146,114 @@ struct UILayer[
     def theme(self) -> Theme:
         """The theme the widgets are drawn in, for a program's own widget to
         match them."""
-        return self._ui[]._theme
+        return self._ui[]._current_theme()
+
+    def theme(self, theme: Theme) raises -> ThemeGuard[Self.ui_origin]:
+        """Draw the widgets inside a `with` block in `theme`, such as one
+        panel in the dark theme on a light screen.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        with ui.theme(Theme.dark()):
+            if ui.button("Night mode", Rectangle((0, 0), 160, 48)):
+                ...
+        ```
+        """
+        self._check_frame()
+        return ThemeGuard(_ui=self._ui[], _theme=theme)
+
+    def style(
+        self,
+        *,
+        button: ButtonStyle = ButtonStyle(),
+        label: LabelStyle = LabelStyle(),
+        slider: SliderStyle = SliderStyle(),
+        checkbox: CheckboxStyle = CheckboxStyle(),
+        text_field: TextFieldStyle = TextFieldStyle(),
+    ) raises -> WidgetStyleGuard[Self.ui_origin]:
+        """Style every widget of a kind inside a `with` block. The styles
+        given sit under each call's own style and over any block outside
+        this one, field by field: a field a call sets wins, and a field
+        nothing sets comes from the theme.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        with ui.style(button=ButtonStyle(corner_radius=4)):
+            _ = ui.button("Square", Rectangle((0, 0), 120, 40))
+            _ = ui.button("Round", Rectangle((0, -50), 120, 40),
+                          style=ButtonStyle(corner_radius=20))
+        ```
+        """
+        self._check_frame()
+        return WidgetStyleGuard(
+            _ui=self._ui[],
+            _styles=_Styles(button, label, slider, checkbox, text_field),
+        )
+
+    def content_color(self) -> Color:
+        """The colour for text here: the innermost panel's content colour, or
+        the theme's `on_surface`. A program's own widget draws its text in it
+        to match the built-in ones."""
+        return self._ui[]._content_color()
+
+    @always_inline
+    def panel(
+        self,
+        rect: Rectangle,
+        *,
+        style: PanelStyle = PanelStyle(),
+        id: _WidgetKey = None,
+    ) raises -> PanelGuard[Self.ui_origin]:
+        """A surface filling `rect`, drawn beneath everything called inside
+        its `with` block. Text on it takes its content colour, so a label on
+        a dark panel turns light without being told, and it covers what is
+        beneath it from the pointer. It doesn't place what is inside it.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        with ui.panel(Rectangle((0, 0), 320, 120)):
+            ui.label("Volume", Rectangle((0, 30), 280, 24))
+            _ = ui.slider(self.volume, 0, 1, Rectangle((0, -15), 280, 32))
+        ```
+        """
+        return self._panel(
+            self._widget_id(call_location(), id._hash), rect, style
+        )
+
+    def _panel(
+        self, id: UInt64, rect: Rectangle, style: PanelStyle
+    ) raises -> PanelGuard[Self.ui_origin]:
+        ref ui = self._ui[]
+        var theme = ui._current_theme()
+        ref colors = theme.colors
+        # a surface the pointer can't reach through, nor focus
+        ui._hits.append(_Hit(id, rect, self._to_local, False, False, False))
+        var color = style.color.or_else(colors.surface_container)
+        var content = style.content_color.or_else(_content_on(colors, color))
+        ui._recorder.style = Style(
+            fill=color,
+            stroke=style.outline_color.or_else(Color.TRANSPARENT),
+            stroke_thickness=style.outline_thickness.or_else(1.0),
+            stroke_enabled=Bool(style.outline_color),
+        )
+        if style.shadow:
+            ui._recorder.style.shadow_color = _PANEL_SHADOW
+            ui._recorder.style.shadow_offset = Vector(0, -3)
+            ui._recorder.style.shadow_blur = 12
+            ui._recorder.style.shadow_spread = 0
+            ui._recorder.style.shadow_inset = False
+            ui._recorder.style.shadow_enabled = True
+        ui._recorder.draw(
+            Rectangle(
+                rect.position,
+                rect.width,
+                rect.height,
+                corner_radius=style.corner_radius.or_else(
+                    theme.corner_radii.large
+                ),
+            )
+        )
+        return PanelGuard(_ui=ui, _content=content)
 
     def id[K: Hashable](self, key: K) raises -> IDGuard[Self.ui_origin]:
         """Add `key` to the ID of every widget inside a `with` block, so a
@@ -203,13 +321,16 @@ struct UILayer[
         ```
         """
         self._check_frame()
-        ref theme = self._ui[]._theme
-        var type = style.text_style.or_else(theme.typography.body)
+        var theme = self._ui[]._current_theme()
+        var merged = style._over(self._ui[]._current_styles().label)
+        var type = merged.text_style.or_else(theme.typography.body)
         self._ui[]._recorder.text(
             text,
             _anchor(rect, alignment),
             _text_style(
-                type, style.color.or_else(theme.colors.on_surface), alignment
+                type,
+                merged.color.or_else(self._ui[]._content_color()),
+                alignment,
             ),
         )
 
@@ -362,17 +483,18 @@ struct UILayer[
         rect: Rectangle,
         placeholder: String,
         max_length: Optional[Int],
-        style: TextFieldStyle,
+        call_style: TextFieldStyle,
         take_focus: Bool,
         disabled: Bool,
         mut changed: Bool,
         mut submitted: Bool,
     ) raises:
+        var style = call_style._over(self._ui[]._current_styles().text_field)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, takes_typing=True)
         ref ui = self._ui[]
         ui._sync_text_input(self._context[])
-        ref theme = ui._theme
+        var theme = ui._current_theme()
         ref colors = theme.colors
         if id not in ui._buffers:
             ui._buffers[id] = _TextBuffer(text)
@@ -536,7 +658,7 @@ struct UILayer[
         the keyboard or code."""
         if not self._shows_ring(state, disabled):
             return
-        var look = ring.or_else(self._ui[]._theme.focus_ring)
+        var look = ring.or_else(self._ui[]._current_theme().focus_ring)
         var gap = look.gap
         self._record_ring(
             Rectangle(
@@ -557,7 +679,7 @@ struct UILayer[
     ):
         if not self._shows_ring(state, disabled):
             return
-        var look = ring.or_else(self._ui[]._theme.focus_ring)
+        var look = ring.or_else(self._ui[]._current_theme().focus_ring)
         self._record_ring(Circle(shape.position, shape.radius + look.gap), look)
 
     def _shows_ring(self, state: _Interaction, disabled: Bool) -> Bool:
@@ -567,7 +689,7 @@ struct UILayer[
         ref ui = self._ui[]
         ui._rings.style = Style(
             fill_enabled=False,
-            stroke=look.color.or_else(ui._theme.colors.secondary),
+            stroke=look.color.or_else(ui._current_theme().colors.secondary),
             stroke_thickness=look.thickness,
             stroke_alignment=StrokeAlign.OUTSIDE,
         )
@@ -602,13 +724,14 @@ struct UILayer[
         text: String,
         rect: Rectangle,
         variant: ButtonVariant,
-        style: ButtonStyle,
+        call_style: ButtonStyle,
         take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
+        var style = call_style._over(self._ui[]._current_styles().button)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
-        ref theme = self._ui[]._theme
+        var theme = self._ui[]._current_theme()
         ref colors = theme.colors
         var container: Color
         var content: Color
@@ -702,14 +825,15 @@ struct UILayer[
         max: Float64,
         rect: Rectangle,
         step: Optional[Float64],
-        style: SliderStyle,
+        call_style: SliderStyle,
         take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
+        var style = call_style._over(self._ui[]._current_styles().slider)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
-        ref theme = ui._theme
+        var theme = ui._current_theme()
         ref colors = theme.colors
         var handle_radius = style.handle_radius.or_else(10.0)
         var thickness = style.track_thickness.or_else(4.0)
@@ -852,15 +976,16 @@ struct UILayer[
         label: String,
         mut checked: Bool,
         rect: Rectangle,
-        style: CheckboxStyle,
+        call_style: CheckboxStyle,
         take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
+        var style = call_style._over(self._ui[]._current_styles().checkbox)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
         if state.clicked or state.activated:
             checked = not checked
-        ref theme = self._ui[]._theme
+        var theme = self._ui[]._current_theme()
         ref colors = theme.colors
         comptime size = 18.0
         var left = rect.position.x - rect.width / 2
@@ -872,7 +997,7 @@ struct UILayer[
         var accent = style.box_color.or_else(colors.primary)
         var check = style.check_color.or_else(colors.on_primary)
         var outline = style.outline_color.or_else(colors.on_surface_variant)
-        var label_color = style.label_color.or_else(colors.on_surface)
+        var label_color = style.label_color.or_else(self._ui[]._content_color())
         if off:
             var faded = _faded(
                 colors.on_surface, theme.state_opacities.disabled_content
@@ -1171,3 +1296,89 @@ struct DisabledGuard[origin: Origin[mut=True]](Movable):
     def __exit__(mut self):
         if self._active:
             self._ui[]._disabled_depth -= 1
+
+
+def _content_on(colors: ColorScheme, color: Color) -> Color:
+    """The colour for text on `color`: its `on_` partner when it is one of
+    the scheme's roles, otherwise black or white, whichever reads better."""
+    if color == colors.primary:
+        return colors.on_primary
+    if color == colors.primary_container:
+        return colors.on_primary_container
+    if color == colors.secondary:
+        return colors.on_secondary
+    if color == colors.secondary_container:
+        return colors.on_secondary_container
+    if color == colors.tertiary:
+        return colors.on_tertiary
+    if color == colors.tertiary_container:
+        return colors.on_tertiary_container
+    if color == colors.error:
+        return colors.on_error
+    if color == colors.error_container:
+        return colors.on_error_container
+    if color == colors.background:
+        return colors.on_background
+    if (
+        color == colors.surface
+        or color == colors.surface_dim
+        or color == colors.surface_bright
+        or color == colors.surface_container_lowest
+        or color == colors.surface_container_low
+        or color == colors.surface_container
+        or color == colors.surface_container_high
+        or color == colors.surface_container_highest
+    ):
+        return colors.on_surface
+    return _readable_on(color)
+
+
+struct ThemeGuard[origin: Origin[mut=True]](Movable):
+    """Ends the `ui.theme` block it was made for, on scope exit. Only
+    `ui.theme` builds one."""
+
+    var _ui: Pointer[UI, Self.origin]
+
+    def __init__(out self, *, ref[Self.origin] _ui: UI, _theme: Theme):
+        _ui._themes.append(_theme)
+        self._ui = Pointer(to=_ui)
+
+    def __enter__(mut self):
+        pass
+
+    def __exit__(mut self):
+        _ = self._ui[]._themes.pop()
+
+
+struct WidgetStyleGuard[origin: Origin[mut=True]](Movable):
+    """Ends the `ui.style` block it was made for, on scope exit. Only
+    `ui.style` builds one."""
+
+    var _ui: Pointer[UI, Self.origin]
+
+    def __init__(out self, *, ref[Self.origin] _ui: UI, _styles: _Styles):
+        _ui._styles.append(_styles._over(_ui._current_styles()))
+        self._ui = Pointer(to=_ui)
+
+    def __enter__(mut self):
+        pass
+
+    def __exit__(mut self):
+        _ = self._ui[]._styles.pop()
+
+
+struct PanelGuard[origin: Origin[mut=True]](Movable):
+    """Ends the `ui.panel` block it was made for, on scope exit. Only
+    `ui.panel` builds one."""
+
+    var _ui: Pointer[UI, Self.origin]
+
+    def __init__(out self, *, ref[Self.origin] _ui: UI, _content: Color):
+        _ui._contents.append(_content)
+        self._ui = Pointer(to=_ui)
+
+    def __enter__(mut self):
+        pass
+
+    def __exit__(mut self):
+        _ = self._ui[]._contents.pop()

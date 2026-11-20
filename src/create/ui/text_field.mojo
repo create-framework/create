@@ -67,6 +67,35 @@ struct TextFieldStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.padding = padding._value
         self.text_style = text_style
 
+    def _over(self, under: Self) -> Self:
+        """This style, with every field it leaves unset taken from `under`:
+        how a call's style sits over a `ui.style` block's, and an inner block
+        over an outer one."""
+        var merged = self.copy()
+        if not merged.container_color:
+            merged.container_color = under.container_color
+        if not merged.outline_color:
+            merged.outline_color = under.outline_color
+        if not merged.focused_outline_color:
+            merged.focused_outline_color = under.focused_outline_color
+        if not merged.outline_thickness:
+            merged.outline_thickness = under.outline_thickness
+        if not merged.text_color:
+            merged.text_color = under.text_color
+        if not merged.placeholder_color:
+            merged.placeholder_color = under.placeholder_color
+        if not merged.caret_color:
+            merged.caret_color = under.caret_color
+        if not merged.selection_color:
+            merged.selection_color = under.selection_color
+        if not merged.corner_radius:
+            merged.corner_radius = under.corner_radius
+        if not merged.padding:
+            merged.padding = under.padding
+        if not merged.text_style:
+            merged.text_style = under.text_style
+        return merged^
+
 
 struct TextFieldResult[
     ui_origin: Origin[mut=True],

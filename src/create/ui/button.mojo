@@ -91,3 +91,24 @@ struct ButtonStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.corner_radius = corner_radius._value
         self.text_style = text_style
         self.focus_ring = focus_ring
+
+    def _over(self, under: Self) -> Self:
+        """This style, with every field it leaves unset taken from `under`:
+        how a call's style sits over a `ui.style` block's, and an inner block
+        over an outer one."""
+        var merged = self.copy()
+        if not merged.container_color:
+            merged.container_color = under.container_color
+        if not merged.content_color:
+            merged.content_color = under.content_color
+        if not merged.outline_color:
+            merged.outline_color = under.outline_color
+        if not merged.outline_thickness:
+            merged.outline_thickness = under.outline_thickness
+        if not merged.corner_radius:
+            merged.corner_radius = under.corner_radius
+        if not merged.text_style:
+            merged.text_style = under.text_style
+        if not merged.focus_ring:
+            merged.focus_ring = under.focus_ring
+        return merged^
