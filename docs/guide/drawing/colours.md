@@ -83,6 +83,36 @@ canvas.fill(Color.hsv(context.time.elapsed * 60, 1.0, 1.0))
 `color.to_hsv()` goes the other way, returning a colour's hue, saturation and value, so you can take
 an existing colour and change only its brightness, for example.
 
+## Lightness that looks even
+
+HSV's value has a catch: it says how bright a colour is to the screen, not to the eye. Yellow and
+blue at the same value look very different: the yellow bright, the blue dark. So stepping the value
+in equal amounts doesn't look like equal steps, and two colours picked at "the same brightness"
+often don't match.
+
+**OKLCH** fixes that. It describes a colour as:
+
+- The **lightness**, from 0 (black) to 1 (white), as the eye sees it: a yellow and a blue at the
+  same lightness look about as light as each other, and equal steps look equal.
+- The **chroma**, how colourful it is: 0 is a grey, and the most vivid colours a screen can show
+  reach about 0.37. How far a colour can go depends on its hue and lightness.
+- The **hue**, in degrees round a colour wheel, as in HSV, though the wheel is spaced differently:
+  about 30 is red, 110 yellow, 145 green, 265 blue.
+
+```mojo
+# In `update`: three hues at one lightness and chroma, which look equally light.
+canvas.fill(Color.oklch(0.7, 0.12, 30))  # a soft red
+canvas.fill(Color.oklch(0.7, 0.12, 110))  # a yellow, no brighter-looking
+canvas.fill(Color.oklch(0.7, 0.12, 265))  # a blue, no darker-looking
+```
+
+Use it to make sets of colours that belong together, such as a palette where every colour has the
+same lightness, or a ramp from dark to light that steps evenly. A chroma too high for the screen to
+show at that lightness and hue is brought down until the colour fits, keeping its lightness and hue,
+so `Color.oklch` always gives a colour you can draw. `color.to_oklch()` goes the other way. Reach
+for HSV when you want to sweep the rainbow quickly, and OKLCH when colours have to look right
+together.
+
 ## Mixing colours
 
 `a.lerp(b, t)` mixes two colours: `t` is how far to go from `a` towards `b`, from 0 (all `a`) to 1

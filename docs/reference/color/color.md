@@ -87,6 +87,21 @@ Build a color from hue in degrees (wraps) and saturation/value in 0..1.
 Hue cycling is the point: `Color.hsv(Float64(context.frame_count()) % 360.0, 1.0, 1.0)`
 sweeps the spectrum without hand-mixing channels.
 
+### `oklch`
+
+```mojo
+@staticmethod
+def oklch(lightness: Float64, chroma: Float64, hue: Float64) -> Self
+```
+
+Build a colour from OKLCH: perceived lightness from 0 (black) to 1 (white), chroma (how colourful, 0 for a grey, up to about 0.37 for the most vivid colours a screen shows) and hue in degrees (wraps).
+
+Unlike HSV's value, equal steps of lightness look like equal steps
+to the eye, whatever the hue: a yellow and a blue at the same
+lightness look about as light as each other. A colour too vivid for
+the screen to show is brought inside by lowering its chroma, keeping
+its lightness and hue.
+
 ## Methods
 
 ### `luminance`
@@ -133,6 +148,14 @@ This color at a different opacity, 0 (invisible) to 255 (opaque).
 The RGB channels are carried over untouched, so a named constant or a
 computed color stays spelled once: `Color.RED.with_alpha(128)` rather
 than respelling all three channels to change the fourth.
+
+### `to_oklch`
+
+```mojo
+def to_oklch(self) -> Tuple[Float64, Float64, Float64]
+```
+
+Inverse of `oklch`: perceived lightness from 0 to 1, chroma, and hue in degrees from 0 to 360. Hue is 0.0 for greys, which have none.
 
 ### `lerp`
 

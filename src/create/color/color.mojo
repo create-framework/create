@@ -1,4 +1,4 @@
-from std.math import min, max, abs
+from std.math import abs, atan2, cos, max, min, pi, sin, sqrt
 
 
 def _channel(v: Float64) -> UInt8:
@@ -12,6 +12,46 @@ def _linear(v: UInt8) -> Float64:
     if c <= 0.03928:
         return c / 12.92
     return ((c + 0.055) / 1.055) ** 2.4
+
+
+def _encode(c: Float64) -> Float64:
+    """Apply the sRGB transfer curve to one linear channel."""
+    if c <= 0.0031308:
+        return 12.92 * c
+    return 1.055 * c ** (1.0 / 2.4) - 0.055
+
+
+def _cube_root(x: Float64) -> Float64:
+    return x ** (1.0 / 3.0) if x >= 0.0 else -((-x) ** (1.0 / 3.0))
+
+
+def _oklab_to_linear(
+    l: Float64, a: Float64, b: Float64
+) -> Tuple[Float64, Float64, Float64]:
+    """An OKLab colour as linear sRGB, each channel 0 to 1 when the screen
+    can show it (Björn Ottosson's matrices)."""
+    var l_ = l + 0.3963377774 * a + 0.2158037573 * b
+    var m_ = l - 0.1055613458 * a - 0.0638541728 * b
+    var s_ = l - 0.0894841775 * a - 1.2914855480 * b
+    var ll = l_ * l_ * l_
+    var mm = m_ * m_ * m_
+    var ss = s_ * s_ * s_
+    return (
+        4.0767416621 * ll - 3.3077115913 * mm + 0.2309699292 * ss,
+        -1.2684380046 * ll + 2.6097574011 * mm - 0.3413193965 * ss,
+        -0.0041960863 * ll - 0.7034186147 * mm + 1.7076147010 * ss,
+    )
+
+
+def _in_gamut(rgb: Tuple[Float64, Float64, Float64]) -> Bool:
+    """Whether every channel is one the screen can show, allowing for
+    rounding."""
+    comptime slack = 1e-4
+    return (
+        -slack <= rgb[0] <= 1.0 + slack
+        and -slack <= rgb[1] <= 1.0 + slack
+        and -slack <= rgb[2] <= 1.0 + slack
+    )
 
 
 def _hex_digit(byte: UInt8) -> Int:
@@ -254,6 +294,72 @@ struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             r = c
             b = x
         return Color(_channel(r + m), _channel(g + m), _channel(b + m))
+
+    @staticmethod
+    def oklch(lightness: Float64, chroma: Float64, hue: Float64) -> Color:
+        """Build a colour from OKLCH: perceived lightness from 0 (black) to 1
+        (white), chroma (how colourful, 0 for a grey, up to about 0.37 for
+        the most vivid colours a screen shows) and hue in degrees (wraps).
+
+        Unlike HSV's value, equal steps of lightness look like equal steps
+        to the eye, whatever the hue: a yellow and a blue at the same
+        lightness look about as light as each other. A colour too vivid for
+        the screen to show is brought inside by lowering its chroma, keeping
+        its lightness and hue.
+        """
+        var l = min(max(lightness, 0.0), 1.0)
+        var c = max(chroma, 0.0)
+        var h = hue * pi / 180.0
+        var rgb = _oklab_to_linear(l, c * cos(h), c * sin(h))
+        if not _in_gamut(rgb):
+            # Lower the chroma until the colour fits, by halving the gap.
+            var low = 0.0
+            var high = c
+            for _ in range(24):
+                var middle = (low + high) / 2
+                if _in_gamut(
+                    _oklab_to_linear(l, middle * cos(h), middle * sin(h))
+                ):
+                    low = middle
+                else:
+                    high = middle
+            rgb = _oklab_to_linear(l, low * cos(h), low * sin(h))
+        return Color(
+            _channel(_encode(rgb[0])),
+            _channel(_encode(rgb[1])),
+            _channel(_encode(rgb[2])),
+        )
+
+    def to_oklch(self) -> Tuple[Float64, Float64, Float64]:
+        """Inverse of `oklch`: perceived lightness from 0 to 1, chroma, and
+        hue in degrees from 0 to 360. Hue is 0.0 for greys, which have none.
+        """
+        var r = _linear(self.r)
+        var g = _linear(self.g)
+        var b = _linear(self.b)
+        var l_ = _cube_root(
+            0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
+        )
+        var m_ = _cube_root(
+            0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
+        )
+        var s_ = _cube_root(
+            0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
+        )
+        var lightness = (
+            0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+        )
+        var a = 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_
+        var bb = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+        var chroma = sqrt(a * a + bb * bb)
+        var hue = 0.0
+        if chroma > 1e-4:
+            hue = atan2(bb, a) * 180.0 / pi
+            if hue < 0.0:
+                hue += 360.0
+        else:
+            chroma = 0.0
+        return (lightness, chroma, hue)
 
     def lerp(self, other: Color, t: Float64) -> Color:
         """A new colour `t` of the way from this one to `other`, `t` clamped
