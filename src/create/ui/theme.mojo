@@ -312,10 +312,10 @@ struct StateOpacities(Copyable, ImplicitlyCopyable, Movable, Writable):
     var disabled_container: Float64
 
     def __init__(out self):
-        self.hovered = 0.08
-        self.focused = 0.10
-        self.pressed = 0.10
-        self.dragged = 0.16
+        self.hovered = 0.12
+        self.focused = 0.12
+        self.pressed = 0.22
+        self.dragged = 0.22
         self.disabled_content = 0.38
         self.disabled_container = 0.12
 

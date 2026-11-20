@@ -45,6 +45,20 @@ def theme(mut self, theme: Theme)
 
 Draw the widgets in `theme` from now on.
 
+### `wants_mouse`
+
+```mojo
+def wants_mouse(self) -> Bool
+```
+
+Whether the mouse is the UI's this frame: the pointer is over a widget, or a widget is held. A game checks it before using the mouse itself, so a click on a button doesn't also fire a weapon.
+
+```mojo
+# In `update`, before or after the UI's `with` block:
+if context.mouse.pressed() and not self.ui.wants_mouse():
+    self.fire()
+```
+
 ### `screen`
 
 ```mojo
