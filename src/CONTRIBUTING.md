@@ -54,7 +54,8 @@ Create is on Mojo 1.2, and some older forms are gone or deprecated:
 - Don't use `alias`; it is deprecated for `comptime`.
 - Don't use `UnsafePointer`; it is deprecated for `Pointer`.
 - Don't use `fn`; it is removed. Use `def`.
-- Don't hold a raw `Pointer` to `Canvas` outside the guards; use origin-tracked references.
+- Don't hold a raw `Pointer` to `Canvas` outside the guards and `UILayer`; use origin-tracked
+  references.
 
 ## Tests
 

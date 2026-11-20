@@ -78,3 +78,9 @@ Sound: `Sound` (the asset), `Audio` (the playback device) and `Playback` (one pl
 Data files: `Table` and `TableRow` for CSV and TSV, and `JSON`.
 
 - **Types:** [`Table`](data/table.md), [`TableRow`](data/tablerow.md), [`JSON`](data/json.md), [`JSONKind`](data/jsonkind.md)
+
+## [`create.ui`](ui/README.md)
+
+The user interface: `UI`, which keeps the widgets' state from frame to frame, and `UILayer`, the handle a `with` block gets to draw widgets with.
+
+- **Types:** [`UI`](ui/ui.md), [`UILayer`](ui/uilayer.md), [`IDGuard`](ui/idguard.md)

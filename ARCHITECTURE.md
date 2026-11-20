@@ -9,7 +9,7 @@ internals](#package-internals).
 
 | Module | Path | Responsibility |
 |---|---|---|
-| root | `src/create/__init__.mojo` | The preamble: star-imports all twelve subpackages below |
+| root | `src/create/__init__.mojo` | The preamble: star-imports all thirteen subpackages below |
 | `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `EditableText`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
@@ -22,6 +22,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
+| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with) and `IDGuard`; widget IDs from call sites, and the recorder that draws a layer in call order |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
@@ -71,6 +72,7 @@ The packages form layers, and a package imports only from the layers below it:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
+| UI | `ui` | `core`, `render`, `geometry` |
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
@@ -84,6 +86,9 @@ imports:
 
 ```mermaid
 flowchart TD
+    ui --> core
+    ui --> render
+    ui --> geometry
     core --> _window
     core --> math
     core --> render
@@ -108,6 +113,8 @@ flowchart TD
 
 The rules behind it, and what each one buys:
 
+- **`ui`** is the top layer, and nothing imports it. It needs `core` for the `Context` its layers
+  read the frame from, and `render` for the canvas they draw on.
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
   `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works
   without a run loop. The settings that map the design onto the window therefore reach `render` as
@@ -161,8 +168,8 @@ name (`from create.geometry import Circle`). Starring a single subpackage is no 
 root import: a subpackage exports only the names it owns, so it leaves out the types its own
 functions take.
 
-- The root has no names of its own: it star-imports the twelve subpackages. Never add a name there;
-  add it to the owning subpackage.
+- The root has no names of its own: it star-imports the thirteen subpackages. Never add a name
+  there; add it to the owning subpackage.
 - A subpackage exports only what it owns, never a lower layer's symbol. The one exception is `math`,
   which also re-exports common `std.math` functions (`sqrt`, `sin`, `cos`, `atan2`, `clamp`,
   `floor`, …) so a sketch has them without a second import, as in Processing. Mojo builtins (`abs`,
