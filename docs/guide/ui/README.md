@@ -12,3 +12,6 @@ where its state lives.
   widget or a whole block, and panels.
 
 Text fields are explained with typed text, in [Typing](../interaction/typing.md#text-fields).
+
+[examples/ui](../../../examples/ui/main.mojo) puts it together: a settings menu with every kind of
+widget.
