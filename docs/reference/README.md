@@ -81,6 +81,6 @@ Data files: `Table` and `TableRow` for CSV and TSV, and `JSON`.
 
 ## [`create.ui`](ui/README.md)
 
-The user interface: `UI`, which keeps the widgets' state from frame to frame, and `UILayer`, the handle a `with` block gets to draw widgets with.
+The user interface: `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `Theme`, the design tokens they draw from.
 
-- **Types:** [`UI`](ui/ui.md), [`UILayer`](ui/uilayer.md), [`IDGuard`](ui/idguard.md)
+- **Types:** [`UI`](ui/ui.md), [`UILayer`](ui/uilayer.md), [`IDGuard`](ui/idguard.md), [`Theme`](ui/theme.md), [`ColorScheme`](ui/colorscheme.md), [`Typography`](ui/typography.md), [`TypeStyle`](ui/typestyle.md), [`CornerRadii`](ui/cornerradii.md), [`Spacing`](ui/spacing.md), [`StateOpacities`](ui/stateopacities.md), [`FocusRing`](ui/focusring.md)

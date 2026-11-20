@@ -22,7 +22,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with) and `IDGuard`; widget IDs from call sites, and the recorder that draws a layer in call order |
+| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), `IDGuard`, and `Theme` with its tokens (`ColorScheme`, `Typography`, …); widget IDs from call sites, and the recorder that draws a layer in call order |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
@@ -72,7 +72,7 @@ The packages form layers, and a package imports only from the layers below it:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
-| UI | `ui` | `core`, `render`, `geometry` |
+| UI | `ui` | `core`, `render`, `geometry`, `color`, `text` |
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
@@ -89,6 +89,8 @@ flowchart TD
     ui --> core
     ui --> render
     ui --> geometry
+    ui --> color
+    ui --> text
     core --> _window
     core --> math
     core --> render
@@ -114,7 +116,8 @@ flowchart TD
 The rules behind it, and what each one buys:
 
 - **`ui`** is the top layer, and nothing imports it. It needs `core` for the `Context` its layers
-  read the frame from, and `render` for the canvas they draw on.
+  read the frame from, `render` for the canvas they draw on, and `color` and `text` for the theme's
+  colours and fonts.
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
   `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works
   without a run loop. The settings that map the design onto the window therefore reach `render` as

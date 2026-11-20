@@ -29,6 +29,14 @@ Draw `shape` in `style`, in order with the layer's widgets: above what was drawn
 ui.draw(Circle((0, 0), 20), Style(fill=Color.ORANGE))
 ```
 
+### `theme`
+
+```mojo
+def theme(self) -> Theme
+```
+
+The theme the widgets are drawn in, for a program's own widget to match them.
+
 ### `id`
 
 ```mojo
