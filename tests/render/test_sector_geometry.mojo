@@ -5,7 +5,6 @@ from create.math import PI, TAU
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create.geometry import Line, Sector
-from create.math.transform import Transform
 from create.math.point import Point
 from create.color.color import Color
 from create.render.style import Style

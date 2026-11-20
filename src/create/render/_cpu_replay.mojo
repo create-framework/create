@@ -12,7 +12,6 @@ from std.collections import Dict, Optional
 from std.math import max, min, abs, sqrt, ceil, floor
 
 from create.math.transform import Transform
-from create.math.transform import Transform
 
 from ._command import (
     CirclePayload,

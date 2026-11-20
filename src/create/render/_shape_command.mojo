@@ -33,7 +33,6 @@ from create.geometry._fillet import (
 from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
-from create.math.transform import Transform
 
 from ._clip import clip_style
 from ._command import (

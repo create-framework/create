@@ -31,7 +31,6 @@ from std.math import abs, asin, cos, exp, max, min, sin, sqrt
 
 from create.math.vector import Vector
 from create.math.transform import Transform
-from create.math.transform import Transform
 from create.math.point import Point
 
 from ._command import (
