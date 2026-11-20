@@ -6,6 +6,7 @@ from create.core import Context
 from create.geometry import Drawable
 from create.render import Canvas, Style
 from ._id import _mix
+from .theme import Theme
 from .ui import UI
 
 
@@ -64,6 +65,11 @@ struct UILayer[
         ref recorder = self._ui[]._recorder
         recorder.style = style
         recorder.draw(shape)
+
+    def theme(self) -> Theme:
+        """The theme the widgets are drawn in, for a program's own widget to
+        match them."""
+        return self._ui[]._theme
 
     def id[K: Hashable](self, key: K) raises -> IDGuard[Self.ui_origin]:
         """Add `key` to the ID of every widget inside a `with` block, so a

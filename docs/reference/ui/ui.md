@@ -21,10 +21,29 @@ Implements `Deinitable`, `Movable`.
 
 ```mojo
 @staticmethod
-def __init__(out self)
+def __init__(
+    out self,
+    theme: Theme = Theme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
+)
 ```
 
+A UI drawn in `theme`, the light theme unless given.
+
 ## Methods
+
+### `theme`
+
+```mojo
+def theme(self) -> Theme
+```
+
+The theme the widgets are drawn in.
+
+```mojo
+def theme(mut self, theme: Theme)
+```
+
+Draw the widgets in `theme` from now on.
 
 ### `screen`
 

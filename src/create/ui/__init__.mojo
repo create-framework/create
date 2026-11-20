@@ -1,5 +1,16 @@
 """The user interface: `UI`, which keeps the widgets' state from frame to
-frame, and `UILayer`, the handle a `with` block gets to draw widgets with.
+frame, `UILayer`, the handle a `with` block gets to draw widgets with, and
+`Theme`, the design tokens they draw from.
 """
 from .ui import UI
 from .layer import UILayer, IDGuard
+from .theme import (
+    Theme,
+    ColorScheme,
+    Typography,
+    TypeStyle,
+    CornerRadii,
+    Spacing,
+    StateOpacities,
+    FocusRing,
+)

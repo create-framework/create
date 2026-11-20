@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: `UI`, which keeps the widgets' state from frame to frame, and `UILayer`, the handle a `with` block gets to draw widgets with.
+The user interface: `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `Theme`, the design tokens they draw from.
 
 ## Types
 
@@ -9,3 +9,11 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, an
 | [`UI`](ui.md) | The state of a program's widgets, kept from frame to frame under each widget's ID. |
 | [`UILayer`](uilayer.md) | The handle a `with self.ui.screen(context, canvas) as ui:` block gets: every widget is a method on it. |
 | [`IDGuard`](idguard.md) | Takes the key `ui.id` added off the widget IDs again, on scope exit. Only `ui.id` builds one. |
+| [`Theme`](theme.md) | The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, state opacities and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it. |
+| [`ColorScheme`](colorscheme.md) | The colours of a theme, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. |
+| [`Typography`](typography.md) | The theme's kinds of text: `title` for headings, `body` for running text and `label` for the text on widgets, such as a button's. |
+| [`TypeStyle`](typestyle.md) | How one kind of text looks: its size, its weight and its font, or the canvas's default font when `font` is `None`. |
+| [`CornerRadii`](cornerradii.md) | How round the theme's corners are, from `small`, such as a checkbox's, to `large`, such as a panel's. |
+| [`Spacing`](spacing.md) | The theme's gaps, from `small`, between a label and its widget, to `large`, between groups of widgets. |
+| [`StateOpacities`](stateopacities.md) | How strongly a widget shows its state. A hovered, focused, pressed or dragged widget draws its content colour over itself at that opacity; a disabled one draws its content and its fill at the `disabled_` ones. |
+| [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard or a gamepad: its `thickness`, and the `gap` between it and the widget. |
