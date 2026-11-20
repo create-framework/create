@@ -174,7 +174,13 @@ struct Backend(Movable):
             skip_letterbox=True,
             skip_clear=request.transparent,
         )
-        mem.save(request.path, opaque=not request.transparent)
+        self.captures.write_png(
+            mem^._take_data(),
+            request.width,
+            request.height,
+            request.path,
+            opaque=not request.transparent,
+        )
 
     def _needs_seed(self) -> Bool:
         """Whether the recording in progress wants the window's finished

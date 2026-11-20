@@ -7,6 +7,14 @@ requests and the recording's state — its GIF writer and its timing, the
 run's clock cut into `1 / fps` slots — and `Backend` does the part that
 needs a replay: it replays the commands for a `save_image` or a recording's
 frame on the CPU, then hands the pixels back here.
+
+**The encoders are compiled only for programs that capture.** The frame loop
+reaches everything here every frame, so it never names the GIF encoder or the
+PNG writer itself: it calls them through the `thin` function pointers that
+`request_image`, `request_screenshot` and `_Recording`'s constructor store.
+Those are reached only from `canvas.save_image`, `save_screenshot` and
+`start_recording`, so a program that calls none of them never references the
+encoders, and Mojo doesn't compile them into it.
 """
 
 from std.math import floor
@@ -24,6 +32,11 @@ from ._gl_backend import GLRenderer
 from ._png import write_png
 from ._surface import MemorySurface, Surface, _force_opaque
 from std.memory import unsafe_memcpy
+
+
+comptime _WritePNG = def(List[UInt8], Int, Int, String) thin raises -> None
+"""Writes `width` x `height` RGBA bytes to a path as a PNG: `write_png`,
+behind a pointer so that only a program that saves an image compiles it."""
 
 
 @fieldwise_init
@@ -177,6 +190,13 @@ struct _Recording(Movable):
     """Whether `canvas` has had its first frame. With the autoclear off,
     that one is the window's finished frame, the picture earlier frames
     left included, which no command can replay."""
+    var _add: def(mut _Recording, MemorySurface, Int) thin raises -> Bool
+    """`_add_frame`, behind a pointer so that only a program that records
+    compiles the GIF encoder."""
+    var _finish: def(mut _Recording, Int) thin raises -> None
+    """`_finish`, behind a pointer for the same reason."""
+    var _cancel: def(mut _Recording) thin raises -> None
+    """`_cancel`, behind a pointer for the same reason."""
 
     def __init__(
         out self,
@@ -210,6 +230,9 @@ struct _Recording(Movable):
         self.canvas = MemorySurface(self.width, self.height)
         self.window = None
         self.seeded = False
+        self._add = _add_frame
+        self._finish = _finish
+        self._cancel = _cancel
 
     def write_pending(mut self, until_slot: Int) raises:
         """Write the waiting frame, shown until `until_slot` begins."""
@@ -223,6 +246,76 @@ struct _Recording(Movable):
             DISPOSE_BACKGROUND if self.transparent else DISPOSE_KEEP,
         )
         self.written = end
+
+
+def _add_frame(
+    mut recording: _Recording, mem: MemorySurface, slot: Int
+) raises -> Bool:
+    """Encode `mem`, the frame `frame_due` asked for, as the frame of
+    `slot`, writing the one before it now that its length is known. Returns
+    whether the recording now has its `frames`, and so should finish.
+
+    An opaque recording's frame after the first holds only the rectangle
+    that changed, drawn over the one before it, with the pixels in it
+    that didn't change transparent; a frame where nothing changed isn't
+    written at all, and the one before it is shown for longer. A
+    transparent recording's frames replace each other, so each is whole.
+    """
+    var frame = Optional[EncodedFrame]()
+    if recording.transparent or not recording.previous:
+        frame = encode_frame(
+            mem.data,
+            recording.width,
+            recording.height,
+            recording.dither,
+            transparent=recording.transparent,
+        )
+    else:
+        var rect = _changed_rect(
+            recording.previous.value(),
+            mem.data,
+            recording.width,
+            recording.height,
+        )
+        if rect:
+            var r = rect.value()
+            var delta = _delta(
+                recording.previous.value(), mem.data, recording.width, r
+            )
+            frame = encode_frame(
+                delta[0],
+                r[2],
+                r[3],
+                recording.dither,
+                transparent=delta[1],
+                left=r[0],
+                top=r[1],
+            )
+    if not recording.transparent:
+        recording.previous = mem.data.copy()
+    if frame:
+        recording.write_pending(slot)
+        recording.pending = frame^
+    # The waiting frame is shown until the slot after this one, whether
+    # this one replaced it or added nothing.
+    recording.pending_slot = slot
+    recording.next_slot = slot + 1
+    recording.frames += 1
+    return Bool(recording.max_frames) and (
+        recording.frames >= recording.max_frames.value()
+    )
+
+
+def _finish(mut recording: _Recording, until_slot: Int) raises:
+    """Write the waiting frame, shown until `until_slot` begins, and the
+    trailer, and close the file."""
+    recording.write_pending(until_slot)
+    recording.writer.finish()
+
+
+def _cancel(mut recording: _Recording) raises:
+    """Close the file without saving it."""
+    recording.writer.cancel()
 
 
 struct Captures(Movable):
@@ -247,20 +340,41 @@ struct Captures(Movable):
     sensible reading of two saves of the same frame to two paths being asked
     for by accident.
     """
+    var _write_png: Optional[_WritePNG]
+    """The PNG writer, stored by the first request that needs it; see the
+    module's docstring."""
 
     def __init__(out self):
         self.recording = None
         self.clock = 0.0
         self.pending_screenshot = Optional[String]()
         self.pending_image = Optional[_ImageRequest]()
+        self._write_png = None
 
     def request_image(mut self, var request: _ImageRequest):
         """File a design-size capture of the frame being recorded."""
         self.pending_image = Optional(request^)
+        self._write_png = write_png
 
     def request_screenshot(mut self, path: String):
         """File a framebuffer-resolution capture of the frame being recorded."""
         self.pending_screenshot = Optional(path)
+        self._write_png = write_png
+
+    def write_png(
+        self,
+        var pixels: List[UInt8],
+        width: Int,
+        height: Int,
+        path: String,
+        opaque: Bool = True,
+    ) raises:
+        """Write `width` x `height` RGBA bytes to `path` as a PNG, through
+        the writer a request stored. `opaque` makes every pixel opaque first,
+        right for anything that came off a framebuffer."""
+        if opaque:
+            _force_opaque(pixels)
+        self._write_png.value()(pixels, width, height, path)
 
     def flush_screenshot[o: Origin[mut=True]](mut self, s: Surface[o]) raises:
         """Service a pending `save_screenshot` by copying the finished buffer.
@@ -272,13 +386,13 @@ struct Captures(Movable):
         if not self.pending_screenshot:
             return
         var path = self.pending_screenshot.take()
-        var mem = MemorySurface(s.width, s.height)
+        var pixels = List[UInt8](length=s.width * s.height * 4, fill=0)
         unsafe_memcpy(
-            dest=mem.data.unsafe_ptr(),
+            dest=pixels.unsafe_ptr(),
             src=s.px,
             count=s.width * s.height * 4,
         )
-        mem.save(path)
+        self.write_png(pixels^, s.width, s.height, path)
 
     def flush_screenshot_gpu(
         mut self, mut gl: GLRenderer, width: Int, height: Int
@@ -293,9 +407,15 @@ struct Captures(Movable):
         if not self.pending_screenshot:
             return
         var path = self.pending_screenshot.take()
-        var frame = gl.read_frame(width, height)
-        _force_opaque(frame)
-        write_png(frame, width, height, path)
+        self.write_png(gl.read_frame(width, height), width, height, path)
+
+    def add_frame(mut self, mem: MemorySurface, slot: Int) raises:
+        """Encode `mem`, the frame `frame_due` asked for, as the frame of
+        `slot` (see `_add_frame`), and finish the recording once it has its
+        `frames`."""
+        ref recording = self.recording.value()
+        if recording._add(recording, mem, slot):
+            self.finish_recording()
 
     def start_recording(mut self, var recording: _Recording) raises:
         """Make `recording` the one in progress, finishing any before it."""
@@ -308,8 +428,7 @@ struct Captures(Movable):
         if not self.recording:
             return
         var recording = self.recording.take()
-        recording.write_pending(recording.pending_slot + 1)
-        recording.writer.finish()
+        recording._finish(recording, recording.pending_slot + 1)
 
     def cancel_recording(mut self) raises:
         """End the recording in progress without saving it. Nothing happens
@@ -317,7 +436,7 @@ struct Captures(Movable):
         if not self.recording:
             return
         var recording = self.recording.take()
-        recording.writer.cancel()
+        recording._cancel(recording)
 
     def frame_due(mut self) raises -> Optional[Int]:
         """The slot the presented frame should be captured in, or `None`
@@ -339,65 +458,6 @@ struct Captures(Movable):
             return None
         if recording.max_slots and slot >= recording.max_slots.value():
             var done = self.recording.take()
-            done.write_pending(done.max_slots.value())
-            done.writer.finish()
+            done._finish(done, done.max_slots.value())
             return None
         return slot
-
-    def add_frame(mut self, mem: MemorySurface, slot: Int) raises:
-        """Encode `mem`, the frame `frame_due` asked for, as the frame of
-        `slot`: the one before it is written now that its length is known,
-        and the recording finishes once it has its `frames`.
-
-        An opaque recording's frame after the first holds only the rectangle
-        that changed, drawn over the one before it, with the pixels in it
-        that didn't change transparent; a frame where nothing changed isn't
-        written at all, and the one before it is shown for longer. A
-        transparent recording's frames replace each other, so each is whole.
-        """
-        ref recording = self.recording.value()
-        var frame = Optional[EncodedFrame]()
-        if recording.transparent or not recording.previous:
-            frame = encode_frame(
-                mem.data,
-                recording.width,
-                recording.height,
-                recording.dither,
-                transparent=recording.transparent,
-            )
-        else:
-            var rect = _changed_rect(
-                recording.previous.value(),
-                mem.data,
-                recording.width,
-                recording.height,
-            )
-            if rect:
-                var r = rect.value()
-                var delta = _delta(
-                    recording.previous.value(), mem.data, recording.width, r
-                )
-                frame = encode_frame(
-                    delta[0],
-                    r[2],
-                    r[3],
-                    recording.dither,
-                    transparent=delta[1],
-                    left=r[0],
-                    top=r[1],
-                )
-        if not recording.transparent:
-            recording.previous = mem.data.copy()
-        if frame:
-            recording.write_pending(slot)
-            recording.pending = frame^
-        # The waiting frame is shown until the slot after this one, whether
-        # this one replaced it or added nothing.
-        recording.pending_slot = slot
-        recording.next_slot = slot + 1
-        recording.frames += 1
-        if (
-            recording.max_frames
-            and recording.frames >= recording.max_frames.value()
-        ):
-            self.finish_recording()

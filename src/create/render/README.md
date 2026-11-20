@@ -490,6 +490,14 @@ command buffer. A failed write raises from there.
     file to `path + ".partial"`, and at `finish` renames it into place through C's `rename`, since
     the standard library has none. `cancel_recording` deletes the partial file instead.
 
+**The encoders are compiled only for programs that capture.** Every frame reaches `Captures`, so
+nothing on that path names the GIF encoder or the PNG writer. It calls them through `thin` function
+pointers instead: `Captures._write_png`, stored by `request_image` and `request_screenshot`, and
+`_Recording`'s `_add`, `_finish` and `_cancel`, stored by its constructor. Those are reached only
+from `save_image`, `save_screenshot` and `start_recording`, so a program that calls none of them
+never references the encoders, and Mojo leaves them out of the build. Keep it so: code that runs
+every frame calls an encoder only through one of these pointers.
+
 See [examples/capture/main.mojo](../../../examples/capture/main.mojo).
 
 ## Text
