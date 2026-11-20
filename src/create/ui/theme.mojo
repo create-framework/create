@@ -244,6 +244,28 @@ def _family(
 
 
 @fieldwise_init
+struct _Palette(Copyable, ImplicitlyCopyable, Movable):
+    """One family of colour for `from_seed`: a hue and a chroma, from which
+    a colour at any tone, its lightness from 0 to 100, is made."""
+
+    var hue: Float64
+    var chroma: Float64
+
+    def tone(self, tone: Float64) -> Color:
+        """This family's colour at `tone`, Material's measure of lightness:
+        0 black, 100 white, and 50 the grey halfway between to the eye
+        (CIELAB lightness). The tone fixes how much light the colour gives
+        off, so two tones far enough apart read together in any hue. Near
+        the ends a screen can show little colour, so the chroma is lowered
+        to fit there, keeping the tone."""
+        # CIELAB lightness to luminance, and luminance to OKLCH lightness,
+        # which for a grey is its cube root.
+        var t = min(max(tone, 0.0), 100.0)
+        var luminance = ((t + 16) / 116) ** 3 if t > 8 else t / 903.2963
+        return Color.oklch(luminance ** (1.0 / 3.0), self.chroma, self.hue)
+
+
+@fieldwise_init
 struct TypeStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     """How one kind of text looks: its size, its weight and its font, or the
     canvas's default font when `font` is `None`."""
@@ -434,6 +456,105 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
             surface,
             on_surface,
         )
+        return Theme._with_colors(colors)
+
+    @staticmethod
+    def from_seed(seed: Color, *, dark: Bool = False) -> Theme:
+        """A whole theme worked out from one colour, such as a game's own,
+        as Material's dynamic colour does: light unless `dark`.
+
+        The seed's hue gives five families of colour: the primary, a greyer
+        secondary, a tertiary turned 60 degrees round the colour wheel,
+        near-greys for the surfaces, and a fixed red for errors. Each role
+        then takes Material's fixed tone, a lightness that looks the same in
+        every hue: in the light scheme `primary` is tone 40 and `on_primary`
+        100, `primary_container` 90 and `on_primary_container` 10. The gap
+        between two paired roles keeps them readable together, whatever the
+        seed. A grey seed gives a grey theme.
+
+        ```mojo
+        # In `create`, building the `ui` field:
+        var ui = UI(Theme.from_seed(Color.hex(0xE07A2E)))  # an orange theme
+        ```
+        """
+        var at = seed.to_oklch()
+        var hue = at[2]
+        # A seed with some colour gets a primary vivid enough to read as
+        # that colour; a grey seed stays grey.
+        var chroma = 0.0 if at[1] < 0.03 else min(max(at[1], 0.1), 0.16)
+        var primary = _Palette(hue, chroma)
+        var secondary = _Palette(hue, chroma / 3)
+        var tertiary = _Palette(hue + 60, chroma * 0.6)
+        var neutral = _Palette(hue, min(chroma / 12, 0.012))
+        var variant = _Palette(hue, min(chroma / 6, 0.025))
+        var error = _Palette(25, 0.17)
+        var colors: ColorScheme
+        if dark:
+            colors = ColorScheme(
+                primary=primary.tone(80),
+                on_primary=primary.tone(20),
+                primary_container=primary.tone(30),
+                on_primary_container=primary.tone(90),
+                secondary=secondary.tone(80),
+                on_secondary=secondary.tone(20),
+                secondary_container=secondary.tone(30),
+                on_secondary_container=secondary.tone(90),
+                tertiary=tertiary.tone(80),
+                on_tertiary=tertiary.tone(20),
+                tertiary_container=tertiary.tone(30),
+                on_tertiary_container=tertiary.tone(90),
+                error=error.tone(80),
+                on_error=error.tone(20),
+                error_container=error.tone(30),
+                on_error_container=error.tone(90),
+                surface=neutral.tone(6),
+                surface_dim=neutral.tone(6),
+                surface_bright=neutral.tone(24),
+                on_surface=neutral.tone(90),
+                on_surface_variant=variant.tone(80),
+                surface_container_lowest=neutral.tone(4),
+                surface_container_low=neutral.tone(10),
+                surface_container=neutral.tone(12),
+                surface_container_high=neutral.tone(17),
+                surface_container_highest=neutral.tone(22),
+                outline=variant.tone(60),
+                outline_variant=variant.tone(30),
+                background=neutral.tone(6),
+                on_background=neutral.tone(90),
+            )
+        else:
+            colors = ColorScheme(
+                primary=primary.tone(40),
+                on_primary=primary.tone(100),
+                primary_container=primary.tone(90),
+                on_primary_container=primary.tone(10),
+                secondary=secondary.tone(40),
+                on_secondary=secondary.tone(100),
+                secondary_container=secondary.tone(90),
+                on_secondary_container=secondary.tone(10),
+                tertiary=tertiary.tone(40),
+                on_tertiary=tertiary.tone(100),
+                tertiary_container=tertiary.tone(90),
+                on_tertiary_container=tertiary.tone(10),
+                error=error.tone(40),
+                on_error=error.tone(100),
+                error_container=error.tone(90),
+                on_error_container=error.tone(10),
+                surface=neutral.tone(98),
+                surface_dim=neutral.tone(87),
+                surface_bright=neutral.tone(98),
+                on_surface=neutral.tone(10),
+                on_surface_variant=variant.tone(30),
+                surface_container_lowest=neutral.tone(100),
+                surface_container_low=neutral.tone(96),
+                surface_container=neutral.tone(94),
+                surface_container_high=neutral.tone(92),
+                surface_container_highest=neutral.tone(90),
+                outline=variant.tone(50),
+                outline_variant=variant.tone(80),
+                background=neutral.tone(98),
+                on_background=neutral.tone(10),
+            )
         return Theme._with_colors(colors)
 
     @staticmethod
