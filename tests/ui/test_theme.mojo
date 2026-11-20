@@ -112,5 +112,52 @@ def test_the_ui_draws_in_the_theme_it_is_given() raises -> None:
         assert_equal(layer.theme().colors.surface, ColorScheme.light().surface)
 
 
+def _seeds() -> List[Color]:
+    return [
+        Color.hex(0xFFD400),  # yellow
+        Color.hex(0x2050E0),  # blue
+        Color.hex(0x808080),  # grey
+        Color.hex(0xE07A2E),  # orange
+        Color.hex(0x1FA060),  # green
+        Color.hex(0xD02030),  # red
+        Color.hex(0x8040C0),  # purple
+    ]
+
+
+def test_every_pair_of_a_seeded_scheme_reads_well() raises -> None:
+    for seed in _seeds():
+        for dark in [False, True]:
+            var colors = Theme.from_seed(seed, dark=dark).colors
+            for pair in _pairs(colors):
+                assert_true(
+                    _contrast(pair[0], pair[1]) >= 4.5,
+                    String(
+                        seed, " dark=", dark, ": ", pair[0], " on ", pair[1]
+                    ),
+                )
+
+
+def test_a_seeded_primary_keeps_the_seeds_hue() raises -> None:
+    var seed = Color.hex(0x2050E0)
+    var primary = Theme.from_seed(seed).colors.primary.to_oklch()
+    assert_true(abs(primary[2] - seed.to_oklch()[2]) < 5)
+    assert_true(primary[1] > 0.08)  # a blue, not a grey
+
+
+def test_a_grey_seed_gives_a_grey_theme() raises -> None:
+    var colors = Theme.from_seed(Color.hex(0x808080)).colors
+    assert_true(colors.primary.to_oklch()[1] < 0.02)
+    assert_true(colors.surface.to_oklch()[1] < 0.02)
+
+
+def test_a_seeded_tertiary_is_turned_round_the_wheel() raises -> None:
+    var seed = Color.hex(0x2050E0)
+    var colors = Theme.from_seed(seed).colors
+    var turned = colors.tertiary.to_oklch()[2] - colors.primary.to_oklch()[2]
+    if turned < 0:
+        turned += 360
+    assert_true(abs(turned - 60) < 8)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

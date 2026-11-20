@@ -75,3 +75,26 @@ def dark(
 ```
 
 A theme of light colours on a dark background, with the colours given replacing its own, as `Theme.light` does.
+
+### `from_seed`
+
+```mojo
+@staticmethod
+def from_seed(seed: Color, *, dark: Bool = False) -> Self
+```
+
+A whole theme worked out from one colour, such as a game's own, as Material's dynamic colour does: light unless `dark`.
+
+The seed's hue gives five families of colour: the primary, a greyer
+secondary, a tertiary turned 60 degrees round the colour wheel,
+near-greys for the surfaces, and a fixed red for errors. Each role
+then takes Material's fixed tone, a lightness that looks the same in
+every hue: in the light scheme `primary` is tone 40 and `on_primary`
+100, `primary_container` 90 and `on_primary_container` 10. The gap
+between two paired roles keeps them readable together, whatever the
+seed. A grey seed gives a grey theme.
+
+```mojo
+# In `create`, building the `ui` field:
+var ui = UI(Theme.from_seed(Color.hex(0xE07A2E)))  # an orange theme
+```
