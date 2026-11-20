@@ -1,3 +1,4 @@
+from ._claim import _Claim
 from .key import Key, _KeySet
 
 
@@ -51,6 +52,8 @@ struct Keyboard(Copyable, Movable, Writable):
     var _released: _KeySet
     var _typed: _KeySet
     var _strokes: List[_Stroke]
+    var _claim: _Claim
+    """Which of several readers, such as two `UI`s, has the keyboard."""
 
     def __init__(out self):
         self.key = Key.NONE
@@ -60,6 +63,7 @@ struct Keyboard(Copyable, Movable, Writable):
         self._released = _KeySet()
         self._typed = _KeySet()
         self._strokes = []
+        self._claim = _Claim()
 
     def down(self, key: Key) -> Bool:
         """Whether `key` is held right now: true every frame it stays down."""

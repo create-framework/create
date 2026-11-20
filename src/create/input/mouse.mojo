@@ -1,6 +1,7 @@
 from create.math.point import Point
 from create.math.vector import Vector
 
+from ._claim import _Claim
 from .mouse_button import MouseButton
 
 
@@ -46,6 +47,8 @@ struct Mouse(Copyable, Movable, Writable):
     var _held: Int
     var _pressed: Int
     var _released: Int
+    var _claim: _Claim
+    """Which of several readers, such as two `UI`s, has the mouse."""
     # Buttons are a handful of small ints (1..5), not the sparse space keys
     # need a set for, so a bitmask is enough.
 
@@ -58,6 +61,7 @@ struct Mouse(Copyable, Movable, Writable):
         self._held = 0
         self._pressed = 0
         self._released = 0
+        self._claim = _Claim()
 
     def down(self, button: MouseButton = MouseButton.LEFT) -> Bool:
         """Whether `button` is held right now."""
