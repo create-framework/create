@@ -85,6 +85,9 @@ struct Context(Copyable, Movable):
     # This frame's `rumble` calls, sent by the windowed loops after `update`
     # and dropped at the next frame's start either way.
     var _rumbles: List[_Rumble]
+    # How many claimant numbers have been handed out: each reader that
+    # shares the devices, such as a `UI`, takes one.
+    var _claimants: Int
 
     def __init__(out self):
         self.time = Time()
@@ -108,6 +111,7 @@ struct Context(Copyable, Movable):
         self._time_paused = False
         self._quit = False
         self._rumbles = []
+        self._claimants = 0
         # A new run starts the playheads' clock at zero.
         self._publish_clock()
 
@@ -341,6 +345,12 @@ struct Context(Copyable, Movable):
     def _new_canvas(self, var state: _PersistentCanvasState) -> Canvas:
         """Build this frame's `Canvas` from the carried-over state."""
         return Canvas(_state=state^)
+
+    def _new_claimant(mut self) -> Int:
+        """A number no other reader of these devices has, to claim the
+        keyboard and mouse with."""
+        self._claimants += 1
+        return self._claimants
 
     def _new_input_frame(mut self):
         """Clear every device's edges, keeping what is held, before a frame's

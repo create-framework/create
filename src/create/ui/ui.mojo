@@ -76,6 +76,9 @@ struct UI(Movable):
     """Whether the focused widget takes typed text, as a text field does."""
     var _buffers: Dict[UInt64, _TextBuffer]
     """Each text field's text, caret and selection, under its ID."""
+    var _claimant: Int
+    """This UI's number for claiming the keyboard and mouse, so several UIs
+    in one program take turns at them; 0 until its first layer opens."""
     var _typing_was: Bool
     """Whether a widget that takes typing had focus when `text_input` was
     last switched: the UI switches it only when that changes."""
@@ -102,6 +105,7 @@ struct UI(Movable):
         self._key_used = False
         self._buffers = {}
         self._typing_was = False
+        self._claimant = 0
 
     def theme(self) -> Theme:
         """The theme the widgets are drawn in."""
@@ -198,8 +202,15 @@ struct UI(Movable):
         """Start a layer, resetting the per-frame state when it is the first
         layer of a new frame."""
         var frame = context.frame_count()
+        if self._claimant == 0:
+            self._claimant = context._new_claimant()
         ref mouse = context.mouse
         ref keyboard = context.keyboard
+        # another UI holding a device: this one leaves it alone
+        var keyboard_taken = keyboard._claim.held_by_other(
+            self._claimant, frame
+        )
+        var mouse_taken = mouse._claim.held_by_other(self._claimant, frame)
         if frame != self._frame:
             self._frame = frame
             self._site_counts.clear()
@@ -208,13 +219,16 @@ struct UI(Movable):
             swap(self._last_hits, self._hits)
             self._hits.clear()
             self._hot = None
-            for i in reversed(range(len(self._last_hits))):
-                if self._last_hits[i].contains(mouse.position):
-                    self._hot = self._last_hits[i].id
-                    break
-            if not mouse.down() and not mouse.released():
+            if not mouse_taken:
+                for i in reversed(range(len(self._last_hits))):
+                    if self._last_hits[i].contains(mouse.position):
+                        self._hot = self._last_hits[i].id
+                        break
+            if mouse_taken or (not mouse.down() and not mouse.released()):
                 self._held = None
             self._key_used = False
+            if keyboard_taken and self._holds_keys():
+                self._clear_focus()  # another UI has taken the keyboard
             if self._focused:
                 var still_there = False
                 for hit in self._last_hits:
@@ -223,18 +237,19 @@ struct UI(Movable):
                         break
                 if not still_there:
                     self._clear_focus()  # its widget wasn't called last frame
-                elif keyboard.pressed(Key.ESCAPE):
+                elif keyboard.pressed(Key.ESCAPE) and not keyboard_taken:
                     self._clear_focus()
                     self._key_used = True
             if mouse.pressed() and not self._hot:
                 self._clear_focus()  # a click on no widget
-            if keyboard.typed(Key.TAB):
+            if keyboard.typed(Key.TAB) and not keyboard_taken:
                 self._tab(
                     backwards=keyboard.down(Key.LEFT_SHIFT)
                     or keyboard.down(Key.RIGHT_SHIFT)
                 )
             self._drop_unseen_buffers()
             self._sync_text_input(context)
+        self._sync_claims(context)
         self._recorder.commands.clear()
         self._rings.commands.clear()
 
@@ -270,6 +285,27 @@ struct UI(Movable):
         self._focused = id
         self._focus_visible = visible
         self._focused_takes_typing = takes_typing
+
+    def _holds_keys(self) -> Bool:
+        """Whether this UI's focus takes keys: from the keyboard or code, or
+        on a widget that takes typing."""
+        return Bool(self._focused) and (
+            self._focus_visible or self._focused_takes_typing
+        )
+
+    def _sync_claims(self, mut context: Context):
+        """Claim the keyboard while this UI's focus takes keys, and the mouse
+        while one of its widgets is held, renewing the claims every frame;
+        let go of them otherwise."""
+        var frame = context.frame_count()
+        if self._holds_keys():
+            context.keyboard._claim.claim(self._claimant, frame)
+        else:
+            context.keyboard._claim.release(self._claimant)
+        if self._held:
+            context.mouse._claim.claim(self._claimant, frame)
+        else:
+            context.mouse._claim.release(self._claimant)
 
     def _sync_text_input(mut self, mut context: Context):
         """Switch `context.text_input` on when a widget that takes typing

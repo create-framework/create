@@ -396,7 +396,7 @@ struct UILayer[
                 select=False,
             )
             buffer.last_change = now
-        if state.focused:
+        if state.focused and self._keyboard_free():
             var before = buffer.text
             var caret = buffer.before_caret()
             buffer.update(self._context[])
@@ -940,8 +940,13 @@ struct UILayer[
             return _Interaction(False, False, False, False, False)
         if take_focus:
             ui._focus(id, visible=True, takes_typing=takes_typing)
-        # while another widget is held, this one doesn't react to the pointer
-        var free = not ui._held or ui._held.value() == id
+        # while another widget is held, in this UI or another, this one
+        # doesn't react to the pointer
+        var free = (not ui._held or ui._held.value() == id) and not (
+            mouse._claim.held_by_other(
+                ui._claimant, self._context[].frame_count()
+            )
+        )
         var hovered = Bool(ui._hot) and ui._hot.value() == id and free
         if hovered and mouse.pressed():
             ui._held = id
@@ -951,6 +956,7 @@ struct UILayer[
         if held and mouse.released():
             clicked = hovered
             ui._held = None
+        ui._sync_claims(self._context[])
         var focused = Bool(ui._focused) and ui._focused.value() == id
         var activated = False
         if self._keys_act(focused):
@@ -970,7 +976,13 @@ struct UILayer[
         """Whether keys act on a widget: it has focus from the keyboard or
         code, not a click, so a game's own keys still work after a button is
         clicked."""
-        return focused and self._ui[]._focus_visible
+        return focused and self._ui[]._focus_visible and self._keyboard_free()
+
+    def _keyboard_free(self) -> Bool:
+        """Whether no other UI holds the keyboard."""
+        return not self._context[].keyboard._claim.held_by_other(
+            self._ui[]._claimant, self._context[].frame_count()
+        )
 
     def _disabled(self, disabled: Bool) -> Bool:
         """Whether a widget given `disabled` is disabled: by its own keyword,
