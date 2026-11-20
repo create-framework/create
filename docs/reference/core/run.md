@@ -1,12 +1,11 @@
 # run
 
 ```mojo
-def run[P: Program](
+def run[P: Program, backend: RenderBackend = RenderBackend.CPU](
     title: String,
     mode: WindowMode = WindowMode.WINDOWED,
     width: Int = Int(1280),
     height: Int = Int(720),
-    backend: RenderBackend = RenderBackend.CPU,
     resizable: Bool = True,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
     autoscale: Autoscale = Autoscale.FIT,
@@ -42,10 +41,13 @@ switches it later in the run.
 is where a program with an opinion of its own states it. The size here is
 the shorthand for the common case where the window and the design agree.
 
-`backend=RenderBackend.GPU` runs the same program through the GL backend
-instead — a different window, a different loop, and the same frame. It is
-a branch rather than a value the loop holds because Mojo 1.0 has no
-dynamic trait dispatch, which is also why `Backend` switches on a `kind`.
+`run[P, backend=RenderBackend.GPU]` runs the same program through the GL
+backend instead: a different window, a different loop, and the same
+frame. The backend is a parameter rather than an argument so that a
+program compiles only the backend it runs on; the GL backend is a large
+share of what a program compiles. To choose on the command line with
+`RenderBackend.from_arguments()`, call `run` once for each backend, which
+compiles both.
 
 `antialiasing` smooths the edges of shapes on either backend
 (`Antialiasing.MEDIUM` by default, `OFF` for hard pixels). See

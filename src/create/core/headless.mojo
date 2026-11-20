@@ -17,13 +17,12 @@ got through the loop."""
 
 
 def run_headless[
-    P: Program
+    P: Program, backend: RenderBackend = RenderBackend.CPU
 ](
     width: Int,
     height: Int,
     frames: Int = 1,
     window_size: Optional[Tuple[Int, Int]] = None,
-    backend: RenderBackend = RenderBackend.CPU,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
     autoscale: Autoscale = Autoscale.FIT,
 ) raises -> Image:
@@ -45,9 +44,10 @@ def run_headless[
     release or typed text lasts the frame it was fed in, while a key held
     down stays down.
 
-    `backend=RenderBackend.GPU` runs the same frames through the GL backend
-    into an offscreen framebuffer instead, reading the result back at the
-    end rather than replaying onto the buffer every frame — see
+    `run_headless[P, backend=RenderBackend.GPU]` runs the same frames
+    through the GL backend into an offscreen framebuffer instead, reading the
+    result back at the end rather than replaying onto the buffer every
+    frame — see
     `_headless_gl.mojo`. It raises if no GL context can be created; it never
     falls back to the CPU backend.
 
@@ -56,7 +56,7 @@ def run_headless[
 
     `autoscale` is `run`'s too: how the design maps onto the framebuffer.
     """
-    if backend == RenderBackend.GPU:
+    comptime if backend == RenderBackend.GPU:
         return _image_of(
             _run_headless_gl[P](
                 width,
@@ -67,36 +67,37 @@ def run_headless[
                 autoscale,
             )
         )
-    var pw = window_size.value()[0] if window_size else width
-    var ph = window_size.value()[1] if window_size else height
-    var mem = MemorySurface(pw, ph)
-    var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
-    var context = Context()
-    context.design_size(width, height)
-    context.autoscale(autoscale)
-    # Before create(), from the arguments, as in the windowed loops.
-    context._set_viewport(state, pw, ph)
-    var program = first_step[P](context, state)
-    state._backend.present(mem.surface(), state._view.scale)
-    var now = 0
-    context.time._start(now)
-    for _ in range(frames):
-        if context._quit:
-            break
-        # Re-derived every frame, as the windowed loops do, so a dial turned
-        # in create() or a previous update() reaches this one.
+    else:
+        var pw = window_size.value()[0] if window_size else width
+        var ph = window_size.value()[1] if window_size else height
+        var mem = MemorySurface(pw, ph)
+        var state = _PersistentCanvasState()
+        state._backend.antialiasing = antialiasing
+        var context = Context()
+        context.design_size(width, height)
+        context.autoscale(autoscale)
+        # Before create(), from the arguments, as in the windowed loops.
         context._set_viewport(state, pw, ph)
-        # This frame's presses, releases and typed text start empty, as
-        # apply_events starts them in the windowed loops: there are no events
-        # here, but a program may feed the context's devices itself.
-        context._new_input_frame()
-        now += _FRAME_MILLIS
-        context._advance_frame(now)
-        state = step(program, context, state^)
+        var program = first_step[P](context, state)
         state._backend.present(mem.surface(), state._view.scale)
-    state._backend.captures.finish_recording()
-    return _image_of(mem^)
+        var now = 0
+        context.time._start(now)
+        for _ in range(frames):
+            if context._quit:
+                break
+            # Re-derived every frame, as the windowed loops do, so a dial turned
+            # in create() or a previous update() reaches this one.
+            context._set_viewport(state, pw, ph)
+            # This frame's presses, releases and typed text start empty, as
+            # apply_events starts them in the windowed loops: there are no events
+            # here, but a program may feed the context's devices itself.
+            context._new_input_frame()
+            now += _FRAME_MILLIS
+            context._advance_frame(now)
+            state = step(program, context, state^)
+            state._backend.present(mem.surface(), state._view.scale)
+        state._backend.captures.finish_recording()
+        return _image_of(mem^)
 
 
 def _image_of(var mem: MemorySurface) raises -> Image:

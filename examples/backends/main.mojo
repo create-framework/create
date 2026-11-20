@@ -163,10 +163,11 @@ def main() raises:
     for i in range(1, len(argv())):
         if argv()[i] == "fullscreen":
             mode = WindowMode.FULLSCREEN
-    run[App](
-        "Backends",
-        mode,
-        width=800,
-        height=600,
-        backend=RenderBackend.from_arguments(),
-    )
+    # `gpu` on the command line runs it on the GPU; calling `run` once for
+    # each backend compiles both
+    if RenderBackend.from_arguments() == RenderBackend.GPU:
+        run[App, backend=RenderBackend.GPU](
+            "Backends", mode, width=800, height=600
+        )
+    else:
+        run[App]("Backends", mode, width=800, height=600)

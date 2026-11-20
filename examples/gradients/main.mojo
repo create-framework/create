@@ -118,10 +118,13 @@ struct App(Program):
 
 
 def main() raises:
-    run[App](
-        "Gradients",
-        width=1280,
-        height=720,
-        autoscale=Autoscale.EXTEND,
-        backend=RenderBackend.from_arguments(),
-    )
+    # `gpu` on the command line runs it on the GPU; calling `run` once for
+    # each backend compiles both
+    if RenderBackend.from_arguments() == RenderBackend.GPU:
+        run[App, backend=RenderBackend.GPU](
+            "Gradients", width=1280, height=720, autoscale=Autoscale.EXTEND
+        )
+    else:
+        run[App](
+            "Gradients", width=1280, height=720, autoscale=Autoscale.EXTEND
+        )

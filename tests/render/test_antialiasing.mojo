@@ -161,8 +161,8 @@ def test_switching_off_late_covers_the_whole_frame() raises -> None:
 def test_switching_off_late_covers_the_whole_gpu_frame() raises -> None:
     var m: Image
     try:
-        m = run_headless[SwitchedOffLate[1]](
-            100, 100, backend=RenderBackend.GPU
+        m = run_headless[SwitchedOffLate[1], backend=RenderBackend.GPU](
+            100, 100
         )
     except e:
         print("SKIP — no GL context:", e)

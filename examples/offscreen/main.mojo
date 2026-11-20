@@ -92,9 +92,11 @@ struct Offscreen(Program):
 
 
 def main() raises:
-    run[Offscreen](
-        "Offscreen",
-        width=800,
-        height=600,
-        backend=RenderBackend.from_arguments(),
-    )
+    # `gpu` on the command line runs it on the GPU; calling `run` once for
+    # each backend compiles both
+    if RenderBackend.from_arguments() == RenderBackend.GPU:
+        run[Offscreen, backend=RenderBackend.GPU](
+            "Offscreen", width=800, height=600
+        )
+    else:
+        run[Offscreen]("Offscreen", width=800, height=600)

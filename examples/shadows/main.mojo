@@ -120,9 +120,9 @@ struct App(Program):
 
 
 def main() raises:
-    run[App](
-        "Shadows",
-        width=1280,
-        height=720,
-        backend=RenderBackend.from_arguments(),
-    )
+    # `gpu` on the command line runs it on the GPU; calling `run` once for
+    # each backend compiles both
+    if RenderBackend.from_arguments() == RenderBackend.GPU:
+        run[App, backend=RenderBackend.GPU]("Shadows", width=1280, height=720)
+    else:
+        run[App]("Shadows", width=1280, height=720)

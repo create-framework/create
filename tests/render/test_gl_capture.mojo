@@ -66,8 +66,8 @@ def test_gpu_screenshot_has_the_framebuffer_resolution_and_is_opaque() raises ->
     None
 ):
     try:
-        _ = run_headless[GPUScreenshot](
-            200, 100, 1, window_size=(640, 480), backend=RenderBackend.GPU
+        _ = run_headless[GPUScreenshot, backend=RenderBackend.GPU](
+            200, 100, 1, window_size=(640, 480)
         )
     except e:
         print("SKIP — no GL context:", e)
@@ -120,8 +120,8 @@ struct CaptureImageGPU(Program):
 def test_gpu_save_image_matches_cpu_save_image_byte_for_byte() raises -> None:
     var gpu_m: Image
     try:
-        gpu_m = run_headless[CaptureImageGPU](
-            200, 100, 1, window_size=(640, 480), backend=RenderBackend.GPU
+        gpu_m = run_headless[CaptureImageGPU, backend=RenderBackend.GPU](
+            200, 100, 1, window_size=(640, 480)
         )
     except e:
         print("SKIP — no GL context:", e)
@@ -174,8 +174,8 @@ def test_gpu_recording_matches_cpu_recording_byte_for_byte() raises -> None:
     # A recording replays each frame on the CPU under either backend, as
     # save_image does, so the two files are the same bytes.
     try:
-        _ = run_headless[RecordFrames[_GIF_GPU]](
-            200, 100, 8, window_size=(640, 480), backend=RenderBackend.GPU
+        _ = run_headless[RecordFrames[_GIF_GPU], backend=RenderBackend.GPU](
+            200, 100, 8, window_size=(640, 480)
         )
     except e:
         print("SKIP — no GL context:", e)
@@ -194,9 +194,9 @@ def test_gpu_recording_matches_cpu_recording_byte_for_byte() raises -> None:
 
 def test_a_transparent_gpu_recording_matches_the_cpu_one() raises -> None:
     try:
-        _ = run_headless[RecordFrames[_GIF_GPU, True]](
-            200, 100, 8, window_size=(640, 480), backend=RenderBackend.GPU
-        )
+        _ = run_headless[
+            RecordFrames[_GIF_GPU, True], backend=RenderBackend.GPU
+        ](200, 100, 8, window_size=(640, 480))
     except e:
         print("SKIP — no GL context:", e)
         return
@@ -253,8 +253,8 @@ def _mid_rgb(gif: DecodedGif, frame: Int, x: Int) -> Int:
 
 def test_a_gpu_restart_starts_an_autoclear_off_recording_over() raises -> None:
     try:
-        _ = run_headless[PaintAcrossARestart](
-            64, 48, 10, backend=RenderBackend.GPU
+        _ = run_headless[PaintAcrossARestart, backend=RenderBackend.GPU](
+            64, 48, 10
         )
     except e:
         print("SKIP — no GL context:", e)
@@ -304,13 +304,8 @@ def test_a_gpu_autoclear_off_recording_starts_from_the_screen() raises -> None:
     # The first frame is read back from the GPU's drawable, twice the
     # design size, and sampled down to the recording's.
     try:
-        _ = run_headless[PaintThenRecord](
-            64,
-            48,
-            10,
-            window_size=(128, 96),
-            backend=RenderBackend.GPU,
-            antialiasing=Antialiasing.OFF,
+        _ = run_headless[PaintThenRecord, backend=RenderBackend.GPU](
+            64, 48, 10, window_size=(128, 96), antialiasing=Antialiasing.OFF
         )
     except e:
         print("SKIP — no GL context:", e)

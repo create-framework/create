@@ -127,8 +127,8 @@ def _at(m: Image, x: Int, y: Int) -> Color:
     return m.pixel(_W // 2 + x, _H // 2 - y)
 
 
-def _frame[scene: Int](backend: RenderBackend) raises -> Image:
-    return run_headless[Clipped[scene]](_W, _H, backend=backend)
+def _frame[scene: Int, backend: RenderBackend]() raises -> Image:
+    return run_headless[Clipped[scene], backend=backend](_W, _H)
 
 
 def _check(scene: Int, m: Image) raises:
@@ -187,14 +187,14 @@ def _check(scene: Int, m: Image) raises:
 
 def _all[backend: RenderBackend]() raises -> List[Image]:
     var out = List[Image]()
-    out.append(_frame[_RECT](backend))
-    out.append(_frame[_INVERTED_CIRCLE](backend))
-    out.append(_frame[_NESTED](backend))
-    out.append(_frame[_ROTATED](backend))
-    out.append(_frame[_FROZEN](backend))
-    out.append(_frame[_CONCAVE](backend))
-    out.append(_frame[_PAINTS](backend))
-    out.append(_frame[_WEDGE](backend))
+    out.append(_frame[_RECT, backend]())
+    out.append(_frame[_INVERTED_CIRCLE, backend]())
+    out.append(_frame[_NESTED, backend]())
+    out.append(_frame[_ROTATED, backend]())
+    out.append(_frame[_FROZEN, backend]())
+    out.append(_frame[_CONCAVE, backend]())
+    out.append(_frame[_PAINTS, backend]())
+    out.append(_frame[_WEDGE, backend]())
     return out^
 
 

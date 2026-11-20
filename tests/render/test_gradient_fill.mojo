@@ -304,12 +304,8 @@ def _gpu_matches_cpu_for[
     to try it with."""
     var gpu: Image
     try:
-        gpu = run_headless[P](
-            100,
-            100,
-            1,
-            window_size=(pixel_w, pixel_h),
-            backend=RenderBackend.GPU,
+        gpu = run_headless[P, backend=RenderBackend.GPU](
+            100, 100, 1, window_size=(pixel_w, pixel_h)
         )
     except:
         return False

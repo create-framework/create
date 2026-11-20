@@ -39,7 +39,7 @@ def _gpu_entry_point() raises:
     It reaches a separate loop and renderer, so the windowed gate above says
     nothing about it.
     """
-    run[Smoke]("Smoke Test", width=320, height=240, backend=RenderBackend.GPU)
+    run[Smoke, backend=RenderBackend.GPU]("Smoke Test", width=320, height=240)
 
 
 def test_smoke_renders_through_the_public_api() raises -> None:

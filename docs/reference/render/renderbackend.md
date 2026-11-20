@@ -4,7 +4,7 @@
 struct RenderBackend
 ```
 
-Which renderer draws a run's frames: `run`'s and `run_headless`'s `backend`.
+Which renderer draws a run's frames: `run`'s and `run_headless`'s `backend` parameter.
 
 Fixed for the run. Both draw the same frame, apart from tiny differences
 along antialiased edges. Compare backends with `==`.
@@ -34,7 +34,7 @@ def __init__(out self, value: Int)
 def from_arguments() -> Self
 ```
 
-The backend named on the command line: `GPU` when the program was run with a `gpu` argument, `CPU` otherwise or with `cpu`, the last named winning. So one build runs on either, `./sketch gpu` or `pixi run example shadows gpu`, passed as `run(..., backend=RenderBackend.from_arguments())`; other arguments are left for the program.
+The backend named on the command line: `GPU` when the program was run with a `gpu` argument, `CPU` otherwise or with `cpu`, the last named winning. So one build runs on either, `./sketch gpu` or `pixi run example shadows gpu`. The backend is a parameter of `run`, so call `run` once for each, which compiles both: `if RenderBackend.from_arguments() == RenderBackend.GPU: run[P, backend=RenderBackend.GPU](...)`, `else: run[P](...)`. Other arguments are left for the program.
 
 ## Special methods
 

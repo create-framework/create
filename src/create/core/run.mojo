@@ -95,13 +95,12 @@ def _run_loop[
 
 
 def run[
-    P: Program
+    P: Program, backend: RenderBackend = RenderBackend.CPU
 ](
     title: String,
     mode: WindowMode = WindowMode.WINDOWED,
     width: Int = 1280,
     height: Int = 720,
-    backend: RenderBackend = RenderBackend.CPU,
     resizable: Bool = True,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
     autoscale: Autoscale = Autoscale.FIT,
@@ -135,19 +134,19 @@ def run[
     is where a program with an opinion of its own states it. The size here is
     the shorthand for the common case where the window and the design agree.
 
-    `backend=RenderBackend.GPU` runs the same program through the GL backend
-    instead — a different window, a different loop, and the same frame. It is
-    a branch rather than a value the loop holds because Mojo 1.0 has no
-    dynamic trait dispatch, which is also why `Backend` switches on a `kind`.
+    `run[P, backend=RenderBackend.GPU]` runs the same program through the GL
+    backend instead: a different window, a different loop, and the same
+    frame. The backend is a parameter rather than an argument so that a
+    program compiles only the backend it runs on; the GL backend is a large
+    share of what a program compiles. To choose on the command line with
+    `RenderBackend.from_arguments()`, call `run` once for each backend, which
+    compiles both.
 
     `antialiasing` smooths the edges of shapes on either backend
     (`Antialiasing.MEDIUM` by default, `OFF` for hard pixels). See
     `Antialiasing`.
     """
-    var fullscreen = mode == WindowMode.FULLSCREEN
-    var borderless = mode == WindowMode.BORDERLESS
-    var maximized = mode == WindowMode.MAXIMIZED
-    if backend == RenderBackend.GPU:
+    comptime if backend == RenderBackend.GPU:
         run_gl[P](
             title,
             mode,
@@ -157,45 +156,48 @@ def run[
             antialiasing=antialiasing,
             autoscale=autoscale,
         )
-        return
-    var win = Window(
-        title,
-        width,
-        height,
-        fullscreen,
-        resizable=resizable,
-        borderless=borderless,
-        maximized=maximized,
-    )
-    # Style and loaded fonts live here rather than in the Canvas, which is
-    # rebuilt every frame; the transform stack deliberately does not, so each
-    # frame starts unrotated and untranslated.
-    var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
-    # The size the program is authored against is always what the caller asked
-    # for, never what the display handed back. In fullscreen SDL ignores the
-    # requested size, so seeding this from the window would make the design
-    # space a property of the user's monitor rather than of the program.
-    #
-    # Scaling that design to the window is the default because the alternative
-    # punishes the obvious way to write a program: laid-out coordinates that
-    # break on a display the author never had. `autoscale=Autoscale.OFF` opts
-    # back out.
-    var context = Context()
-    context.design_size(width, height)
-    context.autoscale(autoscale)
-    context.title(title)
-    context.resizable(resizable)
-    context.window_mode(mode)
-    # The mapping comes from `run`'s arguments and is in place before
-    # create(), so a dial create() turns applies from the next frame, as it
-    # does from `update`.
-    _wait_for_dimensions(win, state, context)
-    # Later changes arrive as events; this is what was copied before.
-    context._clipboard = win.clipboard()
-    var applied = _AppliedWindow(context)
-    var program = first_step[P](context, state)
-    _apply_window_dials(win, applied, context)
-    _present(win, state)
-    _apply_window_mode(win, applied, context)
-    _run_loop(program, win, state^, context, applied^)
+    else:
+        var fullscreen = mode == WindowMode.FULLSCREEN
+        var borderless = mode == WindowMode.BORDERLESS
+        var maximized = mode == WindowMode.MAXIMIZED
+        var win = Window(
+            title,
+            width,
+            height,
+            fullscreen,
+            resizable=resizable,
+            borderless=borderless,
+            maximized=maximized,
+        )
+        # Style and loaded fonts live here rather than in the Canvas, which is
+        # rebuilt every frame; the transform stack deliberately does not, so each
+        # frame starts unrotated and untranslated.
+        var state = _PersistentCanvasState()
+        state._backend.antialiasing = antialiasing
+        # The size the program is authored against is always what the caller asked
+        # for, never what the display handed back. In fullscreen SDL ignores the
+        # requested size, so seeding this from the window would make the design
+        # space a property of the user's monitor rather than of the program.
+        #
+        # Scaling that design to the window is the default because the alternative
+        # punishes the obvious way to write a program: laid-out coordinates that
+        # break on a display the author never had. `autoscale=Autoscale.OFF` opts
+        # back out.
+        var context = Context()
+        context.design_size(width, height)
+        context.autoscale(autoscale)
+        context.title(title)
+        context.resizable(resizable)
+        context.window_mode(mode)
+        # The mapping comes from `run`'s arguments and is in place before
+        # create(), so a dial create() turns applies from the next frame, as it
+        # does from `update`.
+        _wait_for_dimensions(win, state, context)
+        # Later changes arrive as events; this is what was copied before.
+        context._clipboard = win.clipboard()
+        var applied = _AppliedWindow(context)
+        var program = first_step[P](context, state)
+        _apply_window_dials(win, applied, context)
+        _present(win, state)
+        _apply_window_mode(win, applied, context)
+        _run_loop(program, win, state^, context, applied^)

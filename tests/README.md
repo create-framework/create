@@ -34,8 +34,8 @@ directly for input-driven behaviour.
   structurally (bounding box, centroid, ink coverage within tolerance, interior colour), not pixel
   by pixel. The rasterisers may legitimately differ at edges, and demanding exactness would rule out
   GPU antialiasing.
-- `run_headless(..., backend=RenderBackend.GPU)` for what parity can't see across several commands
-  in one frame: batch breaks, buffer growth and per-frame texture cleanup
+- `run_headless[P, backend=RenderBackend.GPU](...)` for what parity can't see across several
+  commands in one frame: batch breaks, buffer growth and per-frame texture cleanup
   (`render/test_gl_batching.mojo`), and the GPU capture paths (`render/test_gl_capture.mojo`).
 - Per pixel, where both backends are meant to compute the same colour:
   `render/test_gradient_fill.mojo` renders each gradient scene through both and compares every pixel

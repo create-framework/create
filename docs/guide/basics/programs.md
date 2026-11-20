@@ -54,38 +54,44 @@ canvas](../drawing/canvas.md#the-background)). See
 ## Running a program
 
 `run[P](title)` opens a window and runs `P` in it until it quits. Its other arguments are keywords
-with defaults:
+with defaults, and so is its `backend` parameter, below:
 
 | Argument | Default | What it sets |
 |---|---|---|
 | `mode` | `WindowMode.WINDOWED` | `WINDOWED`, `MAXIMIZED`, `FULLSCREEN` or `BORDERLESS` |
 | `width`, `height` | `1280`, `720` | The design size, see [Coordinates](coordinates.md#design-size-and-autoscale) |
-| `backend` | `RenderBackend.CPU` | Which renderer draws the frames, below |
 | `resizable` | `True` | Whether the user can resize the window |
 | `antialiasing` | `Antialiasing.MEDIUM` | See [The canvas](../drawing/canvas.md#antialiasing) |
 | `autoscale` | `Autoscale.FIT` | How the design size maps onto the window |
 
-Every argument but `backend` is only a starting value, changed later through a setter (see [The
-run's settings](#the-runs-settings)).
+Every argument is only a starting value, changed later through a setter (see [The run's
+settings](#the-runs-settings)).
 
 **The backend** is the part of the computer that draws the frames, and it is fixed for the run. By
 default the CPU draws them; `RenderBackend.GPU` draws the same program on the graphics card, through
 OpenGL 3.3, instead. The two draw the same frame, apart from tiny differences along smoothed
-(antialiased) edges:
+(antialiased) edges. The backend goes in the square brackets with the program, as a parameter,
+because it is chosen when the program is compiled: only the backend the program uses is built into
+it, which keeps compiling quick.
 
 ```mojo
 # In `main`:
-run[Example]("Example", backend=RenderBackend.GPU)
+run[Example, backend=RenderBackend.GPU]("Example")
 ```
 
 `RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run with
 a `gpu` argument (`./example gpu`), the CPU otherwise. Other arguments are left for the program.
+Since the choice is made while the program runs, call `run` once for each backend; the program then
+contains both, and takes a little longer to compile.
 [examples/backends](../../../examples/backends/main.mojo) reads it this way, so `pixi run example
 backends` and `pixi run example backends gpu` compare the two.
 
 ```mojo
 # In `main`:
-run[Example]("Example", backend=RenderBackend.from_arguments())
+if RenderBackend.from_arguments() == RenderBackend.GPU:
+    run[Example, backend=RenderBackend.GPU]("Example")
+else:
+    run[Example]("Example")
 ```
 
 ## The first frame
@@ -177,10 +183,10 @@ var mode = context.autoscale()  # Autoscale.EXTEND
 `Context`'s only fields are the readings: `time`, `keyboard` and `mouse`. The gamepads are read with
 `context.gamepad(player)` instead, since there can be several; it returns a copy.
 
-Every `run` argument except `backend` can be changed later: `antialiasing` through
-`canvas.antialiasing`, the rest through a setting here. Not every setting is a `run` argument:
-`cursor`, `quit_on_escape`, `max_frame_rate`, `time_scale` and `time_paused` have no argument, so
-set them from the program, in `create` for a setting that should hold from the start.
+Every `run` argument can be changed later: `antialiasing` through `canvas.antialiasing`, the rest
+through a setting here. Not every setting is a `run` argument: `cursor`, `quit_on_escape`,
+`max_frame_rate`, `time_scale` and `time_paused` have no argument, so set them from the program, in
+`create` for a setting that should hold from the start.
 
 ## When a change applies
 

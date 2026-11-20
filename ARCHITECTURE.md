@@ -32,8 +32,9 @@ internals](#package-internals).
 A program's frame passes through three packages: `core` runs the loop, `input` holds what the user
 did, and `render` turns drawing into pixels.
 
-1. **`run[P]` starts the run** (`core`). It seeds the `Context` from its arguments, and branches
-   once on `backend` into the CPU loop or the GL one; `run_headless` has a loop of each kind too.
+1. **`run[P]` starts the run** (`core`). It seeds the `Context` from its arguments, and runs the CPU
+   loop or the GL one, as its `backend` parameter says; `run_headless` has a loop of each kind too.
+   The choice is made at compile time, so a program compiles only the loop it runs.
 2. **Frame 1 is `create`'s.** The loop derives the viewport (the design size mapped onto the
    window), then `first_step` calls `create`, presents what it drew, and starts the clock.
 3. **Every later frame**, the loop pumps the window's events (from `_window`) and folds them into

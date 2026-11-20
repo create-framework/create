@@ -1,12 +1,11 @@
 # run_headless
 
 ```mojo
-def run_headless[P: Program](
+def run_headless[P: Program, backend: RenderBackend = RenderBackend.CPU](
     width: Int,
     height: Int,
     frames: Int = Int(1),
     window_size: Optional[Tuple[Int, Int]] = None,
-    backend: RenderBackend = RenderBackend.CPU,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
     autoscale: Autoscale = Autoscale.FIT,
 ) raises -> Image
@@ -28,9 +27,10 @@ itself (a test pressing keys) gets the windowed loops' frame boundaries: a press
 release or typed text lasts the frame it was fed in, while a key held
 down stays down.
 
-`backend=RenderBackend.GPU` runs the same frames through the GL backend
-into an offscreen framebuffer instead, reading the result back at the
-end rather than replaying onto the buffer every frame — see
+`run_headless[P, backend=RenderBackend.GPU]` runs the same frames
+through the GL backend into an offscreen framebuffer instead, reading the
+result back at the end rather than replaying onto the buffer every
+frame — see
 `_headless_gl.mojo`. It raises if no GL context can be created; it never
 falls back to the CPU backend.
 

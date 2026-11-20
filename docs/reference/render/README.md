@@ -6,7 +6,7 @@ Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settin
 
 | Type | Description |
 |---|---|
-| [`RenderBackend`](renderbackend.md) | Which renderer draws a run's frames: `run`'s and `run_headless`'s `backend`. |
+| [`RenderBackend`](renderbackend.md) | Which renderer draws a run's frames: `run`'s and `run_headless`'s `backend` parameter. |
 | [`Antialiasing`](antialiasing.md) | How smoothly the edges of shapes are drawn. |
 | [`Align`](align.md) | Which point of a box a position names — one value for both axes. |
 | [`StrokeAlign`](strokealign.md) | Where a region's stroke sits against the shape's edge. |

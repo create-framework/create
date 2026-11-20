@@ -28,7 +28,7 @@ struct GPURect(Program):
 def test_the_gpu_backend_paints_a_filled_rectangle() raises -> None:
     var m: Image
     try:
-        m = run_headless[GPURect](32, 32, backend=RenderBackend.GPU)
+        m = run_headless[GPURect, backend=RenderBackend.GPU](32, 32)
     except e:
         print("SKIP — no GL context:", e)
         return
@@ -59,7 +59,7 @@ def test_the_gpu_backend_returns_only_the_last_of_several_frames() raises -> (
 ):
     var m: Image
     try:
-        m = run_headless[GPUMover](64, 32, frames=2, backend=RenderBackend.GPU)
+        m = run_headless[GPUMover, backend=RenderBackend.GPU](64, 32, frames=2)
     except e:
         print("SKIP — no GL context:", e)
         return
@@ -75,8 +75,8 @@ def test_the_gpu_backend_returns_only_the_last_of_several_frames() raises -> (
 def test_the_gpu_backend_paints_letterbox_bars() raises -> None:
     var m: Image
     try:
-        m = run_headless[GPURect](
-            64, 64, window_size=(128, 64), backend=RenderBackend.GPU
+        m = run_headless[GPURect, backend=RenderBackend.GPU](
+            64, 64, window_size=(128, 64)
         )
     except e:
         print("SKIP — no GL context:", e)
@@ -114,7 +114,7 @@ def test_the_gpu_backend_rounds_rectangle_corners() raises -> None:
     to move the structural tolerances. This checks the corner directly."""
     var m: Image
     try:
-        m = run_headless[GPURoundedRect](100, 100, backend=RenderBackend.GPU)
+        m = run_headless[GPURoundedRect, backend=RenderBackend.GPU](100, 100)
     except e:
         print("SKIP — no GL context:", e)
         return
@@ -152,8 +152,8 @@ def test_the_gpu_backend_rounds_triangle_corners() raises -> None:
     to move the structural tolerances. This checks the corner directly."""
     var m: Image
     try:
-        m = run_headless[GPURoundedTriangle](
-            100, 100, backend=RenderBackend.GPU
+        m = run_headless[GPURoundedTriangle, backend=RenderBackend.GPU](
+            100, 100
         )
     except e:
         print("SKIP — no GL context:", e)
@@ -192,7 +192,7 @@ def test_the_gpu_backend_renders_text_with_fill_disabled() raises -> None:
     the fill must not hide it."""
     var m: Image
     try:
-        m = run_headless[GPUTextWithoutFill](64, 64, backend=RenderBackend.GPU)
+        m = run_headless[GPUTextWithoutFill, backend=RenderBackend.GPU](64, 64)
     except e:
         print("SKIP — no GL context:", e)
         return
@@ -235,11 +235,11 @@ def test_the_gpu_backend_multisamples_headless() raises -> None:
     var hard: Image
     var smooth: Image
     try:
-        hard = run_headless[GPUCircle](
-            64, 64, backend=RenderBackend.GPU, antialiasing=Antialiasing.OFF
+        hard = run_headless[GPUCircle, backend=RenderBackend.GPU](
+            64, 64, antialiasing=Antialiasing.OFF
         )
-        smooth = run_headless[GPUCircle](
-            64, 64, backend=RenderBackend.GPU, antialiasing=Antialiasing.MEDIUM
+        smooth = run_headless[GPUCircle, backend=RenderBackend.GPU](
+            64, 64, antialiasing=Antialiasing.MEDIUM
         )
     except e:
         print("SKIP — no GL context:", e)

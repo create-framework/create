@@ -10,7 +10,7 @@ the [user guide](../../../docs/guide/README.md) covers using it,
 
 | File | Role |
 |---|---|
-| `run.mojo`, `_run_gl.mojo` | Windowed loops: CPU, and GPU (`backend == RenderBackend.GPU`) |
+| `run.mojo`, `_run_gl.mojo` | Windowed loops: CPU, and GPU (`run[P, backend=RenderBackend.GPU]`, chosen at compile time) |
 | `headless.mojo`, `_headless_gl.mojo` | `run_headless` over an owned buffer, CPU and GPU |
 | `_step.mojo` | `first_step` (frame 1, drawn by `create`) and `step`, every later frame's body |
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor; sent before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |

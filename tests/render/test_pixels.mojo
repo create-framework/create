@@ -258,8 +258,8 @@ struct DrawsASnapshotBack(Program):
 def test_the_gpu_backend_reads_and_draws_back_the_same() raises -> None:
     var m: Image
     try:
-        m = run_headless[DrawsASnapshotBack](
-            200, 100, frames=3, backend=RenderBackend.GPU
+        m = run_headless[DrawsASnapshotBack, backend=RenderBackend.GPU](
+            200, 100, frames=3
         )
     except e:
         print("SKIP — no GL context:", e)

@@ -252,29 +252,29 @@ def _check(kind: Int, backend: String, m: Image) raises:
     )
 
 
-def _all(backend: RenderBackend, label: String) raises:
+def _all[backend: RenderBackend](label: String) raises:
     comptime for kind in range(_KINDS):
         _check(
-            kind, label, run_headless[HalfRed[kind]](200, 100, backend=backend)
+            kind, label, run_headless[HalfRed[kind], backend=backend](200, 100)
         )
         _check(
             kind,
             label + " tinted",
-            run_headless[HalfRed[kind, True]](200, 100, backend=backend),
+            run_headless[HalfRed[kind, True], backend=backend](200, 100),
         )
 
 
 def test_every_kind_composites_once_on_the_cpu() raises -> None:
-    _all(RenderBackend.CPU, "CPU")
+    _all[RenderBackend.CPU]("CPU")
 
 
 def test_every_kind_composites_once_on_the_gpu() raises -> None:
     try:
-        _ = run_headless[HalfRed[0]](8, 8, backend=RenderBackend.GPU)
+        _ = run_headless[HalfRed[0], backend=RenderBackend.GPU](8, 8)
     except e:
         print("SKIP — no GL context:", e)
         return
-    _all(RenderBackend.GPU, "GPU")
+    _all[RenderBackend.GPU]("GPU")
 
 
 @fieldwise_init

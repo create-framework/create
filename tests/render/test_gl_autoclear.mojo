@@ -119,7 +119,7 @@ def test_a_read_with_the_autoclear_off_starts_from_the_last_frame() raises -> (
         print("SKIP — no GL context:", e)
         return
     # Outside the `try`: the program's own assertions must fail the test.
-    var m = run_headless[ReadsOnTop](64, 32, 2, backend=RenderBackend.GPU)
+    var m = run_headless[ReadsOnTop, backend=RenderBackend.GPU](64, 32, 2)
     assert_equal(m.pixel(32, 16), Color.BLUE)
     assert_equal(m.pixel(4, 4), Color.RED)
 

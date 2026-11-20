@@ -245,8 +245,8 @@ def test_a_snapshot_draws_on_a_frame_canvas() raises -> None:
 def test_a_snapshot_draws_on_the_gpu_too() raises -> None:
     var m: Image
     try:
-        m = run_headless[DrawsABadge](
-            200, 100, frames=2, backend=RenderBackend.GPU
+        m = run_headless[DrawsABadge, backend=RenderBackend.GPU](
+            200, 100, frames=2
         )
     except e:
         print("SKIP — no GL context:", e)

@@ -119,13 +119,13 @@ replays at the new level.
 
 The camera is folded into `RenderCommand.transform`; nothing below `Canvas` knows it exists.
 
-**The loop picks the replay, not the backend.** `run` branches on its `backend` argument once, into
-the CPU loop or the GL one, and only the GL loops (`_run_gl`, `_headless_gl`) own a `GLRenderer`:
-built after their window, since its GL resources need a current context, and dropped before it. They
-pass it to `Backend.present_gpu(gl, …)`; the CPU loops call `present(surface, …)`. So a `Backend`
-never holds GPU state, and there is no backend kind to get wrong. Everything a canvas needs,
-whichever loop presents it, is on the `Backend`: recording, text measurement, images, reads and
-captures. Reads and captures replay on the CPU either way.
+**The loop picks the replay, not the backend.** `run` picks the CPU loop or the GL one by its
+`backend` parameter, at compile time, so a program compiles only one of them, and only the GL loops
+(`_run_gl`, `_headless_gl`) own a `GLRenderer`: built after their window, since its GL resources
+need a current context, and dropped before it. They pass it to `Backend.present_gpu(gl, …)`; the CPU
+loops call `present(surface, …)`. So a `Backend` never holds GPU state, and there is no backend kind
+to get wrong. Everything a canvas needs, whichever loop presents it, is on the `Backend`: recording,
+text measurement, images, reads and captures. Reads and captures replay on the CPU either way.
 
 The autoclear is a recorded `ClearPayload`, so every path handles it: the GPU turns it into
 `glClear`, an opaque `canvas.background()` replaces it via `CommandBuffer.record_clear`
