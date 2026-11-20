@@ -51,3 +51,25 @@ struct SliderStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.track_thickness = track_thickness._value
         self.handle_radius = handle_radius._value
         self.focus_ring = focus_ring
+
+    def _over(self, under: Self) -> Self:
+        """This style, with every field it leaves unset taken from `under`:
+        how a call's style sits over a `ui.style` block's, and an inner block
+        over an outer one."""
+        var merged = self.copy()
+        if not merged.active_track_color:
+            merged.active_track_color = under.active_track_color
+        if not merged.inactive_track_color:
+            merged.inactive_track_color = under.inactive_track_color
+        if not merged.handle_color:
+            merged.handle_color = under.handle_color
+        if not merged.handle_outline_color:
+            merged.handle_outline_color = under.handle_outline_color
+        if not merged.track_thickness:
+            merged.track_thickness = under.track_thickness
+        if not merged.handle_radius:
+            merged.handle_radius = under.handle_radius
+        if not merged.focus_ring:
+            merged.focus_ring = under.focus_ring
+        merged.handle_shadow = self.handle_shadow or under.handle_shadow
+        return merged^

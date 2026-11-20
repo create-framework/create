@@ -3,7 +3,14 @@ frame, `UILayer`, the handle a `with` block gets to draw widgets with, and
 `Theme`, the design tokens they draw from.
 """
 from .ui import UI
-from .layer import UILayer, IDGuard, DisabledGuard
+from .layer import (
+    UILayer,
+    IDGuard,
+    DisabledGuard,
+    ThemeGuard,
+    WidgetStyleGuard,
+    PanelGuard,
+)
 from .theme import (
     Theme,
     ColorScheme,
@@ -19,3 +26,4 @@ from .label import LabelStyle
 from .slider import SliderStyle
 from .checkbox import CheckboxStyle
 from .text_field import TextFieldStyle, TextFieldResult
+from .panel import PanelStyle

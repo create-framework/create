@@ -2,6 +2,7 @@
 
 from std.reflection import SourceLocation
 
+from create.color import Color
 from create.core import Context
 from create.geometry import Rectangle
 from create.input import Gamepad, GamepadButton, Key, Keyboard, Mouse
@@ -11,7 +12,40 @@ from ._id import _mix, _site
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
+from .button import ButtonStyle
+from .checkbox import CheckboxStyle
+from .label import LabelStyle
+from .slider import SliderStyle
+from .text_field import TextFieldStyle
 from .theme import Theme
+
+
+@fieldwise_init
+struct _Styles(Copyable, ImplicitlyCopyable, Movable):
+    """What the open `ui.style` blocks set, merged: each widget's call style
+    sits over these."""
+
+    var button: ButtonStyle
+    var label: LabelStyle
+    var slider: SliderStyle
+    var checkbox: CheckboxStyle
+    var text_field: TextFieldStyle
+
+    def __init__(out self):
+        self.button = ButtonStyle()
+        self.label = LabelStyle()
+        self.slider = SliderStyle()
+        self.checkbox = CheckboxStyle()
+        self.text_field = TextFieldStyle()
+
+    def _over(self, under: Self) -> Self:
+        return _Styles(
+            self.button._over(under.button),
+            self.label._over(under.label),
+            self.slider._over(under.slider),
+            self.checkbox._over(under.checkbox),
+            self.text_field._over(under.text_field),
+        )
 
 
 @fieldwise_init
@@ -63,6 +97,12 @@ struct UI(Movable):
     """The focus ring, drawn on top of the layer it is in, so a neighbour
     never covers it."""
     var _theme: Theme
+    var _themes: List[Theme]
+    """The themes of the open `ui.theme` blocks, innermost last."""
+    var _styles: List[_Styles]
+    """The open `ui.style` blocks, each merged over the ones outside it."""
+    var _contents: List[Color]
+    """The content colours of the open panels, innermost last."""
     var _hits: List[_Hit]
     """The widgets that can be pointed at, this frame, in drawing order."""
     var _last_hits: List[_Hit]
@@ -118,6 +158,9 @@ struct UI(Movable):
         self._stick_was = Vector.ZERO
         self._pad_move = Vector.ZERO
         self._theme = theme
+        self._themes = []
+        self._styles = []
+        self._contents = []
         self._frame = -1
         self._site_counts = {}
         self._keys = []
@@ -241,6 +284,9 @@ struct UI(Movable):
             self._frame = frame
             self._site_counts.clear()
             self._keys.clear()
+            self._themes.clear()
+            self._styles.clear()
+            self._contents.clear()
             self._disabled_depth = 0
             swap(self._last_hits, self._hits)
             self._hits.clear()
@@ -266,8 +312,8 @@ struct UI(Movable):
                 elif keyboard.pressed(Key.ESCAPE) and not keyboard_taken:
                     self._clear_focus()
                     self._key_used = True
-            if mouse.pressed() and not self._hot:
-                self._clear_focus()  # a click on no widget
+            if mouse.pressed() and not self._hot_focusable():
+                self._clear_focus()  # a click on no widget, or on a panel
             if keyboard.typed(Key.TAB) and not keyboard_taken:
                 self._tab(
                     backwards=keyboard.down(Key.LEFT_SHIFT)
@@ -324,6 +370,35 @@ struct UI(Movable):
         self._focus_visible = visible
         self._focused_takes_typing = takes_typing
         self._focus_from_gamepad = from_gamepad
+
+    def _current_theme(self) -> Theme:
+        """The theme widgets are drawn in here: the innermost `ui.theme`
+        block's, or the UI's own."""
+        if self._themes:
+            return self._themes[len(self._themes) - 1]
+        return self._theme
+
+    def _current_styles(self) -> _Styles:
+        if self._styles:
+            return self._styles[len(self._styles) - 1]
+        return _Styles()
+
+    def _content_color(self) -> Color:
+        """The colour for text here: the innermost panel's, or the theme's
+        `on_surface`."""
+        if self._contents:
+            return self._contents[len(self._contents) - 1]
+        return self._current_theme().colors.on_surface
+
+    def _hot_focusable(self) -> Bool:
+        """Whether the widget under the pointer can take focus: not a panel,
+        nor a disabled widget."""
+        if not self._hot:
+            return False
+        for hit in self._last_hits:
+            if hit.id == self._hot.value():
+                return hit.focusable
+        return False
 
     def _holds_keys(self) -> Bool:
         """Whether this UI's focus takes keys: from the keyboard or code, or

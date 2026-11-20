@@ -46,6 +46,72 @@ def theme(self) -> Theme
 
 The theme the widgets are drawn in, for a program's own widget to match them.
 
+```mojo
+def theme(self, theme: Theme) raises -> ThemeGuard[ui_origin]
+```
+
+Draw the widgets inside a `with` block in `theme`, such as one panel in the dark theme on a light screen.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+with ui.theme(Theme.dark()):
+    if ui.button("Night mode", Rectangle((0, 0), 160, 48)):
+        ...
+```
+
+### `style`
+
+```mojo
+def style(
+    self,
+    *,
+    button: ButtonStyle = ButtonStyle(container_color=Optional(None), content_color=Optional(None), outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), corner_radius=_OptionalFloat64(None), text_style=Optional(None), focus_ring=Optional(None)),
+    label: LabelStyle = LabelStyle(color=Optional(None), text_style=Optional(None)),
+    slider: SliderStyle = SliderStyle(active_track_color=Optional(None), inactive_track_color=Optional(None), handle_color=Optional(None), handle_outline_color=Optional(None), handle_shadow=False, track_thickness=_OptionalFloat64(None), handle_radius=_OptionalFloat64(None), focus_ring=Optional(None)),
+    checkbox: CheckboxStyle = CheckboxStyle(box_color=Optional(None), check_color=Optional(None), outline_color=Optional(None), label_color=Optional(None), text_style=Optional(None), focus_ring=Optional(None)),
+    text_field: TextFieldStyle = TextFieldStyle(container_color=Optional(None), outline_color=Optional(None), focused_outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), text_color=Optional(None), placeholder_color=Optional(None), caret_color=Optional(None), selection_color=Optional(None), corner_radius=_OptionalFloat64(None), padding=_OptionalFloat64(None), text_style=Optional(None)),
+) raises -> WidgetStyleGuard[ui_origin]
+```
+
+Style every widget of a kind inside a `with` block. The styles given sit under each call's own style and over any block outside this one, field by field: a field a call sets wins, and a field nothing sets comes from the theme.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+with ui.style(button=ButtonStyle(corner_radius=4)):
+    _ = ui.button("Square", Rectangle((0, 0), 120, 40))
+    _ = ui.button("Round", Rectangle((0, -50), 120, 40),
+                  style=ButtonStyle(corner_radius=20))
+```
+
+### `content_color`
+
+```mojo
+def content_color(self) -> Color
+```
+
+The colour for text here: the innermost panel's content colour, or the theme's `on_surface`. A program's own widget draws its text in it to match the built-in ones.
+
+### `panel`
+
+```mojo
+def panel(
+    self,
+    rect: Rectangle,
+    *,
+    style: PanelStyle = PanelStyle(color=Optional(None), content_color=Optional(None), outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), corner_radius=_OptionalFloat64(None), shadow=False),
+    id: _WidgetKey = None,
+) raises -> PanelGuard[ui_origin]
+```
+
+A surface filling `rect`, drawn beneath everything called inside its `with` block. Text on it takes its content colour, so a label on a dark panel turns light without being told, and it covers what is beneath it from the pointer. It doesn't place what is inside it.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+with ui.panel(Rectangle((0, 0), 320, 120)):
+    ui.label("Volume", Rectangle((0, 30), 280, 24))
+    _ = ui.slider(self.volume, 0, 1, Rectangle((0, -15), 280, 32))
+```
+
 ### `id`
 
 ```mojo
