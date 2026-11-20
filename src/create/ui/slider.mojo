@@ -2,6 +2,7 @@
 
 from create.color import Color
 from create.math._optional_float64 import _OptionalFloat64
+from .theme import FocusRing
 
 
 struct SliderStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -26,6 +27,10 @@ struct SliderStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     var handle_radius: Optional[Float64]
     """10 unless given."""
 
+    var focus_ring: Optional[FocusRing]
+    """The ring shown while it has focus from the keyboard: the theme's
+    unless given."""
+
     def __init__(
         out self,
         *,
@@ -36,6 +41,7 @@ struct SliderStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         handle_shadow: Bool = False,
         track_thickness: _OptionalFloat64 = None,
         handle_radius: _OptionalFloat64 = None,
+        focus_ring: Optional[FocusRing] = None,
     ):
         self.active_track_color = active_track_color
         self.inactive_track_color = inactive_track_color
@@ -44,3 +50,4 @@ struct SliderStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.handle_shadow = handle_shadow
         self.track_thickness = track_thickness._value
         self.handle_radius = handle_radius._value
+        self.focus_ring = focus_ring

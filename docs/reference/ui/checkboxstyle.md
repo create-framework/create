@@ -15,6 +15,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `outline_color: Optional[Color]`: The border of an empty box: `on_surface_variant`.
 - `label_color: Optional[Color]`: The label's text: `on_surface`.
 - `text_style: Optional[TypeStyle]`: The theme's `body` text unless given.
+- `focus_ring: Optional[FocusRing]`: The ring shown while it has focus from the keyboard: the theme's unless given.
 
 ## Constructors
 
@@ -28,5 +29,6 @@ def __init__(
     outline_color: Optional[Color] = None,
     label_color: Optional[Color] = None,
     text_style: Optional[TypeStyle] = None,
+    focus_ring: Optional[FocusRing] = None,
 )
 ```

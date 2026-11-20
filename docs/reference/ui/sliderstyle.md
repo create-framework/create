@@ -17,6 +17,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `handle_shadow: Bool`: Whether the handle casts a soft shadow, lifting it off the track: off unless set.
 - `track_thickness: Optional[Float64]`: 4 unless given.
 - `handle_radius: Optional[Float64]`: 10 unless given.
+- `focus_ring: Optional[FocusRing]`: The ring shown while it has focus from the keyboard: the theme's unless given.
 
 ## Constructors
 
@@ -32,5 +33,6 @@ def __init__(
     handle_shadow: Bool = False,
     track_thickness: _OptionalFloat64 = None,
     handle_radius: _OptionalFloat64 = None,
+    focus_ring: Optional[FocusRing] = None,
 )
 ```
