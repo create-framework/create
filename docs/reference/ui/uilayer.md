@@ -12,6 +12,15 @@ fields, directly. A helper takes it as `ui: UILayer`, its parameters left
 to be inferred. Everything drawn through it is drawn when the block ends,
 in the order it was called.
 
+Every widget that reacts to the pointer takes the same three keywords:
+
+- `take_focus=True` gives it focus in the frame it is passed, as a click
+  would; if several widgets ask in one frame, the last one called gets
+  it.
+- `disabled=True` draws it faded and stops it reacting, as a
+  `ui.disabled` block around it would.
+- `id=` adds a key to its ID, as a `ui.id` block around it would.
+
 Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`.
 
 ## Methods
@@ -62,6 +71,7 @@ def button(
     *,
     variant: ButtonVariant = ButtonVariant.FILLED,
     style: ButtonStyle = ButtonStyle(container_color=Optional(None), content_color=Optional(None), outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), corner_radius=_OptionalFloat64(None), text_style=Optional(None)),
+    take_focus: Bool = False,
     disabled: Bool = False,
     id: _WidgetKey = None,
 ) raises -> Bool
@@ -115,6 +125,7 @@ def slider(
     *,
     step: _OptionalFloat64 = None,
     style: SliderStyle = SliderStyle(active_track_color=Optional(None), inactive_track_color=Optional(None), handle_color=Optional(None), handle_outline_color=Optional(None), handle_shadow=False, track_thickness=_OptionalFloat64(None), handle_radius=_OptionalFloat64(None)),
+    take_focus: Bool = False,
     disabled: Bool = False,
     id: _WidgetKey = None,
 ) raises -> Bool
@@ -143,6 +154,7 @@ def checkbox(
     rect: Rectangle,
     *,
     style: CheckboxStyle = CheckboxStyle(box_color=Optional(None), check_color=Optional(None), outline_color=Optional(None), label_color=Optional(None), text_style=Optional(None)),
+    take_focus: Bool = False,
     disabled: Bool = False,
     id: _WidgetKey = None,
 ) raises -> Bool

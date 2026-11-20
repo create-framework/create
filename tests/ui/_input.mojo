@@ -19,3 +19,7 @@ def press(mut context: Context, position: Point):
 
 def release(mut context: Context, position: Point):
     context.mouse._button_up(MouseButton.LEFT, position)
+
+
+def press_key(mut context: Context, key: Key):
+    context.keyboard._key_down(key)

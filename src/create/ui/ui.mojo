@@ -4,7 +4,7 @@ from std.reflection import SourceLocation
 
 from create.core import Context
 from create.geometry import Rectangle
-from create.input import Mouse
+from create.input import Key, Keyboard, Mouse
 from create.math import Point, Transform
 from create.render import Canvas
 from ._id import _mix, _site
@@ -59,6 +59,15 @@ struct UI(Movable):
     """The widget the left button went down on, until it comes up."""
     var _disabled_depth: Int
     """How many `ui.disabled` blocks that disable are open."""
+    var _focused: Optional[UInt64]
+    """The widget with focus: at most one at a time."""
+    var _focus_visible: Bool
+    """Whether focus came from the keyboard, a gamepad or `take_focus`,
+    rather than a click: only then is a focus ring drawn."""
+    var _focused_takes_typing: Bool
+    """Whether the focused widget takes typed text, as a text field does."""
+    var _key_cleared_focus: Bool
+    """Whether a key took focus away this frame."""
 
     def __init__(out self, theme: Theme = Theme.light()):
         """A UI drawn in `theme`, the light theme unless given."""
@@ -72,6 +81,10 @@ struct UI(Movable):
         self._hot = None
         self._held = None
         self._disabled_depth = 0
+        self._focused = None
+        self._focus_visible = False
+        self._focused_takes_typing = False
+        self._key_cleared_focus = False
 
     def theme(self) -> Theme:
         """The theme the widgets are drawn in."""
@@ -94,6 +107,22 @@ struct UI(Movable):
         """
         return Bool(self._hot) or Bool(self._held)
 
+    def wants_keyboard(self) -> Bool:
+        """Whether the keyboard is the UI's this frame: a widget that takes
+        typing has focus, or a key took focus away from a widget this frame,
+        such as Escape leaving a text field. A game checks it before reading
+        keys itself, so typing a name with W in it doesn't move the player.
+
+        ```mojo
+        # In `update`, before or after the UI's `with` block:
+        if context.keyboard.pressed(Key.ESCAPE) and not self.ui.wants_keyboard():
+            context.quit()
+        ```
+        """
+        return (
+            Bool(self._focused) and self._focused_takes_typing
+        ) or self._key_cleared_focus
+
     def screen(
         mut self, mut context: Context, mut canvas: Canvas
     ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
@@ -106,7 +135,9 @@ struct UI(Movable):
             ...
         ```
         """
-        self._begin_layer(context.frame_count(), context.mouse)
+        self._begin_layer(
+            context.frame_count(), context.mouse, context.keyboard
+        )
         return UILayer(
             _ui=self,
             _context=context,
@@ -135,7 +166,9 @@ struct UI(Movable):
                 self.open_chest()
         ```
         """
-        self._begin_layer(context.frame_count(), context.mouse)
+        self._begin_layer(
+            context.frame_count(), context.mouse, context.keyboard
+        )
         return UILayer(
             _ui=self,
             _context=context,
@@ -144,7 +177,7 @@ struct UI(Movable):
             _view=canvas._current_view(),
         )
 
-    def _begin_layer(mut self, frame: Int, mouse: Mouse):
+    def _begin_layer(mut self, frame: Int, mouse: Mouse, keyboard: Keyboard):
         """Start a layer, resetting the per-frame state when it is the first
         layer of a new frame."""
         if frame != self._frame:
@@ -161,7 +194,31 @@ struct UI(Movable):
                     break
             if not mouse.down() and not mouse.released():
                 self._held = None
+            self._key_cleared_focus = False
+            if self._focused:
+                var still_there = False
+                for hit in self._last_hits:
+                    if hit.id == self._focused.value():
+                        still_there = True
+                        break
+                if not still_there:
+                    self._clear_focus()  # its widget wasn't called last frame
+                elif keyboard.pressed(Key.ESCAPE):
+                    self._clear_focus()
+                    self._key_cleared_focus = True
+            if mouse.pressed() and not self._hot:
+                self._clear_focus()  # a click on no widget
         self._recorder.commands.clear()
+
+    def _focus(mut self, id: UInt64, visible: Bool, takes_typing: Bool = False):
+        self._focused = id
+        self._focus_visible = visible
+        self._focused_takes_typing = takes_typing
+
+    def _clear_focus(mut self):
+        self._focused = None
+        self._focus_visible = False
+        self._focused_takes_typing = False
 
     def _widget_id(
         mut self, location: SourceLocation, key: Optional[UInt64] = None

@@ -59,6 +59,20 @@ if context.mouse.pressed() and not self.ui.wants_mouse():
     self.fire()
 ```
 
+### `wants_keyboard`
+
+```mojo
+def wants_keyboard(self) -> Bool
+```
+
+Whether the keyboard is the UI's this frame: a widget that takes typing has focus, or a key took focus away from a widget this frame, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player.
+
+```mojo
+# In `update`, before or after the UI's `with` block:
+if context.keyboard.pressed(Key.ESCAPE) and not self.ui.wants_keyboard():
+    context.quit()
+```
+
 ### `screen`
 
 ```mojo
