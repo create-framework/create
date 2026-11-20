@@ -60,17 +60,16 @@ loop, and `step` takes only `(program, context, state)`. Each tick, and a new `C
 `context._new_canvas(state^)` and every remap from `context._set_viewport`, so the settings that map
 the design onto the window reach `render` in one place.
 
-`apply_events` keeps only what needs the loop: mapping pointer positions into screen space and the
-Escape quit. Every write to a device goes through one of its `_`-prefixed methods
-(`keyboard._key_down`, `mouse._button_down`, `_gamepads._axis_moved`, …), which own the bookkeeping:
-auto-repeat, edges and slots. `context._new_input_frame()` clears every device's edges at the top of
-a frame, windowed and headless alike. `FocusLost` releases everything held
-(`context._release_held()`): SDL sends a window nothing for keys and buttons let go while it is
-unfocused. Pointer positions and the wheel stay `Float64` from SDL to the `Mouse`: a HiDPI display
-reports fractional logical positions, a trackpad fractional notches, and a frame's wheel events add
-up. `mouse.movement` is SDL's relative motion, mapped like a position (scaled, y flipped) by mapping
-both of its ends, and it adds up the same way. It keeps counting under
-`SDL_SetWindowRelativeMouseMode`, which `lock_mouse` turns on.
+`apply_events` keeps only what needs the loop: mapping pointer positions into screen space. Every
+write to a device goes through one of its `_`-prefixed methods (`keyboard._key_down`,
+`mouse._button_down`, `_gamepads._axis_moved`, …), which own the bookkeeping: auto-repeat, edges and
+slots. `context._new_input_frame()` clears every device's edges at the top of a frame, windowed and
+headless alike. `FocusLost` releases everything held (`context._release_held()`): SDL sends a window
+nothing for keys and buttons let go while it is unfocused. Pointer positions and the wheel stay
+`Float64` from SDL to the `Mouse`: a HiDPI display reports fractional logical positions, a trackpad
+fractional notches, and a frame's wheel events add up. `mouse.movement` is SDL's relative motion,
+mapped like a position (scaled, y flipped) by mapping both of its ends, and it adds up the same way.
+It keeps counting under `SDL_SetWindowRelativeMouseMode`, which `lock_mouse` turns on.
 
 SDL's dummy driver (the window tests') hides, shows and refocuses every window a process opens on
 its own, so window tests read events through `events_without_focus` in
