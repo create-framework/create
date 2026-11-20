@@ -26,7 +26,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 - [Style](drawing/style.md): how the style works, its defaults, the three ways to change it, and
   tint, opacity and blend modes.
 - [Colours](drawing/colours.md): red, green, blue and alpha, named colours, hex codes, hue,
-  saturation and value, and mixing colours.
+  saturation and value, lightness that looks even (OKLCH), and mixing colours.
 - [Strokes](drawing/strokes.md): thickness, where the stroke sits, how its ends look and dashes.
 - [Gradients](drawing/gradients.md): linear and radial gradients, and how they fit a shape.
 - [Shadows](drawing/shadows.md): drop shadows and inset shadows.

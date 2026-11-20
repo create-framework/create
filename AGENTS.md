@@ -45,7 +45,7 @@ page:
 | [coming from processing](docs/guide/basics/coming-from-processing.md) | how Create differs from Processing, or a Processing call's equivalent |
 | [the canvas](docs/guide/drawing/canvas.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, `clear`, transforms and guards, antialiasing, clipping |
 | [style](docs/guide/drawing/style.md) | `Style`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, tint, opacity, blend modes |
-| [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, `lerp`, `luminance` |
+| [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, OKLCH, `lerp`, `luminance` |
 | [strokes](docs/guide/drawing/strokes.md) | stroke thickness, `StrokeAlign`, `StrokeCap`, `StrokeDash` |
 | [gradients](docs/guide/drawing/gradients.md) | `Gradient`, linear and radial, stops, how a gradient fits a shape |
 | [shadows](docs/guide/drawing/shadows.md) | drop and inset shadows, blur, spread, offset |

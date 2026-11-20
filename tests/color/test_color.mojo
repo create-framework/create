@@ -377,5 +377,64 @@ def test_with_alpha_composites_like_a_spelled_out_color() raises -> None:
     assert_equal(a, b)
 
 
+def _close(actual: Float64, expected: Float64, within: Float64) -> Bool:
+    return abs(actual - expected) <= within
+
+
+def test_oklch_matches_published_values() raises -> None:
+    # Reference values from Björn Ottosson's OKLab, as CSS's oklch() gives.
+    var red = Color.RED.to_oklch()
+    assert_true(_close(red[0], 0.62796, 0.001))
+    assert_true(_close(red[1], 0.25768, 0.001))
+    assert_true(_close(red[2], 29.2339, 0.1))
+    var blue = Color(0, 0, 255).to_oklch()
+    assert_true(_close(blue[0], 0.45201, 0.001))
+    assert_true(_close(blue[1], 0.31321, 0.001))
+    assert_true(_close(blue[2], 264.052, 0.1))
+    var white = Color.WHITE.to_oklch()
+    assert_true(_close(white[0], 1.0, 0.0001))
+    assert_equal(white[1], 0.0)
+    assert_equal(white[2], 0.0)  # a grey has no hue
+    assert_true(_close(Color.BLACK.to_oklch()[0], 0.0, 0.0001))
+
+
+def test_oklch_builds_the_published_colours() raises -> None:
+    assert_equal(Color.oklch(0.62796, 0.25768, 29.2339), Color.RED)
+    assert_equal(Color.oklch(0.45201, 0.31321, 264.052), Color(0, 0, 255))
+    assert_equal(Color.oklch(1, 0, 0), Color.WHITE)
+    assert_equal(Color.oklch(0, 0, 0), Color.BLACK)
+
+
+def test_oklch_round_trips_every_tenth_colour() raises -> None:
+    for r in range(0, 256, 17):
+        for g in range(0, 256, 17):
+            for b in range(0, 256, 17):
+                var color = Color(UInt8(r), UInt8(g), UInt8(b))
+                var lch = color.to_oklch()
+                assert_equal(Color.oklch(lch[0], lch[1], lch[2]), color)
+
+
+def test_oklch_hue_wraps() raises -> None:
+    assert_equal(Color.oklch(0.7, 0.1, 30), Color.oklch(0.7, 0.1, 390))
+    assert_equal(Color.oklch(0.7, 0.1, 30), Color.oklch(0.7, 0.1, -330))
+
+
+def test_oklch_too_vivid_keeps_its_lightness_and_hue() raises -> None:
+    # Far more chroma than any screen shows at this lightness and hue.
+    var color = Color.oklch(0.7, 0.5, 145)
+    var lch = color.to_oklch()
+    assert_true(_close(lch[0], 0.7, 0.01))
+    assert_true(_close(lch[2], 145, 2))
+    assert_true(lch[1] > 0.15)  # still as colourful as fits
+
+
+def test_equal_oklch_lightness_looks_equally_light() raises -> None:
+    # The point of OKLCH: a yellow and a blue at one lightness are about as
+    # light as each other, which HSV's value can't promise.
+    var yellow = Color.oklch(0.7, 0.12, 100)
+    var blue = Color.oklch(0.7, 0.12, 260)
+    assert_true(abs(yellow.luminance() - blue.luminance()) < 0.06)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
