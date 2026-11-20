@@ -23,6 +23,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `outline_thickness: Optional[Float64]`
 - `corner_radius: Optional[Float64]`: Half the height unless given, so the ends are round.
 - `text_style: Optional[TypeStyle]`: The theme's `label` text unless given.
+- `focus_ring: Optional[FocusRing]`: The ring shown while it has focus from the keyboard: the theme's unless given.
 
 ## Constructors
 
@@ -37,5 +38,6 @@ def __init__(
     outline_thickness: _OptionalFloat64 = None,
     corner_radius: _OptionalFloat64 = None,
     text_style: Optional[TypeStyle] = None,
+    focus_ring: Optional[FocusRing] = None,
 )
 ```

@@ -322,15 +322,20 @@ struct StateOpacities(Copyable, ImplicitlyCopyable, Movable, Writable):
 
 @fieldwise_init
 struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The ring drawn around a widget focused from the keyboard or a gamepad:
-    its `thickness`, and the `gap` between it and the widget."""
+    """The ring drawn around a widget focused from the keyboard, a gamepad
+    or `take_focus`: its `thickness`, the `gap` between it and the widget,
+    and its `color`, the scheme's `secondary` unless given. It follows the
+    widget's shape, its corners rounded by the widget's own radius grown by
+    the gap."""
 
     var thickness: Float64
     var gap: Float64
+    var color: Optional[Color]
 
     def __init__(out self):
         self.thickness = 3
         self.gap = 2
+        self.color = None
 
 
 @fieldwise_init

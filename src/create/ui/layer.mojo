@@ -9,7 +9,7 @@ from create.input import Key
 from create.image import Image
 from create.math import Point, Transform, Vector
 from create.math._optional_float64 import _OptionalFloat64
-from create.render import Align, Canvas, StrokeCap, Style
+from create.render import Align, Canvas, StrokeAlign, StrokeCap, Style
 from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
 from ._key import _WidgetKey
@@ -19,7 +19,7 @@ from .label import LabelStyle
 from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextFieldResult, TextFieldStyle
-from .theme import Theme, TypeStyle, _contrast, _readable_on
+from .theme import FocusRing, Theme, TypeStyle, _contrast, _readable_on
 from .ui import UI, _Hit
 
 
@@ -105,6 +105,10 @@ struct UILayer[
         return self
 
     def __exit__(self) raises:
+        ref ui = self._ui[]
+        for ref command in ui._rings.commands:
+            ui._recorder.commands.append(command.copy())
+        ui._rings.commands.clear()
         if self._view:
             with _ViewGuard(_canvas=self._canvas[], _view=self._view.value()):
                 self._ui[]._recorder.replay(self._canvas[])
@@ -516,6 +520,55 @@ struct UILayer[
             )
         recorder.end_clip()
 
+    def _ring_around(
+        self,
+        shape: Rectangle,
+        state: _Interaction,
+        disabled: Bool,
+        ring: Optional[FocusRing],
+    ):
+        """Draw the focus ring around `shape`, its corners rounded by the
+        shape's own radius grown by the gap, while the widget has focus from
+        the keyboard or code."""
+        if not self._shows_ring(state, disabled):
+            return
+        var look = ring.or_else(self._ui[]._theme.focus_ring)
+        var gap = look.gap
+        self._record_ring(
+            Rectangle(
+                shape.position,
+                shape.width + 2 * gap,
+                shape.height + 2 * gap,
+                corner_radius=shape.corner_radius + gap,
+            ),
+            look,
+        )
+
+    def _ring_around(
+        self,
+        shape: Circle,
+        state: _Interaction,
+        disabled: Bool,
+        ring: Optional[FocusRing],
+    ):
+        if not self._shows_ring(state, disabled):
+            return
+        var look = ring.or_else(self._ui[]._theme.focus_ring)
+        self._record_ring(Circle(shape.position, shape.radius + look.gap), look)
+
+    def _shows_ring(self, state: _Interaction, disabled: Bool) -> Bool:
+        return state.focused and self._ui[]._focus_visible and not disabled
+
+    def _record_ring[S: Drawable](self, shape: S, look: FocusRing):
+        ref ui = self._ui[]
+        ui._rings.style = Style(
+            fill_enabled=False,
+            stroke=look.color.or_else(ui._theme.colors.secondary),
+            stroke_thickness=look.thickness,
+            stroke_alignment=StrokeAlign.OUTSIDE,
+        )
+        ui._rings.draw(shape)
+
     def _measure(self, text: String, look: Style) raises -> Float64:
         """How wide `text` is drawn in `look`'s font, size and weight."""
         if not text:
@@ -625,6 +678,7 @@ struct UILayer[
                 recorder.style.shadow_inset = True
                 recorder.style.shadow_enabled = True
             recorder.draw(shape)
+        self._ring_around(shape, state, off, style.focus_ring)
         recorder.text(
             text,
             rect.position,
@@ -767,7 +821,9 @@ struct UILayer[
             recorder.style.shadow_spread = 0
             recorder.style.shadow_inset = False
             recorder.style.shadow_enabled = True
-        recorder.draw(Circle(Point(handle_x, y), handle_radius))
+        var knob = Circle(Point(handle_x, y), handle_radius)
+        recorder.draw(knob)
+        self._ring_around(knob, state, off, style.focus_ring)
         return changed
 
     def _checkbox(
@@ -845,6 +901,7 @@ struct UILayer[
                 stroke_thickness=2,
             )
             recorder.draw(box)
+        self._ring_around(box, state, off, style.focus_ring)
         var text_left = Point(left + 40, rect.position.y)
         recorder.text(
             label,

@@ -52,6 +52,9 @@ struct UI(Movable):
     var _keys: List[UInt64]
     """The keys of the `ui.id` blocks open, innermost last."""
     var _recorder: _Recorder
+    var _rings: _Recorder
+    """The focus ring, drawn on top of the layer it is in, so a neighbour
+    never covers it."""
     var _theme: Theme
     var _hits: List[_Hit]
     """The widgets that can be pointed at, this frame, in drawing order."""
@@ -87,6 +90,7 @@ struct UI(Movable):
         self._site_counts = {}
         self._keys = []
         self._recorder = _Recorder()
+        self._rings = _Recorder()
         self._hits = []
         self._last_hits = []
         self._hot = None
@@ -232,6 +236,7 @@ struct UI(Movable):
             self._drop_unseen_buffers()
             self._sync_text_input(context)
         self._recorder.commands.clear()
+        self._rings.commands.clear()
 
     def _tab(mut self, backwards: Bool):
         """Move focus to the next widget Tab can reach, in the order they were

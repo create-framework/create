@@ -1,7 +1,7 @@
 """`CheckboxStyle`: how a checkbox looks."""
 
 from create.color import Color
-from .theme import TypeStyle
+from .theme import FocusRing, TypeStyle
 
 
 struct CheckboxStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -19,6 +19,10 @@ struct CheckboxStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     var text_style: Optional[TypeStyle]
     """The theme's `body` text unless given."""
 
+    var focus_ring: Optional[FocusRing]
+    """The ring shown while it has focus from the keyboard: the theme's
+    unless given."""
+
     def __init__(
         out self,
         *,
@@ -27,9 +31,11 @@ struct CheckboxStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         outline_color: Optional[Color] = None,
         label_color: Optional[Color] = None,
         text_style: Optional[TypeStyle] = None,
+        focus_ring: Optional[FocusRing] = None,
     ):
         self.box_color = box_color
         self.check_color = check_color
         self.outline_color = outline_color
         self.label_color = label_color
         self.text_style = text_style
+        self.focus_ring = focus_ring
