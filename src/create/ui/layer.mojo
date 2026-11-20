@@ -952,7 +952,8 @@ struct UILayer[
         ref colors = theme.colors
         comptime size = 18.0
         var left = rect.position.x - rect.width / 2
-        var centre = Point(left + 20, rect.position.y)
+        # the box against the left edge, the label a gap after it
+        var centre = Point(left + size / 2, rect.position.y)
         var box = Rectangle(
             centre, size, size, corner_radius=theme.corner_radii.small / 2
         )
@@ -1002,7 +1003,7 @@ struct UILayer[
             )
             recorder.draw(box)
         self._ring_around(box, state, off, style.focus_ring)
-        var text_left = Point(left + 40, rect.position.y)
+        var text_left = Point(left + size + 12, rect.position.y)
         recorder.text(
             label,
             text_left,
