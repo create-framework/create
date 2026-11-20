@@ -23,3 +23,5 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`LabelStyle`](labelstyle.md) | How a label's text looks, where it differs from the theme: the theme's `on_surface` colour and `body` text unless given. |
 | [`SliderStyle`](sliderstyle.md) | How one slider looks, where it differs from the theme. Every field left unset is worked out from the theme when the slider is drawn. |
 | [`CheckboxStyle`](checkboxstyle.md) | How one checkbox looks, where it differs from the theme. Every field left unset is worked out from the theme when the checkbox is drawn. |
+| [`TextFieldStyle`](textfieldstyle.md) | How one text field looks, where it differs from the theme. Every field left unset is worked out from the theme when the text field is drawn. |
+| [`TextFieldResult`](textfieldresult.md) | What a text field reports back: whether it changed the text, whether Enter was pressed in it, and where its caret and selection are. As a `Bool`, it is whether the text changed, so `if ui.text_field(...):` works like every other widget. |

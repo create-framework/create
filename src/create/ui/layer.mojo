@@ -17,6 +17,8 @@ from .button import ButtonStyle, ButtonVariant
 from .checkbox import CheckboxStyle
 from .label import LabelStyle
 from .slider import SliderStyle
+from ._text_buffer import _TextBuffer
+from .text_field import TextFieldResult, TextFieldStyle
 from .theme import Theme, TypeStyle, _contrast, _readable_on
 from .ui import UI, _Hit
 
@@ -287,7 +289,255 @@ struct UILayer[
             disabled,
         )
 
+    @always_inline
+    def text_field[
+        text_origin: Origin[mut=True]
+    ](
+        self,
+        ref[text_origin] text: String,
+        rect: Rectangle,
+        *,
+        placeholder: String = "",
+        max_length: Optional[Int] = None,
+        style: TextFieldStyle = TextFieldStyle(),
+        take_focus: Bool = False,
+        disabled: Bool = False,
+        id: _WidgetKey = None,
+    ) raises -> TextFieldResult[
+        Self.ui_origin, Self.context_origin, text_origin
+    ]:
+        """A field for typing into `text`, filling `rect`. Clicking it gives
+        it focus and places the caret; while it has focus, typing and the
+        editing keys change `text`, and Enter submits it.
+
+        Returns a `TextFieldResult`: whether the text changed, as a `Bool`,
+        `submitted` for Enter, and the caret and selection. `placeholder` is
+        shown in a fainter colour while `text` is empty, and `max_length`
+        caps how many characters typing and pasting can bring it to.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
+        # with a `name: String` field:
+        var field = ui.text_field(
+            self.name, Rectangle((0, 0), 320, 40), placeholder="Your name"
+        )
+        if field.submitted:
+            self.start_game(self.name)
+        ```
+        """
+        var widget = self._widget_id(call_location(), id._hash)
+        var changed = False
+        var submitted = False
+        self._text_field(
+            widget,
+            text,
+            rect,
+            placeholder,
+            max_length,
+            style,
+            take_focus,
+            disabled,
+            changed,
+            submitted,
+        )
+        return TextFieldResult(
+            _ui=self._ui[],
+            _context=self._context[],
+            _text=text,
+            _id=widget,
+            _changed=changed,
+            _submitted=submitted,
+        )
+
     # ----------------------------------------------------------- internals
+
+    def _text_field(
+        self,
+        id: UInt64,
+        mut text: String,
+        rect: Rectangle,
+        placeholder: String,
+        max_length: Optional[Int],
+        style: TextFieldStyle,
+        take_focus: Bool,
+        disabled: Bool,
+        mut changed: Bool,
+        mut submitted: Bool,
+    ) raises:
+        var off = self._disabled(disabled)
+        var state = self._interact(id, rect, off, take_focus, takes_typing=True)
+        ref ui = self._ui[]
+        ui._sync_text_input(self._context[])
+        ref theme = ui._theme
+        ref colors = theme.colors
+        if id not in ui._buffers:
+            ui._buffers[id] = _TextBuffer(text)
+        ref buffer = ui._buffers[id]
+        buffer.text = text
+        buffer.max_length = max_length
+        var now = self._context[].time.elapsed
+        var type = style.text_style.or_else(theme.typography.body)
+        var text_color = style.text_color.or_else(colors.on_surface)
+        var look = _text_style(type, text_color, Align.LEFT)
+        var padding = style.padding.or_else(12.0)
+        var left = rect.position.x - rect.width / 2 + padding
+        var inner = rect.width - 2 * padding
+
+        # a press places the caret under the pointer
+        if state.hovered and self._context[].mouse.pressed():
+            var typed = buffer.text  # a copy: measuring borrows the layer
+            var pointer = self._to_local.apply(self._context[].mouse.position)
+            buffer._place(
+                self._offset_at(typed, pointer.x - left + buffer.scroll, look),
+                select=False,
+            )
+            buffer.last_change = now
+        if state.focused:
+            var before = buffer.text
+            var caret = buffer.before_caret()
+            buffer.update(self._context[])
+            if buffer.text != before or buffer.before_caret() != caret:
+                buffer.last_change = now
+            submitted = self._context[].keyboard.pressed(Key.ENTER)
+        if buffer.text != text:
+            text = buffer.text
+            changed = True
+
+        # keep the caret inside the field while it has focus; without focus,
+        # show the text from its start
+        var caret_x = self._measure(buffer.before_caret(), look)
+        if not state.focused:
+            buffer.scroll = 0
+        elif caret_x - buffer.scroll > inner:
+            buffer.scroll = caret_x - inner
+        elif caret_x - buffer.scroll < 0:
+            buffer.scroll = caret_x
+        var shown = buffer.text
+        var whole = self._measure(shown, look)
+        buffer.scroll = min(buffer.scroll, max(0.0, whole - inner))
+
+        # the field
+        var container = style.container_color.or_else(
+            colors.surface_container_highest
+        )
+        var thickness = style.outline_thickness.or_else(1.0)
+        var outline = style.outline_color.or_else(colors.outline)
+        if state.focused and not off:
+            outline = style.focused_outline_color.or_else(colors.primary)
+            thickness *= 2
+        var placeholder_color = style.placeholder_color.or_else(
+            colors.on_surface_variant
+        )
+        if off:
+            var states = theme.state_opacities
+            text_color = _faded(colors.on_surface, states.disabled_content)
+            placeholder_color = text_color
+            if container.a > 0:
+                container = _faded(colors.on_surface, states.disabled_container)
+            outline = _faded(colors.on_surface, states.disabled_container)
+        elif state.hovered and not state.focused and container.a > 0:
+            container = container.lerp(
+                colors.on_surface,
+                _state_opacity(
+                    container,
+                    colors.on_surface,
+                    theme.state_opacities.hovered,
+                    _HOVERED_CONTRAST,
+                ),
+            )
+        var shape = Rectangle(
+            rect.position,
+            rect.width,
+            rect.height,
+            corner_radius=style.corner_radius.or_else(theme.corner_radii.small),
+        )
+        ref recorder = ui._recorder
+        if container.a > 0 or thickness > 0:
+            recorder.style = Style(
+                fill=container,
+                fill_enabled=container.a > 0,
+                stroke=outline,
+                stroke_thickness=thickness,
+                stroke_enabled=thickness > 0,
+            )
+            recorder.draw(shape)
+
+        # the text, clipped to the inside of the field
+        recorder.clip(
+            Rectangle(rect.position, rect.width - padding, rect.height)
+        )
+        var origin_x = left - buffer.scroll
+        var y = rect.position.y
+        if state.focused and buffer.selected_text():
+            var start = self._measure(buffer.before_selection(), look)
+            var width = self._measure(buffer.selected_text(), look)
+            recorder.style = Style(
+                fill=style.selection_color.or_else(
+                    colors.primary.with_alpha(70)
+                ),
+                stroke_enabled=False,
+            )
+            recorder.draw(
+                Rectangle(
+                    Point(origin_x + start + width / 2, y),
+                    width,
+                    type.size * 1.3,
+                )
+            )
+        if buffer.text:
+            recorder.text(
+                buffer.text,
+                Point(origin_x, y),
+                _text_style(type, text_color, Align.LEFT),
+            )
+        elif placeholder:
+            recorder.text(
+                placeholder,
+                Point(left, y),
+                _text_style(type, placeholder_color, Align.LEFT),
+            )
+        # the caret: steady for a moment after a change, then blinking
+        var since = now - buffer.last_change
+        if (
+            state.focused
+            and not off
+            and (since < 0.5 or Int(since * 2) % 2 == 1)
+        ):
+            var x = origin_x + caret_x
+            recorder.style = Style(
+                stroke=style.caret_color.or_else(colors.primary),
+                stroke_thickness=2,
+            )
+            recorder.draw(
+                Line(
+                    Point(x, y - type.size * 0.65),
+                    Point(x, y + type.size * 0.65),
+                )
+            )
+        recorder.end_clip()
+
+    def _measure(self, text: String, look: Style) raises -> Float64:
+        """How wide `text` is drawn in `look`'s font, size and weight."""
+        if not text:
+            return 0
+        with self._canvas[].style(look):
+            return self._canvas[].text_width(text)
+
+    def _offset_at(self, text: String, x: Float64, look: Style) raises -> Int:
+        """The byte offset of the character boundary in `text` nearest to
+        `x` units from its start."""
+        var best = 0
+        var best_distance = abs(x)
+        var prefix = String()
+        var offset = 0
+        for character in text.codepoint_slices():
+            prefix += character
+            offset += character.byte_length()
+            var distance = abs(x - self._measure(prefix, look))
+            if distance < best_distance:
+                best = offset
+                best_distance = distance
+        return best
 
     def _button(
         self,
@@ -608,14 +858,21 @@ struct UILayer[
         return state.clicked or state.activated
 
     def _interact(
-        self, id: UInt64, rect: Rectangle, disabled: Bool, take_focus: Bool
+        self,
+        id: UInt64,
+        rect: Rectangle,
+        disabled: Bool,
+        take_focus: Bool,
+        takes_typing: Bool = False,
     ) -> _Interaction:
         """Record that the widget `id` can be pointed at in `rect`, and work
         out what the pointer did to it. A disabled widget still covers what
         is beneath it, but nothing it does counts."""
         ref ui = self._ui[]
         ref mouse = self._context[].mouse
-        ui._hits.append(_Hit(id, rect, self._to_local, not disabled))
+        ui._hits.append(
+            _Hit(id, rect, self._to_local, not disabled, takes_typing)
+        )
         if disabled:
             if ui._held and ui._held.value() == id:
                 ui._held = None  # disabled while held: let go of it
@@ -625,13 +882,13 @@ struct UILayer[
                 ui._clear_focus()  # a click on it is a click on no widget
             return _Interaction(False, False, False, False, False)
         if take_focus:
-            ui._focus(id, visible=True)
+            ui._focus(id, visible=True, takes_typing=takes_typing)
         # while another widget is held, this one doesn't react to the pointer
         var free = not ui._held or ui._held.value() == id
         var hovered = Bool(ui._hot) and ui._hot.value() == id and free
         if hovered and mouse.pressed():
             ui._held = id
-            ui._focus(id, visible=False)
+            ui._focus(id, visible=False, takes_typing=takes_typing)
         var held = Bool(ui._held) and ui._held.value() == id
         var clicked = False
         if held and mouse.released():

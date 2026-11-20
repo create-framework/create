@@ -28,6 +28,19 @@ struct _Text(Copyable, Movable):
 
 
 @fieldwise_init
+struct _ClipBegin(Copyable, Movable):
+    """Everything drawn up to the matching `_ClipEnd` is kept inside
+    `region`."""
+
+    var region: Rectangle
+
+
+@fieldwise_init
+struct _ClipEnd(Copyable, Movable):
+    pass
+
+
+@fieldwise_init
 struct _Picture(Copyable, Movable):
     var image: Image
     var position: Point
@@ -47,6 +60,8 @@ comptime _Shape = Variant[
     List[Bezier],
     _Text,
     _Picture,
+    _ClipBegin,
+    _ClipEnd,
 ]
 
 
@@ -116,10 +131,34 @@ struct _Recorder(DrawTarget, Movable):
             )
         )
 
+    def clip(mut self, region: Rectangle):
+        """Keep what is recorded from here to `end_clip` inside `region`."""
+        self.commands.append(_DrawCommand(_Shape(_ClipBegin(region)), Style()))
+
+    def end_clip(mut self):
+        self.commands.append(_DrawCommand(_Shape(_ClipEnd()), Style()))
+
     def replay(mut self, mut canvas: Canvas):
         """Draw every recorded command onto `canvas`, in order, and empty the
         list, keeping its memory for the next layer."""
-        for ref command in self.commands:
+        _ = self._replay_from(canvas, 0)
+        self.commands.clear()
+
+    def _replay_from(mut self, mut canvas: Canvas, start: Int) -> Int:
+        """Draw the commands from `start` until a `_ClipEnd` closes the clip
+        they are in, or the list ends; the index after the last one drawn. A
+        `_ClipBegin` draws what it encloses through a nested call, inside the
+        canvas's clip."""
+        var i = start
+        while i < len(self.commands):
+            ref command = self.commands[i]
+            if command.shape.isa[_ClipEnd]():
+                return i + 1
+            if command.shape.isa[_ClipBegin]():
+                var region = command.shape[_ClipBegin].region
+                with canvas.clip(region):
+                    i = self._replay_from(canvas, i + 1)
+                continue
             with canvas.style(command.style):
                 ref shape = command.shape
                 if shape.isa[Rectangle]():
@@ -151,4 +190,5 @@ struct _Recorder(DrawTarget, Movable):
                     )
                 else:
                     canvas._curves(shape[List[Bezier]])
-        self.commands.clear()
+            i += 1
+        return i
