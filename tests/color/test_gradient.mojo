@@ -10,7 +10,6 @@ from create.color.gradient import Gradient
 from create.math.point import Point
 from create.math.vector import Vector
 from create.math.transform import Transform
-from create.math.transform import Transform
 
 
 comptime CENTER = Point(0.0, 0.0)

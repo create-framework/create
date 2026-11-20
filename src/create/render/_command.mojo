@@ -9,7 +9,6 @@ from create.geometry.bezier import Bezier
 from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
-from create.math.transform import Transform
 from std.memory import ArcPointer
 from std.utils import Variant
 

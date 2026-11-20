@@ -15,7 +15,6 @@ from std.math import abs, max, sqrt
 
 from create.math.vector import Vector
 from create.math.transform import Transform
-from create.math.transform import Transform
 
 from ._paint import Paint
 

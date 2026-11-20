@@ -5,7 +5,6 @@ from create.math import PI
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create.geometry import Line, Polygon
-from create.math.transform import Transform
 from create.math.point import Point
 from create.color.color import Color
 from create.render.style import Style

@@ -3,7 +3,6 @@ from std.math import max, min, ceil, floor
 from std.memory import unsafe_memcpy
 
 from create.math.transform import Transform
-from create.math.transform import Transform
 from create.math.vector import Vector
 
 from ._command import RenderCommand

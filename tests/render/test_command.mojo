@@ -29,7 +29,6 @@ from create.render._command import (
 )
 from create.geometry.bezier import Bezier
 from create.math.point import Point
-from create.math.transform import Transform
 
 
 def _styled() -> Style:
