@@ -4,20 +4,26 @@ from std.reflection import SourceLocation, call_location
 
 from create.color import Color
 from create.core import Context
-from create.geometry import Drawable, Rectangle
+from create.geometry import Circle, Drawable, Line, Rectangle
 from create.image import Image
 from create.math import Point, Transform, Vector
-from create.render import Align, Canvas, Style
+from create.math._optional_float64 import _OptionalFloat64
+from create.render import Align, Canvas, StrokeCap, Style
 from ._id import _mix
 from ._key import _WidgetKey
 from .button import ButtonStyle, ButtonVariant
+from .checkbox import CheckboxStyle
 from .label import LabelStyle
-from .theme import Theme, TypeStyle, _contrast
+from .slider import SliderStyle
+from .theme import Theme, TypeStyle, _contrast, _readable_on
 from .ui import UI, _Hit
 
 
 comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
 """The inset shadow a pressed filled or tonal button is drawn with."""
+
+comptime _HANDLE_SHADOW = Color(0, 0, 0, 70)
+"""The shadow a slider's handle casts with `handle_shadow=True`."""
 
 comptime _HOVERED_CONTRAST = 1.4
 comptime _PRESSED_CONTRAST = 1.8
@@ -182,6 +188,70 @@ struct UILayer[
             image, rect.position, rect.width, rect.height, Style()
         )
 
+    @always_inline
+    def slider(
+        self,
+        mut value: Float64,
+        min: Float64,
+        max: Float64,
+        rect: Rectangle,
+        *,
+        step: _OptionalFloat64 = None,
+        style: SliderStyle = SliderStyle(),
+        id: _WidgetKey = None,
+    ) raises -> Bool:
+        """A slider across `rect` that sets `value` between `min` and `max`.
+        Returns whether it changed `value` this frame.
+
+        Pressing anywhere in `rect` moves the handle there, and dragging
+        moves it on, even once the pointer leaves `rect`. `step` rounds the
+        value to multiples of it from `min`. A `value` outside `min` to
+        `max` is drawn at the nearer end, and left as it is until dragged.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        if ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32)):
+            self.audio.volume(self.volume)
+        ```
+        """
+        return self._slider(
+            self._widget_id(call_location(), id._hash),
+            value,
+            min,
+            max,
+            rect,
+            step._value,
+            style,
+        )
+
+    @always_inline
+    def checkbox(
+        self,
+        label: String,
+        mut checked: Bool,
+        rect: Rectangle,
+        *,
+        style: CheckboxStyle = CheckboxStyle(),
+        id: _WidgetKey = None,
+    ) raises -> Bool:
+        """A box against the left edge of `rect`, ticked while `checked` is
+        `True`, with `label` beside it. A click anywhere in `rect` switches
+        `checked`. Returns whether it changed `checked` this frame.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        if ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32)):
+            self.save_settings()
+        ```
+        """
+        return self._checkbox(
+            self._widget_id(call_location(), id._hash),
+            label,
+            checked,
+            rect,
+            style,
+        )
+
     # ----------------------------------------------------------- internals
 
     def _button(
@@ -269,13 +339,189 @@ struct UILayer[
         )
         return state.clicked
 
+    def _slider(
+        self,
+        id: UInt64,
+        mut value: Float64,
+        min: Float64,
+        max: Float64,
+        rect: Rectangle,
+        step: Optional[Float64],
+        style: SliderStyle,
+    ) raises -> Bool:
+        var state = self._interact(id, rect)
+        ref ui = self._ui[]
+        ref theme = ui._theme
+        ref colors = theme.colors
+        var handle_radius = style.handle_radius.or_else(10.0)
+        var thickness = style.track_thickness.or_else(4.0)
+        var left = rect.position.x - rect.width / 2 + handle_radius
+        var right = rect.position.x + rect.width / 2 - handle_radius
+        var y = rect.position.y
+        # held this frame, the frame it is let go of included
+        var dragging = (
+            Bool(ui._held) and ui._held.value() == id
+        ) or state.clicked
+        var changed = False
+        if dragging and right > left and max != min:
+            var pointer = self._to_local.apply(self._context[].mouse.position)
+            var t = _clamp01((pointer.x - left) / (right - left))
+            var new_value = min + t * (max - min)
+            if step and step.value() > 0:
+                var size = step.value()
+                new_value = (
+                    min + Float64(round((new_value - min) / size)) * size
+                )
+                if (max - min) * (new_value - max) > 0:
+                    new_value -= size  # a step past `max` comes back inside
+            if new_value != value:
+                value = new_value
+                changed = True
+        var t = 0.0
+        if max != min:
+            t = _clamp01((value - min) / (max - min))
+        var handle_x = left + t * (right - left)
+        var active = style.active_track_color.or_else(colors.primary)
+        var inactive = style.inactive_track_color.or_else(
+            colors.secondary_container
+        )
+        var handle = style.handle_color.or_else(colors.primary)
+        ref recorder = ui._recorder
+        recorder.style = Style(
+            stroke=inactive,
+            stroke_thickness=thickness,
+            stroke_cap=StrokeCap.ROUND,
+        )
+        recorder.draw(Line(Point(left, y), Point(right, y)))
+        if handle_x > left:
+            recorder.style = Style(
+                stroke=active,
+                stroke_thickness=thickness,
+                stroke_cap=StrokeCap.ROUND,
+            )
+            recorder.draw(Line(Point(left, y), Point(handle_x, y)))
+        # a hovered or dragged handle is tinted, as a button is
+        var tint = _readable_on(handle)
+        var shown = handle
+        if dragging:
+            shown = handle.lerp(
+                tint,
+                _state_opacity(
+                    handle,
+                    tint,
+                    theme.state_opacities.dragged,
+                    _PRESSED_CONTRAST,
+                ),
+            )
+        elif state.hovered:
+            shown = handle.lerp(
+                tint,
+                _state_opacity(
+                    handle,
+                    tint,
+                    theme.state_opacities.hovered,
+                    _HOVERED_CONTRAST,
+                ),
+            )
+        recorder.style = Style(
+            fill=shown,
+            stroke=style.handle_outline_color.or_else(Color.TRANSPARENT),
+            stroke_thickness=1,
+            stroke_enabled=Bool(style.handle_outline_color),
+        )
+        if style.handle_shadow:
+            recorder.style.shadow_color = _HANDLE_SHADOW
+            recorder.style.shadow_offset = Vector(0, -1)
+            recorder.style.shadow_blur = 4
+            recorder.style.shadow_spread = 0
+            recorder.style.shadow_inset = False
+            recorder.style.shadow_enabled = True
+        recorder.draw(Circle(Point(handle_x, y), handle_radius))
+        return changed
+
+    def _checkbox(
+        self,
+        id: UInt64,
+        label: String,
+        mut checked: Bool,
+        rect: Rectangle,
+        style: CheckboxStyle,
+    ) raises -> Bool:
+        var state = self._interact(id, rect)
+        if state.clicked:
+            checked = not checked
+        ref theme = self._ui[]._theme
+        ref colors = theme.colors
+        comptime size = 18.0
+        var left = rect.position.x - rect.width / 2
+        var centre = Point(left + 20, rect.position.y)
+        var box = Rectangle(
+            centre, size, size, corner_radius=theme.corner_radii.small / 2
+        )
+        ref recorder = self._ui[]._recorder
+        var accent = style.box_color.or_else(colors.primary)
+        var check = style.check_color.or_else(colors.on_primary)
+        # a hovered or pressed box is tinted, as a button is: a ticked one
+        # towards its tick, an empty one with the text colour inside it
+        var opacity = 0.0
+        var least_contrast = 1.0
+        if state.pressed:
+            opacity = theme.state_opacities.pressed
+            least_contrast = _PRESSED_CONTRAST
+        elif state.hovered:
+            opacity = theme.state_opacities.hovered
+            least_contrast = _HOVERED_CONTRAST
+        if checked:
+            var fill = accent
+            if opacity > 0:
+                fill = accent.lerp(
+                    check,
+                    _state_opacity(accent, check, opacity, least_contrast),
+                )
+            recorder.style = Style(fill=fill, stroke_enabled=False)
+            recorder.draw(box)
+            recorder.style = Style(
+                stroke=check,
+                stroke_thickness=2,
+                stroke_cap=StrokeCap.ROUND,
+            )
+            var corner = centre + Vector(-1.5, -4.0)
+            recorder.draw(Line(centre + Vector(-5.0, 0.5), corner))
+            recorder.draw(Line(corner, centre + Vector(5.0, 5.0)))
+        else:
+            var layer = 0.0
+            if opacity > 0:
+                layer = _state_opacity(
+                    colors.surface, colors.on_surface, opacity, least_contrast
+                )
+            recorder.style = Style(
+                fill=colors.on_surface.with_alpha(UInt8(layer * 255 + 0.5)),
+                fill_enabled=layer > 0,
+                stroke=style.outline_color.or_else(colors.on_surface_variant),
+                stroke_thickness=2,
+            )
+            recorder.draw(box)
+        var text_left = Point(left + 40, rect.position.y)
+        recorder.text(
+            label,
+            text_left,
+            _text_style(
+                style.text_style.or_else(theme.typography.body),
+                style.label_color.or_else(colors.on_surface),
+                Align.LEFT,
+            ),
+        )
+        return state.clicked
+
     def _interact(self, id: UInt64, rect: Rectangle) -> _Interaction:
         """Record that the widget `id` can be pointed at in `rect`, and work
         out what the pointer did to it."""
         ref ui = self._ui[]
         ref mouse = self._context[].mouse
         ui._hits.append(_Hit(id, rect, self._to_local))
-        var hovered = Bool(ui._hot) and ui._hot.value() == id
+        # while another widget is held, this one doesn't react to the pointer
+        var free = not ui._held or ui._held.value() == id
+        var hovered = Bool(ui._hot) and ui._hot.value() == id and free
         if hovered and mouse.pressed():
             ui._held = id
         var held = Bool(ui._held) and ui._held.value() == id
@@ -384,3 +630,7 @@ def _state_opacity(
         else:
             low = middle
     return high
+
+
+def _clamp01(t: Float64) -> Float64:
+    return 0.0 if t < 0 else (1.0 if t > 1 else t)

@@ -102,6 +102,57 @@ def image(self, image: Image, rect: Rectangle) raises
 
 `image` stretched to fill `rect`. Like a label, it reacts to nothing.
 
+### `slider`
+
+```mojo
+def slider(
+    self,
+    mut value: Float64,
+    min: Float64,
+    max: Float64,
+    rect: Rectangle,
+    *,
+    step: _OptionalFloat64 = None,
+    style: SliderStyle = SliderStyle(active_track_color=Optional(None), inactive_track_color=Optional(None), handle_color=Optional(None), handle_outline_color=Optional(None), handle_shadow=False, track_thickness=_OptionalFloat64(None), handle_radius=_OptionalFloat64(None)),
+    id: _WidgetKey = None,
+) raises -> Bool
+```
+
+A slider across `rect` that sets `value` between `min` and `max`. Returns whether it changed `value` this frame.
+
+Pressing anywhere in `rect` moves the handle there, and dragging
+moves it on, even once the pointer leaves `rect`. `step` rounds the
+value to multiples of it from `min`. A `value` outside `min` to
+`max` is drawn at the nearer end, and left as it is until dragged.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+if ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32)):
+    self.audio.volume(self.volume)
+```
+
+### `checkbox`
+
+```mojo
+def checkbox(
+    self,
+    label: String,
+    mut checked: Bool,
+    rect: Rectangle,
+    *,
+    style: CheckboxStyle = CheckboxStyle(box_color=Optional(None), check_color=Optional(None), outline_color=Optional(None), label_color=Optional(None), text_style=Optional(None)),
+    id: _WidgetKey = None,
+) raises -> Bool
+```
+
+A box against the left edge of `rect`, ticked while `checked` is `True`, with `label` beside it. A click anywhere in `rect` switches `checked`. Returns whether it changed `checked` this frame.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+if ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32)):
+    self.save_settings()
+```
+
 ## Special methods
 
 ### `__enter__`
