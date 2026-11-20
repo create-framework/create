@@ -43,6 +43,7 @@ struct _Interaction(Copyable, ImplicitlyCopyable, Movable):
     """Held down with the pointer still over it: drawn pressed."""
     var clicked: Bool
     """Released over it, after being pressed on it."""
+    var focused: Bool
 
 
 struct UILayer[
@@ -58,6 +59,15 @@ struct UILayer[
     fields, directly. A helper takes it as `ui: UILayer`, its parameters left
     to be inferred. Everything drawn through it is drawn when the block ends,
     in the order it was called.
+
+    Every widget that reacts to the pointer takes the same three keywords:
+
+    - `take_focus=True` gives it focus in the frame it is passed, as a click
+      would; if several widgets ask in one frame, the last one called gets
+      it.
+    - `disabled=True` draws it faded and stops it reacting, as a
+      `ui.disabled` block around it would.
+    - `id=` adds a key to its ID, as a `ui.id` block around it would.
     """
 
     var _ui: Pointer[UI, Self.ui_origin]
@@ -143,6 +153,7 @@ struct UILayer[
         *,
         variant: ButtonVariant = ButtonVariant.FILLED,
         style: ButtonStyle = ButtonStyle(),
+        take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
     ) raises -> Bool:
@@ -161,6 +172,7 @@ struct UILayer[
             rect,
             variant,
             style,
+            take_focus,
             disabled,
         )
 
@@ -210,6 +222,7 @@ struct UILayer[
         *,
         step: _OptionalFloat64 = None,
         style: SliderStyle = SliderStyle(),
+        take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
     ) raises -> Bool:
@@ -235,6 +248,7 @@ struct UILayer[
             rect,
             step._value,
             style,
+            take_focus,
             disabled,
         )
 
@@ -246,6 +260,7 @@ struct UILayer[
         rect: Rectangle,
         *,
         style: CheckboxStyle = CheckboxStyle(),
+        take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
     ) raises -> Bool:
@@ -265,6 +280,7 @@ struct UILayer[
             checked,
             rect,
             style,
+            take_focus,
             disabled,
         )
 
@@ -277,10 +293,11 @@ struct UILayer[
         rect: Rectangle,
         variant: ButtonVariant,
         style: ButtonStyle,
+        take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
         var off = self._disabled(disabled)
-        var state = self._interact(id, rect, off)
+        var state = self._interact(id, rect, off, take_focus)
         ref theme = self._ui[]._theme
         ref colors = theme.colors
         var container: Color
@@ -375,10 +392,11 @@ struct UILayer[
         rect: Rectangle,
         step: Optional[Float64],
         style: SliderStyle,
+        take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
         var off = self._disabled(disabled)
-        var state = self._interact(id, rect, off)
+        var state = self._interact(id, rect, off, take_focus)
         ref ui = self._ui[]
         ref theme = ui._theme
         ref colors = theme.colors
@@ -483,10 +501,11 @@ struct UILayer[
         mut checked: Bool,
         rect: Rectangle,
         style: CheckboxStyle,
+        take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
         var off = self._disabled(disabled)
-        var state = self._interact(id, rect, off)
+        var state = self._interact(id, rect, off, take_focus)
         if state.clicked:
             checked = not checked
         ref theme = self._ui[]._theme
@@ -563,7 +582,7 @@ struct UILayer[
         return state.clicked
 
     def _interact(
-        self, id: UInt64, rect: Rectangle, disabled: Bool
+        self, id: UInt64, rect: Rectangle, disabled: Bool, take_focus: Bool
     ) -> _Interaction:
         """Record that the widget `id` can be pointed at in `rect`, and work
         out what the pointer did to it. A disabled widget still covers what
@@ -574,18 +593,30 @@ struct UILayer[
         if disabled:
             if ui._held and ui._held.value() == id:
                 ui._held = None  # disabled while held: let go of it
-            return _Interaction(False, False, False)
+            if ui._focused and ui._focused.value() == id:
+                ui._clear_focus()  # a disabled widget can't keep focus
+            if ui._hot and ui._hot.value() == id and mouse.pressed():
+                ui._clear_focus()  # a click on it is a click on no widget
+            return _Interaction(False, False, False, False)
+        if take_focus:
+            ui._focus(id, visible=True)
         # while another widget is held, this one doesn't react to the pointer
         var free = not ui._held or ui._held.value() == id
         var hovered = Bool(ui._hot) and ui._hot.value() == id and free
         if hovered and mouse.pressed():
             ui._held = id
+            ui._focus(id, visible=False)
         var held = Bool(ui._held) and ui._held.value() == id
         var clicked = False
         if held and mouse.released():
             clicked = hovered
             ui._held = None
-        return _Interaction(hovered, held and hovered and not clicked, clicked)
+        return _Interaction(
+            hovered,
+            held and hovered and not clicked,
+            clicked,
+            Bool(ui._focused) and ui._focused.value() == id,
+        )
 
     def _disabled(self, disabled: Bool) -> Bool:
         """Whether a widget given `disabled` is disabled: by its own keyword,
