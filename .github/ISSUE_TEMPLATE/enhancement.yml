@@ -1,0 +1,43 @@
+name: "Enhancement"
+description: "Something Create already has that could be organised, named or built better, such as a refactor, a move or a redesign, rather than something new."
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For an improvement to code or API that already exists: a type in the wrong package, a duplicated helper, an API that could be simpler or more consistent. Something Create can't do yet is a feature request instead. Create is in early development, so breaking changes are fine if they make the library better (see [What we value](https://github.com/create-framework/create/blob/main/CONTRIBUTING.md#what-we-value)).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "What could be better"
+      description: "The code or API as it is, and what is wrong with it: where it lives, what it duplicates, what it makes awkward, or which of Create's principles it falls short of."
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: "Where it is today"
+      description: "The code as it stands, as a program or the library uses it, with the files it lives in."
+      render: mojo
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "What it could become"
+      description: "The change, and the code as it would read afterwards. Say what moves where, what is renamed or removed, and what has to be settled first. Rough is fine."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: public-api
+    attributes:
+      label: "Public API"
+      description: "Whether programs would see the change."
+      options:
+        - Internal only
+        - Changes the public API
+        - Not sure yet
+    validations:
+      required: true
