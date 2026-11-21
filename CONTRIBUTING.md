@@ -82,6 +82,7 @@ pixi run test render                      # subpackage, file name sans test_, or
 pixi run test -j 4 canvas tween           # pin worker count (default nproc, max 8)
 pixi run test --shard 2/4                 # every 4th file from the 2nd; CI runs 4 shards
 pixi run precompile                       # type-check the library into build/create.mojoc
+pixi run native                           # build the compiled library, build/libcreate.so
 pixi run build-examples                   # type-check every example, benchmark and the template; a warning fails it
 pixi run check-standalone                 # a `mojo build` program, run outside the environment
 pixi run check-package                    # the conda package from recipe/, built and tested as installed
@@ -97,14 +98,17 @@ pixi run setup                            # once per clone: git hooks + blame ig
 **`-I src` is required for every `mojo run`**, or `from create import *` fails. Pixi tasks add it.
 
 `example` and `benchmark` run against the precompiled library, `build/create.mojoc` (`-I build`),
-not against the source. They depend on the `precompile` task, and pixi's task cache skips that task
-while no `src/create/**/*.mojo` file and nothing in the environment has changed. So while the
-library is unchanged, a run starts in about 2 s rather than 8, and the first run after a library
-edit pays for the ~10 s rebuild.
+not against the source, and call into the compiled library, `build/libcreate.so`, for the loops, the
+window and both replays (see [The compiled library](ARCHITECTURE.md#the-compiled-library)). They
+depend on the `precompile` and `native` tasks, and pixi's task cache skips those while no
+`src/create/**/*.mojo` file and nothing in the environment has changed. So while the library is
+unchanged, a run starts in about 2 s rather than 8, and the first run after a library edit pays for
+the rebuild, about 10 s for the package and 25 s for the compiled library.
 
 `test`, `build-examples` and `check-standalone` work differently. Each one precompiles `src` afresh
-into a temporary package of its own, then builds every file against that package. So their results
-are never stale, and the library is parsed once rather than once for every file.
+into a temporary package of its own (and `test` and `check-standalone` build the compiled library
+beside it), then builds every file against that package. So their results are never stale, and the
+library is parsed once rather than once for every file.
 
 `mojo format`'s grammar is narrower than the compiler's and will abort a commit: `where` is reserved
 (not usable as a name), and `;` statement separators don't parse.

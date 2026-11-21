@@ -16,8 +16,8 @@ from create.render._surface import Surface
 from .program import Program
 from .window_mode import WindowMode
 from ._run_gl import run_gl
-from ._driver import _Driver, _Host, _RunSettings
-from create._native import Slot
+from ._driver import _Driver, _Host, _Run, _RunSettings
+from create._native import Slot, address, check, entry
 
 
 def _update_dimensions(
@@ -157,16 +157,21 @@ def run[
         antialiasing,
         autoscale,
     )
-    _run(settings, driver)
-    # The driver holds `host` by address only, so it is kept alive past the
-    # run by hand: the program in it is dropped here, once the run is over.
+    var error = Slot(String())
+    var ok = entry[_Run]("create_run")(
+        address(settings), address(driver), error.address()
+    )
+    # Passed by address only, so kept alive past the call by hand: the
+    # program in `host` is dropped here, once the run is over.
+    _ = settings^
     _ = driver^
     _ = host^
+    check(ok, error^)
 
 
 def _run(settings: _RunSettings, mut driver: _Driver) raises:
-    """`run`, for the program `driver` calls: open the window and run the
-    loop `settings.backend` picks."""
+    """`run`, in the compiled library: open the window and run the loop
+    `settings.backend` picks."""
     var title = settings.title
     var mode = settings.mode
     var width = settings.width
