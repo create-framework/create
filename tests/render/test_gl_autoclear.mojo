@@ -8,6 +8,8 @@ from std.testing import TestSuite, assert_equal, assert_true
 from create._window import GLWindow
 
 from create import *
+from create._native import Slot
+from create.core._driver import _Driver, _Host
 from create.core._step import first_step, step
 from create.core.headless import run_headless
 from create.render._gl import GL, GL_COLOR_BUFFER_BIT
@@ -48,11 +50,13 @@ def _swapped_frames[
     var target = _GLTarget(GL(), 64, 64)
     var gl = GLRenderer()
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(64, 64)
     context._set_viewport(state, 64, 64)
-    var program = first_step[P](context, state)
+    var host = Slot(_Host[P]())
+    var program = _Driver.of[P](host.address())
+    first_step(program, context, state)
     var now = 0
     context.time._start(now)
     for i in range(frames + 1):
@@ -60,13 +64,15 @@ def _swapped_frames[
             now += 16
             context._advance_frame(now)
             state = step(program, context, state^)
-        state._backend.present_gpu(gl, 64, 64, state._view.scale)
+        state._backend[].present_gpu(gl, 64, 64, state._view.scale)
         if i < frames:
             target.gl.clear_color(0.0, 0.0, 1.0, 1.0)
             target.gl.clear(GL_COLOR_BUFFER_BIT)
     var mem = MemorySurface(64, 64)
     mem.data = gl.read_frame(64, 64)
     _ = state^
+    _ = program^
+    _ = host^
     _ = gl^
     _ = target^
     return mem^

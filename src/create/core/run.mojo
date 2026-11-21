@@ -16,6 +16,8 @@ from create.render._surface import Surface
 from .program import Program
 from .window_mode import WindowMode
 from ._run_gl import run_gl
+from ._driver import _Driver, _Host, _Run, _RunSettings
+from create._native import Slot, address, check, entry
 
 
 def _update_dimensions(
@@ -47,16 +49,14 @@ def _process_events(
 def _present(mut win: Window, mut state: _PersistentCanvasState) raises:
     var pixel_w = win.width()
     var pixel_h = win.height()
-    state._backend.present(
+    state._backend[].present(
         Surface(win.pixels(), pixel_w, pixel_h), state._view.scale
     )
     win.present()
 
 
-def _run_loop[
-    P: Program
-](
-    mut program: P,
+def _run_loop(
+    mut driver: _Driver,
     mut win: Window,
     var state: _PersistentCanvasState,
     mut context: Context,
@@ -84,14 +84,14 @@ def _run_loop[
         # viewport for the same reason — the viewport was measured before the
         # resize, and a stale width would run the raster loops off the new
         # buffer.
-        state = step(program, context, state^)
+        state = step(driver, context, state^)
         _apply_window_dials(win, applied, context)
         _present(win, state)
         _apply_window_mode(win, applied, context)
         _finish_frame(win, context, frame_start)
     # A recording still running when the window closes gets its last frame
     # and its trailer, so the file is complete.
-    state._backend.captures.finish_recording()
+    state._backend[].captures.finish_recording()
 
 
 def run[
@@ -144,11 +144,48 @@ def run[
     (`Antialiasing.MEDIUM` by default, `OFF` for hard pixels). See
     `Antialiasing`.
     """
+    # On the heap, since the library writes the program into it.
+    var host = Slot(_Host[P]())
+    var driver = _Driver.of[P](host.address())
+    var settings = _RunSettings(
+        title,
+        mode,
+        width,
+        height,
+        backend,
+        resizable,
+        antialiasing,
+        autoscale,
+    )
+    var error = Slot(String())
+    var ok = entry[_Run]("create_run")(
+        address(settings), address(driver), error.address()
+    )
+    # Passed by address only, so kept alive past the call by hand: the
+    # program in `host` is dropped here, once the run is over.
+    _ = settings^
+    _ = driver^
+    _ = host^
+    check(ok, error^)
+
+
+def _run(settings: _RunSettings, mut driver: _Driver) raises:
+    """`run`, in the compiled library: open the window and run the loop
+    `settings.backend` picks."""
+    var title = settings.title
+    var mode = settings.mode
+    var width = settings.width
+    var height = settings.height
+    var backend = settings.backend
+    var resizable = settings.resizable
+    var antialiasing = settings.antialiasing
+    var autoscale = settings.autoscale
     var fullscreen = mode == WindowMode.FULLSCREEN
     var borderless = mode == WindowMode.BORDERLESS
     var maximized = mode == WindowMode.MAXIMIZED
     if backend == RenderBackend.GPU:
-        run_gl[P](
+        run_gl(
+            driver,
             title,
             mode,
             width,
@@ -171,7 +208,7 @@ def run[
     # rebuilt every frame; the transform stack deliberately does not, so each
     # frame starts unrotated and untranslated.
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     # The size the program is authored against is always what the caller asked
     # for, never what the display handed back. In fullscreen SDL ignores the
     # requested size, so seeding this from the window would make the design
@@ -194,8 +231,8 @@ def run[
     # Later changes arrive as events; this is what was copied before.
     context._clipboard = win.clipboard()
     var applied = _AppliedWindow(context)
-    var program = first_step[P](context, state)
+    first_step(driver, context, state)
     _apply_window_dials(win, applied, context)
     _present(win, state)
     _apply_window_mode(win, applied, context)
-    _run_loop(program, win, state^, context, applied^)
+    _run_loop(driver, win, state^, context, applied^)
