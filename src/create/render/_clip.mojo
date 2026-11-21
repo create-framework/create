@@ -12,6 +12,21 @@ multisampled stencil buffer. A clip and a `canvas.rectangle` of the same
 from std.math import max, min
 
 from ._command import RenderCommand
+from ._cpu_replay import CpuReplay, clip_rows
+from ._resources import Resources
+from ._surface import Surface
+from create.math.transform import Transform
+
+
+comptime _ClipRowsFn = def(
+    mut CpuReplay,
+    mut Resources,
+    List[_Clip],
+    Surface[MutUntrackedOrigin],
+    Float64,
+    Transform,
+) thin raises -> List[_ClipRows]
+"""`clip_rows`: turns a frame's clips into the rows the CPU replay keeps."""
 from create.color.color import Color
 from .style import Style
 
@@ -41,6 +56,10 @@ struct _Clip(Copyable, Movable):
     var invert: Bool
     """Keep what lies outside `region` instead of inside it."""
     var parent: Int
+    var _rows: _ClipRowsFn
+    """`clip_rows`, stored here because only `canvas.clip` makes a `_Clip`,
+    so a program that never clips doesn't compile how the CPU replay turns
+    clips into rows."""
 
     def __init__(
         out self, var region: RenderCommand, invert: Bool, parent: Int
@@ -48,6 +67,7 @@ struct _Clip(Copyable, Movable):
         self.region = region^
         self.invert = invert
         self.parent = parent
+        self._rows = clip_rows
 
 
 struct _ClipRows(Movable):

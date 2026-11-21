@@ -55,8 +55,8 @@ transform at record time, style resolved now) to the `Backend`. Nothing rasteris
 `present`/`present_gpu` replays the frame, so later style calls can't reach back. Images are
 interned into the backend at record time (the command carries an id); text is recorded as an owned
 `String` and laid out at replay. Add a shape by adding a payload to `_command.mojo`'s
-`RenderPayload` and lowering it in `_lower.mojo`'s `shape_pieces` (below), never by calling
-`_raster.mojo` from `Canvas`.
+`RenderPayload` and giving its builder a lowering function (below), never by calling `_raster.mojo`
+from `Canvas`.
 
 **Every kind but two is lowered to pieces.** A line, a curve, a sector, a polygon or a triangle
 reaches both replays through `shape_pieces(c, m, scale)`, which gives convex device pieces for the
@@ -64,7 +64,18 @@ fill and the stroke, holding only what the paint shows. The CPU fills them with 
 `fill_quad` for each quad, and `fill_convex` for each polygon, whose half-open rule composites a
 shared edge once. The GPU pushes them with `emit_pieces`. A blurred shadow is the shadow command's
 pieces, masked (`shape_shadow_mask`). So both replays draw the same pieces, and a new lowered kind
-needs only a branch in `shape_pieces` and a tiler returning `Pieces`; no backend has to learn it.
+needs only a tiler returning `Pieces`, which its builder stores; no backend has to learn it.
+
+**A command carries the function that lowers it.** `RenderCommand.lower` is a `thin` function
+pointer (`_Lower`) that the kind's builder stores (`polygon_command` stores `polygon_quads`,
+`line_command` `_line_pieces`, and so on), and `shape_pieces` calls it rather than switching on the
+payload. A dashed stroke works the same way: every `StrokeDash` but `SOLID` carries
+`_dashed_pieces`, and `shape_pieces` calls that one first. This is for compile time. Mojo compiles
+every function a program can reach, and a switch over every kind reaches every tiler, while a
+pointer reaches only what some call stores in it. So a program compiles the tiler of a kind only if
+it draws that kind, and the dashing only if it makes a dashed pattern. Keep it so: code that runs
+for every command (the replays, `shape_pieces`, `RenderCommand.__init__`) never names a kind's
+tiler, and the same holds for the clips (see Clips) and the captures (see Captures).
 
 Rectangles and circles are not lowered: each replay rasterises them from their equations
 (`CpuReplay._rect`/`_circle`, `emit_rect`/`emit_circle`), which is where they are fast. Their
@@ -333,16 +344,16 @@ replaces the clear before it.
 
 Each replay rasterises the region **with the code that draws that shape**, so a clip and a fill of
 the same shape cover the same pixels:
-- **CPU:** before any command, `CpuReplay._clip_rows` replays each region through `_one` onto a
-  *recording* surface (`Surface._recording_into`) `grid` times finer, as `_shape` antialiases a
-  shape. There `fill_span` appends `(row, lo, hi, key)` and writes nothing; `key` names the run's
-  paint, which a clip ignores. `_ClipRows` merges those per sub-row, then counts each pixel's
-  covered samples into runs of constant `cover` (0–255, floored like `_mixed`, so a clip edge
-  matches a fill of the same shape exactly), complements them for `invert` (`255 − cover`), and
-  intersects with the parent's (covers multiply). A clipped command's surface carries its rows
-  (`Surface._with_clip`). `fill_span`, `blend` and `fill_all` cut to them and scale a partly kept
-  run's alpha by its cover (`_kept`), and nothing else writes pixels, so no rasteriser knows about
-  clips. With antialiasing off the grid is 1 and every cover is 255.
+- **CPU:** before any command, `clip_rows` replays each region through `_one` onto a *recording*
+  surface (`Surface._recording_into`) `grid` times finer, as `_shape` antialiases a shape. There
+  `fill_span` appends `(row, lo, hi, key)` and writes nothing; `key` names the run's paint, which a
+  clip ignores. `_ClipRows` merges those per sub-row, then counts each pixel's covered samples into
+  runs of constant `cover` (0–255, floored like `_mixed`, so a clip edge matches a fill of the same
+  shape exactly), complements them for `invert` (`255 − cover`), and intersects with the parent's
+  (covers multiply). A clipped command's surface carries its rows (`Surface._with_clip`).
+  `fill_span`, `blend` and `fill_all` cut to them and scale a partly kept run's alpha by its cover
+  (`_kept`), and nothing else writes pixels, so no rasteriser knows about clips. With antialiasing
+  off the grid is 1 and every cover is 255.
   - The clipped paths are out of line (`_fill_span_clipped`, `_shade_span_clipped`,
     `_blend_clipped`). Keep them there: a recursive or larger `fill_span` stops inlining and cost
     circles ~40%.
@@ -350,6 +361,11 @@ the same shape cover the same pixels:
     per-pixel test alone cost an image blit ~15%.
   - The rows live in a local `List` that the surfaces point into untracked (`MutUntrackedOrigin`),
     built in full before the first command so it never reallocates under them.
+  - `clip_rows` is reached only through `_Clip._rows`, a `thin` function pointer that `_Clip`'s
+    constructor stores, and only `canvas.clip` makes a `_Clip`. So a program that never clips
+    doesn't compile it, or `_ClipRows`'s merging (see Canvas, commands and backends). The clipped
+    paths in `_raster.mojo` are still compiled into every program, since they sit behind a run-time
+    test in the hottest loops.
 - **GPU:** the stencil buffer. When `c.clip` differs from what the stencil holds,
   `GLRenderer._apply_clip` flushes, clears the stencil, and draws the chain outermost first through
   `_one` with colour writes off. Level `d` increments the pixels at `d − 1` that its region covers.

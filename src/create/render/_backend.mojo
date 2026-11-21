@@ -77,9 +77,9 @@ def _seed(
 struct Backend(Movable):
     """Where a frame's recorded commands become pixels.
 
-    One struct with a runtime branch on `kind` rather than a trait: Mojo 1.0
-    has no dynamic trait dispatch, so a trait in type position would form an
-    inert `AnyTrait[T]` that nothing converts into.
+    One struct for both backends rather than a trait: Mojo has no dynamic
+    trait dispatch. It holds no GPU state; the GL loops hand their
+    `GLRenderer` to `present_gpu`, so a CPU program never compiles it.
 
     This is what survives the frame boundary. Fonts and glyph masks already
     had to — reloading a face every frame would be absurd — and GPU resources

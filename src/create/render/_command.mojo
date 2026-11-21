@@ -12,6 +12,17 @@ from create.math.vector import Vector
 from std.memory import ArcPointer
 from std.utils import Variant
 
+from ._pieces import Pieces
+from ._lower import _curve_pieces, _line_pieces
+from ._polygon import polygon_quads
+from ._sector import sector_quads
+from ._triangle import triangle_pieces
+
+
+comptime _Lower = def(RenderCommand, Transform, Float64) thin -> Pieces
+"""Lowers a command to `Pieces` under a device matrix and a fallback pixel
+scale: see `RenderCommand.lower`."""
+
 comptime _GEOM_SLOTS = 6
 """A triangle's three corners, interleaved `x1, y1, x2, y2, x3, y3`."""
 
@@ -220,6 +231,10 @@ struct RenderCommand(Copyable, Movable):
     """How far `aligned_stroke` grew the shape to move its stroke out, in
     local units; 0 for a command as recorded. `_fill_box` takes it back off
     a rectangle and a circle, so a fill gradient stays where the shape is."""
+    var lower: Optional[_Lower]
+    """The function that lowers this command to `Pieces` (see
+    `shape_pieces`), stored by the call that records it, so that a program
+    compiles only the lowering of the shapes it draws."""
 
     def __init__(
         out self,
@@ -255,6 +270,7 @@ struct RenderCommand(Copyable, Movable):
                 )
         self.clip = 0
         self.stroke_grow = 0.0
+        self.lower = None
 
     def is_region(self) -> Bool:
         """Whether this draws a shape with an inside: a rectangle, circle,
@@ -372,6 +388,19 @@ def _fill_box(c: RenderCommand) -> Tuple[Point, Vector]:
     )
 
 
+@always_inline
+def _lowered(
+    var payload: RenderPayload,
+    transform: Transform,
+    style: Style,
+    lower: _Lower,
+) -> RenderCommand:
+    """A command drawn through `shape_pieces`, lowered by `lower`."""
+    var c = RenderCommand(payload^, transform, style)
+    c.lower = lower
+    return c^
+
+
 def clear_command(color: Color) -> RenderCommand:
     """Paint the whole framebuffer. Carries no transform — it covers the
     framebuffer, not the design area, so no mapping applies."""
@@ -437,8 +466,11 @@ def sector_command(
     start: Float64,
     sweep: Float64,
 ) -> RenderCommand:
-    return RenderCommand(
-        SectorPayload(Point(cx, cy), r, start, sweep, 0.0), transform, style
+    return _lowered(
+        SectorPayload(Point(cx, cy), r, start, sweep, 0.0),
+        transform,
+        style,
+        sector_quads,
     )
 
 
@@ -450,8 +482,11 @@ def line_command(
     x1: Float64,
     y1: Float64,
 ) -> RenderCommand:
-    return RenderCommand(
-        LinePayload(Point(x0, y0), Point(x1, y1)), transform, style
+    return _lowered(
+        LinePayload(Point(x0, y0), Point(x1, y1)),
+        transform,
+        style,
+        _line_pieces,
     )
 
 
@@ -473,8 +508,11 @@ def triangle_command(
     corners[3] = y2
     corners[4] = x3
     corners[5] = y3
-    return RenderCommand(
-        TrianglePayload(corners^, corner_radius), transform, style
+    return _lowered(
+        TrianglePayload(corners^, corner_radius),
+        transform,
+        style,
+        triangle_pieces,
     )
 
 
@@ -493,14 +531,16 @@ def bezier_chain_command(
 ) -> RenderCommand:
     """A stroke along the joined Béziers whose control points are `points`,
     laid out as `RenderCommand.points` describes: 3n + 1 of them."""
-    return RenderCommand(CurvesPayload(points^), transform, style)
+    return _lowered(CurvesPayload(points^), transform, style, _curve_pieces)
 
 
 def polygon_command(
     transform: Transform, style: Style, var vertices: List[Point]
 ) -> RenderCommand:
     """A polygon through `vertices`, in order, closed back to the first."""
-    return RenderCommand(PolygonPayload(vertices^, 0.0, None), transform, style)
+    return _lowered(
+        PolygonPayload(vertices^, 0.0, None), transform, style, polygon_quads
+    )
 
 
 def rounded_sector_command(

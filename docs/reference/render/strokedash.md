@@ -54,8 +54,8 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 ## Constants
 
 - `SOLID = StrokeDash(_kind=Int(0), _offset=Float64("0"))`
-- `DASHED = StrokeDash(_kind=Int(1), _offset=Float64("0"))`
-- `DOTTED = StrokeDash(_kind=Int(2), _offset=Float64("0"))`
+- `DASHED = StrokeDash(_preset=Int(1))`
+- `DOTTED = StrokeDash(_preset=Int(2))`
 
 ## Constructors
 

@@ -13,6 +13,10 @@ is where they are fast. Neither is a plain triangle's fill, one
 (`is_plain_triangle`). A dashed stroke is lowered on every kind, a
 rectangle's and a circle's too: its dashes are pieces (`_dash.mojo`), and
 its fill the pieces the solid stroke would leave.
+
+`shape_pieces` names no kind's tiler: each command carries its own
+(`RenderCommand.lower`), and each dashed `StrokeDash` carries
+`_dashed_pieces`, so a program compiles only the tilers of what it draws.
 """
 
 from create.geometry._fillet import rect_corner_radius, rounded_vertices
@@ -40,10 +44,7 @@ from ._curve import (
 )
 from ._dash import dashed_stroke
 from ._pieces import Pieces, PlacedMask, pieces_shadow_mask
-from ._polygon import polygon_quads
-from ._sector import sector_quads
 from ._transform import pixel_scale, stroke_thickness_px
-from ._triangle import triangle_pieces
 from .stroke_cap import StrokeCap
 from .stroke_dash import StrokeDash
 
@@ -79,33 +80,31 @@ def shape_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     convex pieces, keeping only the parts its paint shows. `scale` is the
     fallback pixel scale for a transform that is not uniform."""
     if c.paint._stroke_dashed():
-        return _dashed_pieces(c, m, scale)
+        return c.paint.stroke_dash._lower.value()(c, m, scale)
     var out: Pieces
-    if c.payload.isa[LinePayload]():
-        out = _line_pieces(c, m, scale)
-    elif c.payload.isa[CurvesPayload]():
-        out = Pieces()
-        if c.paint._stroke_visible():
-            out.add_stroke(
-                stroke_pieces(
-                    bezier_device_points(c, m),
-                    Float64(stroke_thickness_px(c.paint, m, scale)),
-                    c.paint.stroke_cap,
-                    device_x_axis(m),
-                )
-            )
-    elif c.payload.isa[SectorPayload]():
-        out = sector_quads(c, m, scale)
-    elif c.payload.isa[PolygonPayload]():
-        out = polygon_quads(c, m, scale)
-    elif c.payload.isa[TrianglePayload]():
-        out = triangle_pieces(c, m, scale)
+    if c.lower:
+        out = c.lower.value()(c, m, scale)
     else:
         out = Pieces()
     if not c.paint._fill_visible():
         out.clear_fill()
     if not c.paint._stroke_visible():
         out.clear_stroke()
+    return out^
+
+
+def _curve_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
+    """A chain of Béziers' stroke. A curve has no interior."""
+    var out = Pieces()
+    if c.paint._stroke_visible():
+        out.add_stroke(
+            stroke_pieces(
+                bezier_device_points(c, m),
+                Float64(stroke_thickness_px(c.paint, m, scale)),
+                c.paint.stroke_cap,
+                device_x_axis(m),
+            )
+        )
     return out^
 
 

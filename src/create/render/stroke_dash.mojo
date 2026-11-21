@@ -1,6 +1,9 @@
 comptime _MAX_LENGTHS = 8
 """The most lengths a pattern holds: four on/off pairs."""
 
+from ._command import _Lower
+from ._lower import _dashed_pieces
+
 comptime _EXPLICIT = 0
 comptime _DASHED = 1
 comptime _DOTTED = 2
@@ -57,10 +60,14 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     var _count: Int
     var _kind: Int
     var _offset: Float64
+    var _lower: Optional[_Lower]
+    """`_dashed_pieces`, stored by every constructor of a pattern that can
+    break a stroke, so that only a program that dashes a stroke compiles the
+    dashing. `SOLID` has none."""
 
     comptime SOLID = StrokeDash(_kind=_EXPLICIT)
-    comptime DASHED = StrokeDash(_kind=_DASHED)
-    comptime DOTTED = StrokeDash(_kind=_DOTTED)
+    comptime DASHED = StrokeDash(_preset=_DASHED)
+    comptime DOTTED = StrokeDash(_preset=_DOTTED)
 
     def __init__(out self, on: Float64, off: Float64, *, offset: Float64 = 0):
         """Dashes `on` world units long, `off` apart, starting `offset` into
@@ -71,6 +78,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self._count = 2
         self._kind = _EXPLICIT
         self._offset = offset
+        self._lower = _dashed_pieces
 
     def __init__(out self, *lengths: Float64, offset: Float64 = 0) raises:
         """The pattern `on, off, on, off, ...`, in world units, repeated
@@ -100,13 +108,21 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self._count = len(lengths)
         self._kind = _EXPLICIT
         self._offset = offset
+        self._lower = _dashed_pieces
 
     def __init__(out self, *, _kind: Int, _offset: Float64 = 0):
-        """A preset, or `SOLID` (an explicit pattern of no lengths)."""
+        """`SOLID` (an explicit pattern of no lengths), or with `_kind` a
+        preset's, the shell `_resolved` fills in."""
         self._lengths = SIMD[DType.float64, _MAX_LENGTHS](0)
         self._count = 0
         self._kind = _kind
         self._offset = _offset
+        self._lower = None
+
+    def __init__(out self, *, _preset: Int):
+        """The preset `_preset`, `DASHED` or `DOTTED`."""
+        self = StrokeDash(_kind=_preset)
+        self._lower = _dashed_pieces
 
     def with_offset(self, offset: Float64) -> StrokeDash:
         """This pattern starting `offset` world units into itself, for
@@ -172,6 +188,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         if self._kind == _EXPLICIT:
             return self
         var out = StrokeDash(_kind=_EXPLICIT, _offset=self._offset)
+        out._lower = self._lower
         if self._kind == _DASHED:
             out._lengths[0] = 3.0 * thickness
             out._lengths[1] = 2.0 * thickness

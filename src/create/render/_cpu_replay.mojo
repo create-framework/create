@@ -698,7 +698,12 @@ struct CpuReplay(Movable):
         command, so no row table moves while a surface points into it.
         """
         self.antialiasing = antialiasing
-        var rows = self._clip_rows(res, clips, s, scale, pre)
+        var rows = List[_ClipRows]()
+        if len(clips) > 0:
+            var untracked = Surface[MutUntrackedOrigin](
+                s.px.unsafe_origin_cast[MutUntrackedOrigin](), s.width, s.height
+            )
+            rows = clips[0]._rows(self, res, clips, untracked, scale, pre)
         for ref c in cmds:
             var skipped = (
                 skip_letterbox and c.payload.isa[LetterboxPayload]()
@@ -718,45 +723,6 @@ struct CpuReplay(Movable):
                         pre,
                     )
         _ = rows^
-
-    def _clip_rows[
-        o: Origin[mut=True]
-    ](
-        mut self,
-        mut res: Resources,
-        clips: List[_Clip],
-        s: Surface[o],
-        scale: Float64,
-        pre: Transform,
-    ) raises -> List[_ClipRows]:
-        """Every clip of the frame as the rows of `s` it keeps, in id order.
-
-        Each region is replayed through `_one` onto a recording surface
-        `grid` times finer, as `_shape` antialiases a shape, so its rows keep
-        exactly the coverage the same shape would paint, and then
-        intersected with its parent's, which comes earlier.
-        """
-        var grid = self.antialiasing._cpu_grid()
-        var g = Float64(grid)
-        var out = List[_ClipRows](capacity=len(clips))
-        for i in range(len(clips)):
-            var runs = List[Int]()
-            var recorder = Pointer(to=runs).unsafe_origin_cast[
-                MutUntrackedOrigin
-            ]()
-            var fine = Surface[o](
-                s.px, s.width * grid, s.height * grid
-            )._recording_into(recorder)
-            var region = clips[i].region.copy()
-            self._one(res, fine, region, scale * g, Transform(scale=g) @ pre)
-            var own = _ClipRows(runs, s.width, s.height, clips[i].invert, grid)
-            _ = runs^
-            var parent = clips[i].parent
-            if parent == 0:
-                out.append(own^)
-            else:
-                out.append(own.intersect(out[parent - 1]))
-        return out^
 
     def _one[
         o: Origin[mut=True]
@@ -1546,3 +1512,42 @@ struct CpuReplay(Movable):
             fill_pixels(s, 0, cy0, cx0, cy1, col)
         if cx1 < W:
             fill_pixels(s, cx1, cy0, W, cy1, col)
+
+
+def clip_rows(
+    mut replay: CpuReplay,
+    mut res: Resources,
+    clips: List[_Clip],
+    s: Surface[MutUntrackedOrigin],
+    scale: Float64,
+    pre: Transform,
+) raises -> List[_ClipRows]:
+    """Every clip of the frame as the rows of `s` it keeps, in id order.
+
+    Each region is replayed through `_one` onto a recording surface `grid`
+    times finer, as `_shape` antialiases a shape, so its rows keep exactly
+    the coverage the same shape would paint, and then intersected with its
+    parent's, which comes earlier.
+
+    Reached only through `_Clip._rows`, which `canvas.clip` stores, so a
+    program that never clips doesn't compile it.
+    """
+    var grid = replay.antialiasing._cpu_grid()
+    var g = Float64(grid)
+    var out = List[_ClipRows](capacity=len(clips))
+    for i in range(len(clips)):
+        var runs = List[Int]()
+        var recorder = Pointer(to=runs).unsafe_origin_cast[MutUntrackedOrigin]()
+        var fine = Surface[MutUntrackedOrigin](
+            s.px, s.width * grid, s.height * grid
+        )._recording_into(recorder)
+        var region = clips[i].region.copy()
+        replay._one(res, fine, region, scale * g, Transform(scale=g) @ pre)
+        var own = _ClipRows(runs, s.width, s.height, clips[i].invert, grid)
+        _ = runs^
+        var parent = clips[i].parent
+        if parent == 0:
+            out.append(own^)
+        else:
+            out.append(own.intersect(out[parent - 1]))
+    return out^
