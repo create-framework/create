@@ -1,5 +1,14 @@
 # Sourced by pixi on activation (see [activation] in pixi.toml).
 #
+# Points CREATE_LIBRARY at the compiled library `pixi run native` builds,
+# which every program built against the source calls into (see
+# src/create/_native.mojo). The test scripts set it to a copy of their own.
+case "$(uname)" in
+    Darwin) CREATE_LIBRARY="$PIXI_PROJECT_ROOT/build/libcreate.dylib" ;;
+    *) CREATE_LIBRARY="$PIXI_PROJECT_ROOT/build/libcreate.so" ;;
+esac
+export CREATE_LIBRARY
+#
 # Prefers the system's libdrm over the environment's. SDL creates its GL
 # context through the host's Mesa driver, which is built against the host's
 # libdrm, but the environment's lib directory comes first on the search path,

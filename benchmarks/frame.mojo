@@ -15,7 +15,9 @@ measure the monitor. The CPU path has no equivalent switch: it blits through
 SDL and is nowhere near the refresh rate on this sketch anyway.
 
 `run_gl` is internal, and `run` has no `vsync` switch, so this benchmark
-calls it by path, through a `_Driver` as `run` does.
+calls it by path, through a `_Driver` as `run` does. It runs in the
+benchmark's own build rather than the compiled library: the same code,
+compiled the same way.
 """
 
 from std.sys import argv

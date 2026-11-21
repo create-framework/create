@@ -22,6 +22,9 @@ build:
         set -euo pipefail
         mkdir -p "${PREFIX}/lib/mojo"
         mojo precompile src/create -o "${PREFIX}/lib/mojo/create.mojoc"
+        # The compiled library the package calls into, found in lib/ through
+        # CONDA_PREFIX or the run path (src/create/_native.mojo).
+        sh scripts/build_native.sh "${PREFIX}/lib"
         # The project template create-cli's `create new` copies.
         mkdir -p "${PREFIX}/share/create"
         cp -R template "${PREFIX}/share/create/template"

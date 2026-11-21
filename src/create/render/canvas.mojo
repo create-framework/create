@@ -33,8 +33,9 @@ from create.math.vector import Vector
 from create.math.transform import Transform
 from create.image.image import Image
 from create.animation.animator import Animator
-from ._backend import _seed
+from ._backend import Backend, _seed
 from ._backend_handle import BackendHandle
+from create._native import IN_LIBRARY, Slot, address, at, check, entry
 from ._captures import _ImageRequest, _Recording
 from ._gif import GifWriter
 from ._command import (
@@ -53,6 +54,37 @@ from ._transform import pixel_scale, text_pixel_scale
 
 
 comptime _AUTOCLEAR_COLOR = Color(200)
+
+# The library's entry points a canvas calls, by type; each takes the canvas's
+# address first and an error `String`'s last, and returns whether it worked.
+# See `create/_native.mojo`.
+comptime _CanvasCall = def(Int, Int) thin abi("C") -> Bool
+comptime _CanvasPath = def(Int, Int, Int) thin abi("C") -> Bool
+comptime _ColorAt = def(Int, Int, Int, Int) thin abi("C") -> Bool
+comptime _Snapshot = def(Int, Int, Float64, Int, Int) thin abi("C") -> Bool
+comptime _SaveImage = def(Int, Int, Float64, Bool, Int) thin abi("C") -> Bool
+comptime _Measure = def(Int, Int, Float64, Bool, Int, Int) thin abi("C") -> Bool
+comptime _InternImage = def(Int, Int) thin abi("C") -> Int
+
+
+def intern_image(mut backend: Backend, image: Image) -> Int:
+    """Intern `image` into `backend`, for a command to name by id."""
+    return backend.resources.intern_image(
+        image._id, image._pixels, image.width(), image.height()
+    )
+
+
+@fieldwise_init
+struct _RecordingRequest(Movable):
+    """`start_recording`'s arguments, passed to the library in one."""
+
+    var path: String
+    var seconds: _OptionalFloat64
+    var frames: Optional[Int]
+    var fps: Float64
+    var scale: Float64
+    var dither: Bool
+    var transparent: Bool
 
 
 struct _PersistentCanvasState(Movable):
@@ -991,6 +1023,23 @@ struct Canvas(DrawTarget, Movable):
         mut self, path: String, pixel_scale: Float64, transparent: Bool
     ) raises:
         """`save_image`, to a path already resolved."""
+        comptime if IN_LIBRARY:
+            self._save_image_here(path, pixel_scale, transparent)
+        else:
+            var error = Slot(String())
+            var ok = entry[_SaveImage]("create_canvas_save_image")(
+                address(self),
+                address(path),
+                pixel_scale,
+                transparent,
+                error.address(),
+            )
+            check(ok, error^)
+
+    def _save_image_here(
+        mut self, path: String, pixel_scale: Float64, transparent: Bool
+    ) raises:
+        """`_save_image`, in the library."""
         if pixel_scale <= 0.0:
             raise Error(
                 "save_image needs a positive pixel_scale, got "
@@ -1044,6 +1093,22 @@ struct Canvas(DrawTarget, Movable):
         On an offscreen canvas a read replays what was drawn since the last
         one onto the canvas's own pixels, at its own `scale`.
         """
+        comptime if IN_LIBRARY:
+            return self._color_at_here(position)
+        else:
+            var color = Slot(Color.TRANSPARENT)
+            var error = Slot(String())
+            var ok = entry[_ColorAt]("create_canvas_color_at")(
+                address(self),
+                address(position),
+                color.address(),
+                error.address(),
+            )
+            check(ok, error^)
+            return color^.take()
+
+    def _color_at_here(mut self, position: Point) raises -> Color:
+        """`color_at`, in the library."""
         if self._offscreen():
             self._state._backend[].bake(self._scale)
             var p = self._base._apply_xy(position.x, position.y)
@@ -1087,6 +1152,26 @@ struct Canvas(DrawTarget, Movable):
         On an offscreen canvas `pixel_scale=canvas.pixel_scale()` reads its pixels as they
         are; any other value resamples them, nearest pixel.
         """
+        comptime if IN_LIBRARY:
+            return self._snapshot_here(region, pixel_scale)
+        else:
+            var image = Slot(Optional[Image]())
+            var error = Slot(String())
+            var ok = entry[_Snapshot]("create_canvas_snapshot")(
+                address(self),
+                address(region),
+                pixel_scale,
+                image.address(),
+                error.address(),
+            )
+            check(ok, error^)
+            var shot = image^.take()
+            return shot.take()
+
+    def _snapshot_here(
+        mut self, region: Rectangle, pixel_scale: Float64
+    ) raises -> Image:
+        """`snapshot`, in the library."""
         if pixel_scale <= 0.0:
             raise Error(
                 "snapshot needs a positive pixel_scale, got "
@@ -1181,6 +1266,17 @@ struct Canvas(DrawTarget, Movable):
 
     def _save_screenshot(mut self, path: String) raises:
         """`save_screenshot`, to a path already resolved."""
+        comptime if IN_LIBRARY:
+            self._save_screenshot_here(path)
+        else:
+            var error = Slot(String())
+            var ok = entry[_CanvasPath]("create_canvas_save_screenshot")(
+                address(self), address(path), error.address()
+            )
+            check(ok, error^)
+
+    def _save_screenshot_here(mut self, path: String) raises:
+        """`_save_screenshot`, in the library."""
         if self._offscreen():
             self._state._backend[].bake(self._scale)
             self._state._backend[].target.value().save(path, opaque=False)
@@ -1279,6 +1375,32 @@ struct Canvas(DrawTarget, Movable):
         transparent: Bool,
     ) raises:
         """`start_recording`, to a path already resolved."""
+        comptime if IN_LIBRARY:
+            self._start_recording_here(
+                path, seconds, frames, fps, scale, dither, transparent
+            )
+        else:
+            var request = _RecordingRequest(
+                path, seconds, frames, fps, scale, dither, transparent
+            )
+            var error = Slot(String())
+            var ok = entry[_CanvasPath]("create_canvas_start_recording")(
+                address(self), address(request), error.address()
+            )
+            _ = request^  # passed by address only: kept alive past the call
+            check(ok, error^)
+
+    def _start_recording_here(
+        mut self,
+        path: String,
+        seconds: _OptionalFloat64,
+        frames: Optional[Int],
+        fps: Float64,
+        scale: Float64,
+        dither: Bool,
+        transparent: Bool,
+    ) raises:
+        """`_start_recording`, in the library."""
         if self._offscreen():
             raise Error(
                 "start_recording needs the frame canvas: an offscreen canvas"
@@ -1335,13 +1457,25 @@ struct Canvas(DrawTarget, Movable):
         complete when this returns, and the frame it is called in is not in
         it. `cancel_recording` ends one without saving. Nothing happens when
         nothing is being recorded."""
-        self._state._backend[].captures.finish_recording()
+        comptime if IN_LIBRARY:
+            self._state._backend[].captures.finish_recording()
+        else:
+            self._recording_call("create_canvas_stop_recording")
 
     def cancel_recording(mut self) raises:
         """End the recording in progress without saving it: no file appears
         at its path, and a file already there is left as it was. Nothing
         happens when nothing is being recorded."""
-        self._state._backend[].captures.cancel_recording()
+        comptime if IN_LIBRARY:
+            self._state._backend[].captures.cancel_recording()
+        else:
+            self._recording_call("create_canvas_cancel_recording")
+
+    def _recording_call(mut self, name: StaticString) raises:
+        """Stop or cancel the recording, through the library."""
+        var error = Slot(String())
+        var ok = entry[_CanvasCall](name)(address(self), error.address())
+        check(ok, error^)
 
     def recording(self) -> Bool:
         """Whether a recording started by `start_recording` is in progress."""
@@ -1705,9 +1839,16 @@ struct Canvas(DrawTarget, Movable):
         # The image is interned *now*, not at replay: the command then carries
         # an id rather than a borrow of the program's pixels, which is what
         # keeps caller-owned memory out of a buffer that outlives the call.
-        var id = self._state._backend[].resources.intern_image(
-            image._id, image._pixels, image.width(), image.height()
-        )
+        var id: Int
+        comptime if IN_LIBRARY:
+            id = intern_image(self._state._backend[], image)
+        else:
+            try:
+                id = entry[_InternImage]("create_backend_intern_image")(
+                    address(self._state._backend[]), address(image)
+                )
+            except:
+                id = 0  # unreachable: the library is open, it built the backend
         self._state._backend[].buffer.record(
             image_command(
                 self._transform,
@@ -2006,6 +2147,37 @@ struct Canvas(DrawTarget, Movable):
         return text_pixel_scale(self._transform, self._scale)
 
     def _measure_width(self, text: String, wrap: Float64) raises -> Float64:
+        return self._measure(text, wrap, height=False)
+
+    def _measure_height(self, text: String, wrap: Float64) raises -> Float64:
+        return self._measure(text, wrap, height=True)
+
+    def _measure(
+        self, text: String, wrap: Float64, height: Bool
+    ) raises -> Float64:
+        """`text`'s width, or its height, wrapped at `wrap`, through the
+        library, whose text renderer lays it out."""
+        comptime if IN_LIBRARY:
+            if height:
+                return self._measure_height_here(text, wrap)
+            return self._measure_width_here(text, wrap)
+        else:
+            var result = Slot(0.0)
+            var error = Slot(String())
+            var ok = entry[_Measure]("create_canvas_measure")(
+                address(self),
+                address(text),
+                wrap,
+                height,
+                result.address(),
+                error.address(),
+            )
+            check(ok, error^)
+            return result^.take()
+
+    def _measure_width_here(
+        self, text: String, wrap: Float64
+    ) raises -> Float64:
         var scale = self._text_scale()
         var pixels = (
             self._state._backend[]
@@ -2019,7 +2191,9 @@ struct Canvas(DrawTarget, Movable):
         )
         return Float64(pixels) / scale
 
-    def _measure_height(self, text: String, wrap: Float64) raises -> Float64:
+    def _measure_height_here(
+        self, text: String, wrap: Float64
+    ) raises -> Float64:
         var scale = self._text_scale()
         var pixels = (
             self._state._backend[]

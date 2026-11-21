@@ -15,7 +15,7 @@ working on the package: the [user guide](../../../docs/guide/README.md) covers u
 | `_paint.mojo` | `Paint`, what a command paints with (fill, stroke, shadow, blend mode), and `TextStyle`, what text is set in |
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
-| `_backend_handle.mojo` | `BackendHandle` — how `_PersistentCanvasState` holds its `Backend`: on the heap, reached through `handle[]` |
+| `_backend_handle.mojo` | `BackendHandle` — how `_PersistentCanvasState` holds its `Backend`: on the heap, built and dropped by the compiled library, reached through `handle[]` |
 | `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
 | `_command_buffer.mojo` | `CommandBuffer` — the frame being recorded: its commands, its `canvas.clip` levels, the record count reads are cached against, and the opening clear `autoclear` switches |
 | `_captures.mojo` | `Captures` — the `save_image`, `save_screenshot` and recording requests and the recording's state (GIF writer, slot timing); the backend does their replays |
@@ -100,6 +100,14 @@ inline it made every command's payload as large as a text command's, and replay 
 Copies share it, so change it through `TextPayload.recolor`, which copies first. The builders still
 take a `Style`. The visibility checks the replays gate on (`_fill_visible`, `_stroke_visible`,
 `_shadow_visible`) are `Paint`'s.
+
+**A canvas records in the program and replays in the compiled library** (see [The compiled
+library](../../../ARCHITECTURE.md#the-compiled-library)). The recording calls stay source: they
+build a command and append it through `self._state._backend[].buffer`, which compiles only the
+command buffer. Every method that reaches a replay, the text renderer or a capture (`color_at`,
+`snapshot`, `save_image`, `save_screenshot`, the recording calls, `text_width` and `text_height`,
+and interning an image) does its work in a `_here` twin, which the program reaches through the
+library's entry point and the library calls directly. A new such method follows the same pattern.
 
 `Canvas` holds no `Surface`, and takes its geometry from the `Viewport` alone. Don't add a `Surface`
 field or parameter, and don't import `_window` from `canvas.mojo`. Two things survive the frame

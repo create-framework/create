@@ -1,17 +1,21 @@
-"""How the run loops call a program they are not generic over.
+"""How the compiled library's run loops reach a program they were not
+compiled with.
 
-`run[P]` is generic over the program, so the loops it starts were compiled
-again for every program, and they reach everything: the window, both
-replays, the captures. Instead `run[P]` hands its loop a `_Driver`: the
-program's `create` and `update` as two C functions, `_create_frame[P]` and
-`_update_frame[P]`, and the address of the `_Host[P]` that keeps the program
-between frames. The loops call the driver where they called `P`, so they
-are the same code for every program.
+`run[P]` is generic over the program, so the loops it starts would be
+compiled into every program, and they reach everything: the window, both
+replays, the captures. They live in the compiled library instead (see
+`create/_native.mojo`), which knows no `P`. So `run[P]` hands the library a
+`_Driver`: the program's `create` and `update` as two C functions,
+`_create_frame[P]` and `_update_frame[P]`, compiled into the program, and the
+address of the `_Host[P]` that keeps the program between frames. The loops
+call the driver where they called `P`.
 
-An error raised by `create` or `update` can't unwind through a C function,
-so a callback catches it and passes its message back, and the driver raises
-it again, from where it ends the run as before.
+An error raised by `create` or `update` can't unwind through C, so a
+callback catches it and passes its message back, and the driver raises it
+again on the library's side, from where it ends the run as before.
 """
+
+from std.sys import size_of
 
 from create._native import Slot, address, at, check
 from create.render.antialiasing import Antialiasing
@@ -64,7 +68,7 @@ def _update_frame[
 
 @fieldwise_init
 struct _Driver(Movable):
-    """A program's `create` and `update`, as the loops call them."""
+    """A program's `create` and `update`, as the library's loops call them."""
 
     var host: Int
     var create_frame: _FrameCallback
@@ -98,8 +102,8 @@ struct _Driver(Movable):
 
 
 struct _RunSettings(Movable):
-    """`run`'s and `run_headless`'s arguments, passed to their loops in
-    one."""
+    """`run`'s and `run_headless`'s arguments, passed to the library in one,
+    with the layouts the program was compiled against."""
 
     var title: String
     var mode: WindowMode
@@ -113,6 +117,10 @@ struct _RunSettings(Movable):
     """Headless only: how many `update`s to run."""
     var window_size: Optional[Tuple[Int, Int]]
     """Headless only: the pixel size of the window it stands in for."""
+    var layout: Tuple[Int, Int]
+    """`Context`'s and `Canvas`'s sizes in the program, which the library
+    checks against its own: a library built from other source would
+    misread them."""
 
     def __init__(
         out self,
@@ -137,3 +145,26 @@ struct _RunSettings(Movable):
         self.autoscale = autoscale
         self.frames = frames
         self.window_size = window_size
+        self.layout = _layout()
+
+    def check_layout(self) raises:
+        """Raise unless the program was compiled against this library's
+        layouts."""
+        if self.layout != _layout():
+            raise Error(
+                "create: the compiled library was built from a different"
+                " version of Create than this program. Rebuild it (pixi run"
+                " native) or point CREATE_LIBRARY at the matching one."
+            )
+
+
+def _layout() -> Tuple[Int, Int]:
+    return (size_of[Context](), size_of[Canvas]())
+
+
+comptime _Run = def(Int, Int, Int) thin abi("C") -> Bool
+"""`create_run`: the settings', the driver's and an error `String`'s
+addresses; `False`, with the error written, if the run raised."""
+comptime _RunHeadless = def(Int, Int, Int, Int) thin abi("C") -> Bool
+"""`create_run_headless`: as `_Run`, with an `Optional[Image]`'s address
+before the error's, for the last frame."""

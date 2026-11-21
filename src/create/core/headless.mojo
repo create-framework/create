@@ -7,8 +7,8 @@ from ._step import first_step, step
 from ._headless_gl import _run_headless_gl
 from .program import Program
 from .window_mode import WindowMode
-from ._driver import _Driver, _Host, _RunSettings
-from create._native import Slot
+from ._driver import _Driver, _Host, _RunHeadless, _RunSettings
+from create._native import Slot, address, check, entry
 from create.render._surface import MemorySurface
 from create.image.image import Image
 from create.image.pixel_buffer import PixelBuffer
@@ -74,16 +74,22 @@ def run_headless[
         frames=frames,
         window_size=window_size,
     )
-    var image = _run_headless(settings, driver)
-    # The driver holds `host` by address only, so it is kept alive past the
-    # run by hand: the program in it is dropped here, once the run is over.
+    var image = Slot(Optional[Image]())
+    var error = Slot(String())
+    var ok = entry[_RunHeadless]("create_run_headless")(
+        address(settings), address(driver), image.address(), error.address()
+    )
+    # Passed by address only, so kept alive past the call by hand.
+    _ = settings^
     _ = driver^
     _ = host^
-    return image^
+    check(ok, error^)
+    var last = image^.take()
+    return last.take()
 
 
 def _run_headless(settings: _RunSettings, mut driver: _Driver) raises -> Image:
-    """`run_headless`, for the program `driver` calls."""
+    """`run_headless`, in the compiled library."""
     var width = settings.width
     var height = settings.height
     var frames = settings.frames

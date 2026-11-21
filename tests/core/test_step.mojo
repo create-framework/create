@@ -37,7 +37,7 @@ def _step[
 ](
     var program: P, mut context: Context, var state: _PersistentCanvasState
 ) raises -> _PersistentCanvasState:
-    """`step` for `program`, through a `_Driver` as the loops call
+    """`step` for `program`, through a `_Driver` as the library's loops call
     it."""
     var host = Slot(_Host[P]())
     at[_Host[P]](host.address()).program = program^

@@ -10,9 +10,9 @@ the [user guide](../../../docs/guide/README.md) covers using it,
 
 | File | Role |
 |---|---|
-| `run.mojo`, `_run_gl.mojo` | `run`, which hands the program to its loop through a `_Driver`, and the windowed loops (`_run`): CPU, and GPU (`backend == RenderBackend.GPU`) |
+| `run.mojo`, `_run_gl.mojo` | `run`, which hands the program to the compiled library, and the windowed loops it runs there (`_run`): CPU, and GPU (`backend == RenderBackend.GPU`) |
 | `headless.mojo`, `_headless_gl.mojo` | `run_headless`, the same way, and its loops over an owned buffer, CPU and GPU |
-| `_driver.mojo` | `_Driver`, the program's `create` and `update` as C callbacks for the loops; `_Host[P]`, which keeps the program; `_RunSettings`, the arguments passed across |
+| `_driver.mojo` | `_Driver`, the program's `create` and `update` as C callbacks for the library's loops; `_Host[P]`, which keeps the program; `_RunSettings`, the arguments passed across |
 | `_step.mojo` | `first_step` (frame 1, drawn by `create` through the driver) and `step`, every later frame's body |
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor; sent before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |
 | `_events.mojo` | `apply_events`: the one `Event` fold, into `context.keyboard`, `context.mouse` and the gamepads, through each device's per-event methods |
@@ -20,12 +20,13 @@ the [user guide](../../../docs/guide/README.md) covers using it,
 
 ## Rules
 
-**The loops are not generic over the program.** `run[P]` and `run_headless[P]` are the only generic
-parts: each builds a `_Host[P]`, which keeps the program, and a `_Driver` over it, the program's
-`create` and `update` as C callbacks, and calls its loop with the driver. The loops call
-`driver.create` and `driver.update` where they would call `P.create` and `program.update`, so they
-are the same code for every program. An error either raises comes back through the callback as its
-message and is raised again on the loop's side.
+**The loops run in the compiled library,** not in the program (see [The compiled
+library](../../../ARCHITECTURE.md#the-compiled-library)). `run[P]` and `run_headless[P]` are the
+only generic parts: each builds a `_Host[P]` and a `_Driver` over it and calls the library's
+`create_run` or `create_run_headless`. Everything below that is non-generic and reached only from
+those entry points, so a program compiles none of it. The loops call `driver.create` and
+`driver.update` where they called `P.create` and `program.update`; an error either raises comes back
+as its message and is raised again on the library's side, and then again on the program's.
 
 Every loop runs frame 1 through `first_step` and every later frame through `step`, and both windowed
 loops fold events through `apply_events`, so they cannot drift in what a frame is or how input is

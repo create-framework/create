@@ -93,7 +93,7 @@ if [ -n "$shard" ]; then
 fi
 
 # The library is compiled once, here, and every test file imports the
-# result. Against src each file would parse and elaborate the whole package
+# result; the machinery the package calls into is built once too, below. Against src each file would parse and elaborate the whole package
 # again — most of a render test's build time. Built fresh on every run, so it
 # is never stale.
 if ! mojo precompile src/create -o "$logs/create.mojoc" > "$logs/precompile" 2>&1
@@ -102,6 +102,15 @@ then
     echo "The library does not compile; no tests were run."
     exit 1
 fi
+# The compiled library the tests call into, built from the same source as the
+# package above, so neither can be stale against the other.
+if ! CREATE_LIBRARY=$(sh scripts/build_native.sh "$logs" 2> "$logs/native")
+then
+    cat "$logs/native"
+    echo "The compiled library does not build; no tests were run."
+    exit 1
+fi
+export CREATE_LIBRARY
 
 # Each path reaches the worker as $1 rather than through -I: BSD xargs (macOS)
 # caps a command assembled by -I at 255 bytes, and this one is longer.
