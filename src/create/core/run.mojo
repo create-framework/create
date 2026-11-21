@@ -158,7 +158,7 @@ def run[
         autoscale,
     )
     var error = Slot(String())
-    var ok = entry[_Run]("create_run")(
+    var ok = entry[_Run, "create_run"]()(
         address(settings), address(driver), error.address()
     )
     # Passed by address only, so kept alive past the call by hand: the

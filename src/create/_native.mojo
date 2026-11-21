@@ -120,9 +120,45 @@ def _library() raises -> _DLHandle:
     return library[].handle.value()
 
 
-def entry[T: TrivialRegisterPassable](name: StaticString) raises -> T:
-    """The library's exported function `name`, as the function type `T`."""
-    return _library().get_function[T](String(name))
+struct _Entry(Movable):
+    """An entry point's address, or why it could not be found."""
+
+    var address: Int
+    var error: String
+
+    def __init__(out self, address: Int, var error: String):
+        self.address = address
+        self.error = error^
+
+
+comptime _AnyFunction = def() thin abi("C") -> None
+"""What an entry point is looked up as, before `entry` gives it its type."""
+
+
+def _find[name: StaticString]() -> _Entry:
+    try:
+        var function = _library().get_function[_AnyFunction](String(name))
+        return _Entry(Pointer(to=function).unsafe_bitcast[Int]()[], "")
+    except e:
+        return _Entry(0, String(e))
+
+
+@always_inline
+def entry[T: TrivialRegisterPassable, name: StaticString]() raises -> T:
+    """The library's exported function `name`, as the function type `T`.
+
+    Looked up once, on the first call, and kept in a process-wide global of
+    its own: a lookup by name costs a symbol search and a `String`, about
+    65 ns, where the global costs about 10, and `canvas.image` makes one
+    call per image drawn.
+    """
+    ref found = _Global[name, _find[name]].get_or_create_ptr()[]
+    if found.address == 0:
+        raise Error(found.error)
+    var opaque = Pointer[NoneType, MutUntrackedOrigin](
+        unsafe_from_address=found.address
+    )
+    return Pointer(to=opaque).unsafe_bitcast[T]()[]
 
 
 def address[T: AnyType](ref value: T) -> Int:

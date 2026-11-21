@@ -57,7 +57,7 @@ struct BackendHandle(Movable):
             var error = Slot(String())
             # The size doubles as a check that the library was built from
             # this source: a `Backend` of another layout would be misread.
-            self._address = entry[_NewBackend]("create_backend_new")(
+            self._address = entry[_NewBackend, "create_backend_new"]()(
                 size_of[Backend](), error.address()
             )
             check(self._address != 0, error^)
@@ -67,7 +67,7 @@ struct BackendHandle(Movable):
             free_backend(self._address)
         else:
             try:
-                entry[_FreeBackend]("create_backend_free")(self._address)
+                entry[_FreeBackend, "create_backend_free"]()(self._address)
             except:
                 pass  # unreachable: the library built this backend
 

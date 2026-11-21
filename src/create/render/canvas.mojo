@@ -1027,7 +1027,7 @@ struct Canvas(DrawTarget, Movable):
             self._save_image_here(path, pixel_scale, transparent)
         else:
             var error = Slot(String())
-            var ok = entry[_SaveImage]("create_canvas_save_image")(
+            var ok = entry[_SaveImage, "create_canvas_save_image"]()(
                 address(self),
                 address(path),
                 pixel_scale,
@@ -1098,7 +1098,7 @@ struct Canvas(DrawTarget, Movable):
         else:
             var color = Slot(Color.TRANSPARENT)
             var error = Slot(String())
-            var ok = entry[_ColorAt]("create_canvas_color_at")(
+            var ok = entry[_ColorAt, "create_canvas_color_at"]()(
                 address(self),
                 address(position),
                 color.address(),
@@ -1157,7 +1157,7 @@ struct Canvas(DrawTarget, Movable):
         else:
             var image = Slot(Optional[Image]())
             var error = Slot(String())
-            var ok = entry[_Snapshot]("create_canvas_snapshot")(
+            var ok = entry[_Snapshot, "create_canvas_snapshot"]()(
                 address(self),
                 address(region),
                 pixel_scale,
@@ -1270,7 +1270,7 @@ struct Canvas(DrawTarget, Movable):
             self._save_screenshot_here(path)
         else:
             var error = Slot(String())
-            var ok = entry[_CanvasPath]("create_canvas_save_screenshot")(
+            var ok = entry[_CanvasPath, "create_canvas_save_screenshot"]()(
                 address(self), address(path), error.address()
             )
             check(ok, error^)
@@ -1384,7 +1384,7 @@ struct Canvas(DrawTarget, Movable):
                 path, seconds, frames, fps, scale, dither, transparent
             )
             var error = Slot(String())
-            var ok = entry[_CanvasPath]("create_canvas_start_recording")(
+            var ok = entry[_CanvasPath, "create_canvas_start_recording"]()(
                 address(self), address(request), error.address()
             )
             _ = request^  # passed by address only: kept alive past the call
@@ -1460,7 +1460,7 @@ struct Canvas(DrawTarget, Movable):
         comptime if IN_LIBRARY:
             self._state._backend[].captures.finish_recording()
         else:
-            self._recording_call("create_canvas_stop_recording")
+            self._recording_call["create_canvas_stop_recording"]()
 
     def cancel_recording(mut self) raises:
         """End the recording in progress without saving it: no file appears
@@ -1469,12 +1469,12 @@ struct Canvas(DrawTarget, Movable):
         comptime if IN_LIBRARY:
             self._state._backend[].captures.cancel_recording()
         else:
-            self._recording_call("create_canvas_cancel_recording")
+            self._recording_call["create_canvas_cancel_recording"]()
 
-    def _recording_call(mut self, name: StaticString) raises:
+    def _recording_call[name: StaticString](mut self) raises:
         """Stop or cancel the recording, through the library."""
         var error = Slot(String())
-        var ok = entry[_CanvasCall](name)(address(self), error.address())
+        var ok = entry[_CanvasCall, name]()(address(self), error.address())
         check(ok, error^)
 
     def recording(self) -> Bool:
@@ -1844,7 +1844,7 @@ struct Canvas(DrawTarget, Movable):
             id = intern_image(self._state._backend[], image)
         else:
             try:
-                id = entry[_InternImage]("create_backend_intern_image")(
+                id = entry[_InternImage, "create_backend_intern_image"]()(
                     address(self._state._backend[]), address(image)
                 )
             except:
@@ -2164,7 +2164,7 @@ struct Canvas(DrawTarget, Movable):
         else:
             var result = Slot(0.0)
             var error = Slot(String())
-            var ok = entry[_Measure]("create_canvas_measure")(
+            var ok = entry[_Measure, "create_canvas_measure"]()(
                 address(self),
                 address(text),
                 wrap,
