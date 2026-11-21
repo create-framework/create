@@ -298,7 +298,10 @@ var player = Image.load("assets/player.png")
 - **A call in another file** resolves against that file, as Python's `__file__` does: a helper in
   `game/enemies/spawn.mojo` loading `"sprites/bat.png"` opens `game/enemies/sprites/bat.png`.
 - **Built programs:** the caller's path is baked in at compile time, so a `mojo build` binary finds
-  its files from any directory, as long as they stay where they were at build time.
+  its files from any directory, as long as they stay where they were at build time. The same goes
+  for the libraries Create loads while it runs: SDL, FreeType, the image and sound decoders and
+  `libcreate`, Create's own compiled part. A built program finds them in the pixi environment it was
+  built in, so that environment has to stay where it is too.
 - **Anything else that takes a path**, such as the standard library's `open()`, `listdir` or
   `makedirs`, resolves against the working directory. Pass it `source_path("...")` to resolve the
   path the way Create's loaders do.
