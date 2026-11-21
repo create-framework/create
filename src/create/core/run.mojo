@@ -137,8 +137,8 @@ def run[
 
     `backend=RenderBackend.GPU` runs the same program through the GL backend
     instead — a different window, a different loop, and the same frame. It is
-    a branch rather than a value the loop holds because Mojo 1.0 has no
-    dynamic trait dispatch, which is also why `Backend` switches on a `kind`.
+    a branch, taken once, rather than a value the loop holds, because Mojo
+    has no dynamic trait dispatch: each loop calls its own replay directly.
 
     `antialiasing` smooths the edges of shapes on either backend
     (`Antialiasing.MEDIUM` by default, `OFF` for hard pixels). See

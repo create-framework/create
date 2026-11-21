@@ -77,14 +77,13 @@ def _seed(
 struct Backend(Movable):
     """Where a frame's recorded commands become pixels.
 
-    One struct with a runtime branch on `kind` rather than a trait: Mojo 1.0
-    has no dynamic trait dispatch, so a trait in type position would form an
-    inert `AnyTrait[T]` that nothing converts into.
+    The same struct for both backends: the loop picks the replay, calling
+    `present` on the CPU or `present_gpu` with the `GLRenderer` the GL loop
+    owns, so a `Backend` holds no GPU state and has no kind to get wrong.
 
-    This is what survives the frame boundary. Fonts and glyph masks already
-    had to — reloading a face every frame would be absurd — and GPU resources
-    join them for exactly the same reason, so the backend is the natural owner
-    of both.
+    This is what survives the frame boundary: the command buffer, the glyph
+    cache and interned images every replay reads, the captures and the
+    pixels kept for reads. A canvas holds it through a `BackendHandle`.
     """
 
     var antialiasing: Antialiasing
