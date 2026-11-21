@@ -25,6 +25,11 @@ reaches the machinery calls it directly inside the library, and through
 `entry` everywhere else. Only the library's own build elaborates the
 machinery.
 
+A library built from a checkout is refused once any of the checkout's
+source is newer than it (`_staleness`): it would run the code from before
+the edit. `pixi run native` rebuilds it, or, when the source is the same,
+only touches it.
+
 The library is found, in order:
 
 1. at the path in the environment variable `CREATE_LIBRARY`, which the pixi
@@ -43,8 +48,9 @@ A leaf: it imports nothing from `create`, and nothing re-exports it.
 
 from std.ffi import _DLHandle, _Global
 from std.memory import Allocation, Layout, alloc, dealloc
-from std.os import abort, getenv
-from std.os.path import exists
+from std.os import abort, getenv, listdir, stat
+from std.os.path import exists, isdir
+from std.reflection import source_location
 from std.sys import is_defined, size_of
 from std.sys.info import CompilationTarget
 
@@ -65,6 +71,8 @@ struct _Library(Movable):
 
     var handle: Optional[_DLHandle]
     var error: String
+    """Why the library could not be opened, or why it is not to be used:
+    empty when `handle` is good to call."""
 
     def __init__(out self):
         self.handle = None
@@ -88,9 +96,77 @@ struct _Library(Movable):
                 continue
             try:
                 self.handle = _DLHandle(candidate)
-                return
             except e:
                 self.error = String(e)
+                continue
+            if candidate.startswith("/"):
+                self.error = _staleness(candidate)
+            return
+
+
+def _staleness(library: String) -> String:
+    """Why the library at `library` would run old code, or empty.
+
+    In a checkout of Create, the source a program was compiled from is
+    still on disk, and a library built before the last edit to it would run
+    the code from before the edit, with nothing to say so. So where that
+    source is found, every `.mojo` file of the library's is compared with
+    the library's own time, and a newer one makes the library unusable.
+    `scripts/build_native.sh` touches a library it finds already built from
+    the same source, so a checkout that only changes the files' times is
+    cleared by running it. An installed package keeps no source, and is not
+    checked.
+    """
+    # This file is `<src>/create/_native.mojo`, as the program was compiled.
+    var here = String(source_location().file_name())
+    var create_dir = String(here[byte = : here.rfind("/")])
+    var src = String(create_dir[byte = : create_dir.rfind("/")])
+    if not exists(src + "/native/libcreate.mojo"):
+        return ""
+    try:
+        var built = _modified(library)
+        var newest = String()
+        var newest_time = built
+        for directory in [create_dir, src + "/native"]:
+            _newest_source(directory, newest, newest_time)
+        if newest:
+            return String(
+                "create: ",
+                library,
+                " is older than ",
+                newest,
+                (
+                    ", so it would run the code from before that file's last"
+                    " change. Rebuild it with `pixi run native`."
+                ),
+            )
+    except:
+        pass  # a file that vanished while being read: nothing to compare
+    return ""
+
+
+def _modified(path: String) raises -> Tuple[Int, Int]:
+    """`path`'s modification time, as seconds and nanoseconds."""
+    var times = stat(path).st_mtimespec
+    return (Int(times.tv_sec), Int(times.tv_nsec))
+
+
+def _newest_source(
+    directory: String, mut newest: String, mut newest_time: Tuple[Int, Int]
+) raises:
+    """Note in `newest` any `.mojo` file under `directory` modified after
+    `newest_time`, and move `newest_time` up to it."""
+    for name in listdir(directory):
+        var path = directory + "/" + name
+        if isdir(path):
+            _newest_source(path, newest, newest_time)
+        elif name.endswith(".mojo"):
+            var time = _modified(path)
+            if time[0] > newest_time[0] or (
+                time[0] == newest_time[0] and time[1] > newest_time[1]
+            ):
+                newest = path
+                newest_time = time
 
 
 def _open_library() -> _Library:
@@ -106,6 +182,8 @@ def _library() raises -> _DLHandle:
         library = _LIBRARY.get_or_create_ptr()
     except e:
         abort(String("create: no memory for the library handle: ", e))
+    if library[].handle and library[].error:
+        raise Error(library[].error)
     if not library[].handle:
         raise Error(
             "create: could not load its compiled library, ",

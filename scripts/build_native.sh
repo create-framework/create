@@ -10,6 +10,12 @@
 # captures, so the two must be built from the same source; see
 # src/create/_native.mojo. CREATE_LIBRARY_BUILD tells the source it is being
 # built as the library, so its call sites call the machinery directly.
+#
+# Skipped when the library was last built from the same source, by the same
+# compiler: a hash of both is kept beside it, in libcreate.so.stamp. The
+# library is then touched instead, since a program refuses a library older
+# than the source it was compiled from, and a checkout (git switch, say) makes
+# the source newer without changing it.
 set -eu
 
 out=${1:-build}
@@ -17,7 +23,29 @@ case "$(uname)" in
     Darwin) name=libcreate.dylib ;;
     *) name=libcreate.so ;;
 esac
+library="$out/$name"
 mkdir -p "$out"
-mojo build --emit shared-lib -D CREATE_LIBRARY_BUILD -I src \
-    src/native/libcreate.mojo -o "$out/$name"
-echo "$out/$name"
+
+if command -v sha256sum > /dev/null; then
+    hash() { sha256sum | cut -d ' ' -f 1; }
+else
+    hash() { shasum -a 256 | cut -d ' ' -f 1; }
+fi
+# Taken apart from the pipe below, so a missing compiler stops the script.
+version=$(mojo --version)
+stamp=$({
+    echo "$version"
+    find src/create src/native -name '*.mojo' | LC_ALL=C sort | while read -r f; do
+        echo "$f"
+        cat "$f"
+    done
+} | hash)
+
+if [ -f "$library" ] && [ "$(cat "$library.stamp" 2> /dev/null)" = "$stamp" ]; then
+    touch "$library"
+else
+    mojo build --emit shared-lib -D CREATE_LIBRARY_BUILD -I src \
+        src/native/libcreate.mojo -o "$library"
+    echo "$stamp" > "$library.stamp"
+fi
+echo "$library"

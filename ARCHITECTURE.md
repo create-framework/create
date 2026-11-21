@@ -206,7 +206,13 @@ inlined as before.
   drops, and calls into it for the reads, captures, text measurement and image interning; the
   recording calls write the command buffer through `handle[]`.
 - **Where it is found:** at `CREATE_LIBRARY`, which the pixi activation and the test scripts set;
-  then in `$CONDA_PREFIX/lib`, where the conda package installs it; then by its bare name.
+  then in `$CONDA_PREFIX/lib`, where the conda package installs it; then, on macOS, as
+  `@rpath/libcreate.dylib`; then by its bare name.
+- **A stale library is refused.** Where the source a program was compiled from is still on disk (a
+  checkout), a library older than any `.mojo` file in it would run the code from before the edit, so
+  `_native` refuses it and names the file. `scripts/build_native.sh` rebuilds only when a hash of
+  the source and the compiler changed, and otherwise touches the library, so a checkout that only
+  changes the files' times is cleared by `pixi run native`.
 
 A new call from source into the machinery (a canvas method that replays, say) goes through an entry
 point the same way, so that a program doesn't compile the machinery behind it. The test that it
