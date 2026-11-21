@@ -31,8 +31,12 @@ The library is found, in order:
    tasks and the test scripts set to the copy they built;
 2. in the environment's `lib` directory, from `CONDA_PREFIX`, where the
    conda package installs it;
-3. by its bare name, through the platform's own search, which covers a
-   built program's run path.
+3. on macOS, as `@rpath/libcreate.dylib`: a built program run outside the
+   environment, through the run path `mojo build` gave it. macOS applies an
+   executable's run path only to `@rpath/` names, so the bare name below
+   would miss it (as `_library.mojo` explains for the other libraries);
+4. by its bare name, through the platform's own search, which on Linux covers
+   a built program's run path.
 
 A leaf: it imports nothing from `create`, and nothing re-exports it.
 """
@@ -72,11 +76,14 @@ struct _Library(Movable):
         var prefix = getenv("CONDA_PREFIX")
         if prefix:
             candidates.append(prefix + "/lib/" + _file_name())
+        comptime if CompilationTarget.is_macos():
+            candidates.append("@rpath/" + _file_name())
         candidates.append(_file_name())
         for candidate in candidates:
-            # A path is opened only where it exists, so the error names the
-            # last place looked rather than a missing file earlier on.
-            if "/" in candidate and not exists(candidate):
+            # An absolute path is opened only where it exists, so the error
+            # names the last place looked rather than a missing file earlier
+            # on.
+            if candidate.startswith("/") and not exists(candidate):
                 self.error = String(candidate, " does not exist")
                 continue
             try:
