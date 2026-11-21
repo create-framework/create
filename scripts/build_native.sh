@@ -12,7 +12,7 @@
 # built as the library, so its call sites call the machinery directly.
 #
 # Skipped when the library was last built from the same source, by the same
-# compiler: a hash of both is kept beside it, in libcreate.so.stamp. The
+# compiler and this script: a hash of all three is kept beside it, in libcreate.so.stamp. The
 # library is then touched instead, since a program refuses a library older
 # than the source it was compiled from, and a checkout (git switch, say) makes
 # the source newer without changing it.
@@ -35,6 +35,7 @@ fi
 version=$(mojo --version)
 stamp=$({
     echo "$version"
+    cat "$0"
     find src/create src/native -name '*.mojo' | LC_ALL=C sort | while read -r f; do
         echo "$f"
         cat "$f"
@@ -44,7 +45,11 @@ stamp=$({
 if [ -f "$library" ] && [ "$(cat "$library.stamp" 2> /dev/null)" = "$stamp" ]; then
     touch "$library"
 else
-    mojo build --emit shared-lib -D CREATE_LIBRARY_BUILD -I src \
+    # Debug line tables, so a crash inside the library shows the file and
+    # line: its machine code is the same as without them (full debug info
+    # changes it, so it isn't used), for about 6 MB more.
+    mojo build --emit shared-lib -D CREATE_LIBRARY_BUILD \
+        --debug-level=line-tables -I src \
         src/native/libcreate.mojo -o "$library"
     echo "$stamp" > "$library.stamp"
 fi
