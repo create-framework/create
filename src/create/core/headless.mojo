@@ -76,7 +76,7 @@ def run_headless[
     )
     var image = Slot(Optional[Image]())
     var error = Slot(String())
-    var ok = entry[_RunHeadless]("create_run_headless")(
+    var ok = entry[_RunHeadless, "create_run_headless"]()(
         address(settings), address(driver), image.address(), error.address()
     )
     # Passed by address only, so kept alive past the call by hand.
