@@ -26,7 +26,7 @@ reaches the machinery calls it directly inside the library, and through
 machinery.
 
 A library built from a checkout is refused once any of the checkout's
-source is newer than it (`_staleness`): it would run the code from before
+source is newer than it (`stale_source`): it would run the code from before
 the edit. `pixi run native` rebuilds it, or, when the source is the same,
 only touches it.
 
@@ -100,12 +100,42 @@ struct _Library(Movable):
                 self.error = String(e)
                 continue
             if candidate.startswith("/"):
-                self.error = _staleness(candidate)
+                self.error = _check_source(self.handle.value(), candidate)
             return
 
 
-def _staleness(library: String) -> String:
-    """Why the library at `library` would run old code, or empty.
+comptime _CheckSource = def(Int, Int, Int) thin abi("C") -> Bool
+"""`create_check_source`: the library's path, the source file's and an
+error `String`'s addresses; `False`, with the error written, if stale."""
+
+
+def _check_source(handle: _DLHandle, library: String) -> String:
+    """`stale_source` for the library just opened at `library`, run by the
+    library itself, so that a program doesn't compile the walk: why it would
+    run old code, or empty."""
+    # As the program was compiled: `<src>/create/_native.mojo`.
+    var source = String(source_location().file_name())
+    var error = Slot(String())
+    if not handle.check_symbol("create_check_source"):
+        return String(
+            "create: ",
+            library,
+            (
+                " has no create_check_source, so it is older than this program."
+                " Rebuild it with `pixi run native`."
+            ),
+        )
+    var check = handle.get_function[_CheckSource]("create_check_source")
+    var fresh = check(address(library), address(source), error.address())
+    _ = source^  # passed by address only: kept alive past the call
+    if not fresh:
+        return error^.take()
+    return ""
+
+
+def stale_source(library: String, source: String) -> String:
+    """Why the library at `library` would run old code, or empty, for a
+    program compiled from `source`, the path of its `_native.mojo`.
 
     In a checkout of Create, the source a program was compiled from is
     still on disk, and a library built before the last edit to it would run
@@ -117,9 +147,7 @@ def _staleness(library: String) -> String:
     cleared by running it. An installed package keeps no source, and is not
     checked.
     """
-    # This file is `<src>/create/_native.mojo`, as the program was compiled.
-    var here = String(source_location().file_name())
-    var create_dir = String(here[byte = : here.rfind("/")])
+    var create_dir = String(source[byte = : source.rfind("/")])
     var src = String(create_dir[byte = : create_dir.rfind("/")])
     if not exists(src + "/native/libcreate.mojo"):
         return ""
