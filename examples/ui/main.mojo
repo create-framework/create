@@ -23,7 +23,7 @@ struct Menu(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Menu:
-        return Menu(UI(), "Ada", 0.6, True, False, "")
+        return Menu(UI(), "", 0.6, True, False, "")
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if (
@@ -42,13 +42,13 @@ struct Menu(Program):
                 var y = 3.0 * _ROW
                 ui.label(
                     "Settings",
-                    Rectangle(Point(0, y), _WIDTH, 32.0),
+                    Rectangle((0, y), _WIDTH, 32.0),
                     style=LabelStyle(text_style=ui.theme().typography.title),
                 )
                 y -= _ROW
                 if ui.text_field(
                     self.name,
-                    Rectangle(Point(0, y), _WIDTH, 44.0),
+                    Rectangle((0, y), _WIDTH, 44.0),
                     placeholder="Your name",
                     max_length=16,
                 ).submitted:
@@ -56,14 +56,14 @@ struct Menu(Program):
                 y -= _ROW
                 ui.label(
                     "Volume",
-                    Rectangle(Point(-_WIDTH / 2 + 50, y), 100.0, 24.0),
+                    Rectangle((-_WIDTH / 2 + 50, y), 100.0, 24.0),
                     alignment=Align.LEFT,
                 )
                 _ = ui.slider(
                     self.volume,
                     0,
                     1,
-                    Rectangle(Point(60, y), _WIDTH - 120, 32.0),
+                    Rectangle((60, y), _WIDTH - 120, 32.0),
                     step=0.1,
                 )
                 y -= _ROW
@@ -73,13 +73,13 @@ struct Menu(Program):
                 _ = ui.checkbox(
                     "Music",
                     self.music,
-                    Rectangle(Point(left + 100, y), 200.0, 32.0),
+                    Rectangle((left + 100, y), 200.0, 32.0),
                 )
                 y -= _ROW * 0.8
                 _ = ui.checkbox(
                     "Dark theme",
                     self.dark,
-                    Rectangle(Point(left + 100, y), 200.0, 32.0),
+                    Rectangle((left + 100, y), 200.0, 32.0),
                 )
                 y -= _ROW * 1.2
                 var names = ["Play", "Load", "Credits", "Quit"]
@@ -93,7 +93,7 @@ struct Menu(Program):
                     var x = -_WIDTH / 2 + _WIDTH / 8 + Float64(i) * _WIDTH / 4
                     if ui.button(
                         names[i],
-                        Rectangle(Point(x, y), _WIDTH / 4 - 8, 44.0),
+                        Rectangle((x, y), _WIDTH / 4 - 8, 44.0),
                         variant=variants[i],
                     ):
                         if i == 3:
@@ -102,7 +102,7 @@ struct Menu(Program):
                 y -= _ROW
                 ui.label(
                     self.message,
-                    Rectangle(Point(0, y), _WIDTH, 24.0),
+                    Rectangle((0, y), _WIDTH, 24.0),
                     style=LabelStyle(
                         color=ui.theme().colors.on_surface_variant
                     ),
