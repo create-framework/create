@@ -10,14 +10,23 @@ the [user guide](../../../docs/guide/README.md) covers using it,
 
 | File | Role |
 |---|---|
-| `run.mojo`, `_run_gl.mojo` | Windowed loops: CPU, and GPU (`backend == RenderBackend.GPU`) |
-| `headless.mojo`, `_headless_gl.mojo` | `run_headless` over an owned buffer, CPU and GPU |
-| `_step.mojo` | `first_step` (frame 1, drawn by `create`) and `step`, every later frame's body |
+| `run.mojo`, `_run_gl.mojo` | `run`, which hands the program to the compiled library, and the windowed loops it runs there (`_run`): CPU, and GPU (`backend == RenderBackend.GPU`) |
+| `headless.mojo`, `_headless_gl.mojo` | `run_headless`, the same way, and its loops over an owned buffer, CPU and GPU |
+| `_driver.mojo` | `_Driver`, the program's `create` and `update` as C callbacks for the library's loops; `_Host[P]`, which keeps the program; `_RunSettings`, the arguments passed across |
+| `_step.mojo` | `first_step` (frame 1, drawn by `create` through the driver) and `step`, every later frame's body |
 | `_window_loop.mojo` | Shared by both windowed loops over `NativeWindow`: `_apply_window_dials` (title, resizable, cursor; sent before presenting), `_apply_window_mode` (after presenting), `_finish_frame` (rumble, frame-rate cap) |
 | `_events.mojo` | `apply_events`: the one `Event` fold, into `context.keyboard`, `context.mouse` and the gamepads, through each device's per-event methods |
 | `context.mojo` | The run state the loop owns and the program reads: `Context`. Its `time` reading is `create.time`'s `Time`, and its devices (`keyboard`, `mouse`, `_gamepads`) are `create.input`'s |
 
 ## Rules
+
+**The loops run in the compiled library,** not in the program (see [The compiled
+library](../../../ARCHITECTURE.md#the-compiled-library)). `run[P]` and `run_headless[P]` are the
+only generic parts: each builds a `_Host[P]` and a `_Driver` over it and calls the library's
+`create_run` or `create_run_headless`. Everything below that is non-generic and reached only from
+those entry points, so a program compiles none of it. The loops call `driver.create` and
+`driver.update` where they called `P.create` and `program.update`; an error either raises comes back
+as its message and is raised again on the library's side, and then again on the program's.
 
 Every loop runs frame 1 through `first_step` and every later frame through `step`, and both windowed
 loops fold events through `apply_events`, so they cannot drift in what a frame is or how input is
@@ -112,7 +121,7 @@ the display's. The loop re-reads dimensions every frame.
 current context, and keep the window alive until the renderer is dropped. The renderer is the loop's
 own, passed to `Backend.present_gpu`; the persistent canvas state holds no GPU resources.
 
-**Antialiasing is a `Backend` field** (`state._backend.antialiasing`). The loops seed it from
+**Antialiasing is a `Backend` field** (`state._backend[].antialiasing`). The loops seed it from
 `run`'s argument, and `canvas.antialiasing` changes it. The CPU replay, every pixel read and the GL
 renderer read it at present. GL windows open single-sampled: the renderer multisamples offscreen
 (see [../render/README.md](../render/README.md)), headless included.

@@ -11,6 +11,8 @@ from create._window import GLWindow
 
 from create import *
 from create.render._surface import MemorySurface
+from create._native import Slot
+from create.core._driver import _Driver, _Host
 from create.core._step import first_step, step
 from create.render._gl import GL
 from create.render._gl_target import _GLTarget
@@ -345,8 +347,10 @@ def _texture_growth[P: Program](mut win: GLWindow, frames: Int) raises -> Int:
     var context = Context()
     context.design_size(100, 100)
     context._set_viewport(state, 100, 100)
-    var program = first_step[P](context, state)
-    state._backend.present_gpu(gl, 100, 100, state._view.scale)
+    var host = Slot(_Host[P]())
+    var program = _Driver.of[P](host.address())
+    first_step(program, context, state)
+    state._backend[].present_gpu(gl, 100, 100, state._view.scale)
     var now = 0
     context.time._start(now)
     var first = 0
@@ -354,11 +358,13 @@ def _texture_growth[P: Program](mut win: GLWindow, frames: Int) raises -> Int:
         now += 16
         context._advance_frame(now)
         state = step(program, context, state^)
-        state._backend.present_gpu(gl, 100, 100, state._view.scale)
+        state._backend[].present_gpu(gl, 100, 100, state._view.scale)
         if i == 0:
             first = _live_textures(gl)
     var growth = _live_textures(gl) - first
     _ = state^
+    _ = program^
+    _ = host^
     _ = gl^
     _ = target^
     return growth
@@ -383,15 +389,17 @@ def _gpu_frame[
     var context = Context()
     context.design_size(width, height)
     context._set_viewport(state, width, height)
-    var program = first_step[P](context, state)
-    state._backend.present_gpu(gl, width, height, state._view.scale)
+    var host = Slot(_Host[P]())
+    var program = _Driver.of[P](host.address())
+    first_step(program, context, state)
+    state._backend[].present_gpu(gl, width, height, state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
         now += 16
         context._advance_frame(now)
         state = step(program, context, state^)
-        state._backend.present_gpu(gl, width, height, state._view.scale)
+        state._backend[].present_gpu(gl, width, height, state._view.scale)
 
     var pixels = gl.read_frame(width, height)
     var mem = MemorySurface(width, height)
@@ -400,6 +408,8 @@ def _gpu_frame[
     # Rule 3 from `_gl.mojo`: the context owner (`win`, in the caller) must
     # outlive the last GL call, which tearing down `state` and `target` make.
     _ = state^
+    _ = program^
+    _ = host^
     _ = gl^
     _ = target^
     return mem^
@@ -413,14 +423,18 @@ def _gpu_draw_calls[P: Program](mut win: GLWindow) raises -> Int:
     var context = Context()
     context.design_size(100, 100)
     context._set_viewport(state, 100, 100)
-    var program = first_step[P](context, state)
-    state._backend.present_gpu(gl, 100, 100, state._view.scale)
+    var host = Slot(_Host[P]())
+    var program = _Driver.of[P](host.address())
+    first_step(program, context, state)
+    state._backend[].present_gpu(gl, 100, 100, state._view.scale)
     context.time._start(0)
     context.time._tick(16)
     state = step(program, context, state^)
-    state._backend.present_gpu(gl, 100, 100, state._view.scale)
+    state._backend[].present_gpu(gl, 100, 100, state._view.scale)
     var calls = gl.draw_calls
     _ = state^
+    _ = program^
+    _ = host^
     _ = gl^
     _ = target^
     return calls

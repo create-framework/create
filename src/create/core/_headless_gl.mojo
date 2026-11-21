@@ -24,7 +24,7 @@ from create.render._surface import MemorySurface
 
 from ._step import first_step, step
 from .headless import _FRAME_MILLIS
-from .program import Program
+from ._driver import _Driver
 
 
 def _open_headless_window() raises -> GLWindow:
@@ -38,9 +38,8 @@ def _open_headless_window() raises -> GLWindow:
     return GLWindow("headless", 64, 64, offscreen=True)
 
 
-def _run_headless_gl[
-    P: Program
-](
+def _run_headless_gl(
+    mut driver: _Driver,
     width: Int,
     height: Int,
     frames: Int = 1,
@@ -48,7 +47,7 @@ def _run_headless_gl[
     antialiasing: Antialiasing = Antialiasing.OFF,
     autoscale: Autoscale = Autoscale.FIT,
 ) raises -> MemorySurface:
-    """Run `P` through the GPU backend — `create`'s frame, then `frames`
+    """Run the program `driver` calls through the GPU backend — `create`'s frame, then `frames`
     calls to `update` — and return the last frame as a `MemorySurface`.
 
     Same contract as `run_headless`, down to which frame `step` sees — the
@@ -70,14 +69,14 @@ def _run_headless_gl[
     # After the window: its GL resources need a current context.
     var gl = GLRenderer()
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
     context.autoscale(autoscale)
     # Before create(), from the arguments, as in the windowed loops.
     context._set_viewport(state, pw, ph)
-    var program = first_step[P](context, state)
-    state._backend.present_gpu(gl, pw, ph, state._view.scale)
+    first_step(driver, context, state)
+    state._backend[].present_gpu(gl, pw, ph, state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
@@ -92,9 +91,9 @@ def _run_headless_gl[
         context._new_input_frame()
         now += _FRAME_MILLIS
         context._advance_frame(now)
-        state = step(program, context, state^)
-        state._backend.present_gpu(gl, pw, ph, state._view.scale)
-    state._backend.captures.finish_recording()
+        state = step(driver, context, state^)
+        state._backend[].present_gpu(gl, pw, ph, state._view.scale)
+    state._backend[].captures.finish_recording()
 
     var pixels = gl.read_frame(pw, ph)
     var mem = MemorySurface(pw, ph)

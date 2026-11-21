@@ -6,6 +6,9 @@ from create.render.render_backend import RenderBackend
 from ._step import first_step, step
 from ._headless_gl import _run_headless_gl
 from .program import Program
+from .window_mode import WindowMode
+from ._driver import _Driver, _Host, _RunHeadless, _RunSettings
+from create._native import Slot, address, check, entry
 from create.render._surface import MemorySurface
 from create.image.image import Image
 from create.image.pixel_buffer import PixelBuffer
@@ -56,9 +59,48 @@ def run_headless[
 
     `autoscale` is `run`'s too: how the design maps onto the framebuffer.
     """
+    # On the heap, since the library writes the program into it.
+    var host = Slot(_Host[P]())
+    var driver = _Driver.of[P](host.address())
+    var settings = _RunSettings(
+        "headless",
+        WindowMode.WINDOWED,
+        width,
+        height,
+        backend,
+        False,
+        antialiasing,
+        autoscale,
+        frames=frames,
+        window_size=window_size,
+    )
+    var image = Slot(Optional[Image]())
+    var error = Slot(String())
+    var ok = entry[_RunHeadless]("create_run_headless")(
+        address(settings), address(driver), image.address(), error.address()
+    )
+    # Passed by address only, so kept alive past the call by hand.
+    _ = settings^
+    _ = driver^
+    _ = host^
+    check(ok, error^)
+    var last = image^.take()
+    return last.take()
+
+
+def _run_headless(settings: _RunSettings, mut driver: _Driver) raises -> Image:
+    """`run_headless`, in the compiled library."""
+    var width = settings.width
+    var height = settings.height
+    var frames = settings.frames
+    var window_size = settings.window_size
+    var backend = settings.backend
+    var antialiasing = settings.antialiasing
+    var autoscale = settings.autoscale
     if backend == RenderBackend.GPU:
         return _image_of(
-            _run_headless_gl[P](
+            _run_headless_gl(
+                driver,
                 width,
                 height,
                 frames,
@@ -71,14 +113,14 @@ def run_headless[
     var ph = window_size.value()[1] if window_size else height
     var mem = MemorySurface(pw, ph)
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
     context.autoscale(autoscale)
     # Before create(), from the arguments, as in the windowed loops.
     context._set_viewport(state, pw, ph)
-    var program = first_step[P](context, state)
-    state._backend.present(mem.surface(), state._view.scale)
+    first_step(driver, context, state)
+    state._backend[].present(mem.surface(), state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
@@ -93,9 +135,9 @@ def run_headless[
         context._new_input_frame()
         now += _FRAME_MILLIS
         context._advance_frame(now)
-        state = step(program, context, state^)
-        state._backend.present(mem.surface(), state._view.scale)
-    state._backend.captures.finish_recording()
+        state = step(driver, context, state^)
+        state._backend[].present(mem.surface(), state._view.scale)
+    state._backend[].captures.finish_recording()
     return _image_of(mem^)
 
 

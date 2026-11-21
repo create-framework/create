@@ -26,6 +26,7 @@ internals](#package-internals).
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
+| `_native` | `src/create/_native.mojo` | Internal leaf: opens the compiled library, `libcreate`, and passes values to it by address; `IN_LIBRARY` (see [The compiled library](#the-compiled-library)) |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
 ## How a frame runs
@@ -73,16 +74,16 @@ The packages form layers, and a package imports only from the layers below it:
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `image`, `text`, `math` |
-| Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path` |
-| Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path` |
+| Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
+| Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path`, `_native` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `color`, `input` | `math` |
 | Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
-| Internal | `_window`, `_bytes`, `_library`, `_path` | `_window`: `_library`; the others nothing |
+| Internal | `_window`, `_bytes`, `_library`, `_path`, `_native` | `_window`: `_library`; the others nothing |
 
-The same, as a graph; every arrow points down. The leaves `_bytes`, `_library` and `_path` are left
-out, and so are `audio` and `data`, which import only those leaves and which no package here
-imports:
+The same, as a graph; every arrow points down. The leaves `_bytes`, `_library`, `_path` and
+`_native` are left out, and so are `audio` and `data`, which import only those leaves and which no
+package here imports:
 
 ```mermaid
 flowchart TD
@@ -164,9 +165,52 @@ The rules behind it, and what each one buys:
   library is found even on a system without `-devel` packages.
 - **`_window`** imports nothing from `create` but `_library`. `core` is the only package that uses
   it, and nothing re-exports it.
+- **`_native`** is a leaf imported by `render` and `core`, the packages whose machinery the compiled
+  library holds, and re-exported by nothing. See [The compiled library](#the-compiled-library).
 - **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads and
   `canvas.snapshot` name `Image`, and `canvas.image(animator, …)` names `Animator`. A `render`
   function that needs pixels takes a pointer plus width/height, not an image type.
+
+## The compiled library
+
+A program is compiled from source, and so is every function in Create it reaches. Most of what `run`
+reaches is machinery the program never names: the loops, the window, both replays, text layout and
+the capture encoders. Compiled into every program, it took most of each build, about 16 of hello's
+17 seconds, and the compiler's cache can't help, since an entry is per program and any edit to the
+program misses it. So that machinery is compiled once, into a shared library, `libcreate`
+(`src/native/libcreate.mojo`, built by `pixi run native`), and a program calls into it. What a
+program does name, such as the value types and `Canvas`'s recording calls, stays source and is
+inlined as before.
+
+- **Both halves come from the same source,** so a struct has the same layout in each, and a value
+  crosses as its address: `_native.address(canvas)` on the program's side, `_native.at[Canvas](…)`
+  on the library's. Both allocate through the Mojo runtime's shared allocator, and `_Global`s are
+  process-wide, so a value allocated on one side may be dropped on the other. The library refuses a
+  program whose `Context`, `Canvas` or `Backend` has a different size, the sign of another version.
+- **A call site picks its half at compile time.** The library is built with `-D
+  CREATE_LIBRARY_BUILD`, so `_native.IN_LIBRARY` is true there, and a call site that reaches the
+  machinery calls it directly; in a program it calls the library's entry point through
+  `_native.entry`. An entry point takes addresses, and one that can fail writes the error's message
+  into a `String` and returns `False`, which the program's side raises again: an error can't unwind
+  through C.
+- **A value the other side writes lives in a `_native.Slot`,** a heap cell, never in a plain local:
+  an error message, a result, the program `run` keeps. The compiler sees an address only as an
+  `Int`, so it can keep using a local's initial value after the call and miss what was written. A
+  value passed only by address is kept alive past the call by hand (`_ = settings^`), since a local
+  is dropped after its last use. For the same reason, `BackendHandle[]` returns a reference tied to
+  the handle's origin, never an untracked one, or the handle could be dropped while the reference is
+  in use.
+- **What crosses:** `run` and `run_headless` hand the library a `_Driver` (`core/_driver.mojo`), the
+  program's `create` and `update` as two C callbacks, and the loops call it where they called the
+  program. `Canvas` keeps its `Backend` behind a `BackendHandle`, which the library builds and
+  drops, and calls into it for the reads, captures, text measurement and image interning; the
+  recording calls write the command buffer through `handle[]`.
+- **Where it is found:** at `CREATE_LIBRARY`, which the pixi activation and the test scripts set;
+  then in `$CONDA_PREFIX/lib`, where the conda package installs it; then by its bare name.
+
+A new call from source into the machinery (a canvas method that replays, say) goes through an entry
+point the same way, so that a program doesn't compile the machinery behind it. The test that it
+doesn't is the function count of hello's IR: `mojo build --emit llvm` and count the `define`s.
 
 ## Imports and public surface
 

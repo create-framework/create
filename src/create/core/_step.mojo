@@ -1,13 +1,15 @@
 from create.render.canvas import Canvas, _PersistentCanvasState
 from create.core.context import Context
-from .program import Program
+from ._driver import _Driver
 
 
-def first_step[
-    P: Program
-](mut context: Context, mut state: _PersistentCanvasState) raises -> P:
-    """Build `P` with `create`, which draws frame 1, and hand its recorded
-    state back through `state`.
+def first_step(
+    mut driver: _Driver,
+    mut context: Context,
+    mut state: _PersistentCanvasState,
+) raises:
+    """Build the program with `create`, which draws frame 1, and hand its
+    recorded state back through `state`.
 
     `step`'s twin for the frame that has no program yet: the same canvas, the
     same letterbox, so frame 1 is a frame like any other. The clock is not
@@ -18,13 +20,12 @@ def first_step[
     context._count_frame()
     # The clock a recording is timed by: render never sees `Context`. Real
     # time, so a GIF plays at the speed the frames were shown.
-    state._backend.captures.clock = context.time.real_elapsed
+    state._backend[].captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     try:
-        var program = P.create(context, canvas)
+        driver.create(context, canvas)
         canvas._render_letterbox()
         state = canvas^._release()
-        return program^
     except e:
         # `state` was moved into the canvas; a raising `create` must still
         # hand it back, as the caller's `state` outlives this call.
@@ -32,10 +33,8 @@ def first_step[
         raise e^
 
 
-def step[
-    P: Program
-](
-    mut program: P,
+def step(
+    mut program: _Driver,
     mut context: Context,
     var state: _PersistentCanvasState,
 ) raises -> _PersistentCanvasState:
@@ -53,7 +52,7 @@ def step[
     `Canvas`'s to own, which is what lets `update` be handed both at once.
 
     **The caller presents.** A frame ends with the recording complete and the
-    state handed back; `state._backend.present(surface, scale)` is the caller's
+    state handed back; `state._backend[].present(surface, scale)` is the caller's
     call, not this one's. That keeps the frame body target-agnostic — a GPU
     backend has no `Surface` to name — and it is why `step` grows no second
     target parameter. The
@@ -61,7 +60,7 @@ def step[
     know how to build; in the windowed case that is only valid after events
     have been pumped.
     """
-    state._backend.captures.clock = context.time.real_elapsed
+    state._backend[].captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     program.update(context, canvas)
     # Recorded last, so it doubles as the clip for anything rendered out of

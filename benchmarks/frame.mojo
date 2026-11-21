@@ -14,13 +14,17 @@ Vsync is off on the GPU path — pinned to the refresh rate every frame would
 measure the monitor. The CPU path has no equivalent switch: it blits through
 SDL and is nowhere near the refresh rate on this sketch anyway.
 
-`run_gl` is internal while the GPU backend is being built, so this example
-names it by path rather than through the preamble.
+`run_gl` is internal, and `run` has no `vsync` switch, so this benchmark
+calls it by path, through a `_Driver` as `run` does. It runs in the
+benchmark's own build rather than the compiled library: the same code,
+compiled the same way.
 """
 
 from std.sys import argv
 
 from create import *
+from create._native import Slot
+from create.core._driver import _Driver, _Host
 from create.core._run_gl import run_gl
 
 comptime _SHAPES = 2000
@@ -131,10 +135,15 @@ def main() raises:
             "Bench (CPU)", width=1920, height=1080, autoscale=Autoscale.OFF
         )
     else:
-        run_gl[Bench](
+        var host = Slot(_Host[Bench]())
+        var driver = _Driver.of[Bench](host.address())
+        run_gl(
+            driver,
             "Bench (GPU)",
             width=1920,
             height=1080,
             vsync=False,
             autoscale=Autoscale.OFF,
         )
+        _ = driver^
+        _ = host^
