@@ -1,13 +1,15 @@
 from create.render.canvas import Canvas, _PersistentCanvasState
 from create.core.context import Context
-from .program import Program
+from ._driver import _Driver
 
 
-def first_step[
-    P: Program
-](mut context: Context, mut state: _PersistentCanvasState) raises -> P:
-    """Build `P` with `create`, which draws frame 1, and hand its recorded
-    state back through `state`.
+def first_step(
+    mut driver: _Driver,
+    mut context: Context,
+    mut state: _PersistentCanvasState,
+) raises:
+    """Build the program with `create`, which draws frame 1, and hand its
+    recorded state back through `state`.
 
     `step`'s twin for the frame that has no program yet: the same canvas, the
     same letterbox, so frame 1 is a frame like any other. The clock is not
@@ -21,10 +23,9 @@ def first_step[
     state._backend.captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     try:
-        var program = P.create(context, canvas)
+        driver.create(context, canvas)
         canvas._render_letterbox()
         state = canvas^._release()
-        return program^
     except e:
         # `state` was moved into the canvas; a raising `create` must still
         # hand it back, as the caller's `state` outlives this call.
@@ -32,10 +33,8 @@ def first_step[
         raise e^
 
 
-def step[
-    P: Program
-](
-    mut program: P,
+def step(
+    mut program: _Driver,
     mut context: Context,
     var state: _PersistentCanvasState,
 ) raises -> _PersistentCanvasState:

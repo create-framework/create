@@ -45,6 +45,8 @@ from std.testing import TestSuite, assert_true
 
 from create import *
 from create.render._surface import MemorySurface
+from create._native import Slot, at
+from create.core._driver import _Driver, _Host
 from create.core._step import step
 from create.render._gl import GL
 from create.render._gl_target import _GLTarget
@@ -1402,6 +1404,22 @@ def _create(
     return program^
 
 
+def _step(
+    var program: _Parity,
+    mut context: Context,
+    var state: _PersistentCanvasState,
+) raises -> _PersistentCanvasState:
+    """`step` for `program`, through a `_Driver` as the loops call
+    it."""
+    var host = Slot(_Host[_Parity]())
+    at[_Host[_Parity]](host.address()).program = program^
+    var driver = _Driver.of[_Parity](host.address())
+    var stepped = step(driver, context, state^)
+    _ = driver^
+    _ = host^
+    return stepped^
+
+
 def _cpu_frame(shape: Int) raises -> MemorySurface:
     """One shape's frame through the CPU backend, onto an owned buffer.
 
@@ -1414,7 +1432,7 @@ def _cpu_frame(shape: Int) raises -> MemorySurface:
     var program = _create(context, state, shape)
     context.time._start(0)
     context.time._tick(16)
-    state = step(program, context, state^)
+    state = _step(program^, context, state^)
     state._backend.present(mem.surface(), state._view.scale)
     return mem^
 
@@ -1438,7 +1456,7 @@ def _gpu_frame(mut win: GLWindow, shape: Int) raises -> List[UInt8]:
     var program = _create(context, state, shape)
     context.time._start(0)
     context.time._tick(16)
-    state = step(program, context, state^)
+    state = _step(program^, context, state^)
     state._backend.present_gpu(gl, _PIXEL_W, _PIXEL_H, state._view.scale)
 
     # The same readback `save_screenshot` uses, so the parity test and the

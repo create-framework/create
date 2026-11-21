@@ -31,7 +31,7 @@ from ._window_loop import (
     _apply_window_mode,
     _finish_frame,
 )
-from .program import Program
+from ._driver import _Driver
 from .window_mode import WindowMode
 
 
@@ -90,10 +90,8 @@ def _present(
     win.swap_buffers()
 
 
-def _run_loop[
-    P: Program
-](
-    mut program: P,
+def _run_loop(
+    mut driver: _Driver,
     mut win: GLWindow,
     var gl: GLRenderer,
     var state: _PersistentCanvasState,
@@ -113,7 +111,7 @@ def _run_loop[
         _ = _update_dimensions(win, state, context)
         var frame_start = win.ticks()
         context._advance_frame(frame_start)
-        state = step(program, context, state^)
+        state = step(driver, context, state^)
         _apply_window_dials(win, applied, context)
         _present(win, gl, state)
         _apply_window_mode(win, applied, context)
@@ -125,9 +123,8 @@ def _run_loop[
     _ = win
 
 
-def run_gl[
-    P: Program
-](
+def run_gl(
+    mut driver: _Driver,
     title: String,
     mode: WindowMode = WindowMode.WINDOWED,
     width: Int = 1280,
@@ -137,7 +134,8 @@ def run_gl[
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
     autoscale: Autoscale = Autoscale.FIT,
 ) raises:
-    """Open a GL window and run `P` on the GPU backend until it quits.
+    """Open a GL window and run the program `driver` calls on the GPU
+    backend until it quits.
 
     `mode` covers the display (`WindowMode.FULLSCREEN`/`BORDERLESS`); the
     design size is still `width`/`height`, so the program is authored
@@ -177,8 +175,8 @@ def run_gl[
     _wait_for_dimensions(win, state, context)
     context._clipboard = win.clipboard()
     var applied = _AppliedWindow(context)
-    var program = first_step[P](context, state)
+    first_step(driver, context, state)
     _apply_window_dials(win, applied, context)
     _present(win, gl, state)
     _apply_window_mode(win, applied, context)
-    _run_loop(program, win, gl^, state^, context, applied^)
+    _run_loop(driver, win, gl^, state^, context, applied^)

@@ -26,6 +26,7 @@ internals](#package-internals).
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
+| `_native` | `src/create/_native.mojo` | Internal leaf: passing values across a C boundary by address (`address`, `at`, `Slot`), as `core`'s `_Driver` does |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
 ## How a frame runs
@@ -73,16 +74,16 @@ The packages form layers, and a package imports only from the layers below it:
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `image`, `text`, `math` |
-| Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path` |
+| Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `color`, `input` | `math` |
 | Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
-| Internal | `_window`, `_bytes`, `_library`, `_path` | `_window`: `_library`; the others nothing |
+| Internal | `_window`, `_bytes`, `_library`, `_path`, `_native` | `_window`: `_library`; the others nothing |
 
-The same, as a graph; every arrow points down. The leaves `_bytes`, `_library` and `_path` are left
-out, and so are `audio` and `data`, which import only those leaves and which no package here
-imports:
+The same, as a graph; every arrow points down. The leaves `_bytes`, `_library`, `_path` and
+`_native` are left out, and so are `audio` and `data`, which import only those leaves and which no
+package here imports:
 
 ```mermaid
 flowchart TD
