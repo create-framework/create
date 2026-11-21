@@ -86,7 +86,9 @@ def _present(
     mut win: GLWindow, mut gl: GLRenderer, mut state: _PersistentCanvasState
 ) raises:
     var drawable = win.drawable_size()
-    state._backend.present_gpu(gl, drawable[0], drawable[1], state._view.scale)
+    state._backend[].present_gpu(
+        gl, drawable[0], drawable[1], state._view.scale
+    )
     win.swap_buffers()
 
 
@@ -116,7 +118,7 @@ def _run_loop(
         _present(win, gl, state)
         _apply_window_mode(win, applied, context)
         _finish_frame(win, context, frame_start)
-    state._backend.captures.finish_recording()
+    state._backend[].captures.finish_recording()
     # Rule 3 from `_gl.mojo`: the context owner must outlive the last GL call,
     # and the renderer makes them when it is destroyed.
     _ = gl^
@@ -164,7 +166,7 @@ def run_gl(
     # `_wait_for_dimensions` rather than inside the loop.
     var gl = GLRenderer()
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
     context.autoscale(autoscale)

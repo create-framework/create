@@ -20,7 +20,7 @@ def first_step(
     context._count_frame()
     # The clock a recording is timed by: render never sees `Context`. Real
     # time, so a GIF plays at the speed the frames were shown.
-    state._backend.captures.clock = context.time.real_elapsed
+    state._backend[].captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     try:
         driver.create(context, canvas)
@@ -52,7 +52,7 @@ def step(
     `Canvas`'s to own, which is what lets `update` be handed both at once.
 
     **The caller presents.** A frame ends with the recording complete and the
-    state handed back; `state._backend.present(surface, scale)` is the caller's
+    state handed back; `state._backend[].present(surface, scale)` is the caller's
     call, not this one's. That keeps the frame body target-agnostic — a GPU
     backend has no `Surface` to name — and it is why `step` grows no second
     target parameter. The
@@ -60,7 +60,7 @@ def step(
     know how to build; in the windowed case that is only valid after events
     have been pumped.
     """
-    state._backend.captures.clock = context.time.real_elapsed
+    state._backend[].captures.clock = context.time.real_elapsed
     var canvas = context._new_canvas(state^)
     program.update(context, canvas)
     # Recorded last, so it doubles as the clip for anything rendered out of

@@ -69,14 +69,14 @@ def _run_headless_gl(
     # After the window: its GL resources need a current context.
     var gl = GLRenderer()
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
     context.autoscale(autoscale)
     # Before create(), from the arguments, as in the windowed loops.
     context._set_viewport(state, pw, ph)
     first_step(driver, context, state)
-    state._backend.present_gpu(gl, pw, ph, state._view.scale)
+    state._backend[].present_gpu(gl, pw, ph, state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
@@ -92,8 +92,8 @@ def _run_headless_gl(
         now += _FRAME_MILLIS
         context._advance_frame(now)
         state = step(driver, context, state^)
-        state._backend.present_gpu(gl, pw, ph, state._view.scale)
-    state._backend.captures.finish_recording()
+        state._backend[].present_gpu(gl, pw, ph, state._view.scale)
+    state._backend[].captures.finish_recording()
 
     var pixels = gl.read_frame(pw, ph)
     var mem = MemorySurface(pw, ph)

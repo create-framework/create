@@ -1433,7 +1433,7 @@ def _cpu_frame(shape: Int) raises -> MemorySurface:
     context.time._start(0)
     context.time._tick(16)
     state = _step(program^, context, state^)
-    state._backend.present(mem.surface(), state._view.scale)
+    state._backend[].present(mem.surface(), state._view.scale)
     return mem^
 
 
@@ -1457,7 +1457,7 @@ def _gpu_frame(mut win: GLWindow, shape: Int) raises -> List[UInt8]:
     context.time._start(0)
     context.time._tick(16)
     state = _step(program^, context, state^)
-    state._backend.present_gpu(gl, _PIXEL_W, _PIXEL_H, state._view.scale)
+    state._backend[].present_gpu(gl, _PIXEL_W, _PIXEL_H, state._view.scale)
 
     # The same readback `save_screenshot` uses, so the parity test and the
     # library cannot drift in how a GL frame is read or which way up it is.

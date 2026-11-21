@@ -49,7 +49,7 @@ def _process_events(
 def _present(mut win: Window, mut state: _PersistentCanvasState) raises:
     var pixel_w = win.width()
     var pixel_h = win.height()
-    state._backend.present(
+    state._backend[].present(
         Surface(win.pixels(), pixel_w, pixel_h), state._view.scale
     )
     win.present()
@@ -91,7 +91,7 @@ def _run_loop(
         _finish_frame(win, context, frame_start)
     # A recording still running when the window closes gets its last frame
     # and its trailer, so the file is complete.
-    state._backend.captures.finish_recording()
+    state._backend[].captures.finish_recording()
 
 
 def run[
@@ -203,7 +203,7 @@ def _run(settings: _RunSettings, mut driver: _Driver) raises:
     # rebuilt every frame; the transform stack deliberately does not, so each
     # frame starts unrotated and untranslated.
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     # The size the program is authored against is always what the caller asked
     # for, never what the display handed back. In fullscreen SDL ignores the
     # requested size, so seeding this from the window would make the design
