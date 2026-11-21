@@ -11,6 +11,8 @@ from std.testing import TestSuite, assert_equal
 
 from create import *
 from create.render._surface import MemorySurface
+from create._native import Slot, at
+from create.core._driver import _Driver, _Host
 from create.core._step import step
 from create.render.canvas import _PersistentCanvasState
 
@@ -30,6 +32,22 @@ struct Painter(Program):
         canvas.rectangle((0.0, 0.0), 10.0, 10.0)
 
 
+def _step[
+    P: Program
+](
+    var program: P, mut context: Context, var state: _PersistentCanvasState
+) raises -> _PersistentCanvasState:
+    """`step` for `program`, through a `_Driver` as the loops call
+    it."""
+    var host = Slot(_Host[P]())
+    at[_Host[P]](host.address()).program = program^
+    var driver = _Driver.of[P](host.address())
+    var stepped = step(driver, context, state^)
+    _ = driver^
+    _ = host^
+    return stepped^
+
+
 def _mismatched() raises -> MemorySurface:
     """One frame where the surface is larger than the viewport was measured for.
 
@@ -42,7 +60,7 @@ def _mismatched() raises -> MemorySurface:
     context._set_viewport(start, 64, 64)
     var program = Painter(0)
     var mem = MemorySurface(200, 200)
-    var state = step(program, context, start^)
+    var state = _step(program^, context, start^)
     state._backend.present(mem.surface(), state._view.scale)
     _ = state^
     return mem^
@@ -99,7 +117,7 @@ def test_scripted_click_drives_rendering() raises -> None:
     var idle_start = _PersistentCanvasState()
     idle_context._set_viewport(idle_start, 32, 32)
     var idle_program = ClickPainter(False)
-    var idle_state = step(idle_program, idle_context, idle_start^)
+    var idle_state = _step(idle_program^, idle_context, idle_start^)
     idle_state._backend.present(mem.surface(), idle_state._view.scale)
     assert_equal(mem.pixel(16, 16), Color.BLUE)
     _ = idle_state^
@@ -110,7 +128,7 @@ def test_scripted_click_drives_rendering() raises -> None:
     clicked_context._set_viewport(clicked_start, 32, 32)
     var clicked_program = ClickPainter(False)
     clicked_context.mouse._pressed |= 1 << 1
-    var clicked_state = step(clicked_program, clicked_context, clicked_start^)
+    var clicked_state = _step(clicked_program^, clicked_context, clicked_start^)
     clicked_state._backend.present(mem.surface(), clicked_state._view.scale)
     assert_equal(mem.pixel(16, 16), Color.RED)
     _ = clicked_state^
