@@ -107,14 +107,14 @@ def _run_headless(settings: _RunSettings, mut driver: _Driver) raises -> Image:
     var ph = window_size.value()[1] if window_size else height
     var mem = MemorySurface(pw, ph)
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(width, height)
     context.autoscale(autoscale)
     # Before create(), from the arguments, as in the windowed loops.
     context._set_viewport(state, pw, ph)
     first_step(driver, context, state)
-    state._backend.present(mem.surface(), state._view.scale)
+    state._backend[].present(mem.surface(), state._view.scale)
     var now = 0
     context.time._start(now)
     for _ in range(frames):
@@ -130,8 +130,8 @@ def _run_headless(settings: _RunSettings, mut driver: _Driver) raises -> Image:
         now += _FRAME_MILLIS
         context._advance_frame(now)
         state = step(driver, context, state^)
-        state._backend.present(mem.surface(), state._view.scale)
-    state._backend.captures.finish_recording()
+        state._backend[].present(mem.surface(), state._view.scale)
+    state._backend[].captures.finish_recording()
     return _image_of(mem^)
 
 

@@ -120,7 +120,7 @@ the display's. The loop re-reads dimensions every frame.
 current context, and keep the window alive until the renderer is dropped. The renderer is the loop's
 own, passed to `Backend.present_gpu`; the persistent canvas state holds no GPU resources.
 
-**Antialiasing is a `Backend` field** (`state._backend.antialiasing`). The loops seed it from
+**Antialiasing is a `Backend` field** (`state._backend[].antialiasing`). The loops seed it from
 `run`'s argument, and `canvas.antialiasing` changes it. The CPU replay, every pixel read and the GL
 renderer read it at present. GL windows open single-sampled: the renderer multisamples offscreen
 (see [../render/README.md](../render/README.md)), headless included.

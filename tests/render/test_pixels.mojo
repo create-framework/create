@@ -31,7 +31,7 @@ def _present(
 ) raises -> Canvas:
     """Finish the frame onto `mem` and start the next one."""
     var state = canvas^._release()
-    state._backend.present(mem.surface(), state._view.scale)
+    state._backend[].present(mem.surface(), state._view.scale)
     context._set_viewport(state, mem.width, mem.height)
     return context._new_canvas(state^)
 
@@ -234,7 +234,7 @@ def test_an_image_drawn_every_frame_is_interned_once() raises -> None:
     for _ in range(3):
         canvas.image(image, (0, 0))
         canvas = _present(context, canvas^, mem)
-    assert_equal(len(canvas._state._backend.resources.images), 1)
+    assert_equal(len(canvas._state._backend[].resources.images), 1)
 
 
 @fieldwise_init

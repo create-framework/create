@@ -50,7 +50,7 @@ def _swapped_frames[
     var target = _GLTarget(GL(), 64, 64)
     var gl = GLRenderer()
     var state = _PersistentCanvasState()
-    state._backend.antialiasing = antialiasing
+    state._backend[].antialiasing = antialiasing
     var context = Context()
     context.design_size(64, 64)
     context._set_viewport(state, 64, 64)
@@ -64,7 +64,7 @@ def _swapped_frames[
             now += 16
             context._advance_frame(now)
             state = step(program, context, state^)
-        state._backend.present_gpu(gl, 64, 64, state._view.scale)
+        state._backend[].present_gpu(gl, 64, 64, state._view.scale)
         if i < frames:
             target.gl.clear_color(0.0, 0.0, 1.0, 1.0)
             target.gl.clear(GL_COLOR_BUFFER_BIT)

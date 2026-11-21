@@ -15,6 +15,7 @@ working on the package: the [user guide](../../../docs/guide/README.md) covers u
 | `_paint.mojo` | `Paint`, what a command paints with (fill, stroke, shadow, blend mode), and `TextStyle`, what text is set in |
 | `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
 | `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
+| `_backend_handle.mojo` | `BackendHandle` — how `_PersistentCanvasState` holds its `Backend`: on the heap, reached through `handle[]` |
 | `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
 | `_command_buffer.mojo` | `CommandBuffer` — the frame being recorded: its commands, its `canvas.clip` levels, the record count reads are cached against, and the opening clear `autoclear` switches |
 | `_captures.mojo` | `Captures` — the `save_image`, `save_screenshot` and recording requests and the recording's state (GIF writer, slot timing); the backend does their replays |
