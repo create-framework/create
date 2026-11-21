@@ -97,13 +97,21 @@ pixi run setup                            # once per clone: git hooks + blame ig
 
 **`-I src` is required for every `mojo run`**, or `from create import *` fails. Pixi tasks add it.
 
+**So is a current `build/libcreate.so`**, which a program calls into for the loops, the window and
+both replays (see [The compiled library](ARCHITECTURE.md#the-compiled-library)). After changing
+anything under `src/`, run `pixi run native` before a plain `mojo run`. A program refuses a library
+older than the source it was compiled from, since that library would run the code from before the
+change. `example`, `benchmark` and `test` rebuild it themselves.
+
 `example` and `benchmark` run against the precompiled library, `build/create.mojoc` (`-I build`),
 not against the source, and call into the compiled library, `build/libcreate.so`, for the loops, the
 window and both replays (see [The compiled library](ARCHITECTURE.md#the-compiled-library)). They
-depend on the `precompile` and `native` tasks, and pixi's task cache skips those while no
-`src/create/**/*.mojo` file and nothing in the environment has changed. So while the library is
-unchanged, a run starts in about 2 s rather than 8, and the first run after a library edit pays for
-the rebuild, about 10 s for the package and 25 s for the compiled library.
+depend on the `precompile` and `native` tasks. Pixi's task cache skips `precompile` while no
+`src/create/**/*.mojo` file and nothing in the environment has changed, and `native` skips the build
+itself while the source and the compiler are those it was last built from (a hash of both is in
+`build/libcreate.so.stamp`). So while the library is unchanged, a run starts in about 2 s rather
+than 8, and the first run after a library edit pays for the rebuild, about 10 s for the package and
+25 s for the compiled library.
 
 `test`, `build-examples` and `check-standalone` work differently. Each one precompiles `src` afresh
 into a temporary package of its own (and `test` and `check-standalone` build the compiled library

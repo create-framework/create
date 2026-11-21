@@ -17,10 +17,11 @@ check-standalone = "bash scripts/check_standalone.sh"
 # Skipped while every input is unchanged since the last run (pixi's task cache,
 # which also tracks the environment), so example and benchmark start from it.
 precompile = { cmd = "mkdir -p build && mojo precompile \"$PIXI_PROJECT_ROOT/src/create\" -o build/create.mojoc", inputs = ["src/create/**/*.mojo"], outputs = ["build/create.mojoc"] }
-# The compiled library a program calls into (see src/create/_native.mojo),
-# skipped like precompile while its inputs are unchanged. The activation
-# script points CREATE_LIBRARY at it.
-native = { cmd = "sh scripts/build_native.sh > /dev/null", inputs = ["src/create/**/*.mojo", "src/native/*.mojo"], outputs = ["build/libcreate.*"] }
+# The compiled library a program calls into (see src/create/_native.mojo).
+# The script skips the build itself while the source is unchanged, and touches
+# the library then, which pixi's task cache wouldn't. The activation script
+# points CREATE_LIBRARY at it.
+native = "sh scripts/build_native.sh > /dev/null"
 embed-fonts = "sh scripts/embed_fonts.sh"
 format = "mojo format src examples benchmarks tests template && python scripts/wrap_markdown.py"
 setup = "git config core.hooksPath .githooks && git config blame.ignoreRevsFile .git-blame-ignore-revs"
