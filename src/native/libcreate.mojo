@@ -14,7 +14,7 @@ from every program.
 
 from std.sys import size_of
 
-from create._native import at
+from create._native import at, stale_source
 from create.core._driver import _Driver, _RunSettings
 from create.core.headless import _run_headless
 from create.core.run import _run
@@ -25,6 +25,15 @@ from create.color.color import Color
 from create.render._backend import Backend
 from create.render._backend_handle import free_backend, new_backend
 from create.render.canvas import Canvas, _RecordingRequest, intern_image
+
+
+@export
+def create_check_source(library: Int, source: Int, error: Int) abi("C") -> Bool:
+    var why = stale_source(at[String](library), at[String](source))
+    if why:
+        at[String](error) = why^
+        return False
+    return True
 
 
 @export
