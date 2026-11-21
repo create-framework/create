@@ -48,9 +48,7 @@ struct App(Program):
             text_color=_INK,
             font_size=56,
             font_weight=FontWeight.BOLD,
-            shadow=_SHADOW,
-            shadow_offset=Vector(3, -3),
-            shadow_blur=blur / 4.0,
+            shadow=Shadow(_SHADOW, offset=Vector(3, -3), blur=blur / 4.0),
         ):
             canvas.text("Shadows", (0, canvas.top() - 70))
 
@@ -58,9 +56,7 @@ struct App(Program):
         with canvas.style(
             fill=Color.WHITE,
             stroke_enabled=False,
-            shadow=_CARD_SHADOW,
-            shadow_offset=Vector(0, -10),
-            shadow_blur=blur * 1.5,
+            shadow=Shadow(_CARD_SHADOW, offset=Vector(0, -10), blur=blur * 1.5),
         ):
             canvas.rectangle((-330, 60), 380, 220, corner_radius=18)
         with canvas.style(text_color=_INK, font_size=26):
@@ -73,10 +69,9 @@ struct App(Program):
         with canvas.style(
             fill=_FIELD,
             stroke=_FIELD_EDGE,
-            shadow=_SHADOW,
-            shadow_offset=Vector(3, -4),
-            shadow_blur=blur / 2.0,
-            shadow_inset=True,
+            shadow=Shadow(
+                _SHADOW, offset=Vector(3, -4), blur=blur / 2.0, inset=True
+            ),
         ):
             canvas.rectangle((-330, -170), 380, 60, corner_radius=10)
         with canvas.style(
@@ -97,7 +92,8 @@ struct App(Program):
                 Transform(translation=Vector(170, 110), rotation=self.angle)
             ):
                 canvas.draw(square)
-            with canvas.style(shadow_follows_transform=True):
+            with canvas.style():
+                canvas.shadow(follows_transform=True)
                 with canvas.transform(
                     Transform(translation=Vector(430, 110), rotation=self.angle)
                 ):

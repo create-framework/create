@@ -709,10 +709,8 @@ def test_render_backend_writes_its_constant_name() raises -> None:
 
 def _shadowed(fill: Color, shadow: Color) -> Style:
     var s = _solid(fill)
+    s.shadow = Shadow(shadow, offset=Vector(10, -10), blur=0.0)
     s.shadow_enabled = True
-    s.shadow_color = shadow
-    s.shadow_offset = Vector(10, -10)
-    s.shadow_blur = 0.0
     return s^
 
 
@@ -827,8 +825,8 @@ def test_bezier_casts_its_stroke_at_the_offset() raises -> None:
 def _blurred(fill: Color, blur: Float64) -> Style:
     """White ink blurred by `blur`, thrown 60 units right of its shape."""
     var s = _shadowed(fill, Color.WHITE)
-    s.shadow_offset = Vector(60, 0)
-    s.shadow_blur = blur
+    s.shadow.value().offset = Vector(60, 0)
+    s.shadow.value().blur = blur
     return s^
 
 
@@ -916,7 +914,7 @@ def _blurred_image_frame(
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     var s = _blurred(Color.GREEN, 8.0)
-    s.shadow_offset = Vector(40, 0)
+    s.shadow.value().offset = Vector(40, 0)
     cmds.append(image_command(_base(), s^, -10.0, 0.0, 20.0, 20.0, image, 2, 2))
     backend.replay(mem.surface(), cmds, 1.0)
 
@@ -950,7 +948,7 @@ def test_a_blurred_shadow_turns_with_its_image() raises -> None:
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     var s = _blurred(Color.GREEN, 4.0)
-    s.shadow_offset = Vector(40, 0)
+    s.shadow.value().offset = Vector(40, 0)
     cmds.append(
         image_command(
             _base() @ Transform(rotation=PI / 4.0),
@@ -978,9 +976,9 @@ def test_a_blurred_text_shadow_is_softer_than_a_hard_one() raises -> None:
     var hard = _shadowed(Color.GREEN, Color.RED)
     hard.text_color = Color.GREEN
     hard.font_size = 40
-    hard.shadow_offset = Vector(0, 0)
+    hard.shadow.value().offset = Vector(0, 0)
     var soft = hard.copy()
-    soft.shadow_blur = 8.0
+    soft.shadow.value().blur = 8.0
     var a = List[RenderCommand]()
     a.append(clear_command(Color.BLACK))
     a.append(text_command(_base(), hard^, 0.0, 0.0, "l"))
@@ -1010,9 +1008,9 @@ def test_a_blurred_bezier_shadow_fades_past_the_stroke() raises -> None:
     hard.stroke_enabled = True
     hard.stroke_color = Color.GREEN
     hard.stroke_thickness = 4
-    hard.shadow_offset = Vector(0, 0)
+    hard.shadow.value().offset = Vector(0, 0)
     var soft = hard.copy()
-    soft.shadow_blur = 8.0
+    soft.shadow.value().blur = 8.0
     var a = List[RenderCommand]()
     a.append(clear_command(Color.BLACK))
     a.append(bezier_command(_base(), hard^, _s_curve()))
@@ -1044,9 +1042,9 @@ def test_a_blurred_bezier_shadow_fades_past_the_stroke() raises -> None:
 def _inset(fill: Color, offset: Vector, blur: Float64 = 0.0) -> Style:
     """`fill` with a red inset shadow thrown by `offset`."""
     var s = _shadowed(fill, Color.RED)
-    s.shadow_inset = True
-    s.shadow_offset = offset
-    s.shadow_blur = blur
+    s.shadow.value().inset = True
+    s.shadow.value().offset = offset
+    s.shadow.value().blur = blur
     return s^
 
 
@@ -1130,7 +1128,7 @@ def test_a_blurred_inset_shadow_fades_inwards() raises -> None:
 
 def test_spread_shrinks_an_inset_silhouette_all_round() raises -> None:
     var s = _inset(Color.WHITE, Vector(0, 0))
-    s.shadow_spread = 5.0
+    s.shadow.value().spread = 5.0
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(rect_command(_base(), s, 0.0, 0.0, 40.0, 40.0))

@@ -251,8 +251,8 @@ struct BlurredShapes[shadows: Bool](Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         var st = Style(fill=Color.RED, stroke=Color.WHITE, stroke_thickness=3)
+        st.shadow = Shadow(blur=8.0)
         st.shadow_enabled = Self.shadows
-        st.shadow_blur = 8.0
         with canvas.style(st):
             canvas.rectangle((-20.0, 20.0), 20.0, 14.0)
             canvas.circle((20.0, 20.0), 8.0)
@@ -275,8 +275,8 @@ struct BlurredText[shadows: Bool](Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         var st = Style(text_color=Color.WHITE, font_size=20)
+        st.shadow = Shadow(blur=8.0)
         st.shadow_enabled = Self.shadows
-        st.shadow_blur = 8.0
         with canvas.style(st):
             canvas.text("shadow", (0.0, 0.0))
 
@@ -296,8 +296,8 @@ struct BlurredImage[shadows: Bool](Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         var st = Style()
+        st.shadow = Shadow(blur=8.0)
         st.shadow_enabled = Self.shadows
-        st.shadow_blur = 8.0
         with canvas.style(st):
             canvas.image(self.image, (0.0, 0.0), 20, 20)
 
@@ -319,8 +319,8 @@ struct BlurredBezier[shadows: Bool](Program):
         canvas.fill(Color.RED)
         canvas.rectangle((-30.0, 0.0), 20.0, 20.0)
         var st = Style(stroke=Color.GREEN, stroke_thickness=4)
+        st.shadow = Shadow(blur=8.0)
         st.shadow_enabled = Self.shadows
-        st.shadow_blur = 8.0
         with canvas.style(st):
             canvas.bezier((-30, -30), (-10, 30), (10, -30), (30, 30))
         canvas.rectangle((30.0, 0.0), 20.0, 20.0)

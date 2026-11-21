@@ -23,13 +23,20 @@ def test_default_style_matches_a_fresh_frame() raises -> None:
     assert_equal(s.tint, Color.WHITE)
     assert_equal(s.opacity, 1.0)
     assert_true(s.blend_mode == BlendMode.NORMAL)
-    assert_equal(s.shadow_color, Color(0, 0, 0, 96))
-    assert_equal(s.shadow_offset, Vector(4, -4))
-    assert_equal(s.shadow_blur, 8.0)
-    assert_equal(s.shadow_spread, 0.0)
-    assert_false(s.shadow_inset)
-    assert_false(s.shadow_follows_transform)
+    assert_false(Bool(s.shadow))
     assert_false(s.shadow_enabled)
+
+
+def test_a_shadow_defaults_to_a_soft_translucent_black() raises -> None:
+    var s = Shadow()
+    assert_equal(s.color, Color(0, 0, 0, 96))
+    assert_equal(s.offset, Vector(4, -4))
+    assert_equal(s.blur, 8.0)
+    assert_equal(s.spread, 0.0)
+    assert_false(s.inset)
+    assert_false(s.follows_transform)
+    assert_true(s == Shadow())
+    assert_true(s != Shadow(blur=2))
 
 
 def test_each_keyword_lands_in_its_field() raises -> None:
@@ -51,12 +58,14 @@ def test_each_keyword_lands_in_its_field() raises -> None:
         tint=Color.RED,
         opacity=0.5,
         blend_mode=BlendMode.ADD,
-        shadow=Color.RED,
-        shadow_offset=Vector(1, 2),
-        shadow_blur=3.0,
-        shadow_spread=-1.0,
-        shadow_inset=True,
-        shadow_follows_transform=True,
+        shadow=Shadow(
+            Color.RED,
+            offset=Vector(1, 2),
+            blur=3.0,
+            spread=-1.0,
+            inset=True,
+            follows_transform=True,
+        ),
         shadow_enabled=True,
     )
     assert_equal(s.fill_color, Color.RED)
@@ -76,29 +85,25 @@ def test_each_keyword_lands_in_its_field() raises -> None:
     assert_equal(s.tint, Color.RED)
     assert_equal(s.opacity, 0.5)
     assert_true(s.blend_mode == BlendMode.ADD)
-    assert_equal(s.shadow_color, Color.RED)
-    assert_equal(s.shadow_offset, Vector(1, 2))
-    assert_equal(s.shadow_blur, 3.0)
-    assert_equal(s.shadow_spread, -1.0)
-    assert_true(s.shadow_inset)
-    assert_true(s.shadow_follows_transform)
+    ref shadow = s.shadow.value()
+    assert_equal(shadow.color, Color.RED)
+    assert_equal(shadow.offset, Vector(1, 2))
+    assert_equal(shadow.blur, 3.0)
+    assert_equal(shadow.spread, -1.0)
+    assert_true(shadow.inset)
+    assert_true(shadow.follows_transform)
     assert_true(s.shadow_enabled)
 
 
 def test_naming_a_part_switches_its_property_on() raises -> None:
     assert_true(Style(fill=Color.RED).fill_enabled)
-    assert_true(Style(shadow=Color.RED).shadow_enabled)
-    assert_true(Style(shadow_offset=Vector(1, 2)).shadow_enabled)
-    assert_true(Style(shadow_blur=12).shadow_enabled)
-    assert_true(Style(shadow_spread=0).shadow_enabled)
-    assert_true(Style(shadow_inset=False).shadow_enabled)
-    assert_false(Style(shadow_follows_transform=True).shadow_enabled)
+    assert_true(Style(shadow=Shadow()).shadow_enabled)
 
 
 def test_an_explicit_enabled_beside_a_part_wins() raises -> None:
-    var s = Style(shadow=Color.RED, shadow_enabled=False)
+    var s = Style(shadow=Shadow(Color.RED), shadow_enabled=False)
     assert_false(s.shadow_enabled)
-    assert_equal(s.shadow_color, Color.RED)
+    assert_equal(s.shadow.value().color, Color.RED)
     assert_false(Style(stroke=Color.RED, stroke_enabled=False).stroke_enabled)
     assert_false(Style(fill=Color.RED, fill_enabled=False).fill_enabled)
 
@@ -116,10 +121,16 @@ def test_style_writes_constructor_keywords() raises -> None:
             " text_color=Color(0, 0, 0, 255), font=None, font_size=16.0,"
             " font_weight=FontWeight.REGULAR, font_italic=False,"
             " text_alignment=Align.CENTER, tint=Color(255, 255, 255, 255),"
-            " opacity=1.0, blend_mode=BlendMode.NORMAL, shadow=Color(0, 0, 0,"
-            " 96), shadow_offset=Vector(4.0, -4.0), shadow_blur=8.0,"
-            " shadow_spread=0.0, shadow_inset=False,"
-            " shadow_follows_transform=False, shadow_enabled=False)"
+            " opacity=1.0, blend_mode=BlendMode.NORMAL, shadow=None,"
+            " shadow_enabled=False)"
+        ),
+    )
+    assert_equal(
+        String(Style(shadow=Shadow(blur=12))).split(", shadow=")[1],
+        (
+            "Shadow(Color(0, 0, 0, 96), offset=Vector(4.0, -4.0), blur=12.0,"
+            " spread=0.0, inset=False, follows_transform=False),"
+            " shadow_enabled=True)"
         ),
     )
 
@@ -158,11 +169,13 @@ def test_stroke_cap_prints_its_name() raises -> None:
 
 def test_shadow_is_visible_only_when_enabled_and_opaque_enough() raises -> None:
     assert_false(Style()._paint()._shadow_visible())
-    assert_true(Style(shadow_enabled=True)._paint()._shadow_visible())
+    assert_false(Style(shadow_enabled=True)._paint()._shadow_visible())
+    assert_true(Style(shadow=Shadow())._paint()._shadow_visible())
     assert_false(
-        Style(shadow=Color.TRANSPARENT, shadow_enabled=True)
-        ._paint()
-        ._shadow_visible()
+        Style(shadow=Shadow(), shadow_enabled=False)._paint()._shadow_visible()
+    )
+    assert_false(
+        Style(shadow=Shadow(Color.TRANSPARENT))._paint()._shadow_visible()
     )
 
 
@@ -221,15 +234,13 @@ def test_fractional_sizes_round_once_scaled() raises -> None:
 def test_unset_number_keywords_take_none_or_any_number() raises -> None:
     # An integer literal, a float, `None` and a forwarded `Optional` all
     # reach a number keyword, like every other optional keyword.
-    var s = Style(shadow_blur=12, shadow_spread=1.5)
-    assert_equal(s.shadow_blur, 12.0)
-    assert_equal(s.shadow_spread, 1.5)
-    assert_true(s.shadow_enabled)
+    var s = Style(stroke_thickness=12, font_size=1.5)
+    assert_equal(s.stroke_thickness, 12.0)
+    assert_equal(s.font_size, 1.5)
 
-    var unset = Style(shadow_blur=None, stroke_thickness=None)
-    assert_equal(unset.shadow_blur, 8.0)
+    var unset = Style(font_size=None, stroke_thickness=None)
+    assert_equal(unset.font_size, 16.0)
     assert_equal(unset.stroke_thickness, 1.0)
-    assert_false(unset.shadow_enabled)
 
     var forwarded: Optional[Float64] = 3.0
     assert_equal(Style(stroke_thickness=forwarded).stroke_thickness, 3.0)

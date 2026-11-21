@@ -83,6 +83,21 @@ struct Surface[origin: Origin[mut=True]](Copyable, ImplicitlyCopyable, Movable):
         out._recording = runs
         return out
 
+    def _untracked(self) -> Surface[MutUntrackedOrigin]:
+        """The same surface, its clip and blend mode included, with its
+        origin untracked: what a function stored behind a `thin` pointer
+        takes, since such a function can't be generic over the origin. The
+        compiled code is the same for every origin, so this costs nothing."""
+        var out = Surface[MutUntrackedOrigin](
+            self.px.unsafe_origin_cast[MutUntrackedOrigin](),
+            self.width,
+            self.height,
+        )
+        out._blend_mode = self._blend_mode
+        out._clip = self._clip
+        out._recording = self._recording
+        return out
+
     def offset(self, x: Int, y: Int) -> Int:
         """Byte offset of pixel `(x, y)` — row-major, four bytes per pixel."""
         return (y * self.width + x) * 4

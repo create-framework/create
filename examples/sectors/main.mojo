@@ -130,9 +130,7 @@ struct App(Program):
             fill=body,
             stroke=_HIT if hit else _BACKGROUND,
             stroke_thickness=6,
-            shadow=_SHADOW,
-            shadow_offset=Vector(8, -12),
-            shadow_blur=20,
+            shadow=Shadow(_SHADOW, offset=Vector(8, -12), blur=20),
         ):
             canvas.draw(pacman)
 

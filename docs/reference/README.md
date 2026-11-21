@@ -45,9 +45,9 @@ Colours: `Color`, `Gradient` and `BlendMode`.
 
 ## [`create.render`](render/README.md)
 
-Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `Shadow`, `RenderBackend`).
 
-- **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`Autoscale`](render/autoscale.md), [`Style`](render/style.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`StyleGuard`](render/styleguard.md), [`TransformGuard`](render/transformguard.md), [`OverlayGuard`](render/overlayguard.md), [`ClipGuard`](render/clipguard.md)
+- **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`Autoscale`](render/autoscale.md), [`Style`](render/style.md), [`Shadow`](render/shadow.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`StyleGuard`](render/styleguard.md), [`TransformGuard`](render/transformguard.md), [`OverlayGuard`](render/overlayguard.md), [`ClipGuard`](render/clipguard.md)
 
 ## [`create.image`](image/README.md)
 

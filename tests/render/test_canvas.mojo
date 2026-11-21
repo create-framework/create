@@ -965,15 +965,15 @@ struct ShadowKeywords(Program):
         canvas.background(Color.BLACK)
         canvas.shadow(Color.GREEN, offset=Vector(10, -10), blur=0)
         canvas.shadow_enabled(False)
-        with canvas.style(shadow=Color.BLUE, shadow_blur=12):
+        with canvas.style(shadow=Shadow(Color.BLUE, blur=12)):
             _red_square(canvas, (-75, 0))
         # Restored on exit: green, and off again.
         _red_square(canvas, (-25, 0))
-        # A part without a colour switches the shadow on in the current
-        # colour, but an explicit `shadow_enabled=False` beside it wins.
-        with canvas.style(shadow_spread=0):
+        # `shadow_enabled` alone switches the kept shadow back on, and an
+        # explicit `shadow_enabled=False` beside a shadow wins.
+        with canvas.style(shadow_enabled=True):
             _red_square(canvas, (25, 0))
-        with canvas.style(shadow_spread=0, shadow_enabled=False):
+        with canvas.style(shadow=Shadow(Color.BLUE), shadow_enabled=False):
             _red_square(canvas, (75, 0))
 
 
@@ -1007,7 +1007,7 @@ struct ShadowFollowsTransform(Program):
             Transform(translation=Vector(-40, 0)) @ Transform(rotation=PI / 2.0)
         ):
             _red_square(canvas, (0, 0))
-        canvas.shadow_follows_transform(True)
+        canvas.shadow(follows_transform=True)
         with canvas.transform(
             Transform(translation=Vector(40, 0)) @ Transform(rotation=PI / 2.0)
         ):
@@ -1035,10 +1035,7 @@ struct InsetKeyword(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         with canvas.style(
-            shadow=Color.BLUE,
-            shadow_offset=Vector(6, -6),
-            shadow_blur=0,
-            shadow_inset=True,
+            shadow=Shadow(Color.BLUE, offset=Vector(6, -6), blur=0, inset=True)
         ):
             _red_square(canvas, (0, 0))
 
@@ -2509,12 +2506,7 @@ struct ShadowedImageEveryOverload(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         with canvas.style(
-            Style(
-                shadow=Color.BLUE,
-                shadow_offset=Vector(0, -10),
-                shadow_blur=0.0,
-                shadow_enabled=True,
-            )
+            Style(shadow=Shadow(Color.BLUE, offset=Vector(0, -10), blur=0.0))
         ):
             canvas.image(self.image, (-40, 30))
             canvas.image(self.animator, (-20, 30))

@@ -11,6 +11,7 @@ from create.text.font import Font, FontWeight
 from create.math.vector import Vector
 from create.math._optional_float64 import _OptionalFloat64
 from ._paint import Paint, TextStyle
+from .shadow import Shadow, _DrawShadow
 
 
 struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -34,8 +35,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     var card = Style(
         fill=Color.WHITE,
         stroke_enabled=False,
-        shadow=Color(0, 0, 0, 80),
-        shadow_blur=16,
+        shadow=Shadow(Color(0, 0, 0, 80), blur=16),
     )
     ```
 
@@ -50,8 +50,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     on (a part, not a modifier such as `stroke_alignment`, `stroke_cap`,
     `stroke_dash` or `corner_radius`),
     unless `fill_enabled`, `stroke_enabled` or `shadow_enabled` says
-    otherwise, so `Style(shadow=Color.RED, shadow_enabled=False)` keeps a
-    shadow ready but off. `fill_gradient` is the keyword for `fill`'s
+    otherwise, so `Style(shadow=Shadow(Color.RED), shadow_enabled=False)`
+    keeps a shadow ready but off. `fill_gradient` is the keyword for `fill`'s
     `Gradient` overload, since one keyword can't take both: given beside
     `fill`, the gradient paints and the colour is kept for when it is
     cleared. Every part left unset is what a fresh frame starts with.
@@ -86,12 +86,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     var tint: Color
     var opacity: Float64
     var blend_mode: BlendMode
-    var shadow_color: Color
-    var shadow_offset: Vector
-    var shadow_blur: Float64
-    var shadow_spread: Float64
-    var shadow_inset: Bool
-    var shadow_follows_transform: Bool
+    var shadow: Optional[Shadow]
+    """The shadow cast while `shadow_enabled`; none unless set."""
     var shadow_enabled: Bool
 
     def __init__(
@@ -116,12 +112,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         tint: Color = Color.WHITE,
         opacity: _OptionalFloat64 = None,
         blend_mode: BlendMode = BlendMode.NORMAL,
-        shadow: Optional[Color] = None,
-        shadow_offset: Optional[Vector] = None,
-        shadow_blur: _OptionalFloat64 = None,
-        shadow_spread: _OptionalFloat64 = None,
-        shadow_inset: Optional[Bool] = None,
-        shadow_follows_transform: Bool = False,
+        shadow: Optional[Shadow] = None,
         shadow_enabled: Optional[Bool] = None,
     ):
         self.fill_color = fill.or_else(Color.WHITE)
@@ -145,19 +136,8 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.tint = tint
         self.opacity = opacity.or_else(1.0)
         self.blend_mode = blend_mode
-        self.shadow_color = shadow.or_else(Color(0, 0, 0, 96))
-        self.shadow_offset = shadow_offset.or_else(Vector(4, -4))
-        self.shadow_blur = shadow_blur.or_else(8.0)
-        self.shadow_spread = shadow_spread.or_else(0.0)
-        self.shadow_inset = shadow_inset.or_else(False)
-        self.shadow_follows_transform = shadow_follows_transform
-        self.shadow_enabled = shadow_enabled.or_else(
-            Bool(shadow)
-            or Bool(shadow_offset)
-            or Bool(shadow_blur)
-            or Bool(shadow_spread)
-            or Bool(shadow_inset)
-        )
+        self.shadow = shadow
+        self.shadow_enabled = shadow_enabled.or_else(Bool(shadow))
 
     def write_to[W: Writer](self, mut writer: W):
         # Named by the constructor's keywords, not the fields, so the output
@@ -212,21 +192,12 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             ", blend_mode=",
             self.blend_mode,
             ", shadow=",
-            self.shadow_color,
-            ", shadow_offset=",
-            self.shadow_offset,
-            ", shadow_blur=",
-            self.shadow_blur,
-            ", shadow_spread=",
-            self.shadow_spread,
-            ", shadow_inset=",
-            self.shadow_inset,
-            ", shadow_follows_transform=",
-            self.shadow_follows_transform,
-            ", shadow_enabled=",
-            self.shadow_enabled,
-            ")",
         )
+        if self.shadow:
+            writer.write(self.shadow.value())
+        else:
+            writer.write("None")
+        writer.write(", shadow_enabled=", self.shadow_enabled, ")")
 
     def _paint(self) -> Paint:
         """What a command recorded in this style paints with: a dash preset
@@ -234,6 +205,25 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         var cap = self.stroke_cap
         if self.stroke_dash._is_dotted():
             cap = StrokeCap.ROUND
+        # Copied part by part rather than through a default `Shadow`, which
+        # would make every program compile the shadow code (see `Shadow`).
+        var color = Color(0, 0, 0, 0)
+        var offset = Vector(0, 0)
+        var blur = 0.0
+        var spread = 0.0
+        var inset = False
+        var follows = False
+        var draw = Optional[_DrawShadow]()
+        if self.shadow:
+            ref shadow = self.shadow.value()
+            color = shadow.color
+            offset = shadow.offset
+            blur = shadow.blur
+            spread = shadow.spread
+            inset = shadow.inset
+            follows = shadow.follows_transform
+            if self.shadow_enabled:
+                draw = shadow._draw
         return Paint(
             fill_color=self.fill_color,
             fill_gradient=self.fill_gradient,
@@ -245,13 +235,14 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             stroke_cap=cap,
             stroke_dash=self.stroke_dash._resolved(self.stroke_thickness),
             blend_mode=self.blend_mode,
-            shadow_color=self.shadow_color,
-            shadow_offset=self.shadow_offset,
-            shadow_blur=self.shadow_blur,
-            shadow_spread=self.shadow_spread,
-            shadow_inset=self.shadow_inset,
-            shadow_follows_transform=self.shadow_follows_transform,
-            shadow_enabled=self.shadow_enabled,
+            shadow_color=color,
+            shadow_offset=offset,
+            shadow_blur=blur,
+            shadow_spread=spread,
+            shadow_inset=inset,
+            shadow_follows_transform=follows,
+            shadow_enabled=Bool(draw),
+            _shadow_draw=draw,
         )
 
     def _text_style(self) -> TextStyle:

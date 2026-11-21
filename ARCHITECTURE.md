@@ -12,7 +12,7 @@ internals](#package-internals).
 | root | `src/create/__init__.mojo` | The preamble: star-imports all twelve subpackages below |
 | `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `EditableText`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
-| `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
+| `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Style`, `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `Shadow`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
 | `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock playheads read (`_run_clock`), `DateTime` (the wall clock) |

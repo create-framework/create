@@ -37,7 +37,7 @@ test sees the turned shape, exactly, and `left()`/`right()`/`bottom()`/
 `top()` and `bounds()` are its upright bounding box's. Drawn, it is the
 upright rectangle turned, so a gradient fill, the rounding and the
 stroke turn with it, while a shadow's offset stays screen-fixed unless
-`shadow_follows_transform` is set, as for any turned shape.
+the `Shadow` `follows_transform`, as for any turned shape.
 
 Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Region`, `Shape`, `Writable`, `_Collider`.
 

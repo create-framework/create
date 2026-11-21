@@ -700,10 +700,7 @@ struct CpuReplay(Movable):
         self.antialiasing = antialiasing
         var rows = List[_ClipRows]()
         if len(clips) > 0:
-            var untracked = Surface[MutUntrackedOrigin](
-                s.px.unsafe_origin_cast[MutUntrackedOrigin](), s.width, s.height
-            )
-            rows = clips[0]._rows(self, res, clips, untracked, scale, pre)
+            rows = clips[0]._rows(self, res, clips, s._untracked(), scale, pre)
         for ref c in cmds:
             var skipped = (
                 skip_letterbox and c.payload.isa[LetterboxPayload]()
@@ -759,35 +756,12 @@ struct CpuReplay(Movable):
         # Likewise the blend mode: every raster loop reads it off the surface.
         var t = s._with_blend_mode(c.paint.blend_mode)
         # An outer shadow is the command's silhouette, replayed under it
-        # through this same dispatch.
-        if casts_outer_shadow(c):
-            var sh = shadow_command(c, scale)
-            var sm = pre @ sh.transform
-            # The blur in whole device pixels; see `_ensure_glyph`. Text is
-            # blurred where it is laid out, at its own scale.
-            var sf = text_pixel_scale(sm, scale) if c.payload.isa[
-                TextPayload
-            ]() else pixel_scale(sm, scale)
-            var blur = Int(c.paint.shadow_blur * sf + 0.5)
-            if blur == 0:
-                self._one(res, s, sh, scale, pre)
-            elif blurs_analytically(sh):
-                _blurred_shadow(t, sh, scale, sm)
-            elif c.payload.isa[TextPayload]():
-                self._text(res, t, sh, scale, sm, blur)
-            elif c.payload.isa[ImagePayload]():
-                self._image_shadow(res, t, sh, scale, sm, blur)
-            elif is_lowered(sh):
-                var placed = shape_shadow_mask(sh, sm, scale, blur)
-                blit_alpha(
-                    t,
-                    placed.mask.pixels.unsafe_ptr(),
-                    placed.mask.width,
-                    placed.mask.height,
-                    placed.x,
-                    placed.y,
-                    c.paint.shadow_color,
-                )
+        # through this same dispatch. The shadow code is reached only through
+        # the pointer a `Shadow` carries (see `draw_shadow`).
+        if c.paint._shadow_draw:
+            c.paint._shadow_draw.value()(
+                self, res, s._untracked(), c, scale, pre, False
+            )
         if c.payload.isa[ClearPayload]():
             if c.paint.fill_gradient:
                 var paint = _fill_paint(c, m)
@@ -804,10 +778,10 @@ struct CpuReplay(Movable):
         elif c.payload.isa[LetterboxPayload]():
             self._letterbox(t, c)
         # An inset shadow lies over the command, inside its stroke.
-        if casts_inset_shadow(c):
-            var sm = pre @ shadow_transform(c, scale)
-            var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
-            _inset_shadow(t, c, scale, m, sm, blur)
+        if c.paint._shadow_draw:
+            c.paint._shadow_draw.value()(
+                self, res, s._untracked(), c, scale, pre, True
+            )
 
     def _shape[
         o: Origin[mut=True]
@@ -1551,3 +1525,60 @@ def clip_rows(
         else:
             out.append(own.intersect(out[parent - 1]))
     return out^
+
+
+def draw_shadow(
+    mut replay: CpuReplay,
+    mut res: Resources,
+    s: Surface[MutUntrackedOrigin],
+    c: RenderCommand,
+    scale: Float64,
+    pre: Transform,
+    inset: Bool,
+) raises:
+    """Paint `c`'s outer shadow onto `s`, under it, or with `inset` its
+    inset shadow, over it.
+
+    Reached only through the pointer a `Shadow` carries
+    (`Paint._shadow_draw`), so a program that never makes a `Shadow`
+    doesn't compile the CPU replay's shadow code.
+    """
+    var m = pre @ c.transform
+    var t = s._with_blend_mode(c.paint.blend_mode)
+    if not inset:
+        # An outer shadow is the command's silhouette, replayed under it
+        # through this same dispatch.
+        if casts_outer_shadow(c):
+            var sh = shadow_command(c, scale)
+            var sm = pre @ sh.transform
+            # The blur in whole device pixels; see `_ensure_glyph`. Text is
+            # blurred where it is laid out, at its own scale.
+            var sf = text_pixel_scale(sm, scale) if c.payload.isa[
+                TextPayload
+            ]() else pixel_scale(sm, scale)
+            var blur = Int(c.paint.shadow_blur * sf + 0.5)
+            if blur == 0:
+                replay._one(res, s, sh, scale, pre)
+            elif blurs_analytically(sh):
+                _blurred_shadow(t, sh, scale, sm)
+            elif c.payload.isa[TextPayload]():
+                replay._text(res, t, sh, scale, sm, blur)
+            elif c.payload.isa[ImagePayload]():
+                replay._image_shadow(res, t, sh, scale, sm, blur)
+            elif is_lowered(sh):
+                var placed = shape_shadow_mask(sh, sm, scale, blur)
+                blit_alpha(
+                    t,
+                    placed.mask.pixels.unsafe_ptr(),
+                    placed.mask.width,
+                    placed.mask.height,
+                    placed.x,
+                    placed.y,
+                    c.paint.shadow_color,
+                )
+    else:
+        # An inset shadow lies over the command, inside its stroke.
+        if casts_inset_shadow(c):
+            var sm = pre @ shadow_transform(c, scale)
+            var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
+            _inset_shadow(t, c, scale, m, sm, blur)

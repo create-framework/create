@@ -6,6 +6,7 @@ plain numbers rather than against a framebuffer. That is the whole reason
 tessellation is its own module: a GL context, a window and a GPU would
 otherwise be prerequisites for testing a coordinate flip.
 """
+from create.render.shadow import Shadow
 from create.math import PI
 from std.testing import (
     TestSuite,
@@ -558,9 +559,8 @@ def test_shape_parameters_default_to_zero() raises -> None:
 def _blurred(var s: Style) -> Style:
     """`s` casting an unshifted shadow with blur 8: sigma 4, so the shape
     parameters are local units times 1/4 and the quad reaches 16 past."""
+    s.shadow = Shadow(offset=Vector(0, 0), blur=8.0)
     s.shadow_enabled = True
-    s.shadow_offset = Vector(0, 0)
-    s.shadow_blur = 8.0
     return s^
 
 

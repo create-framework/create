@@ -38,9 +38,7 @@ struct App(Program):
         var card = Style(
             fill_gradient=Gradient.linear(_CREAM, _ROSE),
             stroke_enabled=False,
-            shadow=_SHADOW,
-            shadow_offset=Vector(0, -10),
-            shadow_blur=16,
+            shadow=Shadow(_SHADOW, offset=Vector(0, -10), blur=16),
         )
         return App(sky, card, 0.0)
 

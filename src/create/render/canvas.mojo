@@ -43,6 +43,7 @@ from ._command import (
     text_command,
 )
 from .style import Style
+from .shadow import Shadow
 from create.math._optional_float64 import _OptionalFloat64
 from create._path import _caller_relative
 from ._command import RenderCommand
@@ -560,12 +561,7 @@ struct Canvas(DrawTarget, Movable):
         tint: Optional[Color] = None,
         opacity: _OptionalFloat64 = None,
         blend_mode: Optional[BlendMode] = None,
-        shadow: Optional[Color] = None,
-        shadow_offset: Optional[Vector] = None,
-        shadow_blur: _OptionalFloat64 = None,
-        shadow_spread: _OptionalFloat64 = None,
-        shadow_inset: Optional[Bool] = None,
-        shadow_follows_transform: Optional[Bool] = None,
+        shadow: Optional[Shadow] = None,
         shadow_enabled: Optional[Bool] = None,
     ) -> StyleGuard[origin_of(self)]:
         """Scope style changes to a `with` block, restoring the previous style
@@ -624,20 +620,13 @@ struct Canvas(DrawTarget, Movable):
             self.opacity(opacity.value())
         if blend_mode:
             self.blend_mode(blend_mode.value())
-        if (
-            shadow
-            or shadow_offset
-            or shadow_blur
-            or shadow_spread
-            or shadow_inset
-        ):
-            self.shadow(
-                shadow, shadow_offset, shadow_blur, shadow_spread, shadow_inset
-            )
-        if shadow_follows_transform:
-            self.shadow_follows_transform(shadow_follows_transform.value())
-        # After the shadow parts, which switch it on: an explicit
-        # `shadow_enabled=False` beside them wins.
+        if shadow:
+            # Set directly rather than through `shadow(...)`, whose default
+            # `Shadow` would make every program compile the shadow code.
+            self._style.shadow = shadow
+            self._style.shadow_enabled = True
+        # After the shadow, which switches it on: an explicit
+        # `shadow_enabled=False` beside it wins.
         if shadow_enabled:
             self.shadow_enabled(shadow_enabled.value())
         return guard^
@@ -1764,6 +1753,12 @@ struct Canvas(DrawTarget, Movable):
         """
         self._style.blend_mode = mode
 
+    def shadow(mut self, shadow: Shadow):
+        """Cast `shadow` behind what is rendered next, switching shadows on.
+        See `Shadow` for its parts."""
+        self._style.shadow = shadow
+        self._style.shadow_enabled = True
+
     def shadow(
         mut self,
         color: Optional[Color] = None,
@@ -1771,12 +1766,14 @@ struct Canvas(DrawTarget, Movable):
         blur: _OptionalFloat64 = None,
         spread: _OptionalFloat64 = None,
         inset: Optional[Bool] = None,
+        follows_transform: Optional[Bool] = None,
     ):
         """Cast a shadow behind what is rendered next, switching shadows on.
-        Parts left unset keep their current values, so `shadow()` alone
-        brings back the last shadow, and `shadow(blur=12)` changes only the
-        blur; a fresh frame starts at a translucent black, an offset of
-        `(4, -4)` (down and right, since y is up), a blur of 8 and no spread.
+        Parts left unset keep their values in the current shadow, or take
+        `Shadow`'s defaults without one: a translucent black, an offset of
+        `(4, -4)` (down and right, since y is up), a blur of 8 and no
+        spread. So `shadow()` alone brings back the last shadow, and
+        `shadow(blur=12)` changes only the blur.
 
         Works like CSS `drop-shadow`: the shadow is the shape's whole
         silhouette, fill and stroke together, cast once — a translucent
@@ -1793,7 +1790,10 @@ struct Canvas(DrawTarget, Movable):
         text and images cast none while it is set.
 
         The offset is fixed to the screen, so a rotated shape's shadow still
-        falls the same way; see `shadow_follows_transform`. The shadow
+        falls the same way. `follows_transform=True` applies it in the
+        shape's own frame instead, before the transform, so it rotates and
+        shears with the shape, as a CSS shadow does under a CSS transform;
+        camera zoom and autoscale scale it either way. The shadow
         combines with what is beneath it by the style's `blend_mode`, like
         the shape itself.
 
@@ -1802,35 +1802,27 @@ struct Canvas(DrawTarget, Movable):
         canvas.rectangle((0, 0), 120, 80)
         ```
         """
+        var shadow = self._style.shadow.or_else(Shadow())
         if color:
-            self._style.shadow_color = color.value()
+            shadow.color = color.value()
         if offset:
-            self._style.shadow_offset = offset.value()
+            shadow.offset = offset.value()
         if blur:
-            self._style.shadow_blur = blur.value()
+            shadow.blur = blur.value()
         if spread:
-            self._style.shadow_spread = spread.value()
+            shadow.spread = spread.value()
         if inset:
-            self._style.shadow_inset = inset.value()
-        self._style.shadow_enabled = True
+            shadow.inset = inset.value()
+        if follows_transform:
+            shadow.follows_transform = follows_transform.value()
+        self.shadow(shadow)
 
     def shadow_enabled(mut self, enabled: Bool):
-        """Switch shadows off or back on. Colour, offset, blur, spread and
-        inset are kept while off, so `shadow_enabled(True)` brings back the
-        same shadow; `shadow(color)` switches it on too. Off by default."""
+        """Switch the shadow off or back on. It is kept while off, so
+        `shadow_enabled(True)` brings back the same shadow. Off by default,
+        and with no shadow set there is nothing to switch on: set one with
+        `shadow(...)`."""
         self._style.shadow_enabled = enabled
-
-    def shadow_follows_transform(mut self, follows: Bool):
-        """Whether the shadow's offset turns with the transform.
-
-        `False` (the default) keeps it fixed to the screen, as a light
-        overhead would: a rotating shape's shadow always falls the same way.
-        Camera zoom and autoscale still scale it, so it stays in proportion.
-        `True` applies the offset in the shape's own frame, before the
-        transform, so it rotates and shears with the shape, as a CSS
-        shadow does under a CSS transform.
-        """
-        self._style.shadow_follows_transform = follows
 
     def text_alignment(mut self, align: Align):
         """Anchor the next text at one of the nine points of its box.

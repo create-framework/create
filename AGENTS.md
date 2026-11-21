@@ -48,7 +48,7 @@ page:
 | [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, `lerp`, `luminance` |
 | [strokes](docs/guide/drawing/strokes.md) | stroke thickness, `StrokeAlign`, `StrokeCap`, `StrokeDash` |
 | [gradients](docs/guide/drawing/gradients.md) | `Gradient`, linear and radial, stops, how a gradient fits a shape |
-| [shadows](docs/guide/drawing/shadows.md) | drop and inset shadows, blur, spread, offset |
+| [shadows](docs/guide/drawing/shadows.md) | `Shadow`: drop and inset shadows, blur, spread, offset |
 | [text](docs/guide/drawing/text.md) | `canvas.text`, `Font`, `FontWeight`, italic, `Align`, lines, wrapping, measuring text |
 | [pixels](docs/guide/drawing/pixels.md) | `color_at`, `snapshot`, `PixelBuffer`, `image.pixel` |
 | [input](docs/guide/interaction/input.md) | what all devices share: `down`/`pressed`/`released`, focus loss, `from_name` |

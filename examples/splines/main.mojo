@@ -104,9 +104,7 @@ struct App(Program):
         with canvas.style(
             stroke=_CURVE,
             stroke_thickness=14,
-            shadow=_SHADOW,
-            shadow_offset=Vector(6, -10),
-            shadow_blur=18,
+            shadow=Shadow(_SHADOW, offset=Vector(6, -10), blur=18),
         ):
             canvas.draw(spline)
 

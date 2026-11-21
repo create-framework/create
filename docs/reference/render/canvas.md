@@ -251,12 +251,7 @@ def style(
     tint: Optional[Color] = None,
     opacity: _OptionalFloat64 = None,
     blend_mode: Optional[BlendMode] = None,
-    shadow: Optional[Color] = None,
-    shadow_offset: Optional[Vector] = None,
-    shadow_blur: _OptionalFloat64 = None,
-    shadow_spread: _OptionalFloat64 = None,
-    shadow_inset: Optional[Bool] = None,
-    shadow_follows_transform: Optional[Bool] = None,
+    shadow: Optional[Shadow] = None,
     shadow_enabled: Optional[Bool] = None,
 ) -> StyleGuard[origin_of(self)]
 ```
@@ -1067,6 +1062,12 @@ Applies to shapes, text and images, never to `background`.
 ### `shadow`
 
 ```mojo
+def shadow(mut self, shadow: Shadow)
+```
+
+Cast `shadow` behind what is rendered next, switching shadows on. See `Shadow` for its parts.
+
+```mojo
 def shadow(
     mut self,
     color: Optional[Color] = None,
@@ -1074,10 +1075,11 @@ def shadow(
     blur: _OptionalFloat64 = None,
     spread: _OptionalFloat64 = None,
     inset: Optional[Bool] = None,
+    follows_transform: Optional[Bool] = None,
 )
 ```
 
-Cast a shadow behind what is rendered next, switching shadows on. Parts left unset keep their current values, so `shadow()` alone brings back the last shadow, and `shadow(blur=12)` changes only the blur; a fresh frame starts at a translucent black, an offset of `(4, -4)` (down and right, since y is up), a blur of 8 and no spread.
+Cast a shadow behind what is rendered next, switching shadows on. Parts left unset keep their values in the current shadow, or take `Shadow`'s defaults without one: a translucent black, an offset of `(4, -4)` (down and right, since y is up), a blur of 8 and no spread. So `shadow()` alone brings back the last shadow, and `shadow(blur=12)` changes only the blur.
 
 Works like CSS `drop-shadow`: the shadow is the shape's whole
 silhouette, fill and stroke together, cast once — a translucent
@@ -1094,7 +1096,10 @@ Only rectangles, circles and triangles take an inset shadow; lines,
 text and images cast none while it is set.
 
 The offset is fixed to the screen, so a rotated shape's shadow still
-falls the same way; see `shadow_follows_transform`. The shadow
+falls the same way. `follows_transform=True` applies it in the
+shape's own frame instead, before the transform, so it rotates and
+shears with the shape, as a CSS shadow does under a CSS transform;
+camera zoom and autoscale scale it either way. The shadow
 combines with what is beneath it by the style's `blend_mode`, like
 the shape itself.
 
@@ -1109,22 +1114,7 @@ canvas.rectangle((0, 0), 120, 80)
 def shadow_enabled(mut self, enabled: Bool)
 ```
 
-Switch shadows off or back on. Colour, offset, blur, spread and inset are kept while off, so `shadow_enabled(True)` brings back the same shadow; `shadow(color)` switches it on too. Off by default.
-
-### `shadow_follows_transform`
-
-```mojo
-def shadow_follows_transform(mut self, follows: Bool)
-```
-
-Whether the shadow's offset turns with the transform.
-
-`False` (the default) keeps it fixed to the screen, as a light
-overhead would: a rotating shape's shadow always falls the same way.
-Camera zoom and autoscale still scale it, so it stays in proportion.
-`True` applies the offset in the shape's own frame, before the
-transform, so it rotates and shears with the shape, as a CSS
-shadow does under a CSS transform.
+Switch the shadow off or back on. It is kept while off, so `shadow_enabled(True)` brings back the same shadow. Off by default, and with no shadow set there is nothing to switch on: set one with `shadow(...)`.
 
 ### `text_alignment`
 

@@ -86,9 +86,7 @@ struct App(Program):
             stroke=_CURVE,
             stroke_thickness=12,
             stroke_cap=StrokeCap.ROUND,
-            shadow=_SHADOW,
-            shadow_offset=Vector(6, -10),
-            shadow_blur=18,
+            shadow=Shadow(_SHADOW, offset=Vector(6, -10), blur=18),
         ):
             canvas.draw(curve)
 

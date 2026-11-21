@@ -189,10 +189,8 @@ colour is compared like any fill's."""
 
 def _shadowed(var s: Style) -> Style:
     """`s` casting a hard, opaque shadow down-right."""
+    s.shadow = Shadow(_SHADOW_INK, offset=Vector(8, -8), blur=0.0)
     s.shadow_enabled = True
-    s.shadow_color = _SHADOW_INK
-    s.shadow_offset = Vector(8, -8)
-    s.shadow_blur = 0.0
     return s^
 
 
@@ -201,7 +199,7 @@ def _blurred(var s: Style) -> Style:
     the silhouette. Both backends evaluate the same coverage functions at
     pixel centres, so the soft band compares like any interior colour."""
     s = _shadowed(s^)
-    s.shadow_blur = 8.0
+    s.shadow.value().blur = 8.0
     return s^
 
 
@@ -210,8 +208,8 @@ def _inset(var s: Style, blur: Float64 = 0.0) -> Style:
     edges. Over a light fill the band is compared like any interior colour;
     over no fill it is the only ink inside the stroke."""
     s = _shadowed(s^)
-    s.shadow_inset = True
-    s.shadow_blur = blur
+    s.shadow.value().inset = True
+    s.shadow.value().blur = blur
     return s^
 
 
@@ -742,7 +740,7 @@ struct _Parity(Program):
                     stroke_thickness=4,
                 )
             )
-            s.shadow_spread = 3.0
+            s.shadow.value().spread = 3.0
             with canvas.style(s):
                 canvas.rectangle((-10, 5), 100, 70, corner_radius=16)
         elif self.shape == _SHAPE_BLURRED_INSET_ROUNDED_RECT:
@@ -875,7 +873,7 @@ struct _Parity(Program):
             var s = _shadowed(
                 Style(fill=Color(0xFF, 0xC0, 0x20), stroke_thickness=4)
             )
-            s.shadow_spread = 6.0
+            s.shadow.value().spread = 6.0
             with canvas.style(s):
                 canvas.sector((-10, 10), 60, 0.6, TAU - 1.2)
         elif self.shape == _SHAPE_BLURRED_SECTOR_RING:
@@ -883,7 +881,7 @@ struct _Parity(Program):
             var s = _blurred(
                 Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=8)
             )
-            s.shadow_spread = 3.0
+            s.shadow.value().spread = 3.0
             with canvas.style(s):
                 canvas.sector((-50, -40), 110, 0.2, 1.2)
         elif self.shape == _SHAPE_POLYGON:
@@ -942,7 +940,7 @@ struct _Parity(Program):
             var s = _shadowed(
                 Style(fill=Color(0xFF, 0xC0, 0x20), stroke_thickness=4)
             )
-            s.shadow_spread = 6.0
+            s.shadow.value().spread = 6.0
             with canvas.style(s):
                 canvas.draw(Polygon.star((-10, 10), 70, 30, 5))
         elif self.shape == _SHAPE_BLURRED_POLYGON_RING:
@@ -950,7 +948,7 @@ struct _Parity(Program):
             var s = _blurred(
                 Style(stroke=Color(0x80, 0xFF, 0x80), stroke_thickness=8)
             )
-            s.shadow_spread = 3.0
+            s.shadow.value().spread = 3.0
             with canvas.style(s):
                 canvas.polygon(
                     (-80, -70),

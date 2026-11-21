@@ -19,6 +19,7 @@ from create.color.color import Color
 from create.color.gradient import Gradient
 from create.math.vector import Vector
 from create.text.font import Font, FontWeight
+from .shadow import _DrawShadow
 
 
 @fieldwise_init
@@ -46,6 +47,11 @@ struct Paint(Copyable, ImplicitlyCopyable, Movable):
     var shadow_inset: Bool
     var shadow_follows_transform: Bool
     var shadow_enabled: Bool
+    """Whether the style had a `Shadow`, switched on. The shadow's parts are
+    copied into the fields above, defaults when there was none."""
+    var _shadow_draw: Optional[_DrawShadow]
+    """The `Shadow`'s `draw_shadow`, which the CPU replay calls to paint
+    it; none without a shadow."""
 
     def _fill_visible(self) -> Bool:
         """Whether the fill actually paints anything.

@@ -141,9 +141,7 @@ struct App(Program):
             fill=fill,
             stroke=_HIT if hit else _U_OUTLINE,
             stroke_thickness=6,
-            shadow=_SHADOW,
-            shadow_offset=Vector(10, -14),
-            shadow_blur=24,
+            shadow=Shadow(_SHADOW, offset=Vector(10, -14), blur=24),
         ):
             canvas.draw(u)
 

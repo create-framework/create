@@ -1,5 +1,6 @@
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
 
+from create.render.shadow import Shadow
 from create.math.vector import Vector
 from create.math.transform import Transform
 from create.color.color import Color
@@ -187,8 +188,7 @@ def test_commands_collect_into_a_buffer() raises -> None:
 
 
 def test_opacity_folds_into_the_shadow_color() raises -> None:
-    var s = Style(opacity=0.5)
-    s.shadow_color = Color(0, 0, 0, 200)
+    var s = Style(opacity=0.5, shadow=Shadow(Color(0, 0, 0, 200)))
     var c = rect_command(Transform(), s, 0.0, 0.0, 1.0, 1.0)
     assert_equal(c.paint.shadow_color.a, 100)
 

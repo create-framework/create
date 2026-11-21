@@ -7,16 +7,21 @@ them.
 
 ## Switching a shadow on
 
-Shadows are part of the style, and **off by default**. `canvas.shadow(color=, offset=, blur=,
-spread=, inset=)` switches one on. Parts you leave unset keep their values, so `shadow()` alone
-switches the last shadow back on. `shadow_enabled(False)` switches it off again. `canvas.style(...)`
-takes the same parts as keywords starting with `shadow`, with `shadow=` for the colour:
+Shadows are part of the style, and **off by default**. A shadow is a `Shadow` value, which holds its
+parts: `Shadow(color, offset=, blur=, spread=, inset=, follows_transform=)`. Every part has a
+default, so `Shadow()` alone is a soft, translucent black shadow down and to the right.
+`canvas.style(shadow=...)` and `Style(shadow=...)` take one:
 
 ```mojo
 # In `update`:
-with canvas.style(shadow=Color(0, 0, 0, 120), shadow_blur=12):
+with canvas.style(shadow=Shadow(Color(0, 0, 0, 120), blur=12)):
     canvas.rectangle((0, 0), 200, 120)
 ```
+
+`canvas.shadow(...)` takes the same parts as keywords and switches the shadow on for what is drawn
+next. Parts you leave unset keep their values, so `shadow(blur=12)` changes only the blur, and
+`shadow()` alone switches the last shadow back on. `shadow_enabled(False)` switches it off again,
+keeping it for later.
 
 A translucent black, as here, gives the most natural shadow: it darkens whatever is behind it rather
 than covering it.
@@ -33,7 +38,7 @@ through it. The frame's clear, the background and the letterbox never cast a sha
 - **The offset** is how far the shadow sits from its shape, `(4, -4)` by default: down and to the
   right. It is fixed to the screen, as if the light always came from the same place, so rotating a
   shape doesn't turn its shadow's offset. Camera zoom and autoscale still scale it.
-  `shadow_follows_transform(True)` makes the offset turn with the shape instead.
+  `follows_transform=True` makes the offset turn with the shape instead.
 - **`blur`** softens the shadow's edge. It is roughly how far the fade from shadow to nothing
   reaches, as CSS's blur radius is, and a blur of 0 gives a hard edge.
 - **`spread`** grows the shadow's shape before it is blurred, so it reaches out further on every
@@ -43,10 +48,9 @@ through it. The frame's clear, the background and the letterbox never cast a sha
 
 ## Inset shadows
 
-`inset=True` (`shadow_inset=True` in `canvas.style`) paints the shadow inside the shape instead: it
-is drawn on top of the shape, and clipped to the inside of its stroke. It works on rectangles,
-circles and triangles only; sectors, polygons, lines, arcs, text and images cast nothing while it is
-set.
+`inset=True` paints the shadow inside the shape instead: it is drawn on top of the shape, and
+clipped to the inside of its stroke. It works on rectangles, circles and triangles only; sectors,
+polygons, lines, arcs, text and images cast nothing while it is set.
 
 ## Shadows and the rest of the style
 

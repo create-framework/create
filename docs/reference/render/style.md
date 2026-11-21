@@ -24,8 +24,7 @@ A shadow is part of the style too, so a card's look can carry its own:
 var card = Style(
     fill=Color.WHITE,
     stroke_enabled=False,
-    shadow=Color(0, 0, 0, 80),
-    shadow_blur=16,
+    shadow=Shadow(Color(0, 0, 0, 80), blur=16),
 )
 ```
 
@@ -40,8 +39,8 @@ like them: naming any part of the fill, stroke or shadow switches it
 on (a part, not a modifier such as `stroke_alignment`, `stroke_cap`,
 `stroke_dash` or `corner_radius`),
 unless `fill_enabled`, `stroke_enabled` or `shadow_enabled` says
-otherwise, so `Style(shadow=Color.RED, shadow_enabled=False)` keeps a
-shadow ready but off. `fill_gradient` is the keyword for `fill`'s
+otherwise, so `Style(shadow=Shadow(Color.RED), shadow_enabled=False)`
+keeps a shadow ready but off. `fill_gradient` is the keyword for `fill`'s
 `Gradient` overload, since one keyword can't take both: given beside
 `fill`, the gradient paints and the colour is kept for when it is
 cleared. Every part left unset is what a fresh frame starts with.
@@ -69,12 +68,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `tint: Color`
 - `opacity: Float64`
 - `blend_mode: BlendMode`
-- `shadow_color: Color`
-- `shadow_offset: Vector`
-- `shadow_blur: Float64`
-- `shadow_spread: Float64`
-- `shadow_inset: Bool`
-- `shadow_follows_transform: Bool`
+- `shadow: Optional[Shadow]`: The shadow cast while `shadow_enabled`; none unless set.
 - `shadow_enabled: Bool`
 
 ## Constructors
@@ -103,12 +97,7 @@ def __init__(
     tint: Color = Color.WHITE,
     opacity: _OptionalFloat64 = None,
     blend_mode: BlendMode = BlendMode.NORMAL,
-    shadow: Optional[Color] = None,
-    shadow_offset: Optional[Vector] = None,
-    shadow_blur: _OptionalFloat64 = None,
-    shadow_spread: _OptionalFloat64 = None,
-    shadow_inset: Optional[Bool] = None,
-    shadow_follows_transform: Bool = False,
+    shadow: Optional[Shadow] = None,
     shadow_enabled: Optional[Bool] = None,
 )
 ```

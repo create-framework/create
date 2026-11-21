@@ -602,6 +602,15 @@ keep this:
 
 ## Shadows
 
+A shadow is a `Shadow` value (`shadow.mojo`) on the style, which `Style._paint` copies part by part
+into the command's `Paint`. **The CPU replay's shadow code is compiled only for programs that make a
+`Shadow`.** `Shadow`'s constructor stores `draw_shadow` (`_cpu_replay.mojo`) in it, and `_paint`
+passes that on as `Paint._shadow_draw`, which `CpuReplay._replay` calls before and after the
+command. Nothing else names the CPU's shadow code, so keep it so: build no default `Shadow` on a
+path every program takes, such as `Style._paint` or `canvas.style(...)`, which would make every
+program compile it. The GL renderer calls its own shadow code directly, so a GPU program compiles it
+whatever it draws.
+
 Both replays handle a command's shadow around the command itself, in the command's blend mode:
 - **Outer** (`casts_outer_shadow`), *before* the command. Blur is quantised to whole device pixels
   (`Int(shadow_blur * pixel_scale + 0.5)`) by both backends identically; 0 replays
