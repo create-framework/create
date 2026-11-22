@@ -90,6 +90,15 @@ Test the kind with `c.payload.isa[RectPayload]()` and read or change it through
 and `c.is_shape()` name the groups the replays dispatch on. Reading the wrong payload aborts rather
 than reading another kind's numbers.
 
+**A `Style` is a set of changes; the canvas holds a `_ResolvedStyle`.** The public `Style` has an
+`Optional` field per part, and a part left unset changes nothing. The canvas's own style, the one
+its setters write and every command reads, is an internal `_ResolvedStyle` with every part decided
+(`style.mojo`). `canvas.style(s)` applies `s` to it through `_ResolvedStyle.apply`, which mirrors
+the setters' rules, and its guard restores the whole resolved style; the keyword form calls the
+setters directly, which measured faster than building a `Style` to apply. `ui` resolves its widgets'
+looks the same way and replays them with `canvas._with_style`. Below, "the style" is the resolved
+one.
+
 **A command keeps what it paints with, not the `Style`.** `paint` is a `Paint` (`_paint.mojo`): the
 style's fill, stroke, shadow and blend mode, field for field, from `style._paint()`, with tint and
 opacity folded into its colours by `RenderCommand.__init__`. What only one kind reads rides on its
@@ -98,8 +107,8 @@ payload: a text command's face, size, weight, slant, alignment and colour are a 
 `ArcPointer`. A `Font` alone is 80 bytes, and a `Variant` is as large as its largest arm, so held
 inline it made every command's payload as large as a text command's, and replay measurably slower.
 Copies share it, so change it through `TextPayload.recolor`, which copies first. The builders still
-take a `Style`. The visibility checks the replays gate on (`_fill_visible`, `_stroke_visible`,
-`_shadow_visible`) are `Paint`'s.
+take the resolved style. The visibility checks the replays gate on (`_fill_visible`,
+`_stroke_visible`, `_shadow_visible`) are `Paint`'s.
 
 **A canvas records in the program and replays in the compiled library** (see [The compiled
 library](../../../ARCHITECTURE.md#the-compiled-library)). The recording calls stay source: they

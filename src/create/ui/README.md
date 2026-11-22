@@ -96,17 +96,31 @@ can't hold a device. A `UI` that sees a device claimed by another ignores it.
 
 ## Styling
 
-A widget's look is resolved when it is drawn, in this order: the call's style, then the innermost
-`ui.style` block (each block is stored already merged over the ones outside it), then the theme (the
-innermost `ui.theme` block's, or the `UI`'s own). Merging is field by field, through each style's
-`_over`. Panels push a content colour, which labels and checkbox labels use when their style doesn't
-set one.
+**Every part of a widget is a shape drawn in a `Style`,** `render`'s own. A button, a label and a
+panel have one part; a slider, a checkbox and a text field have several, each a keyword of the call
+(`handle=`) and of `ui.style` (`slider_handle=`). What a part's style means follows from the shape
+it is drawn as: a slider's track is a `Line`, so its stroke is the track; its handle is a point, a
+zero-length round-capped `Line` as `canvas.point` draws it, so its stroke thickness is the handle's
+diameter.
 
-**State colours step OKLCH lightness.** A hovered, pressed or dragged widget's fill is `_stepped`:
-its OKLCH lightness moved by the theme's `StateLayers` step towards its text colour, its chroma and
-hue kept. A widget with no fill of its own draws a translucent layer whose opacity `_layer_opacity`
-chooses to move the surface's lightness by the same step. Disabled widgets fade their colours by
-`_faded`, which scales the colour's own alpha, so a transparent colour stays transparent.
+A part's look is resolved when it is drawn: `call.over(block).over(defaults)`. `block` is the
+innermost `ui.style` block's style for that part (each block is stored already layered over the ones
+outside it, in `_Styles`), and `defaults` is built from the theme, the innermost `ui.theme` block's
+or the `UI`'s own. `Style.over` means applying the base and then the style, so a part named on top
+switches on what the defaults switched off. One part can take what it leaves unset from another: a
+slider's active track from its track, a checkbox's ticked box from its box, a text field's
+placeholder from its text and its focused look from its container. The result is resolved into a
+`_ResolvedStyle` and recorded. A widget's text keeps only the text parts of its style
+(`_text_look`), so a shadow or outline given to a button belongs to its shape, not its letters.
+Panels push a content colour (their style's `text_color`, or the `on_` partner of their fill), which
+labels and checkbox labels use unless their style sets one.
+
+**State colours step OKLCH lightness.** A hovered, pressed or dragged part's paint, its fill for a
+region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the theme's
+`StateLayers` step towards its text colour, its chroma and hue kept. A widget with no fill of its
+own draws a translucent layer whose opacity `_layer_opacity` chooses to move the surface's lightness
+by the same step. Disabled widgets fade their colours by `_faded`, which scales the colour's own
+alpha, so a transparent colour stays transparent.
 
 ## Testing
 
