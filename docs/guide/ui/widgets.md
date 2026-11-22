@@ -27,13 +27,13 @@ struct Settings(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         with self.ui.screen(context, canvas) as ui:
-            if ui.button("Click me", Rectangle((0, 60), 160, 48)):
-                self.clicks += 1
-            ui.slider(self.volume, 0, 1, Rectangle((0, -20), 240, 32))
-            ui.label(
-                String(self.clicks) + " clicks, volume " + String(self.volume),
-                Rectangle((0, -80), 400, 24),
-            )
+            with ui.column(Rectangle((0, 0), 400, 160)):
+                if ui.button("Click me"):
+                    self.clicks += 1
+                ui.slider(self.volume, 0, 1)
+                ui.label(
+                    String(self.clicks) + " clicks, volume " + String(self.volume)
+                )
 
 
 def main() raises:
@@ -45,8 +45,10 @@ remembers what each widget needs from one frame to the next, such as which slide
 which widget has focus and where a text field's caret is.
 
 Every frame, `with self.ui.screen(context, canvas) as ui:` opens a **layer**, and the widgets are
-called inside it, on the `ui` it hands you. Each widget takes a `Rectangle` saying where it goes,
-positioned by its centre like every shape in Create (see [Coordinates](../basics/coordinates.md)).
+called inside it, on the `ui` it hands you. Here they are called inside a `ui.column` block, which
+places each one under the one before, across the rectangle the column is given. A widget can also be
+given a `Rectangle` of its own instead, positioned by its centre like every shape in Create (see
+[Coordinates](../basics/coordinates.md)); [Laying out widgets](#laying-out-widgets) explains both.
 Nothing has to be added or removed: a widget is on screen in the frames it is called in, so showing
 a button only while a menu is open is an `if` around the call.
 
@@ -128,6 +130,58 @@ def settings(ui: UILayer, mut volume: Float64) raises:
   through them to whatever is beneath.
 
 Each widget's look can be changed with `style=`, explained in [Themes and styling](themes.md).
+
+## Laying out widgets
+
+**Every widget goes in a rectangle: one you give it, or the next place in a column or row.** A
+widget given a `rect` fills it, wherever that is, so a button can sit over a chest or in a corner of
+the screen. Called without one, inside a `ui.column` or `ui.row` block, it takes the next place the
+column or row has for it, and you never work out a position:
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+with ui.panel(Rectangle((0, 0), 400, 240)):
+    with ui.column():
+        ui.label("Settings")
+        with ui.row(1, 3):  # a quarter of the width, then three quarters
+            ui.label("Volume", alignment=Align.LEFT)
+            ui.slider(self.volume, 0, 1)
+        ui.checkbox("Music", self.music)
+        ui.space()
+        with ui.row(columns=2):
+            if ui.button("OK"):
+                self.close_settings()
+            if ui.button("Cancel"):
+                self.close_settings()
+```
+
+- **`ui.column(rect)`** places the widgets in it one under the other, from the top down, each across
+  the column's whole width. A widget is the theme's `control_height` tall, 40 unless changed, and a
+  label one and a half times the size of its text. `gap=` sets the space between them, the theme's
+  medium spacing unless given.
+- **`ui.row(weights...)`** places them side by side, from the left, in slots that share the row's
+  width in proportion to the weights: `ui.row(1, 3)` gives the first slot a quarter and the second
+  three quarters. `ui.row(columns=4)` makes four equal slots. In a column, a row is `control_height`
+  tall, or `height=` if given.
+- **Without a rectangle, a column or row fills what is around it:** the inside of the panel it is
+  in, short of its edges by the theme's large spacing, the rest of a column, or the next slot of a
+  row. Columns and rows nest, so a row of columns is a grid.
+- **`ui.space()`** leaves a gap in a column, the theme's large spacing unless given, such as to set
+  the buttons apart from the settings above them.
+- **A widget given a `rect` inside a column or row** goes where the `rect` says, and the column or
+  row doesn't move on, so one widget can be placed by hand among the others.
+
+**A mistake raises an error that says what to do:** a widget called without a `rect` anywhere but in
+a column or row, a column or row without one anywhere but in a panel, column or row, and a widget
+called once every slot of a row is taken.
+
+**A column doesn't grow to fit what is in it.** Each widget is placed as it is called, so that it
+knows where it is and can answer in the same frame. So nothing can be sized from widgets called
+after it: a panel is as big as its rectangle says, and a column that is given more than it can hold
+carries on past its bottom edge. Make the panel tall enough for what it holds.
+
+The same cuts, without the widgets, are `Rectangle`'s `inset`, `rows` and `columns`, for laying out
+what you draw on the canvas (see [Shapes](../geometry/shapes.md#rectangle)).
 
 ## How widgets are told apart
 

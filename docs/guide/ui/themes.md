@@ -121,12 +121,14 @@ without being told. A widget of your own reads that colour with `ui.content_colo
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-with ui.panel(Rectangle((0, 0), 320, 140), style=PanelStyle(shadow=True)):
-    ui.label("Volume", Rectangle((0, 40), 280, 24))
-    ui.slider(self.volume, 0, 1, Rectangle((0, 0), 280, 32))
+with ui.panel(Rectangle((0, 0), 320, 120), style=PanelStyle(shadow=True)):
+    with ui.column():
+        ui.label("Volume")
+        ui.slider(self.volume, 0, 1)
 ```
 
-A panel places nothing: the widgets inside it are positioned by their own rectangles.
+A panel doesn't place what is inside it: a `ui.column()` opened in it fills it, short of its edges,
+and places the widgets (see [Laying out widgets](widgets.md#laying-out-widgets)).
 
 ## Hovered, pressed and disabled
 
