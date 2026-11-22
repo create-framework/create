@@ -13,7 +13,7 @@ from ._layout import _Layout
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
-from .theme import Theme
+from .theme import FocusRing, StateLayers, Theme
 
 
 @fieldwise_init
@@ -131,6 +131,11 @@ struct UI(Movable):
     var _theme: Theme
     var _themes: List[Theme]
     """The themes of the open `ui.theme` blocks, innermost last."""
+    var _corner_radius: Float64
+    var _spacing: Float64
+    var _control_height: Float64
+    var _state_layers: StateLayers
+    var _focus_ring: FocusRing
     var _styles: List[_Styles]
     """The open `ui.style` blocks, each merged over the ones outside it."""
     var _contents: List[Color]
@@ -203,6 +208,11 @@ struct UI(Movable):
         self._pad_move = Vector.ZERO
         self._theme = theme
         self._themes = []
+        self._corner_radius = 16
+        self._spacing = 8
+        self._control_height = 40
+        self._state_layers = StateLayers()
+        self._focus_ring = FocusRing()
         self._styles = []
         self._contents = []
         self._layouts = []
@@ -234,6 +244,55 @@ struct UI(Movable):
     def theme(mut self, theme: Theme):
         """Draw the widgets in `theme` from now on."""
         self._theme = theme
+
+    def corner_radius(self) -> Float64:
+        """How round the widgets' corners are: a panel's radius, 16 unless
+        set. Smaller parts are rounded in proportion: a text field's by a
+        quarter of it, a checkbox's box by an eighth."""
+        return self._corner_radius
+
+    def corner_radius(mut self, radius: Float64):
+        """Round the widgets' corners by `radius` from now on; 0 squares
+        them."""
+        self._corner_radius = radius
+
+    def spacing(self) -> Float64:
+        """The gap between the widgets in a `ui.column` or `ui.row`, 8 unless
+        set. A panel is inset by twice it, and `ui.space()` leaves twice it
+        empty."""
+        return self._spacing
+
+    def spacing(mut self, spacing: Float64):
+        """Space the widgets by `spacing` from now on."""
+        self._spacing = spacing
+
+    def control_height(self) -> Float64:
+        """How tall a button, slider, checkbox or text field is in a
+        `ui.column`, and how tall a `ui.row` is, unless told otherwise: 40
+        unless set."""
+        return self._control_height
+
+    def control_height(mut self, height: Float64):
+        """Make the controls `height` tall from now on."""
+        self._control_height = height
+
+    def state_layers(self) -> StateLayers:
+        """How strongly a widget shows that it is hovered, focused, pressed,
+        dragged or disabled."""
+        return self._state_layers
+
+    def state_layers(mut self, layers: StateLayers):
+        """Show the widgets' states as `layers` says from now on."""
+        self._state_layers = layers
+
+    def focus_ring(self) -> FocusRing:
+        """The ring drawn around a widget focused from the keyboard, a
+        gamepad or `take_focus`."""
+        return self._focus_ring
+
+    def focus_ring(mut self, ring: FocusRing):
+        """Draw the focus ring as `ring` from now on."""
+        self._focus_ring = ring
 
     def wants_mouse(self) -> Bool:
         """Whether the mouse is the UI's this frame: the pointer is over a

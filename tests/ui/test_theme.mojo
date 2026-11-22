@@ -168,18 +168,13 @@ def test_a_seeded_tertiary_is_turned_round_the_wheel() raises -> None:
     assert_true(abs(turned - 60) < 8)
 
 
-def test_every_built_in_theme_has_a_control_height_of_40() raises -> None:
-    for theme in [
-        Theme.light(),
-        Theme.dark(),
-        Theme.from_seed(Color.hex(0x2050E0)),
-        Theme.from_seed(Color.hex(0x2050E0), dark=True),
-    ]:
-        assert_equal(theme.control_height, 40.0)
-
-
-def test_a_theme_prints_its_control_height() raises -> None:
-    assert_true("control_height=40.0" in String(Theme.light()))
+def test_a_ui_starts_with_the_default_tokens() raises -> None:
+    var ui = UI()
+    assert_equal(ui.corner_radius(), 16.0)
+    assert_equal(ui.spacing(), 8.0)
+    assert_equal(ui.control_height(), 40.0)
+    assert_equal(ui.state_layers().hovered, 0.09)
+    assert_equal(ui.focus_ring().thickness, 3.0)
 
 
 def test_widgets_draw_their_text_in_the_default_styles() raises -> None:

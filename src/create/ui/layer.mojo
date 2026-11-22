@@ -267,7 +267,7 @@ struct UILayer[
             Style(
                 fill=colors.surface_container,
                 stroke_enabled=False,
-                corner_radius=theme.corner_radii.large,
+                corner_radius=self._ui[]._corner_radius,
             )
         )
         var resolved = _ResolvedStyle()
@@ -313,12 +313,12 @@ struct UILayer[
         """A column filling `rect`: every widget called inside its `with`
         block without a rect of its own is placed in it, one under the
         other, from the top down, each across the column's whole width.
-        `gap`, the theme's medium spacing unless given, is left between each
+        `gap`, the UI's `spacing` unless given, is left between each
         and the next.
 
-        A widget's height is the theme's `control_height`, or for a label,
+        A widget's height is the UI's `control_height`, or for a label,
         one and a half times its text's size. Without a `rect`, the column
-        fills what is around it: a panel, inset by the theme's large spacing,
+        fills what is around it: a panel, inset by twice the UI's `spacing`,
         the rest of a column, or the next slot of a row.
 
         ```mojo
@@ -332,7 +332,6 @@ struct UILayer[
         ```
         """
         self._check_frame()
-        var theme = self._ui[]._current_theme()
         var area: Rectangle
         if rect:
             area = rect.value()
@@ -345,12 +344,12 @@ struct UILayer[
                 )
             ref around = layouts[len(layouts) - 1]
             if around.kind == _PANEL:
-                area = around.rect.inset(theme.spacing.large)
+                area = around.rect.inset(2 * self._ui[]._spacing)
             else:
                 area = around.take_rest("ui.column")
         return LayoutGuard(
             _ui=self._ui[],
-            _layout=_Layout(_COLUMN, area, gap.or_else(theme.spacing.medium)),
+            _layout=_Layout(_COLUMN, area, gap.or_else(self._ui[]._spacing)),
         )
 
     def row(
@@ -366,12 +365,12 @@ struct UILayer[
         without a rect of its own takes the next slot, from the left. The
         slots share the row's width in proportion to their weights, so
         `ui.row(1, 3)` gives the first a quarter of it and the second three
-        quarters. `gap`, the theme's medium spacing unless given, is left
+        quarters. `gap`, the UI's `spacing` unless given, is left
         between each slot and the next. A widget called once every slot is
         taken raises.
 
         The row fills `rect`. Without one, it is the next strip of the column
-        around it, `height` tall (the theme's `control_height` unless given),
+        around it, `height` tall (the UI's `control_height` unless given),
         the next slot of a row, or the inside of a panel.
 
         ```mojo
@@ -387,7 +386,6 @@ struct UILayer[
         ```
         """
         self._check_frame()
-        var theme = self._ui[]._current_theme()
         var shares = List[Float64]()
         for weight in weights:
             shares.append(weight)
@@ -414,12 +412,12 @@ struct UILayer[
                 )
             ref around = layouts[len(layouts) - 1]
             if around.kind == _PANEL:
-                area = around.rect.inset(theme.spacing.large)
+                area = around.rect.inset(2 * self._ui[]._spacing)
             else:
                 area = around.take(
-                    height.or_else(theme.control_height), "ui.row"
+                    height.or_else(self._ui[]._control_height), "ui.row"
                 )
-        var spacing = gap.or_else(theme.spacing.medium)
+        var spacing = gap.or_else(self._ui[]._spacing)
         return LayoutGuard(
             _ui=self._ui[],
             _layout=_Layout(
@@ -431,15 +429,14 @@ struct UILayer[
         )
 
     def space(self, amount: _OptionalFloat64 = None) raises:
-        """Leave `amount` of the column around it empty, the theme's large
-        spacing unless given, such as to set one group of widgets apart from
+        """Leave `amount` of the column around it empty, twice the UI's
+        `spacing` unless given, such as to set one group of widgets apart from
         the next. It raises outside a `ui.column`."""
         self._check_frame()
         ref layouts = self._ui[]._layouts
         if not layouts:
             raise Error("ui.space: call it inside a ui.column")
-        var theme = self._ui[]._current_theme()
-        layouts[len(layouts) - 1].space(amount.or_else(theme.spacing.large))
+        layouts[len(layouts) - 1].space(amount.or_else(2 * self._ui[]._spacing))
 
     def _place(
         self, rect: Optional[Rectangle], height: Float64, what: String
@@ -461,9 +458,7 @@ struct UILayer[
         self, rect: Optional[Rectangle], what: String
     ) raises -> Rectangle:
         """`_place` for a control: `control_height` tall in a column."""
-        return self._place(
-            rect, self._ui[]._current_theme().control_height, what
-        )
+        return self._place(rect, self._ui[]._control_height, what)
 
     # ------------------------------------------------------------ widgets
 
@@ -856,7 +851,7 @@ struct UILayer[
                 fill=colors.surface_container_highest,
                 stroke=colors.outline,
                 stroke_thickness=1,
-                corner_radius=theme.corner_radii.small,
+                corner_radius=self._ui[]._corner_radius / 4,
             )
         )
         var field = _ResolvedStyle()
@@ -877,7 +872,7 @@ struct UILayer[
                 .over(container_look)
             )
         if off:
-            var states = theme.state_layers
+            var states = self._ui[]._state_layers
             # the field's own colours, faded: the theme's text colour by
             # default, and a transparent one stays transparent
             typed.text_color = _faded(typed.text_color, states.disabled_content)
@@ -897,7 +892,9 @@ struct UILayer[
             and not field.fill_gradient
         ):
             field.fill_color = _stepped(
-                field.fill_color, colors.on_surface, theme.state_layers.hovered
+                field.fill_color,
+                colors.on_surface,
+                self._ui[]._state_layers.hovered,
             )
         var shape = Rectangle(
             rect.position,
@@ -985,7 +982,7 @@ struct UILayer[
         the keyboard or code."""
         if not self._shows_ring(state, disabled):
             return
-        var look = ring.or_else(self._ui[]._current_theme().focus_ring)
+        var look = ring.or_else(self._ui[]._focus_ring)
         var gap = look.gap
         self._record_ring(
             Rectangle(
@@ -1006,7 +1003,7 @@ struct UILayer[
     ):
         if not self._shows_ring(state, disabled):
             return
-        var look = ring.or_else(self._ui[]._current_theme().focus_ring)
+        var look = ring.or_else(self._ui[]._focus_ring)
         self._record_ring(Circle(shape.position, shape.radius + look.gap), look)
 
     def _shows_ring(self, state: _Interaction, disabled: Bool) -> Bool:
@@ -1069,7 +1066,7 @@ struct UILayer[
         if off:
             # Material's disabled look: everything in the text colour,
             # faded, whatever the variant
-            var states = theme.state_layers
+            var states = self._ui[]._state_layers
             resolved.text_color = _faded(
                 colors.on_surface, states.disabled_content
             )
@@ -1091,9 +1088,9 @@ struct UILayer[
         # text
         var step = 0.0
         if state.pressed:
-            step = theme.state_layers.pressed
+            step = self._ui[]._state_layers.pressed
         elif state.hovered:
-            step = theme.state_layers.hovered
+            step = self._ui[]._state_layers.hovered
         var solid = _fills(resolved) and not resolved.fill_gradient
         if step > 0 and solid:
             resolved.fill_color = _stepped(
@@ -1241,7 +1238,7 @@ struct UILayer[
             t = _clamp01((value - min) / (max - min))
         var handle_x = left + t * (right - left)
         if off:
-            var states = theme.state_layers
+            var states = self._ui[]._state_layers
             active.stroke_color = _faded(
                 colors.on_surface, states.disabled_content
             )
@@ -1262,11 +1259,11 @@ struct UILayer[
         var tint = _readable_on(handle.stroke_color)
         if dragging:
             handle.stroke_color = _stepped(
-                handle.stroke_color, tint, theme.state_layers.dragged
+                handle.stroke_color, tint, self._ui[]._state_layers.dragged
             )
         elif state.hovered:
             handle.stroke_color = _stepped(
-                handle.stroke_color, tint, theme.state_layers.hovered
+                handle.stroke_color, tint, self._ui[]._state_layers.hovered
             )
         # a point, as `canvas.point` draws one: round unless square, and
         # never dashed
@@ -1308,7 +1305,7 @@ struct UILayer[
                 fill_enabled=False,
                 stroke=colors.on_surface_variant,
                 stroke_thickness=2,
-                corner_radius=theme.corner_radii.small / 2,
+                corner_radius=self._ui[]._corner_radius / 8,
             )
         )
         var look = _ResolvedStyle()
@@ -1347,7 +1344,7 @@ struct UILayer[
         )
         if off:
             var faded = _faded(
-                colors.on_surface, theme.state_layers.disabled_content
+                colors.on_surface, self._ui[]._state_layers.disabled_content
             )
             if _fills(look):
                 look.fill_color = faded
@@ -1359,9 +1356,9 @@ struct UILayer[
         # towards its tick, an empty one with the text colour inside it
         var step = 0.0
         if state.pressed:
-            step = theme.state_layers.pressed
+            step = self._ui[]._state_layers.pressed
         elif state.hovered:
-            step = theme.state_layers.hovered
+            step = self._ui[]._state_layers.hovered
         if step > 0:
             if _fills(look) and not look.fill_gradient:
                 look.fill_color = _stepped(

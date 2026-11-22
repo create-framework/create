@@ -120,6 +120,25 @@ def test_a_shadow_lifts_a_panel() raises -> None:
     assert_true(lifted.color_at(below) != flat.color_at(below))
 
 
+def test_the_uis_corner_radius_rounds_a_panel() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var round = _canvas()
+    var square = _canvas()
+    var corner = _A.position + Vector(-_A.width / 2 + 1, _A.height / 2 - 1)
+    with ui.screen(context, round) as layer:
+        with layer.panel(_A):
+            pass
+    ui.corner_radius(0)
+    next_frame(context)
+    with ui.screen(context, square) as layer:
+        with layer.panel(_A):
+            pass
+    var surface = ui.theme().colors.surface_container
+    assert_true(round.color_at(corner) != surface)
+    assert_equal(square.color_at(corner), surface)
+
+
 def test_a_panel_covers_what_is_beneath_and_a_click_on_it_clears_focus() raises -> (
     None
 ):

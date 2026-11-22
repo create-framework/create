@@ -47,6 +47,76 @@ def theme(mut self, theme: Theme)
 
 Draw the widgets in `theme` from now on.
 
+### `corner_radius`
+
+```mojo
+def corner_radius(self) -> Float64
+```
+
+How round the widgets' corners are: a panel's radius, 16 unless set. Smaller parts are rounded in proportion: a text field's by a quarter of it, a checkbox's box by an eighth.
+
+```mojo
+def corner_radius(mut self, radius: Float64)
+```
+
+Round the widgets' corners by `radius` from now on; 0 squares them.
+
+### `spacing`
+
+```mojo
+def spacing(self) -> Float64
+```
+
+The gap between the widgets in a `ui.column` or `ui.row`, 8 unless set. A panel is inset by twice it, and `ui.space()` leaves twice it empty.
+
+```mojo
+def spacing(mut self, spacing: Float64)
+```
+
+Space the widgets by `spacing` from now on.
+
+### `control_height`
+
+```mojo
+def control_height(self) -> Float64
+```
+
+How tall a button, slider, checkbox or text field is in a `ui.column`, and how tall a `ui.row` is, unless told otherwise: 40 unless set.
+
+```mojo
+def control_height(mut self, height: Float64)
+```
+
+Make the controls `height` tall from now on.
+
+### `state_layers`
+
+```mojo
+def state_layers(self) -> StateLayers
+```
+
+How strongly a widget shows that it is hovered, focused, pressed, dragged or disabled.
+
+```mojo
+def state_layers(mut self, layers: StateLayers)
+```
+
+Show the widgets' states as `layers` says from now on.
+
+### `focus_ring`
+
+```mojo
+def focus_ring(self) -> FocusRing
+```
+
+The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`.
+
+```mojo
+def focus_ring(mut self, ring: FocusRing)
+```
+
+Draw the focus ring as `ring` from now on.
+
 ### `wants_mouse`
 
 ```mojo

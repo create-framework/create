@@ -159,11 +159,11 @@ def column(
 ) raises -> LayoutGuard[ui_origin]
 ```
 
-A column filling `rect`: every widget called inside its `with` block without a rect of its own is placed in it, one under the other, from the top down, each across the column's whole width. `gap`, the theme's medium spacing unless given, is left between each and the next.
+A column filling `rect`: every widget called inside its `with` block without a rect of its own is placed in it, one under the other, from the top down, each across the column's whole width. `gap`, the UI's `spacing` unless given, is left between each and the next.
 
-A widget's height is the theme's `control_height`, or for a label,
+A widget's height is the UI's `control_height`, or for a label,
 one and a half times its text's size. Without a `rect`, the column
-fills what is around it: a panel, inset by the theme's large spacing,
+fills what is around it: a panel, inset by twice the UI's `spacing`,
 the rest of a column, or the next slot of a row.
 
 ```mojo
@@ -190,10 +190,10 @@ def row(
 ) raises -> LayoutGuard[ui_origin]
 ```
 
-A row cut into slots side by side, one for each weight, or `columns` equal ones: every widget called inside its `with` block without a rect of its own takes the next slot, from the left. The slots share the row's width in proportion to their weights, so `ui.row(1, 3)` gives the first a quarter of it and the second three quarters. `gap`, the theme's medium spacing unless given, is left between each slot and the next. A widget called once every slot is taken raises.
+A row cut into slots side by side, one for each weight, or `columns` equal ones: every widget called inside its `with` block without a rect of its own takes the next slot, from the left. The slots share the row's width in proportion to their weights, so `ui.row(1, 3)` gives the first a quarter of it and the second three quarters. `gap`, the UI's `spacing` unless given, is left between each slot and the next. A widget called once every slot is taken raises.
 
 The row fills `rect`. Without one, it is the next strip of the column
-around it, `height` tall (the theme's `control_height` unless given),
+around it, `height` tall (the UI's `control_height` unless given),
 the next slot of a row, or the inside of a panel.
 
 ```mojo
@@ -214,7 +214,7 @@ with ui.row(columns=2):
 def space(self, amount: _OptionalFloat64 = None) raises
 ```
 
-Leave `amount` of the column around it empty, the theme's large spacing unless given, such as to set one group of widgets apart from the next. It raises outside a `ui.column`.
+Leave `amount` of the column around it empty, twice the UI's `spacing` unless given, such as to set one group of widgets apart from the next. It raises outside a `ui.column`.
 
 ### `button`
 
