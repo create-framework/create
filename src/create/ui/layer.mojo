@@ -15,14 +15,12 @@ from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
 from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
-from .button import ButtonStyle, ButtonVariant
+from .button import ButtonVariant
 from .checkbox import CheckboxStyle
-from .label import LabelStyle
 from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor, TextFieldStyle
 from .theme import ColorScheme, FocusRing, Theme, _readable_on
-from .panel import PanelStyle
 from .ui import UI, _Hit, _Styles
 
 
@@ -31,9 +29,6 @@ comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
 
 comptime _HANDLE_SHADOW = Color(0, 0, 0, 70)
 """The shadow a slider's handle casts with `handle_shadow=True`."""
-
-comptime _PANEL_SHADOW = Color(0, 0, 0, 60)
-"""The shadow a panel casts with `shadow=True`."""
 
 
 @fieldwise_init
@@ -157,8 +152,9 @@ struct UILayer[
     def style(
         self,
         *,
-        button: ButtonStyle = ButtonStyle(),
-        label: LabelStyle = LabelStyle(),
+        button: Style = Style(),
+        label: Style = Style(),
+        panel: Style = Style(),
         slider: SliderStyle = SliderStyle(),
         checkbox: CheckboxStyle = CheckboxStyle(),
         text_field: TextFieldStyle = TextFieldStyle(),
@@ -170,18 +166,21 @@ struct UILayer[
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-        with ui.style(button=ButtonStyle(corner_radius=4)):
+        with ui.style(button=Style(corner_radius=4)):
             if ui.button("Square", Rectangle((0, 0), 120, 40)):
                 ...
-            if ui.button("Round", Rectangle((0, -50), 120, 40),
-                         style=ButtonStyle(corner_radius=20)):
+            if ui.button(
+                "Round",
+                Rectangle((0, -50), 120, 40),
+                style=Style(corner_radius=20),
+            ):
                 ...
         ```
         """
         self._check_frame()
         return WidgetStyleGuard(
             _ui=self._ui[],
-            _styles=_Styles(button, label, slider, checkbox, text_field),
+            _styles=_Styles(button, label, panel, slider, checkbox, text_field),
         )
 
     def content_color(self) -> Color:
@@ -195,7 +194,7 @@ struct UILayer[
         self,
         rect: Rectangle,
         *,
-        style: PanelStyle = PanelStyle(),
+        style: Style = Style(),
         id: _WidgetKey = None,
     ) raises -> PanelGuard[Self.ui_origin]:
         """A surface filling `rect`, drawn beneath everything called inside
@@ -215,36 +214,33 @@ struct UILayer[
         )
 
     def _panel(
-        self, id: UInt64, rect: Rectangle, style: PanelStyle
+        self, id: UInt64, rect: Rectangle, style: Style
     ) raises -> PanelGuard[Self.ui_origin]:
         ref ui = self._ui[]
         var theme = ui._current_theme()
         ref colors = theme.colors
         # a surface the pointer can't reach through, nor focus
         ui._hits.append(_Hit(id, rect, self._to_local, False, False, False))
-        var color = style.color.or_else(colors.surface_container)
-        var content = style.content_color.or_else(_content_on(colors, color))
-        ui._recorder.style = _ResolvedStyle(
-            fill=color,
-            stroke=style.outline_color.or_else(Color.TRANSPARENT),
-            stroke_thickness=style.outline_thickness.or_else(1.0),
-            stroke_enabled=Bool(style.outline_color),
+        var look = style.over(ui._current_styles().panel).over(
+            Style(
+                fill=colors.surface_container,
+                stroke_enabled=False,
+                corner_radius=theme.corner_radii.large,
+            )
         )
-        if style.shadow:
-            ui._recorder.style.shadow_color = _PANEL_SHADOW
-            ui._recorder.style.shadow_offset = Vector(0, -3)
-            ui._recorder.style.shadow_blur = 12
-            ui._recorder.style.shadow_spread = 0
-            ui._recorder.style.shadow_inset = False
-            ui._recorder.style.shadow_enabled = True
+        var resolved = _ResolvedStyle()
+        resolved.apply(look)
+        var surface = (
+            resolved.fill_color if resolved.fill_enabled else colors.surface
+        )
+        var content = look.text_color.or_else(_content_on(colors, surface))
+        ui._recorder.style = resolved
         ui._recorder.draw(
             Rectangle(
                 rect.position,
                 rect.width,
                 rect.height,
-                corner_radius=style.corner_radius.or_else(
-                    theme.corner_radii.large
-                ),
+                corner_radius=resolved.corner_radius,
             )
         )
         return PanelGuard(_ui=ui, _content=content, _rect=rect)
@@ -436,7 +432,7 @@ struct UILayer[
         rect: Optional[Rectangle] = None,
         *,
         variant: ButtonVariant = ButtonVariant.FILLED,
-        style: ButtonStyle = ButtonStyle(),
+        style: Style = Style(),
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
@@ -466,7 +462,7 @@ struct UILayer[
         rect: Optional[Rectangle] = None,
         *,
         alignment: Align = Align.CENTER,
-        style: LabelStyle = LabelStyle(),
+        style: Style = Style(),
     ) raises:
         """Text placed in `rect`, by `alignment`: in its centre unless given,
         against its left edge with `Align.LEFT`, and so on. It reacts to
@@ -479,18 +475,16 @@ struct UILayer[
         """
         self._check_frame()
         var theme = self._ui[]._current_theme()
-        var merged = style._over(self._ui[]._current_styles().label)
-        var type = _over(merged.text_style, theme.typography.body)
-        var place = self._place(rect, _size(type) * 1.5, "ui.label")
-        self._ui[]._recorder.text(
-            text,
-            _anchor(place, alignment),
-            _text_style(
-                type,
-                merged.color.or_else(self._ui[]._content_color()),
-                alignment,
-            ),
+        var look = style.over(self._ui[]._current_styles().label).over(
+            Style(text_color=self._ui[]._content_color()).over(
+                theme.typography.body
+            )
         )
+        var place = self._place(rect, _size(look) * 1.5, "ui.label")
+        var resolved = _ResolvedStyle()
+        resolved.apply(look)
+        resolved.text_alignment = alignment
+        self._ui[]._recorder.text(text, _anchor(place, alignment), resolved)
 
     def image(self, image: Image, rect: Optional[Rectangle] = None) raises:
         """`image` stretched to fill `rect`. Like a label, it reacts to
@@ -930,69 +924,55 @@ struct UILayer[
         text: String,
         rect: Rectangle,
         variant: ButtonVariant,
-        call_style: ButtonStyle,
+        call_style: Style,
         take_focus: Bool,
         disabled: Bool,
     ) raises -> Bool:
-        var style = call_style._over(self._ui[]._current_styles().button)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
         var theme = self._ui[]._current_theme()
         ref colors = theme.colors
-        var container: Color
-        var content: Color
-        var outline: Optional[Color] = None
-        if variant == ButtonVariant.TONAL:
-            container = colors.secondary_container
-            content = colors.on_secondary_container
-        elif variant == ButtonVariant.OUTLINED:
-            container = Color.TRANSPARENT
-            content = colors.primary
-            outline = colors.outline
-        elif variant == ButtonVariant.TEXT:
-            container = Color.TRANSPARENT
-            content = colors.primary
-        else:
-            container = colors.primary
-            content = colors.on_primary
-        container = style.container_color.or_else(container)
-        content = style.content_color.or_else(content)
-        if style.outline_color:
-            outline = style.outline_color
-        var thickness = style.outline_thickness.or_else(1.0)
-        if style.outline_thickness and not outline:
-            outline = colors.outline
+        var look = call_style.over(self._ui[]._current_styles().button).over(
+            _variant_look(variant, colors).over(theme.typography.label)
+        )
+        var resolved = _ResolvedStyle()
+        resolved.apply(look)
         if off:
             # Material's disabled look: everything in the text colour,
             # faded, whatever the variant
             var states = theme.state_layers
-            content = _faded(colors.on_surface, states.disabled_content)
-            if container.a > 0:
-                container = _faded(colors.on_surface, states.disabled_container)
-            if outline:
-                outline = _faded(colors.on_surface, states.disabled_container)
-        var radius = style.corner_radius.or_else(rect.height / 2)
+            resolved.text_color = _faded(
+                colors.on_surface, states.disabled_content
+            )
+            if _fills(resolved):
+                resolved.fill_color = _faded(
+                    colors.on_surface, states.disabled_container
+                )
+                resolved.fill_gradient = None
+            if resolved.stroke_enabled:
+                resolved.stroke_color = _faded(
+                    colors.on_surface, states.disabled_container
+                )
+        var radius = look.corner_radius.or_else(rect.height / 2)
         var shape = Rectangle(
             rect.position, rect.width, rect.height, corner_radius=radius
         )
         ref recorder = self._ui[]._recorder
-        # a hovered or pressed button steps its lightness towards its text
+        # a hovered or pressed button steps its fill's lightness towards its
+        # text
         var step = 0.0
         if state.pressed:
             step = theme.state_layers.pressed
         elif state.hovered:
             step = theme.state_layers.hovered
-        if step > 0 and container.a > 0:
-            container = _stepped(container, content, step)
-        if container.a > 0 or outline:
-            recorder.style = _ResolvedStyle(
-                fill=container,
-                fill_enabled=container.a > 0,
-                stroke=outline.or_else(Color.TRANSPARENT),
-                stroke_thickness=thickness,
-                stroke_enabled=Bool(outline),
+        var solid = _fills(resolved) and not resolved.fill_gradient
+        if step > 0 and solid:
+            resolved.fill_color = _stepped(
+                resolved.fill_color, resolved.text_color, step
             )
-            if state.pressed and container.a > 0:
+        if _fills(resolved) or resolved.stroke_enabled:
+            recorder.style = resolved
+            if state.pressed and _fills(resolved):
                 # pressed in: a soft shadow along the inside of the top edge
                 recorder.style.shadow_color = _PRESSED_SHADOW
                 recorder.style.shadow_offset = Vector(0, -2)
@@ -1001,25 +981,19 @@ struct UILayer[
                 recorder.style.shadow_inset = True
                 recorder.style.shadow_enabled = True
             recorder.draw(shape)
-        if step > 0 and container.a == 0:
-            # no fill to step: a layer of the text colour, as strong as the
-            # step would be over the surface beneath
-            var opacity = _layer_opacity(colors.surface, content, step)
+        if step > 0 and not solid:
+            # no solid fill to step: a layer of the text colour, as strong as
+            # the step would be over the surface beneath
+            var opacity = _layer_opacity(
+                colors.surface, resolved.text_color, step
+            )
             recorder.style = _ResolvedStyle(
-                fill=content.with_alpha(UInt8(opacity * 255 + 0.5)),
+                fill=resolved.text_color.with_alpha(UInt8(opacity * 255 + 0.5)),
                 stroke_enabled=False,
             )
             recorder.draw(shape)
-        self._ring_around(shape, state, off, style.focus_ring)
-        recorder.text(
-            text,
-            rect.position,
-            _text_style(
-                _over(style.text_style, theme.typography.label),
-                content,
-                Align.CENTER,
-            ),
-        )
+        self._ring_around(shape, state, off, None)
+        recorder.text(text, rect.position, _text_look(resolved, Align.CENTER))
         self._ui[]._called(changed=False)
         return state.clicked or state.activated
 
@@ -1425,8 +1399,65 @@ def _text_style(type: Style, color: Color, alignment: Align) -> _ResolvedStyle:
     var resolved = _ResolvedStyle()
     resolved.apply(type)
     resolved.text_color = color
-    resolved.text_alignment = alignment
-    return resolved^
+    return _text_look(resolved, alignment)
+
+
+def _text_look(style: _ResolvedStyle, alignment: Align) -> _ResolvedStyle:
+    """Only the text parts of `style`, placed by `alignment`: the text drawn
+    on a widget, which leaves the widget's fill, stroke and shadow to the
+    shape beneath it."""
+    var look = _ResolvedStyle()
+    look.text_color = style.text_color
+    look.font = style.font
+    look.font_size = style.font_size
+    look.font_weight = style.font_weight
+    look.font_italic = style.font_italic
+    look.tint = style.tint
+    look.opacity = style.opacity
+    look.blend_mode = style.blend_mode
+    look.text_alignment = alignment
+    return look^
+
+
+def _fills(style: _ResolvedStyle) -> Bool:
+    """Whether `style` paints a fill that shows: switched on, and either a
+    gradient or a colour that isn't transparent."""
+    return style.fill_enabled and (
+        Bool(style.fill_gradient) or style.fill_color.a > 0
+    )
+
+
+def _variant_look(variant: ButtonVariant, colors: ColorScheme) -> Style:
+    """How a button of `variant` looks in `colors`, before its own style:
+    the fill behind it, its outline and its text's colour. Each carries the
+    outline's colour, so a style that gives only a thickness gets it."""
+    if variant == ButtonVariant.TONAL:
+        return Style(
+            fill=colors.secondary_container,
+            stroke=colors.outline,
+            stroke_enabled=False,
+            text_color=colors.on_secondary_container,
+        )
+    if variant == ButtonVariant.OUTLINED:
+        return Style(
+            fill_enabled=False,
+            stroke=colors.outline,
+            stroke_thickness=1,
+            text_color=colors.primary,
+        )
+    if variant == ButtonVariant.TEXT:
+        return Style(
+            fill_enabled=False,
+            stroke=colors.outline,
+            stroke_enabled=False,
+            text_color=colors.primary,
+        )
+    return Style(
+        fill=colors.primary,
+        stroke=colors.outline,
+        stroke_enabled=False,
+        text_color=colors.on_primary,
+    )
 
 
 def _over(style: Optional[Style], base: Style) -> Style:

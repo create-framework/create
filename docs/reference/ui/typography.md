@@ -8,7 +8,7 @@ The theme's kinds of text: `title` for headings, `body` for running text and `la
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-var title = LabelStyle(text_style=ui.theme().typography.title)
+var title = ui.theme().typography.title
 ui.label("Settings", Rectangle((0, 0), 200, 32), style=title)
 ```
 

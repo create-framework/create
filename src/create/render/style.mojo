@@ -146,7 +146,10 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     def over(self, base: Style) -> Style:
         """This style layered over `base`: each part this style sets, and
-        `base`'s for the rest.
+        `base`'s for the rest. Applying the result is applying `base` and
+        then this style, so a part named here switches on what `base`
+        switched off: `Style(stroke=Color.RED).over(Style(stroke_enabled=False))`
+        is stroked.
 
         ```mojo
         var card = Style(fill=Color.WHITE, corner_radius=12)
@@ -206,6 +209,22 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             layered.shadow_follows_transform = self.shadow_follows_transform
         if self.shadow_enabled:
             layered.shadow_enabled = self.shadow_enabled
+        # What applying this style after `base` would undo: a fill colour
+        # clears the gradient, and naming a part switches it back on.
+        if self.fill and not self.fill_gradient:
+            layered.fill_gradient = None
+        if (self.fill or self.fill_gradient) and not self.fill_enabled:
+            layered.fill_enabled = None
+        if (self.stroke or self.stroke_thickness) and not self.stroke_enabled:
+            layered.stroke_enabled = None
+        if (
+            self.shadow
+            or self.shadow_offset
+            or self.shadow_blur
+            or self.shadow_spread
+            or self.shadow_inset
+        ) and not self.shadow_enabled:
+            layered.shadow_enabled = None
         return layered^
 
     def write_to[W: Writer](self, mut writer: W):

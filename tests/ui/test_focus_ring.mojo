@@ -72,11 +72,11 @@ def test_a_ring_is_drawn_over_a_neighbour() raises -> None:
     assert_equal(canvas.color_at((53.5, 0)), ui.theme().colors.secondary)
 
 
-def test_a_style_can_change_the_ring() raises -> None:
+def test_a_theme_block_can_change_the_ring() raises -> None:
     var ui = UI()
     var context = Context()
-    var ring = FocusRing()
-    ring.color = Color.RED
+    var theme = Theme.light()
+    theme.focus_ring.color = Color.RED
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     for frame in range(2):
         if frame == 1:
@@ -84,7 +84,8 @@ def test_a_style_can_change_the_ring() raises -> None:
             press_key(context, Key.TAB)
         canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
         with ui.screen(context, canvas) as layer:
-            _ = layer.button("OK", _A, style=ButtonStyle(focus_ring=ring))
+            with layer.theme(theme):
+                _ = layer.button("OK", _A)
     assert_equal(canvas.color_at((53.5, 0)), Color.RED)
 
 

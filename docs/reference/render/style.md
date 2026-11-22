@@ -123,7 +123,7 @@ def __init__(
 def over(self, base: Self) -> Self
 ```
 
-This style layered over `base`: each part this style sets, and `base`'s for the rest.
+This style layered over `base`: each part this style sets, and `base`'s for the rest. Applying the result is applying `base` and then this style, so a part named here switches on what `base` switched off: `Style(stroke=Color.RED).over(Style(stroke_enabled=False))` is stroked.
 
 ```mojo
 var card = Style(fill=Color.WHITE, corner_radius=12)

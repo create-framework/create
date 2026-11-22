@@ -68,14 +68,22 @@ grey theme.
 
 ## Styling one widget
 
-**Each widget has a style with every field optional:** `ButtonStyle`, `SliderStyle`,
-`CheckboxStyle`, `TextFieldStyle` and `LabelStyle`. A field left unset is worked out from the theme,
-so a style only says what differs:
+**A button, a label and a panel take a `Style`,** the same one the canvas draws with (see
+[Style](../drawing/style.md)). Each part it leaves unset comes from the theme, so a style only says
+what differs: `Style(corner_radius=4)` gives a button square corners and keeps its colours. For a
+button, `fill` is the colour behind the text, `stroke` its outline and `text_color` and the `font_*`
+parts its text; for a label, the text; for a panel, its surface, with `text_color` the colour of
+text on it. Anything a `Style` can do, a widget's style can do too, such as a gradient fill or a
+dashed outline:
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-if ui.button("Stop", Rectangle((0, 0), 120, 40), style=ButtonStyle(corner_radius=4)):
+if ui.button("Stop", Rectangle((0, 0), 120, 40), style=Style(corner_radius=4)):
     self.stop()
+var sunset = Gradient.linear(Color.ORANGE, Color.RED)
+if ui.button("Go", Rectangle((0, 50), 120, 40), style=Style(fill_gradient=sunset)):
+    self.go()
+ui.label("Settings", Rectangle((0, 100), 240, 32), style=ui.theme().typography.title)
 ui.slider(
     self.volume,
     0,
@@ -85,7 +93,9 @@ ui.slider(
 )
 ```
 
-Each style's fields are listed in the [reference](../../reference/ui/README.md).
+The slider, the checkbox and the text field have their own style types, listed in the
+[reference](../../reference/ui/README.md). The focus ring always comes from the theme; to change it
+for some widgets, draw them in a `ui.theme` block (below).
 
 ## Styling a block
 
@@ -100,7 +110,7 @@ Two `with` blocks change the look of every widget inside them:
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-with ui.style(button=ButtonStyle(corner_radius=4)):
+with ui.style(button=Style(corner_radius=4)):
     if ui.button("Square", Rectangle((0, 0), 120, 40)):
         ...
     if ui.button("Square too", Rectangle((0, -50), 120, 40)):
@@ -113,17 +123,18 @@ with ui.theme(Theme.dark()):
 ## Panels
 
 **`with ui.panel(rect):` draws a surface beneath everything called inside it.** It is the theme's
-`surface_container` with rounded corners unless `PanelStyle` says otherwise, and `shadow=True` lifts
-it off what is beneath. It covers what is under it from the pointer, so a click on its background
-doesn't reach a button behind it.
+`surface_container` with rounded corners unless its `Style` says otherwise, and the theme's shadow,
+`style=ui.theme().shadow`, lifts it off what is beneath. It covers what is under it from the
+pointer, so a click on its background doesn't reach a button behind it.
 
-A panel also sets the colour of text on it: the `on_` partner of its colour, or black or white for a
-colour that isn't one of the theme's. So a label on a panel filled with `primary` turns light
-without being told. A widget of your own reads that colour with `ui.content_color()`.
+A panel also sets the colour of text on it: its style's `text_color` if given, otherwise the `on_`
+partner of its colour, or black or white for a colour that isn't one of the theme's. So a label on a
+panel filled with `primary` turns light without being told. A widget of your own reads that colour
+with `ui.content_color()`.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-with ui.panel(Rectangle((0, 0), 320, 120), style=PanelStyle(shadow=True)):
+with ui.panel(Rectangle((0, 0), 320, 120), style=ui.theme().shadow):
     with ui.column():
         ui.label("Volume")
         ui.slider(self.volume, 0, 1)

@@ -22,13 +22,11 @@ def test_a_style_block_styles_its_widgets_and_a_call_beats_it() raises -> None:
     var called = _canvas()
     var outside = _canvas()
     with ui.screen(context, inside) as layer:
-        with layer.style(button=ButtonStyle(container_color=Color.RED)):
+        with layer.style(button=Style(fill=Color.RED)):
             _ = layer.button("OK", _A)
     with ui.screen(context, called) as layer:
-        with layer.style(button=ButtonStyle(container_color=Color.RED)):
-            _ = layer.button(
-                "OK", _A, style=ButtonStyle(container_color=Color.BLUE)
-            )
+        with layer.style(button=Style(fill=Color.RED)):
+            _ = layer.button("OK", _A, style=Style(fill=Color.BLUE))
     with ui.screen(context, outside) as layer:
         _ = layer.button("OK", _A)
     assert_equal(inside.color_at(_BESIDE), Color.RED)
@@ -42,8 +40,8 @@ def test_nested_style_blocks_merge_field_by_field() raises -> None:
     var canvas = _canvas()
     canvas.background(Color.WHITE)
     with ui.screen(context, canvas) as layer:
-        with layer.style(button=ButtonStyle(container_color=Color.RED)):
-            with layer.style(button=ButtonStyle(corner_radius=0)):
+        with layer.style(button=Style(fill=Color.RED)):
+            with layer.style(button=Style(corner_radius=0)):
                 _ = layer.button("OK", _A)
     assert_equal(canvas.color_at(_BESIDE), Color.RED)  # from the outer block
     assert_equal(canvas.color_at((49, 19)), Color.RED)  # a square corner
@@ -82,12 +80,37 @@ def test_text_on_a_panel_takes_its_content_colour() raises -> None:
     var colors = ui.theme().colors
     with ui.screen(context, canvas) as layer:
         assert_equal(layer.content_color(), colors.on_surface)
-        with layer.panel(_A, style=PanelStyle(color=colors.primary)):
+        with layer.panel(_A, style=Style(fill=colors.primary)):
             assert_equal(layer.content_color(), colors.on_primary)
-            with layer.panel(_A, style=PanelStyle(color=Color.BLACK)):
+            with layer.panel(_A, style=Style(fill=Color.BLACK)):
                 assert_equal(layer.content_color(), Color.WHITE)
             assert_equal(layer.content_color(), colors.on_primary)
         assert_equal(layer.content_color(), colors.on_surface)
+
+
+def test_a_panels_text_colour_is_the_content_colour() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = _canvas()
+    with ui.screen(context, canvas) as layer:
+        with layer.panel(_A, style=Style(text_color=Color.RED)):
+            assert_equal(layer.content_color(), Color.RED)
+
+
+def test_the_themes_shadow_lifts_a_panel() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var flat = _canvas()
+    var lifted = _canvas()
+    var below = _A.position + Vector(0, -_A.height / 2 - 4)
+    with ui.screen(context, flat) as layer:
+        with layer.panel(_A):
+            pass
+    next_frame(context)
+    with ui.screen(context, lifted) as layer:
+        with layer.panel(_A, style=layer.theme().shadow):
+            pass
+    assert_true(lifted.color_at(below) != flat.color_at(below))
 
 
 def test_a_panel_covers_what_is_beneath_and_a_click_on_it_clears_focus() raises -> (
