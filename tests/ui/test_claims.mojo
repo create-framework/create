@@ -31,10 +31,10 @@ struct _Split:
     def frame(mut self) raises:
         var canvas = Canvas(400, 100)
         with self.left.screen(self.context, canvas) as ui:
-            _ = ui.text_field(self.left_text, _LEFT)
+            ui.text_field(self.left_text, _LEFT)
         if self.open_right:
             with self.right.screen(self.context, canvas) as ui:
-                _ = ui.text_field(self.right_text, _RIGHT)
+                ui.text_field(self.right_text, _RIGHT)
 
     def key(mut self, key: Key) raises:
         next_frame(self.context)
@@ -112,7 +112,7 @@ def test_a_drag_in_one_ui_leaves_the_others_widgets_alone() raises -> None:
             release(context, button.position)  # and let go on its button
         var canvas = Canvas(300, 120)
         with top.screen(context, canvas) as ui:
-            _ = ui.slider(value, 0, 1, track)
+            ui.slider(value, 0, 1, track)
         with bottom.screen(context, canvas) as ui:
             clicked = ui.button("OK", button)
         if frame == 2:

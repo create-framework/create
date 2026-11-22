@@ -23,8 +23,10 @@ def _slider(
     var canvas = Canvas(300, 200)
     with ui.screen(context, canvas) as layer:
         if step > 0:
-            return layer.slider(value, 0, 1, _TRACK, step=step)
-        return layer.slider(value, 0, 1, _TRACK)
+            layer.slider(value, 0, 1, _TRACK, step=step)
+        else:
+            layer.slider(value, 0, 1, _TRACK)
+        return layer.changed()
 
 
 def test_pressing_the_track_moves_the_handle_there() raises -> None:
@@ -97,7 +99,8 @@ def _checkbox(
 ) raises -> Bool:
     var canvas = Canvas(300, 200)
     with ui.screen(context, canvas) as layer:
-        return layer.checkbox("Sound", checked, _BOX)
+        layer.checkbox("Sound", checked, _BOX)
+        return layer.changed()
 
 
 def test_a_click_anywhere_on_a_checkbox_switches_it() raises -> None:
@@ -142,9 +145,31 @@ def test_a_widget_ignores_the_pointer_while_another_is_held() raises -> None:
         else:
             point_at(context, Point(0, 0))
         with ui.screen(context, canvas) as layer:
-            _ = layer.slider(value, 0, 1, _TRACK)
-            assert_false(layer.checkbox("Sound", checked, _BOX))
+            layer.slider(value, 0, 1, _TRACK)
+            layer.checkbox("Sound", checked, _BOX)
+            assert_false(layer.changed())
     assert_false(checked)
+
+
+def test_changed_reports_only_the_widget_called_last() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(300, 200)
+    var value = 0.0
+    point_at(context, Point(50, 0))
+    for frame in range(3):
+        if frame > 0:
+            next_frame(context)
+        if frame == 1:
+            press(context, Point(50, 0))
+        with ui.screen(context, canvas) as layer:
+            if frame != 1:
+                assert_false(layer.changed())  # each frame starts afresh
+            layer.slider(value, 0, 1, _TRACK)
+            if frame == 1:
+                assert_true(layer.changed())
+            _ = layer.button("OK", _BOX)
+            assert_false(layer.changed())
 
 
 def main() raises:

@@ -1,32 +1,25 @@
-# TextFieldResult
+# TextEditor
 
 ```mojo
-struct TextFieldResult[ui_origin: MutOrigin, context_origin: MutOrigin, text_origin: MutOrigin]
+struct TextEditor[ui_origin: MutOrigin, context_origin: MutOrigin]
 ```
 
-What a text field reports back: whether it changed the text, whether Enter was pressed in it, and where its caret and selection are. As a `Bool`, it is whether the text changed, so `if ui.text_field(...):` works like every other widget.
+A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons.
 
-For the rest of its layer's block it also edits the field, through the
-same methods typing uses, so a program can drive it from its own keys or
-buttons:
+An edit reaches the field's `text` the next time the field is called,
+as typing does, and `ui.changed()` reports it then.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`, with
 # a `name: String` field:
-var field = ui.text_field(self.name, Rectangle((0, 0), 320, 40))
-if field.submitted:
-    self.start_game(self.name)
+ui.text_field(self.name, Rectangle((0, 0), 320, 40))
+var editor = ui.text_editor()
 if ui.button("Clear", Rectangle((200, 0), 80, 40)):
-    field.select_all()
-    field.delete_backward()
+    editor.select_all()
+    editor.delete_backward()
 ```
 
-Implements `Boolable`, `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`.
-
-## Fields
-
-- `changed: Bool`: Whether the text changed this frame.
-- `submitted: Bool`: Whether Enter was pressed in the field this frame.
+Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`.
 
 ## Methods
 
@@ -143,11 +136,3 @@ def paste(self) raises
 ```
 
 Insert the clipboard's text, as if typed.
-
-## Special methods
-
-### `__bool__`
-
-```mojo
-def __bool__(self) -> Bool
-```

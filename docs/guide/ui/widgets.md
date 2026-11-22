@@ -9,7 +9,7 @@ them.
 
 **A widget is a call made every frame, not an object you keep.** A button is drawn by calling
 `ui.button` in `update`, and the call returns whether it was clicked. A slider is given the value it
-controls, changes it while it is dragged, and returns whether it did:
+controls, and changes it while it is dragged:
 
 ```mojo
 from create import *
@@ -29,7 +29,7 @@ struct Settings(Program):
         with self.ui.screen(context, canvas) as ui:
             if ui.button("Click me", Rectangle((0, 60), 160, 48)):
                 self.clicks += 1
-            _ = ui.slider(self.volume, 0, 1, Rectangle((0, -20), 240, 32))
+            ui.slider(self.volume, 0, 1, Rectangle((0, -20), 240, 32))
             ui.label(
                 String(self.clicks) + " clicks, volume " + String(self.volume),
                 Rectangle((0, -80), 400, 24),
@@ -50,15 +50,23 @@ positioned by its centre like every shape in Create (see [Coordinates](../basics
 Nothing has to be added or removed: a widget is on screen in the frames it is called in, so showing
 a button only while a menu is open is an `if` around the call.
 
-**Every widget that reacts returns a `Bool`.** A button returns whether it was clicked. A value
-widget, such as a slider or a checkbox, takes the value as `mut`, changes it in place and returns
-whether it changed it, so you can react to a change, such as saving a setting or playing a click:
+**A button returns whether it was clicked; a value widget changes its value.** A click is what a
+button is for, so `ui.button` returns it, to test with `if`. A value widget, such as a slider, a
+checkbox or a text field, takes its value as `mut` and changes it in place, so the value is all most
+programs need, and the call returns nothing.
+
+**`ui.changed()` says whether the widget called just before it changed its value this frame**, for
+reacting to a change, such as saving a setting or playing a click:
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-if ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32)):
+ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32))
+if ui.changed():
     self.audio.volume(self.volume)
 ```
+
+It always answers for the last widget called, so ask right after the widget you mean. After a button
+it is `False`, since a button has no value to change.
 
 ## Layers
 
@@ -92,17 +100,17 @@ a later one raises an error. A helper that draws part of the UI takes it as a pa
 ```mojo
 # A helper, called with the layer inside the block: `settings(ui, ...)`.
 def settings(ui: UILayer, mut volume: Float64) raises:
-    _ = ui.slider(volume, 0, 1, Rectangle((0, 0), 240, 32))
+    ui.slider(volume, 0, 1, Rectangle((0, 0), 240, 32))
 ```
 
 ## The widgets
 
-| Call | What it is | Returns |
+| Call | What it is | Reports |
 |---|---|---|
-| `ui.button(text, rect)` | A button showing `text` | Whether it was clicked |
-| `ui.slider(value, min, max, rect)` | A track with a handle setting `value` | Whether it changed `value` |
-| `ui.checkbox(label, checked, rect)` | A box with `label` beside it | Whether it switched `checked` |
-| `ui.text_field(text, rect)` | A field for typing into `text` | A `TextFieldResult` |
+| `ui.button(text, rect)` | A button showing `text` | Returns whether it was clicked |
+| `ui.slider(value, min, max, rect)` | A track with a handle setting `value` | `ui.changed()`: whether it changed `value` |
+| `ui.checkbox(label, checked, rect)` | A box with `label` beside it | `ui.changed()`: whether it switched `checked` |
+| `ui.text_field(text, rect)` | A field for typing into `text` | `ui.changed()`, `ui.submitted()` and `ui.text_editor()` |
 | `ui.label(text, rect)` | Text placed in `rect` | Nothing |
 | `ui.image(image, rect)` | `image` stretched to fill `rect` | Nothing |
 
@@ -136,7 +144,7 @@ its own with `ui.id`, and its widgets keep their state wherever it moves:
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`, for a list of players:
 for ref player in self.players:
     with ui.id(player.name):  # added to the ID of every widget in the block
-        _ = ui.text_field(player.name, ...)
+        ui.text_field(player.name, ...)
         if ui.button("Remove", ...):
             ...
 ```
@@ -151,7 +159,8 @@ block ends. So an icon on a button, or a highlight behind a slider, goes through
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-_ = ui.button("", Rectangle((0, 0), 48, 48))
+if ui.button("", Rectangle((0, 0), 48, 48)):
+    ...
 ui.draw(Circle((0, 0), 10), Style(fill=ui.theme().colors.on_primary))  # on top of the button
 ```
 
@@ -161,9 +170,11 @@ images go through `ui.label` and `ui.image`, which also draw in order.
 ## Disabled widgets
 
 **`disabled=True` disables one widget, and `with ui.disabled(condition):` every widget in its
-block.** A disabled widget is drawn faded, doesn't react to the pointer or the keys, and returns
-`False`. It still covers what is beneath it, so a click on it doesn't fall through to something
-else. The block form greys out a whole section without an `if` around each widget:
+block.** A disabled widget is drawn faded, doesn't react to the pointer or the keys, and never
+reports a click or a change: a disabled button returns `False`, and `ui.changed()` after any
+disabled widget is `False`. It still covers what is beneath it, so a click on it doesn't fall
+through to something else. The block form greys out a whole section without an `if` around each
+widget:
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:

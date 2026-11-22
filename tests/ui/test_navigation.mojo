@@ -43,9 +43,8 @@ struct _Panel:
                     Rectangle(Point(-120 + 120 * Float64(i), 40), 100.0, 40.0),
                     disabled=self.disable_second and i == 1,
                 )
-            self.changed = layer.slider(
-                self.value, 0, 1, Rectangle((0, -40), 200, 32)
-            )
+            layer.slider(self.value, 0, 1, Rectangle((0, -40), 200, 32))
+            self.changed = layer.changed()
 
     def key(mut self, key: Key, shift: Bool = False) raises:
         next_frame(self.context)

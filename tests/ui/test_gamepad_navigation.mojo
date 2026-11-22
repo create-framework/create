@@ -140,7 +140,7 @@ def test_left_and_right_step_a_focused_slider() raises -> None:
             press_pad(context, GamepadButton.DPAD_LEFT)
         var canvas = Canvas(300, 200)
         with ui.screen(context, canvas) as layer:
-            _ = layer.slider(
+            layer.slider(
                 value, 0, 1, Rectangle((0, 0), 200, 32), take_focus=frame == 0
             )
         if frame == 1:

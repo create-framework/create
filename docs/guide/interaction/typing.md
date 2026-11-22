@@ -38,10 +38,8 @@ the program keeps:
 ```mojo
 # In `update`, with `ui: UI` and `name: String` fields:
 with self.ui.screen(context, canvas) as ui:
-    var field = ui.text_field(
-        self.name, Rectangle((0, 0), 320, 40), placeholder="Your name"
-    )
-    if field.submitted:  # Enter was pressed
+    ui.text_field(self.name, Rectangle((0, 0), 320, 40), placeholder="Your name")
+    if ui.submitted():  # Enter was pressed
         self.start_game(self.name)
 ```
 
@@ -56,8 +54,8 @@ people expect:
 - A word modifier (Option on macOS, Ctrl elsewhere) moves and deletes a word at a time.
 - The command shortcuts (Cmd on macOS, Ctrl elsewhere) select all, copy, cut and paste. They go by
   the letter printed on the key, not its position, so they work on every layout.
-- Enter submits the field: `field.submitted` is true in that frame, and what it means is the
-  program's to decide. Escape leaves the field.
+- Enter submits the field: `ui.submitted()`, right after the field, is true in that frame, and what
+  it means is the program's to decide. Escape leaves the field.
 
 Copying and pasting go through the system clipboard, which a program can also use directly:
 `context.clipboard()` reads it and `context.clipboard(text)` sets it.
@@ -67,10 +65,16 @@ full. The text is the program's own `String`, so the program can set it at any t
 `self.name = ""` to empty the field once it has been submitted. While a field has focus,
 `self.ui.wants_keyboard()` is true, so a game can leave the keys alone while the player types.
 
-**Drawing the text yourself.** The field returns where its caret and selection are: `before_caret()`
-is the text before the caret, `before_selection()` the text before the selection, and
-`selected_text()` the selection itself, to measure with `canvas.text_width`. A `TextFieldStyle` with
-a transparent container, text colour and no outline draws nothing but the caret and the selection,
-so the program can draw the letters its own way, and `take_focus=True` keeps the field focused
-without a click. See [examples/typing](../../../examples/typing/main.mojo), which colours each typed
-letter by whether it is right.
+**Drawing the text yourself.** `ui.text_editor()`, right after the field, gives its `TextEditor`,
+which says where its caret and selection are: `before_caret()` is the text before the caret,
+`before_selection()` the text before the selection, and `selected_text()` the selection itself, to
+measure with `canvas.text_width`. A `TextFieldStyle` with a transparent container, text colour and
+no outline draws nothing but the caret and the selection, so the program can draw the letters its
+own way, and `take_focus=True` keeps the field focused without a click. See
+[examples/typing](../../../examples/typing/main.mojo), which colours each typed letter by whether it
+is right.
+
+**Editing from the program.** The same `TextEditor` edits the field through the methods typing uses:
+`insert`, `delete_backward`, `delete_forward`, the moves, `select_all`, `copy`, `cut` and `paste`.
+So the program's own keys or buttons can drive the field. An edit reaches `text` the next time the
+field is called, as typing does, and `ui.changed()` reports it then.
