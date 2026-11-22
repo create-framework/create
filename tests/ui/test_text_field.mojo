@@ -219,5 +219,77 @@ def test_text_the_program_changes_is_what_the_field_shows() raises -> None:
     assert_equal(form.texts[0], "d")
 
 
+def _field(
+    focus: Bool,
+    container: Style = Style(),
+    focused: Style = Style(),
+    caret: Style = Style(),
+) raises -> Canvas:
+    """One frame of an empty field, focused or not, unsmoothed."""
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
+    var text = String()
+    with ui.screen(context, canvas) as layer:
+        layer.text_field(
+            text,
+            _FIRST,
+            container=container,
+            focused=focused,
+            caret=caret,
+            take_focus=focus,
+        )
+    return canvas^
+
+
+comptime _TOP_EDGE = Point(0.0, 59.5)
+"""Just inside the first field's top edge, where its outline is drawn."""
+
+
+def test_the_caret_takes_its_own_style() raises -> None:
+    # an empty field's caret sits at its left side, inside the padding
+    var canvas = _field(True, caret=Style(stroke=Color.RED, stroke_thickness=4))
+    assert_equal(canvas.color_at((-139.5, 40)), Color.RED)
+    assert_equal(canvas.color_at((-136.5, 40)), Color.RED)
+
+
+def test_focus_doubles_the_outline_in_primary() raises -> None:
+    var theme = Theme.light()
+    var resting = _field(False)
+    var focused = _field(True)
+    assert_equal(resting.color_at(_TOP_EDGE), theme.colors.outline)
+    assert_equal(focused.color_at(_TOP_EDGE), theme.colors.primary)
+    assert_equal(focused.color_at((0, 58.5)), theme.colors.primary)
+    assert_true(resting.color_at((0, 58.5)) != theme.colors.outline)
+
+
+def test_the_focused_look_is_layered_over_the_container() raises -> None:
+    var canvas = _field(
+        True,
+        container=Style(fill=Color.WHITE, stroke=Color.BLUE),
+        focused=Style(stroke=Color.RED),
+    )
+    assert_equal(canvas.color_at(_TOP_EDGE), Color.RED)
+    assert_equal(canvas.color_at((0, 50)), Color.WHITE)
+
+
+def test_a_field_without_an_outline_keeps_none_when_focused() raises -> None:
+    var canvas = _field(
+        True, container=Style(fill=Color.WHITE, stroke_enabled=False)
+    )
+    assert_equal(canvas.color_at(_TOP_EDGE), Color.WHITE)
+
+
+def test_a_style_block_reaches_every_field() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
+    var text = String()
+    with ui.screen(context, canvas) as layer:
+        with layer.style(text_field_caret=Style(stroke=Color.RED)):
+            layer.text_field(text, _FIRST, take_focus=True)
+    assert_equal(canvas.color_at((-138.5, 40)), Color.RED)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

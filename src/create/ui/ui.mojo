@@ -13,7 +13,6 @@ from ._layout import _Layout
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
-from .text_field import TextFieldStyle
 from .theme import Theme
 
 
@@ -33,7 +32,12 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var checkbox_checked_box: Style
     var checkbox_tick: Style
     var checkbox_label: Style
-    var text_field: TextFieldStyle
+    var text_field_container: Style
+    var text_field_focused: Style
+    var text_field_text: Style
+    var text_field_placeholder: Style
+    var text_field_caret: Style
+    var text_field_selection: Style
 
     def __init__(out self):
         self.button = Style()
@@ -47,7 +51,12 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.checkbox_checked_box = Style()
         self.checkbox_tick = Style()
         self.checkbox_label = Style()
-        self.text_field = TextFieldStyle()
+        self.text_field_container = Style()
+        self.text_field_focused = Style()
+        self.text_field_text = Style()
+        self.text_field_placeholder = Style()
+        self.text_field_caret = Style()
+        self.text_field_selection = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -62,7 +71,12 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.checkbox_checked_box.over(under.checkbox_checked_box),
             self.checkbox_tick.over(under.checkbox_tick),
             self.checkbox_label.over(under.checkbox_label),
-            self.text_field._over(under.text_field),
+            self.text_field_container.over(under.text_field_container),
+            self.text_field_focused.over(under.text_field_focused),
+            self.text_field_text.over(under.text_field_text),
+            self.text_field_placeholder.over(under.text_field_placeholder),
+            self.text_field_caret.over(under.text_field_caret),
+            self.text_field_selection.over(under.text_field_selection),
         )
 
 

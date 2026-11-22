@@ -18,8 +18,8 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `_recorder.mojo` | `_Recorder`, a `DrawTarget` a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `theme.mojo` | `Theme` and its tokens, `ColorScheme`, `Theme.from_seed` and its `_Palette`; `_contrast` and `_readable_on` |
-| `button.mojo` | `ButtonVariant`; a button, a label and a panel take a `Style`, and a slider and a checkbox a `Style` per part |
-| `text_field.mojo` | Those widgets' styles (every field optional, with `_over` to merge one over another), and `TextEditor` |
+| `button.mojo` | `ButtonVariant`; a button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
+| `text_field.mojo` | `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
 
 ## How a frame goes
 

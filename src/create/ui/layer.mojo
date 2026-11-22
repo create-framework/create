@@ -24,7 +24,7 @@ from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from ._text_buffer import _TextBuffer
-from .text_field import TextEditor, TextFieldStyle
+from .text_field import TextEditor
 from .theme import ColorScheme, FocusRing, Theme, _readable_on
 from .ui import UI, _Hit, _Styles
 
@@ -165,7 +165,12 @@ struct UILayer[
         checkbox_checked_box: Style = Style(),
         checkbox_tick: Style = Style(),
         checkbox_label: Style = Style(),
-        text_field: TextFieldStyle = TextFieldStyle(),
+        text_field_container: Style = Style(),
+        text_field_focused: Style = Style(),
+        text_field_text: Style = Style(),
+        text_field_placeholder: Style = Style(),
+        text_field_caret: Style = Style(),
+        text_field_selection: Style = Style(),
     ) raises -> WidgetStyleGuard[Self.ui_origin]:
         """Style every widget of a kind inside a `with` block. The styles
         given sit under each call's own style and over any block outside
@@ -200,7 +205,12 @@ struct UILayer[
                 checkbox_checked_box,
                 checkbox_tick,
                 checkbox_label,
-                text_field,
+                text_field_container,
+                text_field_focused,
+                text_field_text,
+                text_field_placeholder,
+                text_field_caret,
+                text_field_selection,
             ),
         )
 
@@ -628,7 +638,13 @@ struct UILayer[
         *,
         placeholder: String = "",
         max_length: Optional[Int] = None,
-        style: TextFieldStyle = TextFieldStyle(),
+        container: Style = Style(),
+        focused: Style = Style(),
+        text_style: Style = Style(),
+        placeholder_style: Style = Style(),
+        caret: Style = Style(),
+        selection: Style = Style(),
+        padding: _OptionalFloat64 = None,
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
@@ -642,6 +658,16 @@ struct UILayer[
         `ui.text_editor()` gives its caret and selection. `placeholder` is
         shown in a fainter colour while `text` is empty, and `max_length`
         caps how many characters typing and pasting can bring it to.
+
+        Each part is drawn in its own `Style`: `container` is the field, a
+        rectangle, and `focused` is layered over it while the field has
+        focus (by default its outline turns `primary` and twice as thick);
+        `text_style` is the typed text and `placeholder_style` the
+        placeholder, which takes what it leaves unset from `text_style`;
+        `caret` is a line, so its `stroke` and `stroke_thickness` are the
+        caret's colour and width; and `selection` is the rectangle behind
+        selected text. `padding`, 12 unless given, is the gap between the
+        field's sides and its text.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
@@ -659,7 +685,13 @@ struct UILayer[
             self._place_control(rect, "ui.text_field"),
             placeholder,
             max_length,
-            style,
+            container,
+            focused,
+            text_style,
+            placeholder_style,
+            caret,
+            selection,
+            padding.or_else(12.0),
             take_focus,
             disabled,
         )
@@ -730,11 +762,16 @@ struct UILayer[
         rect: Rectangle,
         placeholder: String,
         max_length: Optional[Int],
-        call_style: TextFieldStyle,
+        call_container: Style,
+        call_focused: Style,
+        call_text: Style,
+        call_placeholder: Style,
+        call_caret: Style,
+        call_selection: Style,
+        padding: Float64,
         take_focus: Bool,
         disabled: Bool,
     ) raises:
-        var style = call_style._over(self._ui[]._current_styles().text_field)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, takes_typing=True)
         ref ui = self._ui[]
@@ -754,10 +791,19 @@ struct UILayer[
             buffer.text = text
         buffer.max_length = max_length
         var now = self._context[].time.elapsed
-        var type = _over(style.text_style, theme.typography.body)
-        var text_color = style.text_color.or_else(colors.on_surface)
-        var look = _text_style(type, text_color, Align.LEFT)
-        var padding = style.padding.or_else(12.0)
+        var block = ui._current_styles()
+        var text_look = call_text.over(block.text_field_text).over(
+            Style(text_color=colors.on_surface).over(theme.typography.body)
+        )
+        var typed = _ResolvedStyle()
+        typed.apply(text_look)
+        var hint = _ResolvedStyle()
+        hint.apply(
+            call_placeholder.over(block.text_field_placeholder).over(
+                Style(text_color=colors.on_surface_variant).over(text_look)
+            )
+        )
+        var look = _text_look(typed, Align.LEFT)
         var left = rect.position.x - rect.width / 2 + padding
         var inner = rect.width - 2 * padding
 
@@ -795,47 +841,67 @@ struct UILayer[
         buffer.scroll = min(buffer.scroll, max(0.0, whole - inner))
 
         # the field
-        var container = style.container_color.or_else(
-            colors.surface_container_highest
+        var container_look = call_container.over(
+            block.text_field_container
+        ).over(
+            Style(
+                fill=colors.surface_container_highest,
+                stroke=colors.outline,
+                stroke_thickness=1,
+                corner_radius=theme.corner_radii.small,
+            )
         )
-        var thickness = style.outline_thickness.or_else(1.0)
-        var outline = style.outline_color.or_else(colors.outline)
+        var field = _ResolvedStyle()
+        field.apply(container_look)
         if state.focused and not off:
-            outline = style.focused_outline_color.or_else(colors.primary)
-            thickness *= 2
-        var placeholder_color = style.placeholder_color.or_else(
-            colors.on_surface_variant
-        )
+            # by default, the outline turns `primary` and twice as thick,
+            # and a field with no outline stays without one
+            var outlined = Style()
+            if field.stroke_enabled:
+                outlined = Style(
+                    stroke=colors.primary,
+                    stroke_thickness=field.stroke_thickness * 2,
+                )
+            field = _ResolvedStyle()
+            field.apply(
+                call_focused.over(block.text_field_focused)
+                .over(outlined)
+                .over(container_look)
+            )
         if off:
             var states = theme.state_layers
             # the field's own colours, faded: the theme's text colour by
             # default, and a transparent one stays transparent
-            text_color = _faded(text_color, states.disabled_content)
-            placeholder_color = _faded(
-                placeholder_color, states.disabled_content
+            typed.text_color = _faded(typed.text_color, states.disabled_content)
+            hint.text_color = _faded(hint.text_color, states.disabled_content)
+            if _fills(field):
+                field.fill_color = _faded(
+                    colors.on_surface, states.disabled_container
+                )
+                field.fill_gradient = None
+            field.stroke_color = _faded(
+                colors.on_surface, states.disabled_container
             )
-            if container.a > 0:
-                container = _faded(colors.on_surface, states.disabled_container)
-            outline = _faded(colors.on_surface, states.disabled_container)
-        elif state.hovered and not state.focused and container.a > 0:
-            container = _stepped(
-                container, colors.on_surface, theme.state_layers.hovered
+        elif (
+            state.hovered
+            and not state.focused
+            and _fills(field)
+            and not field.fill_gradient
+        ):
+            field.fill_color = _stepped(
+                field.fill_color, colors.on_surface, theme.state_layers.hovered
             )
         var shape = Rectangle(
             rect.position,
             rect.width,
             rect.height,
-            corner_radius=style.corner_radius.or_else(theme.corner_radii.small),
+            corner_radius=field.corner_radius,
         )
         ref recorder = ui._recorder
-        if container.a > 0 or thickness > 0:
-            recorder.style = _ResolvedStyle(
-                fill=container,
-                fill_enabled=container.a > 0,
-                stroke=outline,
-                stroke_thickness=thickness,
-                stroke_enabled=thickness > 0,
-            )
+        if _fills(field) or (
+            field.stroke_enabled and field.stroke_thickness > 0
+        ):
+            recorder.style = field
             recorder.draw(shape)
 
         # the text, clipped to the inside of the field
@@ -847,30 +913,33 @@ struct UILayer[
         if state.focused and buffer.selected_text():
             var start = self._measure(buffer.before_selection(), look)
             var width = self._measure(buffer.selected_text(), look)
-            recorder.style = _ResolvedStyle(
-                fill=style.selection_color.or_else(
-                    colors.primary.with_alpha(70)
-                ),
-                stroke_enabled=False,
+            var highlight = _ResolvedStyle()
+            highlight.apply(
+                call_selection.over(block.text_field_selection).over(
+                    Style(
+                        fill=colors.primary.with_alpha(70), stroke_enabled=False
+                    )
+                )
             )
+            recorder.style = highlight
             recorder.draw(
                 Rectangle(
                     Point(origin_x + start + width / 2, y),
                     width,
-                    _size(type) * 1.3,
+                    typed.font_size * 1.3,
                 )
             )
         if buffer.text:
             recorder.text(
                 buffer.text,
                 Point(origin_x, y),
-                _text_style(type, text_color, Align.LEFT),
+                _text_look(typed, Align.LEFT),
             )
         elif placeholder:
             recorder.text(
                 placeholder,
                 Point(left, y),
-                _text_style(type, placeholder_color, Align.LEFT),
+                _text_look(hint, Align.LEFT),
             )
         # the caret: steady for a moment after a change, then blinking
         var since = now - buffer.last_change
@@ -880,14 +949,17 @@ struct UILayer[
             and (since < 0.5 or Int(since * 2) % 2 == 1)
         ):
             var x = origin_x + caret_x
-            recorder.style = _ResolvedStyle(
-                stroke=style.caret_color.or_else(colors.primary),
-                stroke_thickness=2,
+            var bar = _ResolvedStyle()
+            bar.apply(
+                call_caret.over(block.text_field_caret).over(
+                    Style(stroke=colors.primary, stroke_thickness=2)
+                )
             )
+            recorder.style = bar
             recorder.draw(
                 Line(
-                    Point(x, y - _size(type) * 0.65),
-                    Point(x, y + _size(type) * 0.65),
+                    Point(x, y - typed.font_size * 0.65),
+                    Point(x, y + typed.font_size * 0.65),
                 )
             )
         recorder.end_clip()

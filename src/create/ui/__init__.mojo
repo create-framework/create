@@ -22,4 +22,4 @@ from .theme import (
     FocusRing,
 )
 from .button import ButtonVariant
-from .text_field import TextFieldStyle, TextEditor
+from .text_field import TextEditor
