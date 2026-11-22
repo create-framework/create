@@ -62,16 +62,73 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 
 ```mojo
 @staticmethod
-def light() -> Self
+def light(
+    *,
+    primary: Optional[Color] = None,
+    on_primary: Optional[Color] = None,
+    secondary: Optional[Color] = None,
+    on_secondary: Optional[Color] = None,
+    tertiary: Optional[Color] = None,
+    on_tertiary: Optional[Color] = None,
+    error: Optional[Color] = None,
+    on_error: Optional[Color] = None,
+    surface: Optional[Color] = None,
+    on_surface: Optional[Color] = None,
+) -> Self
 ```
 
-Dark colours on a light background.
+Dark colours on a light background, with the colours given replacing its own.
+
+A colour given also changes its container to a quieter mix of it
+with the surface, and a colour given without its `on_` partner gets
+black or white, whichever reads better on it. So this is enough to
+make the buttons orange:
+
+```mojo
+# In `create`, building the `colors` field:
+var colors = ColorScheme.light(primary=Color.ORANGE)
+```
 
 ### `dark`
 
 ```mojo
 @staticmethod
-def dark() -> Self
+def dark(
+    *,
+    primary: Optional[Color] = None,
+    on_primary: Optional[Color] = None,
+    secondary: Optional[Color] = None,
+    on_secondary: Optional[Color] = None,
+    tertiary: Optional[Color] = None,
+    on_tertiary: Optional[Color] = None,
+    error: Optional[Color] = None,
+    on_error: Optional[Color] = None,
+    surface: Optional[Color] = None,
+    on_surface: Optional[Color] = None,
+) -> Self
 ```
 
-Light colours on a dark background.
+Light colours on a dark background, with the colours given replacing its own, as `ColorScheme.light` does.
+
+### `from_seed`
+
+```mojo
+@staticmethod
+def from_seed(seed: Color, *, dark: Bool = False) -> Self
+```
+
+The colours worked out from one colour, such as a game's own, as Material's dynamic colour does: light unless `dark`.
+
+The seed's hue gives five families of colour: the primary, a greyer
+secondary, a tertiary turned 60 degrees round the colour wheel,
+near-greys for the surfaces, and a fixed red for errors. Each role
+then takes Material's fixed tone, a lightness that looks the same in
+every hue: in the light scheme `primary` is tone 40 and `on_primary`
+100, `primary_container` 90 and `on_primary_container` 10. The gap
+between two paired roles keeps them readable together, whatever the
+seed. A grey seed gives grey colours.
+
+```mojo
+# In `create`, building the `colors` field:
+var colors = ColorScheme.from_seed(Color.hex(0xE07A2E))  # orange
+```
