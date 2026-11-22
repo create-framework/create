@@ -2,7 +2,8 @@
 
 from create.color import Color
 from create.math._optional_float64 import _OptionalFloat64
-from .theme import FocusRing, TypeStyle
+from create.render import Style
+from .theme import FocusRing
 
 
 @fieldwise_init
@@ -66,7 +67,7 @@ struct ButtonStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     var outline_thickness: Optional[Float64]
     var corner_radius: Optional[Float64]
     """Half the height unless given, so the ends are round."""
-    var text_style: Optional[TypeStyle]
+    var text_style: Optional[Style]
     """The theme's `label` text unless given."""
 
     var focus_ring: Optional[FocusRing]
@@ -81,7 +82,7 @@ struct ButtonStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         outline_color: Optional[Color] = None,
         outline_thickness: _OptionalFloat64 = None,
         corner_radius: _OptionalFloat64 = None,
-        text_style: Optional[TypeStyle] = None,
+        text_style: Optional[Style] = None,
         focus_ring: Optional[FocusRing] = None,
     ):
         self.container_color = container_color
