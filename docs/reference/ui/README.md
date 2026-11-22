@@ -13,6 +13,7 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`ThemeGuard`](themeguard.md) | Ends the `ui.theme` block it was made for, on scope exit. Only `ui.theme` builds one. |
 | [`WidgetStyleGuard`](widgetstyleguard.md) | Ends the `ui.style` block it was made for, on scope exit. Only `ui.style` builds one. |
 | [`PanelGuard`](panelguard.md) | Ends the `ui.panel` block it was made for, on scope exit. Only `ui.panel` builds one. |
+| [`LayoutGuard`](layoutguard.md) | Ends the `ui.column` or `ui.row` block it was made for, on scope exit. Only `ui.column` and `ui.row` build one. |
 | [`Theme`](theme.md) | The design tokens every widget draws from: colours, kinds of text, corner radii, gaps, the height of a control, state layers and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it. |
 | [`ColorScheme`](colorscheme.md) | The colours of a theme, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. |
 | [`Typography`](typography.md) | The theme's kinds of text: `title` for headings, `body` for running text and `label` for the text on widgets, such as a button's. |

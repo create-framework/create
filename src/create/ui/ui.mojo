@@ -9,6 +9,7 @@ from create.input import Gamepad, GamepadButton, Key, Keyboard, Mouse
 from create.math import Point, Transform, Vector
 from create.render import Canvas
 from ._id import _mix, _site
+from ._layout import _Layout
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
@@ -103,6 +104,9 @@ struct UI(Movable):
     """The open `ui.style` blocks, each merged over the ones outside it."""
     var _contents: List[Color]
     """The content colours of the open panels, innermost last."""
+    var _layouts: List[_Layout]
+    """The open panels, columns and rows, innermost last: what a widget
+    called without a rect is placed by."""
     var _hits: List[_Hit]
     """The widgets that can be pointed at, this frame, in drawing order."""
     var _last_hits: List[_Hit]
@@ -170,6 +174,7 @@ struct UI(Movable):
         self._themes = []
         self._styles = []
         self._contents = []
+        self._layouts = []
         self._frame = -1
         self._site_counts = {}
         self._keys = []
@@ -312,6 +317,7 @@ struct UI(Movable):
             self._themes.clear()
             self._styles.clear()
             self._contents.clear()
+            self._layouts.clear()
             self._disabled_depth = 0
             self._called(changed=False)
             swap(self._last_hits, self._hits)

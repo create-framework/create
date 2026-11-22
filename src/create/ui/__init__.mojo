@@ -10,6 +10,7 @@ from .layer import (
     ThemeGuard,
     WidgetStyleGuard,
     PanelGuard,
+    LayoutGuard,
 )
 from .theme import (
     Theme,
