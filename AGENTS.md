@@ -58,7 +58,7 @@ page:
 | [gamepads](docs/guide/interaction/gamepads.md) | `Gamepad`, `GamepadButton`, sticks, triggers, rumble |
 | [widgets](docs/guide/ui/widgets.md) | the `ui` package: `UI`, `ui.screen`/`ui.world` layers, `button`, `slider`, `checkbox`, `label`, `image`, laying widgets out with `column`, `row` and `space`, widget IDs and `ui.id`, `ui.draw`, disabled widgets |
 | [focus and navigation](docs/guide/ui/focus.md) | focus, `take_focus`, Tab and keys on widgets, gamepad navigation, focus rings, `wants_keyboard`/`wants_mouse`, several `UI`s |
-| [themes and styling](docs/guide/ui/themes.md) | `Theme`, `ColorScheme` roles, `Theme.from_seed`, styling widgets with `Style` (one keyword per part, each part a shape), `Theme.shadow`, `ui.style`/`ui.theme` blocks, panels, `StateLayers` |
+| [themes and styling](docs/guide/ui/themes.md) | `ColorScheme` and its roles, a program's `colors` passed to `ui.screen`/`ui.world`, `ColorScheme.from_seed`, the `UI`'s settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), styling widgets with `Style` (one keyword per part, each part a shape), `ui.style`/`ui.colors` blocks, panels |
 | [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
 | [tweens](docs/guide/motion/tweens.md) | `Tween` |
 | [animations](docs/guide/motion/animations.md) | `Animation` and `Animator` |

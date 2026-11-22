@@ -22,7 +22,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), the guards of its `with` blocks (`IDGuard`, `DisabledGuard`, `ThemeGuard`, `WidgetStyleGuard`, `PanelGuard`, `LayoutGuard`), `Theme` with its tokens (`ColorScheme`, `Typography`, …), and `ButtonVariant` and `TextEditor` (every widget is styled with `render`'s `Style`, one for each of its parts); widget IDs from call sites, the recorder that draws a layer in call order, and the text editing behind `text_field` (`_TextBuffer`) |
+| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), the guards of its `with` blocks (`IDGuard`, `DisabledGuard`, `ColorsGuard`, `WidgetStyleGuard`, `PanelGuard`, `LayoutGuard`), `ColorScheme` (the colours a layer is drawn in) with `StateLayers` and `FocusRing`, and `ButtonVariant` and `TextEditor` (every widget is styled with `render`'s `Style`, one for each of its parts); widget IDs from call sites, the recorder that draws a layer in call order, and the text editing behind `text_field` (`_TextBuffer`) |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
@@ -121,7 +121,7 @@ The rules behind it, and what each one buys:
 
 - **`ui`** is the top layer, and nothing imports it. It needs `core` for the `Context` its layers
   read the frame and the pointer from, `render` for the canvas they draw on, `geometry` and `math`
-  for the widgets' rectangles and hit-testing, `color` and `text` for the theme's colours and fonts,
+  for the widgets' rectangles and hit-testing, `color` and `text` for the widgets' colours and text,
   and `image` for the `image` widget.
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
   `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works
