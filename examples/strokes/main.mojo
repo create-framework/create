@@ -7,19 +7,19 @@ which close the notches between segments; press Space to clear.
 
 from create import *
 
-comptime _BACKGROUND = Color(240, 236, 222)
-comptime _INK = Color(40, 40, 44)
-comptime _GUIDE = Color(226, 46, 56)
-comptime _STROKE = Color(98, 104, 168, 170)
-comptime _FILL = Color(201, 140, 150)
+comptime BACKGROUND = Color(240, 236, 222)
+comptime INK = Color(40, 40, 44)
+comptime GUIDE = Color(226, 46, 56)
+comptime STROKE = Color(98, 104, 168, 170)
+comptime FILL = Color(201, 140, 150)
 
-comptime _COLUMN = 400.0
+comptime COLUMN = 400.0
 """How far apart the three columns stand."""
-comptime _MAX_POINTS = 2000
+comptime MAX_POINTS = 2000
 """The drawing stops growing past this many points."""
 
 
-def _cap_name(cap: StrokeCap) -> String:
+def cap_name(cap: StrokeCap) -> String:
     if cap == StrokeCap.ROUND:
         return "ROUND"
     if cap == StrokeCap.SQUARE:
@@ -27,7 +27,7 @@ def _cap_name(cap: StrokeCap) -> String:
     return "BUTT"
 
 
-def _alignment_name(alignment: StrokeAlign) -> String:
+def alignment_name(alignment: StrokeAlign) -> String:
     if alignment == StrokeAlign.CENTER:
         return "CENTER"
     if alignment == StrokeAlign.OUTSIDE:
@@ -53,13 +53,13 @@ struct App(Program):
             var points = 0
             for stroke in self.drawing:
                 points += len(stroke)
-            if points < _MAX_POINTS:
+            if points < MAX_POINTS:
                 self.drawing[len(self.drawing) - 1].append(
                     context.mouse.position
                 )
 
-        canvas.background(_BACKGROUND)
-        canvas.text_color(_INK)
+        canvas.background(BACKGROUND)
+        canvas.text_color(INK)
         canvas.font_size(18)
 
         # Caps: the same line and arc ended three ways. The guide runs
@@ -71,18 +71,18 @@ struct App(Program):
             StrokeCap.SQUARE,
         ]
         for i in range(3):
-            var x = (Float64(i) - 1.0) * _COLUMN
+            var x = (Float64(i) - 1.0) * COLUMN
             var start = Point(x - 120, 300)
             var end = Point(x + 120, 300)
             with canvas.style(
-                stroke=_STROKE, stroke_thickness=36, stroke_cap=caps[i]
+                stroke=STROKE, stroke_thickness=36, stroke_cap=caps[i]
             ):
                 canvas.line(start, end)
                 canvas.arc((x, 120), 90, 0.4, 2.3)
-            with canvas.style(stroke=_GUIDE, stroke_thickness=1):
+            with canvas.style(stroke=GUIDE, stroke_thickness=1):
                 canvas.line(start, end)
                 canvas.arc((x, 120), 90, 0.4, 2.3)
-            canvas.text("stroke_cap " + _cap_name(caps[i]), (x, 360))
+            canvas.text("stroke_cap " + cap_name(caps[i]), (x, 360))
 
         # Alignment: the stroke inside the edge, centred on it, or around
         # it. The guide is the shape's true edge.
@@ -92,15 +92,15 @@ struct App(Program):
             StrokeAlign.OUTSIDE,
         ]
         for i in range(3):
-            var x = (Float64(i) - 1.0) * _COLUMN
+            var x = (Float64(i) - 1.0) * COLUMN
             var rectangle = Rectangle((x - 110, -110), 90, 90)
             var triangle = Triangle(
                 (x - 45, -155), (x + 45, -155), (x, -65), corner_radius=10
             )
             var polygon = Polygon.star((x + 115, -110), 55, 25, 5)
             with canvas.style(
-                fill=_FILL,
-                stroke=_STROKE,
+                fill=FILL,
+                stroke=STROKE,
                 stroke_thickness=16,
                 stroke_alignment=alignments[i],
             ):
@@ -108,13 +108,13 @@ struct App(Program):
                 canvas.draw(triangle)
                 canvas.draw(polygon)
             with canvas.style(
-                stroke=_GUIDE, stroke_thickness=1, fill_enabled=False
+                stroke=GUIDE, stroke_thickness=1, fill_enabled=False
             ):
                 canvas.draw(rectangle)
                 canvas.draw(triangle)
                 canvas.draw(polygon)
             canvas.text(
-                "stroke_alignment " + _alignment_name(alignments[i]), (x, -10)
+                "stroke_alignment " + alignment_name(alignments[i]), (x, -10)
             )
 
         # Dashes: a preset sized by the thickness, round dots, and exact
@@ -130,10 +130,10 @@ struct App(Program):
             "StrokeDash(24, 10, 4, 10)",
         ]
         for i in range(3):
-            var x = (Float64(i) - 1.0) * _COLUMN
+            var x = (Float64(i) - 1.0) * COLUMN
             with canvas.style(
-                fill=_FILL,
-                stroke=_STROKE,
+                fill=FILL,
+                stroke=STROKE,
                 stroke_thickness=8,
                 stroke_dash=dashes[i],
                 stroke_cap=StrokeCap.ROUND if i == 2 else StrokeCap.BUTT,
@@ -145,7 +145,7 @@ struct App(Program):
         # The mouse drawing: each segment its own line, round-capped, so
         # the segments meet without a notch at any turn.
         with canvas.style(
-            stroke=_INK, stroke_thickness=14, stroke_cap=StrokeCap.ROUND
+            stroke=INK, stroke_thickness=14, stroke_cap=StrokeCap.ROUND
         ):
             for stroke in self.drawing:
                 for i in range(len(stroke)):

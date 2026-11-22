@@ -17,21 +17,21 @@ or not, F cycles the frame-rate cap, C cycles the cursor over the window
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _BARS = Color(56, 58, 92)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime BARS = Color(56, 58, 92)
 """Not black, so the bars `FIT` leaves are plain to see."""
-comptime _BALL = Color(226, 46, 56)
-comptime _BOX = Color(98, 104, 168)
-comptime _TEXT = Color(240, 236, 222)
-comptime _HINT = Color(176, 172, 162)
+comptime BALL = Color(226, 46, 56)
+comptime BOX = Color(98, 104, 168)
+comptime TEXT = Color(240, 236, 222)
+comptime HINT = Color(176, 172, 162)
 
 
-def _frame_caps() -> List[Int]:
+def frame_caps() -> List[Int]:
     """The caps F cycles through; 0 is uncapped."""
     return [0, 60, 30, 10]
 
 
-def _cursors() -> List[Cursor]:
+def cursors() -> List[Cursor]:
     """The cursors C cycles through, every one there is."""
     return [
         Cursor.ARROW,
@@ -55,14 +55,14 @@ struct App(Program):
     var x: Float64
     var dir: Float64
     var cap: Int
-    """Which of `_frame_caps()` is set."""
+    """Which of `frame_caps()` is set."""
     var cursor: Int
-    """Which of `_cursors()` is set."""
+    """Which of `cursors()` is set."""
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
         # A canvas setting that outlives the frame: set once, kept.
-        canvas.letterbox_color(_BARS)
+        canvas.letterbox_color(BARS)
         # A window dial set in `create` shows from the first frame.
         context.cursor(Cursor.CROSSHAIR)
         return App(x=100.0, dir=1.0, cap=0, cursor=1)
@@ -84,11 +84,11 @@ struct App(Program):
         if context.keyboard.pressed(Key.R):
             context.resizable(not context.resizable())
         if context.keyboard.pressed(Key.F):
-            self.cap = (self.cap + 1) % len(_frame_caps())
-            context.max_frame_rate(_frame_caps()[self.cap])
+            self.cap = (self.cap + 1) % len(frame_caps())
+            context.max_frame_rate(frame_caps()[self.cap])
         if context.keyboard.pressed(Key.C):
-            self.cursor = (self.cursor + 1) % len(_cursors())
-            context.cursor(_cursors()[self.cursor])
+            self.cursor = (self.cursor + 1) % len(cursors())
+            context.cursor(cursors()[self.cursor])
 
         self.x += self.dir * 200.0 * context.time.delta
         # Set the sign rather than flip it: under EXTEND/OFF a shrinking
@@ -100,11 +100,11 @@ struct App(Program):
         elif self.x < canvas.left() + 40.0:
             self.dir = 1.0
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         with canvas.style(stroke_enabled=False):
-            canvas.fill(_BALL)
+            canvas.fill(BALL)
             canvas.circle((self.x, 150), 40)
-            canvas.fill(_BOX)
+            canvas.fill(BOX)
             canvas.rectangle((0, 40), 200, 120, corner_radius=12)
 
         # The origin is the middle of the design area and y grows upward, so
@@ -130,10 +130,10 @@ struct App(Program):
             ),
             String(context.cursor()),
         ]
-        with canvas.style(text_color=_TEXT, font_size=24):
+        with canvas.style(text_color=TEXT, font_size=24):
             for i in range(len(lines)):
                 canvas.text(lines[i], (0, -70 - 40 * i))
-        with canvas.style(text_color=_HINT, font_size=18):
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 (
                     "Space: autoscale   F11: fullscreen   R: resizable   F:"

@@ -7,15 +7,15 @@ drawn in.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _SUN = Color(230, 180, 20)
-comptime _HOVERED_SUN = Color(226, 46, 56)
-comptime _ORBIT = Color(62, 62, 68)
-comptime _PLANET = Color(98, 104, 168)
-comptime _MOON = Color(176, 172, 162)
-comptime _HUB = Color(62, 62, 68)
-comptime _COOL = Color(98, 104, 168)
-comptime _WARM = Color(201, 140, 150)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime SUN = Color(230, 180, 20)
+comptime HOVERED_SUN = Color(226, 46, 56)
+comptime ORBIT = Color(62, 62, 68)
+comptime PLANET = Color(98, 104, 168)
+comptime MOON = Color(176, 172, 162)
+comptime HUB = Color(62, 62, 68)
+comptime COOL = Color(98, 104, 168)
+comptime WARM = Color(201, 140, 150)
 
 
 @fieldwise_init
@@ -27,7 +27,7 @@ struct Transforms(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var elapsed = context.time.elapsed
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         var planet_angle = elapsed * TAU / 10.0
         var moon_angle = elapsed * TAU / 3.5
@@ -40,7 +40,7 @@ struct Transforms(Program):
         var sun_hovered = sun.contains(canvas.to_local(context.mouse.position))
 
         canvas.stroke_enabled(False)
-        canvas.fill(_HOVERED_SUN if sun_hovered else _SUN)
+        canvas.fill(HOVERED_SUN if sun_hovered else SUN)
         canvas.draw(sun)
 
         # Planet: turn, then move out along the turned x axis, so it orbits
@@ -49,26 +49,26 @@ struct Transforms(Program):
             canvas.rotate(planet_angle)
             canvas.translate(Vector(160, 0))
             # Thin orbit guide rendered in planet's frame before further nesting
-            canvas.stroke(_ORBIT, thickness=1)
+            canvas.stroke(ORBIT, thickness=1)
             canvas.fill_enabled(False)
             canvas.circle((0.0, 0.0), 45.0)
 
             canvas.stroke_enabled(False)
-            canvas.fill(_PLANET)
+            canvas.fill(PLANET)
             canvas.circle((0.0, 0.0), 18.0)
 
             # Moon: orbits the planet
             with canvas.transform():
                 canvas.rotate(moon_angle)
                 canvas.translate(Vector(45, 0))
-                canvas.fill(_MOON)
+                canvas.fill(MOON)
                 canvas.circle((0.0, 0.0), 8.0)
 
         # Spinning rect cluster: same transform pattern, different shape.
         # Below and left of centre, so both coordinates are negative.
         with canvas.transform(Transform(translation=Vector(-232, -165))):
             canvas.stroke_enabled(False)
-            canvas.fill(_HUB)
+            canvas.fill(HUB)
             canvas.circle((0.0, 0.0), 8.0)
 
             for i in range(6):
@@ -79,7 +79,7 @@ struct Transforms(Program):
                     canvas.translate(Vector(70, 0))
                     canvas.rotate(-arm_angle)
                     var t = (sin(elapsed * 2.0 + Float64(i)) + 1.0) / 2.0
-                    canvas.fill(_COOL.lerp(_WARM, t))
+                    canvas.fill(COOL.lerp(WARM, t))
                     canvas.rectangle((0.0, 0.0), 36.0, 18.0)
 
         # Rotating triangle fan
@@ -89,7 +89,7 @@ struct Transforms(Program):
                 with canvas.transform():
                     canvas.rotate(a)
                     canvas.stroke_enabled(False)
-                    canvas.fill(_COOL.lerp(_WARM, Float64(i) / 4.0))
+                    canvas.fill(COOL.lerp(WARM, Float64(i) / 4.0))
                     canvas.triangle((0.0, 0.0), (60.0, 15.0), (60.0, -15.0))
 
 

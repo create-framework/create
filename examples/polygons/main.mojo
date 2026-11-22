@@ -7,25 +7,25 @@ to test `overlaps`.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
+comptime BACKGROUND = Color(40, 40, 44)
 """Light enough for the U's shadow to show against it."""
-comptime _TEXT = Color(240, 236, 222)
-comptime _HOVERED = Color(240, 236, 222)
-comptime _STAR = Color(201, 140, 150)
-comptime _U = Color(98, 104, 168, 150)
-comptime _HOVERED_U = Color(240, 236, 222, 190)
-comptime _U_OUTLINE = Color(240, 236, 222)
-comptime _HIT = Color(226, 46, 56)
-comptime _SHADOW = Color(0, 0, 0, 170)
-comptime _PENTAGRAM = Color(201, 140, 150)
+comptime TEXT = Color(240, 236, 222)
+comptime HOVERED = Color(240, 236, 222)
+comptime STAR = Color(201, 140, 150)
+comptime U_FILL = Color(98, 104, 168, 150)
+comptime HOVERED_U = Color(240, 236, 222, 190)
+comptime U_OUTLINE = Color(240, 236, 222)
+comptime HIT = Color(226, 46, 56)
+comptime SHADOW = Color(0, 0, 0, 170)
+comptime PENTAGRAM = Color(201, 140, 150)
 
-comptime _SPIN = 0.6
+comptime SPIN = 0.6
 """How fast the stars turn, in radians per second."""
 
-comptime _PENTAGRAM_HOME = Point(520.0, -80.0)
+comptime PENTAGRAM_HOME = Point(520.0, -80.0)
 
 
-def _side_color(sides: Int) -> Color:
+def side_color(sides: Int) -> Color:
     var colors: List[Color] = [
         Color(98, 104, 168),
         Color(201, 140, 150),
@@ -37,7 +37,7 @@ def _side_color(sides: Int) -> Color:
     return colors[(sides - 3) % len(colors)]
 
 
-def _pentagram(position: Point, r: Float64) -> Polygon:
+def pentagram(position: Point, r: Float64) -> Polygon:
     """Five vertices joined every second one, so the edges cross; under the
     nonzero rule the middle, wound twice, is still inside."""
     var tips = Polygon.regular(position, r, 5).vertices.copy()
@@ -62,7 +62,7 @@ struct App(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
         return App(
             inner_ratio=0.45,
-            pentagram=_pentagram(_PENTAGRAM_HOME, 55),
+            pentagram=pentagram(PENTAGRAM_HOME, 55),
             dragging=False,
             grab=Vector(0, 0),
         )
@@ -87,7 +87,7 @@ struct App(Program):
         if self.dragging:
             self.pentagram = self.pentagram.translate(mouse + self.grab - first)
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         canvas.stroke_enabled(False)
 
         # Regular polygons, three sides to eight; the one under the mouse
@@ -96,14 +96,14 @@ struct App(Program):
             var x = -500.0 + 200.0 * Float64(sides - 3)
             var shape = Polygon.regular((x, 170), 70, sides)
             if shape.contains(mouse):
-                canvas.fill(_HOVERED)
+                canvas.fill(HOVERED)
             else:
-                canvas.fill(_side_color(sides))
+                canvas.fill(side_color(sides))
             canvas.draw(shape)
 
         # Stars turning either way. Every star's first tip points up at
         # rest; `start_angle` turns it.
-        var turn = context.time.elapsed * _SPIN
+        var turn = context.time.elapsed * SPIN
         for i in range(3):
             var tips = 5 + i
             var direction = 1.0 if i % 2 == 0 else -1.0
@@ -115,9 +115,9 @@ struct App(Program):
                 start_angle=TAU / 4.0 + direction * turn,
             )
             if star.contains(mouse):
-                canvas.fill(_HOVERED)
+                canvas.fill(HOVERED)
             else:
-                canvas.fill(_STAR)
+                canvas.fill(STAR)
             canvas.draw(star)
 
         # A concave U from literal vertices, translucent and shadowed. Its
@@ -134,14 +134,14 @@ struct App(Program):
             (60, 20),
         )
         var hit = u.overlaps(self.pentagram)
-        var fill = _U
+        var fill = U_FILL
         if u.contains(mouse):
-            fill = _HOVERED_U
+            fill = HOVERED_U
         with canvas.style(
             fill=fill,
-            stroke=_HIT if hit else _U_OUTLINE,
+            stroke=HIT if hit else U_OUTLINE,
             stroke_thickness=6,
-            shadow=_SHADOW,
+            shadow=SHADOW,
             shadow_offset=Vector(10, -14),
             shadow_blur=24,
         ):
@@ -150,13 +150,13 @@ struct App(Program):
         # Translucent, so the stroke shows every edge, the crossing ones
         # through the middle too, while the middle is filled just once.
         with canvas.style(
-            fill=_PENTAGRAM.with_alpha(90),
-            stroke=_PENTAGRAM,
+            fill=PENTAGRAM.with_alpha(90),
+            stroke=PENTAGRAM,
             stroke_thickness=3,
         ):
             canvas.draw(self.pentagram)
 
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Polygons", (0, canvas.top() - 38))

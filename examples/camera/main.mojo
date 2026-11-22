@@ -11,15 +11,15 @@ them.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _MARKER = Color(226, 46, 56)
-comptime _TEXT = Color(240, 236, 222)
-comptime _ORIGIN = Color(240, 236, 222)
-comptime _POST = Color(98, 104, 168)
-comptime _LIT_POST = Color(201, 140, 150)
-comptime _PAN_SPEED = 300.0
+comptime BACKGROUND = Color(40, 40, 44)
+comptime MARKER = Color(226, 46, 56)
+comptime TEXT = Color(240, 236, 222)
+comptime ORIGIN = Color(240, 236, 222)
+comptime POST = Color(98, 104, 168)
+comptime LIT_POST = Color(201, 140, 150)
+comptime PAN_SPEED = 300.0
 """Screen units per second, so a pan feels the same at any zoom."""
-comptime _ZOOM_STEP = 1.15
+comptime ZOOM_STEP = 1.15
 """How much one notch of the wheel zooms in or out."""
 
 
@@ -34,7 +34,7 @@ struct CameraDemo(Program):
         return CameraDemo(Camera(), [])
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        var pan = _PAN_SPEED * context.time.delta / self.camera.zoom
+        var pan = PAN_SPEED * context.time.delta / self.camera.zoom
         if context.keyboard.down(Key.RIGHT):
             self.camera.position += Vector(pan, 0.0)
         if context.keyboard.down(Key.LEFT):
@@ -45,7 +45,7 @@ struct CameraDemo(Program):
         if context.mouse.wheel.y != 0.0:
             var before = self.camera.to_world(context.mouse.position)
             self.camera.zoom = clamp(
-                self.camera.zoom * pow(_ZOOM_STEP, context.mouse.wheel.y),
+                self.camera.zoom * pow(ZOOM_STEP, context.mouse.wheel.y),
                 0.3,
                 4.0,
             )
@@ -58,7 +58,7 @@ struct CameraDemo(Program):
         if context.keyboard.pressed(Key.C):
             self.markers.clear()
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         canvas.camera(self.camera)
 
         # World content: a strip of posts stretching far past what any single
@@ -67,14 +67,14 @@ struct CameraDemo(Program):
         for i in range(-20, 20):
             var x = Float64(i) * 120.0
             var t = (sin(context.time.elapsed + Float64(i)) + 1.0) / 2.0
-            canvas.fill(_POST.lerp(_LIT_POST, t))
+            canvas.fill(POST.lerp(LIT_POST, t))
             canvas.rectangle((x, 0.0), 40.0, 200.0)
 
-        canvas.fill(_ORIGIN)
+        canvas.fill(ORIGIN)
         canvas.circle((0.0, 140.0), 14.0)
 
         # In world units, so a marker grows and shrinks with the zoom.
-        with canvas.style(fill=_MARKER, stroke=_TEXT, stroke_thickness=2):
+        with canvas.style(fill=MARKER, stroke=TEXT, stroke_thickness=2):
             for marker in self.markers:
                 canvas.circle(marker, 10.0)
 
@@ -82,7 +82,7 @@ struct CameraDemo(Program):
         # how far it has zoomed.
         with canvas.overlay():
             with canvas.style(
-                text_color=_TEXT, font_size=18, text_alignment=Align.TOP
+                text_color=TEXT, font_size=18, text_alignment=Align.TOP
             ):
                 canvas.text(
                     "Left/Right pan, the wheel zooms, a click drops a marker, C"

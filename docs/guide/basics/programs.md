@@ -317,15 +317,15 @@ A program with a menu, a game and a pause screen keeps each scene as a plain fie
 ```mojo
 # From examples/scenes: `Menu` and `Paint` are plain structs.
 def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-    if self.scene == _MENU:
+    if self.scene == MENU:
         self.menu.update(context, canvas)
         if self.menu.start_pressed:
             self.paint.enter()
-            self.scene = _DRAWING
+            self.scene = DRAWING
     else:
         self.paint.update(context, canvas)
         if self.paint.back_pressed:
-            self.scene = _MENU
+            self.scene = MENU
 ```
 
 A scene's `update` takes only what it uses: `context` to read input or time, `canvas` to draw. To

@@ -9,20 +9,20 @@ itself.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _SHAPE = Color(98, 104, 168)
-comptime _HIT = Color(226, 46, 56)
-comptime _GUIDE = Color(176, 172, 162)
-comptime _TEXT = Color(240, 236, 222)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime SHAPE = Color(98, 104, 168)
+comptime HIT = Color(226, 46, 56)
+comptime GUIDE = Color(176, 172, 162)
+comptime TEXT = Color(240, 236, 222)
 
 
-def _reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point):
+def reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point):
     """A line from the mouse to the nearest point of `shape`, and a dot
     there. Any shape answers `closest_point`, so one function serves all."""
     var nearest = shape.closest_point(mouse)
-    with canvas.style(stroke=_GUIDE, stroke_thickness=2):
+    with canvas.style(stroke=GUIDE, stroke_thickness=2):
         canvas.line(mouse, nearest)
-    with canvas.style(fill=_GUIDE, stroke_enabled=False):
+    with canvas.style(fill=GUIDE, stroke_enabled=False):
         canvas.circle(nearest, 5)
 
 
@@ -60,50 +60,50 @@ struct Collisions(Program):
         var mouse = context.mouse.position
         self.probe = self.probe.move_to(mouse)
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         # Regions: filled, lit while they overlap the probe.
         with canvas.style(stroke_enabled=False):
-            canvas.fill(_HIT if self.rectangle.overlaps(self.probe) else _SHAPE)
+            canvas.fill(HIT if self.rectangle.overlaps(self.probe) else SHAPE)
             canvas.draw(self.rectangle)
-            canvas.fill(_HIT if self.circle.overlaps(self.probe) else _SHAPE)
+            canvas.fill(HIT if self.circle.overlaps(self.probe) else SHAPE)
             canvas.draw(self.circle)
-            canvas.fill(_HIT if self.triangle.overlaps(self.probe) else _SHAPE)
+            canvas.fill(HIT if self.triangle.overlaps(self.probe) else SHAPE)
             canvas.draw(self.triangle)
-            canvas.fill(_HIT if self.star.overlaps(self.probe) else _SHAPE)
+            canvas.fill(HIT if self.star.overlaps(self.probe) else SHAPE)
             canvas.draw(self.star)
-            canvas.fill(_HIT if self.ellipse.overlaps(self.probe) else _SHAPE)
+            canvas.fill(HIT if self.ellipse.overlaps(self.probe) else SHAPE)
             canvas.draw(self.ellipse)
-            canvas.fill(_HIT if self.capsule.overlaps(self.probe) else _SHAPE)
+            canvas.fill(HIT if self.capsule.overlaps(self.probe) else SHAPE)
             canvas.draw(self.capsule)
 
         # Curves: stroked, lit while they cross the probe.
         with canvas.style(stroke_thickness=8):
-            canvas.stroke(_HIT if self.line.intersects(self.probe) else _SHAPE)
+            canvas.stroke(HIT if self.line.intersects(self.probe) else SHAPE)
             canvas.draw(self.line)
-            canvas.stroke(_HIT if self.arc.intersects(self.probe) else _SHAPE)
+            canvas.stroke(HIT if self.arc.intersects(self.probe) else SHAPE)
             canvas.draw(self.arc)
 
         with canvas.style(
-            fill=_TEXT.with_alpha(60), stroke=_TEXT, stroke_thickness=2
+            fill=TEXT.with_alpha(60), stroke=TEXT, stroke_thickness=2
         ):
             canvas.draw(self.probe)
 
-        _reach(canvas, self.rectangle, mouse)
-        _reach(canvas, self.circle, mouse)
-        _reach(canvas, self.triangle, mouse)
-        _reach(canvas, self.star, mouse)
-        _reach(canvas, self.ellipse, mouse)
-        _reach(canvas, self.capsule, mouse)
-        _reach(canvas, self.line, mouse)
-        _reach(canvas, self.arc, mouse)
+        reach(canvas, self.rectangle, mouse)
+        reach(canvas, self.circle, mouse)
+        reach(canvas, self.triangle, mouse)
+        reach(canvas, self.star, mouse)
+        reach(canvas, self.ellipse, mouse)
+        reach(canvas, self.capsule, mouse)
+        reach(canvas, self.line, mouse)
+        reach(canvas, self.arc, mouse)
 
         with canvas.style(
-            text_color=_TEXT, font_size=30, text_alignment=Align.TOP
+            text_color=TEXT, font_size=30, text_alignment=Align.TOP
         ):
             canvas.text("Collisions", (0, canvas.top() - 38))
         with canvas.style(
-            text_color=_TEXT, font_size=18, text_alignment=Align.TOP
+            text_color=TEXT, font_size=18, text_alignment=Align.TOP
         ):
             canvas.text(
                 "Regions light up as they overlap the circle, curves as they"

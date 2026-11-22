@@ -9,7 +9,7 @@ sketch through the real window loop, which is what a program actually pays.
 
 Every case reseeds `Random(1234)` per repetition, so every run — and every
 future run, after a change to `_raster.mojo` or `_backend.mojo` — measures the
-identical geometry. Times are ms/frame, mean over `_REPS` repetitions.
+identical geometry. Times are ms/frame, mean over `REPS` repetitions.
 
 Baseline recorded 2026-09-13 on a Ryzen 5 2600X, before the CPU render backend
 performance work (span-based rasterisation, incremental affine mapping, SIMD
@@ -61,71 +61,71 @@ from create.render._curve import stroke_segment
 from create.render import Style
 from create.math.matrix import identity
 
-comptime _W = 1920
-comptime _H = 1080
-comptime _REPS = 20
-comptime _SHAPES = 2000
+comptime W = 1920
+comptime H = 1080
+comptime REPS = 20
+comptime SHAPES = 2000
 
 
-def _round(v: Float64) -> String:
+def three_decimals(v: Float64) -> String:
     return String(Float64(Int(v * 1000.0 + 0.5)) / 1000.0)
 
 
-def _report(label: String, t0: Int, t1: Int, reps: Int = _REPS):
+def report(label: String, t0: Int, t1: Int, reps: Int = REPS):
     var per = Float64(t1 - t0) / 1.0e6 / Float64(reps)
-    print(label + _round(per) + " ms")
+    print(label + three_decimals(per) + " ms")
 
 
-def _base_matrix() -> Transform:
+def base_matrix() -> Transform:
     """The base mapping: y-up world space to top-down device pixels."""
     return Transform(
-        translation=Vector(Float64(_W) / 2.0, Float64(_H) / 2.0),
+        translation=Vector(Float64(W) / 2.0, Float64(H) / 2.0),
         scale_x=1.0,
         scale_y=-1.0,
     )
 
 
-def _rotated_matrix() -> Transform:
+def rotated_matrix() -> Transform:
     """A 45-degree rotation, so shapes fall onto the non-uniform replay path."""
     return Transform(
-        translation=Vector(Float64(_W) / 2.0, Float64(_H) / 2.0),
+        translation=Vector(Float64(W) / 2.0, Float64(H) / 2.0),
         rotation=PI / 4.0,
     )
 
 
-def _fill_bench():
-    var mem = MemorySurface(_W, _H)
+def fill_bench():
+    var mem = MemorySurface(W, H)
 
     var t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
         fill_all(s, Color(10, 20, 30))
     var t1 = perf_counter_ns()
-    _report("fill_all opaque              ", t0, t1)
+    report("fill_all opaque              ", t0, t1)
 
     t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
         fill_all(s, Color(10, 20, 30, 192))
     t1 = perf_counter_ns()
-    _report("fill_all alpha               ", t0, t1)
+    report("fill_all alpha               ", t0, t1)
 
     t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
-        fill_pixels(s, 0, 0, _W, _H, Color(10, 20, 30))
+        fill_pixels(s, 0, 0, W, H, Color(10, 20, 30))
     t1 = perf_counter_ns()
-    _report("fill_pixels opaque           ", t0, t1)
+    report("fill_pixels opaque           ", t0, t1)
 
     t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
-        fill_pixels(s, 0, 0, _W, _H, Color(10, 20, 30, 192))
+        fill_pixels(s, 0, 0, W, H, Color(10, 20, 30, 192))
     t1 = perf_counter_ns()
-    _report("fill_pixels alpha            ", t0, t1)
+    report("fill_pixels alpha            ", t0, t1)
 
 
-def _shape_style(alpha: Bool) -> Style:
+def shape_style(alpha: Bool) -> Style:
     var st = Style()
     st.fill_enabled = True
     st.stroke_enabled = False
@@ -133,14 +133,14 @@ def _shape_style(alpha: Bool) -> Style:
     return st^
 
 
-def _shapes_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
+def shapes_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
     for kind in range(3):
         for alpha in range(2):
-            var st = _shape_style(alpha == 1)
+            var st = shape_style(alpha == 1)
             var t0 = perf_counter_ns()
-            for _ in range(_REPS):
+            for _ in range(REPS):
                 var rng = Random(1234)
-                for _i in range(_SHAPES):
+                for _i in range(SHAPES):
                     var x = rng.float(-900.0, 900.0)
                     var y = rng.float(-500.0, 500.0)
                     var size = rng.float(8.0, 34.0)
@@ -172,17 +172,17 @@ def _shapes_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
                 "circles  " if kind == 1 else "triangles"
             )
             var mode = "alpha " if alpha == 1 else "opaque"
-            _report("2000 " + name + " " + mode + "        ", t0, t1)
+            report("2000 " + name + " " + mode + "        ", t0, t1)
 
 
-def _rotated_bench(
+def rotated_bench(
     rot: Transform, mut be: Backend, mut mem: MemorySurface
 ) raises:
-    var st = _shape_style(True)
+    var st = shape_style(True)
     var t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var rng = Random(1234)
-        for _i in range(_SHAPES):
+        for _i in range(SHAPES):
             var x = rng.float(-400.0, 400.0)
             var y = rng.float(-300.0, 300.0)
             var size = rng.float(8.0, 34.0)
@@ -190,10 +190,10 @@ def _rotated_bench(
         var s = mem.surface()
         be.present(s, 1.0)
     var t1 = perf_counter_ns()
-    _report("2000 rects, rotated, alpha    ", t0, t1)
+    report("2000 rects, rotated, alpha    ", t0, t1)
 
 
-def _image_bench():
+def image_bench():
     comptime SW = 64
     comptime SH = 64
     var src = List[UInt8](length=SW * SH * 4, fill=0)
@@ -204,36 +204,36 @@ def _image_bench():
         sp[unsafe_offset=i * 4 + 2] = 80
         sp[unsafe_offset=i * 4 + 3] = 255
 
-    var mem = MemorySurface(_W, _H)
+    var mem = MemorySurface(W, H)
 
     var t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
-        for row in range(0, _H, 260):
-            for col in range(0, _W, 260):
+        for row in range(0, H, 260):
+            for col in range(0, W, 260):
                 blit_image(s, sp, SW, SH, col, row, 256, 256)
     var t1 = perf_counter_ns()
-    _report("image blit, upscaled 4x      ", t0, t1)
+    report("image blit, upscaled 4x      ", t0, t1)
 
     t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
-        for row in range(0, _H, 20):
-            for col in range(0, _W, 20):
+        for row in range(0, H, 20):
+            for col in range(0, W, 20):
                 blit_image(s, sp, SW, SH, col, row, 16, 16)
     t1 = perf_counter_ns()
-    _report("image blit, downscaled 4x    ", t0, t1)
+    report("image blit, downscaled 4x    ", t0, t1)
 
 
-def _line_bench():
-    var mem = MemorySurface(_W, _H)
+def line_bench():
+    var mem = MemorySurface(W, H)
     var c = Color(200, 60, 60, 192)
 
     var t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var s = mem.surface()
         var rng = Random(1234)
-        for _i in range(_SHAPES):
+        for _i in range(SHAPES):
             var x = rng.float(-900.0, 900.0)
             var y = rng.float(-500.0, 500.0)
             var len = rng.float(20.0, 80.0)
@@ -245,13 +245,13 @@ def _line_bench():
             var qy: Array[Float64, 4] = [q[0].y, q[1].y, q[2].y, q[3].y]
             fill_quad(s, qx, qy, c)
     var t1 = perf_counter_ns()
-    _report("2000 thick alpha lines        ", t0, t1)
+    report("2000 thick alpha lines        ", t0, t1)
 
 
-def _text_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
-    var st = _shape_style(False)
+def text_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
+    var st = shape_style(False)
     var t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         for _i in range(20):
             be.buffer.record(
                 text_command(
@@ -265,22 +265,22 @@ def _text_bench(m: Transform, mut be: Backend, mut mem: MemorySurface) raises:
         var s = mem.surface()
         be.present(s, 1.0)
     var t1 = perf_counter_ns()
-    _report("20 text lines                 ", t0, t1)
+    report("20 text lines                 ", t0, t1)
 
 
-def _frame_bench(
+def frame_bench(
     m: Transform,
     mut be: Backend,
     mut mem: MemorySurface,
     label: String = "gpu frame (record+present)",
 ) raises:
     """One `gpu`-shaped frame: a clear plus 2000 mixed shapes."""
-    var st = _shape_style(True)
+    var st = shape_style(True)
     var t0 = perf_counter_ns()
-    for _ in range(_REPS):
+    for _ in range(REPS):
         var rng = Random(1234)
         be.buffer.record(clear_command(Color(0x10, 0x12, 0x18)))
-        for i in range(_SHAPES):
+        for i in range(SHAPES):
             var x = rng.float(-900.0, 900.0)
             var y = rng.float(-500.0, 500.0)
             var size = rng.float(8.0, 34.0)
@@ -305,16 +305,16 @@ def _frame_bench(
         var s = mem.surface()
         be.present(s, 1.0)
     var t1 = perf_counter_ns()
-    _report(label, t0, t1)
+    report(label, t0, t1)
 
 
-def _antialiasing_bench(
+def antialiasing_bench(
     m: Transform, mut be: Backend, mut mem: MemorySurface
 ) raises:
     """The `gpu`-shaped frame and a few large stroked circles at every
     antialiasing level: many small shapes are all edge, large ones mostly
     interior."""
-    var stroked = _shape_style(True)
+    var stroked = shape_style(True)
     stroked.stroke_enabled = True
     stroked.stroke_color = Color(240, 240, 240)
     var levels: List[Antialiasing] = [
@@ -326,9 +326,9 @@ def _antialiasing_bench(
     for level in levels:
         be.antialiasing = level
         var name = String(level)
-        _frame_bench(m, be, mem, "frame, " + name + "  ")
+        frame_bench(m, be, mem, "frame, " + name + "  ")
         var t0 = perf_counter_ns()
-        for _ in range(_REPS):
+        for _ in range(REPS):
             var rng = Random(1234)
             for _i in range(20):
                 var x = rng.float(-700.0, 700.0)
@@ -337,23 +337,23 @@ def _antialiasing_bench(
             var s = mem.surface()
             be.present(s, 1.0)
         var t1 = perf_counter_ns()
-        _report("20 circles r200, " + name + "  ", t0, t1)
+        report("20 circles r200, " + name + "  ", t0, t1)
     be.antialiasing = Antialiasing.OFF
 
 
 def main() raises:
-    print(String(_W) + "x" + String(_H) + ", " + String(_REPS) + " reps")
-    _fill_bench()
+    print(String(W) + "x" + String(H) + ", " + String(REPS) + " reps")
+    fill_bench()
 
-    var mem = MemorySurface(_W, _H)
+    var mem = MemorySurface(W, H)
     var be = Backend()
-    var m = _base_matrix()
-    var rot = _rotated_matrix()
+    var m = base_matrix()
+    var rot = rotated_matrix()
 
-    _shapes_bench(m, be, mem)
-    _rotated_bench(rot, be, mem)
-    _image_bench()
-    _line_bench()
-    _text_bench(m, be, mem)
-    _frame_bench(m, be, mem)
-    _antialiasing_bench(m, be, mem)
+    shapes_bench(m, be, mem)
+    rotated_bench(rot, be, mem)
+    image_bench()
+    line_bench()
+    text_bench(m, be, mem)
+    frame_bench(m, be, mem)
+    antialiasing_bench(m, be, mem)

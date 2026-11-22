@@ -15,14 +15,14 @@ Space deals a new poster.
 
 from create import *
 
-comptime _WIDTH = 600
-comptime _HEIGHT = 840
-comptime _MARGIN = 40.0
-comptime _MEASURE_SIZE = 100.0
+comptime WIDTH = 600
+comptime HEIGHT = 840
+comptime MARGIN = 40.0
+comptime MEASURE_SIZE = 100.0
 """The size words are measured at before they are scaled to fit."""
 
 
-def _words() -> List[String]:
+def words() -> List[String]:
     return [
         "CREATE",
         "SKETCH",
@@ -41,7 +41,7 @@ def _words() -> List[String]:
     ]
 
 
-def _weights() -> List[FontWeight]:
+def weights() -> List[FontWeight]:
     return [
         FontWeight.THIN,
         FontWeight.LIGHT,
@@ -51,7 +51,7 @@ def _weights() -> List[FontWeight]:
     ]
 
 
-def _palettes() -> List[List[Color]]:
+def palettes() -> List[List[Color]]:
     """Paper, ink and accent."""
     return [
         [Color(240, 236, 222), Color(40, 40, 44), Color(226, 46, 56)],
@@ -79,8 +79,8 @@ struct Poster(Program):
             self.seed += 1
 
         var random = Random(UInt64(self.seed))
-        var palettes = _palettes()
-        var palette = palettes[random.int(0, len(palettes))].copy()
+        var all_palettes = palettes()
+        var palette = all_palettes[random.int(0, len(all_palettes))].copy()
         var paper = palette[0]
         var ink = palette[1]
         var accent = palette[2]
@@ -97,46 +97,46 @@ struct Poster(Program):
                 random.float(120.0, 260.0),
             )
 
-        var words = _words()
-        var weights = _weights()
+        var all_words = words()
+        var all_weights = weights()
         var rows = random.int(4, 8)
         var footer = 50.0
-        var row_height = (canvas.height() - 2.0 * _MARGIN - footer) / Float64(
+        var row_height = (canvas.height() - 2.0 * MARGIN - footer) / Float64(
             rows
         )
-        var full_width = canvas.width() - 2.0 * _MARGIN
+        var full_width = canvas.width() - 2.0 * MARGIN
         for row in range(rows):
-            var y = canvas.top() - _MARGIN - (Float64(row) + 0.5) * row_height
-            var word = words[random.int(0, len(words))]
+            var y = canvas.top() - MARGIN - (Float64(row) + 0.5) * row_height
+            var word = all_words[random.int(0, len(all_words))]
             var share = random.float(0.45, 1.0)
             var align = random.int(0, 3)
             # Each row's own style, so nothing carries into the next.
             with canvas.style():
                 if random.bool():
                     canvas.font(self.mono)
-                canvas.font_weight(weights[random.int(0, len(weights))])
+                canvas.font_weight(all_weights[random.int(0, len(all_weights))])
                 canvas.font_italic(random.float() < 0.3)
                 canvas.text_color(accent if random.float() < 0.25 else ink)
 
                 # Measured once, then scaled: text width grows in proportion
                 # to the size, so one measurement says what size fills the
                 # share. Capped by the row's height so tall words still fit.
-                canvas.font_size(_MEASURE_SIZE)
+                canvas.font_size(MEASURE_SIZE)
                 var measured = canvas.text_width(word)
                 var size = min(
-                    _MEASURE_SIZE * full_width * share / measured,
+                    MEASURE_SIZE * full_width * share / measured,
                     row_height * 1.2,
                 )
                 canvas.font_size(size)
 
                 if align == 0:
                     canvas.text_alignment(Align.LEFT)
-                    canvas.text(word, (canvas.left() + _MARGIN, y))
+                    canvas.text(word, (canvas.left() + MARGIN, y))
                 elif align == 1:
                     canvas.text(word, (0.0, y))
                 else:
                     canvas.text_alignment(Align.RIGHT)
-                    canvas.text(word, (canvas.right() - _MARGIN, y))
+                    canvas.text(word, (canvas.right() - MARGIN, y))
 
         with canvas.style(
             font=self.mono,
@@ -152,4 +152,4 @@ struct Poster(Program):
 
 
 def main() raises:
-    run[Poster]("Poster", width=_WIDTH, height=_HEIGHT)
+    run[Poster]("Poster", width=WIDTH, height=HEIGHT)

@@ -11,29 +11,29 @@ from player import Player
 
 # The level, in world units. y is up, so the ground's top is below the middle
 # of the screen, and a platform higher up has a larger y.
-comptime _WORLD_LEFT = -2400.0
-comptime _WORLD_RIGHT = 2400.0
-comptime _GROUND_TOP = -240.0
-comptime _PLATFORM_THICKNESS = 24.0
-comptime _CAMERA_LEAD = 150.0
+comptime WORLD_LEFT = -2400.0
+comptime WORLD_RIGHT = 2400.0
+comptime GROUND_TOP = -240.0
+comptime PLATFORM_THICKNESS = 24.0
+comptime CAMERA_LEAD = 150.0
 """How far above the camera's centre the player climbs before it follows."""
 
-comptime _SKY = Color(40, 40, 44)
-comptime _GROUND = Color(30, 30, 33)
-comptime _PLATFORM = Color(98, 104, 168)
-comptime _WALL = Color(62, 62, 68)
-comptime _PLAYER = Color(226, 46, 56)
-comptime _HINT = Color(176, 172, 162)
+comptime SKY = Color(40, 40, 44)
+comptime GROUND = Color(30, 30, 33)
+comptime PLATFORM = Color(98, 104, 168)
+comptime WALL = Color(62, 62, 68)
+comptime PLAYER = Color(226, 46, 56)
+comptime HINT = Color(176, 172, 162)
 
 
-def _platforms() -> List[Rectangle]:
+def platforms() -> List[Rectangle]:
     """The ground, then the platforms, left to right. Every shape is placed
     by its middle, so each top is half a thickness above its position."""
     var ground_depth = 1000.0
     var level: List[Rectangle] = [
         Rectangle(
-            (0.0, _GROUND_TOP - ground_depth / 2.0),
-            _WORLD_RIGHT - _WORLD_LEFT,
+            (0.0, GROUND_TOP - ground_depth / 2.0),
+            WORLD_RIGHT - WORLD_LEFT,
             ground_depth,
         )
     ]
@@ -54,9 +54,9 @@ def _platforms() -> List[Rectangle]:
     for platform in layout:
         level.append(
             Rectangle(
-                (platform[0], platform[1] - _PLATFORM_THICKNESS / 2.0),
+                (platform[0], platform[1] - PLATFORM_THICKNESS / 2.0),
                 platform[2],
-                _PLATFORM_THICKNESS,
+                PLATFORM_THICKNESS,
                 corner_radius=6,
             )
         )
@@ -74,11 +74,11 @@ struct Game(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Game:
         return Game(
             player=Player(
-                position=Point(0.0, _GROUND_TOP + Player.HEIGHT / 2.0),
+                position=Point(0.0, GROUND_TOP + Player.HEIGHT / 2.0),
                 velocity=Vector.ZERO,
                 jumps_left=Player.JUMPS,
             ),
-            platforms=_platforms(),
+            platforms=platforms(),
             camera=Camera(),
         )
 
@@ -89,7 +89,7 @@ struct Game(Program):
         var half_w = Player.WIDTH / 2.0
         var position = self.player.position
         self.player.position = Point(
-            clamp(position.x, _WORLD_LEFT + half_w, _WORLD_RIGHT - half_w),
+            clamp(position.x, WORLD_LEFT + half_w, WORLD_RIGHT - half_w),
             position.y,
         )
 
@@ -97,30 +97,30 @@ struct Game(Program):
         # the lead, so a jump from the ground leaves the view still.
         self.camera.position = Point(
             self.player.position.x,
-            max(0.0, self.player.position.y - _CAMERA_LEAD),
+            max(0.0, self.player.position.y - CAMERA_LEAD),
         )
 
-        canvas.background(_SKY)
+        canvas.background(SKY)
         canvas.camera(self.camera)
 
         with canvas.style(stroke_enabled=False):
-            canvas.fill(_GROUND)
+            canvas.fill(GROUND)
             canvas.draw(self.platforms[0])
-            canvas.fill(_PLATFORM)
+            canvas.fill(PLATFORM)
             for i in range(1, len(self.platforms)):
                 canvas.draw(self.platforms[i])
 
             # Walls past either edge, wide enough to fill the view there.
-            canvas.fill(_WALL)
-            canvas.rectangle((_WORLD_LEFT - 500.0, 0.0), 1000.0, 4000.0)
-            canvas.rectangle((_WORLD_RIGHT + 500.0, 0.0), 1000.0, 4000.0)
+            canvas.fill(WALL)
+            canvas.rectangle((WORLD_LEFT - 500.0, 0.0), 1000.0, 4000.0)
+            canvas.rectangle((WORLD_RIGHT + 500.0, 0.0), 1000.0, 4000.0)
 
-            canvas.fill(_PLAYER)
+            canvas.fill(PLAYER)
             canvas.draw(self.player)
 
         with canvas.overlay():
             with canvas.style(
-                text_color=_HINT, font_size=20, text_alignment=Align.TOP_LEFT
+                text_color=HINT, font_size=20, text_alignment=Align.TOP_LEFT
             ):
                 canvas.text(
                     "A/D: move   W: jump (again in the air)",
