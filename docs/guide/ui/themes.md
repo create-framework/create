@@ -8,9 +8,10 @@ sit on.
 ## Themes
 
 **A `Theme` holds design tokens, not widget looks:** the colours, the kinds of text, the corner
-radii, the gaps, the strength of the hovered and pressed states, and the focus ring. Each widget
-works out its look from these when it is drawn, so changing one token changes every widget that uses
-it. A `UI` is drawn in the theme it is built with, the light one unless given:
+radii, the gaps, the height of a control such as a button (`control_height`), the strength of the
+hovered and pressed states, and the focus ring. Each widget works out its look from these when it is
+drawn, so changing one token changes every widget that uses it. A `UI` is drawn in the theme it is
+built with, the light one unless given:
 
 ```mojo
 # In `create`, building the `ui` field:
