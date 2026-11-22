@@ -23,7 +23,6 @@ from ._id import _mix
 from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
-from .checkbox import CheckboxStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor, TextFieldStyle
 from .theme import ColorScheme, FocusRing, Theme, _readable_on
@@ -162,7 +161,10 @@ struct UILayer[
         slider_active_track: Style = Style(),
         slider_handle: Style = Style(),
         slider_handle_outline: Style = Style(),
-        checkbox: CheckboxStyle = CheckboxStyle(),
+        checkbox_box: Style = Style(),
+        checkbox_checked_box: Style = Style(),
+        checkbox_tick: Style = Style(),
+        checkbox_label: Style = Style(),
         text_field: TextFieldStyle = TextFieldStyle(),
     ) raises -> WidgetStyleGuard[Self.ui_origin]:
         """Style every widget of a kind inside a `with` block. The styles
@@ -194,7 +196,10 @@ struct UILayer[
                 slider_active_track,
                 slider_handle,
                 slider_handle_outline,
-                checkbox,
+                checkbox_box,
+                checkbox_checked_box,
+                checkbox_tick,
+                checkbox_label,
                 text_field,
             ),
         )
@@ -575,7 +580,10 @@ struct UILayer[
         mut checked: Bool,
         rect: Optional[Rectangle] = None,
         *,
-        style: CheckboxStyle = CheckboxStyle(),
+        box: Style = Style(),
+        checked_box: Style = Style(),
+        tick: Style = Style(),
+        label_style: Style = Style(),
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
@@ -584,6 +592,13 @@ struct UILayer[
         `True`, with `label` beside it. A click anywhere in `rect` switches
         `checked`. `ui.changed()`, right after it, says whether it changed
         `checked` this frame.
+
+        Each part is a shape drawn in its own `Style`: `box` is the empty
+        box, a rectangle, an outline unless its style fills it;
+        `checked_box` is the ticked box, filled, taking what it leaves unset
+        from `box`, such as its corner radius; `tick` is the lines of the
+        tick, so its `stroke` and `stroke_thickness` are their colour and
+        width; and `label_style` is the text beside the box.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -597,7 +612,10 @@ struct UILayer[
             label,
             checked,
             self._place_control(rect, "ui.checkbox"),
-            style,
+            box,
+            checked_box,
+            tick,
+            label_style,
             take_focus,
             disabled,
         )
@@ -1191,80 +1209,106 @@ struct UILayer[
         label: String,
         mut checked: Bool,
         rect: Rectangle,
-        call_style: CheckboxStyle,
+        call_box: Style,
+        call_checked_box: Style,
+        call_tick: Style,
+        call_label: Style,
         take_focus: Bool,
         disabled: Bool,
     ) raises:
-        var style = call_style._over(self._ui[]._current_styles().checkbox)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
         if state.clicked or state.activated:
             checked = not checked
         var theme = self._ui[]._current_theme()
         ref colors = theme.colors
+        var block = self._ui[]._current_styles()
+        var box_look = call_box.over(block.checkbox_box).over(
+            Style(
+                fill_enabled=False,
+                stroke=colors.on_surface_variant,
+                stroke_thickness=2,
+                corner_radius=theme.corner_radii.small / 2,
+            )
+        )
+        var look = _ResolvedStyle()
+        if checked:
+            look.apply(
+                call_checked_box.over(block.checkbox_checked_box).over(
+                    Style(fill=colors.primary, stroke_enabled=False).over(
+                        box_look
+                    )
+                )
+            )
+        else:
+            look.apply(box_look)
+        var tick = _ResolvedStyle()
+        tick.apply(
+            call_tick.over(block.checkbox_tick).over(
+                Style(
+                    stroke=colors.on_primary,
+                    stroke_thickness=2,
+                    stroke_cap=StrokeCap.ROUND,
+                )
+            )
+        )
+        var text = _ResolvedStyle()
+        text.apply(
+            call_label.over(block.checkbox_label).over(
+                Style(text_color=self._ui[]._content_color()).over(
+                    theme.typography.body
+                )
+            )
+        )
         comptime size = 18.0
         var left = rect.position.x - rect.width / 2
         # the box against the left edge, the label a gap after it
         var centre = Point(left + size / 2, rect.position.y)
         var box = Rectangle(
-            centre, size, size, corner_radius=theme.corner_radii.small / 2
+            centre, size, size, corner_radius=look.corner_radius
         )
-        ref recorder = self._ui[]._recorder
-        var accent = style.box_color.or_else(colors.primary)
-        var check = style.check_color.or_else(colors.on_primary)
-        var outline = style.outline_color.or_else(colors.on_surface_variant)
-        var label_color = style.label_color.or_else(self._ui[]._content_color())
         if off:
             var faded = _faded(
                 colors.on_surface, theme.state_layers.disabled_content
             )
-            accent = faded
-            check = colors.surface
-            outline = faded
-            label_color = faded
-        # a hovered or pressed box is tinted, as a button is: a ticked one
+            if _fills(look):
+                look.fill_color = faded
+                look.fill_gradient = None
+            look.stroke_color = faded
+            tick.stroke_color = colors.surface
+            text.text_color = faded
+        # a hovered or pressed box is tinted, as a button is: a filled one
         # towards its tick, an empty one with the text colour inside it
         var step = 0.0
         if state.pressed:
             step = theme.state_layers.pressed
         elif state.hovered:
             step = theme.state_layers.hovered
+        if step > 0:
+            if _fills(look) and not look.fill_gradient:
+                look.fill_color = _stepped(
+                    look.fill_color, tick.stroke_color, step
+                )
+            elif not _fills(look):
+                var layer = _layer_opacity(
+                    colors.surface, colors.on_surface, step
+                )
+                look.fill_color = colors.on_surface.with_alpha(
+                    UInt8(layer * 255 + 0.5)
+                )
+                look.fill_gradient = None
+                look.fill_enabled = True
+        ref recorder = self._ui[]._recorder
+        recorder.style = look
+        recorder.draw(box)
         if checked:
-            var fill = accent
-            if step > 0:
-                fill = _stepped(accent, check, step)
-            recorder.style = _ResolvedStyle(fill=fill, stroke_enabled=False)
-            recorder.draw(box)
-            recorder.style = _ResolvedStyle(
-                stroke=check,
-                stroke_thickness=2,
-                stroke_cap=StrokeCap.ROUND,
-            )
+            recorder.style = tick
             var corner = centre + Vector(-1.5, -4.0)
             recorder.draw(Line(centre + Vector(-5.0, 0.5), corner))
             recorder.draw(Line(corner, centre + Vector(5.0, 5.0)))
-        else:
-            var layer = 0.0
-            if step > 0:
-                layer = _layer_opacity(colors.surface, colors.on_surface, step)
-            recorder.style = _ResolvedStyle(
-                fill=colors.on_surface.with_alpha(UInt8(layer * 255 + 0.5)),
-                fill_enabled=layer > 0,
-                stroke=outline,
-                stroke_thickness=2,
-            )
-            recorder.draw(box)
-        self._ring_around(box, state, off, style.focus_ring)
+        self._ring_around(box, state, off, None)
         var text_left = Point(left + size + 12, rect.position.y)
-        recorder.text(
-            label,
-            text_left,
-            _text_style(
-                _over(style.text_style, theme.typography.body),
-                label_color,
-                Align.LEFT,
-            ),
-        )
+        recorder.text(label, text_left, _text_look(text, Align.LEFT))
         self._ui[]._called(changed=state.clicked or state.activated)
 
     def _interact(

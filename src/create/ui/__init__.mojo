@@ -22,5 +22,4 @@ from .theme import (
     FocusRing,
 )
 from .button import ButtonVariant
-from .checkbox import CheckboxStyle
 from .text_field import TextFieldStyle, TextEditor
