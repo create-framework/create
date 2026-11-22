@@ -58,6 +58,7 @@ These look like Processing but behave differently, and each one catches people o
 | Processing | Create |
 |---|---|
 | `rect(x, y, w, h)`, `ellipse(...)`, `line(...)` | `canvas.rectangle((x, y), w, h)`, `canvas.ellipse(...)`, `canvas.line(...)`, all [centred](../drawing/canvas.md#shapes) |
+| `point(x, y)` | `canvas.point((x, y))`, a dot as wide as the stroke is thick, round unless the cap is `SQUARE` |
 | `background(c)` | `canvas.background(c)` |
 | `fill(c)`, `noFill()` | `canvas.fill(c)`, `canvas.fill_enabled(False)` |
 | `stroke(c)`, `strokeWeight(w)`, `noStroke()` | `canvas.stroke(c, w)`, `canvas.stroke_enabled(False)` |

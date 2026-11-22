@@ -46,7 +46,7 @@ The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers
 
 - A closed curve and a shape's stroke have no ends, unless they are dashed: then every dash has two.
 - A line of zero length draws nothing with `BUTT`, a dot with `ROUND` and an upright square with
-  `SQUARE`.
+  `SQUARE`. `canvas.point` draws a dot whatever the cap, round unless it is `SQUARE`.
 - The caps are blended onto the frame together with the stroke, as one, whether it is translucent or
   not, and are part of its shadow. So segments drawn end to end with `ROUND` caps meet without
   notches.
