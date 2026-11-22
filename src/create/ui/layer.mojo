@@ -1166,9 +1166,9 @@ struct UILayer[
                 Style(fill_enabled=False, stroke_enabled=False)
             )
         )
-        var handle_radius = handle.stroke_thickness / 2
-        var left = rect.position.x - rect.width / 2 + handle_radius
-        var right = rect.position.x + rect.width / 2 - handle_radius
+        var knob_radius = handle.stroke_thickness / 2
+        var left = rect.position.x - rect.width / 2 + knob_radius
+        var right = rect.position.x + rect.width / 2 - knob_radius
         var y = rect.position.y
         # held this frame, the frame it is let go of included
         var dragging = (
@@ -1268,7 +1268,7 @@ struct UILayer[
         var centre = Point(handle_x, y)
         recorder.style = handle
         recorder.draw(Line(centre, centre))
-        var knob = Circle(centre, handle_radius)
+        var knob = Circle(centre, knob_radius)
         if outline.fill_enabled or outline.stroke_enabled:
             recorder.style = outline
             recorder.draw(knob)

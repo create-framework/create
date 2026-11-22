@@ -44,7 +44,7 @@ page:
 | [mojo](docs/guide/basics/mojo.md) | the Mojo a program needs, explained for newcomers: numbers, `mut`, structs, `Optional`, `raises`/`try`, `^`, `ref` |
 | [coming from processing](docs/guide/basics/coming-from-processing.md) | how Create differs from Processing, or a Processing call's equivalent |
 | [the canvas](docs/guide/drawing/canvas.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, `clear`, transforms and guards, antialiasing, clipping |
-| [style](docs/guide/drawing/style.md) | `Style`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, tint, opacity, blend modes |
+| [style](docs/guide/drawing/style.md) | `Style` as a set of changes and `over`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, tint, opacity, blend modes |
 | [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, OKLCH, `lerp`, `luminance` |
 | [strokes](docs/guide/drawing/strokes.md) | stroke thickness, `StrokeAlign`, `StrokeCap`, `StrokeDash` |
 | [gradients](docs/guide/drawing/gradients.md) | `Gradient`, linear and radial, stops, how a gradient fits a shape |
@@ -58,7 +58,7 @@ page:
 | [gamepads](docs/guide/interaction/gamepads.md) | `Gamepad`, `GamepadButton`, sticks, triggers, rumble |
 | [widgets](docs/guide/ui/widgets.md) | the `ui` package: `UI`, `ui.screen`/`ui.world` layers, `button`, `slider`, `checkbox`, `label`, `image`, laying widgets out with `column`, `row` and `space`, widget IDs and `ui.id`, `ui.draw`, disabled widgets |
 | [focus and navigation](docs/guide/ui/focus.md) | focus, `take_focus`, Tab and keys on widgets, gamepad navigation, focus rings, `wants_keyboard`/`wants_mouse`, several `UI`s |
-| [themes and styling](docs/guide/ui/themes.md) | `Theme`, `ColorScheme` roles, `Theme.from_seed`, widget styles, `ui.style`/`ui.theme` blocks, panels, `StateLayers` |
+| [themes and styling](docs/guide/ui/themes.md) | `Theme`, `ColorScheme` roles, `Theme.from_seed`, styling widgets with `Style` (one keyword per part, each part a shape), `Theme.shadow`, `ui.style`/`ui.theme` blocks, panels, `StateLayers` |
 | [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
 | [tweens](docs/guide/motion/tweens.md) | `Tween` |
 | [animations](docs/guide/motion/animations.md) | `Animation` and `Animator` |

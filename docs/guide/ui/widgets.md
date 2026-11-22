@@ -129,7 +129,9 @@ def settings(ui: UILayer, mut volume: Float64) raises:
   left edge with `Align.LEFT`, and so on. Labels and images don't react, so the pointer passes
   through them to whatever is beneath.
 
-Each widget's look can be changed with `style=`, explained in [Themes and styling](themes.md).
+Each widget's look can be changed with a `Style`: a button, a label or a panel takes one as
+`style=`, and a slider, a checkbox or a text field takes one for each of its parts, such as
+`handle=`. [Themes and styling](themes.md) explains both.
 
 ## Laying out widgets
 
