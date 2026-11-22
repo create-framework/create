@@ -60,9 +60,33 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
     var on_background: Color
 
     @staticmethod
-    def light() -> ColorScheme:
-        """Dark colours on a light background."""
-        return ColorScheme(
+    def light(
+        *,
+        primary: Optional[Color] = None,
+        on_primary: Optional[Color] = None,
+        secondary: Optional[Color] = None,
+        on_secondary: Optional[Color] = None,
+        tertiary: Optional[Color] = None,
+        on_tertiary: Optional[Color] = None,
+        error: Optional[Color] = None,
+        on_error: Optional[Color] = None,
+        surface: Optional[Color] = None,
+        on_surface: Optional[Color] = None,
+    ) -> ColorScheme:
+        """Dark colours on a light background, with the colours given
+        replacing its own.
+
+        A colour given also changes its container to a quieter mix of it
+        with the surface, and a colour given without its `on_` partner gets
+        black or white, whichever reads better on it. So this is enough to
+        make the buttons orange:
+
+        ```mojo
+        # In `create`, building the `colors` field:
+        var colors = ColorScheme.light(primary=Color.ORANGE)
+        ```
+        """
+        var colors = ColorScheme(
             primary=Color.hex(0x3A5BC7),
             on_primary=Color.hex(0xFFFFFF),
             primary_container=Color.hex(0xDCE4FF),
@@ -94,11 +118,37 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             background=Color.hex(0xF8F9FC),
             on_background=Color.hex(0x1A1C20),
         )
+        colors._override(
+            primary,
+            on_primary,
+            secondary,
+            on_secondary,
+            tertiary,
+            on_tertiary,
+            error,
+            on_error,
+            surface,
+            on_surface,
+        )
+        return colors
 
     @staticmethod
-    def dark() -> ColorScheme:
-        """Light colours on a dark background."""
-        return ColorScheme(
+    def dark(
+        *,
+        primary: Optional[Color] = None,
+        on_primary: Optional[Color] = None,
+        secondary: Optional[Color] = None,
+        on_secondary: Optional[Color] = None,
+        tertiary: Optional[Color] = None,
+        on_tertiary: Optional[Color] = None,
+        error: Optional[Color] = None,
+        on_error: Optional[Color] = None,
+        surface: Optional[Color] = None,
+        on_surface: Optional[Color] = None,
+    ) -> ColorScheme:
+        """Light colours on a dark background, with the colours given
+        replacing its own, as `ColorScheme.light` does."""
+        var colors = ColorScheme(
             primary=Color.hex(0xA9BEFF),
             on_primary=Color.hex(0x0E2766),
             primary_container=Color.hex(0x2C4497),
@@ -130,6 +180,118 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             background=Color.hex(0x111318),
             on_background=Color.hex(0xE2E4EA),
         )
+        colors._override(
+            primary,
+            on_primary,
+            secondary,
+            on_secondary,
+            tertiary,
+            on_tertiary,
+            error,
+            on_error,
+            surface,
+            on_surface,
+        )
+        return colors
+
+    @staticmethod
+    def from_seed(seed: Color, *, dark: Bool = False) -> ColorScheme:
+        """The colours worked out from one colour, such as a game's own,
+        as Material's dynamic colour does: light unless `dark`.
+
+        The seed's hue gives five families of colour: the primary, a greyer
+        secondary, a tertiary turned 60 degrees round the colour wheel,
+        near-greys for the surfaces, and a fixed red for errors. Each role
+        then takes Material's fixed tone, a lightness that looks the same in
+        every hue: in the light scheme `primary` is tone 40 and `on_primary`
+        100, `primary_container` 90 and `on_primary_container` 10. The gap
+        between two paired roles keeps them readable together, whatever the
+        seed. A grey seed gives grey colours.
+
+        ```mojo
+        # In `create`, building the `colors` field:
+        var colors = ColorScheme.from_seed(Color.hex(0xE07A2E))  # orange
+        ```
+        """
+        var at = seed.to_oklch()
+        var hue = at[2]
+        # A seed with some colour gets a primary vivid enough to read as
+        # that colour; a grey seed stays grey.
+        var chroma = 0.0 if at[1] < 0.03 else min(max(at[1], 0.1), 0.16)
+        var primary = _Palette(hue, chroma)
+        var secondary = _Palette(hue, chroma / 3)
+        var tertiary = _Palette(hue + 60, chroma * 0.6)
+        var neutral = _Palette(hue, min(chroma / 12, 0.012))
+        var variant = _Palette(hue, min(chroma / 6, 0.025))
+        var error = _Palette(25, 0.17)
+        var colors: ColorScheme
+        if dark:
+            colors = ColorScheme(
+                primary=primary.tone(80),
+                on_primary=primary.tone(20),
+                primary_container=primary.tone(30),
+                on_primary_container=primary.tone(90),
+                secondary=secondary.tone(80),
+                on_secondary=secondary.tone(20),
+                secondary_container=secondary.tone(30),
+                on_secondary_container=secondary.tone(90),
+                tertiary=tertiary.tone(80),
+                on_tertiary=tertiary.tone(20),
+                tertiary_container=tertiary.tone(30),
+                on_tertiary_container=tertiary.tone(90),
+                error=error.tone(80),
+                on_error=error.tone(20),
+                error_container=error.tone(30),
+                on_error_container=error.tone(90),
+                surface=neutral.tone(6),
+                surface_dim=neutral.tone(6),
+                surface_bright=neutral.tone(24),
+                on_surface=neutral.tone(90),
+                on_surface_variant=variant.tone(80),
+                surface_container_lowest=neutral.tone(4),
+                surface_container_low=neutral.tone(10),
+                surface_container=neutral.tone(12),
+                surface_container_high=neutral.tone(17),
+                surface_container_highest=neutral.tone(22),
+                outline=variant.tone(60),
+                outline_variant=variant.tone(30),
+                background=neutral.tone(6),
+                on_background=neutral.tone(90),
+            )
+        else:
+            colors = ColorScheme(
+                primary=primary.tone(40),
+                on_primary=primary.tone(100),
+                primary_container=primary.tone(90),
+                on_primary_container=primary.tone(10),
+                secondary=secondary.tone(40),
+                on_secondary=secondary.tone(100),
+                secondary_container=secondary.tone(90),
+                on_secondary_container=secondary.tone(10),
+                tertiary=tertiary.tone(40),
+                on_tertiary=tertiary.tone(100),
+                tertiary_container=tertiary.tone(90),
+                on_tertiary_container=tertiary.tone(10),
+                error=error.tone(40),
+                on_error=error.tone(100),
+                error_container=error.tone(90),
+                on_error_container=error.tone(10),
+                surface=neutral.tone(98),
+                surface_dim=neutral.tone(87),
+                surface_bright=neutral.tone(98),
+                on_surface=neutral.tone(10),
+                on_surface_variant=variant.tone(30),
+                surface_container_lowest=neutral.tone(100),
+                surface_container_low=neutral.tone(96),
+                surface_container=neutral.tone(94),
+                surface_container_high=neutral.tone(92),
+                surface_container_highest=neutral.tone(90),
+                outline=variant.tone(50),
+                outline_variant=variant.tone(80),
+                background=neutral.tone(98),
+                on_background=neutral.tone(10),
+            )
+        return colors
 
     def _override(
         mut self,
@@ -420,20 +582,20 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
         var ui = UI(Theme.light(primary=Color.ORANGE))
         ```
         """
-        var colors = ColorScheme.light()
-        colors._override(
-            primary,
-            on_primary,
-            secondary,
-            on_secondary,
-            tertiary,
-            on_tertiary,
-            error,
-            on_error,
-            surface,
-            on_surface,
+        return Theme._with_colors(
+            ColorScheme.light(
+                primary=primary,
+                on_primary=on_primary,
+                secondary=secondary,
+                on_secondary=on_secondary,
+                tertiary=tertiary,
+                on_tertiary=on_tertiary,
+                error=error,
+                on_error=on_error,
+                surface=surface,
+                on_surface=on_surface,
+            )
         )
-        return Theme._with_colors(colors)
 
     @staticmethod
     def dark(
@@ -451,119 +613,26 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     ) -> Theme:
         """A theme of light colours on a dark background, with the colours
         given replacing its own, as `Theme.light` does."""
-        var colors = ColorScheme.dark()
-        colors._override(
-            primary,
-            on_primary,
-            secondary,
-            on_secondary,
-            tertiary,
-            on_tertiary,
-            error,
-            on_error,
-            surface,
-            on_surface,
+        return Theme._with_colors(
+            ColorScheme.dark(
+                primary=primary,
+                on_primary=on_primary,
+                secondary=secondary,
+                on_secondary=on_secondary,
+                tertiary=tertiary,
+                on_tertiary=on_tertiary,
+                error=error,
+                on_error=on_error,
+                surface=surface,
+                on_surface=on_surface,
+            )
         )
-        return Theme._with_colors(colors)
 
     @staticmethod
     def from_seed(seed: Color, *, dark: Bool = False) -> Theme:
-        """A whole theme worked out from one colour, such as a game's own,
-        as Material's dynamic colour does: light unless `dark`.
-
-        The seed's hue gives five families of colour: the primary, a greyer
-        secondary, a tertiary turned 60 degrees round the colour wheel,
-        near-greys for the surfaces, and a fixed red for errors. Each role
-        then takes Material's fixed tone, a lightness that looks the same in
-        every hue: in the light scheme `primary` is tone 40 and `on_primary`
-        100, `primary_container` 90 and `on_primary_container` 10. The gap
-        between two paired roles keeps them readable together, whatever the
-        seed. A grey seed gives a grey theme.
-
-        ```mojo
-        # In `create`, building the `ui` field:
-        var ui = UI(Theme.from_seed(Color.hex(0xE07A2E)))  # an orange theme
-        ```
-        """
-        var at = seed.to_oklch()
-        var hue = at[2]
-        # A seed with some colour gets a primary vivid enough to read as
-        # that colour; a grey seed stays grey.
-        var chroma = 0.0 if at[1] < 0.03 else min(max(at[1], 0.1), 0.16)
-        var primary = _Palette(hue, chroma)
-        var secondary = _Palette(hue, chroma / 3)
-        var tertiary = _Palette(hue + 60, chroma * 0.6)
-        var neutral = _Palette(hue, min(chroma / 12, 0.012))
-        var variant = _Palette(hue, min(chroma / 6, 0.025))
-        var error = _Palette(25, 0.17)
-        var colors: ColorScheme
-        if dark:
-            colors = ColorScheme(
-                primary=primary.tone(80),
-                on_primary=primary.tone(20),
-                primary_container=primary.tone(30),
-                on_primary_container=primary.tone(90),
-                secondary=secondary.tone(80),
-                on_secondary=secondary.tone(20),
-                secondary_container=secondary.tone(30),
-                on_secondary_container=secondary.tone(90),
-                tertiary=tertiary.tone(80),
-                on_tertiary=tertiary.tone(20),
-                tertiary_container=tertiary.tone(30),
-                on_tertiary_container=tertiary.tone(90),
-                error=error.tone(80),
-                on_error=error.tone(20),
-                error_container=error.tone(30),
-                on_error_container=error.tone(90),
-                surface=neutral.tone(6),
-                surface_dim=neutral.tone(6),
-                surface_bright=neutral.tone(24),
-                on_surface=neutral.tone(90),
-                on_surface_variant=variant.tone(80),
-                surface_container_lowest=neutral.tone(4),
-                surface_container_low=neutral.tone(10),
-                surface_container=neutral.tone(12),
-                surface_container_high=neutral.tone(17),
-                surface_container_highest=neutral.tone(22),
-                outline=variant.tone(60),
-                outline_variant=variant.tone(30),
-                background=neutral.tone(6),
-                on_background=neutral.tone(90),
-            )
-        else:
-            colors = ColorScheme(
-                primary=primary.tone(40),
-                on_primary=primary.tone(100),
-                primary_container=primary.tone(90),
-                on_primary_container=primary.tone(10),
-                secondary=secondary.tone(40),
-                on_secondary=secondary.tone(100),
-                secondary_container=secondary.tone(90),
-                on_secondary_container=secondary.tone(10),
-                tertiary=tertiary.tone(40),
-                on_tertiary=tertiary.tone(100),
-                tertiary_container=tertiary.tone(90),
-                on_tertiary_container=tertiary.tone(10),
-                error=error.tone(40),
-                on_error=error.tone(100),
-                error_container=error.tone(90),
-                on_error_container=error.tone(10),
-                surface=neutral.tone(98),
-                surface_dim=neutral.tone(87),
-                surface_bright=neutral.tone(98),
-                on_surface=neutral.tone(10),
-                on_surface_variant=variant.tone(30),
-                surface_container_lowest=neutral.tone(100),
-                surface_container_low=neutral.tone(96),
-                surface_container=neutral.tone(94),
-                surface_container_high=neutral.tone(92),
-                surface_container_highest=neutral.tone(90),
-                outline=variant.tone(50),
-                outline_variant=variant.tone(80),
-                background=neutral.tone(98),
-                on_background=neutral.tone(10),
-            )
-        return Theme._with_colors(colors)
+        """A whole theme worked out from one colour, as
+        `ColorScheme.from_seed` does: light unless `dark`."""
+        return Theme._with_colors(ColorScheme.from_seed(seed, dark=dark))
 
     @staticmethod
     def _with_colors(colors: ColorScheme) -> Theme:
