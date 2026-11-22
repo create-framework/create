@@ -78,9 +78,11 @@ Style every widget of a kind inside a `with` block. The styles given sit under e
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 with ui.style(button=ButtonStyle(corner_radius=4)):
-    _ = ui.button("Square", Rectangle((0, 0), 120, 40))
-    _ = ui.button("Round", Rectangle((0, -50), 120, 40),
-                  style=ButtonStyle(corner_radius=20))
+    if ui.button("Square", Rectangle((0, 0), 120, 40)):
+        ...
+    if ui.button("Round", Rectangle((0, -50), 120, 40),
+                 style=ButtonStyle(corner_radius=20)):
+        ...
 ```
 
 ### `content_color`
@@ -109,7 +111,7 @@ A surface filling `rect`, drawn beneath everything called inside its `with` bloc
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 with ui.panel(Rectangle((0, 0), 320, 120)):
     ui.label("Volume", Rectangle((0, 30), 280, 24))
-    _ = ui.slider(self.volume, 0, 1, Rectangle((0, -15), 280, 32))
+    ui.slider(self.volume, 0, 1, Rectangle((0, -15), 280, 32))
 ```
 
 ### `id`
@@ -194,10 +196,10 @@ def slider(
     take_focus: Bool = False,
     disabled: Bool = False,
     id: _WidgetKey = None,
-) raises -> Bool
+) raises
 ```
 
-A slider across `rect` that sets `value` between `min` and `max`. Returns whether it changed `value` this frame.
+A slider across `rect` that sets `value` between `min` and `max`. `ui.changed()`, right after it, says whether it changed `value` this frame.
 
 Pressing anywhere in `rect` moves the handle there, and dragging
 moves it on, even once the pointer leaves `rect`. `step` rounds the
@@ -206,7 +208,8 @@ value to multiples of it from `min`. A `value` outside `min` to
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-if ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32)):
+ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32))
+if ui.changed():
     self.audio.volume(self.volume)
 ```
 
@@ -223,23 +226,24 @@ def checkbox(
     take_focus: Bool = False,
     disabled: Bool = False,
     id: _WidgetKey = None,
-) raises -> Bool
+) raises
 ```
 
-A box against the left edge of `rect`, ticked while `checked` is `True`, with `label` beside it. A click anywhere in `rect` switches `checked`. Returns whether it changed `checked` this frame.
+A box against the left edge of `rect`, ticked while `checked` is `True`, with `label` beside it. A click anywhere in `rect` switches `checked`. `ui.changed()`, right after it, says whether it changed `checked` this frame.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-if ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32)):
+ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32))
+if ui.changed():
     self.save_settings()
 ```
 
 ### `text_field`
 
 ```mojo
-def text_field[text_origin: MutOrigin](
+def text_field(
     self,
-    ref[ui_origin] text: String,
+    mut text: String,
     rect: Rectangle,
     *,
     placeholder: String = "",
@@ -248,24 +252,71 @@ def text_field[text_origin: MutOrigin](
     take_focus: Bool = False,
     disabled: Bool = False,
     id: _WidgetKey = None,
-) raises -> TextFieldResult[ui_origin, context_origin, text_origin]
+) raises
 ```
 
 A field for typing into `text`, filling `rect`. Clicking it gives it focus and places the caret; while it has focus, typing and the editing keys change `text`, and Enter submits it.
 
-Returns a `TextFieldResult`: whether the text changed, as a `Bool`,
-`submitted` for Enter, and the caret and selection. `placeholder` is
+Right after it, `ui.changed()` says whether it changed `text` this
+frame, `ui.submitted()` whether Enter was pressed in it, and
+`ui.text_editor()` gives its caret and selection. `placeholder` is
 shown in a fainter colour while `text` is empty, and `max_length`
 caps how many characters typing and pasting can bring it to.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
 # with a `name: String` field:
-var field = ui.text_field(
+ui.text_field(
     self.name, Rectangle((0, 0), 320, 40), placeholder="Your name"
 )
-if field.submitted:
+if ui.submitted():
     self.start_game(self.name)
+```
+
+### `changed`
+
+```mojo
+def changed(self) -> Bool
+```
+
+Whether the widget called last changed its value this frame: a slider its `value`, a checkbox its `checked`, a text field its `text`. It is `False` after a button, and before any widget is called.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32))
+if ui.changed():
+    self.audio.volume(self.volume)
+```
+
+### `submitted`
+
+```mojo
+def submitted(self) -> Bool
+```
+
+Whether Enter was pressed this frame in the widget called last, a text field. It is `False` after any other widget.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+ui.text_field(self.name, Rectangle((0, 0), 320, 40))
+if ui.submitted():
+    self.start_game(self.name)
+```
+
+### `text_editor`
+
+```mojo
+def text_editor(self) raises -> TextEditor[ui_origin, context_origin]
+```
+
+The caret, the selection and the editing of the widget called last, which must be a text field. It raises after any other widget.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
+# with a `name: String` field:
+ui.text_field(self.name, Rectangle((0, 0), 320, 40))
+var editor = ui.text_editor()
+var caret = editor.before_caret()  # the text left of the caret
 ```
 
 ### `disabled`

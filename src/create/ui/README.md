@@ -17,7 +17,7 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `_recorder.mojo` | `_Recorder`, a `DrawTarget` a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `theme.mojo` | `Theme` and its tokens, `ColorScheme`, `Theme.from_seed` and its `_Palette`; `_contrast` and `_readable_on` |
-| `button.mojo`, `slider.mojo`, `checkbox.mojo`, `label.mojo`, `text_field.mojo`, `panel.mojo` | Each widget's style (every field optional, with `_over` to merge one over another), and `ButtonVariant` and `TextFieldResult` |
+| `button.mojo`, `slider.mojo`, `checkbox.mojo`, `label.mojo`, `text_field.mojo`, `panel.mojo` | Each widget's style (every field optional, with `_over` to merge one over another), and `ButtonVariant` and `TextEditor` |
 
 ## How a frame goes
 
@@ -54,6 +54,15 @@ with how many times that site has run this frame. Every public widget is `@alway
 the library calls would see its own line instead, so every widget method keeps that call in the
 public method and hands the ID to a non-inline `_`-named body. A widget's state is kept under its ID
 in the `UI`; text buffers are dropped when their ID isn't seen for a frame.
+
+## The widget called last
+
+A value widget returns nothing; what it did is read afterwards. Each reacting widget's body ends by
+calling `UI._called`, which records whether it changed its value, whether Enter was pressed in it
+and, for a text field, its ID. `ui.changed()`, `ui.submitted()` and `ui.text_editor()` read those
+back, and the first layer of a frame clears them. A `TextEditor` edits the field's buffer and marks
+it `edited`; the field's next call then hands the buffer's text to the program, rather than taking
+the program's text in, and reports the change.
 
 ## Focus and the devices
 

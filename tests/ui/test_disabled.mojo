@@ -88,7 +88,8 @@ def test_a_disabled_slider_keeps_its_value() raises -> None:
             next_frame(context)
             press(context, Point(40, 0))
         with ui.screen(context, canvas) as layer:
-            assert_false(layer.slider(value, 0, 1, _A, disabled=True))
+            layer.slider(value, 0, 1, _A, disabled=True)
+            assert_false(layer.changed())
     assert_equal(value, 0.5)
 
 

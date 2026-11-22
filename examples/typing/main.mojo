@@ -94,7 +94,7 @@ struct TypingTest(Program):
         # after a click elsewhere. Wide enough that it never scrolls.
         var width = canvas.right() - left
         with self.ui.screen(context, canvas) as ui:
-            var field = ui.text_field(
+            ui.text_field(
                 self.typed,
                 Rectangle(Point(left + width / 2, 0), width, 40.0),
                 style=TextFieldStyle(
@@ -109,7 +109,8 @@ struct TypingTest(Program):
                 take_focus=not finished,
                 disabled=finished,
             )
-            self.selection_start = len(characters(field.before_selection()))
+            var editor = ui.text_editor()
+            self.selection_start = len(characters(editor.before_selection()))
         if not finished and self.typed == self.phrases[self.phrase]:
             self.result = self.score(len(target), context.time.elapsed)
             finished = True

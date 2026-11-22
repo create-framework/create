@@ -18,7 +18,7 @@ from .checkbox import CheckboxStyle
 from .label import LabelStyle
 from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
-from .text_field import TextFieldResult, TextFieldStyle
+from .text_field import TextEditor, TextFieldStyle
 from .theme import ColorScheme, FocusRing, Theme, TypeStyle, _readable_on
 from .panel import PanelStyle
 from .ui import UI, _Hit, _Styles
@@ -165,9 +165,11 @@ struct UILayer[
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
         with ui.style(button=ButtonStyle(corner_radius=4)):
-            _ = ui.button("Square", Rectangle((0, 0), 120, 40))
-            _ = ui.button("Round", Rectangle((0, -50), 120, 40),
-                          style=ButtonStyle(corner_radius=20))
+            if ui.button("Square", Rectangle((0, 0), 120, 40)):
+                ...
+            if ui.button("Round", Rectangle((0, -50), 120, 40),
+                         style=ButtonStyle(corner_radius=20)):
+                ...
         ```
         """
         self._check_frame()
@@ -199,7 +201,7 @@ struct UILayer[
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
         with ui.panel(Rectangle((0, 0), 320, 120)):
             ui.label("Volume", Rectangle((0, 30), 280, 24))
-            _ = ui.slider(self.volume, 0, 1, Rectangle((0, -15), 280, 32))
+            ui.slider(self.volume, 0, 1, Rectangle((0, -15), 280, 32))
         ```
         """
         return self._panel(
@@ -341,9 +343,10 @@ struct UILayer[
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
-    ) raises -> Bool:
+    ) raises:
         """A slider across `rect` that sets `value` between `min` and `max`.
-        Returns whether it changed `value` this frame.
+        `ui.changed()`, right after it, says whether it changed `value` this
+        frame.
 
         Pressing anywhere in `rect` moves the handle there, and dragging
         moves it on, even once the pointer leaves `rect`. `step` rounds the
@@ -352,11 +355,12 @@ struct UILayer[
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-        if ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32)):
+        ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32))
+        if ui.changed():
             self.audio.volume(self.volume)
         ```
         """
-        return self._slider(
+        self._slider(
             self._widget_id(call_location(), id._hash),
             value,
             min,
@@ -379,18 +383,20 @@ struct UILayer[
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
-    ) raises -> Bool:
+    ) raises:
         """A box against the left edge of `rect`, ticked while `checked` is
         `True`, with `label` beside it. A click anywhere in `rect` switches
-        `checked`. Returns whether it changed `checked` this frame.
+        `checked`. `ui.changed()`, right after it, says whether it changed
+        `checked` this frame.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-        if ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32)):
+        ui.checkbox("Sound", self.sound_on, Rectangle((0, 0), 200, 32))
+        if ui.changed():
             self.save_settings()
         ```
         """
-        return self._checkbox(
+        self._checkbox(
             self._widget_id(call_location(), id._hash),
             label,
             checked,
@@ -401,11 +407,9 @@ struct UILayer[
         )
 
     @always_inline
-    def text_field[
-        text_origin: Origin[mut=True]
-    ](
+    def text_field(
         self,
-        ref[text_origin] text: String,
+        mut text: String,
         rect: Rectangle,
         *,
         placeholder: String = "",
@@ -414,33 +418,29 @@ struct UILayer[
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
-    ) raises -> TextFieldResult[
-        Self.ui_origin, Self.context_origin, text_origin
-    ]:
+    ) raises:
         """A field for typing into `text`, filling `rect`. Clicking it gives
         it focus and places the caret; while it has focus, typing and the
         editing keys change `text`, and Enter submits it.
 
-        Returns a `TextFieldResult`: whether the text changed, as a `Bool`,
-        `submitted` for Enter, and the caret and selection. `placeholder` is
+        Right after it, `ui.changed()` says whether it changed `text` this
+        frame, `ui.submitted()` whether Enter was pressed in it, and
+        `ui.text_editor()` gives its caret and selection. `placeholder` is
         shown in a fainter colour while `text` is empty, and `max_length`
         caps how many characters typing and pasting can bring it to.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
         # with a `name: String` field:
-        var field = ui.text_field(
+        ui.text_field(
             self.name, Rectangle((0, 0), 320, 40), placeholder="Your name"
         )
-        if field.submitted:
+        if ui.submitted():
             self.start_game(self.name)
         ```
         """
-        var widget = self._widget_id(call_location(), id._hash)
-        var changed = False
-        var submitted = False
         self._text_field(
-            widget,
+            self._widget_id(call_location(), id._hash),
             text,
             rect,
             placeholder,
@@ -448,16 +448,63 @@ struct UILayer[
             style,
             take_focus,
             disabled,
-            changed,
-            submitted,
         )
-        return TextFieldResult(
-            _ui=self._ui[],
+
+    # ---------------------------------------------- the widget called last
+
+    def changed(self) -> Bool:
+        """Whether the widget called last changed its value this frame: a
+        slider its `value`, a checkbox its `checked`, a text field its
+        `text`. It is `False` after a button, and before any widget is
+        called.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        ui.slider(self.volume, 0, 1, Rectangle((0, 0), 240, 32))
+        if ui.changed():
+            self.audio.volume(self.volume)
+        ```
+        """
+        return self._ui[]._last_changed
+
+    def submitted(self) -> Bool:
+        """Whether Enter was pressed this frame in the widget called last,
+        a text field. It is `False` after any other widget.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        ui.text_field(self.name, Rectangle((0, 0), 320, 40))
+        if ui.submitted():
+            self.start_game(self.name)
+        ```
+        """
+        return self._ui[]._last_submitted
+
+    def text_editor(
+        self,
+    ) raises -> TextEditor[Self.ui_origin, Self.context_origin]:
+        """The caret, the selection and the editing of the widget called
+        last, which must be a text field. It raises after any other widget.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`,
+        # with a `name: String` field:
+        ui.text_field(self.name, Rectangle((0, 0), 320, 40))
+        var editor = ui.text_editor()
+        var caret = editor.before_caret()  # the text left of the caret
+        ```
+        """
+        self._check_frame()
+        ref ui = self._ui[]
+        if not ui._last_text_field:
+            raise Error(
+                "ui.text_editor() needs a text field to be the widget called"
+                " just before it"
+            )
+        return TextEditor(
+            _ui=ui,
             _context=self._context[],
-            _text=text,
-            _id=widget,
-            _changed=changed,
-            _submitted=submitted,
+            _id=ui._last_text_field.value(),
         )
 
     # ----------------------------------------------------------- internals
@@ -472,8 +519,6 @@ struct UILayer[
         call_style: TextFieldStyle,
         take_focus: Bool,
         disabled: Bool,
-        mut changed: Bool,
-        mut submitted: Bool,
     ) raises:
         var style = call_style._over(self._ui[]._current_styles().text_field)
         var off = self._disabled(disabled)
@@ -484,8 +529,15 @@ struct UILayer[
         ref colors = theme.colors
         if id not in ui._buffers:
             ui._buffers[id] = _TextBuffer(text)
+        var changed = False
+        var submitted = False
         ref buffer = ui._buffers[id]
-        buffer.text = text
+        # an edit through `ui.text_editor` since the last call is handed to
+        # `text` below; otherwise the program's text is what the field shows
+        if buffer.edited:
+            buffer.edited = False
+        else:
+            buffer.text = text
         buffer.max_length = max_length
         var now = self._context[].time.elapsed
         var type = style.text_style.or_else(theme.typography.body)
@@ -625,6 +677,7 @@ struct UILayer[
                 )
             )
         recorder.end_clip()
+        ui._called(changed=changed, submitted=submitted, text_field=id)
 
     def _ring_around(
         self,
@@ -794,6 +847,7 @@ struct UILayer[
                 Align.CENTER,
             ),
         )
+        self._ui[]._called(changed=False)
         return state.clicked or state.activated
 
     def _slider(
@@ -807,7 +861,7 @@ struct UILayer[
         call_style: SliderStyle,
         take_focus: Bool,
         disabled: Bool,
-    ) raises -> Bool:
+    ) raises:
         var style = call_style._over(self._ui[]._current_styles().slider)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
@@ -931,7 +985,7 @@ struct UILayer[
         var knob = Circle(Point(handle_x, y), handle_radius)
         recorder.draw(knob)
         self._ring_around(knob, state, off, style.focus_ring)
-        return changed
+        self._ui[]._called(changed=changed)
 
     def _checkbox(
         self,
@@ -942,7 +996,7 @@ struct UILayer[
         call_style: CheckboxStyle,
         take_focus: Bool,
         disabled: Bool,
-    ) raises -> Bool:
+    ) raises:
         var style = call_style._over(self._ui[]._current_styles().checkbox)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
@@ -1013,7 +1067,7 @@ struct UILayer[
                 Align.LEFT,
             ),
         )
-        return state.clicked or state.activated
+        self._ui[]._called(changed=state.clicked or state.activated)
 
     def _interact(
         self,

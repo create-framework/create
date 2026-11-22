@@ -27,5 +27,5 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`SliderStyle`](sliderstyle.md) | How one slider looks, where it differs from the theme. Every field left unset is worked out from the theme when the slider is drawn. |
 | [`CheckboxStyle`](checkboxstyle.md) | How one checkbox looks, where it differs from the theme. Every field left unset is worked out from the theme when the checkbox is drawn. |
 | [`TextFieldStyle`](textfieldstyle.md) | How one text field looks, where it differs from the theme. Every field left unset is worked out from the theme when the text field is drawn. |
-| [`TextFieldResult`](textfieldresult.md) | What a text field reports back: whether it changed the text, whether Enter was pressed in it, and where its caret and selection are. As a `Bool`, it is whether the text changed, so `if ui.text_field(...):` works like every other widget. |
+| [`TextEditor`](texteditor.md) | A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons. |
 | [`PanelStyle`](panelstyle.md) | How one panel looks, where it differs from the theme. Every field left unset is worked out from the theme when the panel is drawn. |

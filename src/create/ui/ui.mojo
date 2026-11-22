@@ -143,6 +143,15 @@ struct UI(Movable):
     var _key_used: Bool
     """Whether a key was the UI's this frame: Tab moving focus, Escape
     taking it away, or a key acting on the focused widget."""
+    var _last_changed: Bool
+    """Whether the widget called last changed its value: what
+    `ui.changed()` reports."""
+    var _last_submitted: Bool
+    """Whether Enter was pressed in the widget called last: what
+    `ui.submitted()` reports."""
+    var _last_text_field: Optional[UInt64]
+    """The ID of the widget called last when it is a text field, for
+    `ui.text_editor()`; `None` when it is any other widget."""
 
     def __init__(
         out self,
@@ -178,6 +187,9 @@ struct UI(Movable):
         self._buffers = {}
         self._typing_was = False
         self._claimant = 0
+        self._last_changed = False
+        self._last_submitted = False
+        self._last_text_field = None
 
     def theme(self) -> Theme:
         """The theme the widgets are drawn in."""
@@ -267,6 +279,19 @@ struct UI(Movable):
             _view=canvas._current_view(),
         )
 
+    def _called(
+        mut self,
+        *,
+        changed: Bool,
+        submitted: Bool = False,
+        text_field: Optional[UInt64] = None,
+    ):
+        """Record what the widget just called did, for `ui.changed()`,
+        `ui.submitted()` and `ui.text_editor()` to report."""
+        self._last_changed = changed
+        self._last_submitted = submitted
+        self._last_text_field = text_field
+
     def _begin_layer(mut self, mut context: Context):
         """Start a layer, resetting the per-frame state when it is the first
         layer of a new frame."""
@@ -288,6 +313,7 @@ struct UI(Movable):
             self._styles.clear()
             self._contents.clear()
             self._disabled_depth = 0
+            self._called(changed=False)
             swap(self._last_hits, self._hits)
             self._hits.clear()
             self._hot = None

@@ -1,7 +1,13 @@
 """`ui.text_field`: typing reaches only the focused field, Enter submits,
 clicking places the caret, and the UI switches `text_input` as focus comes
 and goes."""
-from std.testing import TestSuite, assert_equal, assert_false, assert_true
+from std.testing import (
+    TestSuite,
+    assert_equal,
+    assert_false,
+    assert_raises,
+    assert_true,
+)
 
 from create import *
 from _input import next_frame, point_at, press, press_key, release
@@ -33,13 +39,13 @@ struct _Form:
         var rects = [_FIRST, _SECOND]
         with self.ui.screen(self.context, canvas) as layer:
             for i in range(2):
-                var field = layer.text_field(
+                layer.text_field(
                     self.texts[i],
                     rects[i],
                     disabled=self.disable_first and i == 0,
                 )
-                self.changed[i] = Bool(field)
-                self.submitted[i] = field.submitted
+                self.changed[i] = layer.changed()
+                self.submitted[i] = layer.submitted()
 
     def click(mut self, at: Point) raises:
         next_frame(self.context)
@@ -164,22 +170,43 @@ def test_a_disabled_field_ignores_typing() raises -> None:
     assert_equal(form.texts[0], "")
 
 
-def test_the_result_edits_the_field() raises -> None:
+def test_the_editor_edits_the_field_at_its_next_call() raises -> None:
     var ui = UI()
     var context = Context()
     var canvas = Canvas(400, 200)
     var name = String("Ada Lovelace")
+    for frame in range(2):
+        if frame == 1:
+            next_frame(context)
+        with ui.screen(context, canvas) as layer:
+            layer.text_field(name, _FIRST)
+            if frame == 1:
+                assert_true(layer.changed())
+                break
+            var editor = layer.text_editor()
+            assert_equal(editor.before_caret(), "Ada Lovelace")
+            editor.move_word_left()
+            editor.move_word_left(select=True)
+            assert_equal(editor.selected_text(), "Ada ")
+            editor.delete_backward()
+            editor.move_to_end()
+            editor.insert("!")
+            assert_equal(name, "Ada Lovelace")  # not until the next call
+    assert_equal(name, "Lovelace!")
+
+
+def test_the_editor_needs_a_text_field_called_last() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(400, 200)
+    var name = String("Ada")
     with ui.screen(context, canvas) as layer:
-        var field = layer.text_field(name, _FIRST)
-        assert_equal(field.before_caret(), "Ada Lovelace")
-        field.move_word_left()
-        field.move_word_left(select=True)
-        assert_equal(field.selected_text(), "Ada ")
-        field.delete_backward()
-        assert_equal(name, "Lovelace")
-        field.move_to_end()
-        field.insert("!")
-        assert_equal(name, "Lovelace!")
+        with assert_raises():
+            _ = layer.text_editor()
+        layer.text_field(name, _FIRST)
+        _ = layer.button("OK", _SECOND)
+        with assert_raises():
+            _ = layer.text_editor()
 
 
 def test_text_the_program_changes_is_what_the_field_shows() raises -> None:

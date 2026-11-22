@@ -24,7 +24,7 @@ a ring is drawn round it so the player can see where they are. Focus moves in se
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`: focus
 # the name field as the dialog opens.
-_ = ui.text_field(self.name, Rectangle((0, 40), 320, 40), take_focus=self.just_opened)
+ui.text_field(self.name, Rectangle((0, 40), 320, 40), take_focus=self.just_opened)
 ```
 
 ## The keys and buttons

@@ -71,8 +71,9 @@ so a style only says what differs:
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-_ = ui.button("Stop", Rectangle((0, 0), 120, 40), style=ButtonStyle(corner_radius=4))
-_ = ui.slider(
+if ui.button("Stop", Rectangle((0, 0), 120, 40), style=ButtonStyle(corner_radius=4)):
+    self.stop()
+ui.slider(
     self.volume,
     0,
     1,
@@ -97,10 +98,13 @@ Two `with` blocks change the look of every widget inside them:
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 with ui.style(button=ButtonStyle(corner_radius=4)):
-    _ = ui.button("Square", Rectangle((0, 0), 120, 40))
-    _ = ui.button("Square too", Rectangle((0, -50), 120, 40))
+    if ui.button("Square", Rectangle((0, 0), 120, 40)):
+        ...
+    if ui.button("Square too", Rectangle((0, -50), 120, 40)):
+        ...
 with ui.theme(Theme.dark()):
-    _ = ui.button("Dark", Rectangle((0, -100), 120, 40))
+    if ui.button("Dark", Rectangle((0, -100), 120, 40)):
+        ...
 ```
 
 ## Panels
@@ -118,7 +122,7 @@ without being told. A widget of your own reads that colour with `ui.content_colo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 with ui.panel(Rectangle((0, 0), 320, 140), style=PanelStyle(shadow=True)):
     ui.label("Volume", Rectangle((0, 40), 280, 24))
-    _ = ui.slider(self.volume, 0, 1, Rectangle((0, 0), 280, 32))
+    ui.slider(self.volume, 0, 1, Rectangle((0, 0), 280, 32))
 ```
 
 A panel places nothing: the widgets inside it are positioned by their own rectangles.

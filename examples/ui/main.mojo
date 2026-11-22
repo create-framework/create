@@ -46,12 +46,13 @@ struct Menu(Program):
                     style=LabelStyle(text_style=ui.theme().typography.title),
                 )
                 y -= ROW
-                if ui.text_field(
+                ui.text_field(
                     self.name,
                     Rectangle((0, y), WIDTH, 44.0),
                     placeholder="Your name",
                     max_length=16,
-                ).submitted:
+                )
+                if ui.submitted():
                     self.message = "Hello, " + self.name
                 y -= ROW
                 ui.label(
@@ -59,7 +60,7 @@ struct Menu(Program):
                     Rectangle((-WIDTH / 2 + 50, y), 100.0, 24.0),
                     alignment=Align.LEFT,
                 )
-                _ = ui.slider(
+                ui.slider(
                     self.volume,
                     0,
                     1,
@@ -70,13 +71,13 @@ struct Menu(Program):
                 # Each checkbox on a row of its own, its box lined up with
                 # the field's left edge.
                 var left = -WIDTH / 2
-                _ = ui.checkbox(
+                ui.checkbox(
                     "Music",
                     self.music,
                     Rectangle((left + 100, y), 200.0, 32.0),
                 )
                 y -= ROW * 0.8
-                _ = ui.checkbox(
+                ui.checkbox(
                     "Dark theme",
                     self.dark,
                     Rectangle((left + 100, y), 200.0, 32.0),
