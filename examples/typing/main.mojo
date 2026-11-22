@@ -97,15 +97,11 @@ struct TypingTest(Program):
             ui.text_field(
                 self.typed,
                 Rectangle(Point(left + width / 2, 0), width, 40.0),
-                style=TextFieldStyle(
-                    container_color=Color.TRANSPARENT,
-                    outline_thickness=0,
-                    text_color=Color.TRANSPARENT,
-                    caret_color=TYPED,
-                    selection_color=SELECTION,
-                    padding=0,
-                    text_style=Style(font_size=SIZE),
-                ),
+                container=Style(fill_enabled=False, stroke_enabled=False),
+                text_style=Style(text_color=Color.TRANSPARENT, font_size=SIZE),
+                caret=Style(stroke=TYPED),
+                selection=Style(fill=SELECTION),
+                padding=0,
                 take_focus=not finished,
                 disabled=finished,
             )

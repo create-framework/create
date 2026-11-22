@@ -22,5 +22,4 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`ButtonVariant`](buttonvariant.md) | Which of the theme's colours a button is drawn in. |
-| [`TextFieldStyle`](textfieldstyle.md) | How one text field looks, where it differs from the theme. Every field left unset is worked out from the theme when the text field is drawn. |
 | [`TextEditor`](texteditor.md) | A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons. |

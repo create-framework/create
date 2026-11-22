@@ -68,11 +68,11 @@ full. The text is the program's own `String`, so the program can set it at any t
 **Drawing the text yourself.** `ui.text_editor()`, right after the field, gives its `TextEditor`,
 which says where its caret and selection are: `before_caret()` is the text before the caret,
 `before_selection()` the text before the selection, and `selected_text()` the selection itself, to
-measure with `canvas.text_width`. A `TextFieldStyle` with a transparent container, text colour and
-no outline draws nothing but the caret and the selection, so the program can draw the letters its
-own way, and `take_focus=True` keeps the field focused without a click. See
-[examples/typing](../../../examples/typing/main.mojo), which colours each typed letter by whether it
-is right.
+measure with `canvas.text_width`. A field whose `container` has neither fill nor outline, and whose
+`text_style` makes the text transparent, draws nothing but the caret and the selection, so the
+program can draw the letters its own way, and `take_focus=True` keeps the field focused without a
+click. See [examples/typing](../../../examples/typing/main.mojo), which colours each typed letter by
+whether it is right.
 
 **Editing from the program.** The same `TextEditor` edits the field through the methods typing uses:
 `insert`, `delete_backward`, `delete_forward`, the moves, `select_all`, `copy`, `cut` and `paste`.
