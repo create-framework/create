@@ -427,36 +427,6 @@ struct _Palette(Copyable, ImplicitlyCopyable, Movable):
 
 
 @fieldwise_init
-struct CornerRadii(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """How round the theme's corners are, from `small`, such as a checkbox's,
-    to `large`, such as a panel's."""
-
-    var small: Float64
-    var medium: Float64
-    var large: Float64
-
-    def __init__(out self):
-        self.small = 4
-        self.medium = 12
-        self.large = 16
-
-
-@fieldwise_init
-struct Spacing(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The theme's gaps, from `small`, between a label and its widget, to
-    `large`, between groups of widgets."""
-
-    var small: Float64
-    var medium: Float64
-    var large: Float64
-
-    def __init__(out self):
-        self.small = 4
-        self.medium = 8
-        self.large = 16
-
-
-@fieldwise_init
 struct StateLayers(Copyable, ImplicitlyCopyable, Movable, Writable):
     """How strongly a widget shows its state.
 
@@ -503,10 +473,9 @@ struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
 
 @fieldwise_init
 struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The design tokens every widget draws from: colours, corner radii,
-    gaps, the height of a control, state layers and the focus ring. A
-    widget's look is worked out from these when it is drawn, so changing a
-    token changes every widget that uses it.
+    """The colours every widget draws from. A widget's look is worked out
+    from them when it is drawn, so changing a colour changes every widget
+    that uses it.
 
     ```mojo
     # In `create`, building the `ui` field:
@@ -515,13 +484,6 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     """
 
     var colors: ColorScheme
-    var corner_radii: CornerRadii
-    var spacing: Spacing
-    var control_height: Float64
-    """How tall a button, slider, checkbox or text field is in a
-    `ui.column`, and how tall a `ui.row` is, unless told otherwise."""
-    var state_layers: StateLayers
-    var focus_ring: FocusRing
 
     @staticmethod
     def light(
@@ -606,9 +568,4 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     def _with_colors(colors: ColorScheme) -> Theme:
         return Theme(
             colors=colors,
-            corner_radii=CornerRadii(),
-            spacing=Spacing(),
-            control_height=40,
-            state_layers=StateLayers(),
-            focus_ring=FocusRing(),
         )

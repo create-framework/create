@@ -46,7 +46,25 @@ def test_a_column_stacks_widgets_down_its_width() raises -> None:
     _assert_rect(rects[1], 0, 82, 200, 40)  # 8 below the first
 
 
-def test_a_gap_given_replaces_the_themes() raises -> None:
+def test_the_uis_spacing_and_control_height_lay_out_a_column() raises -> None:
+    var ui = UI()
+    ui.spacing(20)
+    ui.control_height(30)
+    var context = Context()
+    var canvas = Canvas(400, 400)
+    with ui.screen(context, canvas) as layer:
+        with layer.column(_COLUMN):
+            _ = layer.button("One")
+            _ = layer.button("Two")
+            layer.space()  # twice the spacing, 40
+            _ = layer.button("Three")
+    var rects = _placed(ui)
+    _assert_rect(rects[0], 0, 135, 200, 30)
+    _assert_rect(rects[1], 0, 85, 200, 30)  # 20 below the first
+    _assert_rect(rects[2], 0, -5, 200, 30)  # 20 + 40 below the second
+
+
+def test_a_gap_given_replaces_the_uis() raises -> None:
     var ui = UI()
     var context = Context()
     var canvas = Canvas(400, 400)
@@ -181,7 +199,7 @@ def test_space_leaves_part_of_a_column_empty() raises -> None:
             _ = layer.button("Above")
             layer.space(20)
             _ = layer.button("Below")
-            layer.space()  # the theme's large spacing, 16
+            layer.space()  # twice the spacing, 16
             _ = layer.button("Further")
     var rects = _placed(ui)
     _assert_rect(rects[1], 0, 62, 200, 40)

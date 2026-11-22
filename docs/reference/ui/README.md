@@ -14,10 +14,8 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`WidgetStyleGuard`](widgetstyleguard.md) | Ends the `ui.style` block it was made for, on scope exit. Only `ui.style` builds one. |
 | [`PanelGuard`](panelguard.md) | Ends the `ui.panel` block it was made for, on scope exit. Only `ui.panel` builds one. |
 | [`LayoutGuard`](layoutguard.md) | Ends the `ui.column` or `ui.row` block it was made for, on scope exit. Only `ui.column` and `ui.row` build one. |
-| [`Theme`](theme.md) | The design tokens every widget draws from: colours, corner radii, gaps, the height of a control, state layers and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it. |
+| [`Theme`](theme.md) | The colours every widget draws from. A widget's look is worked out from them when it is drawn, so changing a colour changes every widget that uses it. |
 | [`ColorScheme`](colorscheme.md) | The colours of a theme, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. |
-| [`CornerRadii`](cornerradii.md) | How round the theme's corners are, from `small`, such as a checkbox's, to `large`, such as a panel's. |
-| [`Spacing`](spacing.md) | The theme's gaps, from `small`, between a label and its widget, to `large`, between groups of widgets. |
 | [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`ButtonVariant`](buttonvariant.md) | Which of the theme's colours a button is drawn in. |

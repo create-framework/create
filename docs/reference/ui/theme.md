@@ -4,7 +4,7 @@
 struct Theme
 ```
 
-The design tokens every widget draws from: colours, corner radii, gaps, the height of a control, state layers and the focus ring. A widget's look is worked out from these when it is drawn, so changing a token changes every widget that uses it.
+The colours every widget draws from. A widget's look is worked out from them when it is drawn, so changing a colour changes every widget that uses it.
 
 ```mojo
 # In `create`, building the `ui` field:
@@ -16,11 +16,6 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 ## Fields
 
 - `colors: ColorScheme`
-- `corner_radii: CornerRadii`
-- `spacing: Spacing`
-- `control_height: Float64`: How tall a button, slider, checkbox or text field is in a `ui.column`, and how tall a `ui.row` is, unless told otherwise.
-- `state_layers: StateLayers`
-- `focus_ring: FocusRing`
 
 ## Constructors
 
