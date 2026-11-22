@@ -81,6 +81,6 @@ Data files: `Table` and `TableRow` for CSV and TSV, and `JSON`.
 
 ## [`create.ui`](ui/README.md)
 
-The user interface: `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `Theme`, the design tokens they draw from.
+The user interface: `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
 
-- **Types:** [`UI`](ui/ui.md), [`UILayer`](ui/uilayer.md), [`IDGuard`](ui/idguard.md), [`DisabledGuard`](ui/disabledguard.md), [`ThemeGuard`](ui/themeguard.md), [`WidgetStyleGuard`](ui/widgetstyleguard.md), [`PanelGuard`](ui/panelguard.md), [`LayoutGuard`](ui/layoutguard.md), [`Theme`](ui/theme.md), [`ColorScheme`](ui/colorscheme.md), [`StateLayers`](ui/statelayers.md), [`FocusRing`](ui/focusring.md), [`ButtonVariant`](ui/buttonvariant.md), [`TextEditor`](ui/texteditor.md)
+- **Types:** [`UI`](ui/ui.md), [`UILayer`](ui/uilayer.md), [`IDGuard`](ui/idguard.md), [`DisabledGuard`](ui/disabledguard.md), [`ColorsGuard`](ui/colorsguard.md), [`WidgetStyleGuard`](ui/widgetstyleguard.md), [`PanelGuard`](ui/panelguard.md), [`LayoutGuard`](ui/layoutguard.md), [`ColorScheme`](ui/colorscheme.md), [`StateLayers`](ui/statelayers.md), [`FocusRing`](ui/focusring.md), [`ButtonVariant`](ui/buttonvariant.md), [`TextEditor`](ui/texteditor.md)

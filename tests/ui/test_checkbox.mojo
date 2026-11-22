@@ -33,7 +33,7 @@ def _drawn(
 
 
 def test_an_empty_box_is_an_outline() raises -> None:
-    var colors = Theme.light().colors
+    var colors = ColorScheme.light()
     var canvas = _drawn(False)
     assert_equal(
         canvas.color_at(_BOX + Vector(-8.5, 0.0)), colors.on_surface_variant
@@ -42,7 +42,7 @@ def test_an_empty_box_is_an_outline() raises -> None:
 
 
 def test_a_ticked_box_is_filled_and_ticked() raises -> None:
-    var colors = Theme.light().colors
+    var colors = ColorScheme.light()
     var canvas = _drawn(True)
     assert_equal(canvas.color_at(_BOX + Vector(-7, 7)), colors.primary)
     assert_equal(canvas.color_at(_BOX + Vector(-1.5, -4.0)), colors.on_primary)
@@ -56,10 +56,10 @@ def test_the_tick_takes_its_own_style() raises -> None:
 def test_a_square_box_and_its_ticked_form() raises -> None:
     var corner = _BOX + Vector(-8.5, 8.5)
     var round = _drawn(True)
-    assert_true(round.color_at(corner) != Theme.light().colors.primary)
+    assert_true(round.color_at(corner) != ColorScheme.light().primary)
     # the ticked box takes the box's corners
     var square = _drawn(True, box=Style(corner_radius=0))
-    assert_equal(square.color_at(corner), Theme.light().colors.primary)
+    assert_equal(square.color_at(corner), ColorScheme.light().primary)
 
 
 def test_a_ticked_box_can_be_styled_apart() raises -> None:

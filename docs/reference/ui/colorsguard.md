@@ -1,10 +1,10 @@
-# ThemeGuard
+# ColorsGuard
 
 ```mojo
-struct ThemeGuard[origin: MutOrigin]
+struct ColorsGuard[origin: MutOrigin]
 ```
 
-Ends the `ui.theme` block it was made for, on scope exit. Only `ui.theme` builds one.
+Ends the `ui.colors` block it was made for, on scope exit. Only `ui.colors` builds one.
 
 Implements `Deinitable`, `Movable`.
 

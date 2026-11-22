@@ -1,11 +1,11 @@
-"""`ButtonVariant`: which of the theme's colours a button is drawn in."""
+"""`ButtonVariant`: which of the colours a button is drawn in."""
 
 
 @fieldwise_init
 struct ButtonVariant(
     Copyable, Equatable, ImplicitlyCopyable, Movable, Writable
 ):
-    """Which of the theme's colours a button is drawn in.
+    """Which of the colours a button is drawn in.
 
     From the most prominent to the quietest:
 

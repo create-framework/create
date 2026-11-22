@@ -1,13 +1,16 @@
-"""`Theme`: the design tokens every widget draws from."""
+"""`ColorScheme`, the colours widgets are drawn in, and the tokens for how
+they show their state and focus: `StateLayers` and `FocusRing`."""
 
 from create.color import Color
 
 
 @fieldwise_init
 struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The colours of a theme, as pairs of roles: each colour a widget is
-    filled with, and the `on_` colour for text and icons drawn on it, chosen
-    to read well together.
+    """The colours widgets are drawn in, as pairs of roles: each colour a
+    widget is filled with, and the `on_` colour for text and icons drawn on
+    it, chosen to read well together. A program keeps its scheme in a field,
+    passes it to `ui.screen` or `ui.world`, and draws its own things in it,
+    such as `canvas.background(self.colors.background)`.
 
     - **`primary`** is for the most important actions, such as a filled
       button; **`secondary`** and **`tertiary`** for less prominent ones and
@@ -469,103 +472,3 @@ struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.thickness = 3
         self.gap = 2
         self.color = None
-
-
-@fieldwise_init
-struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The colours every widget draws from. A widget's look is worked out
-    from them when it is drawn, so changing a colour changes every widget
-    that uses it.
-
-    ```mojo
-    # In `create`, building the `ui` field:
-    var ui = UI(Theme.dark(primary=Color.ORANGE))
-    ```
-    """
-
-    var colors: ColorScheme
-
-    @staticmethod
-    def light(
-        *,
-        primary: Optional[Color] = None,
-        on_primary: Optional[Color] = None,
-        secondary: Optional[Color] = None,
-        on_secondary: Optional[Color] = None,
-        tertiary: Optional[Color] = None,
-        on_tertiary: Optional[Color] = None,
-        error: Optional[Color] = None,
-        on_error: Optional[Color] = None,
-        surface: Optional[Color] = None,
-        on_surface: Optional[Color] = None,
-    ) -> Theme:
-        """A theme of dark colours on a light background, with the colours
-        given replacing its own.
-
-        A colour given also changes its container to a quieter mix of it
-        with the surface, and a colour given without its `on_` partner gets
-        black or white, whichever reads better on it. So this is enough to
-        make the buttons orange:
-
-        ```mojo
-        # In `create`, building the `ui` field:
-        var ui = UI(Theme.light(primary=Color.ORANGE))
-        ```
-        """
-        return Theme._with_colors(
-            ColorScheme.light(
-                primary=primary,
-                on_primary=on_primary,
-                secondary=secondary,
-                on_secondary=on_secondary,
-                tertiary=tertiary,
-                on_tertiary=on_tertiary,
-                error=error,
-                on_error=on_error,
-                surface=surface,
-                on_surface=on_surface,
-            )
-        )
-
-    @staticmethod
-    def dark(
-        *,
-        primary: Optional[Color] = None,
-        on_primary: Optional[Color] = None,
-        secondary: Optional[Color] = None,
-        on_secondary: Optional[Color] = None,
-        tertiary: Optional[Color] = None,
-        on_tertiary: Optional[Color] = None,
-        error: Optional[Color] = None,
-        on_error: Optional[Color] = None,
-        surface: Optional[Color] = None,
-        on_surface: Optional[Color] = None,
-    ) -> Theme:
-        """A theme of light colours on a dark background, with the colours
-        given replacing its own, as `Theme.light` does."""
-        return Theme._with_colors(
-            ColorScheme.dark(
-                primary=primary,
-                on_primary=on_primary,
-                secondary=secondary,
-                on_secondary=on_secondary,
-                tertiary=tertiary,
-                on_tertiary=on_tertiary,
-                error=error,
-                on_error=on_error,
-                surface=surface,
-                on_surface=on_surface,
-            )
-        )
-
-    @staticmethod
-    def from_seed(seed: Color, *, dark: Bool = False) -> Theme:
-        """A whole theme worked out from one colour, as
-        `ColorScheme.from_seed` does: light unless `dark`."""
-        return Theme._with_colors(ColorScheme.from_seed(seed, dark=dark))
-
-    @staticmethod
-    def _with_colors(colors: ColorScheme) -> Theme:
-        return Theme(
-            colors=colors,
-        )

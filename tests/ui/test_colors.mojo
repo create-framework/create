@@ -1,9 +1,10 @@
-"""`ColorScheme` and `Theme`: the light and dark schemes, colours given to
-replace their own, and schemes from a seed colour."""
+"""`ColorScheme` and the UI's tokens: the light and dark schemes, colours
+given to replace their own, schemes from a seed colour, and the colours a
+layer is drawn in."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.theme import _contrast
+from create.ui.colors import _contrast
 from create.ui.layer import _body_text, _label_text, _over
 
 
@@ -100,25 +101,19 @@ def test_a_surface_given_changes_the_colours_drawn_on_it() raises -> None:
     assert_true(colors.outline != ColorScheme.dark().outline)
 
 
-def test_a_theme_takes_its_colours_from_the_scheme() raises -> None:
-    assert_equal(
-        String(Theme.light(primary=Color.ORANGE).colors),
-        String(ColorScheme.light(primary=Color.ORANGE)),
-    )
-    assert_equal(
-        String(Theme.from_seed(Color.ORANGE, dark=True).colors),
-        String(ColorScheme.from_seed(Color.ORANGE, dark=True)),
-    )
-
-
-def test_the_ui_draws_in_the_theme_it_is_given() raises -> None:
-    var ui = UI(Theme.dark())
-    assert_equal(ui.theme().colors.surface, ColorScheme.dark().surface)
-    ui.theme(Theme.light())
+def test_a_layer_draws_in_the_colours_it_is_given() raises -> None:
+    var ui = UI()
     var context = Context()
     var canvas = Canvas(16, 16)
     with ui.screen(context, canvas) as layer:
-        assert_equal(layer.theme().colors.surface, ColorScheme.light().surface)
+        assert_equal(layer.colors().surface, ColorScheme.light().surface)
+    with ui.screen(context, canvas, ColorScheme.dark()) as layer:
+        assert_equal(layer.colors().surface, ColorScheme.dark().surface)
+        with layer.colors(ColorScheme.light()):
+            assert_equal(layer.colors().surface, ColorScheme.light().surface)
+        assert_equal(layer.colors().surface, ColorScheme.dark().surface)
+    with ui.world(context, canvas, ColorScheme.dark()) as layer:
+        assert_equal(layer.colors().surface, ColorScheme.dark().surface)
 
 
 def _seeds() -> List[Color]:

@@ -25,7 +25,7 @@ def test_tab_shows_a_ring_around_the_button() raises -> None:
     next_frame(context)
     press_key(context, Key.TAB)
     var canvas = _frame(ui, context)
-    var ring = ui.theme().colors.secondary
+    var ring = ColorScheme.light().secondary
     assert_equal(canvas.color_at((53.5, 0)), ring)  # right of the round end
     assert_equal(canvas.color_at((0, 23.5)), ring)  # above the straight top
     assert_equal(canvas.color_at((51, 0)), Color.WHITE)  # the gap
@@ -69,7 +69,7 @@ def test_a_ring_is_drawn_over_a_neighbour() raises -> None:
             _ = layer.button("OK", _A)
             # a neighbour drawn later, under where the ring goes
             layer.draw(Rectangle((54, 0), 10, 10), Style(fill=Color.RED))
-    assert_equal(canvas.color_at((53.5, 0)), ui.theme().colors.secondary)
+    assert_equal(canvas.color_at((53.5, 0)), ColorScheme.light().secondary)
 
 
 def test_the_ui_can_change_the_ring() raises -> None:

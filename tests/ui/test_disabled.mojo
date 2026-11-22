@@ -97,10 +97,10 @@ def test_a_disabled_button_is_drawn_faded() raises -> None:
     var ui = UI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
-    canvas.background(ui.theme().colors.surface)
+    canvas.background(ColorScheme.light().surface)
     with ui.screen(context, canvas) as layer:
         _ = layer.button("OK", _A, disabled=True)
-    var colors = ui.theme().colors
+    var colors = ColorScheme.light()
     var expected = colors.surface.lerp(
         colors.on_surface, ui.state_layers().disabled_container
     )
