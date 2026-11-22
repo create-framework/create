@@ -8,6 +8,7 @@ from create.geometry import Circle, Drawable, Line, Rectangle
 from create.input import GamepadButton, Key
 from create.image import Image
 from create.math import Point, Transform, Vector
+from create.text import FontWeight
 from create.math._optional_float64 import _OptionalFloat64
 from create.render import (
     Align,
@@ -31,6 +32,16 @@ from .ui import UI, _Hit, _Styles
 
 comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
 """The inset shadow a pressed filled or tonal button is drawn with."""
+
+
+def _body_text() -> Style:
+    """The text of labels, checkboxes and text fields, unless styled."""
+    return Style(font_size=16, font_weight=FontWeight.REGULAR)
+
+
+def _label_text() -> Style:
+    """The text on buttons, unless styled."""
+    return Style(font_size=14, font_weight=FontWeight.MEDIUM)
 
 
 @fieldwise_init
@@ -505,11 +516,8 @@ struct UILayer[
         ```
         """
         self._check_frame()
-        var theme = self._ui[]._current_theme()
         var look = style.over(self._ui[]._current_styles().label).over(
-            Style(text_color=self._ui[]._content_color()).over(
-                theme.typography.body
-            )
+            Style(text_color=self._ui[]._content_color()).over(_body_text())
         )
         var place = self._place(rect, _size(look) * 1.5, "ui.label")
         var resolved = _ResolvedStyle()
@@ -793,7 +801,7 @@ struct UILayer[
         var now = self._context[].time.elapsed
         var block = ui._current_styles()
         var text_look = call_text.over(block.text_field_text).over(
-            Style(text_color=colors.on_surface).over(theme.typography.body)
+            Style(text_color=colors.on_surface).over(_body_text())
         )
         var typed = _ResolvedStyle()
         typed.apply(text_look)
@@ -1054,7 +1062,7 @@ struct UILayer[
         var theme = self._ui[]._current_theme()
         ref colors = theme.colors
         var look = call_style.over(self._ui[]._current_styles().button).over(
-            _variant_look(variant, colors).over(theme.typography.label)
+            _variant_look(variant, colors).over(_label_text())
         )
         var resolved = _ResolvedStyle()
         resolved.apply(look)
@@ -1327,9 +1335,7 @@ struct UILayer[
         var text = _ResolvedStyle()
         text.apply(
             call_label.over(block.checkbox_label).over(
-                Style(text_color=self._ui[]._content_color()).over(
-                    theme.typography.body
-                )
+                Style(text_color=self._ui[]._content_color()).over(_body_text())
             )
         )
         comptime size = 18.0
@@ -1629,7 +1635,7 @@ def _variant_look(variant: ButtonVariant, colors: ColorScheme) -> Style:
 
 def _over(style: Optional[Style], base: Style) -> Style:
     """`style` layered over `base`, or `base` when there is none: a
-    widget's text style over the theme's kind of text."""
+    widget's text style over its default text."""
     if style:
         return style.value().over(base)
     return base
