@@ -50,8 +50,8 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
   images, how widgets are told apart, drawing your own things among them, and disabled widgets.
 - [Focus and navigation](ui/focus.md): focus, Tab and the keys, gamepads, focus rings, keeping the
   game's input apart from the UI's, and several `UI`s.
-- [Themes and styling](ui/themes.md): themes and their colours, a theme from one colour, styling one
-  widget or a block, panels, and how widgets show their state.
+- [Themes and styling](ui/themes.md): the colours widgets are drawn in, colours from one colour, the
+  sizes the `UI` keeps, styling one widget or a block, panels, and how widgets show their state.
 
 ## [Motion](motion/README.md)
 

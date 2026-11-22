@@ -10,14 +10,14 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 
 | File | Role |
 |---|---|
-| `ui.mojo` | `UI`: the state kept between frames (the widgets seen, focus, the held widget, text buffers, scope stacks, the device claims), the per-frame reset in `_begin_layer`, Tab and gamepad navigation, `ui.screen` and `ui.world`; `_Hit`, a widget's place for hit-testing; `_Styles`, the merged `ui.style` blocks |
+| `ui.mojo` | `UI`: the state kept between frames (the widgets seen, focus, the held widget, text buffers, scope stacks, the device claims), its settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), the layer's colours, the per-frame reset in `_begin_layer`, Tab and gamepad navigation, `ui.screen` and `ui.world`; `_Hit`, a widget's place for hit-testing; `_Styles`, the merged `ui.style` blocks |
 | `layer.mojo` | `UILayer`, the handle a layer's block gets: every widget, `_interact` (what the pointer and keys did to a widget), the focus ring, `ui.draw`, the scopes and panels, and the guards their `with` blocks return |
 | `_id.mojo` | Widget IDs: a call site's file, line and column, mixed into the keys of the open `ui.id` blocks |
 | `_layout.mojo` | `_Layout`, an open panel, column or row, and how it hands out the slots of the widgets called inside it |
 | `_key.mojo` | `_WidgetKey`, the `id=` keyword, which takes a string, an integer or `None` in one implicit conversion |
 | `_recorder.mojo` | `_Recorder`, a `DrawTarget` a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
-| `theme.mojo` | `Theme` and its tokens, `ColorScheme`, `Theme.from_seed` and its `_Palette`; `_contrast` and `_readable_on` |
+| `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
 | `button.mojo` | `ButtonVariant`; a button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
 | `text_field.mojo` | `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
 
@@ -54,7 +54,7 @@ replay through a recursive `_replay_from`, each inside the canvas's own clip gua
 stack of `_Layout`s: `ui.panel`, `ui.column` and `ui.row` each push one, and their guards pop it. A
 widget's public method resolves its rect through `UILayer._place` before it calls its body, so the
 body, the hit-testing and the ID never see the difference. A column hands out strips from its `top`
-edge down, each as tall as the widget asks: the theme's `control_height`, or one and a half times a
+edge down, each as tall as the widget asks: the `UI`'s `control_height`, or one and a half times a
 label's text size. A row is cut into its slots when it opens, with `Rectangle.columns`.
 
 **Layout is one pass.** Every slot is known when it is asked for, so a widget knows where it is when
@@ -105,18 +105,19 @@ diameter.
 
 A part's look is resolved when it is drawn: `call.over(block).over(defaults)`. `block` is the
 innermost `ui.style` block's style for that part (each block is stored already layered over the ones
-outside it, in `_Styles`), and `defaults` is built from the theme, the innermost `ui.theme` block's
-or the `UI`'s own. `Style.over` means applying the base and then the style, so a part named on top
-switches on what the defaults switched off. One part can take what it leaves unset from another: a
-slider's active track from its track, a checkbox's ticked box from its box, a text field's
-placeholder from its text and its focused look from its container. The result is resolved into a
-`_ResolvedStyle` and recorded. A widget's text keeps only the text parts of its style
-(`_text_look`), so a shadow or outline given to a button belongs to its shape, not its letters.
-Panels push a content colour (their style's `text_color`, or the `on_` partner of their fill), which
-labels and checkbox labels use unless their style sets one.
+outside it, in `_Styles`), and `defaults` is built from the colours, the innermost `ui.colors`
+block's or the layer's, and from the `UI`'s settings, such as its `corner_radius`. `Style.over`
+means applying the base and then the style, so a part named on top switches on what the defaults
+switched off. One part can take what it leaves unset from another: a slider's active track from its
+track, a checkbox's ticked box from its box, a text field's placeholder from its text and its
+focused look from its container. The result is resolved into a `_ResolvedStyle` and recorded. A
+widget's text keeps only the text parts of its style (`_text_look`), so a shadow or outline given to
+a button belongs to its shape, not its letters. Panels push a content colour (their style's
+`text_color`, or the `on_` partner of their fill), which labels and checkbox labels use unless their
+style sets one.
 
 **State colours step OKLCH lightness.** A hovered, pressed or dragged part's paint, its fill for a
-region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the theme's
+region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the `UI`'s
 `StateLayers` step towards its text colour, its chroma and hue kept. A widget with no fill of its
 own draws a translucent layer whose opacity `_layer_opacity` chooses to move the surface's lightness
 by the same step. Disabled widgets fade their colours by `_faded`, which scales the colour's own

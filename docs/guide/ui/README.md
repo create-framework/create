@@ -8,8 +8,8 @@ explains how a widget is called and where its state lives.
   rows, IDs, drawing your own things in a layer, and disabled widgets.
 - [Focus and navigation](focus.md): which widget has focus, Tab and the keys, gamepads, focus rings,
   and keeping the game's own keys and clicks apart from the UI's.
-- [Themes and styling](themes.md): themes and their colours, a theme from one colour, styling one
-  widget or a whole block, and panels.
+- [Themes and styling](themes.md): the colours widgets are drawn in, colours from one colour, the
+  sizes the `UI` keeps, styling one widget or a whole block, and panels.
 
 Text fields are explained with typed text, in [Typing](../interaction/typing.md#text-fields).
 

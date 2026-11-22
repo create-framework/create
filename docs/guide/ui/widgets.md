@@ -158,17 +158,17 @@ with ui.panel(Rectangle((0, 0), 400, 240)):
 ```
 
 - **`ui.column(rect)`** places the widgets in it one under the other, from the top down, each across
-  the column's whole width. A widget is the theme's `control_height` tall, 40 unless changed, and a
-  label one and a half times the size of its text. `gap=` sets the space between them, the theme's
-  medium spacing unless given.
+  the column's whole width. A widget is the `UI`'s `control_height` tall, 40 unless changed, and a
+  label one and a half times the size of its text. `gap=` sets the space between them, the `UI`'s
+  `spacing` unless given.
 - **`ui.row(weights...)`** places them side by side, from the left, in slots that share the row's
   width in proportion to the weights: `ui.row(1, 3)` gives the first slot a quarter and the second
   three quarters. `ui.row(columns=4)` makes four equal slots. In a column, a row is `control_height`
   tall, or `height=` if given.
 - **Without a rectangle, a column or row fills what is around it:** the inside of the panel it is
-  in, short of its edges by the theme's large spacing, the rest of a column, or the next slot of a
+  in, short of its edges by twice the `UI`'s `spacing`, the rest of a column, or the next slot of a
   row. Columns and rows nest, so a row of columns is a grid.
-- **`ui.space()`** leaves a gap in a column, the theme's large spacing unless given, such as to set
+- **`ui.space()`** leaves a gap in a column, twice the `UI`'s `spacing` unless given, such as to set
   the buttons apart from the settings above them.
 - **A widget given a `rect` inside a column or row** goes where the `rect` says, and the column or
   row doesn't move on, so one widget can be placed by hand among the others.
@@ -217,7 +217,7 @@ block ends. So an icon on a button, or a highlight behind a slider, goes through
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 if ui.button("", Rectangle((0, 0), 48, 48)):
     ...
-ui.draw(Circle((0, 0), 10), Style(fill=ui.theme().colors.on_primary))  # on top of the button
+ui.draw(Circle((0, 0), 10), Style(fill=ui.colors().on_primary))  # on top of the button
 ```
 
 It takes any `Drawable`, your own types included (see [The canvas](../drawing/canvas.md)). Text and

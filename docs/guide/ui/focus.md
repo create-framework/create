@@ -52,10 +52,11 @@ focus.
 `take_focus`.** After a click, the pointer already shows where the player is, so no ring is drawn.
 The ring follows the widget's shape, its corners rounded by the widget's own radius grown by the gap
 between them: a pill round a round-ended button, a circle round a slider's handle. A text field
-shows focus its own way instead, by a thicker outline in the theme's `primary` colour and its caret.
+shows focus its own way instead, by a thicker outline in the `primary` colour and its caret.
 
-The ring's thickness, gap and colour come from the theme's `focus_ring`, and `focus_ring=` on a
-widget's style changes it for that widget (see [Themes and styling](themes.md)).
+The ring's thickness, gap and colour come from the `UI`'s `focus_ring`, a `FocusRing`; its colour is
+the colours' `secondary` unless it sets one. `ui.focus_ring(ring)` changes it for every widget (see
+[Sizes and states](themes.md#sizes-and-states)).
 
 ## Keeping the game's input apart
 
@@ -93,11 +94,13 @@ menu in a split-screen game. They take turns at the devices:
   and the other keys, and a click in it takes the keyboard over.
 - **The mouse** is held by the `UI` with a widget held, so dragging a slider in one doesn't press a
   button in another.
-- **Gamepads** don't take turns: `UI(theme, player=n)` listens to one player's pad only, so each
-  player's menu follows its own pad. Without `player`, any pad drives the `UI`.
+- **Gamepads** don't take turns: `UI(player=n)` listens to one player's pad only, so each player's
+  menu follows its own pad. Without `player`, any pad drives the `UI`.
 
 ```mojo
-# In `create`, building two players' menus:
-var left = UI(Theme.from_seed(Color.hex(0xD04040)), player=0)
-var right = UI(Theme.from_seed(Color.hex(0x4060D0)), player=1)
+# In `create`, building two players' menus, each drawn in its own colours:
+var left = UI(player=0)
+var right = UI(player=1)
+var left_colors = ColorScheme.from_seed(Color.hex(0xD04040))
+var right_colors = ColorScheme.from_seed(Color.hex(0x4060D0))
 ```
