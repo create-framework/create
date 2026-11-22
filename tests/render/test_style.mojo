@@ -3,10 +3,16 @@ from std.testing import TestSuite, assert_equal, assert_true, assert_false
 from create import *
 from create.render._text import _pixel_size
 from create.render._transform import stroke_thickness_px
+from create.render.style import _ResolvedStyle
 
 
-def test_default_style_matches_a_fresh_frame() raises -> None:
-    var s = Style()
+def _r(s: Style) -> _ResolvedStyle:
+    """`s` applied to a fresh frame's style."""
+    return s._resolved()
+
+
+def test_a_fresh_frames_style() raises -> None:
+    var s = _ResolvedStyle()
     assert_equal(s.fill_color, Color.WHITE)
     assert_false(s.fill_enabled)
     assert_equal(s.stroke_color, Color.BLACK)
@@ -32,32 +38,53 @@ def test_default_style_matches_a_fresh_frame() raises -> None:
     assert_false(s.shadow_enabled)
 
 
+def test_an_empty_style_sets_nothing() raises -> None:
+    var s = Style()
+    assert_false(Bool(s.fill))
+    assert_false(Bool(s.stroke_thickness))
+    assert_false(Bool(s.stroke_enabled))
+    assert_false(Bool(s.text_alignment))
+    assert_false(Bool(s.shadow_enabled))
+    assert_equal(String(s), "Style()")
+
+
+def test_a_style_holds_only_what_it_was_given() raises -> None:
+    var s = Style(fill=Color.RED, corner_radius=4)
+    assert_equal(s.fill.value(), Color.RED)
+    assert_equal(s.corner_radius.value(), 4.0)
+    assert_false(Bool(s.fill_enabled))  # switched on when applied, not here
+    assert_false(Bool(s.stroke))
+    assert_false(Bool(s.font_size))
+
+
 def test_each_keyword_lands_in_its_field() raises -> None:
-    var s = Style(
-        fill=Color.RED,
-        fill_enabled=False,
-        stroke=Color.BLUE,
-        stroke_thickness=3,
-        stroke_enabled=False,
-        stroke_alignment=StrokeAlign.OUTSIDE,
-        stroke_cap=StrokeCap.ROUND,
-        stroke_dash=StrokeDash.DASHED,
-        corner_radius=5,
-        text_color=Color.WHITE,
-        font_size=32,
-        font_weight=FontWeight.BOLD,
-        font_italic=True,
-        text_alignment=Align.TOP_LEFT,
-        tint=Color.RED,
-        opacity=0.5,
-        blend_mode=BlendMode.ADD,
-        shadow=Color.RED,
-        shadow_offset=Vector(1, 2),
-        shadow_blur=3.0,
-        shadow_spread=-1.0,
-        shadow_inset=True,
-        shadow_follows_transform=True,
-        shadow_enabled=True,
+    var s = _r(
+        Style(
+            fill=Color.RED,
+            fill_enabled=False,
+            stroke=Color.BLUE,
+            stroke_thickness=3,
+            stroke_enabled=False,
+            stroke_alignment=StrokeAlign.OUTSIDE,
+            stroke_cap=StrokeCap.ROUND,
+            stroke_dash=StrokeDash.DASHED,
+            corner_radius=5,
+            text_color=Color.WHITE,
+            font_size=32,
+            font_weight=FontWeight.BOLD,
+            font_italic=True,
+            text_alignment=Align.TOP_LEFT,
+            tint=Color.RED,
+            opacity=0.5,
+            blend_mode=BlendMode.ADD,
+            shadow=Color.RED,
+            shadow_offset=Vector(1, 2),
+            shadow_blur=3.0,
+            shadow_spread=-1.0,
+            shadow_inset=True,
+            shadow_follows_transform=True,
+            shadow_enabled=True,
+        )
     )
     assert_equal(s.fill_color, Color.RED)
     assert_false(s.fill_enabled)
@@ -86,52 +113,70 @@ def test_each_keyword_lands_in_its_field() raises -> None:
 
 
 def test_naming_a_part_switches_its_property_on() raises -> None:
-    assert_true(Style(fill=Color.RED).fill_enabled)
-    assert_true(Style(shadow=Color.RED).shadow_enabled)
-    assert_true(Style(shadow_offset=Vector(1, 2)).shadow_enabled)
-    assert_true(Style(shadow_blur=12).shadow_enabled)
-    assert_true(Style(shadow_spread=0).shadow_enabled)
-    assert_true(Style(shadow_inset=False).shadow_enabled)
-    assert_false(Style(shadow_follows_transform=True).shadow_enabled)
+    assert_true(_r(Style(fill=Color.RED)).fill_enabled)
+    assert_true(_r(Style(shadow=Color.RED)).shadow_enabled)
+    assert_true(_r(Style(shadow_offset=Vector(1, 2))).shadow_enabled)
+    assert_true(_r(Style(shadow_blur=12)).shadow_enabled)
+    assert_true(_r(Style(shadow_spread=0)).shadow_enabled)
+    assert_true(_r(Style(shadow_inset=False)).shadow_enabled)
+    assert_false(_r(Style(shadow_follows_transform=True)).shadow_enabled)
 
 
 def test_an_explicit_enabled_beside_a_part_wins() raises -> None:
-    var s = Style(shadow=Color.RED, shadow_enabled=False)
+    var s = _r(Style(shadow=Color.RED, shadow_enabled=False))
     assert_false(s.shadow_enabled)
     assert_equal(s.shadow_color, Color.RED)
-    assert_false(Style(stroke=Color.RED, stroke_enabled=False).stroke_enabled)
-    assert_false(Style(fill=Color.RED, fill_enabled=False).fill_enabled)
+    assert_false(
+        _r(Style(stroke=Color.RED, stroke_enabled=False)).stroke_enabled
+    )
+    assert_false(_r(Style(fill=Color.RED, fill_enabled=False)).fill_enabled)
 
 
-def test_style_writes_constructor_keywords() raises -> None:
+def test_over_takes_each_part_from_the_top_style_first() raises -> None:
+    var base = Style(fill=Color.WHITE, stroke=Color.BLUE, corner_radius=12)
+    var s = Style(fill=Color.RED, font_size=20).over(base)
+    assert_equal(s.fill.value(), Color.RED)
+    assert_equal(s.stroke.value(), Color.BLUE)
+    assert_equal(s.corner_radius.value(), 12.0)
+    assert_equal(s.font_size.value(), 20.0)
+    assert_false(Bool(s.text_color))
+
+
+def test_over_an_empty_style_changes_nothing() raises -> None:
+    var s = Style(fill=Color.RED, shadow_blur=4)
+    assert_equal(String(s.over(Style())), String(s))
+    assert_equal(String(Style().over(s)), String(s))
+
+
+def test_style_writes_only_what_it_sets() raises -> None:
     assert_equal(
-        String(Style()),
+        String(Style(fill=Color.RED, corner_radius=4)),
+        "Style(fill=Color(255, 0, 0, 255), corner_radius=4.0)",
+    )
+    assert_equal(
+        String(
+            Style(
+                stroke_cap=StrokeCap.ROUND,
+                text_alignment=Align.LEFT,
+                shadow_offset=Vector(0, -3),
+                shadow_enabled=False,
+            )
+        ),
         (
-            "Style(fill=Color(255, 255, 255, 255), fill_gradient=None,"
-            " fill_enabled=False, stroke=Color(0, 0, 0, 255),"
-            " stroke_thickness=1.0, stroke_enabled=True,"
-            " stroke_alignment=StrokeAlign.INSIDE,"
-            " stroke_cap=StrokeCap.BUTT, stroke_dash=StrokeDash.SOLID,"
-            " corner_radius=0.0,"
-            " text_color=Color(0, 0, 0, 255), font=None, font_size=16.0,"
-            " font_weight=FontWeight.REGULAR, font_italic=False,"
-            " text_alignment=Align.CENTER, tint=Color(255, 255, 255, 255),"
-            " opacity=1.0, blend_mode=BlendMode.NORMAL, shadow=Color(0, 0, 0,"
-            " 96), shadow_offset=Vector(4.0, -4.0), shadow_blur=8.0,"
-            " shadow_spread=0.0, shadow_inset=False,"
-            " shadow_follows_transform=False, shadow_enabled=False)"
+            "Style(stroke_cap=StrokeCap.ROUND, text_alignment=Align.LEFT,"
+            " shadow_offset=Vector(0.0, -3.0), shadow_enabled=False)"
         ),
     )
 
 
 def test_stroke_cap_does_not_switch_the_stroke_on() raises -> None:
-    var s = Style(stroke_enabled=False, stroke_cap=StrokeCap.SQUARE)
+    var s = _r(Style(stroke_enabled=False, stroke_cap=StrokeCap.SQUARE))
     assert_false(s.stroke_enabled)
     assert_true(s.stroke_cap == StrokeCap.SQUARE)
 
 
 def test_stroke_alignment_does_not_switch_the_stroke_on() raises -> None:
-    var s = Style(stroke_enabled=False, stroke_alignment=StrokeAlign.CENTER)
+    var s = _r(Style(stroke_enabled=False, stroke_alignment=StrokeAlign.CENTER))
     assert_false(s.stroke_enabled)
     assert_true(s.stroke_alignment == StrokeAlign.CENTER)
 
@@ -171,16 +216,16 @@ def test_shadow_is_visible_only_when_enabled_and_opaque_enough() raises -> None:
 
 def test_fill_gradient_keyword_switches_the_fill_on() raises -> None:
     var sky = Gradient.linear(Color.RED, Color.BLUE)
-    var s = Style(fill_gradient=sky)
+    var s = _r(Style(fill_gradient=sky))
     assert_true(s.fill_enabled)
     assert_true(s.fill_gradient.value() == sky)
     assert_equal(s.fill_color, Color.WHITE)
-    assert_false(Style(fill_gradient=sky, fill_enabled=False).fill_enabled)
+    assert_false(_r(Style(fill_gradient=sky, fill_enabled=False)).fill_enabled)
 
 
 def test_fill_gradient_beside_fill_keeps_both() raises -> None:
     var sky = Gradient.linear(Color.RED, Color.BLUE)
-    var s = Style(fill=Color.GREEN, fill_gradient=sky)
+    var s = _r(Style(fill=Color.GREEN, fill_gradient=sky))
     assert_true(s.fill_gradient.value() == sky)
     assert_equal(s.fill_color, Color.GREEN)
 
@@ -202,17 +247,18 @@ def test_fill_visibility_follows_the_gradient() raises -> None:
 
 
 def test_fractional_sizes_are_kept_as_given() raises -> None:
-    var s = Style(stroke_thickness=1.5, font_size=13.5)
+    var s = _r(Style(stroke_thickness=1.5, font_size=13.5))
     assert_equal(s.stroke_thickness, 1.5)
     assert_equal(s.font_size, 13.5)
 
 
 def test_integer_literals_still_reach_the_float_keywords() raises -> None:
-    var s = Style(stroke_thickness=2, font_size=24)
+    var s = _r(Style(stroke_thickness=2, font_size=24))
     assert_equal(s.stroke_thickness, 2.0)
     assert_equal(s.font_size, 24.0)
     assert_true(
-        Style(stroke_thickness=3, stroke_enabled=False).stroke_thickness == 3.0
+        _r(Style(stroke_thickness=3, stroke_enabled=False)).stroke_thickness
+        == 3.0
     )
 
 
@@ -234,29 +280,29 @@ def test_fractional_sizes_round_once_scaled() raises -> None:
 def test_unset_number_keywords_take_none_or_any_number() raises -> None:
     # An integer literal, a float, `None` and a forwarded `Optional` all
     # reach a number keyword, like every other optional keyword.
-    var s = Style(shadow_blur=12, shadow_spread=1.5)
+    var s = _r(Style(shadow_blur=12, shadow_spread=1.5))
     assert_equal(s.shadow_blur, 12.0)
     assert_equal(s.shadow_spread, 1.5)
     assert_true(s.shadow_enabled)
 
-    var unset = Style(shadow_blur=None, stroke_thickness=None)
+    var unset = _r(Style(shadow_blur=None, stroke_thickness=None))
     assert_equal(unset.shadow_blur, 8.0)
     assert_equal(unset.stroke_thickness, 1.0)
     assert_false(unset.shadow_enabled)
 
     var forwarded: Optional[Float64] = 3.0
-    assert_equal(Style(stroke_thickness=forwarded).stroke_thickness, 3.0)
+    assert_equal(_r(Style(stroke_thickness=forwarded)).stroke_thickness, 3.0)
 
 
 def test_float_keywords_take_an_int_variable() raises -> None:
     var radius: Int = 6
     var size: Int = 24
     var opacity: Int = 0
-    var s = Style(corner_radius=radius, font_size=size, opacity=opacity)
+    var s = _r(Style(corner_radius=radius, font_size=size, opacity=opacity))
     assert_equal(s.corner_radius, 6.0)
     assert_equal(s.font_size, 24.0)
     assert_equal(s.opacity, 0.0)
-    var defaults = Style()
+    var defaults = _r(Style())
     assert_equal(defaults.corner_radius, 0.0)
     assert_equal(defaults.font_size, 16.0)
     assert_equal(defaults.opacity, 1.0)

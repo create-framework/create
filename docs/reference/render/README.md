@@ -13,7 +13,7 @@ Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settin
 | [`StrokeCap`](strokecap.md) | How the two open ends of a stroked line or curve are finished. |
 | [`StrokeDash`](strokedash.md) | How a stroke is broken into dashes along its length. |
 | [`Autoscale`](autoscale.md) | How the program's design size maps onto the window. |
-| [`Style`](style.md) | How the next shape or glyph is painted, independent of where it goes. |
+| [`Style`](style.md) | A set of style changes: how something is painted, independent of where it goes. Each part is optional, and a part left unset changes nothing. |
 | [`Camera`](camera.md) | What part of world space maps onto the screen. |
 | [`Canvas`](canvas.md) | One frame: the geometry and the rendering API. |
 | [`StyleGuard`](styleguard.md) | Restores the style the frame had when the scope was entered. |

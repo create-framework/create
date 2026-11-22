@@ -828,17 +828,16 @@ struct AppliedStyle(Program):
         canvas.background(Color.BLACK)
         canvas.stroke(Color.GREEN, thickness=4)
         canvas.fill(Color.RED)
-        # Sets no stroke, so the block renders with the default 1-unit
-        # black one rather than the green set above.
+        # Sets no stroke, so the block keeps the green one set above.
         with canvas.style(Style(fill=Color.BLUE)):
             canvas.rectangle((-25, 0), 20, 20)
         canvas.rectangle((25, 0), 20, 20)
 
 
-def test_style_object_replaces_the_whole_style_in_scope() raises -> None:
+def test_style_object_changes_only_what_it_sets() raises -> None:
     var m = run_headless[AppliedStyle](100, 100)
     assert_equal(m.pixel(25, 50), Color.BLUE)
-    assert_equal(m.pixel(15, 50), Color.BLACK)  # default stroke, not green
+    assert_equal(m.pixel(16, 50), Color.GREEN)  # the stroke set before
     assert_equal(m.pixel(75, 50), Color.RED)  # restored on exit
     assert_equal(m.pixel(66, 50), Color.GREEN)
 

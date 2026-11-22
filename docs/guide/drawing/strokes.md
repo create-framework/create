@@ -8,8 +8,8 @@ against a shape's edge, how its ends look and how to break it into dashes.
 
 `canvas.stroke(color, thickness)` sets the stroke's colour and thickness, in units, and switches it
 on. `stroke_enabled(False)` switches it off while remembering both, and `stroke()` with no arguments
-switches it back on. A new style has a black stroke 1 unit thick. In `Style` and `canvas.style(...)`
-the keywords are `stroke=` and `stroke_thickness=`.
+switches it back on. Every frame starts with a black stroke 1 unit thick. In `Style` and
+`canvas.style(...)` the keywords are `stroke=` and `stroke_thickness=`.
 
 The stroke has three more settings: where it sits (`stroke_alignment`), how its ends look
 (`stroke_cap`) and whether it is broken into dashes (`stroke_dash`).

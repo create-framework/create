@@ -4,13 +4,13 @@
 struct Style
 ```
 
-How the next shape or glyph is painted, independent of where it goes.
+A set of style changes: how something is painted, independent of where it goes. Each part is optional, and a part left unset changes nothing.
 
-The canvas holds one, set piece by piece through `canvas.fill`,
+The canvas holds a whole style, set piece by piece through `canvas.fill`,
 `canvas.stroke` and the other style setters, read by every render call
-until changed and rebuilt fresh each frame. A program can also build its
-own and apply it whole with `canvas.style(s)`, to reuse one look across
-render calls, frames or entities:
+until changed and rebuilt fresh each frame. A `Style` is a reusable set
+of changes to it: `with canvas.style(s):` applies the parts `s` sets,
+keeps the rest, and restores the whole style when the block ends.
 
 ```mojo
 var label = Style(stroke_enabled=False, text_color=Color.WHITE, font_size=24)
@@ -29,53 +29,55 @@ var card = Style(
 )
 ```
 
+`over` layers one style over another, part by part:
+`Style(corner_radius=4).over(card)` is the card with square corners.
+
 `corner_radius` rounds the shapes the canvas builds from numbers --
 `canvas.rectangle(p, w, h)`, `triangle`, `polygon` and `sector` -- unless
 the call names its own `corner_radius`. A shape value carries its own
 radius, so `canvas.draw(shape)` and `canvas.clip(shape)` ignore the
 style's: what is drawn from a shape is what its `contains` tests.
 
-The constructor's keywords are named after the canvas setters and act
-like them: naming any part of the fill, stroke or shadow switches it
-on (a part, not a modifier such as `stroke_alignment`, `stroke_cap`,
-`stroke_dash` or `corner_radius`),
-unless `fill_enabled`, `stroke_enabled` or `shadow_enabled` says
-otherwise, so `Style(shadow=Color.RED, shadow_enabled=False)` keeps a
-shadow ready but off. `fill_gradient` is the keyword for `fill`'s
-`Gradient` overload, since one keyword can't take both: given beside
-`fill`, the gradient paints and the colour is kept for when it is
-cleared. Every part left unset is what a fresh frame starts with.
+The keywords are named after the canvas setters and act like them when
+the style is applied: naming any part of the fill, stroke or shadow
+switches it on (a part, not a modifier such as `stroke_alignment`,
+`stroke_cap`, `stroke_dash` or `corner_radius`), unless `fill_enabled`,
+`stroke_enabled` or `shadow_enabled` says otherwise, so
+`Style(shadow=Color.RED, shadow_enabled=False)` keeps a shadow ready but
+off. `fill_gradient` is the keyword for `fill`'s `Gradient` overload,
+since one keyword can't take both: given beside `fill`, the gradient
+paints and the colour is kept for when it is cleared.
 
 Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Fields
 
-- `fill_color: Color`
-- `fill_gradient: Optional[Gradient]`: Paints the fill instead of `fill_color` while set; `fill_color` is kept for when it is cleared.
-- `fill_enabled: Bool`
-- `stroke_color: Color`
-- `stroke_thickness: Float64`
-- `stroke_enabled: Bool`
-- `stroke_alignment: StrokeAlign`: Where a region's stroke sits against its edge; `INSIDE` unless set. Lines and curves are always stroked centred.
-- `stroke_cap: StrokeCap`: How the open ends of lines and curves are finished; `BUTT` unless set. Regions' strokes and closed curves have no ends, unless dashed.
-- `stroke_dash: StrokeDash`: How the stroke is broken into dashes; `SOLID` unless set.
-- `corner_radius: Float64`: How far the shapes the canvas builds from numbers are rounded, in world units; 0 is sharp. A shape value keeps its own.
-- `text_color: Color`
-- `font: Optional[Font]`: The face text is drawn in; none for the packaged Noto Sans.
-- `font_size: Float64`
-- `font_weight: FontWeight`
-- `font_italic: Bool`
-- `text_alignment: Align`
-- `tint: Color`
-- `opacity: Float64`
-- `blend_mode: BlendMode`
-- `shadow_color: Color`
-- `shadow_offset: Vector`
-- `shadow_blur: Float64`
-- `shadow_spread: Float64`
-- `shadow_inset: Bool`
-- `shadow_follows_transform: Bool`
-- `shadow_enabled: Bool`
+- `fill: Optional[Color]`
+- `fill_gradient: Optional[Gradient]`
+- `fill_enabled: Optional[Bool]`
+- `stroke: Optional[Color]`
+- `stroke_thickness: Optional[Float64]`
+- `stroke_enabled: Optional[Bool]`
+- `stroke_alignment: Optional[StrokeAlign]`
+- `stroke_cap: Optional[StrokeCap]`
+- `stroke_dash: Optional[StrokeDash]`
+- `corner_radius: Optional[Float64]`
+- `text_color: Optional[Color]`
+- `font: Optional[Font]`
+- `font_size: Optional[Float64]`
+- `font_weight: Optional[FontWeight]`
+- `font_italic: Optional[Bool]`
+- `text_alignment: Optional[Align]`
+- `tint: Optional[Color]`
+- `opacity: Optional[Float64]`
+- `blend_mode: Optional[BlendMode]`
+- `shadow: Optional[Color]`
+- `shadow_offset: Optional[Vector]`
+- `shadow_blur: Optional[Float64]`
+- `shadow_spread: Optional[Float64]`
+- `shadow_inset: Optional[Bool]`
+- `shadow_follows_transform: Optional[Bool]`
+- `shadow_enabled: Optional[Bool]`
 
 ## Constructors
 
@@ -90,25 +92,40 @@ def __init__(
     stroke: Optional[Color] = None,
     stroke_thickness: _OptionalFloat64 = None,
     stroke_enabled: Optional[Bool] = None,
-    stroke_alignment: StrokeAlign = StrokeAlign.INSIDE,
-    stroke_cap: StrokeCap = StrokeCap.BUTT,
-    stroke_dash: StrokeDash = StrokeDash.SOLID,
+    stroke_alignment: Optional[StrokeAlign] = None,
+    stroke_cap: Optional[StrokeCap] = None,
+    stroke_dash: Optional[StrokeDash] = None,
     corner_radius: _OptionalFloat64 = None,
-    text_color: Color = Color.BLACK,
+    text_color: Optional[Color] = None,
     font: Optional[Font] = None,
     font_size: _OptionalFloat64 = None,
-    font_weight: FontWeight = FontWeight.REGULAR,
-    font_italic: Bool = False,
-    text_alignment: Align = Align.CENTER,
-    tint: Color = Color.WHITE,
+    font_weight: Optional[FontWeight] = None,
+    font_italic: Optional[Bool] = None,
+    text_alignment: Optional[Align] = None,
+    tint: Optional[Color] = None,
     opacity: _OptionalFloat64 = None,
-    blend_mode: BlendMode = BlendMode.NORMAL,
+    blend_mode: Optional[BlendMode] = None,
     shadow: Optional[Color] = None,
     shadow_offset: Optional[Vector] = None,
     shadow_blur: _OptionalFloat64 = None,
     shadow_spread: _OptionalFloat64 = None,
     shadow_inset: Optional[Bool] = None,
-    shadow_follows_transform: Bool = False,
+    shadow_follows_transform: Optional[Bool] = None,
     shadow_enabled: Optional[Bool] = None,
 )
+```
+
+## Methods
+
+### `over`
+
+```mojo
+def over(self, base: Self) -> Self
+```
+
+This style layered over `base`: each part this style sets, and `base`'s for the rest.
+
+```mojo
+var card = Style(fill=Color.WHITE, corner_radius=12)
+var square = Style(corner_radius=0).over(card)  # white, square
 ```

@@ -42,7 +42,7 @@ There are three ways to change the style, and they can be mixed and nested:
 |---|---|
 | `canvas.fill(Color.RED)` (any setter) | Lasts for the rest of the frame |
 | `with canvas.style(fill=Color.RED):` | Changes only the named parts, until the block ends |
-| `with canvas.style(heading):` | Uses a whole `Style` value until the block ends. Parts it doesn't set are the `Style()` defaults, not what the style was before |
+| `with canvas.style(heading):` | Changes the parts a `Style` value sets, until the block ends |
 
 ```mojo
 from create import *
@@ -71,10 +71,27 @@ def main() raises:
     run[Styles]("Styles")
 ```
 
-`Style(...)` takes the setters' names as keywords. As with the setters, naming any part of the fill,
-stroke or shadow switches that part on, unless its `*_enabled` keyword says otherwise, so
-`Style(fill=Color.RED)` is filled. A style you reuse is a field built in `create`, like `label`
-above.
+**A `Style` is a set of changes, kept to use again.** `Style(...)` takes the setters' names as
+keywords, and holds only the parts it is given: `Style(text_color=Color.BLUE, font_size=32)` says
+nothing about the fill or the stroke, so a shape drawn inside its block keeps the ones set before
+it. So the two `with` forms do the same thing, and `with canvas.style(self.label):` is `with
+canvas.style(text_color=..., font_size=...):` written once and kept. A style you reuse is a field
+built in `create`, like `label` above.
+
+As with the setters, naming any part of the fill, stroke or shadow switches that part on when the
+style is applied, unless its `*_enabled` keyword says otherwise, so `Style(fill=Color.RED)` fills.
+
+**`a.over(b)` layers one style over another:** each part `a` sets, and `b`'s for the rest. It is how
+to make a variant of a look without repeating it:
+
+```mojo
+# In `create`, building the `card` and `selected` fields:
+var card = Style(fill=Color.WHITE, stroke=Color.GRAY, corner_radius=12)
+var selected = Style(stroke=Color.BLUE, stroke_thickness=3).over(card)
+```
+
+Printing a style shows only the parts it sets: `print(Style(fill=Color.RED))` prints
+`Style(fill=Color(255, 0, 0, 255))`.
 
 A keyword that takes a number (`blur`, `spread`, `thickness`, `font_size`, `opacity`) accepts a
 whole number or a decimal alike, such as `12` or `1.5`.

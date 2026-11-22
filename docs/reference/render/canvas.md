@@ -279,12 +279,13 @@ with canvas.style(fill=Color.RED, stroke_enabled=False):
 def style(mut self, style: Style) -> StyleGuard[origin_of(self)]
 ```
 
-Render with `style` for a `with` block, then restore the previous one.
+Apply the parts `style` sets for a `with` block, then restore the whole style as it was.
 
-Replaces the whole style: a field `style` doesn't set is at its
-`Style()` default inside the block, not whatever was set before.
-Applied as soon as this is called, like `transform(m)`, so outside a
-`with` it holds for the rest of the frame.
+Each part goes through the setter of the same name, so it behaves as
+calling that setter would, and a part `style` leaves unset keeps its
+current value. Applied as soon as this is called, like
+`transform(m)`, so outside a `with` it holds for the rest of the
+frame.
 
 ```mojo
 with canvas.style(self.label_style):
