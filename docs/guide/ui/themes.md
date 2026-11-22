@@ -107,9 +107,11 @@ ui.slider(
 )
 ```
 
-The checkbox and the text field have their own style types, listed in the
-[reference](../../reference/ui/README.md). The focus ring always comes from the theme; to change it
-for some widgets, draw them in a `ui.theme` block (below).
+A checkbox works the same way: `box` is the empty box, a rectangle drawn as an outline;
+`checked_box` is the ticked one, filled, taking what it leaves unset from `box`, such as its
+corners; `tick` is the lines of the tick; and `label_style` is the text beside it. The text field
+has its own style type, listed in the [reference](../../reference/ui/README.md). The focus ring
+always comes from the theme; to change it for some widgets, draw them in a `ui.theme` block (below).
 
 ## Styling a block
 

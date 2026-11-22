@@ -13,7 +13,6 @@ from ._layout import _Layout
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
-from .checkbox import CheckboxStyle
 from .text_field import TextFieldStyle
 from .theme import Theme
 
@@ -30,7 +29,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var slider_active_track: Style
     var slider_handle: Style
     var slider_handle_outline: Style
-    var checkbox: CheckboxStyle
+    var checkbox_box: Style
+    var checkbox_checked_box: Style
+    var checkbox_tick: Style
+    var checkbox_label: Style
     var text_field: TextFieldStyle
 
     def __init__(out self):
@@ -41,7 +43,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.slider_active_track = Style()
         self.slider_handle = Style()
         self.slider_handle_outline = Style()
-        self.checkbox = CheckboxStyle()
+        self.checkbox_box = Style()
+        self.checkbox_checked_box = Style()
+        self.checkbox_tick = Style()
+        self.checkbox_label = Style()
         self.text_field = TextFieldStyle()
 
     def _over(self, under: Self) -> Self:
@@ -53,7 +58,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.slider_active_track.over(under.slider_active_track),
             self.slider_handle.over(under.slider_handle),
             self.slider_handle_outline.over(under.slider_handle_outline),
-            self.checkbox._over(under.checkbox),
+            self.checkbox_box.over(under.checkbox_box),
+            self.checkbox_checked_box.over(under.checkbox_checked_box),
+            self.checkbox_tick.over(under.checkbox_tick),
+            self.checkbox_label.over(under.checkbox_label),
             self.text_field._over(under.text_field),
         )
 
