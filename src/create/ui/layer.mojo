@@ -13,6 +13,7 @@ from create.render import Align, Canvas, StrokeAlign, StrokeCap, Style
 from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
 from ._key import _WidgetKey
+from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonStyle, ButtonVariant
 from .checkbox import CheckboxStyle
 from .label import LabelStyle
@@ -61,6 +62,10 @@ struct UILayer[
     fields, directly. A helper takes it as `ui: UILayer`, its parameters left
     to be inferred. Everything drawn through it is drawn when the block ends,
     in the order it was called.
+
+    Every widget takes the rectangle it fills as `rect`. Called without
+    one, inside a `ui.column` or `ui.row` block, it takes the next slot of
+    the column or row instead; anywhere else, it raises.
 
     Every widget that reacts to the pointer takes the same three keywords:
 
@@ -241,7 +246,7 @@ struct UILayer[
                 ),
             )
         )
-        return PanelGuard(_ui=ui, _content=content)
+        return PanelGuard(_ui=ui, _content=content, _rect=rect)
 
     def id[K: Hashable](self, key: K) raises -> IDGuard[Self.ui_origin]:
         """Add `key` to the ID of every widget inside a `with` block, so a
@@ -258,13 +263,176 @@ struct UILayer[
         self._check_frame()
         return IDGuard(_ui=self._ui[], _key=UInt64(hash(key)))
 
+    # ------------------------------------------------------------- layout
+
+    def column(
+        self,
+        rect: Optional[Rectangle] = None,
+        *,
+        gap: _OptionalFloat64 = None,
+    ) raises -> LayoutGuard[Self.ui_origin]:
+        """A column filling `rect`: every widget called inside its `with`
+        block without a rect of its own is placed in it, one under the
+        other, from the top down, each across the column's whole width.
+        `gap`, the theme's medium spacing unless given, is left between each
+        and the next.
+
+        A widget's height is the theme's `control_height`, or for a label,
+        one and a half times its text's size. Without a `rect`, the column
+        fills what is around it: a panel, inset by the theme's large spacing,
+        the rest of a column, or the next slot of a row.
+
+        ```mojo
+        # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+        with ui.panel(Rectangle((0, 0), 320, 200)):
+            with ui.column():
+                ui.label("Volume")
+                ui.slider(self.volume, 0, 1)
+                if ui.button("Done"):
+                    self.close_settings()
+        ```
+        """
+        self._check_frame()
+        var theme = self._ui[]._current_theme()
+        var area: Rectangle
+        if rect:
+            area = rect.value()
+        else:
+            ref layouts = self._ui[]._layouts
+            if not layouts:
+                raise Error(
+                    "ui.column: give it a rect, or open it inside a"
+                    + " ui.panel, ui.column or ui.row"
+                )
+            ref around = layouts[len(layouts) - 1]
+            if around.kind == _PANEL:
+                area = around.rect.inset(theme.spacing.large)
+            else:
+                area = around.take_rest("ui.column")
+        return LayoutGuard(
+            _ui=self._ui[],
+            _layout=_Layout(_COLUMN, area, gap.or_else(theme.spacing.medium)),
+        )
+
+    def row(
+        self,
+        *weights: Float64,
+        columns: Optional[Int] = None,
+        rect: Optional[Rectangle] = None,
+        gap: _OptionalFloat64 = None,
+        height: _OptionalFloat64 = None,
+    ) raises -> LayoutGuard[Self.ui_origin]:
+        """A row cut into slots side by side, one for each weight, or
+        `columns` equal ones: every widget called inside its `with` block
+        without a rect of its own takes the next slot, from the left. The
+        slots share the row's width in proportion to their weights, so
+        `ui.row(1, 3)` gives the first a quarter of it and the second three
+        quarters. `gap`, the theme's medium spacing unless given, is left
+        between each slot and the next. A widget called once every slot is
+        taken raises.
+
+        The row fills `rect`. Without one, it is the next strip of the column
+        around it, `height` tall (the theme's `control_height` unless given),
+        the next slot of a row, or the inside of a panel.
+
+        ```mojo
+        # In `update`, inside a `ui.column` block:
+        with ui.row(1, 3):
+            ui.label("Volume", alignment=Align.LEFT)
+            ui.slider(self.volume, 0, 1)
+        with ui.row(columns=2):
+            if ui.button("OK"):
+                ...
+            if ui.button("Cancel"):
+                ...
+        ```
+        """
+        self._check_frame()
+        var theme = self._ui[]._current_theme()
+        var shares = List[Float64]()
+        for weight in weights:
+            shares.append(weight)
+        if columns:
+            if shares:
+                raise Error("ui.row: give it weights or columns=, not both")
+            for _ in range(columns.value()):
+                shares.append(1.0)
+        elif not shares:
+            raise Error(
+                "ui.row: give it the weights of its slots, as in"
+                + " ui.row(1, 3), or how many equal ones, as in"
+                + " ui.row(columns=4)"
+            )
+        var area: Rectangle
+        if rect:
+            area = rect.value()
+        else:
+            ref layouts = self._ui[]._layouts
+            if not layouts:
+                raise Error(
+                    "ui.row: give it a rect, or open it inside a ui.panel,"
+                    + " ui.column or ui.row"
+                )
+            ref around = layouts[len(layouts) - 1]
+            if around.kind == _PANEL:
+                area = around.rect.inset(theme.spacing.large)
+            else:
+                area = around.take(
+                    height.or_else(theme.control_height), "ui.row"
+                )
+        var spacing = gap.or_else(theme.spacing.medium)
+        return LayoutGuard(
+            _ui=self._ui[],
+            _layout=_Layout(
+                _ROW,
+                area,
+                spacing,
+                area.columns(weights=shares, gap=spacing),
+            ),
+        )
+
+    def space(self, amount: _OptionalFloat64 = None) raises:
+        """Leave `amount` of the column around it empty, the theme's large
+        spacing unless given, such as to set one group of widgets apart from
+        the next. It raises outside a `ui.column`."""
+        self._check_frame()
+        ref layouts = self._ui[]._layouts
+        if not layouts:
+            raise Error("ui.space: call it inside a ui.column")
+        var theme = self._ui[]._current_theme()
+        layouts[len(layouts) - 1].space(amount.or_else(theme.spacing.large))
+
+    def _place(
+        self, rect: Optional[Rectangle], height: Float64, what: String
+    ) raises -> Rectangle:
+        """Where a widget named `what` goes: `rect` when it is given, or the
+        next slot of the column or row around it, `height` tall in a
+        column."""
+        if rect:
+            return rect.value()
+        ref layouts = self._ui[]._layouts
+        if not layouts:
+            raise Error(
+                what
+                + ": give it a rect, or call it inside a ui.column or ui.row"
+            )
+        return layouts[len(layouts) - 1].take(height, what)
+
+    def _place_control(
+        self, rect: Optional[Rectangle], what: String
+    ) raises -> Rectangle:
+        """`_place` for a control: `control_height` tall in a column."""
+        return self._place(
+            rect, self._ui[]._current_theme().control_height, what
+        )
+
     # ------------------------------------------------------------ widgets
 
     @always_inline
     def button(
         self,
         text: String,
-        rect: Rectangle,
+        rect: Optional[Rectangle] = None,
         *,
         variant: ButtonVariant = ButtonVariant.FILLED,
         style: ButtonStyle = ButtonStyle(),
@@ -284,7 +452,7 @@ struct UILayer[
         return self._button(
             self._widget_id(call_location(), id._hash),
             text,
-            rect,
+            self._place_control(rect, "ui.button"),
             variant,
             style,
             take_focus,
@@ -294,7 +462,7 @@ struct UILayer[
     def label(
         self,
         text: String,
-        rect: Rectangle,
+        rect: Optional[Rectangle] = None,
         *,
         alignment: Align = Align.CENTER,
         style: LabelStyle = LabelStyle(),
@@ -312,9 +480,10 @@ struct UILayer[
         var theme = self._ui[]._current_theme()
         var merged = style._over(self._ui[]._current_styles().label)
         var type = merged.text_style.or_else(theme.typography.body)
+        var place = self._place(rect, type.size * 1.5, "ui.label")
         self._ui[]._recorder.text(
             text,
-            _anchor(rect, alignment),
+            _anchor(place, alignment),
             _text_style(
                 type,
                 merged.color.or_else(self._ui[]._content_color()),
@@ -322,12 +491,13 @@ struct UILayer[
             ),
         )
 
-    def image(self, image: Image, rect: Rectangle) raises:
+    def image(self, image: Image, rect: Optional[Rectangle] = None) raises:
         """`image` stretched to fill `rect`. Like a label, it reacts to
         nothing."""
         self._check_frame()
+        var place = self._place_control(rect, "ui.image")
         self._ui[]._recorder.image(
-            image, rect.position, rect.width, rect.height, Style()
+            image, place.position, place.width, place.height, Style()
         )
 
     @always_inline
@@ -336,7 +506,7 @@ struct UILayer[
         mut value: Float64,
         min: Float64,
         max: Float64,
-        rect: Rectangle,
+        rect: Optional[Rectangle] = None,
         *,
         step: _OptionalFloat64 = None,
         style: SliderStyle = SliderStyle(),
@@ -365,7 +535,7 @@ struct UILayer[
             value,
             min,
             max,
-            rect,
+            self._place_control(rect, "ui.slider"),
             step._value,
             style,
             take_focus,
@@ -377,7 +547,7 @@ struct UILayer[
         self,
         label: String,
         mut checked: Bool,
-        rect: Rectangle,
+        rect: Optional[Rectangle] = None,
         *,
         style: CheckboxStyle = CheckboxStyle(),
         take_focus: Bool = False,
@@ -400,7 +570,7 @@ struct UILayer[
             self._widget_id(call_location(), id._hash),
             label,
             checked,
-            rect,
+            self._place_control(rect, "ui.checkbox"),
             style,
             take_focus,
             disabled,
@@ -410,7 +580,7 @@ struct UILayer[
     def text_field(
         self,
         mut text: String,
-        rect: Rectangle,
+        rect: Optional[Rectangle] = None,
         *,
         placeholder: String = "",
         max_length: Optional[Int] = None,
@@ -442,7 +612,7 @@ struct UILayer[
         self._text_field(
             self._widget_id(call_location(), id._hash),
             text,
-            rect,
+            self._place_control(rect, "ui.text_field"),
             placeholder,
             max_length,
             style,
@@ -1392,8 +1562,15 @@ struct PanelGuard[origin: Origin[mut=True]](Movable):
 
     var _ui: Pointer[UI, Self.origin]
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, _content: Color):
+    def __init__(
+        out self,
+        *,
+        ref[Self.origin] _ui: UI,
+        _content: Color,
+        _rect: Rectangle,
+    ):
         _ui._contents.append(_content)
+        _ui._layouts.append(_Layout(_PANEL, _rect, 0.0))
         self._ui = Pointer(to=_ui)
 
     def __enter__(mut self):
@@ -1401,3 +1578,21 @@ struct PanelGuard[origin: Origin[mut=True]](Movable):
 
     def __exit__(mut self):
         _ = self._ui[]._contents.pop()
+        _ = self._ui[]._layouts.pop()
+
+
+struct LayoutGuard[origin: Origin[mut=True]](Movable):
+    """Ends the `ui.column` or `ui.row` block it was made for, on scope
+    exit. Only `ui.column` and `ui.row` build one."""
+
+    var _ui: Pointer[UI, Self.origin]
+
+    def __init__(out self, *, ref[Self.origin] _ui: UI, var _layout: _Layout):
+        _ui._layouts.append(_layout^)
+        self._ui = Pointer(to=_ui)
+
+    def __enter__(mut self):
+        pass
+
+    def __exit__(mut self):
+        _ = self._ui[]._layouts.pop()

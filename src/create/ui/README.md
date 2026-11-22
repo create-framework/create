@@ -13,6 +13,7 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `ui.mojo` | `UI`: the state kept between frames (the widgets seen, focus, the held widget, text buffers, scope stacks, the device claims), the per-frame reset in `_begin_layer`, Tab and gamepad navigation, `ui.screen` and `ui.world`; `_Hit`, a widget's place for hit-testing; `_Styles`, the merged `ui.style` blocks |
 | `layer.mojo` | `UILayer`, the handle a layer's block gets: every widget, `_interact` (what the pointer and keys did to a widget), the focus ring, `ui.draw`, the scopes and panels, and the guards their `with` blocks return |
 | `_id.mojo` | Widget IDs: a call site's file, line and column, mixed into the keys of the open `ui.id` blocks |
+| `_layout.mojo` | `_Layout`, an open panel, column or row, and how it hands out the slots of the widgets called inside it |
 | `_key.mojo` | `_WidgetKey`, the `id=` keyword, which takes a string, an integer or `None` in one implicit conversion |
 | `_recorder.mojo` | `_Recorder`, a `DrawTarget` a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
@@ -45,6 +46,21 @@ canvas. `UILayer.__exit__` adds the focus ring last, so nothing covers it, then 
 in call order: inside `canvas.overlay()` for a screen layer, or through the `_View` (camera and
 transform) recorded when a world layer opened. Clips nest: `_ClipBegin` and `_ClipEnd` commands
 replay through a recursive `_replay_from`, each inside the canvas's own clip guard.
+
+## Layout
+
+**A widget called without a rect is placed by the innermost open column or row.** `UI._layouts` is a
+stack of `_Layout`s: `ui.panel`, `ui.column` and `ui.row` each push one, and their guards pop it. A
+widget's public method resolves its rect through `UILayer._place` before it calls its body, so the
+body, the hit-testing and the ID never see the difference. A column hands out strips from its `top`
+edge down, each as tall as the widget asks: the theme's `control_height`, or one and a half times a
+label's text size. A row is cut into its slots when it opens, with `Rectangle.columns`.
+
+**Layout is one pass.** Every slot is known when it is asked for, so a widget knows where it is when
+it is called, and answers in the same frame. The cost is that nothing can be sized from what is
+inside it, such as a panel fitted round its widgets: that would need the sizes of widgets not yet
+called. A panel hands out no slots, only its inside, inset, to a column or row opened directly in
+it.
 
 ## IDs
 

@@ -12,6 +12,10 @@ fields, directly. A helper takes it as `ui: UILayer`, its parameters left
 to be inferred. Everything drawn through it is drawn when the block ends,
 in the order it was called.
 
+Every widget takes the rectangle it fills as `rect`. Called without
+one, inside a `ui.column` or `ui.row` block, it takes the next slot of
+the column or row instead; anywhere else, it raises.
+
 Every widget that reacts to the pointer takes the same three keywords:
 
 - `take_focus=True` gives it focus in the frame it is passed, as a click
@@ -129,13 +133,81 @@ for player in self.players:
         ...
 ```
 
+### `column`
+
+```mojo
+def column(
+    self,
+    rect: Optional[Rectangle] = None,
+    *,
+    gap: _OptionalFloat64 = None,
+) raises -> LayoutGuard[ui_origin]
+```
+
+A column filling `rect`: every widget called inside its `with` block without a rect of its own is placed in it, one under the other, from the top down, each across the column's whole width. `gap`, the theme's medium spacing unless given, is left between each and the next.
+
+A widget's height is the theme's `control_height`, or for a label,
+one and a half times its text's size. Without a `rect`, the column
+fills what is around it: a panel, inset by the theme's large spacing,
+the rest of a column, or the next slot of a row.
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+with ui.panel(Rectangle((0, 0), 320, 200)):
+    with ui.column():
+        ui.label("Volume")
+        ui.slider(self.volume, 0, 1)
+        if ui.button("Done"):
+            self.close_settings()
+```
+
+### `row`
+
+```mojo
+def row(
+    self,
+    *weights: Float64,
+    *,
+    columns: Optional[Int] = None,
+    rect: Optional[Rectangle] = None,
+    gap: _OptionalFloat64 = None,
+    height: _OptionalFloat64 = None,
+) raises -> LayoutGuard[ui_origin]
+```
+
+A row cut into slots side by side, one for each weight, or `columns` equal ones: every widget called inside its `with` block without a rect of its own takes the next slot, from the left. The slots share the row's width in proportion to their weights, so `ui.row(1, 3)` gives the first a quarter of it and the second three quarters. `gap`, the theme's medium spacing unless given, is left between each slot and the next. A widget called once every slot is taken raises.
+
+The row fills `rect`. Without one, it is the next strip of the column
+around it, `height` tall (the theme's `control_height` unless given),
+the next slot of a row, or the inside of a panel.
+
+```mojo
+# In `update`, inside a `ui.column` block:
+with ui.row(1, 3):
+    ui.label("Volume", alignment=Align.LEFT)
+    ui.slider(self.volume, 0, 1)
+with ui.row(columns=2):
+    if ui.button("OK"):
+        ...
+    if ui.button("Cancel"):
+        ...
+```
+
+### `space`
+
+```mojo
+def space(self, amount: _OptionalFloat64 = None) raises
+```
+
+Leave `amount` of the column around it empty, the theme's large spacing unless given, such as to set one group of widgets apart from the next. It raises outside a `ui.column`.
+
 ### `button`
 
 ```mojo
 def button(
     self,
     text: String,
-    rect: Rectangle,
+    rect: Optional[Rectangle] = None,
     *,
     variant: ButtonVariant = ButtonVariant.FILLED,
     style: ButtonStyle = ButtonStyle(container_color=Optional(None), content_color=Optional(None), outline_color=Optional(None), outline_thickness=_OptionalFloat64(None), corner_radius=_OptionalFloat64(None), text_style=Optional(None), focus_ring=Optional(None)),
@@ -159,7 +231,7 @@ if ui.button("Play", Rectangle((0, 0), 160, 48)):
 def label(
     self,
     text: String,
-    rect: Rectangle,
+    rect: Optional[Rectangle] = None,
     *,
     alignment: Align = Align.CENTER,
     style: LabelStyle = LabelStyle(color=Optional(None), text_style=Optional(None)),
@@ -176,7 +248,7 @@ ui.label("Volume", Rectangle((0, 40), 240, 24), alignment=Align.LEFT)
 ### `image`
 
 ```mojo
-def image(self, image: Image, rect: Rectangle) raises
+def image(self, image: Image, rect: Optional[Rectangle] = None) raises
 ```
 
 `image` stretched to fill `rect`. Like a label, it reacts to nothing.
@@ -189,7 +261,7 @@ def slider(
     mut value: Float64,
     min: Float64,
     max: Float64,
-    rect: Rectangle,
+    rect: Optional[Rectangle] = None,
     *,
     step: _OptionalFloat64 = None,
     style: SliderStyle = SliderStyle(active_track_color=Optional(None), inactive_track_color=Optional(None), handle_color=Optional(None), handle_outline_color=Optional(None), handle_shadow=False, track_thickness=_OptionalFloat64(None), handle_radius=_OptionalFloat64(None), focus_ring=Optional(None)),
@@ -220,7 +292,7 @@ def checkbox(
     self,
     label: String,
     mut checked: Bool,
-    rect: Rectangle,
+    rect: Optional[Rectangle] = None,
     *,
     style: CheckboxStyle = CheckboxStyle(box_color=Optional(None), check_color=Optional(None), outline_color=Optional(None), label_color=Optional(None), text_style=Optional(None), focus_ring=Optional(None)),
     take_focus: Bool = False,
@@ -244,7 +316,7 @@ if ui.changed():
 def text_field(
     self,
     mut text: String,
-    rect: Rectangle,
+    rect: Optional[Rectangle] = None,
     *,
     placeholder: String = "",
     max_length: Optional[Int] = None,
