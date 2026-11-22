@@ -974,14 +974,13 @@ struct UILayer[
         shape: Rectangle,
         state: _Interaction,
         disabled: Bool,
-        ring: Optional[FocusRing],
     ):
         """Draw the focus ring around `shape`, its corners rounded by the
         shape's own radius grown by the gap, while the widget has focus from
         the keyboard or code."""
         if not self._shows_ring(state, disabled):
             return
-        var look = ring.or_else(self._ui[]._focus_ring)
+        var look = self._ui[]._focus_ring
         var gap = look.gap
         self._record_ring(
             Rectangle(
@@ -998,11 +997,10 @@ struct UILayer[
         shape: Circle,
         state: _Interaction,
         disabled: Bool,
-        ring: Optional[FocusRing],
     ):
         if not self._shows_ring(state, disabled):
             return
-        var look = ring.or_else(self._ui[]._focus_ring)
+        var look = self._ui[]._focus_ring
         self._record_ring(Circle(shape.position, shape.radius + look.gap), look)
 
     def _shows_ring(self, state: _Interaction, disabled: Bool) -> Bool:
@@ -1116,7 +1114,7 @@ struct UILayer[
                 stroke_enabled=False,
             )
             recorder.draw(shape)
-        self._ring_around(shape, state, off, None)
+        self._ring_around(shape, state, off)
         recorder.text(text, rect.position, _text_look(resolved, Align.CENTER))
         self._ui[]._called(changed=False)
         return state.clicked or state.activated
@@ -1274,7 +1272,7 @@ struct UILayer[
         if outline.fill_enabled or outline.stroke_enabled:
             recorder.style = outline
             recorder.draw(knob)
-        self._ring_around(knob, state, off, None)
+        self._ring_around(knob, state, off)
         self._ui[]._called(changed=changed)
 
     def _checkbox(
@@ -1377,7 +1375,7 @@ struct UILayer[
             var corner = centre + Vector(-1.5, -4.0)
             recorder.draw(Line(centre + Vector(-5.0, 0.5), corner))
             recorder.draw(Line(corner, centre + Vector(5.0, 5.0)))
-        self._ring_around(box, state, off, None)
+        self._ring_around(box, state, off)
         var text_left = Point(left + size + 12, rect.position.y)
         recorder.text(label, text_left, _text_look(text, Align.LEFT))
         self._ui[]._called(changed=state.clicked or state.activated)

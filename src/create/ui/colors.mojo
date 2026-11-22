@@ -72,7 +72,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         on_error: Optional[Color] = None,
         surface: Optional[Color] = None,
         on_surface: Optional[Color] = None,
-    ) -> ColorScheme:
+    ) -> Self:
         """Dark colours on a light background, with the colours given
         replacing its own.
 
@@ -145,7 +145,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         on_error: Optional[Color] = None,
         surface: Optional[Color] = None,
         on_surface: Optional[Color] = None,
-    ) -> ColorScheme:
+    ) -> Self:
         """Light colours on a dark background, with the colours given
         replacing its own, as `ColorScheme.light` does."""
         var colors = ColorScheme(
@@ -195,7 +195,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         return colors
 
     @staticmethod
-    def from_seed(seed: Color, *, dark: Bool = False) -> ColorScheme:
+    def from_seed(seed: Color, *, dark: Bool = False) -> Self:
         """The colours worked out from one colour, such as a game's own,
         as Material's dynamic colour does: light unless `dark`.
 
