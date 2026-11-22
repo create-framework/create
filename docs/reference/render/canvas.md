@@ -861,6 +861,14 @@ def line(mut self, start: Point, end: Point)
 
 Stroke the line from `start` to `end` in the stroke colour and thickness, its ends finished as `stroke_cap` says. A line has no interior, so `fill` never applies; a line of no length is a dot under `StrokeCap.ROUND` or `SQUARE` and nothing under `BUTT`.
 
+### `point`
+
+```mojo
+def point(mut self, position: Point)
+```
+
+Draw a dot at `position` in the stroke colour, as wide as the stroke is thick: round, or square under `StrokeCap.SQUARE`. A point is never dashed, and draws nothing while the stroke is off.
+
 ### `bezier`
 
 ```mojo

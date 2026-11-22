@@ -1660,6 +1660,19 @@ struct Canvas(DrawTarget, Movable):
         `StrokeCap.ROUND` or `SQUARE` and nothing under `BUTT`."""
         self.draw(Line(start, end))
 
+    def point(mut self, position: Point):
+        """Draw a dot at `position` in the stroke colour, as wide as the
+        stroke is thick: round, or square under `StrokeCap.SQUARE`. A point
+        is never dashed, and draws nothing while the stroke is off."""
+        var cap = self._style.stroke_cap
+        var dash = self._style.stroke_dash
+        if cap != StrokeCap.SQUARE:
+            self._style.stroke_cap = StrokeCap.ROUND
+        self._style.stroke_dash = StrokeDash.SOLID
+        self.draw(Line(position, position))
+        self._style.stroke_cap = cap
+        self._style.stroke_dash = dash
+
     def bezier(
         mut self,
         start: Point,

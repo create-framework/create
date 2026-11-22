@@ -44,6 +44,17 @@ shapes themselves are described in [Shapes](../geometry/shapes.md) and
 [Curves](../geometry/curves.md), and the tests for whether they touch in
 [Collisions](../geometry/collisions.md).
 
+**`canvas.point(position)` draws a dot**, in the stroke colour and as wide as the stroke is thick,
+as Processing's `point` does. It is round, or square under `StrokeCap.SQUARE`, and is never dashed.
+A point has no fill, so it draws nothing while the stroke is off:
+
+```mojo
+# In `update`: a star at each of the `stars` field's points.
+canvas.stroke(Color.WHITE, 3)
+for star in self.stars:
+    canvas.point(star)
+```
+
 ## Your own types
 
 A program's own type is drawn the same way, by conforming to `Drawable` and drawing its parts:

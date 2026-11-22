@@ -2885,6 +2885,43 @@ def test_a_round_capped_line_of_no_length_is_a_dot() raises -> None:
     assert_equal(canvas.color_at((8, 8)), Color.TRANSPARENT)
 
 
+def _dotted(cap: StrokeCap) raises -> Canvas:
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.stroke(Color.WHITE, 20)
+    canvas.stroke_cap(cap)
+    canvas.stroke_dash(StrokeDash.DASHED)
+    canvas.point((0, 0))
+    return canvas^
+
+
+def test_a_point_is_a_round_dot_under_a_butt_cap() raises -> None:
+    var canvas = _dotted(StrokeCap.BUTT)
+    assert_equal(canvas.color_at((0, 0)), Color.WHITE)
+    assert_equal(canvas.color_at((0, 9)), Color.WHITE)
+    assert_equal(canvas.color_at((8, 8)), Color.TRANSPARENT)
+    assert_equal(canvas.color_at((11, 0)), Color.TRANSPARENT)
+
+
+def test_a_point_is_square_under_a_square_cap() raises -> None:
+    var canvas = _dotted(StrokeCap.SQUARE)
+    assert_equal(canvas.color_at((8, 8)), Color.WHITE)
+    assert_equal(canvas.color_at((11, 0)), Color.TRANSPARENT)
+
+
+def test_a_point_keeps_the_cap_and_dash_it_was_drawn_with() raises -> None:
+    var canvas = _dotted(StrokeCap.BUTT)
+    assert_true(canvas._style.stroke_cap == StrokeCap.BUTT)
+    assert_true(canvas._style.stroke_dash == StrokeDash.DASHED)
+
+
+def test_a_point_draws_nothing_without_a_stroke() raises -> None:
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.stroke(Color.WHITE, 20)
+    canvas.stroke_enabled(False)
+    canvas.point((0, 0))
+    assert_equal(canvas.color_at((0, 0)), Color.TRANSPARENT)
+
+
 def test_image_draws_at_a_fractional_size() raises -> None:
     var canvas = Canvas(10, 10, antialiasing=Antialiasing.OFF)
     var dot = Image.solid(1, 1, Color.RED)
