@@ -1,9 +1,6 @@
 """`Theme`: the design tokens every widget draws from."""
 
 from create.color import Color
-from create.math import Vector
-from create.render import Style
-from create.text import Font, FontWeight
 
 
 @fieldwise_init
@@ -430,30 +427,6 @@ struct _Palette(Copyable, ImplicitlyCopyable, Movable):
 
 
 @fieldwise_init
-struct Typography(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The theme's kinds of text: `title` for headings, `body` for running
-    text and `label` for the text on widgets, such as a button's. Each is a
-    `Style` setting the text's size and weight, and its font where it has
-    one of its own; its colour comes from where the text is drawn.
-
-    ```mojo
-    # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-    var title = ui.theme().typography.title
-    ui.label("Settings", Rectangle((0, 0), 200, 32), style=title)
-    ```
-    """
-
-    var title: Style
-    var body: Style
-    var label: Style
-
-    def __init__(out self):
-        self.title = Style(font_size=22, font_weight=FontWeight.REGULAR)
-        self.body = Style(font_size=16, font_weight=FontWeight.REGULAR)
-        self.label = Style(font_size=14, font_weight=FontWeight.MEDIUM)
-
-
-@fieldwise_init
 struct CornerRadii(Copyable, ImplicitlyCopyable, Movable, Writable):
     """How round the theme's corners are, from `small`, such as a checkbox's,
     to `large`, such as a panel's."""
@@ -530,11 +503,10 @@ struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
 
 @fieldwise_init
 struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The design tokens every widget draws from: colours, kinds of text,
-    corner radii, gaps, the height of a control, state layers, the focus
-    ring and a shadow. A widget's look
-    is worked out from these when it is drawn, so changing a token changes
-    every widget that uses it.
+    """The design tokens every widget draws from: colours, corner radii,
+    gaps, the height of a control, state layers and the focus ring. A
+    widget's look is worked out from these when it is drawn, so changing a
+    token changes every widget that uses it.
 
     ```mojo
     # In `create`, building the `ui` field:
@@ -543,7 +515,6 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     """
 
     var colors: ColorScheme
-    var typography: Typography
     var corner_radii: CornerRadii
     var spacing: Spacing
     var control_height: Float64
@@ -551,9 +522,6 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     `ui.column`, and how tall a `ui.row` is, unless told otherwise."""
     var state_layers: StateLayers
     var focus_ring: FocusRing
-    var shadow: Style
-    """A soft shadow, to lift a surface off what is beneath it: a panel's
-    with `ui.panel(rect, style=ui.theme().shadow)`, or any widget part's."""
 
     @staticmethod
     def light(
@@ -638,15 +606,9 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     def _with_colors(colors: ColorScheme) -> Theme:
         return Theme(
             colors=colors,
-            typography=Typography(),
             corner_radii=CornerRadii(),
             spacing=Spacing(),
             control_height=40,
             state_layers=StateLayers(),
             focus_ring=FocusRing(),
-            shadow=Style(
-                shadow=Color(0, 0, 0, 60),
-                shadow_offset=Vector(0, -3),
-                shadow_blur=12,
-            ),
         )

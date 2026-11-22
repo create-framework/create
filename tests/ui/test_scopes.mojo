@@ -97,7 +97,7 @@ def test_a_panels_text_colour_is_the_content_colour() raises -> None:
             assert_equal(layer.content_color(), Color.RED)
 
 
-def test_the_themes_shadow_lifts_a_panel() raises -> None:
+def test_a_shadow_lifts_a_panel() raises -> None:
     var ui = UI()
     var context = Context()
     var flat = _canvas()
@@ -108,7 +108,14 @@ def test_the_themes_shadow_lifts_a_panel() raises -> None:
             pass
     next_frame(context)
     with ui.screen(context, lifted) as layer:
-        with layer.panel(_A, style=layer.theme().shadow):
+        with layer.panel(
+            _A,
+            style=Style(
+                shadow=Color(0, 0, 0, 60),
+                shadow_offset=Vector(0, -3),
+                shadow_blur=12,
+            ),
+        ):
             pass
     assert_true(lifted.color_at(below) != flat.color_at(below))
 

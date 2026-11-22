@@ -248,10 +248,16 @@ def test_no_outline_unless_given() raises -> None:
     assert_equal(canvas.color_at((-100 + 8.5, 0)), Color.RED)
 
 
-def test_a_handle_can_cast_the_themes_shadow() raises -> None:
+def test_a_handle_can_cast_a_shadow() raises -> None:
     var flat = _drawn(0.5, handle=Style(stroke=Color.RED))
     var lifted = _drawn(
-        0.5, handle=Style(stroke=Color.RED).over(Theme.light().shadow)
+        0.5,
+        handle=Style(
+            stroke=Color.RED,
+            shadow=Color(0, 0, 0, 60),
+            shadow_offset=Vector(0, -3),
+            shadow_blur=12,
+        ),
     )
     var below = Point(0, -13)  # under the handle, past the track
     assert_true(lifted.color_at(below) != flat.color_at(below))

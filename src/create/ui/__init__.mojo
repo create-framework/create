@@ -15,7 +15,6 @@ from .layer import (
 from .theme import (
     Theme,
     ColorScheme,
-    Typography,
     CornerRadii,
     Spacing,
     StateLayers,

@@ -10,6 +10,10 @@ from create import *
 
 # the settings panel, tall enough for the column of widgets inside it
 comptime PANEL = Rectangle((0, 0), 460, 360)
+# a soft shadow, lifting the panel off the background
+comptime SHADOW = Style(
+    shadow=Color(0, 0, 0, 60), shadow_offset=Vector(0, -3), shadow_blur=12
+)
 
 
 @fieldwise_init
@@ -35,10 +39,10 @@ struct Menu(Program):
         canvas.background(self.ui.theme().colors.background)
 
         with self.ui.screen(context, canvas) as ui:
-            with ui.panel(PANEL, style=ui.theme().shadow):
+            with ui.panel(PANEL, style=SHADOW):
                 # Each widget below takes the next place down the column.
                 with ui.column():
-                    ui.label("Settings", style=ui.theme().typography.title)
+                    ui.label("Settings", style=Style(font_size=22))
                     ui.text_field(
                         self.name, placeholder="Your name", max_length=16
                     )
