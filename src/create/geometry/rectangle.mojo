@@ -313,6 +313,93 @@ struct Rectangle(
         moved.position = moved.position + delta
         return moved^
 
+    def inset(self, amount: Float64) -> Rectangle:
+        """The rectangle with each side moved in by `amount`, about the same
+        centre: 10 narrower and 10 lower for an `amount` of 5. A negative
+        `amount` moves the sides out instead. The width and height stop at 0,
+        and the corner radius and rotation are kept.
+
+        ```mojo
+        # In `update`: a frame drawn 8 units inside the screen's edges.
+        canvas.draw(canvas.bounds().inset(8))
+        ```
+        """
+        var inset = self.copy()
+        inset.width = max(self.width - 2.0 * amount, 0.0)
+        inset.height = max(self.height - 2.0 * amount, 0.0)
+        return inset^
+
+    def rows(self, count: Int, *, gap: Float64 = 0.0) -> List[Rectangle]:
+        """The rectangle cut into `count` rows of equal height, the top one
+        first, with `gap` between each row and the next.
+
+        ```mojo
+        # In `update`: three bars stacked down the middle of the screen.
+        for bar in Rectangle((0, 0), 300, 200).rows(3, gap=10):
+            canvas.draw(bar)
+        ```
+        """
+        return self.rows(weights=_equal_weights(count), gap=gap)
+
+    def rows(
+        self, *, weights: List[Float64], gap: Float64 = 0.0
+    ) -> List[Rectangle]:
+        """The rectangle cut into one row for each weight, the top one first,
+        with `gap` between each row and the next. The rows share the height
+        left after the gaps in proportion to their weights, so `weights=[1, 3]`
+        gives the top row a quarter of it and the bottom one three quarters.
+        """
+        var heights = _shares(self.height, weights, gap)
+        var pieces = List[Rectangle](capacity=len(heights))
+        var top = self.height / 2.0
+        for height in heights:
+            var centre = Vector(0.0, top - height / 2.0)
+            pieces.append(self._piece(centre, self.width, height))
+            top -= height + gap
+        return pieces^
+
+    def columns(self, count: Int, *, gap: Float64 = 0.0) -> List[Rectangle]:
+        """The rectangle cut into `count` columns of equal width, the left
+        one first, with `gap` between each column and the next.
+
+        ```mojo
+        # In `update`: four boxes side by side, 8 units apart.
+        for cell in Rectangle((0, 0), 400, 60).columns(4, gap=8):
+            canvas.draw(cell)
+        ```
+        """
+        return self.columns(weights=_equal_weights(count), gap=gap)
+
+    def columns(
+        self, *, weights: List[Float64], gap: Float64 = 0.0
+    ) -> List[Rectangle]:
+        """The rectangle cut into one column for each weight, the left one
+        first, with `gap` between each column and the next. The columns share
+        the width left after the gaps in proportion to their weights, so
+        `weights=[1, 3]` gives the left column a quarter of it and the right one
+        three quarters.
+        """
+        var widths = _shares(self.width, weights, gap)
+        var pieces = List[Rectangle](capacity=len(widths))
+        var left = -self.width / 2.0
+        for width in widths:
+            var centre = Vector(left + width / 2.0, 0.0)
+            pieces.append(self._piece(centre, width, self.height))
+            left += width + gap
+        return pieces^
+
+    def _piece(
+        self, centre: Vector, width: Float64, height: Float64
+    ) -> Rectangle:
+        """A piece of the rectangle, `centre` from its centre in its own
+        upright frame: turned with it, and sharp."""
+        return Rectangle(
+            self._from_local(centre),
+            width,
+            height,
+            rotation=self.rotation,
+        )
+
     comptime _corner_count = 4
 
     def _core(self) -> _Core[Self._corner_count]:
@@ -401,3 +488,29 @@ struct Rectangle(
             self.left() < p.x < self.right()
             and self.bottom() < p.y < self.top()
         )
+
+
+def _equal_weights(count: Int) -> List[Float64]:
+    """`count` weights of 1, for cutting into equal pieces; none for a
+    `count` below 1."""
+    var weights = List[Float64](capacity=max(count, 0))
+    for _ in range(count):
+        weights.append(1.0)
+    return weights^
+
+
+def _shares(
+    length: Float64, weights: List[Float64], gap: Float64
+) -> List[Float64]:
+    """`length` shared out by `weights`, after a `gap` between each piece
+    and the next: the pieces' lengths, never below 0."""
+    var shares = List[Float64](capacity=len(weights))
+    if len(weights) == 0:
+        return shares^
+    var total = 0.0
+    for weight in weights:
+        total += max(weight, 0.0)
+    var free = max(length - gap * Float64(len(weights) - 1), 0.0)
+    for weight in weights:
+        shares.append(free * max(weight, 0.0) / total if total > 0.0 else 0.0)
+    return shares^

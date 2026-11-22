@@ -181,6 +181,59 @@ def move_to(self, position: Point) -> Self
 def translate(self, delta: Vector) -> Self
 ```
 
+### `inset`
+
+```mojo
+def inset(self, amount: Float64) -> Self
+```
+
+The rectangle with each side moved in by `amount`, about the same centre: 10 narrower and 10 lower for an `amount` of 5. A negative `amount` moves the sides out instead. The width and height stop at 0, and the corner radius and rotation are kept.
+
+```mojo
+# In `update`: a frame drawn 8 units inside the screen's edges.
+canvas.draw(canvas.bounds().inset(8))
+```
+
+### `rows`
+
+```mojo
+def rows(self, count: Int, *, gap: Float64 = 0) -> List[Self]
+```
+
+The rectangle cut into `count` rows of equal height, the top one first, with `gap` between each row and the next.
+
+```mojo
+# In `update`: three bars stacked down the middle of the screen.
+for bar in Rectangle((0, 0), 300, 200).rows(3, gap=10):
+    canvas.draw(bar)
+```
+
+```mojo
+def rows(self, *, weights: List[Float64], gap: Float64 = 0) -> List[Self]
+```
+
+The rectangle cut into one row for each weight, the top one first, with `gap` between each row and the next. The rows share the height left after the gaps in proportion to their weights, so `weights=[1, 3]` gives the top row a quarter of it and the bottom one three quarters.
+
+### `columns`
+
+```mojo
+def columns(self, count: Int, *, gap: Float64 = 0) -> List[Self]
+```
+
+The rectangle cut into `count` columns of equal width, the left one first, with `gap` between each column and the next.
+
+```mojo
+# In `update`: four boxes side by side, 8 units apart.
+for cell in Rectangle((0, 0), 400, 60).columns(4, gap=8):
+    canvas.draw(cell)
+```
+
+```mojo
+def columns(self, *, weights: List[Float64], gap: Float64 = 0) -> List[Self]
+```
+
+The rectangle cut into one column for each weight, the left one first, with `gap` between each column and the next. The columns share the width left after the gaps in proportion to their weights, so `weights=[1, 3]` gives the left column a quarter of it and the right one three quarters.
+
 ## Special methods
 
 ### `__eq__`
