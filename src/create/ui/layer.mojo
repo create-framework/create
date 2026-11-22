@@ -26,7 +26,7 @@ from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor
-from .theme import ColorScheme, FocusRing, Theme, _readable_on
+from .colors import ColorScheme, FocusRing, _readable_on
 from .ui import UI, _Hit, _Styles
 
 
@@ -143,24 +143,25 @@ struct UILayer[
         recorder.style = style._resolved()
         recorder.draw(shape)
 
-    def theme(self) -> Theme:
-        """The theme the widgets are drawn in, for a program's own widget to
-        match them."""
-        return self._ui[]._current_theme()
+    def colors(self) -> ColorScheme:
+        """The colours the widgets are drawn in here: the innermost
+        `ui.colors` block's, or the layer's. A program's own widget draws in
+        them to match."""
+        return self._ui[]._current_colors()
 
-    def theme(self, theme: Theme) raises -> ThemeGuard[Self.ui_origin]:
-        """Draw the widgets inside a `with` block in `theme`, such as one
-        panel in the dark theme on a light screen.
+    def colors(self, colors: ColorScheme) raises -> ColorsGuard[Self.ui_origin]:
+        """Draw the widgets inside a `with` block in `colors`, such as one
+        panel in the dark scheme on a light screen.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-        with ui.theme(Theme.dark()):
+        with ui.colors(ColorScheme.dark()):
             if ui.button("Night mode", Rectangle((0, 0), 160, 48)):
                 ...
         ```
         """
         self._check_frame()
-        return ThemeGuard(_ui=self._ui[], _theme=theme)
+        return ColorsGuard(_ui=self._ui[], _colors=colors)
 
     def style(
         self,
@@ -186,7 +187,7 @@ struct UILayer[
         """Style every widget of a kind inside a `with` block. The styles
         given sit under each call's own style and over any block outside
         this one, field by field: a field a call sets wins, and a field
-        nothing sets comes from the theme.
+        nothing sets comes from the widget's defaults.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -227,7 +228,7 @@ struct UILayer[
 
     def content_color(self) -> Color:
         """The colour for text here: the innermost panel's content colour, or
-        the theme's `on_surface`. A program's own widget draws its text in it
+        the colours' `on_surface`. A program's own widget draws its text in it
         to match the built-in ones."""
         return self._ui[]._content_color()
 
@@ -259,8 +260,7 @@ struct UILayer[
         self, id: UInt64, rect: Rectangle, style: Style
     ) raises -> PanelGuard[Self.ui_origin]:
         ref ui = self._ui[]
-        var theme = ui._current_theme()
-        ref colors = theme.colors
+        var colors = ui._current_colors()
         # a surface the pointer can't reach through, nor focus
         ui._hits.append(_Hit(id, rect, self._to_local, False, False, False))
         var look = style.over(ui._current_styles().panel).over(
@@ -779,8 +779,7 @@ struct UILayer[
         var state = self._interact(id, rect, off, take_focus, takes_typing=True)
         ref ui = self._ui[]
         ui._sync_text_input(self._context[])
-        var theme = ui._current_theme()
-        ref colors = theme.colors
+        var colors = ui._current_colors()
         if id not in ui._buffers:
             ui._buffers[id] = _TextBuffer(text)
         var changed = False
@@ -873,7 +872,7 @@ struct UILayer[
             )
         if off:
             var states = self._ui[]._state_layers
-            # the field's own colours, faded: the theme's text colour by
+            # the field's own colours, faded: the colours' text colour by
             # default, and a transparent one stays transparent
             typed.text_color = _faded(typed.text_color, states.disabled_content)
             hint.text_color = _faded(hint.text_color, states.disabled_content)
@@ -1013,7 +1012,7 @@ struct UILayer[
         ref ui = self._ui[]
         ui._rings.style = _ResolvedStyle(
             fill_enabled=False,
-            stroke=look.color.or_else(ui._current_theme().colors.secondary),
+            stroke=look.color.or_else(ui._current_colors().secondary),
             stroke_thickness=look.thickness,
             stroke_alignment=StrokeAlign.OUTSIDE,
         )
@@ -1056,8 +1055,7 @@ struct UILayer[
     ) raises -> Bool:
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
-        var theme = self._ui[]._current_theme()
-        ref colors = theme.colors
+        var colors = self._ui[]._current_colors()
         var look = call_style.over(self._ui[]._current_styles().button).over(
             _variant_look(variant, colors).over(_label_text())
         )
@@ -1141,8 +1139,7 @@ struct UILayer[
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
-        var theme = ui._current_theme()
-        ref colors = theme.colors
+        var colors = ui._current_colors()
         var block = ui._current_styles()
         var track_look = call_track.over(block.slider_track).over(
             Style(
@@ -1297,8 +1294,7 @@ struct UILayer[
         var state = self._interact(id, rect, off, take_focus)
         if state.clicked or state.activated:
             checked = not checked
-        var theme = self._ui[]._current_theme()
-        ref colors = theme.colors
+        var colors = self._ui[]._current_colors()
         var block = self._ui[]._current_styles()
         var box_look = call_box.over(block.checkbox_box).over(
             Style(
@@ -1738,21 +1734,21 @@ def _content_on(colors: ColorScheme, color: Color) -> Color:
     return _readable_on(color)
 
 
-struct ThemeGuard[origin: Origin[mut=True]](Movable):
-    """Ends the `ui.theme` block it was made for, on scope exit. Only
-    `ui.theme` builds one."""
+struct ColorsGuard[origin: Origin[mut=True]](Movable):
+    """Ends the `ui.colors` block it was made for, on scope exit. Only
+    `ui.colors` builds one."""
 
     var _ui: Pointer[UI, Self.origin]
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, _theme: Theme):
-        _ui._themes.append(_theme)
+    def __init__(out self, *, ref[Self.origin] _ui: UI, _colors: ColorScheme):
+        _ui._color_blocks.append(_colors)
         self._ui = Pointer(to=_ui)
 
     def __enter__(mut self):
         pass
 
     def __exit__(mut self):
-        _ = self._ui[]._themes.pop()
+        _ = self._ui[]._color_blocks.pop()
 
 
 struct WidgetStyleGuard[origin: Origin[mut=True]](Movable):

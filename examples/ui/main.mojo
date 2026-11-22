@@ -19,6 +19,7 @@ comptime SHADOW = Style(
 @fieldwise_init
 struct Menu(Program):
     var ui: UI
+    var colors: ColorScheme
     var name: String
     var volume: Float64
     var music: Bool
@@ -27,7 +28,7 @@ struct Menu(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Menu:
-        return Menu(UI(), "", 0.6, True, False, "")
+        return Menu(UI(), ColorScheme.light(), "", 0.6, True, False, "")
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if (
@@ -35,10 +36,10 @@ struct Menu(Program):
             and not self.ui.wants_keyboard()
         ):
             context.quit()
-        self.ui.theme(Theme.dark() if self.dark else Theme.light())
-        canvas.background(self.ui.theme().colors.background)
+        self.colors = ColorScheme.dark() if self.dark else ColorScheme.light()
+        canvas.background(self.colors.background)
 
-        with self.ui.screen(context, canvas) as ui:
+        with self.ui.screen(context, canvas, self.colors) as ui:
             with ui.panel(PANEL, style=SHADOW):
                 # Each widget below takes the next place down the column.
                 with ui.column():
@@ -69,9 +70,7 @@ struct Menu(Program):
                                 self.message = "Pressed " + names[i]
                     ui.label(
                         self.message,
-                        style=Style(
-                            text_color=ui.theme().colors.on_surface_variant
-                        ),
+                        style=Style(text_color=self.colors.on_surface_variant),
                     )
 
 

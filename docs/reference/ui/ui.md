@@ -21,31 +21,12 @@ Implements `Deinitable`, `Movable`.
 
 ```mojo
 @staticmethod
-def __init__(
-    out self,
-    theme: Theme = Theme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
-    *,
-    player: Optional[Int] = None,
-)
+def __init__(out self, *, player: Optional[Int] = None)
 ```
 
-A UI drawn in `theme`, the light theme unless given. Any gamepad moves its focus unless `player` names one, as each player's menu in a split-screen game would.
+A UI whose focus any gamepad moves, unless `player` names one, as each player's menu in a split-screen game would.
 
 ## Methods
-
-### `theme`
-
-```mojo
-def theme(self) -> Theme
-```
-
-The theme the widgets are drawn in.
-
-```mojo
-def theme(mut self, theme: Theme)
-```
-
-Draw the widgets in `theme` from now on.
 
 ### `corner_radius`
 
@@ -152,14 +133,16 @@ def screen(
     mut self,
     mut context: Context,
     mut canvas: Canvas,
+    colors: ColorScheme = ColorScheme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
 ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
 ```
 
-Open a layer drawn in screen space, on top of everything drawn before its block ends, whatever the camera and transform.
+Open a layer drawn in screen space, on top of everything drawn before its block ends, whatever the camera and transform. Its widgets are drawn in `colors`, the light scheme unless given.
 
 ```mojo
-# In `update`, with a `ui: UI` field:
-with self.ui.screen(context, canvas) as ui:
+# In `update`, with `ui: UI` and `colors: ColorScheme` fields:
+canvas.background(self.colors.background)
+with self.ui.screen(context, canvas, self.colors) as ui:
     ...
 ```
 
@@ -170,6 +153,7 @@ def world(
     mut self,
     mut context: Context,
     mut canvas: Canvas,
+    colors: ColorScheme = ColorScheme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
 ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
 ```
 
@@ -178,7 +162,8 @@ Open a layer drawn in the space that is current when the block opens, the camera
 Its widgets move and zoom with the camera, and the pointer is taken
 into the same space to find what is under it. They are drawn when the
 block ends, beneath whatever is drawn after it, so where the block
-sits decides what covers what.
+sits decides what covers what. Its widgets are drawn in `colors`, the
+light scheme unless given.
 
 ```mojo
 # In `update`, with `ui: UI`, `camera: Camera` and `chest: Point`

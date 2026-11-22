@@ -219,7 +219,7 @@ def test_a_bigger_handle_insets_the_track_further() raises -> None:
 
 def test_a_thick_track_thickens_the_active_track() raises -> None:
     var canvas = _drawn(1, track=Style(stroke_thickness=12))
-    var primary = Theme.light().colors.primary
+    var primary = ColorScheme.light().primary
     assert_equal(canvas.color_at((-50, 5)), primary)  # under 6 from the middle
 
 

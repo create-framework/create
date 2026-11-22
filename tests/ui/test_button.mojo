@@ -4,7 +4,7 @@ states are drawn."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.theme import _contrast
+from create.ui.colors import _contrast
 from _input import next_frame, point_at, press, release
 
 comptime _A = Rectangle((-60, 0), 100, 40)
@@ -108,37 +108,39 @@ def test_the_ui_wants_the_mouse_over_a_button_or_holding_one() raises -> None:
     assert_false(ui.wants_mouse())
 
 
-def _button_pixel(mut ui: UI, mut context: Context) raises -> Color:
+def _button_pixel(
+    mut ui: UI, mut context: Context, colors: ColorScheme
+) raises -> Color:
     """The colour of a filled button, beside its text."""
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
-    with ui.screen(context, canvas) as layer:
+    with ui.screen(context, canvas, colors) as layer:
         _ = layer.button("OK", _A)
     return canvas.color_at(_A.position + Vector(30, 0))
 
 
-def test_a_hovered_or_pressed_button_stands_out_in_any_theme() raises -> None:
-    for theme in [Theme.light(), Theme.dark()]:
-        var ui = UI(theme)
+def test_a_hovered_or_pressed_button_stands_out_in_any_scheme() raises -> None:
+    for colors in [ColorScheme.light(), ColorScheme.dark()]:
+        var ui = UI()
         var context = Context()
         point_at(context, Point(0, 45))
-        var rest = _button_pixel(ui, context)
-        assert_equal(rest, theme.colors.primary)
+        var rest = _button_pixel(ui, context, colors)
+        assert_equal(rest, colors.primary)
         next_frame(context)
         point_at(context, _A.position)
-        _ = _button_pixel(ui, context)
+        _ = _button_pixel(ui, context, colors)
         next_frame(context)
-        var hovered = _button_pixel(ui, context)
+        var hovered = _button_pixel(ui, context, colors)
         assert_true(_contrast(rest, hovered) >= 1.35)
         next_frame(context)
         press(context, _A.position)
-        _ = _button_pixel(ui, context)
+        _ = _button_pixel(ui, context, colors)
         next_frame(context)
-        var pressed = _button_pixel(ui, context)
+        var pressed = _button_pixel(ui, context, colors)
         assert_true(_contrast(rest, pressed) >= 1.75)
         # tinted towards the text colour
         assert_true(
-            _contrast(pressed, theme.colors.on_primary)
-            < _contrast(rest, theme.colors.on_primary)
+            _contrast(pressed, colors.on_primary)
+            < _contrast(rest, colors.on_primary)
         )
 
 
@@ -157,7 +159,7 @@ def test_an_outlined_button_draws_only_its_border() raises -> None:
     assert_equal(canvas.color_at(_A.position + Vector(30, 0)), Color.WHITE)
     assert_equal(
         canvas.color_at(_A.position + Vector(0.0, 18.5)),
-        ui.theme().colors.outline,
+        ColorScheme.light().outline,
     )
 
 
@@ -167,7 +169,7 @@ def test_a_partial_style_keeps_the_variants_colours() raises -> None:
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     with ui.screen(context, canvas) as layer:
         _ = layer.button("OK", _A, style=Style(corner_radius=0))
-    var primary = ui.theme().colors.primary
+    var primary = ColorScheme.light().primary
     # square corners, filled with the variant's primary to the very corner
     assert_equal(canvas.color_at(_A.position + Vector(49.5, 19.5)), primary)
 
@@ -182,7 +184,7 @@ def test_a_thickness_alone_outlines_a_filled_button() raises -> None:
         )
     assert_equal(
         canvas.color_at(_A.position + Vector(0.0, 18.5)),
-        ui.theme().colors.outline,
+        ColorScheme.light().outline,
     )
 
 

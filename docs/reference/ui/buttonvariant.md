@@ -4,7 +4,7 @@
 struct ButtonVariant
 ```
 
-Which of the theme's colours a button is drawn in.
+Which of the colours a button is drawn in.
 
 From the most prominent to the quietest:
 

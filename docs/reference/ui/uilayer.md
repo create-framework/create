@@ -42,23 +42,23 @@ Draw `shape` in `style`, in order with the layer's widgets: above what was drawn
 ui.draw(Circle((0, 0), 20), Style(fill=Color.ORANGE))
 ```
 
-### `theme`
+### `colors`
 
 ```mojo
-def theme(self) -> Theme
+def colors(self) -> ColorScheme
 ```
 
-The theme the widgets are drawn in, for a program's own widget to match them.
+The colours the widgets are drawn in here: the innermost `ui.colors` block's, or the layer's. A program's own widget draws in them to match.
 
 ```mojo
-def theme(self, theme: Theme) raises -> ThemeGuard[ui_origin]
+def colors(self, colors: ColorScheme) raises -> ColorsGuard[ui_origin]
 ```
 
-Draw the widgets inside a `with` block in `theme`, such as one panel in the dark theme on a light screen.
+Draw the widgets inside a `with` block in `colors`, such as one panel in the dark scheme on a light screen.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
-with ui.theme(Theme.dark()):
+with ui.colors(ColorScheme.dark()):
     if ui.button("Night mode", Rectangle((0, 0), 160, 48)):
         ...
 ```
@@ -89,7 +89,7 @@ def style(
 ) raises -> WidgetStyleGuard[ui_origin]
 ```
 
-Style every widget of a kind inside a `with` block. The styles given sit under each call's own style and over any block outside this one, field by field: a field a call sets wins, and a field nothing sets comes from the theme.
+Style every widget of a kind inside a `with` block. The styles given sit under each call's own style and over any block outside this one, field by field: a field a call sets wins, and a field nothing sets comes from the widget's defaults.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -110,7 +110,7 @@ with ui.style(button=Style(corner_radius=4)):
 def content_color(self) -> Color
 ```
 
-The colour for text here: the innermost panel's content colour, or the theme's `on_surface`. A program's own widget draws its text in it to match the built-in ones.
+The colour for text here: the innermost panel's content colour, or the colours' `on_surface`. A program's own widget draws its text in it to match the built-in ones.
 
 ### `panel`
 

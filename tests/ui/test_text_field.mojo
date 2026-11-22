@@ -254,13 +254,13 @@ def test_the_caret_takes_its_own_style() raises -> None:
 
 
 def test_focus_doubles_the_outline_in_primary() raises -> None:
-    var theme = Theme.light()
+    var colors = ColorScheme.light()
     var resting = _field(False)
     var focused = _field(True)
-    assert_equal(resting.color_at(_TOP_EDGE), theme.colors.outline)
-    assert_equal(focused.color_at(_TOP_EDGE), theme.colors.primary)
-    assert_equal(focused.color_at((0, 58.5)), theme.colors.primary)
-    assert_true(resting.color_at((0, 58.5)) != theme.colors.outline)
+    assert_equal(resting.color_at(_TOP_EDGE), colors.outline)
+    assert_equal(focused.color_at(_TOP_EDGE), colors.primary)
+    assert_equal(focused.color_at((0, 58.5)), colors.primary)
+    assert_true(resting.color_at((0, 58.5)) != colors.outline)
 
 
 def test_the_focused_look_is_layered_over_the_container() raises -> None:

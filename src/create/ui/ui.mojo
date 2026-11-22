@@ -13,7 +13,7 @@ from ._layout import _Layout
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
-from .theme import FocusRing, StateLayers, Theme
+from .colors import ColorScheme, FocusRing, StateLayers
 
 
 @fieldwise_init
@@ -128,9 +128,10 @@ struct UI(Movable):
     var _rings: _Recorder
     """The focus ring, drawn on top of the layer it is in, so a neighbour
     never covers it."""
-    var _theme: Theme
-    var _themes: List[Theme]
-    """The themes of the open `ui.theme` blocks, innermost last."""
+    var _colors: ColorScheme
+    """The colours the layer open now was given."""
+    var _color_blocks: List[ColorScheme]
+    """The colours of the open `ui.colors` blocks, innermost last."""
     var _corner_radius: Float64
     var _spacing: Float64
     var _control_height: Float64
@@ -193,21 +194,15 @@ struct UI(Movable):
     """The ID of the widget called last when it is a text field, for
     `ui.text_editor()`; `None` when it is any other widget."""
 
-    def __init__(
-        out self,
-        theme: Theme = Theme.light(),
-        *,
-        player: Optional[Int] = None,
-    ):
-        """A UI drawn in `theme`, the light theme unless given. Any gamepad
-        moves its focus unless `player` names one, as each player's menu in a
-        split-screen game would."""
+    def __init__(out self, *, player: Optional[Int] = None):
+        """A UI whose focus any gamepad moves, unless `player` names one, as
+        each player's menu in a split-screen game would."""
         self._player = player
         self._focus_from_gamepad = False
         self._stick_was = Vector.ZERO
         self._pad_move = Vector.ZERO
-        self._theme = theme
-        self._themes = []
+        self._colors = ColorScheme.light()
+        self._color_blocks = []
         self._corner_radius = 16
         self._spacing = 8
         self._control_height = 40
@@ -236,14 +231,6 @@ struct UI(Movable):
         self._last_changed = False
         self._last_submitted = False
         self._last_text_field = None
-
-    def theme(self) -> Theme:
-        """The theme the widgets are drawn in."""
-        return self._theme
-
-    def theme(mut self, theme: Theme):
-        """Draw the widgets in `theme` from now on."""
-        self._theme = theme
 
     def corner_radius(self) -> Float64:
         """How round the widgets' corners are: a panel's radius, 16 unless
@@ -325,18 +312,24 @@ struct UI(Movable):
         return self._holds_keys() or self._key_used
 
     def screen(
-        mut self, mut context: Context, mut canvas: Canvas
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        colors: ColorScheme = ColorScheme.light(),
     ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
         """Open a layer drawn in screen space, on top of everything drawn
-        before its block ends, whatever the camera and transform.
+        before its block ends, whatever the camera and transform. Its widgets
+        are drawn in `colors`, the light scheme unless given.
 
         ```mojo
-        # In `update`, with a `ui: UI` field:
-        with self.ui.screen(context, canvas) as ui:
+        # In `update`, with `ui: UI` and `colors: ColorScheme` fields:
+        canvas.background(self.colors.background)
+        with self.ui.screen(context, canvas, self.colors) as ui:
             ...
         ```
         """
         self._begin_layer(context)
+        self._colors = colors
         return UILayer(
             _ui=self,
             _context=context,
@@ -345,7 +338,10 @@ struct UI(Movable):
         )
 
     def world(
-        mut self, mut context: Context, mut canvas: Canvas
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        colors: ColorScheme = ColorScheme.light(),
     ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
         """Open a layer drawn in the space that is current when the block
         opens, the camera and any transform included: for a button above a
@@ -354,7 +350,8 @@ struct UI(Movable):
         Its widgets move and zoom with the camera, and the pointer is taken
         into the same space to find what is under it. They are drawn when the
         block ends, beneath whatever is drawn after it, so where the block
-        sits decides what covers what.
+        sits decides what covers what. Its widgets are drawn in `colors`, the
+        light scheme unless given.
 
         ```mojo
         # In `update`, with `ui: UI`, `camera: Camera` and `chest: Point`
@@ -366,6 +363,7 @@ struct UI(Movable):
         ```
         """
         self._begin_layer(context)
+        self._colors = colors
         return UILayer(
             _ui=self,
             _context=context,
@@ -404,7 +402,7 @@ struct UI(Movable):
             self._frame = frame
             self._site_counts.clear()
             self._keys.clear()
-            self._themes.clear()
+            self._color_blocks.clear()
             self._styles.clear()
             self._contents.clear()
             self._layouts.clear()
@@ -493,12 +491,12 @@ struct UI(Movable):
         self._focused_takes_typing = takes_typing
         self._focus_from_gamepad = from_gamepad
 
-    def _current_theme(self) -> Theme:
-        """The theme widgets are drawn in here: the innermost `ui.theme`
-        block's, or the UI's own."""
-        if self._themes:
-            return self._themes[len(self._themes) - 1]
-        return self._theme
+    def _current_colors(self) -> ColorScheme:
+        """The colours widgets are drawn in here: the innermost `ui.colors`
+        block's, or the layer's."""
+        if self._color_blocks:
+            return self._color_blocks[len(self._color_blocks) - 1]
+        return self._colors
 
     def _current_styles(self) -> _Styles:
         if self._styles:
@@ -506,11 +504,11 @@ struct UI(Movable):
         return _Styles()
 
     def _content_color(self) -> Color:
-        """The colour for text here: the innermost panel's, or the theme's
+        """The colour for text here: the innermost panel's, or the colours'
         `on_surface`."""
         if self._contents:
             return self._contents[len(self._contents) - 1]
-        return self._current_theme().colors.on_surface
+        return self._current_colors().on_surface
 
     def _hot_focusable(self) -> Bool:
         """Whether the widget under the pointer can take focus: not a panel,

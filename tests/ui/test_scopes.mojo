@@ -1,5 +1,5 @@
-"""Style and theme scopes, and panels: a `ui.style` block styles its widgets
-under each call's own style, a `ui.theme` block draws them in another theme,
+"""Style and colour scopes, and panels: a `ui.style` block styles its widgets
+under each call's own style, a `ui.colors` block draws them in other colours,
 and a panel draws a surface beneath what is inside it and sets the colour of
 text on it."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
@@ -31,7 +31,7 @@ def test_a_style_block_styles_its_widgets_and_a_call_beats_it() raises -> None:
         _ = layer.button("OK", _A)
     assert_equal(inside.color_at(_BESIDE), Color.RED)
     assert_equal(called.color_at(_BESIDE), Color.BLUE)
-    assert_equal(outside.color_at(_BESIDE), ui.theme().colors.primary)
+    assert_equal(outside.color_at(_BESIDE), ColorScheme.light().primary)
 
 
 def test_nested_style_blocks_merge_field_by_field() raises -> None:
@@ -47,18 +47,16 @@ def test_nested_style_blocks_merge_field_by_field() raises -> None:
     assert_equal(canvas.color_at((49, 19)), Color.RED)  # a square corner
 
 
-def test_a_theme_block_draws_in_its_theme() raises -> None:
+def test_a_colors_block_draws_in_its_colours() raises -> None:
     var ui = UI()
     var context = Context()
     var canvas = _canvas()
     with ui.screen(context, canvas) as layer:
-        with layer.theme(Theme.dark()):
+        with layer.colors(ColorScheme.dark()):
             _ = layer.button("OK", _A)
-            assert_equal(
-                layer.theme().colors.primary, Theme.dark().colors.primary
-            )
-        assert_equal(layer.theme().colors.primary, Theme.light().colors.primary)
-    assert_equal(canvas.color_at(_BESIDE), Theme.dark().colors.primary)
+            assert_equal(layer.colors().primary, ColorScheme.dark().primary)
+        assert_equal(layer.colors().primary, ColorScheme.light().primary)
+    assert_equal(canvas.color_at(_BESIDE), ColorScheme.dark().primary)
 
 
 def test_a_panel_is_drawn_beneath_what_is_inside_it() raises -> None:
@@ -68,7 +66,7 @@ def test_a_panel_is_drawn_beneath_what_is_inside_it() raises -> None:
     with ui.screen(context, canvas) as layer:
         with layer.panel(Rectangle((0, 0), 200, 120)):
             _ = layer.button("OK", _A)
-    var colors = ui.theme().colors
+    var colors = ColorScheme.light()
     assert_equal(canvas.color_at(_BESIDE), colors.primary)
     assert_equal(canvas.color_at((0, 45)), colors.surface_container)
 
@@ -77,7 +75,7 @@ def test_text_on_a_panel_takes_its_content_colour() raises -> None:
     var ui = UI()
     var context = Context()
     var canvas = _canvas()
-    var colors = ui.theme().colors
+    var colors = ColorScheme.light()
     with ui.screen(context, canvas) as layer:
         assert_equal(layer.content_color(), colors.on_surface)
         with layer.panel(_A, style=Style(fill=colors.primary)):
@@ -134,7 +132,7 @@ def test_the_uis_corner_radius_rounds_a_panel() raises -> None:
     with ui.screen(context, square) as layer:
         with layer.panel(_A):
             pass
-    var surface = ui.theme().colors.surface_container
+    var surface = ColorScheme.light().surface_container
     assert_true(round.color_at(corner) != surface)
     assert_equal(square.color_at(corner), surface)
 
