@@ -9,7 +9,14 @@ from create.input import GamepadButton, Key
 from create.image import Image
 from create.math import Point, Transform, Vector
 from create.math._optional_float64 import _OptionalFloat64
-from create.render import Align, Canvas, StrokeAlign, StrokeCap, Style
+from create.render import (
+    Align,
+    Canvas,
+    StrokeAlign,
+    StrokeCap,
+    StrokeDash,
+    Style,
+)
 from create.render.style import _ResolvedStyle
 from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
@@ -17,7 +24,6 @@ from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from .checkbox import CheckboxStyle
-from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor, TextFieldStyle
 from .theme import ColorScheme, FocusRing, Theme, _readable_on
@@ -26,9 +32,6 @@ from .ui import UI, _Hit, _Styles
 
 comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
 """The inset shadow a pressed filled or tonal button is drawn with."""
-
-comptime _HANDLE_SHADOW = Color(0, 0, 0, 70)
-"""The shadow a slider's handle casts with `handle_shadow=True`."""
 
 
 @fieldwise_init
@@ -155,7 +158,10 @@ struct UILayer[
         button: Style = Style(),
         label: Style = Style(),
         panel: Style = Style(),
-        slider: SliderStyle = SliderStyle(),
+        slider_track: Style = Style(),
+        slider_active_track: Style = Style(),
+        slider_handle: Style = Style(),
+        slider_handle_outline: Style = Style(),
         checkbox: CheckboxStyle = CheckboxStyle(),
         text_field: TextFieldStyle = TextFieldStyle(),
     ) raises -> WidgetStyleGuard[Self.ui_origin]:
@@ -180,7 +186,17 @@ struct UILayer[
         self._check_frame()
         return WidgetStyleGuard(
             _ui=self._ui[],
-            _styles=_Styles(button, label, panel, slider, checkbox, text_field),
+            _styles=_Styles(
+                button,
+                label,
+                panel,
+                slider_track,
+                slider_active_track,
+                slider_handle,
+                slider_handle_outline,
+                checkbox,
+                text_field,
+            ),
         )
 
     def content_color(self) -> Color:
@@ -504,7 +520,10 @@ struct UILayer[
         rect: Optional[Rectangle] = None,
         *,
         step: _OptionalFloat64 = None,
-        style: SliderStyle = SliderStyle(),
+        track: Style = Style(),
+        active_track: Style = Style(),
+        handle: Style = Style(),
+        handle_outline: Style = Style(),
         take_focus: Bool = False,
         disabled: Bool = False,
         id: _WidgetKey = None,
@@ -517,6 +536,15 @@ struct UILayer[
         moves it on, even once the pointer leaves `rect`. `step` rounds the
         value to multiples of it from `min`. A `value` outside `min` to
         `max` is drawn at the nearer end, and left as it is until dragged.
+
+        Each part is a shape drawn in its own `Style`: `track` is a line, so
+        its `stroke` and `stroke_thickness` are the track's colour and
+        thickness; `active_track` is the line from the start to the handle,
+        drawn over `track` and taking what it leaves unset from it; `handle`
+        is a point, so its `stroke` is the handle's colour and its
+        `stroke_thickness` its diameter (`StrokeCap.SQUARE` makes it square);
+        and `handle_outline` is a circle round the handle, drawn on top when
+        it sets a stroke or a fill.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -532,7 +560,10 @@ struct UILayer[
             max,
             self._place_control(rect, "ui.slider"),
             step._value,
-            style,
+            track,
+            active_track,
+            handle,
+            handle_outline,
             take_focus,
             disabled,
         )
@@ -1005,18 +1036,47 @@ struct UILayer[
         max: Float64,
         rect: Rectangle,
         step: Optional[Float64],
-        call_style: SliderStyle,
+        call_track: Style,
+        call_active_track: Style,
+        call_handle: Style,
+        call_handle_outline: Style,
         take_focus: Bool,
         disabled: Bool,
     ) raises:
-        var style = call_style._over(self._ui[]._current_styles().slider)
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
         var theme = ui._current_theme()
         ref colors = theme.colors
-        var handle_radius = style.handle_radius.or_else(10.0)
-        var thickness = style.track_thickness.or_else(4.0)
+        var block = ui._current_styles()
+        var track_look = call_track.over(block.slider_track).over(
+            Style(
+                stroke=colors.secondary_container,
+                stroke_thickness=4,
+                stroke_cap=StrokeCap.ROUND,
+            )
+        )
+        var track = _ResolvedStyle()
+        track.apply(track_look)
+        var active = _ResolvedStyle()
+        active.apply(
+            call_active_track.over(block.slider_active_track).over(
+                Style(stroke=colors.primary).over(track_look)
+            )
+        )
+        var handle = _ResolvedStyle()
+        handle.apply(
+            call_handle.over(block.slider_handle).over(
+                Style(stroke=colors.primary, stroke_thickness=20)
+            )
+        )
+        var outline = _ResolvedStyle()
+        outline.apply(
+            call_handle_outline.over(block.slider_handle_outline).over(
+                Style(fill_enabled=False, stroke_enabled=False)
+            )
+        )
+        var handle_radius = handle.stroke_thickness / 2
         var left = rect.position.x - rect.width / 2 + handle_radius
         var right = rect.position.x + rect.width / 2 - handle_radius
         var y = rect.position.y
@@ -1082,56 +1142,47 @@ struct UILayer[
         if max != min:
             t = _clamp01((value - min) / (max - min))
         var handle_x = left + t * (right - left)
-        var active = style.active_track_color.or_else(colors.primary)
-        var inactive = style.inactive_track_color.or_else(
-            colors.secondary_container
-        )
-        var handle = style.handle_color.or_else(colors.primary)
         if off:
             var states = theme.state_layers
-            active = _faded(colors.on_surface, states.disabled_content)
-            inactive = _faded(colors.on_surface, states.disabled_container)
+            active.stroke_color = _faded(
+                colors.on_surface, states.disabled_content
+            )
+            track.stroke_color = _faded(
+                colors.on_surface, states.disabled_container
+            )
             # solid, so the track doesn't show through it
-            handle = colors.surface.lerp(
+            handle.stroke_color = colors.surface.lerp(
                 colors.on_surface, states.disabled_content
             )
         ref recorder = ui._recorder
-        recorder.style = _ResolvedStyle(
-            stroke=inactive,
-            stroke_thickness=thickness,
-            stroke_cap=StrokeCap.ROUND,
-        )
+        recorder.style = track
         recorder.draw(Line(Point(left, y), Point(right, y)))
         if handle_x > left:
-            recorder.style = _ResolvedStyle(
-                stroke=active,
-                stroke_thickness=thickness,
-                stroke_cap=StrokeCap.ROUND,
-            )
+            recorder.style = active
             recorder.draw(Line(Point(left, y), Point(handle_x, y)))
         # a hovered or dragged handle is tinted, as a button is
-        var tint = _readable_on(handle)
-        var shown = handle
+        var tint = _readable_on(handle.stroke_color)
         if dragging:
-            shown = _stepped(handle, tint, theme.state_layers.dragged)
+            handle.stroke_color = _stepped(
+                handle.stroke_color, tint, theme.state_layers.dragged
+            )
         elif state.hovered:
-            shown = _stepped(handle, tint, theme.state_layers.hovered)
-        recorder.style = _ResolvedStyle(
-            fill=shown,
-            stroke=style.handle_outline_color.or_else(Color.TRANSPARENT),
-            stroke_thickness=1,
-            stroke_enabled=Bool(style.handle_outline_color),
-        )
-        if style.handle_shadow:
-            recorder.style.shadow_color = _HANDLE_SHADOW
-            recorder.style.shadow_offset = Vector(0, -1)
-            recorder.style.shadow_blur = 4
-            recorder.style.shadow_spread = 0
-            recorder.style.shadow_inset = False
-            recorder.style.shadow_enabled = True
-        var knob = Circle(Point(handle_x, y), handle_radius)
-        recorder.draw(knob)
-        self._ring_around(knob, state, off, style.focus_ring)
+            handle.stroke_color = _stepped(
+                handle.stroke_color, tint, theme.state_layers.hovered
+            )
+        # a point, as `canvas.point` draws one: round unless square, and
+        # never dashed
+        if handle.stroke_cap != StrokeCap.SQUARE:
+            handle.stroke_cap = StrokeCap.ROUND
+        handle.stroke_dash = StrokeDash.SOLID
+        var centre = Point(handle_x, y)
+        recorder.style = handle
+        recorder.draw(Line(centre, centre))
+        var knob = Circle(centre, handle_radius)
+        if outline.fill_enabled or outline.stroke_enabled:
+            recorder.style = outline
+            recorder.draw(knob)
+        self._ring_around(knob, state, off, None)
         self._ui[]._called(changed=changed)
 
     def _checkbox(

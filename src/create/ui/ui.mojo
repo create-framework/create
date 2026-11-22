@@ -14,7 +14,6 @@ from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
 from .checkbox import CheckboxStyle
-from .slider import SliderStyle
 from .text_field import TextFieldStyle
 from .theme import Theme
 
@@ -27,7 +26,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var button: Style
     var label: Style
     var panel: Style
-    var slider: SliderStyle
+    var slider_track: Style
+    var slider_active_track: Style
+    var slider_handle: Style
+    var slider_handle_outline: Style
     var checkbox: CheckboxStyle
     var text_field: TextFieldStyle
 
@@ -35,7 +37,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.button = Style()
         self.label = Style()
         self.panel = Style()
-        self.slider = SliderStyle()
+        self.slider_track = Style()
+        self.slider_active_track = Style()
+        self.slider_handle = Style()
+        self.slider_handle_outline = Style()
         self.checkbox = CheckboxStyle()
         self.text_field = TextFieldStyle()
 
@@ -44,7 +49,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.button.over(under.button),
             self.label.over(under.label),
             self.panel.over(under.panel),
-            self.slider._over(under.slider),
+            self.slider_track.over(under.slider_track),
+            self.slider_active_track.over(under.slider_active_track),
+            self.slider_handle.over(under.slider_handle),
+            self.slider_handle_outline.over(under.slider_handle_outline),
             self.checkbox._over(under.checkbox),
             self.text_field._over(under.text_field),
         )
