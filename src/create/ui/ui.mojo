@@ -7,15 +7,13 @@ from create.core import Context
 from create.geometry import Rectangle
 from create.input import Gamepad, GamepadButton, Key, Keyboard, Mouse
 from create.math import Point, Transform, Vector
-from create.render import Canvas
+from create.render import Canvas, Style
 from ._id import _mix, _site
 from ._layout import _Layout
 from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
-from .button import ButtonStyle
 from .checkbox import CheckboxStyle
-from .label import LabelStyle
 from .slider import SliderStyle
 from .text_field import TextFieldStyle
 from .theme import Theme
@@ -26,23 +24,26 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     """What the open `ui.style` blocks set, merged: each widget's call style
     sits over these."""
 
-    var button: ButtonStyle
-    var label: LabelStyle
+    var button: Style
+    var label: Style
+    var panel: Style
     var slider: SliderStyle
     var checkbox: CheckboxStyle
     var text_field: TextFieldStyle
 
     def __init__(out self):
-        self.button = ButtonStyle()
-        self.label = LabelStyle()
+        self.button = Style()
+        self.label = Style()
+        self.panel = Style()
         self.slider = SliderStyle()
         self.checkbox = CheckboxStyle()
         self.text_field = TextFieldStyle()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
-            self.button._over(under.button),
-            self.label._over(under.label),
+            self.button.over(under.button),
+            self.label.over(under.label),
+            self.panel.over(under.panel),
             self.slider._over(under.slider),
             self.checkbox._over(under.checkbox),
             self.text_field._over(under.text_field),

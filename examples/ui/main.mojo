@@ -35,15 +35,10 @@ struct Menu(Program):
         canvas.background(self.ui.theme().colors.background)
 
         with self.ui.screen(context, canvas) as ui:
-            with ui.panel(PANEL, style=PanelStyle(shadow=True)):
+            with ui.panel(PANEL, style=ui.theme().shadow):
                 # Each widget below takes the next place down the column.
                 with ui.column():
-                    ui.label(
-                        "Settings",
-                        style=LabelStyle(
-                            text_style=ui.theme().typography.title
-                        ),
-                    )
+                    ui.label("Settings", style=ui.theme().typography.title)
                     ui.text_field(
                         self.name, placeholder="Your name", max_length=16
                     )
@@ -70,8 +65,8 @@ struct Menu(Program):
                                 self.message = "Pressed " + names[i]
                     ui.label(
                         self.message,
-                        style=LabelStyle(
-                            color=ui.theme().colors.on_surface_variant
+                        style=Style(
+                            text_color=ui.theme().colors.on_surface_variant
                         ),
                     )
 

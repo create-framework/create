@@ -65,8 +65,9 @@ def test_a_label_is_as_tall_as_its_text_needs() raises -> None:
         with layer.column(_COLUMN):
             layer.label("Body")  # 16 high, so 24
             _ = layer.button("After body")
-            var title = LabelStyle(text_style=layer.theme().typography.title)
-            layer.label("Title", style=title)  # 22 high, so 33
+            layer.label(
+                "Title", style=layer.theme().typography.title
+            )  # 22 high, so 33
             _ = layer.button("After title")
     var rects = _placed(ui)
     _assert_rect(rects[0], 0, 98, 200, 40)  # 150 - 24 - 8 - 20

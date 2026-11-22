@@ -148,6 +148,28 @@ def test_over_an_empty_style_changes_nothing() raises -> None:
     assert_equal(String(Style().over(s)), String(s))
 
 
+def test_over_is_applying_the_base_then_the_top() raises -> None:
+    # a part named on top switches on what the base switched off
+    var outlined = Style(stroke_thickness=2).over(Style(stroke_enabled=False))
+    assert_true(_r(outlined).stroke_enabled)
+    assert_true(
+        _r(Style(fill=Color.RED).over(Style(fill_enabled=False))).fill_enabled
+    )
+    assert_true(
+        _r(
+            Style(shadow_blur=4).over(Style(shadow_enabled=False))
+        ).shadow_enabled
+    )
+    # an explicit switch on top still wins
+    var off = Style(stroke=Color.RED, stroke_enabled=False)
+    assert_false(_r(off.over(Style(stroke_enabled=True))).stroke_enabled)
+    # a fill colour on top clears the base's gradient
+    var sky = Gradient.linear(Color.RED, Color.BLUE)
+    var solid = _r(Style(fill=Color.GREEN).over(Style(fill_gradient=sky)))
+    assert_false(Bool(solid.fill_gradient))
+    assert_equal(solid.fill_color, Color.GREEN)
+
+
 def test_style_writes_only_what_it_sets() raises -> None:
     assert_equal(
         String(Style(fill=Color.RED, corner_radius=4)),

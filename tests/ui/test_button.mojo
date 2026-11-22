@@ -152,13 +152,53 @@ def test_an_outlined_button_draws_only_its_border() raises -> None:
             "OK",
             _A,
             variant=ButtonVariant.OUTLINED,
-            style=ButtonStyle(outline_thickness=4, corner_radius=0),
+            style=Style(stroke_thickness=4, corner_radius=0),
         )
     assert_equal(canvas.color_at(_A.position + Vector(30, 0)), Color.WHITE)
     assert_equal(
         canvas.color_at(_A.position + Vector(0.0, 18.5)),
         ui.theme().colors.outline,
     )
+
+
+def test_a_partial_style_keeps_the_variants_colours() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    with ui.screen(context, canvas) as layer:
+        _ = layer.button("OK", _A, style=Style(corner_radius=0))
+    var primary = ui.theme().colors.primary
+    # square corners, filled with the variant's primary to the very corner
+    assert_equal(canvas.color_at(_A.position + Vector(49.5, 19.5)), primary)
+
+
+def test_a_thickness_alone_outlines_a_filled_button() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    with ui.screen(context, canvas) as layer:
+        _ = layer.button(
+            "OK", _A, style=Style(stroke_thickness=4, corner_radius=0)
+        )
+    assert_equal(
+        canvas.color_at(_A.position + Vector(0.0, 18.5)),
+        ui.theme().colors.outline,
+    )
+
+
+def test_a_button_takes_a_gradient_fill() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    var fade = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT)
+    with ui.screen(context, canvas) as layer:
+        _ = layer.button(
+            "", _A, style=Style(fill_gradient=fade, corner_radius=0)
+        )
+    var left = canvas.color_at(_A.position + Vector(-35, 0))
+    var right = canvas.color_at(_A.position + Vector(45, 0))
+    assert_true(left.r > left.b)
+    assert_true(right.b > right.r)
 
 
 def test_a_label_lets_the_pointer_through() raises -> None:
