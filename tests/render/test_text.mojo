@@ -26,6 +26,7 @@ from create.render._text import (
     _MAX_WEIGHT,
     _pixel_size,
 )
+from create.render.style import _ResolvedStyle
 
 
 def _ink_box(m: MemorySurface) -> Tuple[Int, Int, Int, Int]:
@@ -51,7 +52,7 @@ def _ink_box(m: MemorySurface) -> Tuple[Int, Int, Int, Int]:
 
 
 def _style(align: Align) -> TextStyle:
-    var s = Style()
+    var s = _ResolvedStyle()
     s.text_color = Color.WHITE
     s.font_size = 24
     s.text_alignment = align
@@ -171,7 +172,7 @@ def test_style_defaults() raises -> None:
     # What every frame starts with, since style does not survive the frame
     # boundary — a wrong default here silently changes the first render call of
     # every render that doesn't set that field.
-    var s = Style()
+    var s = _ResolvedStyle()
     assert_equal(s.fill_color, Color.WHITE)
     assert_false(s.fill_enabled)
     assert_equal(s.stroke_color, Color.BLACK)
@@ -343,7 +344,7 @@ def test_the_cache_is_bounded() raises -> None:
     # is the guard, and rasterising four thousand real glyphs to reach it
     # would cost the suite a minute and prove nothing extra.
     var t = TextRenderer()
-    var slot = t._slot(t._face(Style()._text_style()))
+    var slot = t._slot(t._face(_ResolvedStyle()._text_style()))
     for i in range(_GLYPH_CACHE_LIMIT):
         var key = t._glyph_key(slot, 0xE000 + i, 16, FontWeight.REGULAR.value)
         t._glyphs[key] = _GlyphInfo(0, 0, 0, 0, 4)

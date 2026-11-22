@@ -10,6 +10,7 @@ from create.image import Image
 from create.math import Point, Transform, Vector
 from create.math._optional_float64 import _OptionalFloat64
 from create.render import Align, Canvas, StrokeAlign, StrokeCap, Style
+from create.render.style import _ResolvedStyle
 from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
 from ._key import _WidgetKey
@@ -131,7 +132,7 @@ struct UILayer[
         """
         self._check_frame()
         ref recorder = self._ui[]._recorder
-        recorder.style = style
+        recorder.style = style._resolved()
         recorder.draw(shape)
 
     def theme(self) -> Theme:
@@ -223,7 +224,7 @@ struct UILayer[
         ui._hits.append(_Hit(id, rect, self._to_local, False, False, False))
         var color = style.color.or_else(colors.surface_container)
         var content = style.content_color.or_else(_content_on(colors, color))
-        ui._recorder.style = Style(
+        ui._recorder.style = _ResolvedStyle(
             fill=color,
             stroke=style.outline_color.or_else(Color.TRANSPARENT),
             stroke_thickness=style.outline_thickness.or_else(1.0),
@@ -497,7 +498,7 @@ struct UILayer[
         self._check_frame()
         var place = self._place_control(rect, "ui.image")
         self._ui[]._recorder.image(
-            image, place.position, place.width, place.height, Style()
+            image, place.position, place.width, place.height, _ResolvedStyle()
         )
 
     @always_inline
@@ -785,7 +786,7 @@ struct UILayer[
         )
         ref recorder = ui._recorder
         if container.a > 0 or thickness > 0:
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 fill=container,
                 fill_enabled=container.a > 0,
                 stroke=outline,
@@ -803,7 +804,7 @@ struct UILayer[
         if state.focused and buffer.selected_text():
             var start = self._measure(buffer.before_selection(), look)
             var width = self._measure(buffer.selected_text(), look)
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 fill=style.selection_color.or_else(
                     colors.primary.with_alpha(70)
                 ),
@@ -836,7 +837,7 @@ struct UILayer[
             and (since < 0.5 or Int(since * 2) % 2 == 1)
         ):
             var x = origin_x + caret_x
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 stroke=style.caret_color.or_else(colors.primary),
                 stroke_thickness=2,
             )
@@ -890,7 +891,7 @@ struct UILayer[
 
     def _record_ring[S: Drawable](self, shape: S, look: FocusRing):
         ref ui = self._ui[]
-        ui._rings.style = Style(
+        ui._rings.style = _ResolvedStyle(
             fill_enabled=False,
             stroke=look.color.or_else(ui._current_theme().colors.secondary),
             stroke_thickness=look.thickness,
@@ -898,14 +899,16 @@ struct UILayer[
         )
         ui._rings.draw(shape)
 
-    def _measure(self, text: String, look: Style) raises -> Float64:
+    def _measure(self, text: String, look: _ResolvedStyle) raises -> Float64:
         """How wide `text` is drawn in `look`'s font, size and weight."""
         if not text:
             return 0
-        with self._canvas[].style(look):
+        with self._canvas[]._with_style(look):
             return self._canvas[].text_width(text)
 
-    def _offset_at(self, text: String, x: Float64, look: Style) raises -> Int:
+    def _offset_at(
+        self, text: String, x: Float64, look: _ResolvedStyle
+    ) raises -> Int:
         """The byte offset of the character boundary in `text` nearest to
         `x` units from its start."""
         var best = 0
@@ -982,7 +985,7 @@ struct UILayer[
         if step > 0 and container.a > 0:
             container = _stepped(container, content, step)
         if container.a > 0 or outline:
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 fill=container,
                 fill_enabled=container.a > 0,
                 stroke=outline.or_else(Color.TRANSPARENT),
@@ -1002,7 +1005,7 @@ struct UILayer[
             # no fill to step: a layer of the text colour, as strong as the
             # step would be over the surface beneath
             var opacity = _layer_opacity(colors.surface, content, step)
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 fill=content.with_alpha(UInt8(opacity * 255 + 0.5)),
                 stroke_enabled=False,
             )
@@ -1119,14 +1122,14 @@ struct UILayer[
                 colors.on_surface, states.disabled_content
             )
         ref recorder = ui._recorder
-        recorder.style = Style(
+        recorder.style = _ResolvedStyle(
             stroke=inactive,
             stroke_thickness=thickness,
             stroke_cap=StrokeCap.ROUND,
         )
         recorder.draw(Line(Point(left, y), Point(right, y)))
         if handle_x > left:
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 stroke=active,
                 stroke_thickness=thickness,
                 stroke_cap=StrokeCap.ROUND,
@@ -1139,7 +1142,7 @@ struct UILayer[
             shown = _stepped(handle, tint, theme.state_layers.dragged)
         elif state.hovered:
             shown = _stepped(handle, tint, theme.state_layers.hovered)
-        recorder.style = Style(
+        recorder.style = _ResolvedStyle(
             fill=shown,
             stroke=style.handle_outline_color.or_else(Color.TRANSPARENT),
             stroke_thickness=1,
@@ -1205,9 +1208,9 @@ struct UILayer[
             var fill = accent
             if step > 0:
                 fill = _stepped(accent, check, step)
-            recorder.style = Style(fill=fill, stroke_enabled=False)
+            recorder.style = _ResolvedStyle(fill=fill, stroke_enabled=False)
             recorder.draw(box)
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 stroke=check,
                 stroke_thickness=2,
                 stroke_cap=StrokeCap.ROUND,
@@ -1219,7 +1222,7 @@ struct UILayer[
             var layer = 0.0
             if step > 0:
                 layer = _layer_opacity(colors.surface, colors.on_surface, step)
-            recorder.style = Style(
+            recorder.style = _ResolvedStyle(
                 fill=colors.on_surface.with_alpha(UInt8(layer * 255 + 0.5)),
                 fill_enabled=layer > 0,
                 stroke=outline,
@@ -1416,9 +1419,11 @@ def _anchor(rect: Rectangle, alignment: Align) -> Point:
     return Point(x, y)
 
 
-def _text_style(type: TypeStyle, color: Color, alignment: Align) -> Style:
-    """A `Style` that draws text as `type` says, in `color`."""
-    return Style(
+def _text_style(
+    type: TypeStyle, color: Color, alignment: Align
+) -> _ResolvedStyle:
+    """A style that draws text as `type` says, in `color`."""
+    return _ResolvedStyle(
         text_color=color,
         font=type.font,
         font_size=type.size,

@@ -54,6 +54,7 @@ from create.render._polygon import polygon_quads
 from create.render._lower import is_plain_triangle, shape_pieces
 from create.geometry.bezier import Bezier
 from create.geometry import Polygon
+from create.render.style import _ResolvedStyle
 
 
 def _emit(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
@@ -78,10 +79,10 @@ def _viewport(design: Int, pixels: Int) -> Viewport:
     return v^
 
 
-def _plain() -> Style:
-    """Fill only — the stroke that `Style()` enables by default would double
+def _plain() -> _ResolvedStyle:
+    """Fill only — the stroke that `_ResolvedStyle()` enables by default would double
     every vertex count these tests are asserting on."""
-    var s = Style()
+    var s = _ResolvedStyle()
     s.fill_color = Color.RED
     s.fill_enabled = True
     s.stroke_enabled = False
@@ -321,7 +322,7 @@ def test_a_sector_emits_only_its_visible_parts() raises -> None:
     assert_equal(vb.count(), 6 * (len(quads.fill_quads) // 4))
 
 
-def _star_command(v: Viewport, style: Style) -> RenderCommand:
+def _star_command(v: Viewport, style: _ResolvedStyle) -> RenderCommand:
     var p = Polygon.star((0.0, 0.0), 40.0, 16.0, 5)
     return polygon_command(v.base_matrix(), style, p.vertices.copy())
 
@@ -555,7 +556,7 @@ def test_shape_parameters_default_to_zero() raises -> None:
         assert_equal(vb.data[_FLOATS + 9 + i], Float32(3 + i))
 
 
-def _blurred(var s: Style) -> Style:
+def _blurred(var s: _ResolvedStyle) -> _ResolvedStyle:
     """`s` casting an unshifted shadow with blur 8: sigma 4, so the shape
     parameters are local units times 1/4 and the quad reaches 16 past."""
     s.shadow_enabled = True
@@ -591,7 +592,7 @@ def test_a_blurred_rect_shadow_is_one_box_quad() raises -> None:
 def test_an_stroke_only_blurred_rect_shadow_carries_its_ring() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
-    var s = Style()
+    var s = _ResolvedStyle()
     s.fill_enabled = False
     s.stroke_thickness = 4
     var c = rect_command(v.base_matrix(), _blurred(s^), 0.0, 0.0, 20.0, 20.0)
@@ -629,7 +630,7 @@ def test_a_blurred_triangle_shadow_is_one_edges_quad() raises -> None:
 def test_a_blurred_line_shadow_is_a_box_along_the_stroke() raises -> None:
     var vb = VertexBuffer()
     var v = _viewport(100, 100)
-    var s = Style()
+    var s = _ResolvedStyle()
     s.stroke_thickness = 2
     var c = line_command(v.base_matrix(), _blurred(s^), -10.0, 0.0, 10.0, 0.0)
     emit_blurred_shadow(vb, shadow_command(c, v.scale), v.scale)

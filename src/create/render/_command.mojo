@@ -4,7 +4,7 @@ from create.color.color import Color, _tinted
 from create.color.gradient import Gradient
 from ._paint import Paint, TextStyle
 from ._text import NO_WRAP
-from .style import Style
+from .style import _ResolvedStyle
 from create.geometry.bezier import Bezier
 from create.math.transform import Transform
 from create.math.point import Point
@@ -225,7 +225,7 @@ struct RenderCommand(Copyable, Movable):
         out self,
         var payload: RenderPayload,
         transform: Transform,
-        style: Style,
+        style: _ResolvedStyle,
     ):
         self.payload = payload^
         self.transform = transform
@@ -375,7 +375,7 @@ def _fill_box(c: RenderCommand) -> Tuple[Point, Vector]:
 def clear_command(color: Color) -> RenderCommand:
     """Paint the whole framebuffer. Carries no transform — it covers the
     framebuffer, not the design area, so no mapping applies."""
-    var s = Style()
+    var s = _ResolvedStyle()
     s.fill_color = color
     s.fill_enabled = True
     return RenderCommand(ClearPayload(0.0, 0.0), Transform(), s)
@@ -389,7 +389,7 @@ def clear_command(
     `screen` maps to pixels. Beyond that area, as in the letterbox, its end
     colours carry on. The geometry is the rectangle's, which is the box
     `_fill_box` reads."""
-    var s = Style()
+    var s = _ResolvedStyle()
     s.fill_gradient = gradient
     s.fill_enabled = True
     return RenderCommand(ClearPayload(w, h), screen, s)
@@ -404,7 +404,7 @@ def _clear_is_opaque(c: RenderCommand) -> Bool:
 
 def rect_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     x: Float64,
     y: Float64,
     w: Float64,
@@ -420,7 +420,7 @@ def rect_command(
 
 def circle_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     cx: Float64,
     cy: Float64,
     r: Float64,
@@ -430,7 +430,7 @@ def circle_command(
 
 def sector_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     cx: Float64,
     cy: Float64,
     r: Float64,
@@ -444,7 +444,7 @@ def sector_command(
 
 def line_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     x0: Float64,
     y0: Float64,
     x1: Float64,
@@ -457,7 +457,7 @@ def line_command(
 
 def triangle_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     x1: Float64,
     y1: Float64,
     x2: Float64,
@@ -479,7 +479,7 @@ def triangle_command(
 
 
 def bezier_command(
-    transform: Transform, style: Style, curve: Bezier
+    transform: Transform, style: _ResolvedStyle, curve: Bezier
 ) -> RenderCommand:
     return bezier_chain_command(
         transform,
@@ -489,7 +489,7 @@ def bezier_command(
 
 
 def bezier_chain_command(
-    transform: Transform, style: Style, var points: List[Point]
+    transform: Transform, style: _ResolvedStyle, var points: List[Point]
 ) -> RenderCommand:
     """A stroke along the joined Béziers whose control points are `points`,
     laid out as `RenderCommand.points` describes: 3n + 1 of them."""
@@ -497,7 +497,7 @@ def bezier_chain_command(
 
 
 def polygon_command(
-    transform: Transform, style: Style, var vertices: List[Point]
+    transform: Transform, style: _ResolvedStyle, var vertices: List[Point]
 ) -> RenderCommand:
     """A polygon through `vertices`, in order, closed back to the first."""
     return RenderCommand(PolygonPayload(vertices^, 0.0, None), transform, style)
@@ -505,7 +505,7 @@ def polygon_command(
 
 def rounded_sector_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     var vertices: List[Point],
     cx: Float64,
     cy: Float64,
@@ -519,7 +519,7 @@ def rounded_sector_command(
 
 def framed_polygon_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     var vertices: List[Point],
     cx: Float64,
     cy: Float64,
@@ -539,7 +539,7 @@ def framed_polygon_command(
 
 def image_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     cx: Float64,
     cy: Float64,
     w: Float64,
@@ -572,7 +572,7 @@ def image_command(
 
 def text_command(
     transform: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     x: Float64,
     y: Float64,
     var s: String,
@@ -600,7 +600,7 @@ def letterbox_command(
     Recorded last, so it doubles as the clip for anything a program drew past
     the edges of the design area.
     """
-    var s = Style()
+    var s = _ResolvedStyle()
     s.fill_color = color
     s.fill_enabled = True
     return RenderCommand(LetterboxPayload(cx0, cy0, cx1, cy1), Transform(), s)

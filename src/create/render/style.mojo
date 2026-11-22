@@ -228,6 +228,148 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             ")",
         )
 
+    def _resolved(self) -> _ResolvedStyle:
+        """This style with every part decided, as the canvas draws with it."""
+        var resolved = _ResolvedStyle()
+        resolved.fill_color = self.fill_color
+        resolved.fill_gradient = self.fill_gradient
+        resolved.fill_enabled = self.fill_enabled
+        resolved.stroke_color = self.stroke_color
+        resolved.stroke_thickness = self.stroke_thickness
+        resolved.stroke_enabled = self.stroke_enabled
+        resolved.stroke_alignment = self.stroke_alignment
+        resolved.stroke_cap = self.stroke_cap
+        resolved.stroke_dash = self.stroke_dash
+        resolved.corner_radius = self.corner_radius
+        resolved.text_color = self.text_color
+        resolved.font = self.font
+        resolved.font_size = self.font_size
+        resolved.font_weight = self.font_weight
+        resolved.font_italic = self.font_italic
+        resolved.text_alignment = self.text_alignment
+        resolved.tint = self.tint
+        resolved.opacity = self.opacity
+        resolved.blend_mode = self.blend_mode
+        resolved.shadow_color = self.shadow_color
+        resolved.shadow_offset = self.shadow_offset
+        resolved.shadow_blur = self.shadow_blur
+        resolved.shadow_spread = self.shadow_spread
+        resolved.shadow_inset = self.shadow_inset
+        resolved.shadow_follows_transform = self.shadow_follows_transform
+        resolved.shadow_enabled = self.shadow_enabled
+        return resolved^
+
+
+struct _ResolvedStyle(Copyable, ImplicitlyCopyable, Movable):
+    """A style with every part decided: what the canvas holds and draws with.
+
+    A `Style` is resolved into one when it is applied. Its constructor takes
+    the same keywords as `Style`'s, with the same defaults, so the library
+    builds the looks it draws with directly.
+    """
+
+    var fill_color: Color
+    var fill_gradient: Optional[Gradient]
+    """Paints the fill instead of `fill_color` while set; `fill_color` is
+    kept for when it is cleared."""
+    var fill_enabled: Bool
+    var stroke_color: Color
+    var stroke_thickness: Float64
+    var stroke_enabled: Bool
+    var stroke_alignment: StrokeAlign
+    """Where a region's stroke sits against its edge; `INSIDE` unless
+    set. Lines and curves are always stroked centred."""
+    var stroke_cap: StrokeCap
+    """How the open ends of lines and curves are finished; `BUTT` unless
+    set. Regions' strokes and closed curves have no ends, unless dashed."""
+    var stroke_dash: StrokeDash
+    """How the stroke is broken into dashes; `SOLID` unless set."""
+    var corner_radius: Float64
+    """How far the shapes the canvas builds from numbers are rounded, in
+    world units; 0 is sharp. A shape value keeps its own."""
+    var text_color: Color
+    var font: Optional[Font]
+    """The face text is drawn in; none for the packaged Noto Sans."""
+    var font_size: Float64
+    var font_weight: FontWeight
+    var font_italic: Bool
+    var text_alignment: Align
+    var tint: Color
+    var opacity: Float64
+    var blend_mode: BlendMode
+    var shadow_color: Color
+    var shadow_offset: Vector
+    var shadow_blur: Float64
+    var shadow_spread: Float64
+    var shadow_inset: Bool
+    var shadow_follows_transform: Bool
+    var shadow_enabled: Bool
+
+    def __init__(
+        out self,
+        *,
+        fill: Optional[Color] = None,
+        fill_gradient: Optional[Gradient] = None,
+        fill_enabled: Optional[Bool] = None,
+        stroke: Optional[Color] = None,
+        stroke_thickness: _OptionalFloat64 = None,
+        stroke_enabled: Optional[Bool] = None,
+        stroke_alignment: StrokeAlign = StrokeAlign.INSIDE,
+        stroke_cap: StrokeCap = StrokeCap.BUTT,
+        stroke_dash: StrokeDash = StrokeDash.SOLID,
+        corner_radius: _OptionalFloat64 = None,
+        text_color: Color = Color.BLACK,
+        font: Optional[Font] = None,
+        font_size: _OptionalFloat64 = None,
+        font_weight: FontWeight = FontWeight.REGULAR,
+        font_italic: Bool = False,
+        text_alignment: Align = Align.CENTER,
+        tint: Color = Color.WHITE,
+        opacity: _OptionalFloat64 = None,
+        blend_mode: BlendMode = BlendMode.NORMAL,
+        shadow: Optional[Color] = None,
+        shadow_offset: Optional[Vector] = None,
+        shadow_blur: _OptionalFloat64 = None,
+        shadow_spread: _OptionalFloat64 = None,
+        shadow_inset: Optional[Bool] = None,
+        shadow_follows_transform: Bool = False,
+        shadow_enabled: Optional[Bool] = None,
+    ):
+        self.fill_color = fill.or_else(Color.WHITE)
+        self.fill_gradient = fill_gradient
+        self.fill_enabled = fill_enabled.or_else(
+            Bool(fill) or Bool(fill_gradient)
+        )
+        self.stroke_color = stroke.or_else(Color.BLACK)
+        self.stroke_thickness = stroke_thickness.or_else(1.0)
+        self.stroke_enabled = stroke_enabled.or_else(True)
+        self.stroke_alignment = stroke_alignment
+        self.stroke_cap = stroke_cap
+        self.stroke_dash = stroke_dash
+        self.corner_radius = corner_radius.or_else(0.0)
+        self.text_color = text_color
+        self.font = font
+        self.font_size = font_size.or_else(16.0)
+        self.font_weight = font_weight
+        self.font_italic = font_italic
+        self.text_alignment = text_alignment
+        self.tint = tint
+        self.opacity = opacity.or_else(1.0)
+        self.blend_mode = blend_mode
+        self.shadow_color = shadow.or_else(Color(0, 0, 0, 96))
+        self.shadow_offset = shadow_offset.or_else(Vector(4, -4))
+        self.shadow_blur = shadow_blur.or_else(8.0)
+        self.shadow_spread = shadow_spread.or_else(0.0)
+        self.shadow_inset = shadow_inset.or_else(False)
+        self.shadow_follows_transform = shadow_follows_transform
+        self.shadow_enabled = shadow_enabled.or_else(
+            Bool(shadow)
+            or Bool(shadow_offset)
+            or Bool(shadow_blur)
+            or Bool(shadow_spread)
+            or Bool(shadow_inset)
+        )
+
     def _paint(self) -> Paint:
         """What a command recorded in this style paints with: a dash preset
         resolved against the thickness, and `DOTTED`'s dots round."""

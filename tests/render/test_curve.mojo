@@ -25,6 +25,7 @@ from create.render._curve import (
 )
 from create.render.stroke_cap import StrokeCap
 from create.render._raster import fill_all, fill_quad
+from create.render.style import _ResolvedStyle
 
 
 def _assert_point_near(p: Point, q: Point, tol: Float64 = 1e-9) raises:
@@ -38,7 +39,9 @@ def _s_curve() -> Bezier:
 
 def test_device_points_follow_the_transform() raises -> None:
     var b = _s_curve()
-    var c = bezier_command(Transform(scale_x=2.0, scale_y=2.0), Style(), b)
+    var c = bezier_command(
+        Transform(scale_x=2.0, scale_y=2.0), _ResolvedStyle(), b
+    )
     var points = bezier_device_points(c, c.transform)
     _assert_point_near(points[0], Point(0.0, 0.0))
     _assert_point_near(points[len(points) - 1], Point(200.0, 0.0))
@@ -46,7 +49,7 @@ def test_device_points_follow_the_transform() raises -> None:
 
 def test_device_points_refine_with_zoom() raises -> None:
     # The same curve drawn larger is flattened into more segments.
-    var c = bezier_command(Transform(), Style(), _s_curve())
+    var c = bezier_command(Transform(), _ResolvedStyle(), _s_curve())
     var near = bezier_device_points(c, c.transform)
     var far = bezier_device_points(c, Transform(scale_x=8.0, scale_y=8.0))
     assert_true(len(far) > len(near))
@@ -67,7 +70,7 @@ def _two_curve_chain() -> List[Point]:
 
 def test_chain_flattens_to_one_polyline() raises -> None:
     var chain = _two_curve_chain()
-    var c = bezier_chain_command(Transform(), Style(), chain.copy())
+    var c = bezier_chain_command(Transform(), _ResolvedStyle(), chain.copy())
     var points = bezier_device_points(c, c.transform)
     var first = Bezier(chain[0], chain[1], chain[2], chain[3]).flatten(0.25)
     var second = Bezier(chain[3], chain[4], chain[5], chain[6]).flatten(0.25)
@@ -81,7 +84,9 @@ def test_chain_flattens_to_one_polyline() raises -> None:
 
 
 def test_chain_stroke_shares_edges_across_the_joint() raises -> None:
-    var c = bezier_chain_command(Transform(), Style(), _two_curve_chain())
+    var c = bezier_chain_command(
+        Transform(), _ResolvedStyle(), _two_curve_chain()
+    )
     var corners = stroke_quads(bezier_device_points(c, c.transform), 6.0)
     for q in range(len(corners) // 4 - 1):
         assert_equal(corners[4 * q + 1], corners[4 * (q + 1)])
@@ -127,7 +132,7 @@ def test_straight_polyline_gives_a_straight_band() raises -> None:
 
 
 def test_neighbouring_quads_share_their_joining_edge() raises -> None:
-    var c = bezier_command(Transform(), Style(), _s_curve())
+    var c = bezier_command(Transform(), _ResolvedStyle(), _s_curve())
     var corners = stroke_quads(bezier_device_points(c, c.transform), 6.0)
     var quads = len(corners) // 4
     assert_true(quads > 2)
@@ -159,7 +164,7 @@ def test_repeated_points_are_skipped() raises -> None:
 
 def test_zero_length_gives_no_quads() raises -> None:
     var b = Bezier((5.0, 5.0), (5.0, 5.0), (5.0, 5.0), (5.0, 5.0))
-    var c = bezier_command(Transform(), Style(), b)
+    var c = bezier_command(Transform(), _ResolvedStyle(), b)
     assert_equal(
         len(stroke_quads(bezier_device_points(c, c.transform), 3.0)), 0
     )
@@ -170,8 +175,8 @@ def test_zero_width_gives_no_quads() raises -> None:
     assert_equal(len(stroke_quads(points, 0.0)), 0)
 
 
-def _stroked(thickness: Float64) -> Style:
-    var s = Style()
+def _stroked(thickness: Float64) -> _ResolvedStyle:
+    var s = _ResolvedStyle()
     s.stroke_thickness = thickness
     return s^
 

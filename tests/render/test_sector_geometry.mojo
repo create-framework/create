@@ -17,6 +17,7 @@ from create.render._sector import (
     sector_quads,
 )
 from create.render._transform import stroke_thickness_px, pixel_scale
+from create.render.style import _ResolvedStyle
 
 comptime _SIZE = 64
 comptime _INK = Color(255, 255, 255, 128)
@@ -44,7 +45,10 @@ def _device(m: Transform) -> Transform:
 
 
 def _quads(
-    s: Sector, m: Transform, style: Style = Style(), grow: Float64 = 0.0
+    s: Sector,
+    m: Transform,
+    style: _ResolvedStyle = _ResolvedStyle(),
+    grow: Float64 = 0.0,
 ) -> Pieces:
     var c = sector_command(
         m,
@@ -102,7 +106,10 @@ def _signed_distance(s: Sector, p: Point) -> Float64:
 
 
 def _assert_tiles(
-    s: Sector, m: Transform, style: Style = Style(), grow: Float64 = 0.0
+    s: Sector,
+    m: Transform,
+    style: _ResolvedStyle = _ResolvedStyle(),
+    grow: Float64 = 0.0,
 ) raises:
     """Quads convex, painted at most once, and covering the sector grown by
     `grow`: each pixel centre more than a pixel from an edge is painted
@@ -158,12 +165,14 @@ def _convex(corners: List[Point], i: Int) -> Bool:
     return not (positive and negative)
 
 
-def _stroked(thickness: Float64) -> Style:
-    return Style(fill=Color.RED, stroke_thickness=thickness)
+def _stroked(thickness: Float64) -> _ResolvedStyle:
+    return _ResolvedStyle(fill=Color.RED, stroke_thickness=thickness)
 
 
 def test_sector_command_records_its_geometry() raises -> None:
-    var c = sector_command(Transform(), Style(), 1.0, 2.0, 3.0, 0.5, -1.0)
+    var c = sector_command(
+        Transform(), _ResolvedStyle(), 1.0, 2.0, 3.0, 0.5, -1.0
+    )
     assert_true(c.payload.isa[SectorPayload]())
     ref sector = c.payload[SectorPayload]
     assert_equal(sector.center, Point(1.0, 2.0))
@@ -174,7 +183,7 @@ def test_sector_command_records_its_geometry() raises -> None:
 
 
 def test_fill_only_tiles_the_sector() raises -> None:
-    var style = Style(fill=Color.RED, stroke_enabled=False)
+    var style = _ResolvedStyle(fill=Color.RED, stroke_enabled=False)
     for s in _sectors():
         var q = _quads(s, Transform(), style)
         assert_equal(len(q.stroke_quads), 0)
@@ -253,7 +262,7 @@ def test_shrunk_sectors_tile_their_erosion() raises -> None:
 
 
 def test_an_stroke_only_sector_masks_only_its_ring() raises -> None:
-    var style = Style(stroke=Color.RED, stroke_thickness=4)
+    var style = _ResolvedStyle(stroke=Color.RED, stroke_thickness=4)
     var c = sector_command(Transform(), style, 0.0, 0.0, 20.0, 0.0, TAU)
     var placed = shape_shadow_mask(c, c.transform, 1.0, 0)
     # The device pixels whose lower-left corners are (0, 0) and (-19, 0).

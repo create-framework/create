@@ -16,6 +16,7 @@ from std.testing import (
 
 from create import *
 from create.render._dash import dash_path
+from create.render.style import _ResolvedStyle
 
 
 def _canvas() raises -> Canvas:
@@ -97,7 +98,7 @@ def test_naming_a_dash_does_not_switch_the_stroke_on() raises -> None:
 
 
 def test_a_command_records_a_preset_as_lengths() raises -> None:
-    var paint = Style(
+    var paint = _ResolvedStyle(
         stroke_thickness=3, stroke_dash=StrokeDash.DASHED
     )._paint()
     assert_equal(paint.stroke_dash, StrokeDash(9, 6))
@@ -105,7 +106,7 @@ def test_a_command_records_a_preset_as_lengths() raises -> None:
 
 
 def test_dotted_is_round_whatever_the_cap() raises -> None:
-    var paint = Style(
+    var paint = _ResolvedStyle(
         stroke_dash=StrokeDash.DOTTED, stroke_cap=StrokeCap.SQUARE
     )._paint()
     assert_equal(paint.stroke_cap, StrokeCap.ROUND)

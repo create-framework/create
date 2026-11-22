@@ -47,13 +47,13 @@ from ._command import (
     sector_command,
     triangle_command,
 )
-from .style import Style
+from .style import _ResolvedStyle
 from ._curve import circle_segments
 from ._transform import pixel_scale
 
 
 def shape_command(
-    r: Rectangle, transform: Transform, style: Style, scale: Float64
+    r: Rectangle, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     """A turned rectangle is the upright one turned about its centre, so its
     gradient, rounding and stroke turn with it, as under `canvas.transform`."""
@@ -81,7 +81,7 @@ def shape_command(
 
 
 def shape_command(
-    c: Circle, transform: Transform, style: Style, scale: Float64
+    c: Circle, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     return circle_command(
         transform, style, c.position.x, c.position.y, c.radius
@@ -89,7 +89,7 @@ def shape_command(
 
 
 def shape_command(
-    e: Ellipse, transform: Transform, style: Style, scale: Float64
+    e: Ellipse, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     """The polygon through the ellipse's outline, flattened as finely as a
     circle of its larger radius is drawn, in a multiple of four segments so
@@ -105,7 +105,7 @@ def shape_command(
 
 
 def shape_command(
-    c: Capsule, transform: Transform, style: Style, scale: Float64
+    c: Capsule, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     """The polygon through the capsule's outline, each half circle in half
     the chords a circle of its radius is drawn with, its gradient spanning
@@ -129,7 +129,7 @@ def shape_command(
 
 
 def shape_command(
-    t: Triangle, transform: Transform, style: Style, scale: Float64
+    t: Triangle, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     return triangle_command(
         transform,
@@ -145,7 +145,7 @@ def shape_command(
 
 
 def shape_command(
-    s: Sector, transform: Transform, style: Style, scale: Float64
+    s: Sector, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     """Rounded, the polygon through the sector's outline, its curves
     flattened as finely as circles of their radii are drawn; sharp, a
@@ -182,7 +182,7 @@ def shape_command(
 
 
 def shape_command(
-    p: Polygon, transform: Transform, style: Style, scale: Float64
+    p: Polygon, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     """The polygon through `p.vertices`, every corner rounded by
     `p.corner_radius` with its fillets flattened now, in local space."""
@@ -196,7 +196,7 @@ def shape_command(
 
 
 def shape_command(
-    l: Line, transform: Transform, style: Style, scale: Float64
+    l: Line, transform: Transform, style: _ResolvedStyle, scale: Float64
 ) -> RenderCommand:
     return line_command(
         transform, style, l.start.x, l.start.y, l.end.x, l.end.y
@@ -204,7 +204,7 @@ def shape_command(
 
 
 def curves_command(
-    curves: List[Bezier], transform: Transform, style: Style
+    curves: List[Bezier], transform: Transform, style: _ResolvedStyle
 ) -> RenderCommand:
     """`curves`, each starting where the last ends, as one stroke. At least
     one curve."""
