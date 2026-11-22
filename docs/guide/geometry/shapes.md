@@ -60,6 +60,26 @@ rectangle is drawn as an upright one turned by a transform. So its rounding, str
 turn with it, while its shadow's offset stays fixed to the screen, as it does under
 `canvas.transform`.
 
+**A rectangle can be cut into smaller ones,** to lay things out without working out each centre:
+
+- `rect.inset(amount)` is the rectangle with each side moved in by `amount`, about the same centre,
+  such as for a margin. A negative `amount` moves the sides out instead.
+- `rect.rows(count, gap=…)` cuts it into `count` rows of equal height, the top one first, with `gap`
+  between them. `rect.columns(count, gap=…)` cuts it into columns, the left one first.
+- Given `weights=` instead of a count, the pieces share the space in proportion to the weights:
+  `rect.columns(weights=[1, 3])` gives the left column a quarter of the width and the right one
+  three quarters.
+
+```mojo
+# In `update`: a grid of three rows of four cells, 8 units apart, inside a
+# 20-unit margin.
+for row in canvas.bounds().inset(20).rows(3, gap=8):
+    for cell in row.columns(4, gap=8):
+        canvas.draw(cell)
+```
+
+The pieces of a turned rectangle are cut along its own sides, and turn with it.
+
 ## `Circle`
 
 A circle is `radius` round its centre, `position`. `canvas.circle(position, radius)` draws one.
