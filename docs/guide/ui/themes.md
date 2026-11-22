@@ -84,16 +84,30 @@ var sunset = Gradient.linear(Color.ORANGE, Color.RED)
 if ui.button("Go", Rectangle((0, 50), 120, 40), style=Style(fill_gradient=sunset)):
     self.go()
 ui.label("Settings", Rectangle((0, 100), 240, 32), style=ui.theme().typography.title)
+```
+
+**A widget with several parts takes a `Style` for each,** and each part is a shape drawn in it, so
+what a part's style means follows from the shape. A slider's `track` is a line, so its `stroke` and
+`stroke_thickness` are the track's colour and thickness, and `active_track`, the line from the start
+to the handle, takes what it leaves unset from `track`. Its `handle` is a point, drawn as
+`canvas.point` draws one: its `stroke` is the handle's colour and its `stroke_thickness` its
+diameter, and `stroke_cap=StrokeCap.SQUARE` makes it square. `handle_outline` is a circle round the
+handle, drawn only when it sets a stroke or a fill:
+
+```mojo
+# In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
 ui.slider(
     self.volume,
     0,
     1,
     Rectangle((0, -60), 240, 32),
-    style=SliderStyle(handle_color=Color.WHITE, handle_shadow=True),
+    track=Style(stroke_thickness=2),
+    handle=Style(stroke=Color.WHITE, stroke_thickness=24).over(ui.theme().shadow),
+    handle_outline=Style(stroke=Color.GRAY),
 )
 ```
 
-The slider, the checkbox and the text field have their own style types, listed in the
+The checkbox and the text field have their own style types, listed in the
 [reference](../../reference/ui/README.md). The focus ring always comes from the theme; to change it
 for some widgets, draw them in a `ui.theme` block (below).
 
@@ -101,10 +115,10 @@ for some widgets, draw them in a `ui.theme` block (below).
 
 Two `with` blocks change the look of every widget inside them:
 
-- **`with ui.style(button=..., slider=..., ...):`** sets style fields for every widget of a kind in
-  the block. A call's own style wins over the block's, and a block inside another wins over the
-  outer one, field by field: an inner block that sets only the corner radius keeps the outer block's
-  colours.
+- **`with ui.style(button=..., slider_handle=..., ...):`** sets style fields for every widget of a
+  kind in the block. A call's own style wins over the block's, and a block inside another wins over
+  the outer one, field by field: an inner block that sets only the corner radius keeps the outer
+  block's colours.
 - **`with ui.theme(theme):`** draws the block's widgets in another theme, such as one panel in the
   dark theme on a light screen.
 

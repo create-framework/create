@@ -172,5 +172,107 @@ def test_changed_reports_only_the_widget_called_last() raises -> None:
             assert_false(layer.changed())
 
 
+def _drawn(
+    value: Float64,
+    track: Style = Style(),
+    handle: Style = Style(),
+    handle_outline: Style = Style(),
+) raises -> Canvas:
+    """One frame of a slider at `value`, in the parts' styles, unsmoothed."""
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(300, 200, antialiasing=Antialiasing.OFF)
+    var shown = value
+    with ui.screen(context, canvas) as layer:
+        layer.slider(
+            shown,
+            0,
+            1,
+            _TRACK,
+            track=track,
+            handle=handle,
+            handle_outline=handle_outline,
+        )
+    return canvas^
+
+
+def test_the_handles_diameter_is_its_stroke_thickness() raises -> None:
+    # 40 across, so its centre is inset 20 from the track's end, at -90
+    var canvas = _drawn(
+        0,
+        track=Style(stroke=Color.BLUE),
+        handle=Style(stroke=Color.RED, stroke_thickness=40),
+    )
+    assert_equal(canvas.color_at((-90 + 18, 0)), Color.RED)
+    assert_equal(canvas.color_at((-90 + 23, 0)), Color.BLUE)
+    assert_equal(canvas.color_at((-90, 19)), Color.RED)
+
+
+def test_a_bigger_handle_insets_the_track_further() raises -> None:
+    var usual = _drawn(1, track=Style(stroke=Color.BLUE))
+    var big = _drawn(
+        1, track=Style(stroke=Color.BLUE), handle=Style(stroke_thickness=40)
+    )
+    assert_true(usual.color_at((-96, 0)) != Color.TRANSPARENT)
+    assert_equal(big.color_at((-96, 0)), Color.TRANSPARENT)
+
+
+def test_a_track_thickness_reaches_the_active_track() raises -> None:
+    var canvas = _drawn(1, track=Style(stroke_thickness=12))
+    var primary = Theme.light().colors.primary
+    assert_equal(canvas.color_at((-50, 5)), primary)  # under 6 from the middle
+
+
+def test_a_square_cap_makes_a_square_handle() raises -> None:
+    var round = _drawn(0, handle=Style(stroke=Color.RED))
+    var square = _drawn(
+        0, handle=Style(stroke=Color.RED, stroke_cap=StrokeCap.SQUARE)
+    )
+    var corner = Point(-100 + 9, 9)  # inside the square, outside the circle
+    assert_true(round.color_at(corner) != Color.RED)
+    assert_equal(square.color_at(corner), Color.RED)
+
+
+def test_a_handle_outline_draws_a_ring_on_top() raises -> None:
+    var canvas = _drawn(
+        0,
+        handle=Style(stroke=Color.RED),
+        handle_outline=Style(stroke=Color.GREEN, stroke_thickness=3),
+    )
+    assert_equal(canvas.color_at((-100, 0)), Color.RED)
+    assert_equal(canvas.color_at((-100 + 8.5, 0)), Color.GREEN)
+
+
+def test_no_outline_unless_given() raises -> None:
+    var canvas = _drawn(0, handle=Style(stroke=Color.RED))
+    assert_equal(canvas.color_at((-100 + 8.5, 0)), Color.RED)
+
+
+def test_a_handle_can_cast_the_themes_shadow() raises -> None:
+    var flat = _drawn(0.5, handle=Style(stroke=Color.RED))
+    var lifted = _drawn(
+        0.5, handle=Style(stroke=Color.RED).over(Theme.light().shadow)
+    )
+    var below = Point(0, -13)  # under the handle, past the track
+    assert_true(lifted.color_at(below) != flat.color_at(below))
+
+
+def test_a_dragged_handle_is_tinted() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var value = 0.5
+    var colors = List[Color]()
+    point_at(context, Point(0, 0))
+    for frame in range(2):
+        if frame == 1:
+            next_frame(context)
+            press(context, Point(0, 0))
+        var canvas = Canvas(300, 200, antialiasing=Antialiasing.OFF)
+        with ui.screen(context, canvas) as layer:
+            layer.slider(value, 0, 1, _TRACK, handle=Style(stroke=Color.RED))
+        colors.append(canvas.color_at((0, 0)))
+    assert_true(colors[1] != Color.RED)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
