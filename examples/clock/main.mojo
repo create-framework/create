@@ -10,19 +10,19 @@ not shift as it ticks.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _FACE = Color(30, 30, 33)
-comptime _TRACK = Color(62, 62, 68)
-comptime _HAND = Color(240, 236, 222)
-comptime _SECONDS = Color(226, 46, 56)
-comptime _HINT = Color(176, 172, 162)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime FACE = Color(30, 30, 33)
+comptime TRACK = Color(62, 62, 68)
+comptime HAND = Color(240, 236, 222)
+comptime SECONDS = Color(226, 46, 56)
+comptime HINT = Color(176, 172, 162)
 
-comptime _CENTER = Point(-230.0, 0.0)
-comptime _RADIUS = 200.0
-comptime _TEXT_X = 260.0
+comptime CENTER = Point(-230.0, 0.0)
+comptime RADIUS = 200.0
+comptime TEXT_X = 260.0
 
 
-def _day_names() -> List[String]:
+def day_names() -> List[String]:
     return [
         "Sunday",
         "Monday",
@@ -34,7 +34,7 @@ def _day_names() -> List[String]:
     ]
 
 
-def _month_names() -> List[String]:
+def month_names() -> List[String]:
     return [
         "January",
         "February",
@@ -51,25 +51,25 @@ def _month_names() -> List[String]:
     ]
 
 
-def _weekday(year: Int, month: Int, day: Int) -> Int:
+def weekday(year: Int, month: Int, day: Int) -> Int:
     """0 for Sunday to 6 for Saturday (Sakamoto's method)."""
     var offsets: List[Int] = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
     var y = year - 1 if month < 3 else year
     return (y + y // 4 - y // 100 + y // 400 + offsets[month - 1] + day) % 7
 
 
-def _clock_angle(fraction: Float64) -> Float64:
+def clock_angle(fraction: Float64) -> Float64:
     """How far round the face `fraction` of a turn is, as an angle: from
     the top, clockwise. Angles count counter-clockwise from +x, y up."""
     return PI / 2.0 - TAU * fraction
 
 
-def _hand(fraction: Float64, length: Float64) -> Line:
-    var angle = _clock_angle(fraction)
-    return Line(_CENTER, _CENTER + Vector.from_angle(angle, length))
+def hand(fraction: Float64, length: Float64) -> Line:
+    var angle = clock_angle(fraction)
+    return Line(CENTER, CENTER + Vector.from_angle(angle, length))
 
 
-def _two_digits(value: Int) -> String:
+def two_digits(value: Int) -> String:
     return String("0", value) if value < 10 else String(value)
 
 
@@ -85,61 +85,61 @@ struct Clock(Program):
         var minutes = Float64(now.minute) + seconds / 60.0
         var hours = Float64(now.hour % 12) + minutes / 60.0
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
-        with canvas.style(fill=_FACE, stroke_enabled=False):
-            canvas.circle(_CENTER, _RADIUS)
+        with canvas.style(fill=FACE, stroke_enabled=False):
+            canvas.circle(CENTER, RADIUS)
 
         # The seconds ring: a full track, and an arc swept clockwise (a
         # negative sweep, since y is up) from the top.
-        with canvas.style(stroke=_TRACK, stroke_thickness=8):
-            canvas.arc(_CENTER, _RADIUS + 16.0, 0.0, TAU)
+        with canvas.style(stroke=TRACK, stroke_thickness=8):
+            canvas.arc(CENTER, RADIUS + 16.0, 0.0, TAU)
         with canvas.style(
-            stroke=_SECONDS, stroke_thickness=8, stroke_cap=StrokeCap.ROUND
+            stroke=SECONDS, stroke_thickness=8, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.arc(_CENTER, _RADIUS + 16.0, PI / 2.0, -TAU * seconds / 60.0)
+            canvas.arc(CENTER, RADIUS + 16.0, PI / 2.0, -TAU * seconds / 60.0)
 
         # Sixty ticks, every fifth longer and heavier: the hours.
         for i in range(60):
             var hour_mark = i % 5 == 0
-            var direction = Vector.from_angle(_clock_angle(Float64(i) / 60))
-            var inner = _RADIUS * (0.82 if hour_mark else 0.9)
+            var direction = Vector.from_angle(clock_angle(Float64(i) / 60))
+            var inner = RADIUS * (0.82 if hour_mark else 0.9)
             with canvas.style(
-                stroke=_HAND if hour_mark else _TRACK,
+                stroke=HAND if hour_mark else TRACK,
                 stroke_thickness=6 if hour_mark else 2,
             ):
                 canvas.draw(
                     Line(
-                        _CENTER + direction * inner,
-                        _CENTER + direction * (_RADIUS * 0.95),
+                        CENTER + direction * inner,
+                        CENTER + direction * (RADIUS * 0.95),
                     )
                 )
 
         with canvas.style(
-            stroke=_HAND, stroke_thickness=10, stroke_cap=StrokeCap.ROUND
+            stroke=HAND, stroke_thickness=10, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(_hand(hours / 12.0, _RADIUS * 0.5))
+            canvas.draw(hand(hours / 12.0, RADIUS * 0.5))
         with canvas.style(
-            stroke=_HAND, stroke_thickness=6, stroke_cap=StrokeCap.ROUND
+            stroke=HAND, stroke_thickness=6, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(_hand(minutes / 60.0, _RADIUS * 0.75))
+            canvas.draw(hand(minutes / 60.0, RADIUS * 0.75))
         with canvas.style(
-            stroke=_SECONDS, stroke_thickness=2, stroke_cap=StrokeCap.ROUND
+            stroke=SECONDS, stroke_thickness=2, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(_hand(seconds / 60.0, _RADIUS * 0.85))
-        with canvas.style(fill=_SECONDS, stroke_enabled=False):
-            canvas.circle(_CENTER, 8)
+            canvas.draw(hand(seconds / 60.0, RADIUS * 0.85))
+        with canvas.style(fill=SECONDS, stroke_enabled=False):
+            canvas.circle(CENTER, 8)
 
         # The time, bold, in cells as wide as the widest digit.
         var time = String(
-            _two_digits(now.hour),
+            two_digits(now.hour),
             ":",
-            _two_digits(now.minute),
+            two_digits(now.minute),
             ":",
-            _two_digits(now.second),
+            two_digits(now.second),
         )
         with canvas.style(
-            text_color=_HAND, font_size=84, font_weight=FontWeight.BOLD
+            text_color=HAND, font_size=84, font_weight=FontWeight.BOLD
         ):
             var cell = 0.0
             for digit in range(10):
@@ -151,7 +151,7 @@ struct Clock(Program):
                 var width = colon if character == ":" else cell
                 widths.append(width)
                 total += width
-            var x = _TEXT_X - total / 2.0
+            var x = TEXT_X - total / 2.0
             var i = 0
             for character in time.codepoint_slices():
                 canvas.text(String(character), (x + widths[i] / 2.0, 40.0))
@@ -159,20 +159,20 @@ struct Clock(Program):
                 i += 1
 
         var date = String(
-            _day_names()[_weekday(now.year, now.month, now.day)],
+            day_names()[weekday(now.year, now.month, now.day)],
             " ",
             now.day,
             " ",
-            _month_names()[now.month - 1],
+            month_names()[now.month - 1],
             " ",
             now.year,
         )
-        with canvas.style(text_color=_HAND, font_size=28, font_italic=True):
-            canvas.text(date, (_TEXT_X, -30.0))
+        with canvas.style(text_color=HAND, font_size=28, font_italic=True):
+            canvas.text(date, (TEXT_X, -30.0))
         with canvas.style(
-            text_color=_HINT, font_size=18, font_weight=FontWeight.LIGHT
+            text_color=HINT, font_size=18, font_weight=FontWeight.LIGHT
         ):
-            canvas.text("DateTime.now(), read once a frame", (_TEXT_X, -80.0))
+            canvas.text("DateTime.now(), read once a frame", (TEXT_X, -80.0))
 
 
 def main() raises:

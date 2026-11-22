@@ -6,19 +6,19 @@ Drag the four handles to reshape the curve.
 
 from create import *
 
-comptime _GRAB_RADIUS = 18.0
+comptime GRAB_RADIUS = 18.0
 """How close, in design units, a press must land to pick up a handle."""
 
-comptime _SPEED = 260.0
+comptime SPEED = 260.0
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _CONTROL_LINE = Color(62, 62, 68)
-comptime _CURVE = Color(98, 104, 168)
-comptime _SHADOW = Color(0, 0, 0, 160)
-comptime _DOT = Color(226, 46, 56)
-comptime _ENDPOINT = Color(240, 236, 222)
-comptime _CONTROL = Color(176, 172, 162)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime CONTROL_LINE = Color(62, 62, 68)
+comptime CURVE = Color(98, 104, 168)
+comptime SHADOW = Color(0, 0, 0, 160)
+comptime DOT = Color(226, 46, 56)
+comptime ENDPOINT = Color(240, 236, 222)
+comptime CONTROL = Color(176, 172, 162)
 """How fast the dot travels along the curve, in design units per second."""
 
 
@@ -54,7 +54,7 @@ struct App(Program):
         var mouse = context.mouse.position
         if context.mouse.pressed():
             for i in range(len(self.handles)):
-                if (mouse - self.handles[i]).magnitude() <= _GRAB_RADIUS:
+                if (mouse - self.handles[i]).magnitude() <= GRAB_RADIUS:
                     self.dragging = i
         if context.mouse.released():
             self.dragging = -1
@@ -68,42 +68,40 @@ struct App(Program):
         # `at` would bunch the dot up wherever the controls pull the curve
         # tight; `at_distance` moves it the same distance every second.
         var length = curve.length()
-        self.travelled += _SPEED * context.time.delta
+        self.travelled += SPEED * context.time.delta
         if self.travelled > length:
             self.travelled = 0.0
         var dot = curve.at_distance(self.travelled)
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         # The control polygon: each control's pull on its endpoint.
-        canvas.stroke(_CONTROL_LINE, thickness=2)
+        canvas.stroke(CONTROL_LINE, thickness=2)
         canvas.line(self.handles[0], self.handles[1])
         canvas.line(self.handles[3], self.handles[2])
 
         # The curve itself, with a soft shadow. A curve has no interior, so
         # only the stroke draws and casts.
         with canvas.style(
-            stroke=_CURVE,
+            stroke=CURVE,
             stroke_thickness=12,
             stroke_cap=StrokeCap.ROUND,
-            shadow=_SHADOW,
+            shadow=SHADOW,
             shadow_offset=Vector(6, -10),
             shadow_blur=18,
         ):
             canvas.draw(curve)
 
         canvas.stroke_enabled(False)
-        canvas.fill(_DOT)
+        canvas.fill(DOT)
         canvas.circle(dot, 13)
 
         for i in range(len(self.handles)):
             var endpoint = i == 0 or i == 3
-            canvas.fill(
-                _ENDPOINT if endpoint or i == self.dragging else _CONTROL
-            )
+            canvas.fill(ENDPOINT if endpoint or i == self.dragging else CONTROL)
             canvas.circle(self.handles[i], 10 if endpoint else 8)
 
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Cubic Bézier", (0, canvas.top() - 38))

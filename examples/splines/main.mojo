@@ -7,17 +7,17 @@ the curve; 1, 2 and 3 set its alpha: uniform, centripetal, chordal.
 
 from create import *
 
-comptime _GRAB_RADIUS = 18.0
+comptime GRAB_RADIUS = 18.0
 """How close, in design units, a click must land to pick up a point."""
 
-comptime _SPEED = 260.0
+comptime SPEED = 260.0
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _CURVE = Color(98, 104, 168, 170)
-comptime _SHADOW = Color(0, 0, 0, 160)
-comptime _DOT = Color(226, 46, 56)
-comptime _POINT = Color(240, 236, 222)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime CURVE = Color(98, 104, 168, 170)
+comptime SHADOW = Color(0, 0, 0, 160)
+comptime DOT = Color(226, 46, 56)
+comptime POINT = Color(240, 236, 222)
 """How fast the dot travels along the curve, in design units per second."""
 
 
@@ -56,9 +56,9 @@ struct App(Program):
             travelled=0.0,
         )
 
-    def _point_under(self, position: Point) -> Int:
+    def point_under(self, position: Point) -> Int:
         for i in range(len(self.points)):
-            if (position - self.points[i]).magnitude() <= _GRAB_RADIUS:
+            if (position - self.points[i]).magnitude() <= GRAB_RADIUS:
                 return i
         return -1
 
@@ -66,7 +66,7 @@ struct App(Program):
         # No camera, so the mouse is already in the space the points are in.
         var mouse = context.mouse.position
         if context.mouse.pressed():
-            self.dragging = self._point_under(mouse)
+            self.dragging = self.point_under(mouse)
             if self.dragging < 0:
                 self.points.append(mouse)
                 self.dragging = len(self.points) - 1
@@ -75,7 +75,7 @@ struct App(Program):
         if self.dragging >= 0:
             self.points[self.dragging] = mouse
         if context.mouse.pressed(MouseButton.RIGHT):
-            var i = self._point_under(mouse)
+            var i = self.point_under(mouse)
             if i >= 0:
                 _ = self.points.pop(i)
         if context.keyboard.pressed(Key.C):
@@ -92,19 +92,19 @@ struct App(Program):
         # `at` would move the dot faster along long stretches than short
         # ones; `at_distance` moves it the same distance every second.
         var length = spline.length()
-        self.travelled += _SPEED * context.time.delta
+        self.travelled += SPEED * context.time.delta
         if self.travelled > length:
             self.travelled = 0.0
         var dot = spline.at_distance(self.travelled)
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         # Translucent, so any joint painted twice would show as a brighter
         # seam; there is none, closed or not.
         with canvas.style(
-            stroke=_CURVE,
+            stroke=CURVE,
             stroke_thickness=14,
-            shadow=_SHADOW,
+            shadow=SHADOW,
             shadow_offset=Vector(6, -10),
             shadow_blur=18,
         ):
@@ -112,10 +112,10 @@ struct App(Program):
 
         canvas.stroke_enabled(False)
         if len(self.points) > 0:
-            canvas.fill(_DOT)
+            canvas.fill(DOT)
             canvas.circle(dot, 13)
 
-        canvas.fill(_POINT)
+        canvas.fill(POINT)
         for point in self.points:
             canvas.circle(point, 9)
 
@@ -126,7 +126,7 @@ struct App(Program):
             kind = "centripetal"
         else:
             kind = "chordal"
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text(

@@ -23,15 +23,15 @@ from std.os import makedirs
 
 from create import *
 
-comptime _DESIGN_W = 800
-comptime _DESIGN_H = 500
-comptime _RECORD_SECONDS = 10.0
+comptime DESIGN_W = 800
+comptime DESIGN_H = 500
+comptime RECORD_SECONDS = 10.0
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _SQUARE = Color(98, 104, 168)
-comptime _DISC = Color(201, 140, 150)
-comptime _RECORDING = Color(226, 46, 56)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime SQUARE = Color(98, 104, 168)
+comptime DISC = Color(201, 140, 150)
+comptime RECORDING = Color(226, 46, 56)
 
 
 @fieldwise_init
@@ -71,7 +71,7 @@ struct Capture(Program):
                 var transparent = context.keyboard.down(Key.SHIFT)
                 canvas.start_recording(
                     "out/recording.gif",
-                    seconds=_RECORD_SECONDS,
+                    seconds=RECORD_SECONDS,
                     transparent=transparent,
                 )
                 self.saved = ""
@@ -79,17 +79,17 @@ struct Capture(Program):
             canvas.cancel_recording()
             self.saved = ""
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         with canvas.style(stroke_enabled=False):
             with canvas.transform(Transform(rotation=self.angle)):
-                canvas.fill(_SQUARE)
+                canvas.fill(SQUARE)
                 canvas.rectangle((0, 0), 220, 220)
-                canvas.fill(_DISC)
+                canvas.fill(DISC)
                 canvas.circle((0, 0), 70)
 
         with canvas.style(
-            text_color=_TEXT,
+            text_color=TEXT,
             font_size=24,
             text_alignment=Align.TOP,
         ):
@@ -97,12 +97,12 @@ struct Capture(Program):
                 "S: screenshot   I: image   R: record   Shift: transparent",
                 (0, canvas.top() - 30),
             )
-        with canvas.style(text_color=_TEXT, font_size=20):
+        with canvas.style(text_color=TEXT, font_size=20):
             if canvas.recording():
                 var label = String("Recording; R to stop, X to discard")
                 # Drawn like everything else, so it is in the recording too.
                 var dot = -canvas.text_width(label) / 2.0 - 16.0
-                with canvas.style(fill=_RECORDING, stroke_enabled=False):
+                with canvas.style(fill=RECORDING, stroke_enabled=False):
                     canvas.circle((dot, canvas.bottom() + 50), 8)
                 canvas.text(label, (0, canvas.bottom() + 50))
             elif self.saved:
@@ -110,4 +110,4 @@ struct Capture(Program):
 
 
 def main() raises:
-    run[Capture]("Capture", width=_DESIGN_W, height=_DESIGN_H)
+    run[Capture]("Capture", width=DESIGN_W, height=DESIGN_H)

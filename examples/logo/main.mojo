@@ -11,30 +11,30 @@ from std.os import makedirs
 from create import *
 
 
-comptime _SIDE = 640.0
-comptime _PAPER = Color(253, 253, 250)
+comptime SIDE = 640.0
+comptime PAPER = Color(253, 253, 250)
 
-comptime _START_RATE = 30.0
+comptime START_RATE = 30.0
 """Points a second at the start."""
-comptime _DOUBLING = 0.25
+comptime DOUBLING = 0.25
 """Seconds for the rate of points to double."""
-comptime _MAX_POINTS = 240_000
+comptime MAX_POINTS = 240_000
 """Where the points stop."""
-comptime _GROW_POINTS = 40_000
+comptime GROW_POINTS = 40_000
 """Where the triangles start to grow, while the points carry on."""
-comptime _DURATION = 2.5
+comptime DURATION = 2.5
 """Seconds each triangle takes to grow to its full size."""
-comptime _STAGGER = 0.25
+comptime STAGGER = 0.25
 """Seconds between one triangle starting to grow and the next."""
-comptime _HOLD_SECONDS = 2.5
+comptime HOLD_SECONDS = 2.5
 """How long the recording keeps the finished logo on screen."""
 
 
-def _corner(row: Int, index: Int) -> Point:
+def corner(row: Int, index: Int) -> Point:
     """Corner `index` along grid line `row`, counting rows down from the apex
     (0) to the base (4)."""
-    var step = _SIDE / 4.0
-    var height = _SIDE * sqrt(3.0) / 2.0
+    var step = SIDE / 4.0
+    var height = SIDE * sqrt(3.0) / 2.0
     return Point(
         (Float64(index) - Float64(row) / 2.0) * step,
         height / 2.0 - Float64(row) * height / 4.0,
@@ -42,7 +42,7 @@ def _corner(row: Int, index: Int) -> Point:
 
 
 @fieldwise_init
-struct _Piece(Copyable):
+struct Piece(Copyable):
     """One small triangle and its growth."""
 
     var shape: Triangle
@@ -57,7 +57,7 @@ struct _Piece(Copyable):
 
 @fieldwise_init
 struct Logo(Program):
-    var pieces: List[_Piece]
+    var pieces: List[Piece]
     var random: Random
     var point: Point
     """The chaos game's current position."""
@@ -99,9 +99,9 @@ struct Logo(Program):
                 if index > 0:
                     triangles.append(
                         Triangle(
-                            _corner(row, index - 1),
-                            _corner(row, index),
-                            _corner(row + 1, index),
+                            corner(row, index - 1),
+                            corner(row, index),
+                            corner(row + 1, index),
                         )
                     )
                     triangle_colors.append(colors[next_color])
@@ -111,30 +111,30 @@ struct Logo(Program):
                     continue
                 triangles.append(
                     Triangle(
-                        _corner(row, index),
-                        _corner(row + 1, index),
-                        _corner(row + 1, index + 1),
+                        corner(row, index),
+                        corner(row + 1, index),
+                        corner(row + 1, index + 1),
                     )
                 )
                 triangle_colors.append(Color.BLACK)
 
-        var pieces = List[_Piece]()
+        var pieces = List[Piece]()
         for i in range(len(triangles)):
             var home = triangles[i].center()
             var curve = curves[i % len(curves)]
-            var duration = _DURATION
+            var duration = DURATION
             # The last, bottom-right triangle would bounce; let it ease in,
             # and quicker, so the logo doesn't wait on it.
             if i == len(triangles) - 1:
                 curve = Easing.OUT_SINE
-                duration = _DURATION * 0.6
+                duration = DURATION * 0.6
             pieces.append(
-                _Piece(
+                Piece(
                     shape=triangles[i].translate(-Vector(home)),
                     home=home,
                     color=triangle_colors[i],
                     tween=Tween(duration, curve),
-                    delay=Float64(i) * _STAGGER,
+                    delay=Float64(i) * STAGGER,
                 )
             )
         var layer = Canvas(canvas.width(), canvas.height())
@@ -145,7 +145,7 @@ struct Logo(Program):
         return Logo(
             pieces=pieces^,
             random=Random(),
-            point=_corner(0, 0),
+            point=corner(0, 0),
             layer=layer^,
             picture=picture^,
             count=0,
@@ -156,26 +156,26 @@ struct Logo(Program):
     @staticmethod
     def points_by(seconds: Float64) -> Int:
         """How many points there are `seconds` into the run: the rate starts
-        at `_START_RATE` and doubles every `_DOUBLING` seconds, so the first
+        at `START_RATE` and doubles every `DOUBLING` seconds, so the first
         points appear one by one and the rest fill in fast."""
-        var growth = log(2.0) / _DOUBLING
-        var points = _START_RATE / growth * (exp(growth * seconds) - 1.0)
-        return min(Int(points), _MAX_POINTS)
+        var growth = log(2.0) / DOUBLING
+        var points = START_RATE / growth * (exp(growth * seconds) - 1.0)
+        return min(Int(points), MAX_POINTS)
 
     def random_corner(mut self) -> Point:
         var pick = self.random.int(0, 3)
         if pick == 0:
-            return _corner(0, 0)
+            return corner(0, 0)
         if pick == 1:
-            return _corner(4, 0)
-        return _corner(4, 4)
+            return corner(4, 0)
+        return corner(4, 4)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var target = Self.points_by(context.time.elapsed)
         if self.count < target:
             # A point on the logo's edge would stick a pixel out past it,
             # and nothing drawn later covers the outside: clip to it.
-            var stroke = Triangle(_corner(0, 0), _corner(4, 0), _corner(4, 4))
+            var stroke = Triangle(corner(0, 0), corner(4, 0), corner(4, 4))
             with self.layer.clip(stroke):
                 with self.layer.style(fill=Color.BLACK, stroke_enabled=False):
                     for _ in range(target - self.count):
@@ -183,13 +183,13 @@ struct Logo(Program):
                         self.layer.circle(self.point, 1)
             self.count = target
             self.picture = self.layer.snapshot()
-        if self.count >= _GROW_POINTS:
+        if self.count >= GROW_POINTS:
             self.elapsed += context.time.delta
 
         var landed = True
         for ref piece in self.pieces:
             if (
-                self.count >= _GROW_POINTS
+                self.count >= GROW_POINTS
                 and self.elapsed >= piece.delay
                 and not piece.tween.is_playing()
                 and not piece.tween.is_finished()
@@ -198,24 +198,24 @@ struct Logo(Program):
             landed = landed and piece.tween.is_finished()
         if landed:
             self.shown += context.time.delta
-            if canvas.recording() and self.shown >= _HOLD_SECONDS:
+            if canvas.recording() and self.shown >= HOLD_SECONDS:
                 canvas.stop_recording()
 
-        canvas.background(_PAPER)
+        canvas.background(PAPER)
         canvas.image(self.picture, (0, 0), canvas.width(), canvas.height())
         canvas.stroke_enabled(False)
         if landed:
             # Under the landed pieces, so no seam shows where two meet.
             canvas.fill(Color.BLACK)
-            canvas.triangle(_corner(0, 0), _corner(4, 0), _corner(4, 4))
+            canvas.triangle(corner(0, 0), corner(4, 0), corner(4, 4))
             # The gap's edges lie under the coloured pieces around it, and
             # antialiased, they'd leave a dark rim inside those pieces'
             # edges: grow it a little, under their solid insides, so their
             # edges blend into paper alone.
-            var gap = Triangle(_corner(2, 1), _corner(3, 1), _corner(3, 2))
+            var gap = Triangle(corner(2, 1), corner(3, 1), corner(3, 2))
             var middle = gap.center()
             comptime grow = 1.04
-            canvas.fill(_PAPER)
+            canvas.fill(PAPER)
             canvas.triangle(
                 middle + (gap.a - middle) * grow,
                 middle + (gap.b - middle) * grow,

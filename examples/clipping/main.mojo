@@ -5,15 +5,15 @@ except around the mouse.
 
 from create import *
 
-comptime _LINES = 24
-comptime _LINE_HEIGHT = 28.0
+comptime LINES = 24
+comptime LINE_HEIGHT = 28.0
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _PANEL = Color(30, 30, 33)
-comptime _TEXT = Color(240, 236, 222)
-comptime _STRIPE = Color(98, 104, 168)
-comptime _OTHER_STRIPE = Color(201, 140, 150)
-comptime _FOG = Color(0, 0, 0, 140)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime PANEL = Color(30, 30, 33)
+comptime TEXT = Color(240, 236, 222)
+comptime STRIPE = Color(98, 104, 168)
+comptime OTHER_STRIPE = Color(201, 140, 150)
+comptime FOG = Color(0, 0, 0, 140)
 
 
 @fieldwise_init
@@ -29,19 +29,19 @@ struct Clipping(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         var t = context.time.elapsed
 
         # A list scrolling through a panel: rows enter and leave at its edges.
-        canvas.fill(_PANEL)
+        canvas.fill(PANEL)
         canvas.draw(self.panel)
         with canvas.clip(self.panel):
-            var scroll = (t * 40.0) % (_LINES * _LINE_HEIGHT)
-            canvas.text_color(_TEXT)
-            for i in range(_LINES * 2):
-                var y = 200.0 - Float64(i) * _LINE_HEIGHT + scroll
+            var scroll = (t * 40.0) % (LINES * LINE_HEIGHT)
+            canvas.text_color(TEXT)
+            for i in range(LINES * 2):
+                var y = 200.0 - Float64(i) * LINE_HEIGHT + scroll
                 canvas.text(
-                    "Row " + String(i % _LINES + 1), (self.panel.position.x, y)
+                    "Row " + String(i % LINES + 1), (self.panel.position.x, y)
                 )
 
         # Stripes seen through a star: the clip stays put while they turn.
@@ -51,12 +51,12 @@ struct Clipping(Program):
                 Transform(translation=Vector(200, 0), rotation=t * 0.5)
             ):
                 for i in range(-10, 11):
-                    canvas.fill(_STRIPE if i % 2 == 0 else _OTHER_STRIPE)
+                    canvas.fill(STRIPE if i % 2 == 0 else OTHER_STRIPE)
                     canvas.rectangle((Float64(i) * 24, 0), 24, 500)
 
         # Fog with a hole in it, wherever the mouse is.
         with canvas.clip(Circle(context.mouse.position, 120), invert=True):
-            canvas.background(_FOG)
+            canvas.background(FOG)
 
 
 def main() raises:

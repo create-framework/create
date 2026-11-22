@@ -4,14 +4,14 @@ and a 1D field read with the clock steers the circle.
 
 from create import *
 
-comptime _COLUMNS = 80
-comptime _ROWS = 60
+comptime COLUMNS = 80
+comptime ROWS = 60
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _WATER = Color(44, 46, 84)
-comptime _GRASS = Color(240, 236, 222)
-comptime _WANDERER = Color(226, 46, 56)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime WATER = Color(44, 46, 84)
+comptime GRASS = Color(240, 236, 222)
+comptime WANDERER = Color(226, 46, 56)
 
 
 @fieldwise_init
@@ -37,16 +37,16 @@ struct App(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         var t = context.time.elapsed
 
         # A grid of cells shaded from deep water to pale grass. Anchored to the
         # edge methods, so the field fills whatever the canvas reports.
-        var cell_w = (canvas.right() - canvas.left()) / Float64(_COLUMNS)
-        var cell_h = (canvas.top() - canvas.bottom()) / Float64(_ROWS)
+        var cell_w = (canvas.right() - canvas.left()) / Float64(COLUMNS)
+        var cell_h = (canvas.top() - canvas.bottom()) / Float64(ROWS)
         canvas.stroke_enabled(False)
-        for column in range(_COLUMNS):
-            for row in range(_ROWS):
+        for column in range(COLUMNS):
+            for row in range(ROWS):
                 var center = Point(
                     canvas.left() + (Float64(column) + 0.5) * cell_w,
                     canvas.bottom() + (Float64(row) + 0.5) * cell_h,
@@ -54,16 +54,16 @@ struct App(Program):
                 var height = self.terrain.at(center, time=t * 0.3)
                 # Layered octaves average towards 0.5, so stretch the middle
                 # of the range across the whole gradient.
-                canvas.fill(_WATER.lerp(_GRASS, smoothstep(0.3, 0.7, height)))
+                canvas.fill(WATER.lerp(GRASS, smoothstep(0.3, 0.7, height)))
                 canvas.rectangle(center, cell_w, cell_h)
 
         # The same range as Random.float(), so lerp turns it into a position.
         var x = lerp(canvas.left() + 40, canvas.right() - 40, self.wobble.at(t))
-        canvas.fill(_WANDERER)
-        canvas.stroke(_TEXT, thickness=3)
+        canvas.fill(WANDERER)
+        canvas.stroke(TEXT, thickness=3)
         canvas.circle((x, 0), 24)
 
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.font_size(16)
         canvas.text_alignment(Align.BOTTOM_LEFT)
         canvas.text(

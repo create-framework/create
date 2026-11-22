@@ -14,19 +14,19 @@ A and D (or Left and Right) run, Space spins, Up/Down scale time, P pauses.
 
 from create import *
 
-comptime _SIZE = 128
-comptime _GROUND = -140.0
+comptime SIZE = 128
+comptime GROUND = -140.0
 
 # Transparent rows under the feet in the source cell, at the rendered scale.
-comptime _FOOT_PAD = 12.0
+comptime FOOT_PAD = 12.0
 
-comptime _SCALE_STEP = 0.25
-comptime _MIN_SCALE = 0.25
-comptime _MAX_SCALE = 2.0
+comptime SCALE_STEP = 0.25
+comptime MIN_SCALE = 0.25
+comptime MAX_SCALE = 2.0
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _GROUND_COLOR = Color(30, 30, 33)
-comptime _HINT = Color(176, 172, 162)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime GROUND_COLOR = Color(30, 30, 33)
+comptime HINT = Color(176, 172, 162)
 
 
 @fieldwise_init
@@ -99,24 +99,24 @@ struct Game(Program):
             context.time_paused(not context.time_paused())
         if context.keyboard.pressed(Key.UP):
             context.time_scale(
-                min(context.time_scale() + _SCALE_STEP, _MAX_SCALE)
+                min(context.time_scale() + SCALE_STEP, MAX_SCALE)
             )
         if context.keyboard.pressed(Key.DOWN):
             context.time_scale(
-                max(context.time_scale() - _SCALE_STEP, _MIN_SCALE)
+                max(context.time_scale() - SCALE_STEP, MIN_SCALE)
             )
 
-        var margin = Float64(_SIZE) / 2.0
+        var margin = Float64(SIZE) / 2.0
         self.x = clamp(self.x, canvas.left() + margin, canvas.right() - margin)
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         canvas.stroke_enabled(False)
 
         # The ground runs from its surface all the way to the bottom edge, so
         # it never floats over the background however tall the window is.
-        var height = _GROUND - canvas.bottom()
-        canvas.fill(_GROUND_COLOR)
+        var height = GROUND - canvas.bottom()
+        canvas.fill(GROUND_COLOR)
         canvas.rectangle(
             (0.0, canvas.bottom() + height / 2.0), canvas.right() * 2.0, height
         )
@@ -125,12 +125,12 @@ struct Game(Program):
         # scaled up, and the sized overload does it without touching the asset.
         canvas.image(
             self.animator,
-            (self.x, _GROUND + _SIZE / 2.0 - _FOOT_PAD),
-            _SIZE,
-            _SIZE,
+            (self.x, GROUND + SIZE / 2.0 - FOOT_PAD),
+            SIZE,
+            SIZE,
         )
 
-        canvas.text_color(_HINT)
+        canvas.text_color(HINT)
         canvas.text_alignment(Align.TOP)
         canvas.font_size(20)
         canvas.text(

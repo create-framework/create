@@ -19,13 +19,13 @@ from std.sys import argv
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _CREAM = Color(240, 236, 222)
-comptime _ROSE = Color(201, 140, 150)
-comptime _INDIGO = Color(98, 104, 168)
-comptime _LAVENDER = Color(150, 154, 206)
-comptime _RED = Color(226, 46, 56)
-comptime _CHARCOAL = Color(30, 30, 33)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime CREAM = Color(240, 236, 222)
+comptime ROSE = Color(201, 140, 150)
+comptime INDIGO = Color(98, 104, 168)
+comptime LAVENDER = Color(150, 154, 206)
+comptime RED = Color(226, 46, 56)
+comptime CHARCOAL = Color(30, 30, 33)
 
 
 @fieldwise_init
@@ -52,14 +52,14 @@ struct App(Program):
                 Antialiasing((canvas.antialiasing().value + 1) % 4)
             )
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         # A plain filled rectangle and a stroked one, side by side.
-        with canvas.style(fill=_INDIGO, stroke_enabled=False):
+        with canvas.style(fill=INDIGO, stroke_enabled=False):
             canvas.rectangle((-260, 180), 160, 100)
 
         with canvas.style(
-            fill=_ROSE,
+            fill=ROSE,
             stroke=Color.BLACK,
             stroke_thickness=6,
         ):
@@ -67,8 +67,8 @@ struct App(Program):
 
         # A stroke wider than the shape: all stroke, no interior.
         with canvas.style(
-            fill=_RED,
-            stroke=_CREAM,
+            fill=RED,
+            stroke=CREAM,
             stroke_thickness=30,
         ):
             canvas.rectangle((160, 180), 40, 40)
@@ -76,18 +76,18 @@ struct App(Program):
         # Translucent over the indigo rectangle: the case a double-blended fill
         # under its own stroke would get visibly wrong.
         with canvas.style(
-            fill=_ROSE.with_alpha(0x80),
-            stroke=_CREAM.with_alpha(0x80),
+            fill=ROSE.with_alpha(0x80),
+            stroke=CREAM.with_alpha(0x80),
             stroke_thickness=8,
         ):
             canvas.circle((-260, 180), 70)
 
-        with canvas.style(fill=_RED, stroke_enabled=False):
+        with canvas.style(fill=RED, stroke_enabled=False):
             canvas.circle((0, 0), 90)
 
         with canvas.style(
-            fill=_CHARCOAL,
-            stroke=_ROSE,
+            fill=CHARCOAL,
+            stroke=ROSE,
             stroke_thickness=10,
         ):
             canvas.circle((220, 0), 80)
@@ -98,18 +98,18 @@ struct App(Program):
             Transform(translation=Vector(-230, 0), rotation=self.angle)
         ):
             with canvas.style(
-                fill=_CREAM,
+                fill=CREAM,
                 stroke=Color.BLACK,
                 stroke_thickness=4,
             ):
                 canvas.rectangle((0, 0), 120, 120)
 
-        with canvas.style(stroke=_LAVENDER, stroke_thickness=5):
+        with canvas.style(stroke=LAVENDER, stroke_thickness=5):
             canvas.line((-340, -140), (340, -260))
 
         with canvas.style(
-            fill=_LAVENDER,
-            stroke=_CREAM,
+            fill=LAVENDER,
+            stroke=CREAM,
             stroke_thickness=3,
         ):
             canvas.triangle((-140, -180), (40, -180), (-50, -30))
@@ -119,21 +119,21 @@ struct App(Program):
         # Text before the images: solids and glyphs share the atlas binding
         # and so share one batch, which the image texture then breaks.
         with canvas.style(
-            text_color=_CREAM,
+            text_color=CREAM,
             font_size=28,
             text_alignment=Align.CENTER,
         ):
             canvas.text("Centre / middle", (0, 0))
 
         with canvas.style(
-            text_color=_ROSE,
+            text_color=ROSE,
             font_size=20,
             text_alignment=Align.TOP_LEFT,
         ):
             canvas.text("Left / top", (canvas.left() + 12, canvas.top() - 12))
 
         with canvas.style(
-            text_color=_CREAM.with_alpha(0xA0),
+            text_color=CREAM.with_alpha(0xA0),
             font_size=20,
             text_alignment=Align.BOTTOM_RIGHT,
         ):
@@ -146,7 +146,7 @@ struct App(Program):
         canvas.image(self.logo, (90, -230), 70, 70)
 
         with canvas.style(
-            text_color=_CREAM,
+            text_color=CREAM,
             font_size=20,
             text_alignment=Align.TOP_RIGHT,
         ):

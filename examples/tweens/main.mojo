@@ -5,21 +5,21 @@ Hover a row to play its curve.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _HINT = Color(176, 172, 162)
-comptime _TRACK = Color(62, 62, 68)
-comptime _ACTIVE_TRACK = Color(90, 90, 98)
-comptime _DOT = Color(98, 104, 168)
-comptime _ACTIVE_LABEL = Color(226, 46, 56)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime HINT = Color(176, 172, 162)
+comptime TRACK = Color(62, 62, 68)
+comptime ACTIVE_TRACK = Color(90, 90, 98)
+comptime DOT = Color(98, 104, 168)
+comptime ACTIVE_LABEL = Color(226, 46, 56)
 
-comptime _ROW_SPACING = 70.0
-comptime _TOP_ROW = 250.0
-comptime _TRACK_START = -360.0
-comptime _TRACK_END = 580.0
+comptime ROW_SPACING = 70.0
+comptime TOP_ROW = 250.0
+comptime TRACK_START = -360.0
+comptime TRACK_END = 580.0
 
 
-def _curves() -> List[Easing]:
+def curves() -> List[Easing]:
     # LINEAR first so every other row reads as a departure from it.
     return [
         Easing.LINEAR,
@@ -47,12 +47,12 @@ struct App(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        return App(clock=Tween(1.6), curves=_curves(), hovered=-1)
+        return App(clock=Tween(1.6), curves=curves(), hovered=-1)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var hovered = -1
         for i in range(len(self.curves)):
-            if abs(context.mouse.position.y - _row_y(i)) < _ROW_SPACING / 2.0:
+            if abs(context.mouse.position.y - row_y(i)) < ROW_SPACING / 2.0:
                 hovered = i
         if hovered != self.hovered:
             # ping_pong rather than loop: progress runs back down on the
@@ -61,22 +61,22 @@ struct App(Program):
             self.hovered = hovered
             self.clock.ping_pong()
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Easing and tweens", (0, canvas.top() - 38))
         canvas.font_size(18)
-        canvas.text_color(_HINT)
+        canvas.text_color(HINT)
         canvas.text("Hover over a curve to play it", (0, canvas.top() - 82))
 
         canvas.text_alignment(Align.LEFT)
         for i in range(len(self.curves)):
-            var y = _row_y(i)
+            var y = row_y(i)
             var active = i == self.hovered
-            canvas.stroke(_ACTIVE_TRACK if active else _TRACK, thickness=3)
-            canvas.line((_TRACK_START, y), (_TRACK_END, y))
+            canvas.stroke(ACTIVE_TRACK if active else TRACK, thickness=3)
+            canvas.line((TRACK_START, y), (TRACK_END, y))
 
             # A resting row sits at the start of its track. OUT_BACK and
             # OUT_ELASTIC leave 0..1 mid-run, so the hovered dot visibly
@@ -84,15 +84,15 @@ struct App(Program):
             var t = 0.0
             if active:
                 t = ease(self.curves[i], self.clock.progress())
-            with canvas.style(fill=_DOT, stroke_enabled=False):
-                canvas.circle((lerp(_TRACK_START, _TRACK_END, t), y), 11)
+            with canvas.style(fill=DOT, stroke_enabled=False):
+                canvas.circle((lerp(TRACK_START, TRACK_END, t), y), 11)
 
-            canvas.text_color(_ACTIVE_LABEL if active else _HINT)
+            canvas.text_color(ACTIVE_LABEL if active else HINT)
             canvas.text(String(self.curves[i]), (canvas.left() + 26, y))
 
 
-def _row_y(i: Int) -> Float64:
-    return _TOP_ROW - Float64(i) * _ROW_SPACING
+def row_y(i: Int) -> Float64:
+    return TOP_ROW - Float64(i) * ROW_SPACING
 
 
 def main() raises:

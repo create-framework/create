@@ -12,26 +12,26 @@ every pixel, so white keeps each colour and darker tints shade it.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _HINT = Color(176, 172, 162)
-comptime _INDIGO = Color(98, 104, 168)
-comptime _ROSE = Color(201, 140, 150)
-comptime _RED = Color(226, 46, 56)
-comptime _SIZE = 220.0
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime HINT = Color(176, 172, 162)
+comptime INDIGO = Color(98, 104, 168)
+comptime ROSE = Color(201, 140, 150)
+comptime RED = Color(226, 46, 56)
+comptime SIZE = 220.0
 """How big each loaded picture is drawn, in design units."""
-comptime _ROW_Y = 120.0
-comptime _SPRITE_CELLS = 16
-comptime _SPRITE_SIZE = 128.0
-comptime _SPEED = 400.0
+comptime ROW_Y = 120.0
+comptime SPRITE_CELLS = 16
+comptime SPRITE_SIZE = 128.0
+comptime SPEED = 400.0
 """How fast the sprite moves, in design units per second."""
 
 
-def _formats() -> List[String]:
+def formats() -> List[String]:
     return ["jpeg", "png", "bmp"]
 
 
-def _tints() -> List[Color]:
+def tints() -> List[Color]:
     return [
         Color(240, 236, 222),
         Color(255, 190, 200),
@@ -40,23 +40,23 @@ def _tints() -> List[Color]:
     ]
 
 
-def _sprite() raises -> Image:
+def sprite() raises -> Image:
     """A ring of colours, set one cell at a time. A buffer starts
     transparent, so the corners outside the ring stay see-through."""
-    var buffer = PixelBuffer(_SPRITE_CELLS, _SPRITE_CELLS)
-    var middle = Float64(_SPRITE_CELLS - 1) / 2.0
-    for y in range(_SPRITE_CELLS):
-        for x in range(_SPRITE_CELLS):
+    var buffer = PixelBuffer(SPRITE_CELLS, SPRITE_CELLS)
+    var middle = Float64(SPRITE_CELLS - 1) / 2.0
+    for y in range(SPRITE_CELLS):
+        for x in range(SPRITE_CELLS):
             var offset = Vector(Float64(x) - middle, middle - Float64(y))
             var distance = offset.magnitude()
             if distance <= middle + 0.5:
                 # Indigo to rose to red round the ring, darker inside.
                 var turn = offset.angle() / TAU + 0.5
-                var color = _INDIGO.lerp(
-                    _ROSE, turn * 2.0
-                ) if turn < 0.5 else _ROSE.lerp(_RED, turn * 2.0 - 1.0)
+                var color = INDIGO.lerp(
+                    ROSE, turn * 2.0
+                ) if turn < 0.5 else ROSE.lerp(RED, turn * 2.0 - 1.0)
                 if distance < middle / 2.0:
-                    color = color.lerp(_BACKGROUND, 0.45)
+                    color = color.lerp(BACKGROUND, 0.45)
                 buffer.set(x, y, color)
     # The buffer is handed over, not copied: it can't be used after this.
     return Image(buffer^)
@@ -65,26 +65,26 @@ def _sprite() raises -> Image:
 @fieldwise_init
 struct Images(Program):
     var pictures: List[Image]
-    """The same picture from each format in `_formats()`."""
+    """The same picture from each format in `formats()`."""
     var sprite: Image
     var position: Point
     var tint: Int
-    """Which of `_tints()` the sprite is drawn with."""
+    """Which of `tints()` the sprite is drawn with."""
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Images:
         var pictures = List[Image]()
-        for format in _formats():
+        for format in formats():
             pictures.append(Image.load("assets/image." + format))
         return Images(
             pictures=pictures^,
-            sprite=_sprite(),
+            sprite=sprite(),
             position=Point(0, -170),
             tint=0,
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        var step = _SPEED * context.time.delta
+        var step = SPEED * context.time.delta
         var x = self.position.x
         var y = self.position.y
         if context.keyboard.down(Key.W):
@@ -97,39 +97,39 @@ struct Images(Program):
             x += step
         # Kept on screen, measured from the edges since the origin is the
         # middle of the screen.
-        var half = _SPRITE_SIZE / 2.0
+        var half = SPRITE_SIZE / 2.0
         self.position = Point(
             clamp(x, canvas.left() + half, canvas.right() - half),
             clamp(y, canvas.bottom() + half, canvas.top() - half),
         )
         if context.keyboard.pressed(Key.T):
-            self.tint = (self.tint + 1) % len(_tints())
+            self.tint = (self.tint + 1) % len(tints())
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
-        var formats = _formats()
+        var all_formats = formats()
         var reading = String("Hover a picture to read its pixels")
         for i in range(len(self.pictures)):
             ref picture = self.pictures[i]
-            var center = Point(Float64(i - 1) * 300.0, _ROW_Y)
-            canvas.image(picture, center, _SIZE, _SIZE)
-            with canvas.style(text_color=_HINT, font_size=18):
+            var center = Point(Float64(i - 1) * 300.0, ROW_Y)
+            canvas.image(picture, center, SIZE, SIZE)
+            with canvas.style(text_color=HINT, font_size=18):
                 canvas.text(
-                    "image." + formats[i], (center.x, _ROW_Y - _SIZE / 2 - 24)
+                    "image." + all_formats[i], (center.x, ROW_Y - SIZE / 2 - 24)
                 )
 
             # From the mouse to a cell: measured from the top-left corner,
             # y down, and scaled from the drawn size to the image's own.
-            var left = center.x - _SIZE / 2.0
-            var top = center.y + _SIZE / 2.0
+            var left = center.x - SIZE / 2.0
+            var top = center.y + SIZE / 2.0
             var column = Int(
                 (context.mouse.position.x - left)
-                / _SIZE
+                / SIZE
                 * Float64(picture.width())
             )
             var row = Int(
                 (top - context.mouse.position.y)
-                / _SIZE
+                / SIZE
                 * Float64(picture.height())
             )
             if (
@@ -141,7 +141,7 @@ struct Images(Program):
                 var color = picture.pixel(column, row)
                 reading = String(
                     "image.",
-                    formats[i],
+                    all_formats[i],
                     ".pixel(",
                     column,
                     ", ",
@@ -149,18 +149,18 @@ struct Images(Program):
                     ") is ",
                     color,
                 )
-                with canvas.style(fill=color, stroke=_TEXT, stroke_thickness=2):
+                with canvas.style(fill=color, stroke=TEXT, stroke_thickness=2):
                     canvas.rectangle(
                         context.mouse.position + Vector(30, 30), 36, 36
                     )
 
-        with canvas.style(text_color=_TEXT, font_size=18):
-            canvas.text(reading, (0.0, _ROW_Y + _SIZE / 2 + 30))
+        with canvas.style(text_color=TEXT, font_size=18):
+            canvas.text(reading, (0.0, ROW_Y + SIZE / 2 + 30))
 
-        var tint = _tints()[self.tint]
+        var tint = tints()[self.tint]
         with canvas.style(tint=tint):
-            canvas.image(self.sprite, self.position, _SPRITE_SIZE, _SPRITE_SIZE)
-        with canvas.style(text_color=_HINT, font_size=18):
+            canvas.image(self.sprite, self.position, SPRITE_SIZE, SPRITE_SIZE)
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 "W, A, S and D move the sprite; T tints it: " + String(tint),
                 (0.0, canvas.bottom() + 30),

@@ -12,15 +12,15 @@ Space cycles the modes.
 
 from create import *
 
-comptime _BARS = 8
-comptime _TEXT = Color(240, 236, 222)
-comptime _PANEL = Color(0, 0, 0, 180)
-comptime _RED = Color(226, 46, 56)
-comptime _ROSE = Color(201, 140, 150)
-comptime _INDIGO = Color(98, 104, 168)
+comptime BARS = 8
+comptime TEXT = Color(240, 236, 222)
+comptime PANEL = Color(0, 0, 0, 180)
+comptime RED = Color(226, 46, 56)
+comptime ROSE = Color(201, 140, 150)
+comptime INDIGO = Color(98, 104, 168)
 
 
-def _next_mode(mode: BlendMode) -> BlendMode:
+def next_mode(mode: BlendMode) -> BlendMode:
     if mode == BlendMode.NORMAL:
         return BlendMode.ADD
     if mode == BlendMode.ADD:
@@ -42,7 +42,7 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if context.keyboard.pressed(Key.SPACE):
-            self.mode = _next_mode(self.mode)
+            self.mode = next_mode(self.mode)
 
         # Gray bars, black on the left to white on the right. Measured from
         # the edges, since the origin is the middle of the screen.
@@ -52,9 +52,9 @@ struct App(Program):
         # shared edge against the clear colour underneath, which shows as a
         # thin light seam whenever the window scale puts an edge mid-pixel.
         canvas.stroke_enabled(False)
-        var bar_w = (canvas.right() - canvas.left()) / Float64(_BARS)
-        for i in range(_BARS):
-            var gray = UInt8(i * 255 // (_BARS - 1))
+        var bar_w = (canvas.right() - canvas.left()) / Float64(BARS)
+        for i in range(BARS):
+            var gray = UInt8(i * 255 // (BARS - 1))
             canvas.fill(Color(gray, gray, gray))
             var x0 = canvas.left() + Float64(i) * bar_w
             canvas.rectangle(
@@ -70,7 +70,7 @@ struct App(Program):
         var center_x = 0.55 * canvas.right() * sin(t * 0.5)
         # Not pure primaries: with every channel at 0 or 255, SCREEN and ADD
         # give identical results.
-        var colors = [_RED, _ROSE, _INDIGO]
+        var colors = [RED, ROSE, INDIGO]
         with canvas.style(blend_mode=self.mode):
             for i in range(3):
                 var angle = t * 0.8 + Float64(i) * 2.0 * PI / 3.0
@@ -81,9 +81,9 @@ struct App(Program):
                 )
 
         # A plain panel behind the label, so it reads over any bar.
-        canvas.fill(_PANEL)
+        canvas.fill(PANEL)
         canvas.rectangle((0.0, canvas.bottom() + 60.0), 360.0, 100.0)
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.font_size(28)
         canvas.text(String(self.mode), (0.0, canvas.bottom() + 75.0))
         canvas.font_size(18)

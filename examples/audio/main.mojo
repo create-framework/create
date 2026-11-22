@@ -11,34 +11,32 @@ it, Up and Down set its volume, Left and Right the overall volume.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TRACK = Color(62, 62, 68)
-comptime _LEVEL = Color(98, 104, 168)
-comptime _CHIME = Color(226, 46, 56)
-comptime _TEXT = Color(240, 236, 222)
-comptime _HINT = Color(176, 172, 162)
-comptime _BAR_WIDTH = 360.0
-comptime _VOLUME_STEP = 0.6
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TRACK = Color(62, 62, 68)
+comptime LEVEL = Color(98, 104, 168)
+comptime CHIME = Color(226, 46, 56)
+comptime TEXT = Color(240, 236, 222)
+comptime HINT = Color(176, 172, 162)
+comptime BAR_WIDTH = 360.0
+comptime VOLUME_STEP = 0.6
 """How far a held arrow key turns a volume, per second."""
 
 
-def _volume_bar(mut canvas: Canvas, label: String, level: Float64, y: Float64):
+def volume_bar(mut canvas: Canvas, label: String, level: Float64, y: Float64):
     """A labelled bar, filled to `level` of its width."""
-    var left = -_BAR_WIDTH / 2.0
+    var left = -BAR_WIDTH / 2.0
     with canvas.style(stroke_enabled=False):
-        canvas.fill(_TRACK)
-        canvas.rectangle((0.0, y), _BAR_WIDTH, 14.0, corner_radius=7)
+        canvas.fill(TRACK)
+        canvas.rectangle((0.0, y), BAR_WIDTH, 14.0, corner_radius=7)
         if level > 0.0:
-            canvas.fill(_LEVEL)
-            var w = _BAR_WIDTH * level
+            canvas.fill(LEVEL)
+            var w = BAR_WIDTH * level
             canvas.rectangle((left + w / 2.0, y), w, 14.0, corner_radius=7)
     with canvas.style(
-        text_color=_TEXT, font_size=18, text_alignment=Align.RIGHT
+        text_color=TEXT, font_size=18, text_alignment=Align.RIGHT
     ):
         canvas.text(label, (left - 20.0, y))
-    with canvas.style(
-        text_color=_TEXT, font_size=18, text_alignment=Align.LEFT
-    ):
+    with canvas.style(text_color=TEXT, font_size=18, text_alignment=Align.LEFT):
         canvas.text(String(Int(level * 100.0 + 0.5), "%"), (-left + 20.0, y))
 
 
@@ -66,7 +64,7 @@ struct AudioDemo(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        var step = _VOLUME_STEP * context.time.delta
+        var step = VOLUME_STEP * context.time.delta
 
         if context.keyboard.pressed(Key.SPACE):
             _ = self.audio.play(self.chime)
@@ -100,16 +98,14 @@ struct AudioDemo(Program):
         if context.keyboard.down(Key.LEFT):
             self.audio.volume(clamp(self.audio.volume() - step, 0.0, 1.0))
 
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
 
         # The chime's flash, fading over half a second.
         var since = context.time.elapsed - self.chimed_at
         var flash = clamp(1.0 - since / 0.5, 0.0, 1.0)
-        with canvas.style(
-            fill=_TRACK.lerp(_CHIME, flash), stroke_enabled=False
-        ):
+        with canvas.style(fill=TRACK.lerp(CHIME, flash), stroke_enabled=False):
             canvas.circle((-250.0, 40.0), 40.0 + 12.0 * flash)
-        with canvas.style(text_color=_HINT, font_size=18):
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text("Space: chime", (-250.0, -30.0))
 
         var state: String
@@ -119,21 +115,21 @@ struct AudioDemo(Program):
             state = "paused"
         else:
             state = "stopped"
-        with canvas.style(text_color=_TEXT, font_size=26):
+        with canvas.style(text_color=TEXT, font_size=26):
             canvas.text("Ambience " + state, (120.0, 60.0))
-        with canvas.style(text_color=_HINT, font_size=18):
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text("L: start/stop   P: pause/resume", (120.0, 20.0))
 
-        _volume_bar(canvas, "Ambience", self.ambience_volume, -90.0)
-        _volume_bar(canvas, "Overall", self.audio.volume(), -140.0)
-        with canvas.style(text_color=_HINT, font_size=18):
+        volume_bar(canvas, "Ambience", self.ambience_volume, -90.0)
+        volume_bar(canvas, "Overall", self.audio.volume(), -140.0)
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 "Up/Down: ambience volume   Left/Right: overall volume",
                 (0.0, -200.0),
             )
 
         with canvas.style(
-            text_color=_TEXT, font_size=30, text_alignment=Align.TOP
+            text_color=TEXT, font_size=30, text_alignment=Align.TOP
         ):
             canvas.text("Audio", (0, canvas.top() - 20.0))
 

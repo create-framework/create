@@ -7,7 +7,7 @@ The sketch is deliberately more than a display is worth: a few thousand
 animated shapes, two images and a block of text, all of it re-recorded every
 frame so the measurement covers recording, tessellation and rasterisation
 rather than a static buffer being re-shown. Frame times are printed as a
-rolling mean over `_WINDOW` frames, so a single hitch does not read as a
+rolling mean over `WINDOW` frames, so a single hitch does not read as a
 regression.
 
 Vsync is off on the GPU path — pinned to the refresh rate every frame would
@@ -27,14 +27,14 @@ from create._native import Slot
 from create.core._driver import _Driver, _Host
 from create.core._run_gl import run_gl
 
-comptime _SHAPES = 2000
+comptime SHAPES = 2000
 """Shapes per frame. Chosen so the GPU path is still comfortable and the CPU
 path is visibly not — the point of the sketch is the gap between them."""
-comptime _WINDOW = 120
+comptime WINDOW = 120
 """Frames per printed line."""
 
 
-def _round(v: Float64) -> String:
+def two_decimals(v: Float64) -> String:
     """Two decimals. A frame time printed to fifteen is noise, not precision."""
     return String(Float64(Int(v * 100.0 + 0.5)) / 100.0)
 
@@ -62,14 +62,14 @@ struct Bench(Program):
         self.frames += 1
         self.elapsed += context.time.delta
         self.worst = max(self.worst, context.time.delta)
-        if self.frames == _WINDOW:
-            var mean_ms = self.elapsed / Float64(_WINDOW) * 1000.0
+        if self.frames == WINDOW:
+            var mean_ms = self.elapsed / Float64(WINDOW) * 1000.0
             print(
-                _round(mean_ms)
+                two_decimals(mean_ms)
                 + " ms mean, "
-                + _round(self.worst * 1000.0)
+                + two_decimals(self.worst * 1000.0)
                 + " ms worst, "
-                + _round(1000.0 / mean_ms)
+                + two_decimals(1000.0 / mean_ms)
                 + " fps, "
                 + String(canvas.width())
                 + "x"
@@ -89,7 +89,7 @@ struct Bench(Program):
         var h = canvas.top()
         with canvas.style():
             canvas.stroke_enabled(False)
-            for i in range(_SHAPES):
+            for i in range(SHAPES):
                 var x = rng.float(-w, w)
                 var y = rng.float(-h, h)
                 var size = rng.float(8.0, 34.0)
@@ -121,7 +121,7 @@ struct Bench(Program):
             canvas.font_weight(FontWeight.MEDIUM)
             canvas.text_alignment(Align.CENTER)
             canvas.text(
-                String(_SHAPES) + " shapes, two images, this text", (0, 0)
+                String(SHAPES) + " shapes, two images, this text", (0, 0)
             )
 
 

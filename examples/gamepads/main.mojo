@@ -6,16 +6,16 @@ says who joined or left.
 
 from create import *
 
-comptime _PLAYERS = 4
-comptime _SPEED = 300.0
-comptime _MESSAGE_SECONDS = 3.0
+comptime PLAYERS = 4
+comptime SPEED = 300.0
+comptime MESSAGE_SECONDS = 3.0
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _TEXT = Color(240, 236, 222)
-comptime _RED = Color(226, 46, 56)
-comptime _INDIGO = Color(98, 104, 168)
-comptime _ROSE = Color(201, 140, 150)
-comptime _CREAM = Color(240, 236, 222)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime TEXT = Color(240, 236, 222)
+comptime RED = Color(226, 46, 56)
+comptime INDIGO = Color(98, 104, 168)
+comptime ROSE = Color(201, 140, 150)
+comptime CREAM = Color(240, 236, 222)
 
 
 @fieldwise_init
@@ -29,16 +29,16 @@ struct Gamepads(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Gamepads:
         var positions = List[Point]()
         var colors = List[Int]()
-        for i in range(_PLAYERS):
+        for i in range(PLAYERS):
             positions.append(Point(Float64(i) * 120 - 180, 0))
             colors.append(i)
         return Gamepads(positions^, colors^, "", 0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(_BACKGROUND)
-        var palette = [_RED, _INDIGO, _ROSE, _CREAM]
+        canvas.background(BACKGROUND)
+        var palette = [RED, INDIGO, ROSE, CREAM]
 
-        for i in range(_PLAYERS):
+        for i in range(PLAYERS):
             var pad = context.gamepad(i)
             var player = "Player " + String(i + 1)
             if pad.connected_this_frame:
@@ -48,7 +48,7 @@ struct Gamepads(Program):
                 self.say(context, player + " left: " + pad.name)
             if not pad.connected:
                 continue
-            var speed = _SPEED * (1.0 + pad.right_trigger)
+            var speed = SPEED * (1.0 + pad.right_trigger)
             self.positions[i] = (
                 self.positions[i] + pad.left_stick * speed * context.time.delta
             )
@@ -60,17 +60,17 @@ struct Gamepads(Program):
 
             canvas.fill(palette[self.colors[i]])
             canvas.circle(self.positions[i], 30 + 20 * pad.left_trigger)
-            canvas.text_color(_TEXT)
+            canvas.text_color(TEXT)
             canvas.text(String(i + 1), self.positions[i] + Vector(0, 45))
 
-        canvas.text_color(_TEXT)
+        canvas.text_color(TEXT)
         canvas.text_alignment(Align.LEFT)
         var connected = 0
-        for i in range(_PLAYERS):
+        for i in range(PLAYERS):
             if context.gamepad(i).connected:
                 connected += 1
         canvas.text(
-            String(connected) + " of " + String(_PLAYERS) + " gamepads",
+            String(connected) + " of " + String(PLAYERS) + " gamepads",
             (canvas.left() + 20, canvas.top() - 30),
         )
         if context.time.elapsed < self.message_until:
@@ -83,7 +83,7 @@ struct Gamepads(Program):
 
     def say(mut self, context: Context, message: String):
         self.message = message
-        self.message_until = context.time.elapsed + _MESSAGE_SECONDS
+        self.message_until = context.time.elapsed + MESSAGE_SECONDS
 
 
 def main() raises:

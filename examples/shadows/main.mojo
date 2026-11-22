@@ -8,17 +8,17 @@ Space toggles every shadow between soft and hard.
 
 from create import *
 
-comptime _PAGE = Color(240, 236, 222)
-comptime _INK = Color(40, 40, 44)
-comptime _SHADOW = Color(40, 40, 44, 90)
-comptime _CARD_SHADOW = Color(40, 40, 44, 70)
-comptime _SQUARE_SHADOW = Color(0, 0, 0, 80)
-comptime _FIELD = Color(250, 248, 242)
-comptime _FIELD_EDGE = Color(200, 196, 186)
-comptime _PLACEHOLDER = Color(150, 146, 138)
-comptime _SQUARE = Color(98, 104, 168)
-comptime _CAPTION = Color(80, 78, 74)
-comptime _HINT = Color(110, 108, 104)
+comptime PAGE = Color(240, 236, 222)
+comptime INK = Color(40, 40, 44)
+comptime SHADOW = Color(40, 40, 44, 90)
+comptime CARD_SHADOW = Color(40, 40, 44, 70)
+comptime SQUARE_SHADOW = Color(0, 0, 0, 80)
+comptime FIELD = Color(250, 248, 242)
+comptime FIELD_EDGE = Color(200, 196, 186)
+comptime PLACEHOLDER = Color(150, 146, 138)
+comptime SQUARE = Color(98, 104, 168)
+comptime CAPTION = Color(80, 78, 74)
+comptime HINT = Color(110, 108, 104)
 
 
 @fieldwise_init
@@ -36,7 +36,7 @@ struct App(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(_PAGE)
+        canvas.background(PAGE)
         if context.keyboard.pressed(Key.SPACE):
             self.soft = not self.soft
         self.angle += 0.6 * context.time.delta
@@ -45,10 +45,10 @@ struct App(Program):
 
         # A heading whose glyphs cast their own shadow.
         with canvas.style(
-            text_color=_INK,
+            text_color=INK,
             font_size=56,
             font_weight=FontWeight.BOLD,
-            shadow=_SHADOW,
+            shadow=SHADOW,
             shadow_offset=Vector(3, -3),
             shadow_blur=blur / 4.0,
         ):
@@ -58,29 +58,29 @@ struct App(Program):
         with canvas.style(
             fill=Color.WHITE,
             stroke_enabled=False,
-            shadow=_CARD_SHADOW,
+            shadow=CARD_SHADOW,
             shadow_offset=Vector(0, -10),
             shadow_blur=blur * 1.5,
         ):
             canvas.rectangle((-330, 60), 380, 220, corner_radius=18)
-        with canvas.style(text_color=_INK, font_size=26):
+        with canvas.style(text_color=INK, font_size=26):
             canvas.text("A card", (-330, 110))
-        with canvas.style(text_color=_HINT, font_size=18):
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text("A drop shadow, offset straight down", (-330, 60))
 
         # A text field pressed into the page: the inset shadow darkens the
         # top-left inner edges, as if lit from above.
         with canvas.style(
-            fill=_FIELD,
-            stroke=_FIELD_EDGE,
-            shadow=_SHADOW,
+            fill=FIELD,
+            stroke=FIELD_EDGE,
+            shadow=SHADOW,
             shadow_offset=Vector(3, -4),
             shadow_blur=blur / 2.0,
             shadow_inset=True,
         ):
             canvas.rectangle((-330, -170), 380, 60, corner_radius=10)
         with canvas.style(
-            text_color=_PLACEHOLDER,
+            text_color=PLACEHOLDER,
             font_size=20,
             font_italic=True,
             text_alignment=Align.LEFT,
@@ -90,9 +90,9 @@ struct App(Program):
         # The same turning square twice. On the left the shadow is fixed to
         # the screen, as under a light overhead; on the right it turns with
         # the square.
-        canvas.shadow(_SQUARE_SHADOW, offset=Vector(14, -14), blur=blur)
+        canvas.shadow(SQUARE_SHADOW, offset=Vector(14, -14), blur=blur)
         var square = Rectangle((0, 0), 120, 120, corner_radius=14)
-        with canvas.style(fill=_SQUARE, stroke_enabled=False):
+        with canvas.style(fill=SQUARE, stroke_enabled=False):
             with canvas.transform(
                 Transform(translation=Vector(170, 110), rotation=self.angle)
             ):
@@ -107,12 +107,12 @@ struct App(Program):
         canvas.image(self.logo, (300, -170), 150, 150)
         canvas.shadow_enabled(False)
 
-        with canvas.style(text_color=_CAPTION, font_size=18):
+        with canvas.style(text_color=CAPTION, font_size=18):
             canvas.text("Fixed to the screen", (170, -20))
             canvas.text("Follows the transform", (430, -20))
             canvas.text("An image's alpha", (300, -265))
 
-        with canvas.style(text_color=_HINT, font_size=18):
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 "Space: " + ("soft" if self.soft else "hard") + " shadows",
                 (0, canvas.bottom() + 40),

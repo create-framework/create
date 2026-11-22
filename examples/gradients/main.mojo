@@ -9,12 +9,12 @@ it.
 """
 from create import *
 
-comptime _CREAM = Color(240, 236, 222)
-comptime _ROSE = Color(201, 140, 150)
-comptime _INDIGO = Color(98, 104, 168)
-comptime _NAVY = Color(38, 40, 62)
-comptime _RED = Color(226, 46, 56)
-comptime _SHADOW = Color(0, 0, 0, 90)
+comptime CREAM = Color(240, 236, 222)
+comptime ROSE = Color(201, 140, 150)
+comptime INDIGO = Color(98, 104, 168)
+comptime NAVY = Color(38, 40, 62)
+comptime RED = Color(226, 46, 56)
+comptime SHADOW = Color(0, 0, 0, 90)
 
 
 @fieldwise_init
@@ -31,14 +31,14 @@ struct App(Program):
             [
                 (0.0, Color.hex(0x1E1E24)),
                 (0.55, Color.hex(0x3E4170)),
-                (1.0, _ROSE),
+                (1.0, ROSE),
             ]
         )
         # A style can carry a gradient like any colour.
         var card = Style(
-            fill_gradient=Gradient.linear(_CREAM, _ROSE),
+            fill_gradient=Gradient.linear(CREAM, ROSE),
             stroke_enabled=False,
-            shadow=_SHADOW,
+            shadow=SHADOW,
             shadow_offset=Vector(0, -10),
             shadow_blur=16,
         )
@@ -48,12 +48,12 @@ struct App(Program):
         canvas.background(self.sky)
         self.angle += 0.5 * context.time.delta
 
-        canvas.stroke(_CREAM, thickness=2)
+        canvas.stroke(CREAM, thickness=2)
         # Left to right.
         canvas.fill(
             Gradient.linear(
-                _ROSE,
-                _INDIGO,
+                ROSE,
+                INDIGO,
                 direction=Vector.RIGHT,
             )
         )
@@ -61,9 +61,9 @@ struct App(Program):
         # Lit from the top left: a radial off the box's centre.
         canvas.fill(
             Gradient.radial(
-                _CREAM,
-                _INDIGO,
-                _NAVY,
+                CREAM,
+                INDIGO,
+                NAVY,
                 center=(-0.35, 0.35),
             )
         )
@@ -71,8 +71,8 @@ struct App(Program):
         # Corner to corner, with no trigonometry.
         canvas.fill(
             Gradient.linear(
-                _CREAM,
-                _RED,
+                CREAM,
+                RED,
                 direction=Vector(1, 1),
             )
         )
@@ -80,13 +80,13 @@ struct App(Program):
         # A sector spans its whole circle, so the slice shows part of it.
         canvas.fill(
             Gradient.linear(
-                _INDIGO,
-                _RED,
+                INDIGO,
+                RED,
                 direction=Vector.RIGHT,
             )
         )
         canvas.sector((220, 120), 65.0, 0.5, 1.6 * PI)
-        canvas.fill(Gradient.linear(_ROSE, _RED))
+        canvas.fill(Gradient.linear(ROSE, RED))
         canvas.draw(Polygon.star((450, 120), 70.0, 30.0, 5))
 
         # The card turns, and its gradient turns with it.
@@ -97,17 +97,17 @@ struct App(Program):
                 canvas.rectangle((0, 0), 220, 130, corner_radius=18)
 
         # A fade to transparent: a glow over whatever is behind it.
-        with canvas.style(fill=_INDIGO, stroke_enabled=False):
+        with canvas.style(fill=INDIGO, stroke_enabled=False):
             canvas.circle((150, -140), 45)
         with canvas.style(
             fill_gradient=Gradient.radial(
-                Color.WHITE.with_alpha(220), _CREAM.with_alpha(0)
+                Color.WHITE.with_alpha(220), CREAM.with_alpha(0)
             ),
             stroke_enabled=False,
         ):
             canvas.circle((150, -140), 120)
 
-        with canvas.style(text_color=_CREAM, font_size=18):
+        with canvas.style(text_color=CREAM, font_size=18):
             canvas.text("Linear", (-450, 30))
             canvas.text("Radial", (-220, 30))
             canvas.text("Diagonal", (0, 30))

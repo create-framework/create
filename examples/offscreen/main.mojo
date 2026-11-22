@@ -9,32 +9,32 @@ C clears the layer.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _HINT = Color(176, 172, 162)
-comptime _ORBIT = Color(62, 62, 68)
-comptime _PAINT_FROM = Color(98, 104, 168)
-comptime _PAINT_TO = Color(201, 140, 150)
-comptime _BADGE_LIGHT = Color(236, 196, 202)
-comptime _BADGE_DARK = Color(170, 90, 104)
-comptime _BADGE_RIM = Color(90, 40, 50)
-comptime _BADGE_TEXT = Color(60, 20, 30)
+comptime BACKGROUND = Color(40, 40, 44)
+comptime HINT = Color(176, 172, 162)
+comptime ORBIT = Color(62, 62, 68)
+comptime PAINT_FROM = Color(98, 104, 168)
+comptime PAINT_TO = Color(201, 140, 150)
+comptime BADGE_LIGHT = Color(236, 196, 202)
+comptime BADGE_DARK = Color(170, 90, 104)
+comptime BADGE_RIM = Color(90, 40, 50)
+comptime BADGE_TEXT = Color(60, 20, 30)
 
-comptime _BADGE_SIZE = 80
+comptime BADGE_SIZE = 80
 
 
-def _badge() raises -> Image:
+def badge() raises -> Image:
     """A badge drawn offscreen, at twice the design density so it stays
     crisp on a window scaled up to 2x."""
-    var badge = Canvas(_BADGE_SIZE, _BADGE_SIZE, pixel_scale=2.0)
-    badge.shadow(blur=6)
-    badge.fill(Gradient.radial(_BADGE_LIGHT, _BADGE_DARK))
-    badge.stroke(_BADGE_RIM, thickness=3)
-    badge.circle((0, 0), 32)
-    badge.shadow_enabled(False)
-    badge.text_color(_BADGE_TEXT)
-    badge.font_size(28)
-    badge.text("1st", (0, 0))
-    return badge.snapshot(pixel_scale=badge.pixel_scale())
+    var canvas = Canvas(BADGE_SIZE, BADGE_SIZE, pixel_scale=2.0)
+    canvas.shadow(blur=6)
+    canvas.fill(Gradient.radial(BADGE_LIGHT, BADGE_DARK))
+    canvas.stroke(BADGE_RIM, thickness=3)
+    canvas.circle((0, 0), 32)
+    canvas.shadow_enabled(False)
+    canvas.text_color(BADGE_TEXT)
+    canvas.font_size(28)
+    canvas.text("1st", (0, 0))
+    return canvas.snapshot(pixel_scale=canvas.pixel_scale())
 
 
 @fieldwise_init
@@ -51,7 +51,7 @@ struct Offscreen(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Offscreen:
         var layer = Canvas(canvas.width(), canvas.height())
         var strokes = layer.snapshot()
-        return Offscreen(_badge(), layer^, strokes^, Point(0, 0))
+        return Offscreen(badge(), layer^, strokes^, Point(0, 0))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if context.keyboard.pressed(Key.C):
@@ -63,8 +63,8 @@ struct Offscreen(Program):
                 context.mouse.position if context.mouse.pressed() else self.last_mouse
             )
             with self.layer.style(
-                stroke=_PAINT_FROM.lerp(
-                    _PAINT_TO,
+                stroke=PAINT_FROM.lerp(
+                    PAINT_TO,
                     0.5 + 0.5 * sin(context.time.elapsed * 2.0),
                 ),
                 stroke_thickness=12,
@@ -77,17 +77,15 @@ struct Offscreen(Program):
         self.last_mouse = context.mouse.position
 
         # The frame under the layer, redrawn and cleared every frame.
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         var t = context.time.elapsed
-        with canvas.style(fill=_ORBIT, stroke_enabled=False):
+        with canvas.style(fill=ORBIT, stroke_enabled=False):
             canvas.circle((cos(t) * 200, sin(t * 1.3) * 120), 40)
 
         canvas.image(self.strokes, (0, 0), canvas.width(), canvas.height())
-        canvas.image(
-            self.badge, context.mouse.position, _BADGE_SIZE, _BADGE_SIZE
-        )
+        canvas.image(self.badge, context.mouse.position, BADGE_SIZE, BADGE_SIZE)
 
-        with canvas.style(text_color=_HINT, font_size=18):
+        with canvas.style(text_color=HINT, font_size=18):
             canvas.text("Drag to paint, C to clear", (0, canvas.bottom() + 30))
 
 

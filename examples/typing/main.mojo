@@ -8,12 +8,12 @@ Type the phrase shown; Enter moves on once it is right.
 
 from create import *
 
-comptime _BACKGROUND = Color(40, 40, 44)
-comptime _HINT = Color(176, 172, 162)
-comptime _TYPED = Color(240, 236, 222)
-comptime _MISTAKE = Color(226, 46, 56)
-comptime _SELECTION = Color(70, 90, 140)
-comptime _SIZE = 28.0
+comptime BACKGROUND = Color(40, 40, 44)
+comptime HINT = Color(176, 172, 162)
+comptime TYPED = Color(240, 236, 222)
+comptime MISTAKE = Color(226, 46, 56)
+comptime SELECTION = Color(70, 90, 140)
+comptime SIZE = 28.0
 
 
 def characters(text: String) -> List[String]:
@@ -65,7 +65,7 @@ struct TypingTest(Program):
             + " of "
             + String(len(self.phrases))
         )
-        canvas.background(_BACKGROUND)
+        canvas.background(BACKGROUND)
         var target = characters(self.phrases[self.phrase])
         var finished = self.typed == self.phrases[self.phrase]
         if finished and context.keyboard.pressed(Key.ENTER):
@@ -80,10 +80,10 @@ struct TypingTest(Program):
 
         # Both lines start at the same left edge, so each typed letter sits
         # under the one it should match.
-        canvas.font_size(_SIZE)
+        canvas.font_size(SIZE)
         canvas.text_alignment(Align.LEFT)
         var left = -canvas.text_width(self.phrases[self.phrase]) / 2
-        canvas.text_color(_HINT)
+        canvas.text_color(HINT)
         canvas.text(self.phrases[self.phrase], (left, 60))
 
         # The field does the editing: typed text, Backspace, Delete, the
@@ -101,10 +101,10 @@ struct TypingTest(Program):
                     container_color=Color.TRANSPARENT,
                     outline_thickness=0,
                     text_color=Color.TRANSPARENT,
-                    caret_color=_TYPED,
-                    selection_color=_SELECTION,
+                    caret_color=TYPED,
+                    selection_color=SELECTION,
                     padding=0,
-                    text_style=TypeStyle(_SIZE, FontWeight.REGULAR, None),
+                    text_style=TypeStyle(SIZE, FontWeight.REGULAR, None),
                 ),
                 take_focus=not finished,
                 disabled=finished,
@@ -120,13 +120,13 @@ struct TypingTest(Program):
         var typed = characters(self.typed)
         for i in range(len(typed)):
             var right = i < len(target) and typed[i] == target[i]
-            canvas.text_color(_TYPED if right else _MISTAKE)
+            canvas.text_color(TYPED if right else MISTAKE)
             canvas.text(typed[i], (x, 0))
             x += canvas.text_width(typed[i])
 
         canvas.font_size(20)
         canvas.text_alignment(Align.CENTER)
-        canvas.text_color(_HINT)
+        canvas.text_color(HINT)
         if finished:
             canvas.text(self.result, (0, -80))
             canvas.text("Enter for the next phrase", (0, -120))
