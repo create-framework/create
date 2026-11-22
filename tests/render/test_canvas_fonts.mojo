@@ -172,7 +172,7 @@ def test_a_style_prints_its_font() raises -> None:
     assert_true(
         String(style).find('font=Font.load("' + font.path() + '")') >= 0
     )
-    assert_true(String(Style()).find("font=None") >= 0)
+    assert_true(String(Style()).find("font=") < 0)  # unset, not printed
 
 
 def main() raises:

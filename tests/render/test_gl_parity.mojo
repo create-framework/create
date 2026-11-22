@@ -192,7 +192,7 @@ colour is compared like any fill's."""
 def _shadowed(var s: Style) -> Style:
     """`s` casting a hard, opaque shadow down-right."""
     s.shadow_enabled = True
-    s.shadow_color = _SHADOW_INK
+    s.shadow = _SHADOW_INK
     s.shadow_offset = Vector(8, -8)
     s.shadow_blur = 0.0
     return s^
