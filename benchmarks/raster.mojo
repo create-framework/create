@@ -58,7 +58,7 @@ from create.render._raster import (
     fill_quad,
 )
 from create.render._curve import stroke_segment
-from create.render import Style
+from create.render.style import _ResolvedStyle
 from create.math.matrix import identity
 
 comptime W = 1920
@@ -125,8 +125,8 @@ def fill_bench():
     report("fill_pixels alpha            ", t0, t1)
 
 
-def shape_style(alpha: Bool) -> Style:
-    var st = Style()
+def shape_style(alpha: Bool) -> _ResolvedStyle:
+    var st = _ResolvedStyle()
     st.fill_enabled = True
     st.stroke_enabled = False
     st.fill_color = Color(200, 60, 60, 192) if alpha else Color(200, 60, 60)

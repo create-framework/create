@@ -49,10 +49,11 @@ from create.render._shadow import (
 )
 from create.render._lower import shape_shadow_mask
 from create.render.stroke_cap import StrokeCap
+from create.render.style import _ResolvedStyle
 
 
-def _shadowed() -> Style:
-    var s = Style(fill=Color.WHITE, shadow_enabled=True)
+def _shadowed() -> _ResolvedStyle:
+    var s = _ResolvedStyle(fill=Color.WHITE, shadow_enabled=True)
     s.shadow_offset = Vector(4, -4)
     return s^
 
@@ -125,7 +126,9 @@ def test_filled_shape_casts_one_filled_layer() raises -> None:
 
 
 def test_stroke_only_shape_casts_its_ring() raises -> None:
-    var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
+    var s = _ResolvedStyle(
+        stroke=Color.RED, stroke_thickness=3, shadow_enabled=True
+    )
     var c = circle_command(Transform(), s, 0.0, 0.0, 10.0)
     var sh = shadow_command(c, 1.0)
     assert_false(sh.paint.fill_enabled)
@@ -253,7 +256,9 @@ def test_a_sector_casts_its_grown_silhouette() raises -> None:
 
 
 def test_an_stroke_only_sector_casts_its_ring() raises -> None:
-    var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
+    var s = _ResolvedStyle(
+        stroke=Color.RED, stroke_thickness=3, shadow_enabled=True
+    )
     s.shadow_spread = 1.0
     var c = sector_command(Transform(), s, 0.0, 0.0, 10.0, 0.0, 1.0)
     var sh = shadow_command(c, 1.0)
@@ -298,7 +303,9 @@ def test_a_polygon_casts_its_grown_silhouette() raises -> None:
 
 
 def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
-    var s = Style(stroke=Color.RED, stroke_thickness=3, shadow_enabled=True)
+    var s = _ResolvedStyle(
+        stroke=Color.RED, stroke_thickness=3, shadow_enabled=True
+    )
     s.shadow_spread = 1.0
     var c = polygon_command(Transform(), s, _square())
     var sh = shadow_command(c, 1.0)
@@ -411,7 +418,7 @@ def _blurred_line(
 ) -> BlurredSilhouette:
     """A line from (0, 0) to (20, 0), 6 thick and its shadow blurred by 4
     (sigma 2) unless given."""
-    var s = Style(
+    var s = _ResolvedStyle(
         stroke=Color.BLACK,
         stroke_thickness=thickness,
         stroke_cap=cap,
@@ -495,14 +502,16 @@ def test_a_square_line_shadow_reaches_the_corner() raises -> None:
 
 
 def test_a_butt_line_of_no_length_casts_nothing() raises -> None:
-    var s = Style(stroke=Color.BLACK, stroke_thickness=6, shadow_blur=4)
+    var s = _ResolvedStyle(
+        stroke=Color.BLACK, stroke_thickness=6, shadow_blur=4
+    )
     assert_false(casts_outer_shadow(line_command(Transform(), s, 5, 5, 5, 5)))
     s.stroke_cap = StrokeCap.ROUND
     assert_true(casts_outer_shadow(line_command(Transform(), s, 5, 5, 5, 5)))
 
 
 def _mask_mass(cap: StrokeCap) -> Int:
-    var s = Style(
+    var s = _ResolvedStyle(
         stroke=Color.BLACK, stroke_thickness=8, stroke_cap=cap, shadow_blur=4
     )
     var c = bezier_command(

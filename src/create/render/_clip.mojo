@@ -13,14 +13,14 @@ from std.math import max, min
 
 from ._command import RenderCommand
 from create.color.color import Color
-from .style import Style
+from .style import _ResolvedStyle
 
 
-def clip_style() -> Style:
+def clip_style() -> _ResolvedStyle:
     """The style a clip region is recorded in: an opaque solid fill and
     nothing else, so its rasterisation covers exactly the shape's interior.
     """
-    var s = Style()
+    var s = _ResolvedStyle()
     s.fill_color = Color.WHITE
     s.fill_enabled = True
     s.stroke_enabled = False

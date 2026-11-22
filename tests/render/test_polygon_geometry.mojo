@@ -17,6 +17,7 @@ from create.render._polygon import (
 )
 from create.render._raster import fill_quad
 from create.render._transform import stroke_thickness_px, pixel_scale
+from create.render.style import _ResolvedStyle
 
 comptime _SIZE = 64
 comptime _INK = Color(255, 255, 255, 128)
@@ -64,7 +65,10 @@ def _device(m: Transform) -> Transform:
 
 
 def _quads(
-    p: Polygon, m: Transform, style: Style = Style(), grow: Float64 = 0.0
+    p: Polygon,
+    m: Transform,
+    style: _ResolvedStyle = _ResolvedStyle(),
+    grow: Float64 = 0.0,
 ) -> Pieces:
     var c = polygon_command(m, style, p.vertices.copy())
     c.payload[PolygonPayload].grow = grow
@@ -136,7 +140,10 @@ def _convex(corners: List[Point], i: Int) -> Bool:
 
 
 def _assert_tiles(
-    s: Polygon, m: Transform, style: Style = Style(), grow: Float64 = 0.0
+    s: Polygon,
+    m: Transform,
+    style: _ResolvedStyle = _ResolvedStyle(),
+    grow: Float64 = 0.0,
 ) raises:
     """Quads convex, painted at most once, and covering the polygon grown
     by `grow`: each pixel centre more than a pixel from an edge is painted
@@ -187,13 +194,13 @@ def _assert_tiles(
                 )
 
 
-def _stroked(thickness: Float64) -> Style:
-    return Style(fill=Color.RED, stroke_thickness=thickness)
+def _stroked(thickness: Float64) -> _ResolvedStyle:
+    return _ResolvedStyle(fill=Color.RED, stroke_thickness=thickness)
 
 
 def test_polygon_command_records_its_vertices() raises -> None:
     var p = _l_shape()
-    var c = polygon_command(Transform(), Style(), p.vertices.copy())
+    var c = polygon_command(Transform(), _ResolvedStyle(), p.vertices.copy())
     assert_true(c.payload.isa[PolygonPayload]())
     ref polygon = c.payload[PolygonPayload]
     assert_equal(len(polygon.vertices), 6)
@@ -203,7 +210,7 @@ def test_polygon_command_records_its_vertices() raises -> None:
 
 
 def test_fill_only_tiles_the_polygon() raises -> None:
-    var style = Style(fill=Color.RED, stroke_enabled=False)
+    var style = _ResolvedStyle(fill=Color.RED, stroke_enabled=False)
     for p in _polygons():
         var q = _quads(p, Transform(), style)
         assert_equal(len(q.stroke_quads), 0)
@@ -228,7 +235,9 @@ def test_quads_cover_the_area_exactly() raises -> None:
 def test_the_pentagram_fills_its_centre() raises -> None:
     # Nonzero: the doubly wound pentagon counts, once.
     var p = _pentagram()
-    var q = _quads(p, Transform(), Style(fill=Color.RED, stroke_enabled=False))
+    var q = _quads(
+        p, Transform(), _ResolvedStyle(fill=Color.RED, stroke_enabled=False)
+    )
     var star = Polygon.star((0.0, 0.0), 26.0, 26.0 * 0.381966, 5)
     assert_true(abs(_area(q.fill_quads) - star.area()) < 1e-3)
 
@@ -274,7 +283,10 @@ def test_grown_square_is_rounded() raises -> None:
     # w² + 4wd + πd², less what the discs' 12 segments cut off the corners.
     var p = Polygon((-10.0, -10.0), (10.0, -10.0), (10.0, 10.0), (-10.0, 10.0))
     var q = _quads(
-        p, Transform(), Style(fill=Color.RED, stroke_enabled=False), 4.0
+        p,
+        Transform(),
+        _ResolvedStyle(fill=Color.RED, stroke_enabled=False),
+        4.0,
     )
     var expected = 400.0 + 4.0 * 20.0 * 4.0 + PI * 16.0
     var area = _area(q.fill_quads)
@@ -317,7 +329,7 @@ def test_a_square_shadow_ring_has_its_area() raises -> None:
 
 
 def test_an_stroke_only_polygon_masks_only_its_ring() raises -> None:
-    var style = Style(stroke=Color.RED, stroke_thickness=4)
+    var style = _ResolvedStyle(stroke=Color.RED, stroke_thickness=4)
     var p = Polygon((-20.0, -20.0), (20.0, -20.0), (20.0, 20.0), (-20.0, 20.0))
     var c = polygon_command(Transform(), style, p.vertices.copy())
     var placed = shape_shadow_mask(c, c.transform, 1.0, 0)

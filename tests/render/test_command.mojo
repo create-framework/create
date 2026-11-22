@@ -29,10 +29,11 @@ from create.render._command import (
 )
 from create.geometry.bezier import Bezier
 from create.math.point import Point
+from create.render.style import _ResolvedStyle
 
 
-def _styled() -> Style:
-    var s = Style()
+def _styled() -> _ResolvedStyle:
+    var s = _ResolvedStyle()
     s.fill_color = Color(10, 20, 30)
     s.stroke_color = Color(40, 50, 60)
     s.stroke_thickness = 3
@@ -41,7 +42,7 @@ def _styled() -> Style:
 
 
 def test_rect_packs_centre_and_extent() raises -> None:
-    var c = rect_command(Transform(), Style(), 1.0, 2.0, 3.0, 4.0)
+    var c = rect_command(Transform(), _ResolvedStyle(), 1.0, 2.0, 3.0, 4.0)
     assert_true(c.payload.isa[RectPayload]())
     ref rect = c.payload[RectPayload]
     assert_equal(rect.center, Point(1.0, 2.0))
@@ -51,21 +52,23 @@ def test_rect_packs_centre_and_extent() raises -> None:
 
 
 def test_circle_packs_centre_and_radius() raises -> None:
-    var c = circle_command(Transform(), Style(), -5.0, 6.0, 7.0)
+    var c = circle_command(Transform(), _ResolvedStyle(), -5.0, 6.0, 7.0)
     assert_true(c.payload.isa[CirclePayload]())
     assert_equal(c.payload[CirclePayload].center, Point(-5.0, 6.0))
     assert_equal(c.payload[CirclePayload].r, 7.0)
 
 
 def test_line_packs_both_endpoints() raises -> None:
-    var c = line_command(Transform(), Style(), 1.0, 2.0, 3.0, 4.0)
+    var c = line_command(Transform(), _ResolvedStyle(), 1.0, 2.0, 3.0, 4.0)
     assert_true(c.payload.isa[LinePayload]())
     assert_equal(c.payload[LinePayload].start, Point(1.0, 2.0))
     assert_equal(c.payload[LinePayload].end, Point(3.0, 4.0))
 
 
 def test_triangle_packs_all_three_vertices() raises -> None:
-    var c = triangle_command(Transform(), Style(), 1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+    var c = triangle_command(
+        Transform(), _ResolvedStyle(), 1.0, 2.0, 3.0, 4.0, 5.0, 6.0
+    )
     assert_true(c.payload.isa[TrianglePayload]())
     for i in range(6):
         assert_equal(c.payload[TrianglePayload].corners[i], Float64(i + 1))
@@ -73,7 +76,7 @@ def test_triangle_packs_all_three_vertices() raises -> None:
 
 def test_bezier_is_a_chain_of_one() raises -> None:
     var curve = Bezier((1.0, 2.0), (3.0, 4.0), (5.0, 6.0), (7.0, 8.0))
-    var c = bezier_command(Transform(), Style(), curve)
+    var c = bezier_command(Transform(), _ResolvedStyle(), curve)
     assert_true(c.payload.isa[CurvesPayload]())
     ref controls = c.payload[CurvesPayload].points
     assert_equal(len(controls), 4)
@@ -93,7 +96,7 @@ def test_bezier_chain_keeps_its_points() raises -> None:
         (5.0, -1.0),
         (6.0, 0.0),
     ]
-    var c = bezier_chain_command(Transform(), Style(), points.copy())
+    var c = bezier_chain_command(Transform(), _ResolvedStyle(), points.copy())
     assert_true(c.payload.isa[CurvesPayload]())
     ref controls = c.payload[CurvesPayload].points
     assert_equal(len(controls), 7)
@@ -103,7 +106,7 @@ def test_bezier_chain_keeps_its_points() raises -> None:
 
 def test_image_carries_an_image_id_not_a_pointer() raises -> None:
     var c = image_command(
-        Transform(), Style(), 1.0, 2.0, 30.0, 40.0, 77, 16, 24
+        Transform(), _ResolvedStyle(), 1.0, 2.0, 30.0, 40.0, 77, 16, 24
     )
     assert_true(c.payload.isa[ImagePayload]())
     ref image = c.payload[ImagePayload]
@@ -116,7 +119,7 @@ def test_image_carries_an_image_id_not_a_pointer() raises -> None:
 
 def test_text_owns_its_string() raises -> None:
     var s = String("hello")
-    var c = text_command(Transform(), Style(), 8.0, 9.0, s^)
+    var c = text_command(Transform(), _ResolvedStyle(), 8.0, 9.0, s^)
     assert_true(c.payload.isa[TextPayload]())
     assert_equal(c.payload[TextPayload].text, "hello")
     assert_equal(c.payload[TextPayload].position, Point(8.0, 9.0))
@@ -144,7 +147,7 @@ def test_the_transform_is_kept_whole_not_applied() raises -> None:
     var m = Transform(rotation=0.5) @ Transform(
         translation=Vector(100.0, 200.0)
     )
-    var c = rect_command(m, Style(), 0.0, 0.0, 10.0, 10.0)
+    var c = rect_command(m, _ResolvedStyle(), 0.0, 0.0, 10.0, 10.0)
     assert_equal(c.payload[RectPayload].center, Point(0.0, 0.0))
     assert_true(c.transform == m)
 
@@ -165,7 +168,7 @@ def test_the_style_is_resolved_at_record_time() raises -> None:
 def test_only_text_carries_how_text_is_set() raises -> None:
     # A shape's command keeps what it paints with; the font, its size and
     # the text colour ride on a text command's payload alone.
-    var s = Style(text_color=Color.RED, font_size=30, font_italic=True)
+    var s = _ResolvedStyle(text_color=Color.RED, font_size=30, font_italic=True)
     var t = text_command(Transform(), s, 0.0, 0.0, String("hi"))
     ref text = t.payload[TextPayload].style[]
     assert_equal(text.text_color, Color.RED)
@@ -177,8 +180,10 @@ def test_commands_collect_into_a_buffer() raises -> None:
     # The recording shape Canvas will use: one heterogeneous list, in order.
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
-    cmds.append(rect_command(Transform(), Style(), 0.0, 0.0, 4.0, 4.0))
-    cmds.append(text_command(Transform(), Style(), 0.0, 0.0, String("hi")))
+    cmds.append(rect_command(Transform(), _ResolvedStyle(), 0.0, 0.0, 4.0, 4.0))
+    cmds.append(
+        text_command(Transform(), _ResolvedStyle(), 0.0, 0.0, String("hi"))
+    )
     assert_equal(len(cmds), 3)
     assert_true(cmds[0].payload.isa[ClearPayload]())
     assert_true(cmds[1].payload.isa[RectPayload]())
@@ -187,14 +192,14 @@ def test_commands_collect_into_a_buffer() raises -> None:
 
 
 def test_opacity_folds_into_the_shadow_color() raises -> None:
-    var s = Style(opacity=0.5)
+    var s = _ResolvedStyle(opacity=0.5)
     s.shadow_color = Color(0, 0, 0, 200)
     var c = rect_command(Transform(), s, 0.0, 0.0, 1.0, 1.0)
     assert_equal(c.paint.shadow_color.a, 100)
 
 
 def test_opacity_folds_into_the_fill_gradient() raises -> None:
-    var s = Style(
+    var s = _ResolvedStyle(
         fill_gradient=Gradient.linear(Color.RED, Color.BLUE.with_alpha(200)),
         opacity=0.5,
     )
@@ -207,7 +212,7 @@ def test_opacity_folds_into_the_fill_gradient() raises -> None:
 
 
 def test_tint_folds_into_every_colour() raises -> None:
-    var s = Style(
+    var s = _ResolvedStyle(
         fill=Color(200, 100, 50),
         stroke=Color.WHITE,
         text_color=Color.WHITE,

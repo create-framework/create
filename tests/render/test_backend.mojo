@@ -32,6 +32,7 @@ from create.render._command import (
 from create.math.transform import Transform
 from create.math.vector import Vector
 from create.math.point import Point
+from create.render.style import _ResolvedStyle
 
 
 comptime _W = 100
@@ -47,8 +48,8 @@ def _base(width: Int = _W, height: Int = _H) -> Transform:
     return v.base_matrix()
 
 
-def _solid(fill: Color) -> Style:
-    var s = Style()
+def _solid(fill: Color) -> _ResolvedStyle:
+    var s = _ResolvedStyle()
     s.fill_color = fill
     s.fill_enabled = True
     s.stroke_enabled = False
@@ -178,7 +179,7 @@ def test_circle_samples_pixel_centres() raises -> None:
 def _brute_circle(
     mut mem: MemorySurface,
     m: Transform,
-    style: Style,
+    style: _ResolvedStyle,
     cx: Float64,
     cy: Float64,
     r: Float64,
@@ -229,7 +230,7 @@ def _check_circle_matches_brute_force(
     stroke_thickness: Float64,
 ) raises -> None:
     var m = _base()
-    var st = Style()
+    var st = _ResolvedStyle()
     st.fill_color = Color.RED
     st.fill_enabled = fill_enabled
     st.stroke_color = Color.BLUE
@@ -283,7 +284,7 @@ def test_circle_span_matches_brute_force_pr_inner_exactly_zero() raises -> None:
 
 
 def test_line_replays_between_its_endpoints() raises -> None:
-    var st = Style()
+    var st = _ResolvedStyle()
     st.fill_enabled = False
     st.stroke_enabled = True
     st.stroke_color = Color.WHITE
@@ -301,7 +302,7 @@ def test_line_replays_between_its_endpoints() raises -> None:
 
 
 def test_line_with_stroke_disabled_renders_nothing() raises -> None:
-    var st = Style()
+    var st = _ResolvedStyle()
     st.stroke_enabled = False
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
@@ -314,8 +315,8 @@ def _s_curve() -> Bezier:
     return Bezier((-40.0, -30.0), (-40.0, 60.0), (40.0, -60.0), (40.0, 30.0))
 
 
-def _stroke(color: Color, thickness: Float64) -> Style:
-    var st = Style()
+def _stroke(color: Color, thickness: Float64) -> _ResolvedStyle:
+    var st = _ResolvedStyle()
     st.stroke_enabled = True
     st.stroke_color = color
     st.stroke_thickness = thickness
@@ -479,7 +480,9 @@ def test_image_replays_from_an_interned_image() raises -> None:
 
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
-    cmds.append(image_command(_base(), Style(), 0.0, 0.0, 20.0, 10.0, id, 2, 1))
+    cmds.append(
+        image_command(_base(), _ResolvedStyle(), 0.0, 0.0, 20.0, 10.0, id, 2, 1)
+    )
     backend.replay(mem.surface(), cmds, 1.0)
     assert_equal(mem.pixel(45, 50), Color.RED)
     assert_equal(mem.pixel(55, 50), Color.BLUE)
@@ -520,7 +523,9 @@ def test_an_interned_image_outlives_the_image() raises -> None:
     var mem = MemorySurface(_W, _H)
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
-    cmds.append(image_command(_base(), Style(), 0.0, 0.0, 20.0, 10.0, id, 2, 1))
+    cmds.append(
+        image_command(_base(), _ResolvedStyle(), 0.0, 0.0, 20.0, 10.0, id, 2, 1)
+    )
     backend.replay(mem.surface(), cmds, 1.0)
     assert_equal(mem.pixel(50, 50), Color.RED)
 
@@ -551,7 +556,9 @@ def test_image_with_an_unknown_image_is_skipped() raises -> None:
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(
-        image_command(_base(), Style(), 0.0, 0.0, 20.0, 10.0, 999, 2, 1)
+        image_command(
+            _base(), _ResolvedStyle(), 0.0, 0.0, 20.0, 10.0, 999, 2, 1
+        )
     )
     var m = _replay(cmds)
     assert_equal(m.pixel(50, 50), Color.BLACK)
@@ -576,7 +583,7 @@ def test_text_replays_through_the_backend_font() raises -> None:
 
 
 def test_text_with_a_transparent_text_color_renders_nothing() raises -> None:
-    var st = Style()
+    var st = _ResolvedStyle()
     st.text_color = Color(255, 255, 255, 0)
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
@@ -707,7 +714,7 @@ def test_render_backend_writes_its_constant_name() raises -> None:
     assert_equal(String(RenderBackend(99)), "RenderBackend(99)")
 
 
-def _shadowed(fill: Color, shadow: Color) -> Style:
+def _shadowed(fill: Color, shadow: Color) -> _ResolvedStyle:
     var s = _solid(fill)
     s.shadow_enabled = True
     s.shadow_color = shadow
@@ -824,7 +831,7 @@ def test_bezier_casts_its_stroke_at_the_offset() raises -> None:
     assert_true(shadow_pixels > 0)
 
 
-def _blurred(fill: Color, blur: Float64) -> Style:
+def _blurred(fill: Color, blur: Float64) -> _ResolvedStyle:
     """White ink blurred by `blur`, thrown 60 units right of its shape."""
     var s = _shadowed(fill, Color.WHITE)
     s.shadow_offset = Vector(60, 0)
@@ -1041,7 +1048,7 @@ def test_a_blurred_bezier_shadow_fades_past_the_stroke() raises -> None:
     assert_equal(mb.pixel(_W - 3, _H - 3), Color.BLACK)
 
 
-def _inset(fill: Color, offset: Vector, blur: Float64 = 0.0) -> Style:
+def _inset(fill: Color, offset: Vector, blur: Float64 = 0.0) -> _ResolvedStyle:
     """`fill` with a red inset shadow thrown by `offset`."""
     var s = _shadowed(fill, Color.RED)
     s.shadow_inset = True

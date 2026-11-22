@@ -18,7 +18,8 @@ from create.geometry import (
 )
 from create.image import Image
 from create.math import Point
-from create.render import Canvas, Style
+from create.render import Canvas
+from create.render.style import _ResolvedStyle
 
 
 @fieldwise_init
@@ -68,7 +69,7 @@ comptime _Shape = Variant[
 @fieldwise_init
 struct _DrawCommand(Copyable, Movable):
     var shape: _Shape
-    var style: Style
+    var style: _ResolvedStyle
 
 
 struct _Recorder(DrawTarget, Movable):
@@ -78,11 +79,11 @@ struct _Recorder(DrawTarget, Movable):
     dynamic dispatch is needed to replay them."""
 
     var commands: List[_DrawCommand]
-    var style: Style
+    var style: _ResolvedStyle
 
     def __init__(out self):
         self.commands = []
-        self.style = Style()
+        self.style = _ResolvedStyle()
 
     def _rectangle(mut self, r: Rectangle):
         self.commands.append(_DrawCommand(_Shape(r), self.style))
@@ -111,7 +112,7 @@ struct _Recorder(DrawTarget, Movable):
     def _curves(mut self, curves: List[Bezier]):
         self.commands.append(_DrawCommand(_Shape(curves.copy()), self.style))
 
-    def text(mut self, text: String, position: Point, style: Style):
+    def text(mut self, text: String, position: Point, style: _ResolvedStyle):
         """Record `text`, drawn at `position` in `style`'s text settings."""
         self.commands.append(_DrawCommand(_Shape(_Text(text, position)), style))
 
@@ -121,7 +122,7 @@ struct _Recorder(DrawTarget, Movable):
         position: Point,
         width: Float64,
         height: Float64,
-        style: Style,
+        style: _ResolvedStyle,
     ):
         """Record `image`, centred at `position` and stretched to `width` by
         `height`."""
@@ -133,10 +134,12 @@ struct _Recorder(DrawTarget, Movable):
 
     def clip(mut self, region: Rectangle):
         """Keep what is recorded from here to `end_clip` inside `region`."""
-        self.commands.append(_DrawCommand(_Shape(_ClipBegin(region)), Style()))
+        self.commands.append(
+            _DrawCommand(_Shape(_ClipBegin(region)), _ResolvedStyle())
+        )
 
     def end_clip(mut self):
-        self.commands.append(_DrawCommand(_Shape(_ClipEnd()), Style()))
+        self.commands.append(_DrawCommand(_Shape(_ClipEnd()), _ResolvedStyle()))
 
     def replay(mut self, mut canvas: Canvas):
         """Draw every recorded command onto `canvas`, in order, and empty the
@@ -159,7 +162,7 @@ struct _Recorder(DrawTarget, Movable):
                 with canvas.clip(region):
                     i = self._replay_from(canvas, i + 1)
                 continue
-            with canvas.style(command.style):
+            with canvas._with_style(command.style):
                 ref shape = command.shape
                 if shape.isa[Rectangle]():
                     canvas._rectangle(shape[Rectangle])

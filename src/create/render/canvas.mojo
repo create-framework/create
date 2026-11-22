@@ -44,7 +44,7 @@ from ._command import (
     image_command,
     text_command,
 )
-from .style import Style
+from .style import Style, _ResolvedStyle
 from create.math._optional_float64 import _OptionalFloat64
 from create._path import _caller_relative
 from ._command import RenderCommand
@@ -247,13 +247,15 @@ struct StyleGuard[origin: Origin[mut=True]](Movable):
     """
 
     var _canvas: Pointer[Canvas, Self.origin]
-    var _saved: Style
+    var _saved: _ResolvedStyle
 
     def __init__(out self, *, ref[Self.origin] _canvas: Canvas):
         self._saved = _canvas._style
         self._canvas = Pointer(to=_canvas)
 
-    def __init__(out self, *, ref[Self.origin] _canvas: Canvas, _style: Style):
+    def __init__(
+        out self, *, ref[Self.origin] _canvas: Canvas, _style: _ResolvedStyle
+    ):
         """Snapshot, then replace the canvas's style with `_style`."""
         self._saved = _canvas._style
         _canvas._style = _style
@@ -356,7 +358,7 @@ struct Canvas(DrawTarget, Movable):
     var _state: _PersistentCanvasState
     # Style is per-frame, not carried in `_state`: carrying one across would
     # only preserve a forgotten setting. A reusable style is a `Style` field.
-    var _style: Style
+    var _style: _ResolvedStyle
     var _base: Transform
     var _base_inv: Transform
     # Camera is per-frame too, and for the same reason as style: it resets to
@@ -383,7 +385,7 @@ struct Canvas(DrawTarget, Movable):
         self._height = state._view.height
         self._scale = state._view.scale
         self._state = state^
-        self._style = Style()
+        self._style = _ResolvedStyle()
         self._base = self._view.base_matrix()
         self._base_inv = self._base.inverse()
         self._camera = Camera()
@@ -729,6 +731,13 @@ struct Canvas(DrawTarget, Movable):
             canvas.text("Score", (0, canvas.top() - 20))
         ```
         """
+        return self._with_style(style._resolved())
+
+    def _with_style(
+        mut self, style: _ResolvedStyle
+    ) -> StyleGuard[origin_of(self)]:
+        """`style(s)` for a style already resolved: how the library applies
+        the looks it built itself, such as a widget's."""
         return StyleGuard[origin_of(self)](_canvas=self, _style=style)
 
     def _push_transform(mut self, m: Transform):
