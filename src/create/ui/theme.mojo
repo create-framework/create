@@ -368,7 +368,8 @@ struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
 @fieldwise_init
 struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The design tokens every widget draws from: colours, kinds of text,
-    corner radii, gaps, state layers and the focus ring. A widget's look
+    corner radii, gaps, the height of a control, state layers and the focus
+    ring. A widget's look
     is worked out from these when it is drawn, so changing a token changes
     every widget that uses it.
 
@@ -382,6 +383,9 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
     var typography: Typography
     var corner_radii: CornerRadii
     var spacing: Spacing
+    var control_height: Float64
+    """How tall a button, slider, checkbox or text field is in a
+    `ui.column`, and how tall a `ui.row` is, unless told otherwise."""
     var state_layers: StateLayers
     var focus_ring: FocusRing
 
@@ -564,6 +568,7 @@ struct Theme(Copyable, ImplicitlyCopyable, Movable, Writable):
             typography=Typography(),
             corner_radii=CornerRadii(),
             spacing=Spacing(),
+            control_height=40,
             state_layers=StateLayers(),
             focus_ring=FocusRing(),
         )
