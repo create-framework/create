@@ -1,7 +1,8 @@
 """`CheckboxStyle`: how a checkbox looks."""
 
 from create.color import Color
-from .theme import FocusRing, TypeStyle
+from create.render import Style
+from .theme import FocusRing
 
 
 struct CheckboxStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -16,7 +17,7 @@ struct CheckboxStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The border of an empty box: `on_surface_variant`."""
     var label_color: Optional[Color]
     """The label's text: `on_surface`."""
-    var text_style: Optional[TypeStyle]
+    var text_style: Optional[Style]
     """The theme's `body` text unless given."""
 
     var focus_ring: Optional[FocusRing]
@@ -30,7 +31,7 @@ struct CheckboxStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         check_color: Optional[Color] = None,
         outline_color: Optional[Color] = None,
         label_color: Optional[Color] = None,
-        text_style: Optional[TypeStyle] = None,
+        text_style: Optional[Style] = None,
         focus_ring: Optional[FocusRing] = None,
     ):
         self.box_color = box_color

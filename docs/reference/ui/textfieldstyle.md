@@ -24,7 +24,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `selection_color: Optional[Color]`: The highlight behind selected text: `primary`, faded.
 - `corner_radius: Optional[Float64]`: The theme's small corner radius unless given.
 - `padding: Optional[Float64]`: The gap between the field's edges and its text: 12 unless given.
-- `text_style: Optional[TypeStyle]`: The theme's `body` text unless given.
+- `text_style: Optional[Style]`: The theme's `body` text unless given.
 
 ## Constructors
 
@@ -43,6 +43,6 @@ def __init__(
     selection_color: Optional[Color] = None,
     corner_radius: _OptionalFloat64 = None,
     padding: _OptionalFloat64 = None,
-    text_style: Optional[TypeStyle] = None,
+    text_style: Optional[Style] = None,
 )
 ```

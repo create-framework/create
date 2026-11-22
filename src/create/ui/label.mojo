@@ -1,7 +1,7 @@
 """`LabelStyle`: how a label's text looks."""
 
 from create.color import Color
-from .theme import TypeStyle
+from create.render import Style
 
 
 struct LabelStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
@@ -9,13 +9,13 @@ struct LabelStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     theme's `on_surface` colour and `body` text unless given."""
 
     var color: Optional[Color]
-    var text_style: Optional[TypeStyle]
+    var text_style: Optional[Style]
 
     def __init__(
         out self,
         *,
         color: Optional[Color] = None,
-        text_style: Optional[TypeStyle] = None,
+        text_style: Optional[Style] = None,
     ):
         self.color = color
         self.text_style = text_style

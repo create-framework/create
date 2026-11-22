@@ -4,7 +4,7 @@ selection and editing."""
 from create.color import Color
 from create.core import Context
 from create.math._optional_float64 import _OptionalFloat64
-from .theme import TypeStyle
+from create.render import Style
 from .ui import UI
 
 
@@ -37,7 +37,7 @@ struct TextFieldStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The theme's small corner radius unless given."""
     var padding: Optional[Float64]
     """The gap between the field's edges and its text: 12 unless given."""
-    var text_style: Optional[TypeStyle]
+    var text_style: Optional[Style]
     """The theme's `body` text unless given."""
 
     def __init__(
@@ -53,7 +53,7 @@ struct TextFieldStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
         selection_color: Optional[Color] = None,
         corner_radius: _OptionalFloat64 = None,
         padding: _OptionalFloat64 = None,
-        text_style: Optional[TypeStyle] = None,
+        text_style: Optional[Style] = None,
     ):
         self.container_color = container_color
         self.outline_color = outline_color

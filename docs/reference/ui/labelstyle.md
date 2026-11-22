@@ -11,7 +11,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 ## Fields
 
 - `color: Optional[Color]`
-- `text_style: Optional[TypeStyle]`
+- `text_style: Optional[Style]`
 
 ## Constructors
 
@@ -21,6 +21,6 @@ def __init__(
     out self,
     *,
     color: Optional[Color] = None,
-    text_style: Optional[TypeStyle] = None,
+    text_style: Optional[Style] = None,
 )
 ```

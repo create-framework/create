@@ -21,7 +21,7 @@ from .label import LabelStyle
 from .slider import SliderStyle
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor, TextFieldStyle
-from .theme import ColorScheme, FocusRing, Theme, TypeStyle, _readable_on
+from .theme import ColorScheme, FocusRing, Theme, _readable_on
 from .panel import PanelStyle
 from .ui import UI, _Hit, _Styles
 
@@ -480,8 +480,8 @@ struct UILayer[
         self._check_frame()
         var theme = self._ui[]._current_theme()
         var merged = style._over(self._ui[]._current_styles().label)
-        var type = merged.text_style.or_else(theme.typography.body)
-        var place = self._place(rect, type.size * 1.5, "ui.label")
+        var type = _over(merged.text_style, theme.typography.body)
+        var place = self._place(rect, _size(type) * 1.5, "ui.label")
         self._ui[]._recorder.text(
             text,
             _anchor(place, alignment),
@@ -711,7 +711,7 @@ struct UILayer[
             buffer.text = text
         buffer.max_length = max_length
         var now = self._context[].time.elapsed
-        var type = style.text_style.or_else(theme.typography.body)
+        var type = _over(style.text_style, theme.typography.body)
         var text_color = style.text_color.or_else(colors.on_surface)
         var look = _text_style(type, text_color, Align.LEFT)
         var padding = style.padding.or_else(12.0)
@@ -814,7 +814,7 @@ struct UILayer[
                 Rectangle(
                     Point(origin_x + start + width / 2, y),
                     width,
-                    type.size * 1.3,
+                    _size(type) * 1.3,
                 )
             )
         if buffer.text:
@@ -843,8 +843,8 @@ struct UILayer[
             )
             recorder.draw(
                 Line(
-                    Point(x, y - type.size * 0.65),
-                    Point(x, y + type.size * 0.65),
+                    Point(x, y - _size(type) * 0.65),
+                    Point(x, y + _size(type) * 0.65),
                 )
             )
         recorder.end_clip()
@@ -1015,7 +1015,7 @@ struct UILayer[
             text,
             rect.position,
             _text_style(
-                style.text_style.or_else(theme.typography.label),
+                _over(style.text_style, theme.typography.label),
                 content,
                 Align.CENTER,
             ),
@@ -1235,7 +1235,7 @@ struct UILayer[
             label,
             text_left,
             _text_style(
-                style.text_style.or_else(theme.typography.body),
+                _over(style.text_style, theme.typography.body),
                 label_color,
                 Align.LEFT,
             ),
@@ -1419,17 +1419,27 @@ def _anchor(rect: Rectangle, alignment: Align) -> Point:
     return Point(x, y)
 
 
-def _text_style(
-    type: TypeStyle, color: Color, alignment: Align
-) -> _ResolvedStyle:
-    """A style that draws text as `type` says, in `color`."""
-    return _ResolvedStyle(
-        text_color=color,
-        font=type.font,
-        font_size=type.size,
-        font_weight=type.weight,
-        text_alignment=alignment,
-    )
+def _text_style(type: Style, color: Color, alignment: Align) -> _ResolvedStyle:
+    """A style that draws text in `type`'s font, size, weight and slant, in
+    `color`, placed by `alignment`."""
+    var resolved = _ResolvedStyle()
+    resolved.apply(type)
+    resolved.text_color = color
+    resolved.text_alignment = alignment
+    return resolved^
+
+
+def _over(style: Optional[Style], base: Style) -> Style:
+    """`style` layered over `base`, or `base` when there is none: a
+    widget's text style over the theme's kind of text."""
+    if style:
+        return style.value().over(base)
+    return base
+
+
+def _size(type: Style) -> Float64:
+    """The size `type` sets its text in: a fresh frame's when unset."""
+    return type.font_size.or_else(16.0)
 
 
 def _stepped(base: Color, toward: Color, step: Float64) -> Color:

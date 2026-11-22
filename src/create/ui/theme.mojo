@@ -1,6 +1,7 @@
 """`Theme`: the design tokens every widget draws from."""
 
 from create.color import Color
+from create.render import Style
 from create.text import Font, FontWeight
 
 
@@ -266,28 +267,27 @@ struct _Palette(Copyable, ImplicitlyCopyable, Movable):
 
 
 @fieldwise_init
-struct TypeStyle(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """How one kind of text looks: its size, its weight and its font, or the
-    canvas's default font when `font` is `None`."""
-
-    var size: Float64
-    var weight: FontWeight
-    var font: Optional[Font]
-
-
-@fieldwise_init
 struct Typography(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The theme's kinds of text: `title` for headings, `body` for running
-    text and `label` for the text on widgets, such as a button's."""
+    text and `label` for the text on widgets, such as a button's. Each is a
+    `Style` setting the text's size and weight, and its font where it has
+    one of its own; its colour comes from where the text is drawn.
 
-    var title: TypeStyle
-    var body: TypeStyle
-    var label: TypeStyle
+    ```mojo
+    # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
+    var title = LabelStyle(text_style=ui.theme().typography.title)
+    ui.label("Settings", Rectangle((0, 0), 200, 32), style=title)
+    ```
+    """
+
+    var title: Style
+    var body: Style
+    var label: Style
 
     def __init__(out self):
-        self.title = TypeStyle(22, FontWeight.REGULAR, None)
-        self.body = TypeStyle(16, FontWeight.REGULAR, None)
-        self.label = TypeStyle(14, FontWeight.MEDIUM, None)
+        self.title = Style(font_size=22, font_weight=FontWeight.REGULAR)
+        self.body = Style(font_size=16, font_weight=FontWeight.REGULAR)
+        self.label = Style(font_size=14, font_weight=FontWeight.MEDIUM)
 
 
 @fieldwise_init

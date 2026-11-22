@@ -16,7 +16,6 @@ from .theme import (
     Theme,
     ColorScheme,
     Typography,
-    TypeStyle,
     CornerRadii,
     Spacing,
     StateLayers,

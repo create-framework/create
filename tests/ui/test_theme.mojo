@@ -1,9 +1,10 @@
 """`Theme`: the light and dark schemes, and colours given to replace their
 own."""
-from std.testing import TestSuite, assert_equal, assert_true
+from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
 from create.ui.theme import _contrast
+from create.ui.layer import _over
 
 
 def _pairs(c: ColorScheme) -> List[Tuple[Color, Color]]:
@@ -171,6 +172,23 @@ def test_every_built_in_theme_has_a_control_height_of_40() raises -> None:
 
 def test_a_theme_prints_its_control_height() raises -> None:
     assert_true("control_height=40.0" in String(Theme.light()))
+
+
+def test_the_kinds_of_text_are_styles() raises -> None:
+    var typography = Theme.light().typography
+    assert_equal(typography.title.font_size.value(), 22.0)
+    assert_equal(typography.body.font_size.value(), 16.0)
+    assert_equal(typography.label.font_size.value(), 14.0)
+    assert_equal(typography.label.font_weight.value(), FontWeight.MEDIUM)
+    assert_false(Bool(typography.body.text_color))  # set where it is drawn
+
+
+def test_a_widgets_text_style_keeps_the_rest_of_the_kind() raises -> None:
+    var label = Theme.light().typography.label
+    var bigger = _over(Style(font_size=30), label)
+    assert_equal(bigger.font_size.value(), 30.0)
+    assert_equal(bigger.font_weight.value(), FontWeight.MEDIUM)
+    assert_equal(String(_over(None, label)), String(label))
 
 
 def main() raises:

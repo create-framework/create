@@ -104,7 +104,7 @@ struct TypingTest(Program):
                     caret_color=TYPED,
                     selection_color=SELECTION,
                     padding=0,
-                    text_style=TypeStyle(SIZE, FontWeight.REGULAR, None),
+                    text_style=Style(font_size=SIZE),
                 ),
                 take_focus=not finished,
                 disabled=finished,
