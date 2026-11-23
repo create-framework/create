@@ -1,76 +1,104 @@
-"""A program's own type drawn with `canvas.draw`, and the style's corner
-radius.
+"""A program's own type drawn with `canvas.draw`, like any shape.
 
-Each `Button` is a rounded plate with a round icon: `Drawable`, so the canvas
-draws it as its parts in the current style. It lights up while the mouse is
-inside its plate, and because the plate carries its own `corner_radius`, a
-pointer in a cut-away corner leaves it dark: what is drawn is what
-`contains` tests.
-
-Below, plain `canvas.rectangle` calls are rounded by `canvas.corner_radius`,
-the style's radius for shapes built from numbers; the last names its own.
+`Rocket` is built from shapes, a `Capsule`, a nose and two fins, and is
+`Drawable`: its `draw_to` draws those parts, and nothing else. It sets no
+colour, so each rocket below takes the style around its `canvas.draw`, as a
+`Circle` would: a fill, an outline, or both. It knows nothing of where it is
+drawn either: each is drawn around the origin, inside a transform that places
+it and rocks it.
 """
 
 from create import *
 
 comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
-comptime OUTLINE = COLORS.outline
-comptime IDLE = COLORS.surface_container_high
-comptime HOVERED = Color.MAGENTA
-comptime PLATE = Color.CYAN
 comptime CAPTION = COLORS.on_surface_variant
+comptime TITLE = COLORS.on_surface
+comptime WINDOW = COLORS.on_surface
+
+comptime SPACING = 260.0
+"""How far apart the rockets stand, in design units."""
+comptime BOB = 12.0
+"""How far each rocket rises and falls, in design units."""
+comptime TILT = 0.15
+"""How far each rocket rocks either way, in radians."""
 
 
-@fieldwise_init
-struct Button(Copyable, Drawable, Movable):
-    var plate: Rectangle
-    var icon: Circle
+struct Rocket(Copyable, Drawable, Movable):
+    var body: Capsule
+    var nose: Triangle
+    var left_fin: Triangle
+    var right_fin: Triangle
+
+    def __init__(out self):
+        self.body = Capsule((0, -60), (0, 20), 30)
+        self.nose = Triangle((-30, 20), (30, 20), (0, 100))
+        self.left_fin = Triangle((-30, -45), (-30, -100), (-70, -90))
+        self.right_fin = Triangle((30, -45), (30, -100), (70, -90))
 
     def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.plate)
-        target.draw(self.icon)
-
-
-def button(position: Point) -> Button:
-    return Button(
-        Rectangle(position, 220, 90, corner_radius=36),
-        Circle(position - Vector(65, 0), 22),
-    )
+        # Each part is a shape of its own, all in the same style: so an
+        # outline goes round every part, even where two overlap. The fins'
+        # inner edges line up with the body's sides, so a centred outline
+        # draws the edge they share as one line.
+        target.draw(self.nose)
+        target.draw(self.left_fin)
+        target.draw(self.right_fin)
+        target.draw(self.body)
 
 
 @fieldwise_init
 struct App(Program):
-    var buttons: List[Button]
+    var rocket: Rocket
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        return App([button((-260, 110)), button((0, 110)), button((260, 110))])
+        return App(Rocket())
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(BACKGROUND)
-        canvas.stroke(OUTLINE, thickness=3)
 
-        for b in self.buttons:
-            var hovered = b.plate.contains(context.mouse.position)
-            canvas.fill(HOVERED if hovered else IDLE)
-            canvas.draw(b)
-
-        with canvas.style(fill=PLATE):
-            canvas.corner_radius(8)
-            canvas.rectangle((-300, -110), 120, 80)
-            canvas.rectangle((-150, -110), 120, 80)
-            canvas.corner_radius(30)
-            canvas.rectangle((0, -110), 120, 80)
-            canvas.rectangle((150, -110), 120, 80)
-            canvas.rectangle((300, -110), 120, 80, corner_radius=0)
-
-        with canvas.style(text_color=CAPTION, font_size=18):
-            canvas.text("canvas.draw(button)", (0, 200))
-            canvas.text(
-                "canvas.corner_radius(8), then (30); the last names 0",
-                (0, -190),
+        for i in range(3):
+            # Each rocket rocks a little out of step with the last.
+            var phase = context.time.elapsed * 2.0 + Float64(i) * 1.3
+            var place = Transform(
+                translation=Vector(Float64(i - 1) * SPACING, BOB * sin(phase)),
+                rotation=TILT * sin(phase * 0.7),
             )
+            with canvas.transform(place):
+                if i == 0:
+                    with canvas.style(fill=Color.RED, stroke_enabled=False):
+                        canvas.draw(self.rocket)
+                elif i == 1:
+                    with canvas.style(
+                        fill_enabled=False,
+                        stroke=Color.CYAN,
+                        stroke_thickness=4,
+                        stroke_alignment=StrokeAlign.CENTER,
+                    ):
+                        canvas.draw(self.rocket)
+                else:
+                    with canvas.style(
+                        fill=Color.YELLOW,
+                        stroke=BACKGROUND,
+                        stroke_thickness=4,
+                        stroke_alignment=StrokeAlign.CENTER,
+                    ):
+                        canvas.draw(self.rocket)
+
+                # A part in a colour of its own is drawn on its own, after.
+                with canvas.style(fill=WINDOW, stroke_enabled=False):
+                    canvas.circle((0, 5), 12)
+
+        with canvas.style(
+            text_color=TITLE, font_size=30, text_alignment=Align.TOP
+        ):
+            canvas.text("canvas.draw(rocket)", (0, canvas.top() - 36))
+        with canvas.style(text_color=CAPTION, font_size=18):
+            var y = canvas.bottom() + 60
+            canvas.text("a fill", (-SPACING, y))
+            canvas.text("an outline", (0, y))
+            canvas.text("both", (SPACING, y))
 
 
 def main() raises:
