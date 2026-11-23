@@ -6,11 +6,9 @@ mouse.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime RED = Color(226, 46, 56)
-comptime ROSE = Color(201, 140, 150)
-comptime INDIGO = Color(98, 104, 168)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
 
 
 @fieldwise_init
@@ -36,7 +34,7 @@ struct Pixels(Program):
 
         var t = context.time.elapsed
         canvas.stroke_enabled(False)
-        var colors = [RED, ROSE, INDIGO]
+        var colors = [Color.RED, Color.GREEN, Color.BLUE]
         for i in range(3):
             var angle = t * (0.7 + 0.3 * Float64(i)) + Float64(i) * 2.1
             canvas.fill(colors[i])

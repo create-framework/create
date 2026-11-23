@@ -9,15 +9,16 @@ C clears the layer.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime HINT = Color(176, 172, 162)
-comptime ORBIT = Color(62, 62, 68)
-comptime PAINT_FROM = Color(98, 104, 168)
-comptime PAINT_TO = Color(201, 140, 150)
-comptime BADGE_LIGHT = Color(236, 196, 202)
-comptime BADGE_DARK = Color(170, 90, 104)
-comptime BADGE_RIM = Color(90, 40, 50)
-comptime BADGE_TEXT = Color(60, 20, 30)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime HINT = COLORS.on_surface_variant
+comptime ORBIT = COLORS.outline_variant
+comptime PAINT_FROM = Color.CYAN
+comptime PAINT_TO = Color.MAGENTA
+comptime BADGE_LIGHT = Color.YELLOW
+comptime BADGE_DARK = Color.RED
+comptime BADGE_RIM = COLORS.on_surface
+comptime BADGE_TEXT = COLORS.background
 
 comptime BADGE_SIZE = 80
 

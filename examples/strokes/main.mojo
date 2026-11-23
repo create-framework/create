@@ -7,11 +7,13 @@ which close the notches between segments; press Space to clear.
 
 from create import *
 
-comptime BACKGROUND = Color(240, 236, 222)
-comptime INK = Color(40, 40, 44)
-comptime GUIDE = Color(226, 46, 56)
-comptime STROKE = Color(98, 104, 168, 170)
-comptime FILL = Color(201, 140, 150)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime GUIDE = COLORS.on_surface
+comptime STROKE = Color.CYAN.with_alpha(170)
+comptime FILL = Color.MAGENTA
+comptime INK = Color.YELLOW
 
 comptime COLUMN = 400.0
 """How far apart the three columns stand."""
@@ -59,7 +61,7 @@ struct App(Program):
                 )
 
         canvas.background(BACKGROUND)
-        canvas.text_color(INK)
+        canvas.text_color(TEXT)
         canvas.font_size(18)
 
         # Caps: the same line and arc ended three ways. The guide runs

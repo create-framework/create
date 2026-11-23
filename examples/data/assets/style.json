@@ -1,10 +1,10 @@
 {
   "title": "High scores",
   "colors": {
-    "background": "#28282c",
-    "bar": "#6268a8",
-    "best": "#e22e38",
-    "text": "#f0ecde"
+    "background": "#111318",
+    "bar": "#00ffff",
+    "best": "#ff00ff",
+    "text": "#e2e4ea"
   },
   "show_level": true
 }

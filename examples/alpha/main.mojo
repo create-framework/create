@@ -8,13 +8,11 @@ every part of a render call at once.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime PANEL = Color(30, 30, 33)
-comptime TEXT = Color(240, 236, 222)
-comptime HINT = Color(176, 172, 162)
-comptime RED = Color(226, 46, 56)
-comptime ROSE = Color(201, 140, 150)
-comptime INDIGO = Color(98, 104, 168)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime PANEL = COLORS.surface_container
+comptime TEXT = COLORS.on_surface
+comptime HINT = COLORS.on_surface_variant
 comptime CARD = Point(200.0, 20.0)
 
 
@@ -36,11 +34,11 @@ struct App(Program):
         canvas.rectangle(CARD, 300.0, 240.0, corner_radius=16)
 
         # Overlapping translucent colours mix where they cross.
-        canvas.fill(RED.with_alpha(128))
+        canvas.fill(Color.RED.with_alpha(128))
         canvas.circle((-225.0, -5.0), 60.0)
-        canvas.fill(ROSE.with_alpha(128))
+        canvas.fill(Color.GREEN.with_alpha(128))
         canvas.circle((-145.0, -5.0), 60.0)
-        canvas.fill(INDIGO.with_alpha(128))
+        canvas.fill(Color.BLUE.with_alpha(128))
         canvas.circle((-185.0, 65.0), 60.0)
 
         # One value fades fill, stroke, text and image alike. Each shape
@@ -48,7 +46,7 @@ struct App(Program):
         var opacity = 0.5 + 0.5 * sin(context.time.elapsed * 1.5)
         with canvas.style(opacity=opacity):
             with canvas.style(
-                fill=ROSE,
+                fill=Color.MAGENTA,
                 stroke=TEXT,
                 stroke_thickness=6,
             ):

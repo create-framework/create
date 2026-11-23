@@ -15,6 +15,9 @@ Space deals a new poster.
 
 from create import *
 
+comptime COLORS = ColorScheme.dark()
+comptime PAPER = COLORS.background
+comptime INK = COLORS.on_surface
 comptime WIDTH = 600
 comptime HEIGHT = 840
 comptime MARGIN = 40.0
@@ -51,13 +54,14 @@ def weights() -> List[FontWeight]:
     ]
 
 
-def palettes() -> List[List[Color]]:
-    """Paper, ink and accent."""
+def accents() -> List[Color]:
     return [
-        [Color(240, 236, 222), Color(40, 40, 44), Color(226, 46, 56)],
-        [Color(40, 40, 44), Color(240, 236, 222), Color(201, 140, 150)],
-        [Color(98, 104, 168), Color(240, 236, 222), Color(226, 46, 56)],
-        [Color(201, 140, 150), Color(40, 40, 44), Color(240, 236, 222)],
+        Color.RED,
+        Color.YELLOW,
+        Color.GREEN,
+        Color.CYAN,
+        Color.BLUE,
+        Color.MAGENTA,
     ]
 
 
@@ -79,13 +83,10 @@ struct Poster(Program):
             self.seed += 1
 
         var random = Random(UInt64(self.seed))
-        var all_palettes = palettes()
-        var palette = all_palettes[random.int(0, len(all_palettes))].copy()
-        var paper = palette[0]
-        var ink = palette[1]
-        var accent = palette[2]
+        var all_accents = accents()
+        var accent = all_accents[random.int(0, len(all_accents))]
 
-        canvas.background(paper)
+        canvas.background(PAPER)
 
         # A translucent accent shape behind the words.
         with canvas.style(fill=accent.with_alpha(110), stroke_enabled=False):
@@ -116,7 +117,7 @@ struct Poster(Program):
                     canvas.font(self.mono)
                 canvas.font_weight(all_weights[random.int(0, len(all_weights))])
                 canvas.font_italic(random.float() < 0.3)
-                canvas.text_color(accent if random.float() < 0.25 else ink)
+                canvas.text_color(accent if random.float() < 0.25 else INK)
 
                 # Measured once, then scaled: text width grows in proportion
                 # to the size, so one measurement says what size fills the
@@ -141,7 +142,7 @@ struct Poster(Program):
         with canvas.style(
             font=self.mono,
             font_size=16,
-            text_color=ink,
+            text_color=INK,
             opacity=0.6,
             text_alignment=Align.BOTTOM,
         ):

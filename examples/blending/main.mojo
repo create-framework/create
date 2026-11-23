@@ -13,11 +13,9 @@ Space cycles the modes.
 from create import *
 
 comptime BARS = 8
-comptime TEXT = Color(240, 236, 222)
-comptime PANEL = Color(0, 0, 0, 180)
-comptime RED = Color(226, 46, 56)
-comptime ROSE = Color(201, 140, 150)
-comptime INDIGO = Color(98, 104, 168)
+comptime COLORS = ColorScheme.dark()
+comptime TEXT = COLORS.on_surface
+comptime PANEL = COLORS.background.with_alpha(180)
 
 
 def next_mode(mode: BlendMode) -> BlendMode:
@@ -51,6 +49,7 @@ struct App(Program):
         # paints over it. Bars that merely abutted would each antialias their
         # shared edge against the clear colour underneath, which shows as a
         # thin light seam whenever the window scale puts an edge mid-pixel.
+        canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
         var bar_w = (canvas.right() - canvas.left()) / Float64(BARS)
         for i in range(BARS):
@@ -68,9 +67,13 @@ struct App(Program):
         # mode: the guard puts everything after it back to NORMAL.
         var t = context.time.elapsed
         var center_x = 0.55 * canvas.right() * sin(t * 0.5)
-        # Not pure primaries: with every channel at 0 or 255, SCREEN and ADD
-        # give identical results.
-        var colors = [RED, ROSE, INDIGO]
+        # The primaries a quarter of the way to white: with every channel at
+        # 0 or 255, SCREEN and ADD give identical results.
+        var colors = [
+            Color.RED.lerp(Color.WHITE, 0.25),
+            Color.GREEN.lerp(Color.WHITE, 0.25),
+            Color.BLUE.lerp(Color.WHITE, 0.25),
+        ]
         with canvas.style(blend_mode=self.mode):
             for i in range(3):
                 var angle = t * 0.8 + Float64(i) * 2.0 * PI / 3.0

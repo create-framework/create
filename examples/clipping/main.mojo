@@ -8,12 +8,13 @@ from create import *
 comptime LINES = 24
 comptime LINE_HEIGHT = 28.0
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime PANEL = Color(30, 30, 33)
-comptime TEXT = Color(240, 236, 222)
-comptime STRIPE = Color(98, 104, 168)
-comptime OTHER_STRIPE = Color(201, 140, 150)
-comptime FOG = Color(0, 0, 0, 140)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime PANEL = COLORS.surface_container
+comptime TEXT = COLORS.on_surface
+comptime STRIPE = Color.CYAN
+comptime OTHER_STRIPE = Color.MAGENTA
+comptime FOG = COLORS.background.with_alpha(140)
 
 
 @fieldwise_init

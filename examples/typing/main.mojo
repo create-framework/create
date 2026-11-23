@@ -8,11 +8,12 @@ Type the phrase shown; Enter moves on once it is right.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime HINT = Color(176, 172, 162)
-comptime TYPED = Color(240, 236, 222)
-comptime MISTAKE = Color(226, 46, 56)
-comptime SELECTION = Color(70, 90, 140)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime HINT = COLORS.on_surface_variant
+comptime TYPED = COLORS.on_surface
+comptime MISTAKE = Color.RED
+comptime SELECTION = COLORS.primary_container
 comptime SIZE = 28.0
 
 

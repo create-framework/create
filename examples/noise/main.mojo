@@ -7,11 +7,12 @@ from create import *
 comptime COLUMNS = 80
 comptime ROWS = 60
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime WATER = Color(44, 46, 84)
-comptime GRASS = Color(240, 236, 222)
-comptime WANDERER = Color(226, 46, 56)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime WATER = Color.BLUE
+comptime GRASS = Color.GREEN
+comptime WANDERER = Color.MAGENTA
 
 
 @fieldwise_init

@@ -6,14 +6,14 @@ Drag the ball into the pac-man's mouth and let go as it shuts.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-"""Light enough for the pac-man's shadow to show against it."""
-comptime TEXT = Color(240, 236, 222)
-comptime PACMAN_BODY = Color(250, 200, 40)
-comptime HOVERED = Color(240, 236, 222)
-comptime HIT = Color(226, 46, 56)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime PACMAN_BODY = Color.YELLOW
+comptime HOVERED = COLORS.on_surface
+comptime HIT = Color.RED
 comptime SHADOW = Color(0, 0, 0, 170)
-comptime BALL = Color(98, 104, 168)
+comptime BALL = Color.BLUE
 
 comptime PIE = Point(-260.0, -20.0)
 comptime PIE_RADIUS = 190.0
@@ -36,11 +36,11 @@ def shares() -> List[Float64]:
 
 def slice_color(i: Int) -> Color:
     var colors: List[Color] = [
-        Color(98, 104, 168),
-        Color(201, 140, 150),
-        Color(150, 154, 206),
-        Color(240, 236, 222),
-        Color(226, 46, 56),
+        Color.BLUE,
+        Color.MAGENTA,
+        Color.CYAN,
+        Color.GREEN,
+        Color.YELLOW,
     ]
     return colors[i % len(colors)]
 

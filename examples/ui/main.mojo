@@ -28,7 +28,7 @@ struct Menu(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Menu:
-        return Menu(UI(), ColorScheme.light(), "", 0.6, True, False, "")
+        return Menu(UI(), ColorScheme.dark(), "", 0.6, True, True, "")
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         if (

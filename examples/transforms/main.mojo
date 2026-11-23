@@ -7,15 +7,16 @@ drawn in.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime SUN = Color(230, 180, 20)
-comptime HOVERED_SUN = Color(226, 46, 56)
-comptime ORBIT = Color(62, 62, 68)
-comptime PLANET = Color(98, 104, 168)
-comptime MOON = Color(176, 172, 162)
-comptime HUB = Color(62, 62, 68)
-comptime COOL = Color(98, 104, 168)
-comptime WARM = Color(201, 140, 150)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime SUN = Color.YELLOW
+comptime HOVERED_SUN = Color.RED
+comptime ORBIT = COLORS.outline_variant
+comptime PLANET = Color.BLUE
+comptime MOON = COLORS.on_surface_variant
+comptime HUB = COLORS.outline_variant
+comptime COOL = Color.CYAN
+comptime WARM = Color.MAGENTA
 
 
 @fieldwise_init

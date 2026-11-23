@@ -9,11 +9,12 @@ itself.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime SHAPE = Color(98, 104, 168)
-comptime HIT = Color(226, 46, 56)
-comptime GUIDE = Color(176, 172, 162)
-comptime TEXT = Color(240, 236, 222)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime SHAPE = Color.CYAN
+comptime HIT = Color.RED
+comptime GUIDE = COLORS.on_surface_variant
+comptime TEXT = COLORS.on_surface
 
 
 def reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point):
