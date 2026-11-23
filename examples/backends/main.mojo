@@ -6,10 +6,10 @@ they could disagree.
     pixi run example backends gpu fullscreen  # letterboxed on a wide display
 
 The two frames should look the same, apart from the GPU's multisampled
-edges. The scene has filled and stroked rectangles and circles, a
-translucent fill under a stroke, a stroke wider than its shape, a turning
-rectangle, a diagonal line, text at each alignment and one image at two
-sizes. In full screen it also has the letterbox bars of `FIT`: the 4:3
+edges. Each card holds one case: a filled and stroked shape, translucent
+fills under a translucent stroke, a turning square whose stroke follows the
+turn, a fan of thin lines, a gradient inside a sweeping arc, and an image.
+In full screen the scene also has the letterbox bars of `FIT`: the 4:3
 design keeps its size, so on a 16:9 display the bars show from the first
 frame. A cycles the antialiasing level, to compare the edges at each, and
 Escape quits.
@@ -21,26 +21,44 @@ from create import *
 
 comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
+comptime CARD = COLORS.surface_container
 comptime TEXT = COLORS.on_surface
-comptime OUTLINE = COLORS.background
-comptime PANEL = COLORS.surface_container
+comptime CAPTION = COLORS.on_surface_variant
+comptime OUTLINE = COLORS.on_surface
+
+comptime GRID = Rectangle((0, -30), 720, 440)
+"""The area the cards are laid out in, below the header."""
+comptime GAP = 20.0
+comptime TURN_SPEED = 0.6
+"""How fast the square turns and the arc sweeps, in radians per second."""
+
+
+def captions() -> List[String]:
+    return [
+        "Fill and stroke",
+        "Translucency",
+        "Rotation",
+        "Thin lines",
+        "Gradient and arc",
+        "Image",
+    ]
 
 
 @fieldwise_init
 struct App(Program):
-    var angle: Float64
+    var backend: RenderBackend
+    """The backend `run` was given: `from_arguments` reads the same command
+    line in `main` and here, so the two agree."""
     var logo: Image
-    var fps: Int
+    var angle: Float64
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        # Twice, below, from one interned image and so one GL upload.
-        var logo = Image.load("../../assets/logo/png/logo.png")
-        return App(0.0, logo^, 0)
+        var logo = Image.load("../../assets/logo/png/logo-cutout.png")
+        return App(RenderBackend.from_arguments(), logo^, 0.0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.angle += context.time.delta
-        self.fps = Int(context.frame_rate())
+        self.angle += TURN_SPEED * context.time.delta
         if context.keyboard.pressed(Key.ESCAPE):
             context.quit()
         if context.keyboard.pressed(Key.A):
@@ -52,109 +70,86 @@ struct App(Program):
 
         canvas.background(BACKGROUND)
 
-        # A plain filled rectangle and a stroked one, side by side.
-        with canvas.style(fill=Color.BLUE, stroke_enabled=False):
-            canvas.rectangle((-260, 180), 160, 100)
+        var cards = List[Rectangle]()
+        for row in GRID.rows(2, gap=GAP):
+            for card in row.columns(3, gap=GAP):
+                cards.append(card)
+        var names = captions()
+        with canvas.style(fill=CARD, stroke_enabled=False):
+            for card in cards:
+                canvas.rectangle(
+                    card.center(), card.width, card.height, corner_radius=16
+                )
+        with canvas.style(text_color=CAPTION, font_size=16):
+            for i in range(len(cards)):
+                canvas.text(
+                    names[i], (cards[i].center().x, cards[i].bottom() + 24)
+                )
 
-        with canvas.style(
-            fill=Color.MAGENTA,
-            stroke=OUTLINE,
-            stroke_thickness=6,
-        ):
-            canvas.rectangle((-60, 180), 160, 100)
+        # Each case sits a little above its card's centre, clear of the
+        # caption.
+        var centers = List[Point]()
+        for card in cards:
+            centers.append(card.center() + Vector(0, 14))
 
-        # A stroke wider than the shape: all stroke, no interior.
-        with canvas.style(
-            fill=Color.RED,
-            stroke=Color.YELLOW,
-            stroke_thickness=30,
-        ):
-            canvas.rectangle((160, 180), 40, 40)
+        # Fill and stroke.
+        with canvas.style(fill=Color.RED, stroke=OUTLINE, stroke_thickness=6):
+            canvas.rectangle(centers[0], 96, 96, corner_radius=14)
 
-        # Translucent over the blue rectangle: the case a double-blended fill
-        # under its own stroke would get visibly wrong.
-        with canvas.style(
-            fill=Color.MAGENTA.with_alpha(0x80),
-            stroke=Color.YELLOW.with_alpha(0x80),
-            stroke_thickness=8,
-        ):
-            canvas.circle((-260, 180), 70)
+        # Translucent fills under a translucent stroke: where a fill blended
+        # twice under its own stroke would show.
+        with canvas.style(stroke=OUTLINE.with_alpha(0x99), stroke_thickness=6):
+            canvas.fill(Color.CYAN.with_alpha(0x99))
+            canvas.circle(centers[1] - Vector(24, 0), 44)
+            canvas.fill(Color.MAGENTA.with_alpha(0x99))
+            canvas.circle(centers[1] + Vector(24, 0), 44)
 
-        with canvas.style(fill=Color.RED, stroke_enabled=False):
-            canvas.circle((0, 0), 90)
-
-        with canvas.style(
-            fill=PANEL,
-            stroke=Color.GREEN,
-            stroke_thickness=10,
-        ):
-            canvas.circle((220, 0), 80)
-
-        # A rotating rectangle: the transform is baked per vertex, so a rotated
-        # stroke ring has to follow the shape rather than stay axis-aligned.
+        # A turning square: the transform is baked per vertex, so the stroke
+        # has to follow the shape rather than stay axis-aligned.
         with canvas.transform(
-            Transform(translation=Vector(-230, 0), rotation=self.angle)
+            Transform(translation=Vector(centers[2]), rotation=self.angle)
         ):
             with canvas.style(
-                fill=Color.YELLOW,
-                stroke=OUTLINE,
-                stroke_thickness=4,
+                fill=Color.YELLOW, stroke=OUTLINE, stroke_thickness=4
             ):
-                canvas.rectangle((0, 0), 120, 120)
+                canvas.rectangle((0, 0), 84, 84, corner_radius=10)
 
-        with canvas.style(stroke=Color.CYAN, stroke_thickness=5):
-            canvas.line((-340, -140), (340, -260))
+        # A fan of hairlines, where edge smoothing differs most.
+        var corner = centers[3] - Vector(60, 60)
+        with canvas.style(stroke=Color.GREEN, stroke_thickness=1.5):
+            for i in range(9):
+                var direction = Vector.from_angle(Float64(i) * PI / 16.0, 120)
+                canvas.line(corner, corner + direction)
 
+        # A radial gradient, lit from the top left, inside a sweeping arc.
+        canvas.fill(
+            Gradient.radial(Color.CYAN, Color.BLUE, center=(-0.35, 0.35))
+        )
+        canvas.stroke_enabled(False)
+        canvas.circle(centers[4], 46)
         with canvas.style(
-            fill=Color.CYAN,
-            stroke=Color.YELLOW,
-            stroke_thickness=3,
+            stroke=Color.CYAN, stroke_thickness=6, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.triangle((-140, -180), (40, -180), (-50, -30))
+            canvas.arc(centers[4], 66, self.angle * 1.5, PI)
 
-        # The same image at two sizes: one texture, one upload and (since
-        # the two renders are adjacent) one extra batch for the pair.
-        # Text before the images: solids and glyphs share the atlas binding
-        # and so share one batch, which the image texture then breaks.
-        with canvas.style(
-            text_color=TEXT,
-            font_size=28,
-            text_alignment=Align.CENTER,
-        ):
-            canvas.text("Centre / middle", (0, 0))
+        canvas.image(self.logo, centers[5], 150, 150)
 
-        with canvas.style(
-            text_color=Color.MAGENTA,
-            font_size=20,
-            text_alignment=Align.TOP_LEFT,
-        ):
-            canvas.text("Left / top", (canvas.left() + 12, canvas.top() - 12))
-
-        with canvas.style(
-            text_color=TEXT.with_alpha(0xA0),
-            font_size=20,
-            text_alignment=Align.BOTTOM_RIGHT,
-        ):
+        var backend = "GPU" if self.backend == RenderBackend.GPU else "CPU"
+        with canvas.style(text_color=TEXT, font_size=20):
+            canvas.text_alignment(Align.TOP_LEFT)
             canvas.text(
-                "Right / bottom — translucent",
-                (canvas.right() - 12, canvas.bottom() + 12),
+                "Render backend: "
+                + backend
+                + "\nFPS: "
+                + String(Int(context.frame_rate())),
+                (canvas.left() + 20, canvas.top() - 20),
             )
-
-        canvas.image(self.logo, (250, -170), 140, 140)
-        canvas.image(self.logo, (90, -230), 70, 70)
-
         with canvas.style(
-            text_color=TEXT,
-            font_size=20,
-            text_alignment=Align.TOP_RIGHT,
+            text_color=CAPTION, font_size=16, text_alignment=Align.TOP_RIGHT
         ):
             canvas.text(
-                "FPS: " + String(self.fps),
-                (canvas.right() - 12, canvas.top() - 12),
-            )
-            canvas.text(
-                String(canvas.antialiasing()) + " (A to cycle)",
-                (canvas.right() - 12, canvas.top() - 40),
+                String(canvas.antialiasing()) + "\nPress A to cycle",
+                (canvas.right() - 20, canvas.top() - 20),
             )
 
 
