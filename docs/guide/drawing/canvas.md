@@ -61,18 +61,30 @@ A program's own type is drawn the same way, by conforming to `Drawable` and draw
 
 ```mojo
 # From examples/drawables:
-@fieldwise_init
-struct Button(Copyable, Drawable, Movable):
-    var plate: Rectangle
-    var icon: Circle
+struct Rocket(Copyable, Drawable, Movable):
+    var body: Capsule
+    var nose: Triangle
+    var left_fin: Triangle
+    var right_fin: Triangle
+
+    def __init__(out self):
+        self.body = Capsule((0, -60), (0, 20), 30)
+        self.nose = Triangle((-30, 20), (30, 20), (0, 100))
+        self.left_fin = Triangle((-30, -45), (-30, -100), (-70, -90))
+        self.right_fin = Triangle((30, -45), (30, -100), (70, -90))
 
     def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.plate)
-        target.draw(self.icon)
+        target.draw(self.nose)
+        target.draw(self.left_fin)
+        target.draw(self.right_fin)
+        target.draw(self.body)
 ```
 
-`canvas.draw(button)` then draws both parts. Style comes from the canvas, not the parts, so set the
-fill before drawing it. See [examples/drawables](../../../examples/drawables/main.mojo).
+`canvas.draw(rocket)` then draws every part. `draw_to` only draws shapes; it sets no style, so the
+whole rocket takes the style and transform current at the `canvas.draw` call, as a single shape
+would. Each part is still a shape of its own: an outline goes round every part, even where two
+overlap, and so does a shadow. To give one part a colour of its own, such as a window, draw it with
+a separate call. See [examples/drawables](../../../examples/drawables/main.mojo).
 
 `Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts.
 `DrawTarget` is what `draw_to` draws into, which is the canvas. To keep drawables of different types
