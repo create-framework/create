@@ -10,6 +10,7 @@ comptime GRAB_RADIUS = 18.0
 """How close, in design units, a press must land to pick up a handle."""
 
 comptime SPEED = 260.0
+"""How fast the dot travels along the curve, in design units per second."""
 
 comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
@@ -17,10 +18,11 @@ comptime TEXT = COLORS.on_surface
 comptime CONTROL_LINE = COLORS.outline_variant
 comptime CURVE = Color.CYAN
 comptime SHADOW = Color(0, 0, 0, 160)
-comptime DOT = Color.RED
+comptime DOT = Color.GREEN
 comptime ENDPOINT = COLORS.on_surface
 comptime CONTROL = COLORS.on_surface_variant
-"""How fast the dot travels along the curve, in design units per second."""
+comptime RING = 4.0
+"""The background-coloured ring around the dot and the handles."""
 
 
 @fieldwise_init
@@ -93,14 +95,21 @@ struct App(Program):
         ):
             canvas.draw(curve)
 
-        canvas.stroke_enabled(False)
-        canvas.fill(DOT)
-        canvas.circle(dot, 13)
-
-        for i in range(len(self.handles)):
-            var endpoint = i == 0 or i == 3
-            canvas.fill(ENDPOINT if endpoint or i == self.dragging else CONTROL)
-            canvas.circle(self.handles[i], 10 if endpoint else 8)
+        # A ring of the background colour parts the dot and the handles from
+        # the curve, so their colours never touch the curve's along an edge.
+        with canvas.style(
+            stroke=BACKGROUND,
+            stroke_thickness=RING,
+            stroke_alignment=StrokeAlign.OUTSIDE,
+        ):
+            canvas.fill(DOT)
+            canvas.circle(dot, 13)
+            for i in range(len(self.handles)):
+                var endpoint = i == 0 or i == 3
+                canvas.fill(
+                    ENDPOINT if endpoint or i == self.dragging else CONTROL
+                )
+                canvas.circle(self.handles[i], 10 if endpoint else 8)
 
         canvas.text_color(TEXT)
         canvas.font_size(30)
