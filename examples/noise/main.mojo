@@ -12,7 +12,6 @@ comptime BACKGROUND = COLORS.background
 comptime TEXT = COLORS.on_surface
 comptime WATER = Color.BLUE
 comptime GRASS = Color.GREEN
-comptime WANDERER = Color.MAGENTA
 
 
 @fieldwise_init
@@ -25,17 +24,9 @@ struct App(Program):
     call instead, which sets how fast the field evolves.
     """
 
-    var wobble: Noise
-    """A 1D field read with the elapsed time: the circle's x position. Its
-    feature size is in seconds, so the circle changes course about every
-    two."""
-
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        return App(
-            terrain=Noise(7, feature_size=150),
-            wobble=Noise(3, feature_size=2),
-        )
+        return App(Noise(7, feature_size=150))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(BACKGROUND)
@@ -57,19 +48,6 @@ struct App(Program):
                 # of the range across the whole gradient.
                 canvas.fill(WATER.lerp(GRASS, smoothstep(0.3, 0.7, height)))
                 canvas.rectangle(center, cell_w, cell_h)
-
-        # The same range as Random.float(), so lerp turns it into a position.
-        var x = lerp(canvas.left() + 40, canvas.right() - 40, self.wobble.at(t))
-        canvas.fill(WANDERER)
-        canvas.stroke(TEXT, thickness=3)
-        canvas.circle((x, 0), 24)
-
-        canvas.text_color(TEXT)
-        canvas.font_size(16)
-        canvas.text_alignment(Align.BOTTOM_LEFT)
-        canvas.text(
-            String(self.terrain), (canvas.left() + 12, canvas.bottom() + 12)
-        )
 
 
 def main() raises:
