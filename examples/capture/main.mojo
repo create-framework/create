@@ -27,11 +27,12 @@ comptime DESIGN_W = 800
 comptime DESIGN_H = 500
 comptime RECORD_SECONDS = 10.0
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime SQUARE = Color(98, 104, 168)
-comptime DISC = Color(201, 140, 150)
-comptime RECORDING = Color(226, 46, 56)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime SQUARE = Color.CYAN
+comptime DISC = Color.MAGENTA
+comptime RECORDING = Color.RED
 
 
 @fieldwise_init

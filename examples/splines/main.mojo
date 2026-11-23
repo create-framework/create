@@ -12,12 +12,13 @@ comptime GRAB_RADIUS = 18.0
 
 comptime SPEED = 260.0
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime CURVE = Color(98, 104, 168, 170)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime CURVE = Color.CYAN.with_alpha(170)
 comptime SHADOW = Color(0, 0, 0, 160)
-comptime DOT = Color(226, 46, 56)
-comptime POINT = Color(240, 236, 222)
+comptime DOT = Color.RED
+comptime POINT = COLORS.on_surface
 """How fast the dot travels along the curve, in design units per second."""
 
 

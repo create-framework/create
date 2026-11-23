@@ -13,11 +13,13 @@ the style's radius for shapes built from numbers; the last names its own.
 
 from create import *
 
-comptime BACKGROUND = Color(240, 236, 222)
-comptime OUTLINE = Color(40, 40, 44)
-comptime HOVERED = Color(201, 140, 150)
-comptime PLATE = Color(98, 104, 168)
-comptime CAPTION = Color(80, 78, 74)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime OUTLINE = COLORS.outline
+comptime IDLE = COLORS.surface_container_high
+comptime HOVERED = Color.MAGENTA
+comptime PLATE = Color.CYAN
+comptime CAPTION = COLORS.on_surface_variant
 
 
 @fieldwise_init
@@ -51,7 +53,7 @@ struct App(Program):
 
         for b in self.buttons:
             var hovered = b.plate.contains(context.mouse.position)
-            canvas.fill(HOVERED if hovered else Color.WHITE)
+            canvas.fill(HOVERED if hovered else IDLE)
             canvas.draw(b)
 
         with canvas.style(fill=PLATE):

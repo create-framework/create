@@ -8,17 +8,20 @@ Space toggles every shadow between soft and hard.
 
 from create import *
 
-comptime PAGE = Color(240, 236, 222)
-comptime INK = Color(40, 40, 44)
-comptime SHADOW = Color(40, 40, 44, 90)
-comptime CARD_SHADOW = Color(40, 40, 44, 70)
-comptime SQUARE_SHADOW = Color(0, 0, 0, 80)
-comptime FIELD = Color(250, 248, 242)
-comptime FIELD_EDGE = Color(200, 196, 186)
-comptime PLACEHOLDER = Color(150, 146, 138)
-comptime SQUARE = Color(98, 104, 168)
-comptime CAPTION = Color(80, 78, 74)
-comptime HINT = Color(110, 108, 104)
+comptime COLORS = ColorScheme.dark()
+comptime PAGE = COLORS.surface_container_high
+"""Lighter than the scheme's background, so the shadows show against it."""
+comptime CARD = COLORS.surface_bright
+comptime INK = COLORS.on_surface
+comptime SHADOW = Color(0, 0, 0, 160)
+comptime CARD_SHADOW = Color(0, 0, 0, 140)
+comptime SQUARE_SHADOW = Color(0, 0, 0, 140)
+comptime FIELD = COLORS.surface_container_lowest
+comptime FIELD_EDGE = COLORS.outline_variant
+comptime PLACEHOLDER = COLORS.on_surface_variant
+comptime SQUARE = Color.CYAN
+comptime CAPTION = COLORS.on_surface_variant
+comptime HINT = COLORS.on_surface_variant
 
 
 @fieldwise_init
@@ -56,7 +59,7 @@ struct App(Program):
 
         # A card lifted off the page: soft, offset down, a rounded silhouette.
         with canvas.style(
-            fill=Color.WHITE,
+            fill=CARD,
             stroke_enabled=False,
             shadow=CARD_SHADOW,
             shadow_offset=Vector(0, -10),

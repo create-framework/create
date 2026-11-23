@@ -27,10 +27,17 @@ all. `pixi run build-examples` type-checks every example, and a warning fails it
   like, use `Point` for locations and `Vector` for movements, and reach for the library's helpers
   (`lerp`, `clamp`, `ease`, `contains`) rather than writing the maths out.
 - **Name the numbers.** The colours, and the speeds and sizes a reader might tune, are `comptime`
-  constants at the top of the file, named by what they are for: `comptime BACKGROUND = Color(40, 40,
-  44)`, `comptime PAN_SPEED = 300.0`. Colours taken in turn, such as a pie chart's slices, are a
-  list returned by a function named for them (`slice_color(i)`). A value used for both drawing and
-  logic is kept once, such as a `Rectangle` field that is drawn and tested with `contains`.
+  constants at the top of the file, named by what they are for: `comptime BACKGROUND =
+  COLORS.background`, `comptime PAN_SPEED = 300.0`. Colours taken in turn, such as a pie chart's
+  slices, are a list returned by a function named for them (`slice_color(i)`). A value used for both
+  drawing and logic is kept once, such as a `Rectangle` field that is drawn and tested with
+  `contains`.
+- **Colour the subject, and only the subject.** Everything around it (the background, panels,
+  tracks, guides and text) takes its colour from the UI's default dark scheme, kept as `comptime
+  COLORS = ColorScheme.dark()`. What the example is about is drawn in the logo's colours: pure
+  `Color.RED`, `GREEN`, `BLUE`, `CYAN`, `MAGENTA` and `YELLOW`. Shadows stay black. (`blending`
+  moves its colours a little towards white, since pure channels make `ADD` and `SCREEN` look the
+  same.) `hello` and `logo` keep their own look.
 - **Use plain names, without a leading `_`.** In the library, `_` marks a name as internal to its
   package. A program is not a package and nothing imports it, so the `_` would add nothing, and a
   reader copying the example would pick up a habit that serves no purpose in their own program.

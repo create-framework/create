@@ -24,9 +24,10 @@ comptime SCALE_STEP = 0.25
 comptime MIN_SCALE = 0.25
 comptime MAX_SCALE = 2.0
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime GROUND_COLOR = Color(30, 30, 33)
-comptime HINT = Color(176, 172, 162)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime GROUND_COLOR = COLORS.surface_container
+comptime HINT = COLORS.on_surface_variant
 
 
 @fieldwise_init
@@ -143,8 +144,7 @@ struct Game(Program):
         )
 
         if context.time_paused():
-            var shade = UInt8(140 + Int(115.0 * self.pulse.value()))
-            canvas.text_color(Color(shade, shade, shade))
+            canvas.text_color(HINT.lerp(COLORS.on_surface, self.pulse.value()))
             canvas.font_size(40)
             canvas.text("Paused", (0.0, 40.0))
 

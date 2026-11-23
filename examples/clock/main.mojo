@@ -10,12 +10,13 @@ not shift as it ticks.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime FACE = Color(30, 30, 33)
-comptime TRACK = Color(62, 62, 68)
-comptime HAND = Color(240, 236, 222)
-comptime SECONDS = Color(226, 46, 56)
-comptime HINT = Color(176, 172, 162)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime FACE = COLORS.surface_container
+comptime TRACK = COLORS.outline_variant
+comptime HAND = COLORS.on_surface
+comptime SECONDS = Color.RED
+comptime HINT = COLORS.on_surface_variant
 
 comptime CENTER = Point(-230.0, 0.0)
 comptime RADIUS = 200.0

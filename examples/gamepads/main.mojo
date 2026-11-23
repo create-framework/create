@@ -10,12 +10,9 @@ comptime PLAYERS = 4
 comptime SPEED = 300.0
 comptime MESSAGE_SECONDS = 3.0
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime RED = Color(226, 46, 56)
-comptime INDIGO = Color(98, 104, 168)
-comptime ROSE = Color(201, 140, 150)
-comptime CREAM = Color(240, 236, 222)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
 
 
 @fieldwise_init
@@ -36,7 +33,14 @@ struct Gamepads(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(BACKGROUND)
-        var palette = [RED, INDIGO, ROSE, CREAM]
+        var palette = [
+            Color.RED,
+            Color.GREEN,
+            Color.BLUE,
+            Color.YELLOW,
+            Color.CYAN,
+            Color.MAGENTA,
+        ]
 
         for i in range(PLAYERS):
             var pad = context.gamepad(i)

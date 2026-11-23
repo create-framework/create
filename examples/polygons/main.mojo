@@ -7,17 +7,17 @@ to test `overlaps`.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-"""Light enough for the U's shadow to show against it."""
-comptime TEXT = Color(240, 236, 222)
-comptime HOVERED = Color(240, 236, 222)
-comptime STAR = Color(201, 140, 150)
-comptime U_FILL = Color(98, 104, 168, 150)
-comptime HOVERED_U = Color(240, 236, 222, 190)
-comptime U_OUTLINE = Color(240, 236, 222)
-comptime HIT = Color(226, 46, 56)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime HOVERED = COLORS.on_surface
+comptime STAR = Color.MAGENTA
+comptime U_FILL = Color.BLUE.with_alpha(150)
+comptime HOVERED_U = COLORS.on_surface.with_alpha(190)
+comptime U_OUTLINE = COLORS.on_surface
+comptime HIT = Color.RED
 comptime SHADOW = Color(0, 0, 0, 170)
-comptime PENTAGRAM = Color(201, 140, 150)
+comptime PENTAGRAM = Color.YELLOW
 
 comptime SPIN = 0.6
 """How fast the stars turn, in radians per second."""
@@ -27,12 +27,12 @@ comptime PENTAGRAM_HOME = Point(520.0, -80.0)
 
 def side_color(sides: Int) -> Color:
     var colors: List[Color] = [
-        Color(98, 104, 168),
-        Color(201, 140, 150),
-        Color(150, 154, 206),
-        Color(240, 236, 222),
-        Color(226, 46, 56),
-        Color(150, 92, 106),
+        Color.RED,
+        Color.YELLOW,
+        Color.GREEN,
+        Color.CYAN,
+        Color.BLUE,
+        Color.MAGENTA,
     ]
     return colors[(sides - 3) % len(colors)]
 

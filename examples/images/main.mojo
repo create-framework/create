@@ -7,17 +7,16 @@ corner with y down, so the mouse's position is converted first.
 
 Below, a sprite built cell by cell in a `PixelBuffer`, then made an `Image`.
 W, A, S and D move it; T cycles the `tint` that recolours it, a multiply of
-every pixel, so white keeps each colour and darker tints shade it.
+every pixel, so white keeps each colour and cyan, magenta and yellow
+filter it.
 """
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime HINT = Color(176, 172, 162)
-comptime INDIGO = Color(98, 104, 168)
-comptime ROSE = Color(201, 140, 150)
-comptime RED = Color(226, 46, 56)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime HINT = COLORS.on_surface_variant
 comptime SIZE = 220.0
 """How big each loaded picture is drawn, in design units."""
 comptime ROW_Y = 120.0
@@ -32,11 +31,17 @@ def formats() -> List[String]:
 
 
 def tints() -> List[Color]:
+    return [Color.WHITE, Color.CYAN, Color.MAGENTA, Color.YELLOW]
+
+
+def ring_colors() -> List[Color]:
     return [
-        Color(240, 236, 222),
-        Color(255, 190, 200),
-        Color(190, 194, 255),
-        Color(160, 160, 160),
+        Color.RED,
+        Color.YELLOW,
+        Color.GREEN,
+        Color.CYAN,
+        Color.BLUE,
+        Color.MAGENTA,
     ]
 
 
@@ -45,16 +50,18 @@ def sprite() raises -> Image:
     transparent, so the corners outside the ring stay see-through."""
     var buffer = PixelBuffer(SPRITE_CELLS, SPRITE_CELLS)
     var middle = Float64(SPRITE_CELLS - 1) / 2.0
+    var colors = ring_colors()
     for y in range(SPRITE_CELLS):
         for x in range(SPRITE_CELLS):
             var offset = Vector(Float64(x) - middle, middle - Float64(y))
             var distance = offset.magnitude()
             if distance <= middle + 0.5:
-                # Indigo to rose to red round the ring, darker inside.
-                var turn = offset.angle() / TAU + 0.5
-                var color = INDIGO.lerp(
-                    ROSE, turn * 2.0
-                ) if turn < 0.5 else ROSE.lerp(RED, turn * 2.0 - 1.0)
+                # Round the ring through `ring_colors()`, darker inside.
+                var around = (offset.angle() / TAU + 0.5) * Float64(len(colors))
+                var i = Int(around) % len(colors)
+                var color = colors[i].lerp(
+                    colors[(i + 1) % len(colors)], around - Float64(Int(around))
+                )
                 if distance < middle / 2.0:
                     color = color.lerp(BACKGROUND, 0.45)
                 buffer.set(x, y, color)

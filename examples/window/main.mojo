@@ -17,13 +17,14 @@ or not, F cycles the frame-rate cap, C cycles the cursor over the window
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime BARS = Color(56, 58, 92)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime BARS = COLORS.surface_container_highest
 """Not black, so the bars `FIT` leaves are plain to see."""
-comptime BALL = Color(226, 46, 56)
-comptime BOX = Color(98, 104, 168)
-comptime TEXT = Color(240, 236, 222)
-comptime HINT = Color(176, 172, 162)
+comptime BALL = Color.RED
+comptime BOX = Color.BLUE
+comptime TEXT = COLORS.on_surface
+comptime HINT = COLORS.on_surface_variant
 
 
 def frame_caps() -> List[Int]:

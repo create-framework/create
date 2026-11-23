@@ -1,8 +1,9 @@
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime INK = Color(201, 140, 150)
-comptime HINT = Color(176, 172, 162)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime INK = Color.MAGENTA
+comptime HINT = COLORS.on_surface_variant
 
 
 @fieldwise_init

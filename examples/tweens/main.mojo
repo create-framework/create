@@ -5,13 +5,14 @@ Hover a row to play its curve.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime HINT = Color(176, 172, 162)
-comptime TRACK = Color(62, 62, 68)
-comptime ACTIVE_TRACK = Color(90, 90, 98)
-comptime DOT = Color(98, 104, 168)
-comptime ACTIVE_LABEL = Color(226, 46, 56)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime HINT = COLORS.on_surface_variant
+comptime TRACK = COLORS.outline_variant
+comptime ACTIVE_TRACK = COLORS.outline
+comptime DOT = Color.CYAN
+comptime ACTIVE_LABEL = Color.RED
 
 comptime ROW_SPACING = 70.0
 comptime TOP_ROW = 250.0

@@ -4,11 +4,12 @@ clockwise and one counter-clockwise.
 
 from create import *
 
-comptime BACKGROUND = Color(40, 40, 44)
-comptime TEXT = Color(240, 236, 222)
-comptime TRACK = Color(62, 62, 68)
-comptime CLOCKWISE = Color(98, 104, 168)
-comptime COUNTER = Color(201, 140, 150)
+comptime COLORS = ColorScheme.dark()
+comptime BACKGROUND = COLORS.background
+comptime TEXT = COLORS.on_surface
+comptime TRACK = COLORS.outline_variant
+comptime CLOCKWISE = Color.CYAN
+comptime COUNTER = Color.MAGENTA
 
 comptime RING_RADIUS = 140.0
 comptime RING_THICKNESS = 18
@@ -30,7 +31,7 @@ struct App(Program):
         canvas.fill_enabled(False)
 
         # Two progress rings off one tween. Angles count counter-clockwise
-        # from +x because y is up, so the clockwise ring (indigo, like a
+        # from +x because y is up, so the clockwise ring (cyan, like a
         # clock's hand) starts at the top and sweeps negatively.
         var sweep = TAU * self.progress.value()
         var clockwise = Point(-200.0, -20.0)
