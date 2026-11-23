@@ -1,10 +1,10 @@
 """Drawing offscreen: a `Canvas(width, height)` of the program's own, read
 back as an `Image` with `snapshot`.
 
-Two uses. A badge drawn once in `create` and kept as an image, stamped
-where the mouse is. And a paint layer kept as a field: drag to paint into
-it, and the strokes stay while the frame under them is redrawn every frame.
-C clears the layer.
+Two offscreen canvases make a small paint program. The brush, a soft round
+tip, is drawn once in `create` and kept as an image. The paint layer is a
+canvas kept as a field: dragging stamps the brush into it, and the strokes
+stay while the frame under them is redrawn every frame. C clears the layer.
 """
 
 from create import *
@@ -12,82 +12,104 @@ from create import *
 comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
 comptime HINT = COLORS.on_surface_variant
-comptime ORBIT = COLORS.outline_variant
+comptime BACKDROP = COLORS.outline_variant
 comptime PAINT_FROM = Color.CYAN
 comptime PAINT_TO = Color.MAGENTA
-comptime BADGE_LIGHT = Color.YELLOW
-comptime BADGE_DARK = Color.RED
-comptime BADGE_RIM = COLORS.on_surface
-comptime BADGE_TEXT = COLORS.background
 
-comptime BADGE_SIZE = 80
+comptime BRUSH_SIZE = 48.0
+"""How wide the brush is, in design units."""
+comptime SPACING = BRUSH_SIZE / 12
+"""How far apart the brush is stamped along a drag, in design units."""
+comptime PREVIEW_OPACITY = 0.35
+"""How strongly the brush shows under the mouse when not painting."""
+comptime DRIFT_SPEED = 0.3
+"""How fast the backdrop's rings drift, in radians per second."""
 
 
-def badge() raises -> Image:
-    """A badge drawn offscreen, at twice the design density so it stays
-    crisp on a window scaled up to 2x."""
-    var canvas = Canvas(BADGE_SIZE, BADGE_SIZE, pixel_scale=2.0)
-    canvas.shadow(blur=6)
-    canvas.fill(Gradient.radial(BADGE_LIGHT, BADGE_DARK))
-    canvas.stroke(BADGE_RIM, thickness=3)
-    canvas.circle((0, 0), 32)
-    canvas.shadow_enabled(False)
-    canvas.text_color(BADGE_TEXT)
-    canvas.font_size(28)
-    canvas.text("1st", (0, 0))
+def brush() raises -> Image:
+    """A white disc fading out to its rim, drawn offscreen at twice the
+    design density so it stays smooth on a window scaled up to 2x. White,
+    so a tint gives it any colour."""
+    var canvas = Canvas(BRUSH_SIZE, BRUSH_SIZE, pixel_scale=2.0)
+    canvas.fill(Gradient.radial(Color.WHITE, Color.WHITE.with_alpha(0)))
+    canvas.stroke_enabled(False)
+    canvas.circle((0, 0), BRUSH_SIZE / 2)
     return canvas.snapshot(pixel_scale=canvas.pixel_scale())
 
 
 @fieldwise_init
 struct Offscreen(Program):
-    var badge: Image
+    var brush: Image
     var layer: Canvas
     """The paint layer: the size of the design, transparent but for the
     strokes painted into it."""
     var strokes: Image
-    """The layer as last read, redrawn every frame."""
-    var last_mouse: Point
+    """The layer as last read, drawn every frame."""
+    var last_stamp: Point
+    """Where the brush was last stamped, so the next stamp keeps its
+    distance."""
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Offscreen:
         var layer = Canvas(canvas.width(), canvas.height())
         var strokes = layer.snapshot()
-        return Offscreen(badge(), layer^, strokes^, Point(0, 0))
+        return Offscreen(brush(), layer^, strokes^, Point(0, 0))
+
+    def stamp(mut self, position: Point, color: Color):
+        with self.layer.style(tint=color):
+            self.layer.image(self.brush, position, BRUSH_SIZE, BRUSH_SIZE)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        var mouse = context.mouse.position
+        var t = context.time.elapsed
+        var color = PAINT_FROM.lerp(PAINT_TO, 0.5 + 0.5 * sin(t * 2.0))
+
         if context.keyboard.pressed(Key.C):
             self.layer.clear()
             self.strokes = self.layer.snapshot()
+        if context.mouse.pressed():
+            self.stamp(mouse, color)
+            self.last_stamp = mouse
+        elif context.mouse.down():
+            # Stamps evenly spaced from the last one towards the mouse, so a
+            # fast drag paints a line rather than dots.
+            var to_mouse = mouse - self.last_stamp
+            var step = to_mouse.with_length(SPACING)
+            for _ in range(Int(to_mouse.magnitude() / SPACING)):
+                var at = self.last_stamp + step
+                self.last_stamp = at
+                self.stamp(at, color)
         if context.mouse.down():
-            # From where the mouse was, so a fast drag paints a line, not dots.
-            var start = (
-                context.mouse.position if context.mouse.pressed() else self.last_mouse
-            )
-            with self.layer.style(
-                stroke=PAINT_FROM.lerp(
-                    PAINT_TO,
-                    0.5 + 0.5 * sin(context.time.elapsed * 2.0),
-                ),
-                stroke_thickness=12,
-                stroke_cap=StrokeCap.ROUND,
-            ):
-                # Round caps join each segment to the next without a notch.
-                self.layer.line(start, context.mouse.position)
-            # Read only when something was painted: a read copies the layer.
+            # Read only while painting: a read copies the layer.
             self.strokes = self.layer.snapshot()
-        self.last_mouse = context.mouse.position
 
-        # The frame under the layer, redrawn and cleared every frame.
+        # The frame under the layer, redrawn every frame.
         canvas.background(BACKGROUND)
-        var t = context.time.elapsed
-        with canvas.style(fill=ORBIT, stroke_enabled=False):
-            canvas.circle((cos(t) * 200, sin(t * 1.3) * 120), 40)
+        with canvas.style(
+            fill_enabled=False, stroke=BACKDROP, stroke_thickness=2
+        ):
+            for i in range(5):
+                var angle = t * DRIFT_SPEED + Float64(i) * TAU / 5
+                canvas.circle(
+                    Point(0, 0) + Vector.from_angle(angle, 180),
+                    50 + 20 * sin(t + Float64(i)),
+                )
 
         canvas.image(self.strokes, (0, 0), canvas.width(), canvas.height())
-        canvas.image(self.badge, context.mouse.position, BADGE_SIZE, BADGE_SIZE)
+
+        # The brush under the mouse, faint, in the colour it would paint.
+        if not context.mouse.down():
+            with canvas.style(tint=color, opacity=PREVIEW_OPACITY):
+                canvas.image(self.brush, mouse, BRUSH_SIZE, BRUSH_SIZE)
 
         with canvas.style(text_color=HINT, font_size=18):
-            canvas.text("Drag to paint, C to clear", (0, canvas.bottom() + 30))
+            canvas.text(
+                (
+                    "Drag to paint, C to clear. The strokes stay while the"
+                    " frame under them is redrawn."
+                ),
+                (0, canvas.bottom() + 30),
+            )
 
 
 def main() raises:
