@@ -525,16 +525,22 @@ nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and ca
   into the atlas gutter to match the CPU's reach. Every glyph has a blank texel all round it, and
   the first shelf starts at `_FIRST_SHELF_Y` to keep the white texel's row out of reach. A text
   shadow's blur is quantised at `text_pixel_scale` too, on both backends.
+- **Quarter-pixel placement:** `layout` rounds its anchor to the nearest `1 / _SUBPIXELS` of a pixel
+  (`_subpixel_offset`, floored so negative positions step alike), lays out from the whole pixel, and
+  rasterises every glyph moved by the fraction (`FT_Set_Transform`'s delta, set for the one load).
+  So text moving less than a pixel a frame glides, and rows of text keep their spacing at a pixel
+  scale that makes it fractional. An offset moves no advance, so it changes no line.
 - **The glyph cache** (`_glyphs`) is keyed by one `Int`: codepoint 21 bits, size 12, weight 10, blur
-  10, font slot 10. Size, weight and blur are clamped into theirs (`_MAX_SIZE` 4095 px,
-  `_MAX_WEIGHT`, `_MAX_BLUR` 1023 px) where they enter. A slot is handed to each face on first sight
-  (`_slot`, by `Font._id`); the renderer holds the face while its slot is live.
+  9, font slot 7, subpixel offset 4 (2 bits for x, 2 for y). Size, weight and blur are clamped into
+  theirs (`_MAX_SIZE` 4095 px, `_MAX_WEIGHT`, `_MAX_BLUR` 511 px) where they enter. A slot is handed
+  to each face on first sight (`_slot`, by `Font._id`); the renderer holds the face while its slot
+  is live.
 - **Italic is a face, not a key bit:** `_face(style)` swaps in `Font._italic()`, the same font
   drawing its italic `_Face` under an id of its own, so it takes a slot like any other font and the
   key has no italic field. The italic `_Face` is opened on first use and shared by every copy
   (`_FontFaces` in `create.text`).
 - **Never stale by switching:** a key names its face, so switching fonts keeps every face's masks
-  and the GL atlas. Only running out of `_FONT_SLOTS` (1024) starts over: glyphs and slots are
+  and the GL atlas. Only running out of `_FONT_SLOTS` (128) starts over: glyphs and slots are
   cleared and `atlas_generation` is bumped, which the atlas watches. `_GLYPH_CACHE_LIMIT` drops the
   masks (not the slots) whole when full.
 - **Lines:** `_measure` caches a string's glyphs and breaks it into `_Line`s at each newline (a
