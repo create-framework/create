@@ -443,8 +443,12 @@ struct _Face(Movable):
             != 0
         )
 
-    def render(mut self, codepoint: Int, size: Int) raises -> _GlyphInfo:
-        """Rasterise one glyph at `size` pixels.
+    def render(
+        mut self, codepoint: Int, size: Int, dx: Int = 0, dy: Int = 0
+    ) raises -> _GlyphInfo:
+        """Rasterise one glyph at `size` pixels, its outline moved by `dx`
+        and `dy` 64ths of a pixel, y up, before it is rasterised. The move
+        shows in the bearings and the mask, not in the advance.
 
         A codepoint this face cannot load or render yields an empty glyph that
         still advances the pen, so a missing character leaves a gap rather than
@@ -453,12 +457,31 @@ struct _Face(Movable):
         var ft = load_library("libfreetype", 6)
         self._set_size(ft, size)
 
-        if (
-            ft.call["FT_Load_Char", Int32](
-                self._face, codepoint, Int32(_FT_LOAD_DEFAULT)
+        # The transform applies when the glyph loads, so it is set for this
+        # load alone and put back at once: the shear, or nothing.
+        var moved = dx != 0 or dy != 0
+        var matrix = Array[Int64, 4](fill=0)
+        matrix[0] = 1 << 16
+        matrix[1] = _SHEAR
+        matrix[3] = 1 << 16
+        var matrix_address = Int(matrix.unsafe_ptr()) if self.sheared else 0
+        if moved:
+            var delta = Array[Int64, 2](fill=0)
+            delta[0] = Int64(dx)
+            delta[1] = Int64(dy)
+            ft.call["FT_Set_Transform", NoneType](
+                self._face, matrix_address, Int(delta.unsafe_ptr())
             )
-            != 0
-        ):
+            _ = delta^
+        var loaded = ft.call["FT_Load_Char", Int32](
+            self._face, codepoint, Int32(_FT_LOAD_DEFAULT)
+        )
+        if moved:
+            ft.call["FT_Set_Transform", NoneType](
+                self._face, matrix_address, Int(0)
+            )
+        _ = matrix^
+        if loaded != 0:
             return _GlyphInfo(0, 0, 0, 0, size)
 
         if (
@@ -649,6 +672,13 @@ struct Font(Copyable, ImplicitlyCopyable, Movable, Writable):
         face._set_size(load_library("libfreetype", 6), size)
         return (face.ascender, face.descender, face.line_height)
 
-    def _render(mut self, codepoint: Int, size: Int) raises -> _GlyphInfo:
-        """Rasterise one glyph at `size` pixels; see `_Face.render`."""
-        return self._faces[].face(self._draws_italic).render(codepoint, size)
+    def _render(
+        mut self, codepoint: Int, size: Int, dx: Int = 0, dy: Int = 0
+    ) raises -> _GlyphInfo:
+        """Rasterise one glyph at `size` pixels, moved by `dx` and `dy`
+        64ths of a pixel, y up; see `_Face.render`."""
+        return (
+            self._faces[]
+            .face(self._draws_italic)
+            .render(codepoint, size, dx, dy)
+        )

@@ -1,5 +1,5 @@
 from std.collections import Dict, Optional
-from std.math import max, min
+from std.math import floor, max, min
 from .align import Align
 from create.color.color import Color
 from create.text.font import (
@@ -19,10 +19,18 @@ comptime _MAX_SIZE = 4095
 """The largest pixel size text is rasterised at: 12 bits of the glyph key."""
 comptime _MAX_WEIGHT = 1023
 """The largest weight a key can hold, 10 bits; faces stop at 900 anyway."""
-comptime _MAX_BLUR = 1023
-"""The widest shadow blur, in pixels, a glyph mask is made for: 10 bits."""
-comptime _FONT_SLOTS = 1024
-"""Faces one renderer keys glyphs for before it starts over: 10 bits."""
+comptime _MAX_BLUR = 511
+"""The widest shadow blur, in pixels, a glyph mask is made for: 9 bits."""
+comptime _FONT_SLOTS = 128
+"""Faces one renderer keys glyphs for before it starts over: 7 bits."""
+comptime _SUBPIXELS = 4
+"""The steps a pixel is cut into for placing text, along each axis: 2 bits
+each of the glyph key.
+
+Text is placed at the nearest quarter pixel, and a glyph is rasterised at
+that offset, so text moving by less than a pixel a frame glides rather than
+jumping a whole pixel at a time, and rows of text keep their spacing at a
+pixel scale that makes it a fraction of a pixel."""
 
 comptime _GLYPH_CACHE_LIMIT = 4096
 """Cached masks kept before the cache is dropped whole.
@@ -43,6 +51,19 @@ def _pixel_size(style: TextStyle, pixel_scale: Float64) -> Int:
 def _key_weight(style: TextStyle) -> Int:
     """The style's weight, clamped into the glyph key's 10 bits."""
     return min(max(style.font_weight.value, 0), _MAX_WEIGHT)
+
+
+def _subpixel_offset(position: Float64) -> Tuple[Int, Int]:
+    """`position`, in device pixels, as the whole pixel at or before its
+    nearest `1 / _SUBPIXELS` of a pixel, and how many of those steps past
+    that pixel it is, from 0 to `_SUBPIXELS - 1`.
+
+    Floored rather than truncated, so a position just left of or above the
+    origin steps the same way as any other.
+    """
+    var steps = Int(floor(position * Float64(_SUBPIXELS) + 0.5))
+    var pixel = Int(floor(Float64(steps) / Float64(_SUBPIXELS)))
+    return (pixel, steps - pixel * _SUBPIXELS)
 
 
 struct PlacedGlyph(Copyable, Movable):
@@ -211,18 +232,26 @@ struct TextRenderer(Movable):
         return slot
 
     def _glyph_key(
-        self, slot: Int, codepoint: Int, size: Int, weight: Int, blur: Int = 0
+        self,
+        slot: Int,
+        codepoint: Int,
+        size: Int,
+        weight: Int,
+        blur: Int = 0,
+        offset: Int = 0,
     ) -> Int:
         """Pack what a mask depends on into one key: 21 bits of codepoint,
-        12 of size, 10 of weight, 10 of blur and 10 of font slot. Size, weight
-        and blur are clamped into theirs where they enter (`_MAX_SIZE`,
-        `_MAX_WEIGHT`, `_MAX_BLUR`)."""
+        12 of size, 10 of weight, 9 of blur, 7 of font slot and 4 of
+        subpixel offset (see `_subpixel_offset`). Size, weight and blur are
+        clamped into theirs where they enter (`_MAX_SIZE`, `_MAX_WEIGHT`,
+        `_MAX_BLUR`)."""
         return (
             codepoint
             | (size << 21)
             | (weight << 33)
             | (blur << 43)
-            | (slot << 53)
+            | (slot << 52)
+            | (offset << 59)
         )
 
     def _ensure_glyph(
@@ -232,9 +261,11 @@ struct TextRenderer(Movable):
         size: Int,
         weight: Int,
         blur: Int = 0,
+        offset: Int = 0,
     ) raises -> Int:
         """Cache the mask for `(codepoint, size, weight, blur)` in the face
-        in `slot`, and return its key.
+        in `slot`, moved right and down by the fraction of a pixel `offset`
+        packs (see `_subpixel_offset`), and return its key.
 
         A `blur` above 0 is a shadow's: the plain mask blurred with sigma
         `blur / 2` pixels, grown by the blur's reach and moved back by it, so
@@ -249,14 +280,16 @@ struct TextRenderer(Movable):
         uncached, a static line of text paid all three per character per frame.
 
         The mask is alpha only and the pen advance is a number, so nothing here
-        depends on the fill, the position or the alignment; only these three
-        inputs change what is stored.
+        depends on the fill, the alignment or the position beyond its
+        fraction of a pixel; only these inputs change what is stored.
         """
-        var key = self._glyph_key(slot, codepoint, size, weight, blur)
+        var key = self._glyph_key(slot, codepoint, size, weight, blur, offset)
         if key in self._glyphs:
             return key
         if blur > 0:
-            var plain = self._ensure_glyph(slot, codepoint, size, weight)
+            var plain = self._ensure_glyph(
+                slot, codepoint, size, weight, 0, offset
+            )
             ref g = self._glyphs[plain]
             var mask = blur_alpha(
                 g.pixels, g.width, g.height, Float64(blur) / 2.0
@@ -279,6 +312,10 @@ struct TextRenderer(Movable):
         # call site, because this is the only place either one rasterises.
         # A copy shares the face, so this is where it rasterises.
         var face = self._fonts[slot].copy()
+        # FreeType's offsets are in 64ths of a pixel, with y up.
+        comptime step = 64 // _SUBPIXELS
+        var dx = (offset % _SUBPIXELS) * step
+        var dy = -(offset // _SUBPIXELS) * step
         if len(self._fallback_font) > 0 and not face.has_glyph(codepoint):
             # Italic text falls back to the fallback's italic. The key names
             # the primary face's slot, so the two never share an entry.
@@ -286,10 +323,10 @@ struct TextRenderer(Movable):
             if face._draws_italic:
                 fallback = fallback._italic()
             fallback._set_weight(weight)
-            self._glyphs[key] = fallback._render(codepoint, size)
+            self._glyphs[key] = fallback._render(codepoint, size, dx, dy)
         else:
             face._set_weight(weight)
-            self._glyphs[key] = face._render(codepoint, size)
+            self._glyphs[key] = face._render(codepoint, size, dx, dy)
         return key
 
     def glyph_mask(
@@ -306,10 +343,12 @@ struct TextRenderer(Movable):
         weight: Int,
         blur: Int,
         wrap: Float64 = NO_WRAP,
+        offset: Int = 0,
     ) raises -> _Run:
-        """Cache every glyph of `s` and break it into lines: at each newline,
-        and, unless `wrap` is `NO_WRAP`, wherever a line would grow wider
-        than `wrap` pixels.
+        """Cache every glyph of `s`, at the subpixel `offset`, and break it
+        into lines: at each newline, and, unless `wrap` is `NO_WRAP`,
+        wherever a line would grow wider than `wrap` pixels. An offset moves
+        no glyph's advance, so it changes no line.
 
         A carriage return is dropped, so a Windows line ending breaks once. A
         wrapped line breaks before the last run of spaces that fits, and the
@@ -333,7 +372,7 @@ struct TextRenderer(Movable):
                 continue
             if c == _CARRIAGE_RETURN:
                 continue
-            var key = self._ensure_glyph(slot, c, size, weight, blur)
+            var key = self._ensure_glyph(slot, c, size, weight, blur, offset)
             var advance = self._glyphs[key].advance_x
             var i = len(run.keys)
             var space = c == _SPACE
@@ -405,6 +444,10 @@ struct TextRenderer(Movable):
         blurred by `blur` pixels (see `_ensure_glyph`), broken into lines at
         its newlines and wrapped at `wrap` pixels (see `_measure`).
 
+        The anchor is placed at the nearest `1 / _SUBPIXELS` of a pixel, and
+        every glyph is rasterised at that fraction (see `_subpixel_offset`),
+        so text drawn at any position lands within an eighth of a pixel of it.
+
         Glyphs lay out upright in pixel space, y down, so `Align.TOP`/`BOTTOM`
         mean the top and bottom of the text box: the first line's ascent to
         the last line's descent, lines a face's line height apart. Each line
@@ -422,8 +465,12 @@ struct TextRenderer(Movable):
         var weight = _key_weight(style)
         var blur_px = min(max(blur, 0), _MAX_BLUR)
 
+        var x = _subpixel_offset(tx)
+        var y = _subpixel_offset(ty)
+        var offset = x[1] + y[1] * _SUBPIXELS
+
         # Two passes: measure every line for alignment, then place.
-        var run = self._measure(slot, s, size, weight, blur_px, wrap)
+        var run = self._measure(slot, s, size, weight, blur_px, wrap, offset)
 
         var metrics = face._vertical_metrics(size)
         var asc = metrics[0]
@@ -432,7 +479,7 @@ struct TextRenderer(Movable):
         # From the first baseline to the last.
         var block = (len(run.lines) - 1) * line_height
         var align = style.text_alignment
-        var baseline_y = Int(ty)
+        var baseline_y = y[0]
         if align._top():
             baseline_y += asc
         elif align._bottom():
@@ -442,7 +489,7 @@ struct TextRenderer(Movable):
 
         var placed = List[PlacedGlyph]()
         for ref line in run.lines:
-            var cx = Int(tx)
+            var cx = x[0]
             if align._right():
                 cx -= line.width
             elif not align._left():

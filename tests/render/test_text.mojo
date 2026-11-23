@@ -554,5 +554,57 @@ def test_wrapped_measures_follow_the_lines() raises -> None:
     )
 
 
+def _ink_centroid(m: MemorySurface) -> Tuple[Float64, Float64]:
+    """The alpha-weighted centre of everything rendered, `(x, y)`."""
+    var total = 0.0
+    var sx = 0.0
+    var sy = 0.0
+    for y in range(m.height):
+        for x in range(m.width):
+            var a = Float64(m.pixel(x, y).a)
+            total += a
+            sx += a * Float64(x)
+            sy += a * Float64(y)
+    return (sx / total, sy / total)
+
+
+def test_text_moves_by_quarter_pixels() raises -> None:
+    # Text placed a quarter pixel further along is drawn a quarter pixel
+    # further along, not snapped to the same whole pixel.
+    var previous = _ink_centroid(_render(Align.LEFT, 40.0, 30.0))
+    for i in range(1, 5):
+        var step = Float64(i) * 0.25
+        var now = _ink_centroid(_render(Align.LEFT, 40.0 + step, 30.0 + step))
+        assert_true(now[0] - previous[0] > 0.15, "x did not move")
+        assert_true(now[1] - previous[1] > 0.15, "y did not move")
+        assert_true(now[0] - previous[0] < 0.35, "x moved too far")
+        assert_true(now[1] - previous[1] < 0.35, "y moved too far")
+        previous = now
+
+
+def test_a_whole_pixel_move_redraws_the_same_glyphs() raises -> None:
+    # A whole pixel apart, the fraction is the same, so the same masks land
+    # one pixel over.
+    var t = TextRenderer()
+    var a = t.layout("Hi", 40.25, 30.5, _style(Align.LEFT), 1.0)
+    var b = t.layout("Hi", 41.25, 31.5, _style(Align.LEFT), 1.0)
+    for i in range(len(a)):
+        assert_equal(a[i].key, b[i].key)
+        assert_equal(b[i].x - a[i].x, 1)
+        assert_equal(b[i].y - a[i].y, 1)
+
+
+def test_text_left_of_the_origin_rounds_alike() raises -> None:
+    # Floored, not truncated: -0.75 is a quarter pixel past -1, as 0.25 is a
+    # quarter past 0.
+    var t = TextRenderer()
+    var a = t.layout("Hi", 0.25, 0.25, _style(Align.LEFT), 1.0)
+    var b = t.layout("Hi", -0.75, -0.75, _style(Align.LEFT), 1.0)
+    for i in range(len(a)):
+        assert_equal(a[i].key, b[i].key)
+        assert_equal(a[i].x - b[i].x, 1)
+        assert_equal(a[i].y - b[i].y, 1)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
