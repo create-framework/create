@@ -309,7 +309,7 @@ def test_a_turned_image_antialiases_its_edge() raises -> None:
     assert_true(abs(mass - 400 * 255) < 80 * 255 // 4, "wrong coverage")
 
 
-def test_blit_image_downscales_by_nearest_neighbour() raises -> None:
+def test_blit_image_downscale_keeps_both_halves() raises -> None:
     var sp = PixelBuffer(4, 4)
     var ptr = sp._data.unsafe_ptr()
     # Left half red, right half blue — a downscale must keep both halves.
@@ -334,6 +334,80 @@ def test_blit_image_downscales_by_nearest_neighbour() raises -> None:
     assert_equal(mem.pixel(0, 0), Color(255, 0, 0, 255))
     assert_equal(mem.pixel(1, 0), Color(0, 0, 255, 255))
     assert_equal(mem.pixel(0, 2).a, 0)
+
+
+def _stripes(width: Int, height: Int) raises -> PixelBuffer:
+    """Opaque red and blue columns in turn, starting with red."""
+    var sp = PixelBuffer(width, height)
+    var ptr = sp._data.unsafe_ptr()
+    for row in range(height):
+        for col in range(width):
+            var off = (row * width + col) * 4
+            ptr[unsafe_offset=off] = 255 if col % 2 == 0 else 0
+            ptr[unsafe_offset=off + 2] = 0 if col % 2 == 0 else 255
+            ptr[unsafe_offset=off + 3] = 255
+    return sp^
+
+
+def test_blit_image_downscale_averages_the_texels_a_pixel_covers() raises -> (
+    None
+):
+    # Each pixel covers one red and one blue column: it shows their mix,
+    # rather than whichever column its corner lands on.
+    var sp = _stripes(8, 2)
+    var mem = MemorySurface(4, 1)
+    blit_image(
+        mem.surface(),
+        sp._data.unsafe_ptr(),
+        sp.width(),
+        sp.height(),
+        0,
+        0,
+        4,
+        1,
+    )
+    for x in range(4):
+        assert_equal(mem.pixel(x, 0), Color(128, 0, 128, 255))
+
+
+def test_blit_image_downscale_averages_alpha_without_darkening() raises -> None:
+    # Opaque white beside transparent black: half as opaque, still white.
+    var sp = PixelBuffer(2, 1)
+    var ptr = sp._data.unsafe_ptr()
+    for i in range(4):
+        ptr[unsafe_offset=i] = 255
+    var mem = _filled(1, 1, Color.BLACK)
+    blit_image(mem.surface(), sp._data.unsafe_ptr(), 2, 1, 0, 0, 1, 1)
+    # Half white over black; a darkened mix would give a quarter.
+    assert_equal(mem.pixel(0, 0), Color(128, 128, 128, 255))
+
+
+def test_a_mirrored_downscale_averages_too() raises -> None:
+    var sp = _stripes(8, 2)
+    var mem = MemorySurface(4, 1)
+    blit_image_mapped(
+        mem.surface(),
+        sp._data.unsafe_ptr(),
+        sp.width(),
+        sp.height(),
+        image_mapping(
+            Transform(translation=Vector(2.0, 0.5), scale_x=-1.0, scale_y=1.0),
+            0.0,
+            0.0,
+            4.0,
+            1.0,
+            8,
+            2,
+        ),
+    )
+    for x in range(4):
+        assert_equal(mem.pixel(x, 0), Color(128, 0, 128, 255))
+
+
+def test_a_turned_image_at_its_size_keeps_one_texel_a_pixel() raises -> None:
+    var mem = _turned_blit(1)
+    # Solid white inside, untouched by any averaging.
+    assert_equal(mem.pixel(20, 20), Color.WHITE)
 
 
 def test_blit_image_skips_transparent_source_pixels() raises -> None:

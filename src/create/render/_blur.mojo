@@ -177,8 +177,8 @@ def blur_image_alpha[
     """The alpha of the `src_width` x `src_height` RGBA image at `src`,
     resampled to `width` x `height` and blurred by `sigma` pixels.
 
-    Resampled first, with the same nearest-neighbour mapping `blit_image`
-    uses, so the blur is in device pixels: blurring a small image before
+    Resampled first, nearest-neighbour, as `blit_image` maps an image drawn
+    at its size or larger, so the blur is in device pixels: blurring a small image before
     scaling it up would magnify its blur into blocks.
     """
     var alpha = List[UInt8](length=width * height, fill=0)
