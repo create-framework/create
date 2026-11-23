@@ -1,5 +1,5 @@
-"""`Noise`: a 2D field moving through time shades a grid from water to grass,
-and a 1D field read with the clock steers the circle.
+"""`Noise`: a 2D field, moving through time, shades a grid of cells from
+water to grass.
 """
 
 from create import *
