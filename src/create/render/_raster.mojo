@@ -694,14 +694,94 @@ def _texel[
 ](src: Pointer[UInt8, so], off: Int, tint: Color, recolored: Bool) -> Color:
     """The texel at `off`, multiplied by `tint`: its colour channels only if
     `recolored`, its alpha always."""
-    var r = src[unsafe_offset=off]
-    var g = src[unsafe_offset=off + 1]
-    var b = src[unsafe_offset=off + 2]
+    return _tinted(
+        Color(
+            src[unsafe_offset=off],
+            src[unsafe_offset=off + 1],
+            src[unsafe_offset=off + 2],
+            src[unsafe_offset=off + 3],
+        ),
+        tint,
+        recolored,
+    )
+
+
+@always_inline
+def _tinted(c: Color, tint: Color, recolored: Bool) -> Color:
+    """`c` multiplied by `tint`: its colour channels only if `recolored`, its
+    alpha always."""
+    var r = c.r
+    var g = c.g
+    var b = c.b
     if recolored:
         r = _multiplied(r, tint.r)
         g = _multiplied(g, tint.g)
         b = _multiplied(b, tint.b)
-    return Color(r, g, b, _faded(src[unsafe_offset=off + 3], tint.a))
+    return Color(r, g, b, _faded(c.a, tint.a))
+
+
+def _averaged[
+    so: Origin
+](
+    src: Pointer[UInt8, so],
+    sw: Int,
+    x_lo: Int,
+    x_hi: Int,
+    y_lo: Int,
+    y_hi: Int,
+) -> Color:
+    """The average of the texels in columns `x_lo..<x_hi` and rows
+    `y_lo..<y_hi` of the `sw`-wide RGBA buffer at `src`: what a device pixel
+    covering them all shows. Each texel's colour counts by its alpha, so a
+    transparent texel's colour, often black, never darkens an opaque
+    neighbour; the alpha is the plain average."""
+    var r = 0
+    var g = 0
+    var b = 0
+    var a = 0
+    for y in range(y_lo, y_hi):
+        var off = (y * sw + x_lo) * 4
+        for _ in range(x_lo, x_hi):
+            var ta = Int(src[unsafe_offset=off + 3])
+            r += Int(src[unsafe_offset=off]) * ta
+            g += Int(src[unsafe_offset=off + 1]) * ta
+            b += Int(src[unsafe_offset=off + 2]) * ta
+            a += ta
+            off += 4
+    if a == 0:
+        return Color(0, 0, 0, 0)
+    var n = (x_hi - x_lo) * (y_hi - y_lo)
+    var half = a // 2
+    return Color(
+        UInt8((r + half) // a),
+        UInt8((g + half) // a),
+        UInt8((b + half) // a),
+        UInt8((a + n // 2) // n),
+    )
+
+
+def _footprints(source: Int, device: Int) -> List[Int]:
+    """For each of `device` pixels along one axis of an image `source`
+    texels long, the texels it shows, as `lo, hi` pairs (`hi` exclusive).
+
+    Drawn smaller than its size, a pixel covers the texels whose centres
+    fall inside its footprint, `[i, i + 1) * source / device`: at least one,
+    since the footprint is a texel or more long. Drawn at its size or
+    larger, it shows the one texel its left edge lands on, as the
+    nearest-neighbour walk does."""
+    var spans = List[Int](capacity=device * 2)
+    for i in range(device):
+        if source > device:
+            # ceil((2 * i * source - device) / (2 * device)), the first
+            # texel whose centre, `t + 0.5`, is at or past the footprint's
+            # start; the next pixel's first is this one's end.
+            spans.append(-((device - 2 * i * source) // (2 * device)))
+            spans.append(-((device - 2 * (i + 1) * source) // (2 * device)))
+        else:
+            var t = i * source // device
+            spans.append(t)
+            spans.append(t + 1)
+    return spans^
 
 
 def blit_image[
@@ -758,9 +838,13 @@ def _blit_image[
     `Surface` is a plain value: nothing here needs to know where the pixels
     came from.
 
-    Nearest-neighbour, into an upright destination: a rotated, sheared or
-    mirrored one goes through `blit_image_mapped` instead. A 1:1 blit skips
-    the source-index division rather than relying on it cancelling.
+    Into an upright destination: a rotated, sheared or mirrored one goes
+    through `blit_image_mapped` instead. A 1:1 blit skips the source-index
+    division rather than relying on it cancelling. Drawn larger than its
+    size on both axes, each pixel takes one texel, nearest-neighbour. Drawn
+    smaller on either, each pixel averages the texels it covers
+    (`_footprints`, `_averaged`), so detail finer than a pixel blends rather
+    than shimmering in and out as the image moves or scales.
 
     Destination rows and columns are clipped once against the surface up
     front, the way `fill_pixels` already clips, instead of testing `dx`/`dy`
@@ -788,6 +872,12 @@ def _blit_image[
     if row_lo >= row_hi or col_lo >= col_hi:
         return
 
+    # Drawn smaller than its size on either axis, a pixel averages the
+    # texels it covers, rather than showing one and skipping the rest.
+    var minified = dw < sw or dh < sh
+    var columns = _footprints(sw, dw) if minified else List[Int]()
+    var rows = _footprints(sh, dh) if minified else List[Int]()
+
     for row in range(row_lo, row_hi):
         var dst_row_off = (y0 + row) * W * 4
         if one_to_one:
@@ -804,6 +894,21 @@ def _blit_image[
                         sp, src_off, tint, recolored
                     ),
                 )
+        elif minified:
+            var y_lo = rows[row * 2]
+            var y_hi = rows[row * 2 + 1]
+            for col in range(col_lo, col_hi):
+                var texel = _averaged(
+                    sp, sw, columns[col * 2], columns[col * 2 + 1], y_lo, y_hi
+                )
+                if texel.a != 0:
+                    blend[clipped=clipped](
+                        s,
+                        dst_row_off + (x0 + col) * 4,
+                        _silhouette(t, texel.a) if silhouetted else _tinted(
+                            texel, tint, recolored
+                        ),
+                    )
         else:
             var src_row_off = (row * sh // dh) * sw * 4
             var src_col = col_lo * sw // dw
@@ -823,6 +928,19 @@ def _blit_image[
                 while err >= dw:
                     err -= dw
                     src_col += 1
+
+
+@always_inline
+def _footprint(at: Float64, reach: Float64, size: Int) -> Tuple[Int, Int]:
+    """The texels, `lo` to `hi` exclusive, along one axis of an image `size`
+    texels long whose centres fall within `reach` of `at`: the one under
+    `at` when none do, as when the image is drawn larger than its size."""
+    var lo = min(max(Int(ceil(at - reach - 0.5)), 0), size - 1)
+    var hi = min(Int(ceil(at + reach - 0.5)), size)
+    if hi <= lo:
+        lo = min(max(Int(floor(at)), 0), size - 1)
+        hi = lo + 1
+    return (lo, hi)
 
 
 def blit_image_mapped[
@@ -864,8 +982,10 @@ def _blit_image_mapped[
 ):
     """`_blit_image` for a destination that is not an upright rect: every
     device pixel in `mapping`'s bounds takes the texel its centre lands on,
-    nearest-neighbour, as the upright blit samples. Tint and silhouette as
-    there.
+    nearest-neighbour, or, where the image is drawn smaller than its size,
+    the average of the texels its footprint covers, as the upright blit
+    samples. The footprint averaged is the box `reach_u` by `reach_v` around
+    the centre, the parallelogram's bounds. Tint and silhouette as there.
 
     A pixel whose footprint lies wholly inside the image is painted whole.
     One straddling the image's edge is covered by the share of its
@@ -888,6 +1008,14 @@ def _blit_image_mapped[
     var fh = Float64(sh)
     var reach_u = (abs(mapping.u_dx) + abs(mapping.u_dy)) / 2.0
     var reach_v = (abs(mapping.v_dx) + abs(mapping.v_dy)) / 2.0
+    # Drawn smaller than its size along either device axis, a pixel moves
+    # more than a texel per step, and averages the texels in its footprint.
+    # A turn alone keeps the step a texel long, so it keeps one texel.
+    var minified = (
+        mapping.u_dx * mapping.u_dx + mapping.v_dx * mapping.v_dx > 1.0 + 1e-9
+        or mapping.u_dy * mapping.u_dy + mapping.v_dy * mapping.v_dy
+        > 1.0 + 1e-9
+    )
     var samples = grid * grid
     var step = 1.0 / Float64(grid)
     var first = step / 2.0 - 0.5
@@ -922,18 +1050,31 @@ def _blit_image_mapped[
                             inside += 1
                 cover = inside * 255 // samples
             if cover != 0:
-                var tu = min(max(Int(u), 0), sw - 1)
-                var tv = min(max(Int(v), 0), sh - 1)
-                var src_off = (tv * sw + tu) * 4
-                var sa = src[unsafe_offset=src_off + 3]
-                if sa != 0:
+                var texel: Color
+                if minified:
+                    var span_u = _footprint(u, reach_u, sw)
+                    var span_v = _footprint(v, reach_v, sh)
+                    texel = _averaged(
+                        src, sw, span_u[0], span_u[1], span_v[0], span_v[1]
+                    )
+                else:
+                    var tu = min(max(Int(u), 0), sw - 1)
+                    var tv = min(max(Int(v), 0), sh - 1)
+                    var src_off = (tv * sw + tu) * 4
+                    texel = Color(
+                        src[unsafe_offset=src_off],
+                        src[unsafe_offset=src_off + 1],
+                        src[unsafe_offset=src_off + 2],
+                        src[unsafe_offset=src_off + 3],
+                    )
+                if texel.a != 0:
                     var shade: Color
                     if silhouetted:
-                        shade = _silhouette(t, _faded(sa, UInt8(cover)))
+                        shade = _silhouette(t, _faded(texel.a, UInt8(cover)))
                     else:
                         var faded = tint
                         faded.a = _faded(tint.a, UInt8(cover))
-                        shade = _texel(src, src_off, faded, recolored)
+                        shade = _tinted(texel, faded, recolored)
                     blend[clipped=clipped](s, dst_row_off + col * 4, shade)
             u += mapping.u_dx
             v += mapping.v_dx

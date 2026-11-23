@@ -648,8 +648,12 @@ through the four mapped corners, multisampled. On the CPU a pixel whose footprin
 texel coordinate) lies inside the image is painted whole; one on the edge counts its `grid`×`grid`
 sample centres inside, as a shape's edge does, and scales the centre's texel alpha by that share. A
 blurred shadow's mask (`image_shadow_mask`) samples centres only, on both backends, so they blur the
-same mask. The CPU samples texels nearest-neighbour and the GPU linearly, so parity holds inside a
-solid image and its rim may differ.
+same mask. The CPU samples texels nearest-neighbour where the image is drawn at its size or larger.
+Drawn smaller along either device axis, each pixel averages the texels whose centres fall in its
+footprint, weighting colour by alpha (`_footprints` upright, `_footprint` mapped, both through
+`_averaged`), so a fine detail or a faded rim blends instead of being skipped; a turn alone keeps
+one texel a pixel. The GPU samples linearly without mipmaps, so parity holds inside a solid image;
+its rim and a minified image's fine detail may differ.
 
 ## CPU rasteriser
 
