@@ -172,17 +172,36 @@ struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         `self.a` decides how much of `self` shows through. Compositing over an
         opaque color yields an opaque color, so this is what a background fill does
         against the framebuffer.
+
+        Over a translucent `dst`, each color counts by how much of it shows:
+        `self` by its alpha, `dst` by its own alpha times what `self` leaves
+        uncovered. So a translucent color over a transparent one is itself,
+        not darkened towards the transparent color's channels.
         """
-        if self.a == 255:
+        if self.a == 255 or dst.a == 0:
             return self
         if self.a == 0:
             return dst
         var a = Int(self.a)
         var ia = 255 - a
+        if dst.a == 255:
+            return Color(
+                UInt8((Int(self.r) * a + Int(dst.r) * ia) // 255),
+                UInt8((Int(self.g) * a + Int(dst.g) * ia) // 255),
+                UInt8((Int(self.b) * a + Int(dst.b) * ia) // 255),
+                255,
+            )
+        # Each side's weight, in 255ths of 255ths: `self`'s alpha, and what
+        # of `dst`'s alpha `self` leaves showing. Their sum is the result's
+        # alpha, which the weighted channels are divided back out of.
+        var top = a * 255
+        var under = Int(dst.a) * ia
+        var total = top + under
+        var half = total // 2
         return Color(
-            UInt8((Int(self.r) * a + Int(dst.r) * ia) // 255),
-            UInt8((Int(self.g) * a + Int(dst.g) * ia) // 255),
-            UInt8((Int(self.b) * a + Int(dst.b) * ia) // 255),
+            UInt8((Int(self.r) * top + Int(dst.r) * under + half) // total),
+            UInt8((Int(self.g) * top + Int(dst.g) * under + half) // total),
+            UInt8((Int(self.b) * top + Int(dst.b) * under + half) // total),
             UInt8(a + Int(dst.a) * ia // 255),
         )
 

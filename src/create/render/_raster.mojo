@@ -178,8 +178,10 @@ def fill_span[
     once, and narrows back. The source vector's alpha lane carries `255`
     rather than `c.a`, which is what makes one blend formula correct for
     both the colour lanes and the alpha lane — see
-    `test_fill_span_alpha_matches_over_exhaustively`. A tail of fewer than
-    four pixels falls back to the scalar loop. Every rasteriser that
+    `test_fill_span_alpha_matches_over_exhaustively`. That formula holds
+    only over opaque pixels, so a group of four that isn't wholly opaque,
+    and a tail of fewer than four pixels, go through `Color.over` one pixel
+    at a time. Every rasteriser that
     produces a horizontal run of pixels goes through this one loop; none of
     this may be re-open-coded at a call site.
 
@@ -301,28 +303,44 @@ def _fill_run[
     var one_px = SIMD[DType.uint8, 4](c.r, c.g, c.b, 255)
     var two_px = one_px.join(one_px)
     var src4 = two_px.join(two_px).cast[DType.uint32]()
+    # Every byte but the alphas set, so OR-ing it into four pixels leaves
+    # all 255 only if all four are opaque.
+    var colors_set = SIMD[DType.uint8, 16](255)
+    comptime for k in range(3, 16, 4):
+        colors_set[k] = 0
     var i = 0
     while i + 4 <= count:
         var o2 = off + i * 4
-        var dst = px.unsafe_load[width=16](offset=o2).cast[DType.uint32]()
-        var out = ((src4 * a4 + dst * ia4) // 255).cast[DType.uint8]()
-        px.unsafe_store[width=16](offset=o2, val=out)
+        var bytes = px.unsafe_load[width=16](offset=o2)
+        if (bytes | colors_set).reduce_and() == 255:
+            var dst = bytes.cast[DType.uint32]()
+            var out = ((src4 * a4 + dst * ia4) // 255).cast[DType.uint8]()
+            px.unsafe_store[width=16](offset=o2, val=out)
+        else:
+            # The lerp holds only over opaque pixels.
+            for k in range(4):
+                _over_pixel(px, o2 + k * 4, c)
         i += 4
     while i < count:
-        var o2 = off + i * 4
-        var out = c.over(
-            Color(
-                px[unsafe_offset=o2],
-                px[unsafe_offset=o2 + 1],
-                px[unsafe_offset=o2 + 2],
-                px[unsafe_offset=o2 + 3],
-            )
-        )
-        px[unsafe_offset=o2] = out.r
-        px[unsafe_offset=o2 + 1] = out.g
-        px[unsafe_offset=o2 + 2] = out.b
-        px[unsafe_offset=o2 + 3] = out.a
+        _over_pixel(px, off + i * 4, c)
         i += 1
+
+
+@always_inline
+def _over_pixel[o: Origin[mut=True]](px: Pointer[UInt8, o], off: Int, c: Color):
+    """`c` composited over the pixel at byte offset `off`, by `Color.over`."""
+    var out = c.over(
+        Color(
+            px[unsafe_offset=off],
+            px[unsafe_offset=off + 1],
+            px[unsafe_offset=off + 2],
+            px[unsafe_offset=off + 3],
+        )
+    )
+    px[unsafe_offset=off] = out.r
+    px[unsafe_offset=off + 1] = out.g
+    px[unsafe_offset=off + 2] = out.b
+    px[unsafe_offset=off + 3] = out.a
 
 
 @fieldwise_init
