@@ -345,6 +345,20 @@ def test_over_accumulates_alpha_on_translucent_destination() raises -> None:
     assert_equal(c.a, UInt8(191))
 
 
+def test_over_a_transparent_destination_keeps_the_source() raises -> None:
+    var c = Color(255, 255, 255, 128).over(Color(0, 0, 0, 0))
+    assert_equal(c, Color(255, 255, 255, 128))
+
+
+def test_over_a_translucent_destination_weights_each_by_its_alpha() raises -> (
+    None
+):
+    # Red covers half; blue shows through in half of what red leaves, so
+    # the mix is two parts red to one part blue.
+    var c = Color(255, 0, 0, 128).over(Color(0, 0, 255, 128))
+    assert_equal(c, Color(170, 0, 85, 191))
+
+
 def test_over_per_channel() raises -> None:
     var c = Color(255, 0, 0, 128).over(Color(0, 0, 255))
     assert_equal(c.r, UInt8(128))

@@ -376,10 +376,9 @@ def test_blit_image_downscale_averages_alpha_without_darkening() raises -> None:
     var ptr = sp._data.unsafe_ptr()
     for i in range(4):
         ptr[unsafe_offset=i] = 255
-    var mem = _filled(1, 1, Color.BLACK)
+    var mem = MemorySurface(1, 1)
     blit_image(mem.surface(), sp._data.unsafe_ptr(), 2, 1, 0, 0, 1, 1)
-    # Half white over black; a darkened mix would give a quarter.
-    assert_equal(mem.pixel(0, 0), Color(128, 128, 128, 255))
+    assert_equal(mem.pixel(0, 0), Color(255, 255, 255, 128))
 
 
 def test_a_mirrored_downscale_averages_too() raises -> None:
@@ -618,6 +617,28 @@ def test_fill_span_alpha_matches_over_exhaustively() raises -> None:
         fill_span(mem.surface(), 0, 4, c)
         for x in range(4):
             assert_equal(mem.pixel(x, 0), expected, "alpha " + String(a))
+
+
+def test_fill_span_over_translucent_pixels_matches_over() raises -> None:
+    # Opaque, transparent and translucent pixels in one run of four and a
+    # tail: each must take what `Color.over` gives it.
+    var under = [
+        Color(200, 150, 50, 255),
+        Color(0, 0, 0, 0),
+        Color(10, 200, 90, 255),
+        Color(90, 10, 200, 100),
+        Color(0, 0, 0, 0),
+        Color(30, 60, 90, 255),
+    ]
+    var c = Color(255, 255, 255, 128)
+    var mem = MemorySurface(len(under), 1)
+    for x in range(len(under)):
+        blend(mem.surface(), x * 4, under[x])
+    fill_span(mem.surface(), 0, len(under), c)
+    for x in range(len(under)):
+        assert_equal(mem.pixel(x, 0), c.over(under[x]), "pixel " + String(x))
+    # Over transparent, the colour is kept rather than darkened.
+    assert_equal(mem.pixel(1, 0), c)
 
 
 def test_fill_all_matches_the_reference_blend_loop() raises -> None:
