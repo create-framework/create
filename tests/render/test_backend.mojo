@@ -1295,15 +1295,25 @@ def test_a_bezier_takes_an_inset_shadow_inside_its_stroke() raises -> None:
 
 
 def _inset_on_its_ink(inset: RenderCommand, plain: RenderCommand) raises:
+    var backend = Backend()
+    _inset_on_its_ink(inset, plain, backend)
+
+
+def _inset_on_its_ink(
+    inset: RenderCommand, plain: RenderCommand, mut backend: Backend
+) raises:
     """Assert that `inset`, drawn white with a red inset shadow, paints only
     where `plain`, the same command without the shadow, does, and that its
-    shadow bands part of that and leaves the rest white."""
+    shadow bands part of that and leaves the rest white. `backend` holds
+    the images they draw."""
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(inset.copy())
-    var m = _replay(cmds)
+    var m = MemorySurface(_W, _H)
+    backend.replay(m.surface(), cmds, 1.0)
     cmds[1] = plain.copy()
-    var ink = _replay(cmds)
+    var ink = MemorySurface(_W, _H)
+    backend.replay(ink.surface(), cmds, 1.0)
     var red = 0
     var white = 0
     for y in range(_H):
@@ -1334,6 +1344,32 @@ def test_text_takes_an_inset_shadow_inside_its_letters() raises -> None:
         text_command(turned, s, 0.0, 0.0, "H"),
         text_command(turned, plain, 0.0, 0.0, "H"),
     )
+
+
+def test_an_image_takes_an_inset_shadow_inside_its_opaque_pixels() raises -> (
+    None
+):
+    # An 8 x 8 white disc on transparency, drawn 48 units wide.
+    var src = List[UInt8](length=8 * 8 * 4, fill=0)
+    for y in range(8):
+        for x in range(8):
+            var dx = Float64(x) - 3.5
+            var dy = Float64(y) - 3.5
+            if dx * dx + dy * dy <= 12.0:
+                for ch in range(4):
+                    src[(y * 8 + x) * 4 + ch] = 255
+    var backend = Backend()
+    var id = backend.resources.intern_image(9, ArcPointer(src^), 8, 8)
+    var s = _inset(Color.WHITE, Vector(3, -3))
+    var plain = s.copy()
+    plain.shadow_enabled = False
+    for turn in [0.0, 0.5]:
+        var m = _base() @ Transform(rotation=turn)
+        _inset_on_its_ink(
+            image_command(m, s, 0.0, 0.0, 48.0, 48.0, id, 8, 8),
+            image_command(m, plain, 0.0, 0.0, 48.0, 48.0, id, 8, 8),
+            backend,
+        )
 
 
 def main() raises:

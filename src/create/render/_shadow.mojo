@@ -49,9 +49,9 @@ from ._command import (
 )
 from create.geometry._fillet import rect_corner_radius
 from create.color.color import Color
-from ._blur import BlurredMask, PlacedMask, blur_alpha
-from ._image_mapping import image_mapping
-from ._raster import blit_image_mapped
+from ._blur import BlurredMask, PlacedMask
+from ._image_mapping import image_mapping, upright, upright_rect
+from ._raster import blit_image, blit_image_mapped
 from ._surface import MemorySurface
 from ._transform import stroke_thickness_px, pixel_scale
 from .stroke_align import StrokeAlign
@@ -80,8 +80,8 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
 
     A shape with an interior takes one whether or not its fill is visible,
     as in CSS: the shadow is inside the shape, not on it. A line's or a
-    curve's inside is its stroke, and text's its letters. An image ignores
-    `shadow_inset` and casts nothing.
+    curve's inside is its stroke, text's its letters and an image's its
+    opaque pixels.
     """
     if not c.paint._shadow_visible() or not c.paint.shadow_inset:
         return False
@@ -89,7 +89,7 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
         return _strokes_something(c)
     if c.payload.isa[TextPayload]():
         return c.payload[TextPayload].style[].text_color.a > 0
-    return c.is_region()
+    return c.is_region() or c.payload.isa[ImagePayload]()
 
 
 def _strokes_something(c: RenderCommand) -> Bool:
@@ -200,6 +200,65 @@ def _spread(mut s: RenderCommand, d: Float64, grow_triangle: Bool):
         s.payload[PolygonPayload].grow += d
 
 
+def image_mask[
+    so: Origin
+](
+    c: RenderCommand, m: Transform, src: Pointer[UInt8, so], grid: Int = 1
+) -> PlacedMask:
+    """The opaque pixels of the image command `c`, its pixels at `src`, as
+    an alpha mask where `m` places them: the pixels the image covers, blitted
+    as `CpuReplay._image` blits it, its edge under a turn antialiased on a
+    `grid` x `grid` of samples a pixel."""
+    ref image = c.payload[ImagePayload]
+    if upright(m):
+        var r = upright_rect(
+            m, image.center.x, image.center.y, image.w, image.h
+        )
+        if r.width <= 0 or r.height <= 0:
+            return PlacedMask.empty()
+        var scratch = MemorySurface(r.width, r.height)
+        blit_image(
+            scratch.surface(),
+            src,
+            image.image_w,
+            image.image_h,
+            0,
+            0,
+            r.width,
+            r.height,
+            Optional(Color.WHITE),
+        )
+        return PlacedMask(
+            BlurredMask(scratch.alpha(), r.width, r.height, 0), r.x, r.y
+        )
+    var mapping = image_mapping(
+        m,
+        image.center.x,
+        image.center.y,
+        image.w,
+        image.h,
+        image.image_w,
+        image.image_h,
+    )
+    var width = mapping.x1 - mapping.x0
+    var height = mapping.y1 - mapping.y0
+    if width <= 0 or height <= 0:
+        return PlacedMask.empty()
+    var scratch = MemorySurface(width, height)
+    blit_image_mapped(
+        scratch.surface(),
+        src,
+        image.image_w,
+        image.image_h,
+        mapping.translated(-mapping.x0, -mapping.y0),
+        Optional(Color.WHITE),
+        grid=grid,
+    )
+    return PlacedMask(
+        BlurredMask(scratch.alpha(), width, height, 0), mapping.x0, mapping.y0
+    )
+
+
 def image_shadow_mask[
     so: Origin
 ](
@@ -215,37 +274,10 @@ def image_shadow_mask[
     An upright image's mask is cached by size (`shadow_mask_key`); this one
     depends on the whole transform, so like a Bézier's it is built afresh
     each frame. The mask is the pixels `blit_image_mapped` covers on the
-    device, so a hard and a blurred shadow line up.
+    device, sampled at pixel centres, so a hard and a blurred shadow line
+    up.
     """
-    ref image = c.payload[ImagePayload]
-    var mapping = image_mapping(
-        m,
-        image.center.x,
-        image.center.y,
-        image.w,
-        image.h,
-        image.image_w,
-        image.image_h,
-    )
-    var width = mapping.x1 - mapping.x0
-    var height = mapping.y1 - mapping.y0
-    if width <= 0 or height <= 0:
-        return PlacedMask(BlurredMask(List[UInt8](), 0, 0, 0), 0, 0)
-    var scratch = MemorySurface(width, height)
-    blit_image_mapped(
-        scratch.surface(),
-        src,
-        image.image_w,
-        image.image_h,
-        mapping.translated(-mapping.x0, -mapping.y0),
-        Optional(Color.WHITE),
-    )
-    var alpha = List[UInt8](length=width * height, fill=0)
-    for i in range(width * height):
-        alpha[i] = scratch.data[i * 4 + 3]
-    var mask = blur_alpha(alpha, width, height, Float64(blur) / 2.0)
-    var pad = mask.pad
-    return PlacedMask(mask^, mapping.x0 - pad, mapping.y0 - pad)
+    return image_mask(c, m, src).blurred(blur)
 
 
 # --- Blur coverage -----------------------------------------------------------

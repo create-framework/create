@@ -52,7 +52,8 @@ lies on the stroke, as if the stroke were a groove cut into the screen. Its spre
 silhouette from both sides, and a round or square cap with it, but a butt end stays where it is.
 
 Text casts its inset shadow inside its letters, so they look stamped into the screen. The spread
-doesn't change it. Images cast nothing while it is set.
+doesn't change it. An image casts its inset shadow inside its opaque pixels, which the spread
+doesn't change either.
 
 A rectangle's or circle's inset shadow is worked out directly. Anything else's is drawn into an
 image every frame and blurred there, so it costs about as much as a blurred drop shadow.

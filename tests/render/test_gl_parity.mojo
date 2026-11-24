@@ -195,6 +195,8 @@ comptime _INSET_NAMES: List[String] = [
     "blurred inset round line",
     "inset text",
     "blurred inset turned text",
+    "inset image",
+    "blurred inset turned image",
 ]
 comptime _SHAPE_COUNT = _SHAPE_INSET + len(_INSET_NAMES)
 
@@ -305,9 +307,9 @@ def _draw_region(mut canvas: Canvas, kind: Int) raises:
         canvas.triangle((-45, -30), (45, -30), (0, 40), corner_radius=8)
 
 
-def _draw_inset(mut canvas: Canvas, i: Int) raises:
+def _draw_inset(mut canvas: Canvas, i: Int, block: Image) raises:
     """The `i`-th inset case: a hard, opaque inset shadow over a light fill,
-    or soft where the name says blurred."""
+    or soft where the name says blurred. `block` is a solid image."""
     if i == 0:
         # Rounded far more than the offset, so the silhouette's rounded
         # corners land well inside the interior.
@@ -393,6 +395,15 @@ def _draw_inset(mut canvas: Canvas, i: Int) raises:
         ):
             with canvas.transform(Transform(rotation=0.3)):
                 canvas.text("HI", (0, 0))
+    elif i == 9:
+        # Large, so the band and the untouched middle both have an inside
+        # away from the edges.
+        with canvas.style(_inset(Style())):
+            canvas.image(block, (-10, 0), 100, 100)
+    elif i == 10:
+        with canvas.style(_inset(Style(), 8.0)):
+            with canvas.transform(Transform(rotation=0.5)):
+                canvas.image(block, (-10, 0), 100, 100)
 
 
 def _shape_name(shape: Int) -> String:
@@ -638,7 +649,7 @@ struct _Parity(Program):
         canvas.background(_BACKGROUND)
 
         if self.shape >= _SHAPE_INSET:
-            _draw_inset(canvas, self.shape - _SHAPE_INSET)
+            _draw_inset(canvas, self.shape - _SHAPE_INSET, self.block)
         elif self.shape >= _SHAPE_DASHED:
             _draw_dashed(canvas, self.shape - _SHAPE_DASHED)
         elif self.shape >= _SHAPE_ALIGNED:
