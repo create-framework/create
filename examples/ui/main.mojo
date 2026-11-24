@@ -2,8 +2,7 @@
 text field, a slider, checkboxes and the four kinds of button.
 
 Click the widgets, or Tab through them and use Enter, Space and the arrows;
-a gamepad's d-pad and A button work too. Escape leaves the text field, and
-quits when nothing has focus.
+a gamepad's d-pad and A button work too. Escape leaves the text field.
 """
 
 from create import *
@@ -31,11 +30,6 @@ struct Menu(Program):
         return Menu(UI(), ColorScheme.dark(), "", 0.6, True, True, "")
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        if (
-            context.keyboard.pressed(Key.ESCAPE)
-            and not self.ui.wants_keyboard()
-        ):
-            context.quit()
         self.colors = ColorScheme.dark() if self.dark else ColorScheme.light()
         canvas.background(self.colors.background)
 
