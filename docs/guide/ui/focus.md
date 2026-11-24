@@ -55,8 +55,8 @@ between them: a pill round a round-ended button, a circle round a slider's handl
 shows focus its own way instead, by a thicker outline in the `primary` colour and its caret.
 
 The ring's thickness, gap and colour come from the `UI`'s `focus_ring`, a `FocusRing`; its colour is
-the colours' `secondary` unless it sets one. `ui.focus_ring(ring)` changes it for every widget (see
-[Sizes and states](themes.md#sizes-and-states)).
+the colours' `secondary` unless it sets one. `self.ui.focus_ring(ring)` changes it for every widget
+(see [Sizes and states](themes.md#sizes-and-states)).
 
 ## Keeping the game's input apart
 
@@ -64,11 +64,11 @@ A game reads the same keyboard and mouse as its UI, so a click on a menu button 
 weapon, and typing a name with W in it could walk the player forward. Two readings on the `UI` say
 when the input is the UI's:
 
-- **`ui.wants_mouse(context)`** is true while the pointer is over a widget, or a widget is held,
-  such as a slider being dragged.
-- **`ui.wants_keyboard(context)`** is true while a text field has focus, while a widget has focus
-  from the keyboard (so the keys act on it), and in the frame a key took focus away, such as the
-  Escape that leaves a field.
+- **`self.ui.wants_mouse(context)`** is true while the pointer is over a widget, or a widget is
+  held, such as a slider being dragged.
+- **`self.ui.wants_keyboard(context)`** is true while a text field has focus, while a widget has
+  focus from the keyboard (so the keys act on it), and in the frame a key took focus away, such as
+  the Escape that leaves a field.
 
 Check them before reading input for the game itself. They are read on the `UI` field, so they work
 before or after the UI's block. A `UI` that opened no layer this frame or last, such as a menu that
