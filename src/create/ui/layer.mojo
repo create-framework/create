@@ -27,7 +27,7 @@ from .button import ButtonVariant
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor
 from .colors import ColorScheme, FocusRing, _readable_on
-from .ui import UI, _Hit, _Styles
+from .ui import UI, _CORNER_RADIUS, _Hit, _Styles
 
 
 comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
@@ -1114,7 +1114,11 @@ struct UILayer[
                 resolved.stroke_color = _faded(
                     colors.on_surface, states.disabled_container
                 )
-        var radius = look.corner_radius.or_else(rect.height / 2)
+        # a pill at the default corner radius, squaring as it shrinks
+        var roundness = clamp(
+            self._ui[]._corner_radius / _CORNER_RADIUS, 0.0, 1.0
+        )
+        var radius = look.corner_radius.or_else(roundness * rect.height / 2)
         var shape = Rectangle(
             rect.position, rect.width, rect.height, corner_radius=radius
         )

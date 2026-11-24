@@ -106,6 +106,10 @@ struct _Hit(Copyable, ImplicitlyCopyable, Movable):
         return self.to_local.inverse().apply(self.rect.position)
 
 
+comptime _CORNER_RADIUS = 16.0
+"""The `UI`'s `corner_radius` unless set, at which a button is a pill."""
+
+
 struct UI(Movable):
     """The state of a program's widgets, kept from frame to frame under each
     widget's ID.
@@ -210,7 +214,7 @@ struct UI(Movable):
         self._pad_move = Vector.ZERO
         self._colors = ColorScheme.light()
         self._color_blocks = []
-        self._corner_radius = 16
+        self._corner_radius = _CORNER_RADIUS
         self._spacing = 8
         self._control_height = 40
         self._state_layers = StateLayers()
@@ -243,8 +247,9 @@ struct UI(Movable):
 
     def corner_radius(self) -> Float64:
         """How round the widgets' corners are: a panel's radius, 16 unless
-        set. Smaller parts are rounded in proportion: a text field's by a
-        quarter of it, a checkbox's box by an eighth."""
+        set. The other widgets are rounded in proportion: a text field by a
+        quarter of it and a checkbox's box by an eighth, and a button is a
+        pill at 16 or more, and squarer below."""
         return self._corner_radius
 
     def corner_radius(mut self, radius: Float64):
