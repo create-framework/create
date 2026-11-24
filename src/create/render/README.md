@@ -645,10 +645,11 @@ Both replays handle a command's shadow around the command itself, in the command
   position (`MODE_INSET_BOX`). A hard inset on the GPU uses a steep sigma (1/64 px), not a step.
   Every other kind is cut from masks (`inset_shadow_mask`, `_inset.mojo`): the interior's pieces
   rasterised under the command's matrix, times what the silhouette's, rasterised under the shadow
-  transform and blurred, leaves uncovered. The CPU blits the mask and the GPU draws it as a texture
-  for the frame, as a blurred Bézier's shadow: uncached, one mask a frame. A triangle is masked
-  rather than analytic: its silhouette's corners are rounded, and the GPU's analytic modes see a
-  triangle only as its three edges, which would cut them sharp.
+  transform and blurred, leaves uncovered. A line's or a curve's interior is its stroke, and its
+  silhouette the stroke thinned by twice the spread. The CPU blits the mask and the GPU draws it as
+  a texture for the frame, as a blurred Bézier's shadow: uncached, one mask a frame. A triangle is
+  masked rather than analytic: its silhouette's corners are rounded, and the GPU's analytic modes
+  see a triangle only as its three edges, which would cut them sharp.
 
 The offset is one transform (`shadow_transform`). A screen-fixed offset composes a device
 translation after the command transform; one that follows the transform composes

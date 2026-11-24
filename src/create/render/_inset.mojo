@@ -3,14 +3,16 @@
 A rectangle's or a circle's inset shadow is evaluated per pixel from its
 equations (`InsetRegion`, `_cpu_replay._inset_shadow`, `emit_inset_shadow`).
 Every other kind's interior has no such formula: a triangle's rounded
-corners blur through no closed form. So its shadow is built here, on the
+corners blur through no closed form, and a sector, a polygon or a stroke
+along a curve has none to start from. So its shadow is built here, on the
 CPU, as an alpha mask in device pixels, which both replays composite in the
 shadow colour: the CPU with `blit_alpha`, the GPU as one texture drawn for
 the frame (`GLRenderer._mask_shadow`).
 
 The mask is the **interior** times what the **silhouette** leaves
 uncovered. The interior is what the shadow is clipped to, under the
-command's own matrix: a region's fill inside its stroke. The silhouette is
+command's own matrix: a region's fill inside its stroke, or a line's or a
+curve's stroke, which is all the inside it has. The silhouette is
 the interior under the shadow transform, shrunk by the spread and blurred.
 Both are rasterised from the same pieces the shape is drawn with, so the
 shadow's edge lies on the fill's. A mask has no stable id to key a cache by,
@@ -29,6 +31,7 @@ from ._command import (
     SectorPayload,
     TrianglePayload,
 )
+from ._lower import shape_pieces
 from ._pieces import Pieces, pieces_mask
 from ._polygon import polygon_quads
 from ._sector import sector_quads
@@ -60,8 +63,11 @@ def inset_shadow_mask(
 
 
 def _interior(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
-    """The region `c`'s fill inside its stroke, mapped by `m`, whether or not
-    the fill is visible: the shadow is inside the shape, not on it."""
+    """What `c`'s inset shadow is clipped to, mapped by `m`: a region's fill
+    inside its stroke, whether or not the fill is visible, since the shadow
+    is inside the shape, not on it; a line's or a curve's stroke."""
+    if not c.is_region():
+        return shape_pieces(c, m, scale)
     # Tiled with the fill hidden, so a stroke too wide to leave any fill
     # leaves no interior, rather than filling the shape with its colour.
     var hidden = c.copy()
@@ -78,9 +84,18 @@ def _interior(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
 
 
 def _shrunk(c: RenderCommand, d: Float64) -> Optional[RenderCommand]:
-    """The region `c` with every edge moved in by `d` local units, out for a
-    negative `d`, and its corners' radius less by as much: the reverse of an
-    outer shadow's spread. `None` once nothing is left of it."""
+    """`c` with every edge of its interior moved in by `d` local units, out
+    for a negative `d`: the reverse of an outer shadow's spread. A region's
+    corners' radius drops by as much, and a line's or a curve's stroke
+    thins by `d` either side, its round and square caps with it; a butt
+    end stays where it is. `None` once nothing is left of it."""
+    if not c.is_region():
+        var thickness = c.paint.stroke_thickness - 2.0 * d
+        if thickness <= 0.0:
+            return None
+        var out = c.copy()
+        out.paint.stroke_thickness = thickness
+        return out^
     if c.payload.isa[TrianglePayload]():
         # Shrunk past its inradius, a triangle would turn inside out.
         if d >= _inradius(c.payload[TrianglePayload].corners):

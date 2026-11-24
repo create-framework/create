@@ -191,6 +191,8 @@ comptime _INSET_NAMES: List[String] = [
     "blurred inset sector",
     "inset star",
     "blurred inset ellipse",
+    "inset bezier",
+    "blurred inset round line",
 ]
 comptime _SHAPE_COUNT = _SHAPE_INSET + len(_INSET_NAMES)
 
@@ -346,6 +348,24 @@ def _draw_inset(mut canvas: Canvas, i: Int) raises:
             )
         ):
             canvas.ellipse((-10, 0), 150, 100)
+    elif i == 5:
+        # Thick, so the stroke has an inside a few pixels from every edge.
+        with canvas.style(
+            _inset(Style(stroke=Color(0xF0, 0xE0, 0xC0), stroke_thickness=24))
+        ):
+            canvas.bezier((-70, -40), (-60, 60), (40, -60), (60, 40))
+    elif i == 6:
+        with canvas.style(
+            _inset(
+                Style(
+                    stroke=Color(0xF0, 0xE0, 0xC0),
+                    stroke_thickness=30,
+                    stroke_cap=StrokeCap.ROUND,
+                ),
+                8.0,
+            )
+        ):
+            canvas.line((-60, -30), (50, 30))
 
 
 def _shape_name(shape: Int) -> String:
