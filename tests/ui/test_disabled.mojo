@@ -110,6 +110,27 @@ def test_a_disabled_button_is_drawn_faded() raises -> None:
     assert_true(abs(Int(pixel.b) - Int(expected.b)) <= 2)
 
 
+def test_a_disabled_widget_on_a_panel_is_drawn_against_it() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    var value = 0.5
+    with ui.screen(context, canvas) as layer:
+        with layer.panel(
+            Rectangle((0, 0), 200, 100), style=Style(fill=Color.BLACK)
+        ):
+            layer.slider(value, 0, 1, _A, disabled=True)
+    var colors = ColorScheme.light()
+    # the handle, solid over the track: the panel's black towards on_surface
+    var expected = Color.BLACK.lerp(
+        colors.on_surface, ui.state_layers().disabled_content
+    )
+    var pixel = canvas.color_at(_A.position)
+    assert_true(abs(Int(pixel.r) - Int(expected.r)) <= 2)
+    assert_true(abs(Int(pixel.g) - Int(expected.g)) <= 2)
+    assert_true(abs(Int(pixel.b) - Int(expected.b)) <= 2)
+
+
 def _label_and_image(disabled: Bool) raises -> Canvas:
     """A black label at `_A` and a red image under it, in a block disabled
     or not, on white."""
