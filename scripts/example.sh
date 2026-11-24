@@ -9,6 +9,10 @@
 #
 # A path that exists as given is run as-is, so the long form still works.
 #
+# Every example's window has the app ID `create-example` (the Wayland app_id,
+# the X11 window class), so a window manager rule can float or size them all
+# at once. SDL reads it from SDL_APP_ID; one already set is kept.
+#
 # It runs against build/create.mojoc, which the pixi task rebuilds first only
 # when the library changed, so the library is not recompiled on every run.
 set -e
@@ -31,4 +35,5 @@ else
     exit 1
 fi
 
+export SDL_APP_ID="${SDL_APP_ID:-create-example}"
 exec mojo run -I build "$file" "$@"
