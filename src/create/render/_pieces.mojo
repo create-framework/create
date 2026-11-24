@@ -20,7 +20,7 @@ from std.math import ceil, floor
 from create.color.color import Color
 from create.math.point import Point
 
-from ._blur import BlurredMask, blur_alpha
+from ._blur import BlurredMask, PlacedMask
 from ._curve import StrokePieces
 from ._raster import FillPaint, fill_convex, fill_quad
 from ._surface import MemorySurface, Surface
@@ -99,22 +99,8 @@ def fill_pieces[
         fill_convex(s, polygon, paint)
 
 
-struct PlacedMask(Movable):
-    """A blurred mask and where its top-left pixel lands on the device."""
-
-    var mask: BlurredMask
-    var x: Int
-    var y: Int
-
-    def __init__(out self, var mask: BlurredMask, x: Int, y: Int):
-        self.mask = mask^
-        self.x = x
-        self.y = y
-
-
-def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
-    """Every piece, fill and stroke alike, rasterised into one alpha mask and
-    blurred by `blur` device pixels.
+def pieces_mask(pieces: Pieces) -> PlacedMask:
+    """Every piece, fill and stroke alike, rasterised into one alpha mask.
 
     The pieces are shifted by a whole number of pixels onto the mask, so
     every pixel centre falls where it would on the device and the mask holds
@@ -129,7 +115,7 @@ def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
     for polygon in pieces.stroke_polygons:
         _extend(lo, hi, polygon)
     if lo.x > hi.x:
-        return PlacedMask(BlurredMask(List[UInt8](), 0, 0, 0), 0, 0)
+        return PlacedMask.empty()
     var x0 = Int(floor(lo.x))
     var y0 = Int(floor(lo.y))
     var width = Int(ceil(hi.x)) - x0 + 1
@@ -152,12 +138,12 @@ def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
         _shifted(pieces.stroke_polygons, shift),
         Color.WHITE,
     )
-    var alpha = List[UInt8](length=width * height, fill=0)
-    for i in range(width * height):
-        alpha[i] = scratch.data[i * 4 + 3]
-    var mask = blur_alpha(alpha, width, height, Float64(blur) / 2.0)
-    var pad = mask.pad
-    return PlacedMask(mask^, x0 - pad, y0 - pad)
+    return PlacedMask(BlurredMask(scratch.alpha(), width, height, 0), x0, y0)
+
+
+def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
+    """`pieces_mask` blurred by `blur` device pixels."""
+    return pieces_mask(pieces).blurred(blur)
 
 
 def _extend(mut lo: Point, mut hi: Point, points: List[Point]):

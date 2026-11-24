@@ -58,6 +58,39 @@ struct BlurredMask(Movable):
         self.pad = pad
 
 
+struct PlacedMask(Movable):
+    """A mask and where its top-left pixel lands on the device."""
+
+    var mask: BlurredMask
+    var x: Int
+    var y: Int
+
+    def __init__(out self, var mask: BlurredMask, x: Int, y: Int):
+        self.mask = mask^
+        self.x = x
+        self.y = y
+
+    @staticmethod
+    def empty() -> PlacedMask:
+        """A mask of no pixels, which covers nothing."""
+        return PlacedMask(BlurredMask(List[UInt8](), 0, 0, 0), 0, 0)
+
+    def blurred(self, blur: Int) -> PlacedMask:
+        """This mask blurred by `blur` device pixels, placed so the source
+        stays where it was; a copy of it for a `blur` of 0, and an empty
+        mask stays empty."""
+        if self.mask.width == 0 or self.mask.height == 0:
+            return PlacedMask.empty()
+        var mask = blur_alpha(
+            self.mask.pixels,
+            self.mask.width,
+            self.mask.height,
+            Float64(blur) / 2.0,
+        )
+        var pad = mask.pad
+        return PlacedMask(mask^, self.x - pad, self.y - pad)
+
+
 def box_widths(sigma: Float64) -> Array[Int, 3]:
     """The three odd box widths whose variances sum closest to `sigma`^2.
 

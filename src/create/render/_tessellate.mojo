@@ -42,11 +42,7 @@ from ._command import (
 from ._curve import _MIN_CIRCLE_SEGMENTS, circle_segments
 from ._pieces import Pieces
 from ._image_mapping import image_corners, upright, upright_rect
-from create.geometry._fillet import (
-    corner_fillet,
-    rect_corner_radius,
-    triangle_corner_radius,
-)
+from create.geometry._fillet import rect_corner_radius
 from ._shadow import (
     SIL_RECT,
     SIL_TRIANGLE,
@@ -87,10 +83,8 @@ comptime MODE_SHADOW_EDGES: Float32 = 5.0
 three edges and `s3` its ring thickness, all over sigma."""
 comptime MODE_INSET_BOX: Float32 = 6.0
 """Inset shadow of a rectangle, rounded rectangle or circle: `MODE_SHADOW_BOX`'s
-parameters with no ring, the coverage inverted."""
-comptime MODE_INSET_EDGES: Float32 = 7.0
-"""Inset shadow of a triangle: `MODE_SHADOW_EDGES`'s parameters with no ring,
-the coverage inverted."""
+parameters with no ring, the coverage inverted. Every other kind's inset
+shadow is a mask (`inset_shadow_mask`) drawn in `MODE_SILHOUETTE`."""
 
 comptime MODE_GRADIENT: Float32 = 8.0
 """Gradient fill: `uv` is the gradient's device mapping at the vertex (the
@@ -614,115 +608,6 @@ def _emit_quads(mut vb: VertexBuffer, corners: List[Point], color: Color):
         )
 
 
-def _fillet_arc_span(
-    f: Tuple[
-        Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64
-    ]
-) -> Float64:
-    """The signed sweep from a fillet's `angle_in` to its `angle_out`,
-    normalised to `[-PI, PI]`, so the arc is walked the short way round."""
-    var delta = f[7] - f[6]
-    if delta > PI:
-        delta -= 2.0 * PI
-    if delta < -PI:
-        delta += 2.0 * PI
-    return delta
-
-
-def _rounded_triangle_fill(
-    mut vb: VertexBuffer,
-    m: Transform,
-    cx: Float64,
-    cy: Float64,
-    f0: Tuple[
-        Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64
-    ],
-    f1: Tuple[
-        Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64
-    ],
-    f2: Tuple[
-        Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64
-    ],
-    r: Float64,
-    sf: Float64,
-    color: Color,
-):
-    """The eroded hexagon (a centroid fan over the six tangent points) union
-    a corner fan per vertex: the eroded triangle union its three fillet
-    discs, cheap here because every vertex is mapped individually anyway. Full
-    size, not inset — the fill is unaffected by whether a stroke is
-    rendered, exactly as the unrounded triangle's own fill is."""
-    var centre = m._apply_xy(cx, cy)
-    var tx0 = f0[2]
-    var ty0 = f0[3]
-    var tx1 = f0[4]
-    var ty1 = f0[5]
-    var tx2 = f1[2]
-    var ty2 = f1[3]
-    var tx3 = f1[4]
-    var ty3 = f1[5]
-    var tx4 = f2[2]
-    var ty4 = f2[3]
-    var tx5 = f2[4]
-    var ty5 = f2[5]
-    var hx = List[Float64]()
-    var hy = List[Float64]()
-    hx.append(tx0)
-    hy.append(ty0)
-    hx.append(tx1)
-    hy.append(ty1)
-    hx.append(tx2)
-    hy.append(ty2)
-    hx.append(tx3)
-    hy.append(ty3)
-    hx.append(tx4)
-    hy.append(ty4)
-    hx.append(tx5)
-    hy.append(ty5)
-    for i in range(6):
-        var j = (i + 1) % 6
-        var pa = m._apply_xy(hx[i], hy[i])
-        var pb = m._apply_xy(hx[j], hy[j])
-        vb.triangle(centre[0], centre[1], pa[0], pa[1], pb[0], pb[1], color)
-
-    var span0 = _fillet_arc_span(f0)
-    var span1 = _fillet_arc_span(f1)
-    var span2 = _fillet_arc_span(f2)
-    _corner_fan(
-        vb,
-        m,
-        f0[0],
-        f0[1],
-        r,
-        f0[6],
-        span0,
-        _arc_segments(r * sf, span0),
-        color,
-    )
-    _corner_fan(
-        vb,
-        m,
-        f1[0],
-        f1[1],
-        r,
-        f1[6],
-        span1,
-        _arc_segments(r * sf, span1),
-        color,
-    )
-    _corner_fan(
-        vb,
-        m,
-        f2[0],
-        f2[1],
-        r,
-        f2[6],
-        span2,
-        _arc_segments(r * sf, span2),
-        color,
-    )
-
-
 def emit_letterbox(
     mut vb: VertexBuffer, c: RenderCommand, width: Int, height: Int
 ):
@@ -885,41 +770,20 @@ def _emit_region(
     rounded rectangle's corners take their segment count from the shape's
     radius, as `emit_rect`'s fill does."""
     ref g = region.geom
-    if region.kind == SIL_RECT:
-        var r = min(region.radius, min(g[2], g[3]))
-        var x0 = g[0] - g[2]
-        var y0 = g[1] - g[3]
-        var x1 = g[0] + g[2]
-        var y1 = g[1] + g[3]
-        if r <= 0.0:
-            _mapped_quad(vb, m, x0, y0, x1, y1, color)
-        else:
-            var n = _arc_segments((r + stroke_inset) * sf, PI / 2.0)
-            _rounded_rect_fill(vb, m, x0, y0, x1, y1, r, n, color)
-        return
-    var r = region.radius
+    var r = min(region.radius, min(g[2], g[3]))
+    var x0 = g[0] - g[2]
+    var y0 = g[1] - g[3]
+    var x1 = g[0] + g[2]
+    var y1 = g[1] + g[3]
     if r <= 0.0:
-        var p1 = m._apply_xy(g[0], g[1])
-        var p2 = m._apply_xy(g[2], g[3])
-        var p3 = m._apply_xy(g[4], g[5])
-        vb.triangle(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1], color)
-        return
-    _rounded_triangle_fill(
-        vb,
-        m,
-        (g[0] + g[2] + g[4]) / 3.0,
-        (g[1] + g[3] + g[5]) / 3.0,
-        corner_fillet(g[0], g[1], g[4], g[5], g[2], g[3], r),
-        corner_fillet(g[2], g[3], g[0], g[1], g[4], g[5], r),
-        corner_fillet(g[4], g[5], g[2], g[3], g[0], g[1], r),
-        r,
-        sf,
-        color,
-    )
+        _mapped_quad(vb, m, x0, y0, x1, y1, color)
+    else:
+        var n = _arc_segments((r + stroke_inset) * sf, PI / 2.0)
+        _rounded_rect_fill(vb, m, x0, y0, x1, y1, r, n, color)
 
 
 def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
-    """`c`'s inset shadow (`c` a rectangle, circle or triangle): its interior
+    """`c`'s inset shadow (`c` a rectangle or circle): its interior
     tessellated, every vertex carrying the silhouette's shape parameters.
 
     The interior is the geometry, so the shadow is clipped to it for free.
@@ -952,20 +816,12 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     for i in range(first, vb.count()):
         var at = i * _VERTEX_FLOATS
         var l = sminv._apply_xy(Float64(vb.data[at]), Float64(vb.data[at + 1]))
-        var x = l[0]
-        var y = l[1]
-        if shape.kind == SIL_RECT:
-            vb.data[at + 2] = Float32((x - g[0]) * k)
-            vb.data[at + 3] = Float32((y - g[1]) * k)
-            vb.data[at + 8] = MODE_INSET_BOX
-            vb.data[at + 9] = Float32(g[2] * k)
-            vb.data[at + 10] = Float32(g[3] * k)
-            vb.data[at + 11] = Float32(g[4] * k)
-        else:
-            vb.data[at + 8] = MODE_INSET_EDGES
-            vb.data[at + 9] = Float32((g[0] * x + g[1] * y + g[2]) * k)
-            vb.data[at + 10] = Float32((g[3] * x + g[4] * y + g[5]) * k)
-            vb.data[at + 11] = Float32((g[6] * x + g[7] * y + g[8]) * k)
+        vb.data[at + 2] = Float32((l[0] - g[0]) * k)
+        vb.data[at + 3] = Float32((l[1] - g[1]) * k)
+        vb.data[at + 8] = MODE_INSET_BOX
+        vb.data[at + 9] = Float32(g[2] * k)
+        vb.data[at + 10] = Float32(g[3] * k)
+        vb.data[at + 11] = Float32(g[4] * k)
 
 
 def emit_blurred_shadow(

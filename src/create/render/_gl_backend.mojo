@@ -117,6 +117,7 @@ from ._gl import (
 )
 from ._blur import (
     SHADOW_MASK_LIMIT,
+    PlacedMask,
     blur_reach,
     blur_image_alpha,
     shadow_mask_key,
@@ -128,7 +129,7 @@ from ._lower import (
     shape_pieces,
     shape_shadow_mask,
 )
-from ._pieces import PlacedMask
+from ._inset import inset_shadow_mask
 from ._image_mapping import upright, upright_rect
 from ._interned_image import _InternedImage
 from ._tessellate import (
@@ -153,7 +154,9 @@ from ._shadow import (
     casts_inset_shadow,
     casts_outer_shadow,
     image_shadow_mask,
+    insets_analytically,
     shadow_command,
+    shadow_transform,
 )
 from ._text import PlacedGlyph, TextRenderer
 from ._transform import (
@@ -344,12 +347,12 @@ void main() {
         float d = (BAYER[(p.y & 3) * 4 + (p.x & 3)] + 0.5) / 16.0;
         frag_color = min(floor(c * 255.0 + d), 255.0) / 255.0;
     } else {
-        // `s3` is the ring: subtract the silhouette shrunk by it. Modes 6
-        // and 7 are 4 and 5 inverted, for an inset shadow.
+        // `s3` is the ring: subtract the silhouette shrunk by it. Mode 6
+        // is 4 inverted, for an inset shadow.
         float ring = v_shape.w;
         bool inset = v_mode > 5.5;
         float c;
-        if (v_mode < 4.5 || (inset && v_mode < 6.5)) {
+        if (v_mode < 4.5 || inset) {
             c = box_coverage(v_uv, v_shape.xy, v_shape.z);
             if (ring > 0.0 && c > 0.0) {
                 c -= box_coverage(
@@ -1014,10 +1017,19 @@ struct GLRenderer(Movable):
                     c.paint.shadow_color,
                 )
         self._one(c, images, text, width, height, scale)
-        # Over the command, clipped to its interior; solid-mode
-        # geometry, so it batches with anything.
+        # Over the command, clipped to its interior: a rectangle's or a
+        # circle's as solid-mode geometry, which batches with anything, and
+        # every other kind's as the CPU's mask.
         if casts_inset_shadow(c):
-            emit_inset_shadow(self.vertices, c, scale)
+            if insets_analytically(c):
+                emit_inset_shadow(self.vertices, c, scale)
+            else:
+                self._mask_shadow(
+                    inset_shadow_mask(
+                        c, c.transform, shadow_transform(c, scale), scale
+                    ),
+                    c.paint.shadow_color,
+                )
 
     def _one(
         mut self,
@@ -1340,8 +1352,9 @@ struct GLRenderer(Movable):
         emit_image(self.vertices, c, scale, blur_reach(sigma))
 
     def _mask_shadow(mut self, placed: PlacedMask, color: Color) raises:
-        """A blurred curve or sector shadow: the CPU replay's mask, uploaded
-        for this frame only and drawn as one quad where the CPU blits it."""
+        """A shadow built as a mask: a blurred curve's, sector's or polygon's,
+        or an inset one. The CPU replay's mask, uploaded for this frame
+        only and drawn as one quad where the CPU blits it."""
         ref mask = placed.mask
         if mask.width == 0 or mask.height == 0:
             return

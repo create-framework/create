@@ -39,7 +39,8 @@ from ._curve import (
     stroke_segment,
 )
 from ._dash import dashed_stroke
-from ._pieces import Pieces, PlacedMask, pieces_shadow_mask
+from ._blur import PlacedMask
+from ._pieces import Pieces, pieces_shadow_mask
 from ._polygon import polygon_quads
 from ._sector import sector_quads
 from ._transform import pixel_scale, stroke_thickness_px
