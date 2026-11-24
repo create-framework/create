@@ -28,6 +28,7 @@ from create.render._command import (
     letterbox_command,
     bezier_command,
     bezier_chain_command,
+    sector_command,
 )
 from create.math.transform import Transform
 from create.math.vector import Vector
@@ -1182,6 +1183,36 @@ def test_circles_and_triangles_take_inset_shadows_inside_only() raises -> None:
             var in_circle = cx * cx + cy * cy <= 400.0
             var in_triangle = y >= 55 and y < 95 and x >= 55 and x < 95
             assert_true(in_circle or in_triangle, String(x, ",", y))
+
+
+def test_a_sector_takes_an_inset_shadow_inside_its_stroke() raises -> None:
+    # The upper half disc of radius 30 about device (50, 50); the spread
+    # bands its inside 4 deep along the arc and the flat edge, row 50.
+    for stroked in [False, True]:
+        var s = _inset(Color.WHITE, Vector(0, 0))
+        s.shadow_spread = 4.0
+        if stroked:
+            s.stroke_enabled = True
+            s.stroke_color = Color.BLUE
+            s.stroke_thickness = 2
+        var cmds = List[RenderCommand]()
+        cmds.append(clear_command(Color.BLACK))
+        cmds.append(sector_command(_base(), s, 0.0, 0.0, 30.0, 0.0, PI))
+        var m = _replay(cmds)
+        assert_equal(m.pixel(50, 35), Color.WHITE)
+        assert_equal(m.pixel(50, 22), Color.RED)
+        assert_equal(m.pixel(22, 45), Color.RED)
+        assert_equal(m.pixel(50, 47), Color.RED)
+        assert_equal(m.pixel(50, 49), Color.BLUE if stroked else Color.RED)
+        assert_equal(m.pixel(50, 52), Color.BLACK)
+        # Every red pixel lies inside the half disc.
+        for y in range(_H):
+            for x in range(_W):
+                if m.pixel(x, y) != Color.RED:
+                    continue
+                var dx = Float64(x) + 0.5 - 50.0
+                var dy = 50.0 - Float64(y) - 0.5
+                assert_true(dy > 0.0 and dx * dx + dy * dy <= 900.0)
 
 
 def test_lines_ignore_inset() raises -> None:

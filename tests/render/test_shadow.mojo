@@ -272,11 +272,11 @@ def test_an_stroke_only_sector_casts_its_ring() raises -> None:
     )
 
 
-def test_a_sector_casts_no_inset_shadow() raises -> None:
+def test_a_sector_casts_an_inset_shadow() raises -> None:
     var s = _shadowed()
     s.shadow_inset = True
     var c = sector_command(Transform(), s, 0.0, 0.0, 10.0, 0.0, 1.0)
-    assert_false(casts_inset_shadow(c))
+    assert_true(casts_inset_shadow(c))
     assert_false(casts_outer_shadow(c))
 
 

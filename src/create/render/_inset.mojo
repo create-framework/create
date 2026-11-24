@@ -23,8 +23,9 @@ from std.math import max
 from create.math.transform import Transform
 
 from ._blur import BlurredMask, PlacedMask
-from ._command import RenderCommand, TrianglePayload
+from ._command import RenderCommand, SectorPayload, TrianglePayload
 from ._pieces import Pieces, pieces_mask
+from ._sector import sector_quads
 from ._shadow import _inradius, _spread
 from ._transform import pixel_scale
 from ._triangle import triangle_pieces
@@ -55,7 +56,15 @@ def inset_shadow_mask(
 def _interior(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     """The region `c`'s fill inside its stroke, mapped by `m`, whether or not
     the fill is visible: the shadow is inside the shape, not on it."""
-    var out = triangle_pieces(c, m, scale)
+    # Tiled with the fill hidden, so a stroke too wide to leave any fill
+    # leaves no interior, rather than filling the shape with its colour.
+    var hidden = c.copy()
+    hidden.paint.fill_enabled = False
+    var out: Pieces
+    if c.payload.isa[SectorPayload]():
+        out = sector_quads(hidden, m, scale)
+    else:
+        out = triangle_pieces(hidden, m, scale)
     out.clear_stroke()
     return out^
 

@@ -187,6 +187,8 @@ comptime _SHAPE_INSET = 134
 (`_draw_inset`, named by `_INSET_NAMES`)."""
 comptime _INSET_NAMES: List[String] = [
     "inset rounded triangle",
+    "inset sector",
+    "blurred inset sector",
 ]
 comptime _SHAPE_COUNT = _SHAPE_INSET + len(_INSET_NAMES)
 
@@ -307,6 +309,22 @@ def _draw_inset(mut canvas: Canvas, i: Int) raises:
             _inset(Style(fill=Color(0xF0, 0xE0, 0xC0), stroke_enabled=False))
         ):
             canvas.triangle((-60, -45), (50, -45), (-5, 50), corner_radius=30)
+    elif i == 1:
+        # No fill: the band is the only ink inside the stroke.
+        var s = _inset(
+            Style(stroke=Color(0x30, 0x60, 0xC0), stroke_thickness=4)
+        )
+        s.shadow_spread = 3.0
+        with canvas.style(s):
+            canvas.sector((-10, -5), 60, 0.3, 4.5)
+    elif i == 2:
+        with canvas.style(
+            _inset(
+                Style(fill=Color(0xF0, 0xE0, 0xC0), stroke_enabled=False),
+                8.0,
+            )
+        ):
+            canvas.sector((-10, -5), 60, 0.3, 4.5)
 
 
 def _shape_name(shape: Int) -> String:
