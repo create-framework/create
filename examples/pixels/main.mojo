@@ -1,7 +1,8 @@
-"""Reading back what is drawn: each frame is drawn over a slightly larger,
-fainter copy of the last one, so the circles leave trails that drift
-outwards, and the swatch at the bottom shows the colour under the
-mouse.
+"""Reading the screen: `canvas.color_at` returns the colour drawn at a point.
+
+A colour picker. On the left, a spectrum; on the right, the colour under the
+mouse and its channels, read back from what the frame has drawn so far. Hover
+anywhere to pick a colour.
 """
 
 from create import *
@@ -9,47 +10,77 @@ from create import *
 comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
 comptime TEXT = COLORS.on_surface
+comptime HINT = COLORS.on_surface_variant
+comptime OUTLINE = COLORS.outline
+
+comptime SPECTRUM = Rectangle((-180, 20), 400, 320)
+comptime SWATCH = Rectangle((240, 90), 180, 180)
 
 
 @fieldwise_init
 struct Pixels(Program):
-    var last: Optional[Image]
+    var hues: Gradient
+    """Every hue, left to right."""
+    var shade: Gradient
+    """Laid over the hues: paler towards the top, darker towards the
+    bottom."""
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Pixels:
-        return Pixels(None)
+        var hues = Gradient.linear(
+            Color.RED,
+            Color.YELLOW,
+            Color.GREEN,
+            Color.CYAN,
+            Color.BLUE,
+            Color.MAGENTA,
+            Color.RED,
+            direction=Vector.RIGHT,
+        )
+        var shade = Gradient.linear(
+            Color.WHITE,
+            Color.WHITE.with_alpha(0),
+            Color.BLACK.with_alpha(0),
+            Color.BLACK,
+        )
+        return Pixels(hues^, shade^)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(BACKGROUND)
-        if self.last:
-            # The last frame, 1% larger, faded by a translucent background:
-            # a trail that drifts outwards.
-            canvas.image(
-                self.last.value(),
-                (0, 0),
-                canvas.width() * 1.01,
-                canvas.height() * 1.01,
+        # What there is to pick from.
+        with canvas.style(stroke_enabled=False):
+            canvas.fill(self.hues)
+            canvas.draw(SPECTRUM)
+            canvas.fill(self.shade)
+            canvas.draw(SPECTRUM)
+
+        # Read before anything else is drawn: a read sees what the frame has
+        # drawn so far, so the swatch and its text never show in it.
+        var picked = canvas.color_at(context.mouse.position)
+
+        with canvas.style(
+            fill=picked, stroke=OUTLINE, stroke_thickness=2, corner_radius=16
+        ):
+            canvas.rectangle(SWATCH.position, SWATCH.width, SWATCH.height)
+        with canvas.style(
+            text_color=TEXT, font_size=20, text_alignment=Align.TOP
+        ):
+            canvas.text(
+                "Red: "
+                + String(picked.r)
+                + "\nGreen: "
+                + String(picked.g)
+                + "\nBlue: "
+                + String(picked.b)
+                + "\nAlpha: "
+                + String(picked.a),
+                (SWATCH.position.x, SWATCH.bottom() - 30),
             )
-            canvas.background(BACKGROUND.with_alpha(30))
-
-        var t = context.time.elapsed
-        canvas.stroke_enabled(False)
-        var colors = [Color.RED, Color.GREEN, Color.BLUE]
-        for i in range(3):
-            var angle = t * (0.7 + 0.3 * Float64(i)) + Float64(i) * 2.1
-            canvas.fill(colors[i])
-            canvas.circle((cos(angle) * 180, sin(angle * 1.3) * 120), 18)
-
-        # Kept before the swatch, so the trail never shows it.
-        self.last = canvas.snapshot()
-
-        var under = canvas.color_at(context.mouse.position)
-        canvas.fill(under)
-        canvas.stroke(TEXT)
-        canvas.rectangle((0, canvas.bottom() + 40), 60, 40)
-        canvas.text_color(TEXT)
-        canvas.text(String(under), (0, canvas.bottom() + 80))
+        with canvas.style(text_color=HINT, font_size=18):
+            canvas.text(
+                "Hover anywhere to pick a colour.", (0, canvas.bottom() + 30)
+            )
 
 
 def main() raises:
-    run[Pixels]("Pixels", width=800, height=600)
+    run[Pixels]("Pixels", width=900, height=600)
