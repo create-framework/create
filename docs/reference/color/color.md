@@ -137,6 +137,11 @@ Composite this color over `dst`, source-over.
 opaque color yields an opaque color, so this is what a background fill does
 against the framebuffer.
 
+Over a translucent `dst`, each color counts by how much of it shows:
+`self` by its alpha, `dst` by its own alpha times what `self` leaves
+uncovered. So a translucent color over a transparent one is itself,
+not darkened towards the transparent color's channels.
+
 ### `with_alpha`
 
 ```mojo
