@@ -53,6 +53,9 @@ struct _Interaction(Copyable, ImplicitlyCopyable, Movable):
     """Held down with the pointer still over it: drawn pressed."""
     var clicked: Bool
     """Released over it, after being pressed on it."""
+    var held: Bool
+    """Held with the pointer, wherever it is, in the frames from the press
+    to the release, both included."""
     var focused: Bool
     var activated: Bool
     """Enter or Space pressed while it has focus from the keyboard."""
@@ -1176,10 +1179,7 @@ struct UILayer[
         var left = rect.position.x - rect.width / 2 + knob_radius
         var right = rect.position.x + rect.width / 2 - knob_radius
         var y = rect.position.y
-        # held this frame, the frame it is let go of included
-        var dragging = (
-            Bool(ui._held) and ui._held.value() == id
-        ) or state.clicked
+        var dragging = state.held  # the frame it is let go of included
         var changed = False
         if dragging and right > left and max != min:
             var pointer = self._to_local.apply(self._context[].mouse.position)
@@ -1419,7 +1419,7 @@ struct UILayer[
                 ui._clear_focus()  # a disabled widget can't keep focus
             if ui._hot and ui._hot.value() == id and mouse.pressed():
                 ui._clear_focus()  # a click on it is a click on no widget
-            return _Interaction(False, False, False, False, False)
+            return _Interaction(False, False, False, False, False, False)
         if take_focus:
             ui._focus(id, visible=True, takes_typing=takes_typing)
         # while another widget is held, in this UI or another, this one
@@ -1456,6 +1456,7 @@ struct UILayer[
             hovered,
             held and hovered and not clicked,
             clicked,
+            held,
             focused,
             activated,
         )
