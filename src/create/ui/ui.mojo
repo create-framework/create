@@ -120,6 +120,9 @@ struct UI(Movable):
 
     var _frame: Int
     """The frame the per-frame state below belongs to."""
+    var _layer_open: Bool
+    """Whether a layer's block is open: the layers share one recorder, so
+    a second can't open inside it."""
     var _site_counts: Dict[UInt64, Int]
     """How many times each call site has run this frame."""
     var _keys: List[UInt64]
@@ -212,6 +215,7 @@ struct UI(Movable):
         self._contents = []
         self._layouts = []
         self._frame = -1
+        self._layer_open = False
         self._site_counts = {}
         self._keys = []
         self._recorder = _Recorder()
@@ -333,7 +337,7 @@ struct UI(Movable):
         mut context: Context,
         mut canvas: Canvas,
         colors: ColorScheme = ColorScheme.light(),
-    ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
+    ) raises -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
         """Open a layer drawn in screen space, on top of everything drawn
         before its block ends, whatever the camera and transform. Its widgets
         are drawn in `colors`, the light scheme unless given.
@@ -359,7 +363,7 @@ struct UI(Movable):
         mut context: Context,
         mut canvas: Canvas,
         colors: ColorScheme = ColorScheme.light(),
-    ) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
+    ) raises -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]:
         """Open a layer drawn in the space that is current when the block
         opens, the camera and any transform included: for a button above a
         chest, a health bar over an enemy, or a label that turns with a ship.
@@ -402,10 +406,17 @@ struct UI(Movable):
         self._last_submitted = submitted
         self._last_text_field = text_field
 
-    def _begin_layer(mut self, mut context: Context):
+    def _begin_layer(mut self, mut context: Context) raises:
         """Start a layer, resetting the per-frame state when it is the first
-        layer of a new frame."""
+        layer of a new frame. Raises inside another of this UI's layers."""
         var frame = context.frame_count()
+        if self._layer_open and frame == self._frame:
+            raise Error(
+                "UI: a layer was opened inside another layer of the same UI;"
+                " end the first block before opening the next, or give the"
+                " inner layer a `UI` of its own"
+            )
+        self._layer_open = True
         if self._claimant == 0:
             self._claimant = context._new_claimant()
         ref mouse = context.mouse

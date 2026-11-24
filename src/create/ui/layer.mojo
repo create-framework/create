@@ -120,6 +120,7 @@ struct UILayer[
 
     def __exit__(self) raises:
         ref ui = self._ui[]
+        ui._layer_open = False
         for ref command in ui._rings.commands:
             ui._recorder.commands.append(command.copy())
         ui._rings.commands.clear()
