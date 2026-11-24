@@ -44,9 +44,9 @@ through it. The frame's clear, the background and the letterbox never cast a sha
 ## Inset shadows
 
 `inset=True` (`shadow_inset=True` in `canvas.style`) paints the shadow inside the shape instead: it
-is drawn on top of the shape, and clipped to the inside of its stroke. It works on rectangles,
-circles, triangles and sectors; polygons, ellipses, capsules, rounded sectors, lines, arcs, text and
-images cast nothing while it is set.
+is drawn on top of the shape, and clipped to the inside of its stroke. It works on every shape with
+an inside: rectangles, circles, ellipses, capsules, triangles, sectors and polygons. Lines, arcs,
+curves, text and images cast nothing while it is set.
 
 A rectangle's or circle's inset shadow is worked out directly. Any other shape's is drawn into an
 image every frame and blurred there, so it costs about as much as a blurred drop shadow.

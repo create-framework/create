@@ -759,8 +759,8 @@ fill stops where it starts, and a translucent ellipse composites
 once. It is drawn as a polygon, flattened as finely as a circle of
 its larger radius, so filled it costs what a circle does and
 stroked what a stroked `polygon` of its outline does, about three
-times a circle's. It casts no inset shadow; a blurred drop shadow
-costs what a `bezier`'s does. With `width == height` it covers what
+times a circle's. A blurred drop shadow or an inset one costs what a
+`bezier`'s blurred shadow does. With `width == height` it covers what
 `circle(position, width / 2)` does, to within its flattening.
 
 ```mojo
@@ -780,9 +780,9 @@ starts, and a translucent capsule composites once. Unlike a
 round-capped `line`, it has a fill and a stroke of its own. It is
 drawn as a polygon, each end flattened as finely as a circle of
 `radius`, so filled it costs what a circle does and stroked what a
-stroked `polygon` of its outline does. It casts no inset shadow; a
-blurred drop shadow costs what a `bezier`'s does. A zero `radius` draws
-nothing.
+stroked `polygon` of its outline does. A blurred drop shadow or an
+inset one costs what a `bezier`'s blurred shadow does. A zero
+`radius` draws nothing.
 
 ```mojo
 def capsule(mut self, start: Point, end: Point, radius: Int)
@@ -814,7 +814,7 @@ A zero radius or sweep draws nothing.
 `corner_radius`, or the style's when not given, rounds the tip and
 both ends of the arc, as `Sector` describes. A rounded sector is
 drawn as a polygon, so it costs what a stroked `polygon` of its
-flattened outline does, and casts no inset shadow.
+flattened outline does.
 
 ```mojo
 def sector(
@@ -840,9 +840,9 @@ Filled by the nonzero rule, so a self-crossing polygon fills every
 area its edges wind round, whichever way they run. The stroke is
 inset along the outside, as a sector's is, and centred on an edge
 running through the inside — a pentagram's inner pentagon — so every
-edge is stroked as thick; a translucent polygon composites once. It
-casts no inset shadow; a blurred drop shadow costs what a `bezier`'s
-does. Fewer than three vertices draw nothing.
+edge is stroked as thick; a translucent polygon composites once. A
+blurred drop shadow or an inset one costs what a `bezier`'s blurred
+shadow does. Fewer than three vertices draw nothing.
 
 `corner_radius`, or the style's when not given, rounds every corner,
 as `Polygon` describes; each
@@ -1100,9 +1100,8 @@ coordinate.
 `inset=True` paints the shadow inside the shape instead, over its
 fill and within its stroke, as if the shape were a hole cut in a
 surface: the band shows on the side the offset points away from.
-Only rectangles, circles, triangles and sectors take an inset
-shadow; polygons, ellipses, capsules, rounded sectors, lines, text
-and images cast none while it is set.
+Only shapes with an inside take an inset shadow; lines, curves,
+text and images cast none while it is set.
 
 The offset is fixed to the screen, so a rotated shape's shadow still
 falls the same way; see `shadow_follows_transform`. The shadow

@@ -189,6 +189,8 @@ comptime _INSET_NAMES: List[String] = [
     "inset rounded triangle",
     "inset sector",
     "blurred inset sector",
+    "inset star",
+    "blurred inset ellipse",
 ]
 comptime _SHAPE_COUNT = _SHAPE_INSET + len(_INSET_NAMES)
 
@@ -325,6 +327,25 @@ def _draw_inset(mut canvas: Canvas, i: Int) raises:
             )
         ):
             canvas.sector((-10, -5), 60, 0.3, 4.5)
+    elif i == 3:
+        var s = _inset(
+            Style(
+                fill=Color(0xF0, 0xE0, 0xC0),
+                stroke=Color(0x30, 0x60, 0xC0),
+                stroke_thickness=4,
+            )
+        )
+        s.shadow_spread = 2.0
+        with canvas.style(s):
+            canvas.draw(Polygon.star((-10, 0), 70, 35, 5))
+    elif i == 4:
+        with canvas.style(
+            _inset(
+                Style(fill=Color(0xF0, 0xE0, 0xC0), stroke_enabled=False),
+                8.0,
+            )
+        ):
+            canvas.ellipse((-10, 0), 150, 100)
 
 
 def _shape_name(shape: Int) -> String:
