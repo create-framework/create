@@ -20,7 +20,9 @@ so each one costs a rasterisation and a blur per frame, as a blurred
 Bézier's shadow does.
 """
 
-from std.math import max
+from std.math import max, min
+
+from create.color.color import Color
 
 from create.math.transform import Transform
 
@@ -29,20 +31,35 @@ from ._command import (
     PolygonPayload,
     RenderCommand,
     SectorPayload,
+    TextPayload,
     TrianglePayload,
 )
+from ._image_mapping import mask_mapping
 from ._lower import shape_pieces
 from ._pieces import Pieces, pieces_mask
 from ._polygon import polygon_quads
 from ._sector import sector_quads
+from ._raster import blit_alpha, blit_alpha_mapped
 from ._shadow import _inradius, _spread
-from ._transform import pixel_scale
+from ._surface import MemorySurface
+from ._text import PlacedGlyph, TextRenderer
+from ._transform import (
+    glyph_transform,
+    pixel_scale,
+    text_pixel_scale,
+    text_upright,
+)
 from ._triangle import triangle_pieces
 
 
 def inset_shadow_mask(
-    c: RenderCommand, m: Transform, sm: Transform, scale: Float64, grid: Int
-) -> PlacedMask:
+    c: RenderCommand,
+    m: Transform,
+    sm: Transform,
+    scale: Float64,
+    grid: Int,
+    mut text: TextRenderer,
+) raises -> PlacedMask:
     """`c`'s inset shadow as a mask to composite in its shadow colour: `c`
     casts one (`casts_inset_shadow`) but not analytically
     (`insets_analytically`), `m` is its device matrix and `sm` its shadow
@@ -50,7 +67,15 @@ def inset_shadow_mask(
     the fallback pixel scale for a transform that is not uniform, and
     `grid` the antialiasing's samples along each axis of a pixel
     (`Antialiasing._cpu_grid`), so the mask's edge is as smooth as the
-    shape's."""
+    shape's. `text` lays out and rasterises a text command's glyphs."""
+    if c.payload.isa[TextPayload]():
+        # Blurred where it is laid out, at its own scale, as a text drop
+        # shadow is; its glyphs are already antialiased.
+        var blur = Int(c.paint.shadow_blur * text_pixel_scale(sm, scale) + 0.5)
+        return _uncovered(
+            _text_mask(text, c, m, scale, 0),
+            _text_mask(text, c, sm, scale, blur),
+        )
     var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
     var interior = pieces_mask(_interior(c, m, scale), grid)
     var silhouette = PlacedMask.empty()
@@ -103,6 +128,80 @@ def _shrunk(c: RenderCommand, d: Float64) -> Optional[RenderCommand]:
     var out = c.copy()
     _spread(out, -d, grow_triangle=True)
     return out^
+
+
+def _text_mask(
+    mut text: TextRenderer,
+    c: RenderCommand,
+    m: Transform,
+    scale: Float64,
+    blur: Int,
+) raises -> PlacedMask:
+    """The text command `c`'s glyphs, blurred by `blur` device pixels,
+    composited into one alpha mask where `m` places them: laid out and
+    blitted as `CpuReplay._text` draws them, so the mask covers what the
+    text paints."""
+    ref payload = c.payload[TextPayload]
+    var sf = text_pixel_scale(m, scale)
+    var wrap = payload.wrap_pixels(sf)
+    var upright = text_upright(m)
+    var glyphs: List[PlacedGlyph]
+    var mapped = Transform()
+    if upright:
+        var p = m._apply_xy(payload.position.x, payload.position.y)
+        glyphs = text.layout(
+            payload.text, p[0], p[1], payload.style[], sf, blur, wrap
+        )
+    else:
+        mapped = glyph_transform(m, payload.position.x, payload.position.y, sf)
+        glyphs = text.layout(
+            payload.text, 0.0, 0.0, payload.style[], sf, blur, wrap
+        )
+    var x0 = Int.MAX
+    var y0 = Int.MAX
+    var x1 = Int.MIN
+    var y1 = Int.MIN
+    for ref g in glyphs:
+        if upright:
+            x0 = min(x0, g.x)
+            y0 = min(y0, g.y)
+            x1 = max(x1, g.x + g.width)
+            y1 = max(y1, g.y + g.height)
+        else:
+            var at = mask_mapping(mapped, g.x, g.y, g.width, g.height)
+            if at.x1 > at.x0 and at.y1 > at.y0:
+                x0 = min(x0, at.x0)
+                y0 = min(y0, at.y0)
+                x1 = max(x1, at.x1)
+                y1 = max(y1, at.y1)
+    if x1 <= x0 or y1 <= y0:
+        return PlacedMask.empty()
+    var scratch = MemorySurface(x1 - x0, y1 - y0)
+    var s = scratch.surface()
+    for ref g in glyphs:
+        ref pixels = text.glyph_mask(g.key)
+        if upright:
+            blit_alpha(
+                s,
+                pixels.unsafe_ptr(),
+                g.width,
+                g.height,
+                g.x - x0,
+                g.y - y0,
+                Color.WHITE,
+            )
+        else:
+            blit_alpha_mapped(
+                s,
+                pixels.unsafe_ptr(),
+                g.width,
+                g.height,
+                mask_mapping(mapped, g.x, g.y, g.width, g.height).translated(
+                    -x0, -y0
+                ),
+                Color.WHITE,
+            )
+    return PlacedMask(BlurredMask(scratch.alpha(), x1 - x0, y1 - y0, 0), x0, y0)
 
 
 def _uncovered(interior: PlacedMask, silhouette: PlacedMask) -> PlacedMask:

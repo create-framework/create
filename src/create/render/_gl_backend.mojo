@@ -1039,6 +1039,7 @@ struct GLRenderer(Movable):
                         shadow_transform(c, scale),
                         scale,
                         self.grid,
+                        text,
                     ),
                     c.paint.shadow_color,
                 )

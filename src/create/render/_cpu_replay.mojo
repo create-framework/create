@@ -879,7 +879,7 @@ struct CpuReplay(Movable):
                 )
             else:
                 var placed = inset_shadow_mask(
-                    c, m, sm, scale, self.antialiasing._cpu_grid()
+                    c, m, sm, scale, self.antialiasing._cpu_grid(), res.text[]
                 )
                 blit_alpha(
                     t,

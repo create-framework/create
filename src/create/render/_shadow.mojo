@@ -80,13 +80,15 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
 
     A shape with an interior takes one whether or not its fill is visible,
     as in CSS: the shadow is inside the shape, not on it. A line's or a
-    curve's inside is its stroke. Text and images ignore `shadow_inset` and
-    cast nothing.
+    curve's inside is its stroke, and text's its letters. An image ignores
+    `shadow_inset` and casts nothing.
     """
     if not c.paint._shadow_visible() or not c.paint.shadow_inset:
         return False
     if c.payload.isa[LinePayload]() or c.payload.isa[CurvesPayload]():
         return _strokes_something(c)
+    if c.payload.isa[TextPayload]():
+        return c.payload[TextPayload].style[].text_color.a > 0
     return c.is_region()
 
 

@@ -340,6 +340,14 @@ def test_a_polygon_casts_an_inset_shadow() raises -> None:
     assert_false(casts_outer_shadow(c))
 
 
+def test_text_casts_an_inset_shadow_on_its_letters() raises -> None:
+    var s = _shadowed()
+    s.shadow_inset = True
+    assert_true(casts_inset_shadow(text_command(Transform(), s, 0, 0, "hi")))
+    s.text_color = Color(0, 0, 0, 0)
+    assert_false(casts_inset_shadow(text_command(Transform(), s, 0, 0, "hi")))
+
+
 def test_text_shadow_recolours_the_glyphs() raises -> None:
     var s = _shadowed()
     var c = text_command(Transform(), s, 0.0, 0.0, "hi")
