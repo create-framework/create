@@ -12,6 +12,7 @@ from std.collections import Dict, Optional
 from std.math import max, min, abs, sqrt, ceil, floor
 
 from create.math.transform import Transform
+from create.math.vector import Vector
 
 from ._command import (
     CirclePayload,
@@ -173,6 +174,7 @@ def _inset_shadow[
     m: Transform,
     sm: Transform,
     blur: Int,
+    grid: Int,
 ):
     """Paint `c`'s inset shadow over it: the shadow colour wherever the
     silhouette — the interior moved by the offset (`sm`) and shrunk by the
@@ -180,7 +182,9 @@ def _inset_shadow[
 
     Tested at pixel centres like `_blurred_shadow`, since the alpha is
     per pixel anyway wherever the shadow is soft; a `blur` of 0 cuts the
-    silhouette hard. Full-alpha runs go through `fill_span` together.
+    silhouette hard. The interior's edge is antialiased as the shape's is:
+    a pixel within reach of it counts its `grid` x `grid` samples inside.
+    Full-alpha runs go through `fill_span` together.
     """
     var interior = inset_interior(c, local_stroke_thickness(c, m, scale))
     if interior.empty:
@@ -191,6 +195,13 @@ def _inset_shadow[
     var b = device_bounds(m, lb[0], lb[1], lb[2], lb[3], s.width, s.height)
     var minv = m.inverse()
     var sminv = sm.inverse()
+    # Half a pixel's diagonal in local units, at most: a pixel whose centre
+    # is further than this from the edge lies wholly on one side of it.
+    var reach = 0.5 * (
+        minv.apply(Vector.RIGHT).magnitude()
+        + minv.apply(Vector.DOWN).magnitude()
+    )
+    var samples = Float64(grid * grid)
     var color = c.paint.shadow_color
     var full = Float64(color.a)
     for py in range(b[1], b[3]):
@@ -199,16 +210,33 @@ def _inset_shadow[
         for px in range(b[0], b[2]):
             var x = Float64(px) + 0.5
             var y = Float64(py) + 0.5
-            var a = 0
             var l = minv._apply_xy(x, y)
-            if interior.contains(l[0], l[1]):
+            var d = interior.distance(l[0], l[1])
+            var inside: Float64
+            if grid == 1 or d < -reach:
+                inside = 1.0 if d <= 0.0 else 0.0
+            elif d > reach:
+                inside = 0.0
+            else:
+                var hits = 0
+                for sy in range(grid):
+                    for sx in range(grid):
+                        var p = minv._apply_xy(
+                            Float64(px) + (Float64(sx) + 0.5) / Float64(grid),
+                            Float64(py) + (Float64(sy) + 0.5) / Float64(grid),
+                        )
+                        if interior.contains(p[0], p[1]):
+                            hits += 1
+                inside = Float64(hits) / samples
+            var a = 0
+            if inside > 0.0:
                 var ls = sminv._apply_xy(x, y)
                 var cov: Float64
                 if blur > 0:
                     cov = soft.coverage(ls[0], ls[1])
                 else:
                     cov = 1.0 if cut.contains(ls[0], ls[1]) else 0.0
-                a = Int(full * (1.0 - cov) + 0.5)
+                a = Int(full * inside * (1.0 - cov) + 0.5)
             if a >= Int(color.a):
                 if run < 0:
                     run = px
@@ -846,9 +874,13 @@ struct CpuReplay(Movable):
                 var blur = Int(
                     c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5
                 )
-                _inset_shadow(t, c, scale, m, sm, blur)
+                _inset_shadow(
+                    t, c, scale, m, sm, blur, self.antialiasing._cpu_grid()
+                )
             else:
-                var placed = inset_shadow_mask(c, m, sm, scale)
+                var placed = inset_shadow_mask(
+                    c, m, sm, scale, self.antialiasing._cpu_grid()
+                )
                 blit_alpha(
                     t,
                     placed.mask.pixels.unsafe_ptr(),

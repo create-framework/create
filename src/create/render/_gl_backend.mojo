@@ -115,6 +115,7 @@ from ._gl import (
     _Strings,
     _UInts,
 )
+from .antialiasing import Antialiasing
 from ._blur import (
     SHADOW_MASK_LIMIT,
     PlacedMask,
@@ -652,6 +653,9 @@ struct GLRenderer(Movable):
     next one."""
     var max_samples: Int
     """The driver's `GL_MAX_SAMPLES`, which caps the sample count."""
+    var grid: Int
+    """The samples along each axis of a pixel a mask built on the CPU is
+    antialiased with: the CPU's at the frame's antialiasing level."""
 
     def __init__(out self) raises:
         self.gl = GL()
@@ -678,6 +682,7 @@ struct GLRenderer(Movable):
         self.draw_calls = 0
         self.frame = None
         self.max_samples = self.gl.read_int(GL_MAX_SAMPLES)
+        self.grid = 1
 
         var name = String("u_viewport")
         self.u_viewport = self.gl.get_uniform_location(
@@ -875,10 +880,10 @@ struct GLRenderer(Movable):
         width: Int,
         height: Int,
         scale: Float64,
-        samples: Int = 0,
+        antialiasing: Antialiasing = Antialiasing.OFF,
     ) raises:
         """Replay `cmds` onto the current drawable, `width` x `height` pixels,
-        multisampled `samples` times per pixel.
+        multisampled as `antialiasing` says.
 
         `width`/`height` are the *drawable's*, not the viewport's — under
         display scaling the two differ, and the letterbox bars have to reach
@@ -897,7 +902,10 @@ struct GLRenderer(Movable):
         last frame's pixels are lost then, as a resized window's are on the
         CPU.
         """
-        var count = min(samples, self.max_samples)
+        var count = min(antialiasing._gpu_samples(), self.max_samples)
+        # The masks built on the CPU are antialiased as the CPU would draw
+        # them, since multisampling doesn't reach a texture's contents.
+        self.grid = antialiasing._cpu_grid()
         if count < 2:
             count = 0
         var destination = UInt32(self.gl.read_int(GL_DRAW_FRAMEBUFFER_BINDING))
@@ -1026,7 +1034,11 @@ struct GLRenderer(Movable):
             else:
                 self._mask_shadow(
                     inset_shadow_mask(
-                        c, c.transform, shadow_transform(c, scale), scale
+                        c,
+                        c.transform,
+                        shadow_transform(c, scale),
+                        scale,
+                        self.grid,
                     ),
                     c.paint.shadow_color,
                 )

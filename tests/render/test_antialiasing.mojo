@@ -56,6 +56,49 @@ def test_a_gradient_edge_is_partly_covered() raises -> None:
 
 
 @fieldwise_init
+struct InsetOffGrid[triangle: Bool](Program):
+    """A black shape on black with a red inset shadow banding its inside,
+    its left edge at device x 40.25, as `OffGrid`'s: a rectangle, whose
+    inset shadow is analytic, or a right triangle, whose is a mask."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> InsetOffGrid[Self.triangle]:
+        return InsetOffGrid[Self.triangle](0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.BLACK)
+        canvas.stroke_enabled(False)
+        canvas.fill(Color.BLACK)
+        canvas.shadow(Color.RED, offset=Vector(0, 0), blur=0, spread=4)
+        canvas.shadow(inset=True)
+        comptime if Self.triangle:
+            canvas.triangle((-9.75, -30.0), (20.0, -30.0), (-9.75, 30.0))
+        else:
+            canvas.rectangle((0.25, 0.0), 20.0, 20.0)
+
+
+def test_an_inset_shadow_edge_is_partly_covered() raises -> None:
+    # The shadow is clipped to the shape's inside, so its edge pixel takes
+    # the shape's share of samples, as the shape's own edge does.
+    var rect = run_headless[InsetOffGrid[False]](100, 100)
+    assert_equal(rect.pixel(40, 50), Color(191, 0, 0, 255))
+    assert_equal(rect.pixel(41, 50), Color.RED)
+    assert_equal(rect.pixel(39, 50), Color.BLACK)
+    var triangle = run_headless[InsetOffGrid[True]](100, 100)
+    assert_equal(triangle.pixel(40, 50), Color(191, 0, 0, 255))
+    assert_equal(triangle.pixel(41, 50), Color.RED)
+    assert_equal(triangle.pixel(39, 50), Color.BLACK)
+    var hard = run_headless[InsetOffGrid[True]](
+        100, 100, antialiasing=Antialiasing.OFF
+    )
+    assert_equal(hard.pixel(40, 50), Color.RED)
+
+
+@fieldwise_init
 struct OnGrid(Program):
     """Shapes whose every edge lies on a pixel boundary."""
 

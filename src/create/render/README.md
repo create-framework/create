@@ -411,9 +411,13 @@ level can change without recreating the GL context.
 **CPU:** `Backend.antialiasing` (an `Antialiasing`, seeded by the run loops and set by
 `canvas.antialiasing`) applies to the CPU replay of the shape kinds (rect, circle, line, Bézier,
 sector, polygon, triangle), through `CpuReplay._shape`. Clear, text, images, letterbox and blurred
-or inset shadows are untouched; a hard shadow is a shape command, so it is antialiased like one. An
-image that isn't upright has its edge antialiased on the same grid inside `blit_image_mapped` (see
-Images).
+shadows are untouched; a hard shadow is a shape command, so it is antialiased like one. An inset
+shadow is clipped to the shape's inside on the same grid, so its edge is as smooth as the shape's:
+`_inset_shadow` counts the samples of each pixel within half a pixel's diagonal of the interior's
+edge, and a mask (`inset_shadow_mask`) is rasterised on the grid by `pieces_mask`. The GPU's
+multisampling doesn't reach a texture's contents, so `GLRenderer.render` builds its masks on the
+CPU's grid for the same level. An image that isn't upright has its edge antialiased on the same grid
+inside `blit_image_mapped` (see Images).
 
 - **Record at `grid`×.** `_shape` replays the command through the kind's own rasteriser
   (`_shape_pixels`) onto a recording surface `grid` times wider and taller, with
