@@ -1577,15 +1577,6 @@ def _anchor(rect: Rectangle, alignment: Align) -> Point:
     return Point(x, y)
 
 
-def _text_style(type: Style, color: Color, alignment: Align) -> _ResolvedStyle:
-    """A style that draws text in `type`'s font, size, weight and slant, in
-    `color`, placed by `alignment`."""
-    var resolved = _ResolvedStyle()
-    resolved.apply(type)
-    resolved.text_color = color
-    return _text_look(resolved, alignment)
-
-
 def _text_look(style: _ResolvedStyle, alignment: Align) -> _ResolvedStyle:
     """Only the text parts of `style`, placed by `alignment`: the text drawn
     on a widget, which leaves the widget's fill, stroke and shadow to the
@@ -1642,14 +1633,6 @@ def _variant_look(variant: ButtonVariant, colors: ColorScheme) -> Style:
         stroke_enabled=False,
         text_color=colors.on_primary,
     )
-
-
-def _over(style: Optional[Style], base: Style) -> Style:
-    """`style` layered over `base`, or `base` when there is none: a
-    widget's text style over its default text."""
-    if style:
-        return style.value().over(base)
-    return base
 
 
 def _size(type: Style) -> Float64:

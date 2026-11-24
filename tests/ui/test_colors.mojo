@@ -5,7 +5,7 @@ from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
 from create.ui.colors import _contrast
-from create.ui.layer import _body_text, _label_text, _over
+from create.ui.layer import _body_text, _label_text
 
 
 def _pairs(c: ColorScheme) -> List[Tuple[Color, Color]]:
@@ -178,14 +178,6 @@ def test_widgets_draw_their_text_in_the_default_styles() raises -> None:
     assert_equal(_label_text().font_size.value(), 14.0)
     assert_equal(_label_text().font_weight.value(), FontWeight.MEDIUM)
     assert_false(Bool(_body_text().text_color))  # set where it is drawn
-
-
-def test_a_widgets_text_style_keeps_the_rest_of_the_default() raises -> None:
-    var label = _label_text()
-    var bigger = _over(Style(font_size=30), label)
-    assert_equal(bigger.font_size.value(), 30.0)
-    assert_equal(bigger.font_weight.value(), FontWeight.MEDIUM)
-    assert_equal(String(_over(None, label)), String(label))
 
 
 def main() raises:
