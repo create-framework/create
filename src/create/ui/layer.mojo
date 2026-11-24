@@ -916,7 +916,8 @@ struct UILayer[
             recorder.style = field
             recorder.draw(shape)
 
-        # the text, clipped to the inside of the field
+        # the text, clipped half the padding in from each side: scrolled
+        # text runs on into the padding, but stops short of the border
         recorder.clip(
             Rectangle(rect.position, rect.width - padding, rect.height)
         )
