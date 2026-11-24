@@ -317,11 +317,11 @@ def test_an_stroke_only_polygon_casts_its_ring() raises -> None:
     assert_false(casts_outer_shadow(polygon_command(Transform(), s, _square())))
 
 
-def test_a_polygon_casts_no_inset_shadow() raises -> None:
+def test_a_polygon_casts_an_inset_shadow() raises -> None:
     var s = _shadowed()
     s.shadow_inset = True
     var c = polygon_command(Transform(), s, _square())
-    assert_false(casts_inset_shadow(c))
+    assert_true(casts_inset_shadow(c))
     assert_false(casts_outer_shadow(c))
 
 

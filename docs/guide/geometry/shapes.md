@@ -100,8 +100,7 @@ so to turn one, draw it inside a `canvas.transform`.
   drawn.
 - It is drawn as a polygon with enough corners to look perfectly smooth, as a circle is, so its
   stroke is equally thick all the way round and is placed by `stroke_alignment`. Filled, it costs
-  about as much to draw as a circle; stroked, about three times as much. Inset shadows don't apply
-  to it.
+  about as much to draw as a circle; stroked, about three times as much.
 
 ## `Capsule`
 
@@ -123,7 +122,7 @@ passed through the wall, so a fast ball can't skip through a thin wall between t
 - A capsule with a `radius` of zero is a line segment, and draws nothing.
 - It is drawn as a polygon, with its round ends as smooth as a circle of the same radius, and a
   gradient spans its bounding box. Filled, it costs about as much to draw as a circle; stroked,
-  about 2.3 times as much. Inset shadows don't apply to it.
+  about 2.3 times as much.
 
 ## `Triangle`
 
@@ -155,7 +154,7 @@ Both put their first vertex at `start_angle`, which is straight up unless you gi
   are meaningful only for a simple polygon, one whose edges don't cross.
 - `canvas.polygon` places its stroke by `stroke_alignment` along the outline. On an edge that runs
   through the inside, such as an edge of a pentagram's inner pentagon, it centres the stroke
-  instead, so that every edge is stroked equally thick. Inset shadows don't apply to it.
+  instead, so that every edge is stroked equally thick.
 - `corner_radius` rounds every vertex, but not the points where crossing edges meet.
 - The stroke is the costly part to draw. It costs more the more corners a polygon has, and rounding
   the corners multiplies the cost again: on the CPU at `MEDIUM`, a stroked 40-tip star takes about 2
@@ -179,8 +178,7 @@ described by the same angles: it is the curved edge of a sector, without the ins
   outside it, for `contains` and `overlaps` alike.
 - `center()` is `position`, the circle's centre, as for a `Circle`, rather than the balance point of
   the slice.
-- `canvas.sector` places its stroke by `stroke_alignment`, as for a circle. A rounded sector is
-  drawn as a polygon, so inset shadows don't apply to it.
+- `canvas.sector` places its stroke by `stroke_alignment`, as for a circle.
 - `corner_radius` rounds the tip and the two corners where the straight edges meet the curved one.
   Past a half turn, the tip points inwards, and its rounding fills in the notch. At exactly a half
   turn the tip is a straight line, so there is nothing there to round, and a whole circle has no

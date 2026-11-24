@@ -23,8 +23,14 @@ from std.math import max
 from create.math.transform import Transform
 
 from ._blur import BlurredMask, PlacedMask
-from ._command import RenderCommand, SectorPayload, TrianglePayload
+from ._command import (
+    PolygonPayload,
+    RenderCommand,
+    SectorPayload,
+    TrianglePayload,
+)
 from ._pieces import Pieces, pieces_mask
+from ._polygon import polygon_quads
 from ._sector import sector_quads
 from ._shadow import _inradius, _spread
 from ._transform import pixel_scale
@@ -63,6 +69,8 @@ def _interior(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
     var out: Pieces
     if c.payload.isa[SectorPayload]():
         out = sector_quads(hidden, m, scale)
+    elif c.payload.isa[PolygonPayload]():
+        out = polygon_quads(hidden, m, scale)
     else:
         out = triangle_pieces(hidden, m, scale)
     out.clear_stroke()

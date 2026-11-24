@@ -28,6 +28,7 @@ from create.render._command import (
     letterbox_command,
     bezier_command,
     bezier_chain_command,
+    polygon_command,
     sector_command,
 )
 from create.math.transform import Transform
@@ -1213,6 +1214,36 @@ def test_a_sector_takes_an_inset_shadow_inside_its_stroke() raises -> None:
                 var dx = Float64(x) + 0.5 - 50.0
                 var dy = 50.0 - Float64(y) - 0.5
                 assert_true(dy > 0.0 and dx * dx + dy * dy <= 900.0)
+
+
+def test_a_concave_polygon_takes_an_inset_shadow() raises -> None:
+    # An L over device columns 20 to 80 and rows 20 to 80, its inner corner
+    # at (40, 60). The silhouette moves 4 right and 4 down, uncovering the
+    # left and top edges, the bottom arm's top edge beside the inner corner
+    # among them.
+    var cmds = List[RenderCommand]()
+    cmds.append(clear_command(Color.BLACK))
+    var corners: List[Point] = [
+        Point(-30, -30),
+        Point(30, -30),
+        Point(30, -10),
+        Point(-10, -10),
+        Point(-10, 30),
+        Point(-30, 30),
+    ]
+    cmds.append(
+        polygon_command(_base(), _inset(Color.WHITE, Vector(4, -4)), corners^)
+    )
+    var m = _replay(cmds)
+    assert_equal(m.pixel(22, 40), Color.RED)
+    assert_equal(m.pixel(30, 22), Color.RED)
+    assert_equal(m.pixel(60, 62), Color.RED)
+    assert_equal(m.pixel(30, 40), Color.WHITE)
+    assert_equal(m.pixel(70, 75), Color.WHITE)
+    assert_equal(m.pixel(37, 50), Color.WHITE)
+    assert_equal(m.pixel(45, 45), Color.BLACK)
+    assert_equal(m.pixel(50, 62), Color.RED)
+    assert_equal(m.pixel(50, 66), Color.WHITE)
 
 
 def test_lines_ignore_inset() raises -> None:
