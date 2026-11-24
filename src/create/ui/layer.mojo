@@ -515,12 +515,13 @@ struct UILayer[
         text: String,
         rect: Optional[Rectangle] = None,
         *,
-        alignment: Align = Align.CENTER,
+        alignment: Optional[Align] = None,
         style: Style = Style(),
     ) raises:
         """Text placed in `rect`, by `alignment`: in its centre unless given,
-        against its left edge with `Align.LEFT`, and so on. It reacts to
-        nothing, so the pointer passes through it to what is beneath.
+        here or as the style's `text_alignment`, against its left edge with
+        `Align.LEFT`, and so on. It reacts to nothing, so the pointer passes
+        through it to what is beneath.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -534,8 +535,11 @@ struct UILayer[
         var place = self._place(rect, _size(look) * 1.5, "ui.label")
         var resolved = _ResolvedStyle()
         resolved.apply(look)
-        resolved.text_alignment = alignment
-        self._ui[]._recorder.text(text, _anchor(place, alignment), resolved)
+        var placed = alignment.or_else(
+            look.text_alignment.or_else(Align.CENTER)
+        )
+        resolved.text_alignment = placed
+        self._ui[]._recorder.text(text, _anchor(place, placed), resolved)
         self._ui[]._called(changed=False)
 
     def image(self, image: Image, rect: Optional[Rectangle] = None) raises:

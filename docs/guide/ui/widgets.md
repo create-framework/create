@@ -125,9 +125,9 @@ def settings(ui: UILayer, mut volume: Float64) raises:
   value outside `min` to `max` is drawn at the nearer end and left as it is until dragged.
 - **A checkbox** switches `checked` when clicked anywhere in its rectangle, its label included.
 - **A text field** is explained in [Typing](../interaction/typing.md#text-fields).
-- **A label** places its text by `alignment=`: in the middle of `rect` unless given, against its
-  left edge with `Align.LEFT`, and so on. Labels and images don't react, so the pointer passes
-  through them to whatever is beneath.
+- **A label** places its text by `alignment=`, or its style's `text_alignment` when the call gives
+  none: in the middle of `rect` unless given, against its left edge with `Align.LEFT`, and so on.
+  Labels and images don't react, so the pointer passes through them to whatever is beneath.
 
 Each widget's look can be changed with a `Style`: a button, a label or a panel takes one as
 `style=`, and a slider, a checkbox or a text field takes one for each of its parts, such as

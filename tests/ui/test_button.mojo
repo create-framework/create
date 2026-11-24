@@ -235,6 +235,38 @@ def test_a_label_lets_the_pointer_through() raises -> None:
                 assert_true(clicked)
 
 
+def _ink_near_the_left(alignment: Optional[Align], style: Style) raises -> Bool:
+    """Whether a label across the canvas, drawn by `alignment` and `style`,
+    puts ink within its leftmost 20 units."""
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    canvas.background(Color.WHITE)
+    with ui.screen(context, canvas) as layer:
+        layer.label(
+            "MM",
+            Rectangle((0, 0), 180, 40),
+            alignment=alignment,
+            style=style.over(Style(text_color=Color.BLACK)),
+        )
+    for x in range(-90, -70):
+        for y in range(-20, 20):
+            if canvas.color_at((Float64(x) + 0.5, Float64(y) + 0.5)).r < 128:
+                return True
+    return False
+
+
+def test_a_label_takes_its_alignment_from_the_call_or_its_style() raises -> (
+    None
+):
+    assert_false(_ink_near_the_left(None, Style()))  # centred
+    assert_true(_ink_near_the_left(Align.LEFT, Style()))
+    assert_true(_ink_near_the_left(None, Style(text_alignment=Align.LEFT)))
+    assert_false(  # the call's wins
+        _ink_near_the_left(Align.CENTER, Style(text_alignment=Align.LEFT))
+    )
+
+
 def test_an_image_fills_its_rectangle() raises -> None:
     var ui = UI()
     var context = Context()
