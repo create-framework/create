@@ -75,6 +75,79 @@ def test_a_span_matches_one_pixel_at_a_time_in_every_mode() raises -> None:
                 )
 
 
+def _modes() -> List[BlendMode]:
+    return [
+        BlendMode.ADD,
+        BlendMode.SUBTRACT,
+        BlendMode.MULTIPLY,
+        BlendMode.SCREEN,
+    ]
+
+
+def test_every_mode_over_a_transparent_pixel_gives_the_source() raises -> None:
+    # Nothing is under the source to blend with, so it shows as itself,
+    # rather than blended with the transparent pixel's black.
+    for mode in _modes():
+        for a in [255, 128, 7]:
+            var src = _SRC.with_alpha(UInt8(a))
+            var mem = MemorySurface(1, 1)
+            blend(mem.surface()._with_blend_mode(mode), 0, src)
+            assert_equal(mem.pixel(0, 0), src, String(mode, " alpha ", a))
+
+
+def test_over_a_translucent_pixel_the_mode_shows_as_much_as_it_covers() raises -> (
+    None
+):
+    # An opaque source over a half-transparent pixel: half of it shows the
+    # mode's result over the pixel, and the other half the source itself.
+    var mem = MemorySurface(1, 1)
+    blend(mem.surface(), 0, _DST.with_alpha(128))
+    blend(mem.surface()._with_blend_mode(BlendMode.MULTIPLY), 0, _SRC)
+    var full = _one_pixel(BlendMode.MULTIPLY, _SRC)
+
+    # The source weighs 127 parts in 255, the mode's result 128.
+    def mix(s: UInt8, m: UInt8) -> UInt8:
+        return UInt8((Int(s) * 127 + Int(m) * 128 + 127) // 255)
+
+    assert_equal(
+        mem.pixel(0, 0),
+        Color(
+            mix(_SRC.r, full.r), mix(_SRC.g, full.g), mix(_SRC.b, full.b), 255
+        ),
+    )
+
+
+def test_a_span_over_translucent_pixels_matches_one_pixel_at_a_time() raises -> (
+    None
+):
+    # Opaque, transparent and translucent pixels in one four-wide step and
+    # a tail: each must take what `blend` gives it alone.
+    var under = [
+        _DST,
+        Color(0, 0, 0, 0),
+        _DST.with_alpha(100),
+        _DST,
+        _DST.with_alpha(200),
+        Color(0, 0, 0, 0),
+    ]
+    for mode in _modes():
+        for a in [255, 128]:
+            var src = _SRC.with_alpha(UInt8(a))
+            var mem = MemorySurface(len(under), 1)
+            var alone = MemorySurface(len(under), 1)
+            for x in range(len(under)):
+                blend(mem.surface(), x * 4, under[x])
+                blend(alone.surface(), x * 4, under[x])
+                blend(alone.surface()._with_blend_mode(mode), x * 4, src)
+            fill_span(mem.surface()._with_blend_mode(mode), 0, len(under), src)
+            for x in range(len(under)):
+                assert_equal(
+                    mem.pixel(x, 0),
+                    alone.pixel(x, 0),
+                    String(mode, " alpha ", a, " pixel ", x),
+                )
+
+
 @fieldwise_init
 struct BlendModes(Program):
     """One square per mode on a `_DST` background, left to right: `ADD`,

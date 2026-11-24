@@ -28,23 +28,40 @@ def _blend_lanes[
     outright; the alpha lanes composite source-over in every mode. The one
     formula for all modes but `NORMAL`, so `blend` and `fill_span` cannot
     disagree about one.
+
+    Those formulas hold over an opaque `dst`. Over a translucent one, the
+    mode applies only as far as `dst` is there: as `Color.over` does, the
+    source counts by its alpha times what of it `dst` doesn't cover, and the
+    mode's result by `dst`'s alpha. So over a transparent pixel every mode
+    leaves the source as it is, rather than blending it with black.
     """
     var av = SIMD[DType.uint32, w](a)
     var iav = SIMD[DType.uint32, w](255 - a)
     var over = (src * av + dst * iav) // 255
-    var out = over
+    var blended = over
     if mode == BlendMode.ADD:
-        out = min(dst + src * av // 255, SIMD[DType.uint32, w](255))
+        blended = min(dst + src * av // 255, SIMD[DType.uint32, w](255))
     elif mode == BlendMode.SUBTRACT:
-        out = dst - min(dst, src * av // 255)
+        blended = dst - min(dst, src * av // 255)
     elif mode == BlendMode.MULTIPLY:
-        out = ((src * dst // 255) * av + dst * iav) // 255
+        blended = ((src * dst // 255) * av + dst * iav) // 255
     elif mode == BlendMode.SCREEN:
-        out = ((src + dst - src * dst // 255) * av + dst * iav) // 255
+        blended = ((src + dst - src * dst // 255) * av + dst * iav) // 255
     var alpha_lane = SIMD[DType.bool, w](fill=False)
     comptime for i in range(3, w, 4):
         alpha_lane[i] = True
-    return alpha_lane.select(over, out)
+    var full = SIMD[DType.uint32, w](255)
+    if alpha_lane.select(dst, full).reduce_min() == 255:
+        return alpha_lane.select(over, blended)
+    # Each pixel's own alpha, in every one of its lanes.
+    var b = SIMD[DType.uint32, w](0)
+    comptime for i in range(w):
+        b[i] = dst[i - i % 4 + 3]
+    var top = av * (full - b)
+    var under = b * 255
+    var total = max(top + under, SIMD[DType.uint32, w](1))
+    var mixed = (src * top + blended * under + total // 2) // total
+    return alpha_lane.select(over, mixed)
 
 
 def _blend_pixel[
