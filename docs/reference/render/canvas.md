@@ -1100,8 +1100,8 @@ coordinate.
 `inset=True` paints the shadow inside the shape instead, over its
 fill and within its stroke, as if the shape were a hole cut in a
 surface: the band shows on the side the offset points away from.
-Only shapes with an inside take an inset shadow; lines, curves,
-text and images cast none while it is set.
+A line's or a curve's inside is its stroke, and `spread` thins it;
+text and images cast no inset shadow while it is set.
 
 The offset is fixed to the screen, so a rotated shape's shadow still
 falls the same way; see `shadow_follows_transform`. The shadow

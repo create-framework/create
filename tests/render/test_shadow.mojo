@@ -111,6 +111,21 @@ def test_only_render_calls_that_paint_cast_a_shadow() raises -> None:
     )
 
 
+def test_a_line_or_curve_casts_an_inset_shadow_on_its_stroke() raises -> None:
+    var s = _shadowed()
+    s.shadow_inset = True
+    s.stroke_enabled = True
+    s.stroke_thickness = 4
+    assert_true(casts_inset_shadow(line_command(Transform(), s, 0, 0, 9, 0)))
+    var curve = Bezier((0.0, 0.0), (1.0, 2.0), (3.0, 2.0), (4.0, 0.0))
+    assert_true(casts_inset_shadow(bezier_command(Transform(), s, curve)))
+    # A butt line of no length paints nothing, so casts nothing.
+    s.stroke_cap = StrokeCap.BUTT
+    assert_false(casts_inset_shadow(line_command(Transform(), s, 1, 1, 1, 1)))
+    s.stroke_enabled = False
+    assert_false(casts_inset_shadow(bezier_command(Transform(), s, curve)))
+
+
 def test_filled_shape_casts_one_filled_layer() raises -> None:
     var s = _shadowed()
     s.shadow_color = Color(0, 0, 0, 100)

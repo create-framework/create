@@ -1246,32 +1246,67 @@ def test_a_concave_polygon_takes_an_inset_shadow() raises -> None:
     assert_equal(m.pixel(50, 66), Color.WHITE)
 
 
-def test_lines_ignore_inset() raises -> None:
-    var s = _inset(Color.WHITE, Vector(4, -4))
+def test_a_line_takes_an_inset_shadow_inside_its_stroke() raises -> None:
+    # A butt line 10 thick along row 50, over device rows 45 to 55; the
+    # silhouette moves 4 down, uncovering the stroke's top 4 rows.
+    var s = _inset(Color.WHITE, Vector(0, -4))
     s.stroke_enabled = True
     s.stroke_color = Color.WHITE
-    s.stroke_thickness = 6
+    s.stroke_thickness = 10
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
     cmds.append(line_command(_base(), s, -30.0, 0.0, 30.0, 0.0))
     var m = _replay(cmds)
-    for y in range(_H):
-        for x in range(_W):
-            assert_true(m.pixel(x, y) != Color.RED)
+    assert_equal(m.pixel(50, 44), Color.BLACK)
+    assert_equal(m.pixel(50, 45), Color.RED)
+    assert_equal(m.pixel(50, 48), Color.RED)
+    assert_equal(m.pixel(50, 49), Color.WHITE)
+    assert_equal(m.pixel(50, 54), Color.WHITE)
+    assert_equal(m.pixel(50, 55), Color.BLACK)
+    assert_equal(m.pixel(20, 50), Color.WHITE)
+    assert_equal(m.pixel(19, 50), Color.BLACK)
+    # Spread thins the silhouette: with no offset, the stroke's edges band.
+    s.shadow_offset = Vector(0, 0)
+    s.shadow_spread = 2.0
+    cmds[1] = line_command(_base(), s, -30.0, 0.0, 30.0, 0.0)
+    m = _replay(cmds)
+    assert_equal(m.pixel(50, 46), Color.RED)
+    assert_equal(m.pixel(50, 47), Color.WHITE)
+    assert_equal(m.pixel(50, 52), Color.WHITE)
+    assert_equal(m.pixel(50, 53), Color.RED)
+    # Spread past half the thickness leaves no silhouette at all.
+    s.shadow_spread = 6.0
+    cmds[1] = line_command(_base(), s, -30.0, 0.0, 30.0, 0.0)
+    m = _replay(cmds)
+    assert_equal(m.pixel(50, 50), Color.RED)
 
 
-def test_beziers_ignore_inset() raises -> None:
-    var s = _inset(Color.WHITE, Vector(4, -4))
+def test_a_bezier_takes_an_inset_shadow_inside_its_stroke() raises -> None:
+    var s = _inset(Color.WHITE, Vector(3, -3))
     s.stroke_enabled = True
     s.stroke_color = Color.WHITE
-    s.stroke_thickness = 6
+    s.stroke_thickness = 8
+    var plain = s.copy()
+    plain.shadow_enabled = False
     var cmds = List[RenderCommand]()
     cmds.append(clear_command(Color.BLACK))
-    cmds.append(bezier_command(_base(), s, _s_curve()))
+    cmds.append(bezier_command(_base(), s^, _s_curve()))
     var m = _replay(cmds)
+    cmds[1] = bezier_command(_base(), plain^, _s_curve())
+    var stroke = _replay(cmds)
+    var red = 0
+    var white = 0
     for y in range(_H):
         for x in range(_W):
-            assert_true(m.pixel(x, y) != Color.RED)
+            var p = m.pixel(x, y)
+            if p == Color.RED:
+                red += 1
+            elif p == Color.WHITE:
+                white += 1
+            # The shadow lies on the stroke and nowhere else.
+            assert_equal(p == Color.BLACK, stroke.pixel(x, y) == Color.BLACK)
+    assert_true(red > 50)
+    assert_true(white > red)
 
 
 def main() raises:

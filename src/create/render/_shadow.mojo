@@ -68,14 +68,8 @@ def casts_outer_shadow(c: RenderCommand) -> Bool:
         return False
     if c.is_region():
         return c.paint._fill_visible() or c.paint._stroke_visible()
-    if c.payload.isa[LinePayload]():
-        ref line = c.payload[LinePayload]
-        # A butt line of no length paints nothing, so casts nothing.
-        if c.paint.stroke_cap == StrokeCap.BUTT and line.start == line.end:
-            return False
-        return c.paint._stroke_visible()
-    if c.payload.isa[CurvesPayload]():
-        return c.paint._stroke_visible()
+    if c.payload.isa[LinePayload]() or c.payload.isa[CurvesPayload]():
+        return _strokes_something(c)
     if c.payload.isa[TextPayload]():
         return c.payload[TextPayload].style[].text_color.a > 0
     return c.payload.isa[ImagePayload]()
@@ -84,13 +78,26 @@ def casts_outer_shadow(c: RenderCommand) -> Bool:
 def casts_inset_shadow(c: RenderCommand) -> Bool:
     """Whether `c` paints an inset shadow over itself.
 
-    Only the shapes with an interior take one; a line, a curve, text or an
-    image ignores `shadow_inset` and casts nothing. Painted whether or not the
-    fill is visible, as in CSS: the shadow is inside the shape, not on it.
+    A shape with an interior takes one whether or not its fill is visible,
+    as in CSS: the shadow is inside the shape, not on it. A line's or a
+    curve's inside is its stroke. Text and images ignore `shadow_inset` and
+    cast nothing.
     """
     if not c.paint._shadow_visible() or not c.paint.shadow_inset:
         return False
+    if c.payload.isa[LinePayload]() or c.payload.isa[CurvesPayload]():
+        return _strokes_something(c)
     return c.is_region()
+
+
+def _strokes_something(c: RenderCommand) -> Bool:
+    """Whether the line or curve `c` paints anything: its stroke, when it is
+    visible, unless `c` is a butt line of no length."""
+    if c.payload.isa[LinePayload]():
+        ref line = c.payload[LinePayload]
+        if c.paint.stroke_cap == StrokeCap.BUTT and line.start == line.end:
+            return False
+    return c.paint._stroke_visible()
 
 
 def insets_analytically(c: RenderCommand) -> Bool:
