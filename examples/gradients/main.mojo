@@ -1,6 +1,6 @@
 """Gradients: a sky behind everything, and a fill on every kind of shape.
 
-    pixi run example gradients        # CPU
+    pixi run example gradients cpu    # CPU
     pixi run example gradients gpu    # the same scene through the GPU backend
 
 The background spans the whole window (`EXTEND`), so resize it to watch the

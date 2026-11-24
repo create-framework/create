@@ -1,7 +1,7 @@
 """One scene to run on each backend, CPU and GPU, made of the cases where
 they could disagree.
 
-    pixi run example backends                 # CPU
+    pixi run example backends cpu             # CPU
     pixi run example backends gpu             # the same scene through the GPU
     pixi run example backends gpu fullscreen  # letterboxed on a wide display
 
@@ -47,8 +47,8 @@ def captions() -> List[String]:
 @fieldwise_init
 struct App(Program):
     var backend: RenderBackend
-    """The backend `run` was given: `from_arguments` reads the same command
-    line in `main` and here, so the two agree."""
+    """The backend `run` was given: `from_arguments` returns the same backend
+    in `main` and here, and asks for it only once."""
     var logo: Image
     var angle: Float64
 

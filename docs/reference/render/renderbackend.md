@@ -34,7 +34,16 @@ def __init__(out self, value: Int)
 def from_arguments() -> Self
 ```
 
-The backend named on the command line: `GPU` when the program was run with a `gpu` argument, `CPU` otherwise or with `cpu`, the last named winning. So one build runs on either, `./sketch gpu` or `pixi run example shadows gpu`, passed as `run(..., backend=RenderBackend.from_arguments())`; other arguments are left for the program.
+The backend named on the command line, `gpu` or `cpu`, or asked for in the terminal when neither is named.
+
+So one build runs on either, `./sketch gpu` or `pixi run example
+shadows gpu`, passed as `run(..., backend=RenderBackend.from_arguments())`.
+When both are named, the last one wins; other arguments are left for
+the program. With neither, it asks in the terminal, and asks again
+until the answer is `gpu` or `cpu`. A program not started from a
+terminal can't be asked, so it prints what to add to the command and
+exits. Calls after the first return the backend chosen first, without
+asking again.
 
 ## Special methods
 

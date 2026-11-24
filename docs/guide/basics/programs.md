@@ -78,10 +78,18 @@ OpenGL 3.3, instead. The two draw the same frame, apart from tiny differences al
 run[Example]("Example", backend=RenderBackend.GPU)
 ```
 
-`RenderBackend.from_arguments()` lets the command line choose: the GPU when the program is run with
-a `gpu` argument (`./example gpu`), the CPU otherwise. Other arguments are left for the program.
-[examples/backends](../../../examples/backends/main.mojo) reads it this way, so `pixi run example
-backends` and `pixi run example backends gpu` compare the two.
+`RenderBackend.from_arguments()` lets the command line choose, so one program runs on either: the
+GPU when it is run with a `gpu` argument (`./example gpu`), the CPU with a `cpu` argument. Other
+arguments are left for the program. Run with neither, the program asks in the terminal before its
+window opens:
+
+```text
+Select a rendering backend. Type `gpu` or `cpu` and hit ENTER:
+```
+
+A program not started from a terminal can't be asked, so it prints what to add to the command and
+exits. [examples/backends](../../../examples/backends/main.mojo) reads it this way, so `pixi run
+example backends cpu` and `pixi run example backends gpu` compare the two.
 
 ```mojo
 # In `main`:
