@@ -11,15 +11,17 @@ comptime GRAB_RADIUS = 18.0
 """How close, in design units, a click must land to pick up a point."""
 
 comptime SPEED = 260.0
+"""How fast the dot travels along the curve, in design units per second."""
 
 comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
 comptime TEXT = COLORS.on_surface
 comptime CURVE = Color.CYAN.with_alpha(170)
 comptime SHADOW = Color(0, 0, 0, 160)
-comptime DOT = Color.RED
+comptime DOT = Color.GREEN
 comptime POINT = COLORS.on_surface
-"""How fast the dot travels along the curve, in design units per second."""
+comptime RING = 4.0
+"""The background-coloured ring around the dot and the points."""
 
 
 @fieldwise_init
@@ -47,7 +49,6 @@ struct App(Program):
                 (-480.0, -120.0),
                 (-300.0, 160.0),
                 (-80.0, -40.0),
-                (-40.0, 0.0),
                 (180.0, 200.0),
                 (440.0, -160.0),
             ],
@@ -111,14 +112,19 @@ struct App(Program):
         ):
             canvas.draw(spline)
 
-        canvas.stroke_enabled(False)
-        if len(self.points) > 0:
-            canvas.fill(DOT)
-            canvas.circle(dot, 13)
-
-        canvas.fill(POINT)
-        for point in self.points:
-            canvas.circle(point, 9)
+        # A ring of the background colour parts the dot and the points from
+        # the curve, so their colours never touch the curve's along an edge.
+        with canvas.style(
+            stroke=BACKGROUND,
+            stroke_thickness=RING,
+            stroke_alignment=StrokeAlign.OUTSIDE,
+        ):
+            if len(self.points) > 0:
+                canvas.fill(DOT)
+                canvas.circle(dot, 13)
+            canvas.fill(POINT)
+            for point in self.points:
+                canvas.circle(point, 9)
 
         var kind: String
         if self.alpha == 0.0:
