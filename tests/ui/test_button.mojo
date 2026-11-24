@@ -267,6 +267,25 @@ def test_a_label_takes_its_alignment_from_the_call_or_its_style() raises -> (
     )
 
 
+def _corner_is_filled(corner_radius: Float64) raises -> Bool:
+    """Whether a button at `_A`, in a `UI` of `corner_radius`, paints its
+    top-left corner pixel."""
+    var ui = UI()
+    ui.corner_radius(corner_radius)
+    var context = Context()
+    var canvas = Canvas(300, 100, antialiasing=Antialiasing.OFF)
+    canvas.background(Color.WHITE)
+    with ui.screen(context, canvas) as layer:
+        _ = layer.button("", _A)
+    return canvas.color_at((-109.5, 19.5)) != Color.WHITE
+
+
+def test_a_buttons_corners_follow_the_uis_corner_radius() raises -> None:
+    assert_false(_corner_is_filled(16))  # a pill
+    assert_false(_corner_is_filled(32))  # no rounder than a pill
+    assert_true(_corner_is_filled(0))  # square
+
+
 def test_an_image_fills_its_rectangle() raises -> None:
     var ui = UI()
     var context = Context()

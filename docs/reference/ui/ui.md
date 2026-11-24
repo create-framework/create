@@ -34,7 +34,7 @@ A UI whose focus any gamepad moves, unless `player` names one, as each player's 
 def corner_radius(self) -> Float64
 ```
 
-How round the widgets' corners are: a panel's radius, 16 unless set. Smaller parts are rounded in proportion: a text field's by a quarter of it, a checkbox's box by an eighth.
+How round the widgets' corners are: a panel's radius, 16 unless set. The other widgets are rounded in proportion: a text field by a quarter of it and a checkbox's box by an eighth, and a button is a pill at 16 or more, and squarer below.
 
 ```mojo
 def corner_radius(mut self, radius: Float64)
