@@ -20,6 +20,7 @@ from create.render.autoscale import Autoscale
 from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
 from create.image.image import Image
+from create.core.headless import run_headless
 from std.testing import TestSuite, assert_equal, assert_true
 
 comptime _GRID = 20
@@ -440,6 +441,32 @@ def _gpu_draw_calls[P: Program](mut win: GLWindow) raises -> Int:
     return calls
 
 
+@fieldwise_init
+struct SweptTextBlur(Program):
+    """Text with a drop shadow blurred one pixel more every frame, as a
+    blur slider dragged across: every frame packs every glyph's mask at a
+    new blur, until the glyph atlas fills and starts over."""
+
+    var blur: Float64
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> SweptTextBlur:
+        return SweptTextBlur(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        self.blur += 1.0
+        canvas.background(Color.WHITE)
+        with canvas.style(
+            text_color=Color.BLACK,
+            font_size=40,
+            shadow=Color(0, 0, 0, 120),
+            shadow_blur=self.blur,
+        ):
+            canvas.text("Text casts its letters", (0, 0))
+
+
 def test_gl_batching_behaviours() raises -> None:
     var win: GLWindow
     try:
@@ -578,6 +605,24 @@ def test_gl_batching_behaviours() raises -> None:
             _ramp_cell_color(index),
             String("many gradients: rect ", index),
         )
+
+    # Case 13: blurred text shadows at more blurs than the glyph atlas holds.
+    # The atlas starts over once full, after drawing what still reads it, so
+    # the last frame is the CPU's.
+    var swept = _gpu_frame[SweptTextBlur](win, 600, 200, frames=80)
+    var cpu = run_headless[SweptTextBlur](600, 200, frames=80)
+    var error = 0
+    for y in range(200):
+        for x in range(600):
+            error += abs(Int(swept.pixel(x, y).r) - Int(cpu.pixel(x, y).r))
+    assert_true(
+        Float64(error) / (600.0 * 200.0) < 2.0,
+        "swept text blur: the last frame strays from the CPU's",
+    )
+    assert_true(
+        _has_ink(swept, Color.WHITE, 280, 90, 320, 110),
+        "swept text blur: no text drawn",
+    )
 
     _ = win^
 

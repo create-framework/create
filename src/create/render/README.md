@@ -555,7 +555,11 @@ nothing is interned. Faces live in `create.text`; `TextRenderer` lays out and ca
 - **Never stale by switching:** a key names its face, so switching fonts keeps every face's masks
   and the GL atlas. Only running out of `_FONT_SLOTS` (128) starts over: glyphs and slots are
   cleared and `atlas_generation` is bumped, which the atlas watches. `_GLYPH_CACHE_LIMIT` drops the
-  masks (not the slots) whole when full.
+  masks (not the slots) whole when full. The GL atlas starts over too when a glyph no longer fits
+  (`GLRenderer._pack`): it flushes the batch, which still reads the old glyphs, blanks every texel
+  (`_reset_atlas`) and packs again from the top. A blurred text shadow fills it fastest, since each
+  blur gives each glyph a mask of its own: a blur slider dragged across fills it in a few dozen
+  frames.
 - **Lines:** `_measure` caches a string's glyphs and breaks it into `_Line`s at each newline (a
   carriage return takes no glyph) and, given a wrap width in pixels, greedily before the last run of
   spaces that fits, or between glyphs in a word wider than the wrap. `layout` aligns each line on
