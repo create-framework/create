@@ -206,7 +206,8 @@ for ref player in self.players:
             ...
 ```
 
-`id=` on a single call does the same for one widget: `ui.button("OK", rect, id=player.name)`.
+`id=` on a single call does the same for one widget, and takes any key `ui.id` takes:
+`ui.button("OK", rect, id=player.name)`.
 
 ## Drawing your own things
 
