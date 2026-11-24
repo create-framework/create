@@ -18,14 +18,19 @@ comptime _BOX = Rectangle((0, -60), 200, 32)
 
 
 def _slider(
-    mut ui: UI, mut context: Context, mut value: Float64, step: Float64 = 0
+    mut ui: UI,
+    mut context: Context,
+    mut value: Float64,
+    step: Float64 = 0,
+    min: Float64 = 0,
+    max: Float64 = 1,
 ) raises -> Bool:
     var canvas = Canvas(300, 200)
     with ui.screen(context, canvas) as layer:
         if step > 0:
-            layer.slider(value, 0, 1, _TRACK, step=step)
+            layer.slider(value, min, max, _TRACK, step=step)
         else:
-            layer.slider(value, 0, 1, _TRACK)
+            layer.slider(value, min, max, _TRACK)
         return layer.changed()
 
 
@@ -81,6 +86,18 @@ def test_a_step_rounds_the_value() raises -> None:
     press(context, Point(13, 0))  # 0.565, nearest step 0.5
     assert_true(_slider(ui, context, value, step=0.25))
     assert_almost_equal(value, 0.5)
+
+
+def test_a_step_past_max_comes_back_inside_a_reversed_range() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var value = 10.0
+    point_at(context, Point(105, 0))
+    _ = _slider(ui, context, value, step=6, min=10, max=0)
+    next_frame(context)
+    press(context, Point(105, 0))  # past the end: 0, which rounds to -2
+    assert_true(_slider(ui, context, value, step=6, min=10, max=0))
+    assert_equal(value, 4.0)  # the last step inside the range
 
 
 def test_a_value_out_of_range_is_left_alone_until_dragged() raises -> None:

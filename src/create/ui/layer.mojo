@@ -1185,7 +1185,8 @@ struct UILayer[
                     min + Float64(round((new_value - min) / size)) * size
                 )
                 if (max - min) * (new_value - max) > 0:
-                    new_value -= size  # a step past `max` comes back inside
+                    # a step past `max` comes back inside, towards `min`
+                    new_value -= size if max > min else -size
             if new_value != value:
                 value = new_value
                 changed = True
