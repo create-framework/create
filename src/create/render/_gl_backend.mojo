@@ -1040,6 +1040,7 @@ struct GLRenderer(Movable):
                         scale,
                         self.grid,
                         text,
+                        images,
                     ),
                     c.paint.shadow_color,
                 )

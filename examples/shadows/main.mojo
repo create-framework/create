@@ -4,8 +4,8 @@ The sliders and checkboxes on the left set a single shadow, and every tile
 on the right is drawn with it, so you can see what each part does and what
 each kind of render call casts: a fill its shape, a shape with no fill only
 its stroke, text its letters, an image its opaque pixels and a curve its
-stroke. With Inset on, only the rectangle, circle and triangle cast a shadow,
-inside themselves.
+stroke. With Inset on, each casts it inside itself instead: within its fill,
+its stroke, its letters or its opaque pixels.
 Follows transform turns the turning triangle's shadow with it.
 
     pixi run example shadows cpu    # CPU

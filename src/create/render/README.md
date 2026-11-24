@@ -648,10 +648,11 @@ Both replays handle a command's shadow around the command itself, in the command
   transform and blurred, leaves uncovered. A line's or a curve's interior is its stroke, and its
   silhouette the stroke thinned by twice the spread. Text's are its glyphs laid out and blitted into
   a mask as `CpuReplay._text` draws them, its silhouette's blurred glyphs from the glyph cache, and
-  the spread ignored, as a text drop shadow ignores it. The CPU blits the mask and the GPU draws it
-  as a texture for the frame, as a blurred Bézier's shadow: uncached, one mask a frame. A triangle
-  is masked rather than analytic: its silhouette's corners are rounded, and the GPU's analytic modes
-  see a triangle only as its three edges, which would cut them sharp.
+  the spread ignored, as a text drop shadow ignores it. An image's are its opaque pixels blitted
+  white as `CpuReplay._image` blits them (`image_mask`), its spread ignored too. The CPU blits the
+  mask and the GPU draws it as a texture for the frame, as a blurred Bézier's shadow: uncached, one
+  mask a frame. A triangle is masked rather than analytic: its silhouette's corners are rounded, and
+  the GPU's analytic modes see a triangle only as its three edges, which would cut them sharp.
 
 The offset is one transform (`shadow_transform`). A screen-fixed offset composes a device
 translation after the command transform; one that follows the transform composes

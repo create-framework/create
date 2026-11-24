@@ -28,6 +28,7 @@ from create.math.transform import Transform
 
 from ._blur import BlurredMask, PlacedMask
 from ._command import (
+    ImagePayload,
     PolygonPayload,
     RenderCommand,
     SectorPayload,
@@ -40,7 +41,8 @@ from ._pieces import Pieces, pieces_mask
 from ._polygon import polygon_quads
 from ._sector import sector_quads
 from ._raster import blit_alpha, blit_alpha_mapped
-from ._shadow import _inradius, _spread
+from ._interned_image import _InternedImage
+from ._shadow import _inradius, _spread, image_mask
 from ._surface import MemorySurface
 from ._text import PlacedGlyph, TextRenderer
 from ._transform import (
@@ -59,6 +61,7 @@ def inset_shadow_mask(
     scale: Float64,
     grid: Int,
     mut text: TextRenderer,
+    images: Dict[Int, _InternedImage],
 ) raises -> PlacedMask:
     """`c`'s inset shadow as a mask to composite in its shadow colour: `c`
     casts one (`casts_inset_shadow`) but not analytically
@@ -67,7 +70,8 @@ def inset_shadow_mask(
     the fallback pixel scale for a transform that is not uniform, and
     `grid` the antialiasing's samples along each axis of a pixel
     (`Antialiasing._cpu_grid`), so the mask's edge is as smooth as the
-    shape's. `text` lays out and rasterises a text command's glyphs."""
+    shape's. `text` lays out and rasterises a text command's glyphs, and
+    `images` holds an image command's pixels."""
     if c.payload.isa[TextPayload]():
         # Blurred where it is laid out, at its own scale, as a text drop
         # shadow is; its glyphs are already antialiased.
@@ -77,6 +81,16 @@ def inset_shadow_mask(
             _text_mask(text, c, sm, scale, blur),
         )
     var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
+    if c.payload.isa[ImagePayload]():
+        # An image has no spread to shrink it by, as for its drop shadow.
+        ref image = c.payload[ImagePayload]
+        if image.image not in images:
+            return PlacedMask.empty()
+        var src = images[image.image].pixels[].unsafe_ptr()
+        return _uncovered(
+            image_mask(c, m, src, grid),
+            image_mask(c, sm, src, grid).blurred(blur),
+        )
     var interior = pieces_mask(_interior(c, m, scale), grid)
     var silhouette = PlacedMask.empty()
     var shrunk = _shrunk(c, c.paint.shadow_spread)

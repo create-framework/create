@@ -359,6 +359,14 @@ def test_text_shadow_recolours_the_glyphs() raises -> None:
     assert_equal(c.payload[TextPayload].style[].text_color, s.text_color)
 
 
+def test_an_image_casts_an_inset_shadow() raises -> None:
+    var s = _shadowed()
+    s.shadow_inset = True
+    var c = image_command(Transform(), s, 0, 0, 4, 4, 7, 4, 4)
+    assert_true(casts_inset_shadow(c))
+    assert_false(casts_outer_shadow(c))
+
+
 def test_image_shadow_is_a_silhouette() raises -> None:
     var s = _shadowed()
     var c = image_command(Transform(), s, 0, 0, 4, 4, 7, 4, 4)
