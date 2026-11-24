@@ -53,8 +53,9 @@ again on the CPU, as [`save_image`](../media/capture.md#saving-images) does. See
 - **A snapshot is sized by the design:** it is the design size times `pixel_scale` (1 by default),
   without the letterbox bars. So `snapshot()` drawn back with `canvas.image(shot, (0, 0),
   canvas.width(), canvas.height())` lines up exactly, which is how a feedback effect works: each
-  frame draws the last one back in, slightly changed. `pixel_scale=canvas.pixel_scale()` gives the
-  window's own pixels instead.
+  frame draws the last one back in, slightly changed (see
+  [examples/feedback](../../../examples/feedback/main.mojo)). `pixel_scale=canvas.pixel_scale()`
+  gives the window's own pixels instead.
 - **Many reads cost one:** the frame is drawn again only when something new has been drawn since the
   last read, so many `color_at` calls in a row cost the same as one. Drawing the frame again takes
   about as long as drawing a frame on the CPU, which is fine for picking a colour, a snapshot or a
