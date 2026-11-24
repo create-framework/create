@@ -120,8 +120,10 @@ style sets one.
 region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the `UI`'s
 `StateLayers` step towards its text colour, its chroma and hue kept. A widget with no fill of its
 own draws a translucent layer whose opacity `_layer_opacity` chooses to move the surface's lightness
-by the same step. Disabled widgets fade their colours by `_faded`, which scales the colour's own
-alpha, so a transparent colour stays transparent.
+by the same step. The surface is what the widget sits on: the innermost panel's fill
+(`UI._surface_color`), or the colours' `surface` outside any panel; disabled parts drawn solid, such
+as a slider's handle, are mixed from it too. Disabled widgets fade their colours by `_faded`, which
+scales the colour's own alpha, so a transparent colour stays transparent.
 
 ## Testing
 

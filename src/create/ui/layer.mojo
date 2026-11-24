@@ -281,8 +281,9 @@ struct UILayer[
         )
         var resolved = _ResolvedStyle()
         resolved.apply(look)
+        # a panel with no fill shows what is beneath it
         var surface = (
-            resolved.fill_color if resolved.fill_enabled else colors.surface
+            resolved.fill_color if resolved.fill_enabled else ui._surface_color()
         )
         var content = look.text_color.or_else(_content_on(colors, surface))
         ui._recorder.style = resolved
@@ -295,7 +296,9 @@ struct UILayer[
             )
         )
         ui._called(changed=False)
-        return PanelGuard(_ui=ui, _content=content, _rect=rect)
+        return PanelGuard(
+            _ui=ui, _surface=surface, _content=content, _rect=rect
+        )
 
     def id[K: Hashable](self, key: K) raises -> IDGuard[Self.ui_origin]:
         """Add `key` to the ID of every widget inside a `with` block, so a
@@ -1143,7 +1146,7 @@ struct UILayer[
             # no solid fill to step: a layer of the text colour, as strong as
             # the step would be over the surface beneath
             var opacity = _layer_opacity(
-                colors.surface, resolved.text_color, step
+                self._ui[]._surface_color(), resolved.text_color, step
             )
             recorder.style = _ResolvedStyle(
                 fill=resolved.text_color.with_alpha(UInt8(opacity * 255 + 0.5)),
@@ -1288,8 +1291,10 @@ struct UILayer[
                 colors.on_surface, states.disabled_container
             )
             # solid, so the track doesn't show through it
-            handle.stroke_color = colors.surface.lerp(
-                colors.on_surface, states.disabled_content
+            handle.stroke_color = (
+                self._ui[]
+                ._surface_color()
+                .lerp(colors.on_surface, states.disabled_content)
             )
         ref recorder = ui._recorder
         recorder.style = track
@@ -1391,7 +1396,7 @@ struct UILayer[
                 look.fill_color = faded
                 look.fill_gradient = None
             look.stroke_color = faded
-            tick.stroke_color = colors.surface
+            tick.stroke_color = self._ui[]._surface_color()
             text.text_color = faded
         # a hovered or pressed box is tinted, as a button is: a filled one
         # towards its tick, an empty one with the text colour inside it
@@ -1407,7 +1412,7 @@ struct UILayer[
                 )
             elif not _fills(look):
                 var layer = _layer_opacity(
-                    colors.surface, colors.on_surface, step
+                    self._ui[]._surface_color(), colors.on_surface, step
                 )
                 look.fill_color = colors.on_surface.with_alpha(
                     UInt8(layer * 255 + 0.5)
@@ -1805,9 +1810,11 @@ struct PanelGuard[origin: Origin[mut=True]](Movable):
         out self,
         *,
         ref[Self.origin] _ui: UI,
+        _surface: Color,
         _content: Color,
         _rect: Rectangle,
     ):
+        _ui._surfaces.append(_surface)
         _ui._contents.append(_content)
         _ui._layouts.append(_Layout(_PANEL, _rect, 0.0))
         self._ui = Pointer(to=_ui)
@@ -1816,6 +1823,7 @@ struct PanelGuard[origin: Origin[mut=True]](Movable):
         pass
 
     def __exit__(mut self):
+        _ = self._ui[]._surfaces.pop()
         _ = self._ui[]._contents.pop()
         _ = self._ui[]._layouts.pop()
 

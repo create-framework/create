@@ -146,6 +146,8 @@ struct UI(Movable):
     """The open `ui.style` blocks, each merged over the ones outside it."""
     var _contents: List[Color]
     """The content colours of the open panels, innermost last."""
+    var _surfaces: List[Color]
+    """The surface colours of the open panels, innermost last."""
     var _layouts: List[_Layout]
     """The open panels, columns and rows, innermost last: what a widget
     called without a rect is placed by."""
@@ -215,6 +217,7 @@ struct UI(Movable):
         self._focus_ring = FocusRing()
         self._styles = []
         self._contents = []
+        self._surfaces = []
         self._layouts = []
         self._frame = -1
         self._layer_open = False
@@ -435,6 +438,7 @@ struct UI(Movable):
             self._color_blocks.clear()
             self._styles.clear()
             self._contents.clear()
+            self._surfaces.clear()
             self._layouts.clear()
             self._disabled_depth = 0
             self._called(changed=False)
@@ -539,6 +543,13 @@ struct UI(Movable):
         if self._contents:
             return self._contents[len(self._contents) - 1]
         return self._current_colors().on_surface
+
+    def _surface_color(self) -> Color:
+        """The colour widgets here sit on: the innermost panel's, or the
+        colours' `surface`."""
+        if self._surfaces:
+            return self._surfaces[len(self._surfaces) - 1]
+        return self._current_colors().surface
 
     def _hot_focusable(self) -> Bool:
         """Whether the widget under the pointer can take focus: not a panel,
