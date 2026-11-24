@@ -1168,10 +1168,7 @@ struct GLRenderer(Movable):
         if text.atlas_generation != self.atlas_generation:
             # The renderer handed its font slots out afresh, so the packed
             # masks may belong to a face a key no longer names: start over.
-            self.glyphs.clear()
-            self.shelf_x = _ATLAS_PAD
-            self.shelf_y = _FIRST_SHELF_Y
-            self.shelf_h = 1
+            self._reset_atlas()
             self.atlas_generation = text.atlas_generation
         var m = c.transform
         var sf = text_pixel_scale(m, scale)
@@ -1233,25 +1230,71 @@ struct GLRenderer(Movable):
                     text_style.text_color,
                 )
 
+    def _fits(self, g: PlacedGlyph) -> Bool:
+        """Whether `g` fits in the atlas's free space, on the current shelf
+        or a new one below it."""
+        var y = self.shelf_y
+        if self.shelf_x + g.width + _ATLAS_PAD > ATLAS_SIZE:
+            y += self.shelf_h + _ATLAS_PAD
+        return y + g.height + _ATLAS_PAD <= ATLAS_SIZE
+
+    def _reset_atlas(mut self) raises:
+        """Empty the atlas: every texel blank again but the opaque one at
+        `(0, 0)`, so a glyph packed where an old one was keeps the blank
+        gutter its bilinear reads rely on, and no glyph packed."""
+        self.glyphs.clear()
+        self.shelf_x = _ATLAS_PAD
+        self.shelf_y = _FIRST_SHELF_Y
+        self.shelf_h = 1
+        var blank = List[UInt8](length=ATLAS_SIZE * ATLAS_SIZE, fill=0)
+        blank[0] = 255
+        self.gl.active_texture(GL_TEXTURE0)
+        self.gl.pixel_storei(GL_UNPACK_ALIGNMENT, 1)
+        self.gl.tex_sub_image_2d(
+            GL_TEXTURE_2D,
+            0,
+            0,
+            0,
+            Int32(ATLAS_SIZE),
+            Int32(ATLAS_SIZE),
+            GL_RED,
+            GL_UNSIGNED_BYTE,
+            _Bytes(unsafe_from_address=Int(blank.unsafe_ptr())),
+        )
+        _ = blank^
+
     def _pack(
         mut self, g: PlacedGlyph, mut text: TextRenderer
     ) raises -> _AtlasRect:
         """The glyph's rect in the atlas, uploading its mask on first sight."""
         if g.key in self.glyphs:
             return self.glyphs[g.key]
+        if (
+            g.width + 2 * _ATLAS_PAD > ATLAS_SIZE
+            or _FIRST_SHELF_Y + g.height + _ATLAS_PAD > ATLAS_SIZE
+        ):
+            raise Error(
+                "a glyph of "
+                + String(g.width)
+                + "x"
+                + String(g.height)
+                + " pixels is too large for the "
+                + String(ATLAS_SIZE)
+                + "x"
+                + String(ATLAS_SIZE)
+                + " GL glyph atlas"
+            )
+        if not self._fits(g):
+            # Full: the glyphs packed so far are drawn, and the atlas starts
+            # over, keeping what is still in use by packing it again. A
+            # blurred text shadow fills it fastest, since every blur gives
+            # every glyph a mask of its own.
+            self._flush()
+            self._reset_atlas()
         if self.shelf_x + g.width + _ATLAS_PAD > ATLAS_SIZE:
             self.shelf_x = _ATLAS_PAD
             self.shelf_y += self.shelf_h + _ATLAS_PAD
             self.shelf_h = 1
-        if self.shelf_y + g.height + _ATLAS_PAD > ATLAS_SIZE:
-            raise Error(
-                "the GL glyph atlas is full — "
-                + String(len(self.glyphs))
-                + " glyphs packed into "
-                + String(ATLAS_SIZE)
-                + "x"
-                + String(ATLAS_SIZE)
-            )
         var rect = _AtlasRect(self.shelf_x, self.shelf_y, g.width, g.height)
         self.shelf_x += g.width + _ATLAS_PAD
         self.shelf_h = max(self.shelf_h, g.height)
