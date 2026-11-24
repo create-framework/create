@@ -114,7 +114,21 @@ Light colours on a dark background, with the colours given replacing its own, as
 
 ```mojo
 @staticmethod
-def from_seed(seed: Color, *, dark: Bool = False) -> Self
+def from_seed(
+    seed: Color,
+    *,
+    dark: Bool = False,
+    primary: Optional[Color] = None,
+    on_primary: Optional[Color] = None,
+    secondary: Optional[Color] = None,
+    on_secondary: Optional[Color] = None,
+    tertiary: Optional[Color] = None,
+    on_tertiary: Optional[Color] = None,
+    error: Optional[Color] = None,
+    on_error: Optional[Color] = None,
+    surface: Optional[Color] = None,
+    on_surface: Optional[Color] = None,
+) -> Self
 ```
 
 The colours worked out from one colour, such as a game's own, as Material's dynamic colour does: light unless `dark`.
@@ -128,7 +142,12 @@ every hue: in the light scheme `primary` is tone 40 and `on_primary`
 between two paired roles keeps them readable together, whatever the
 seed. A grey seed gives grey colours.
 
+The colours given replace those worked out, as in `light` and `dark`.
+
 ```mojo
 # In `create`, building the `colors` field:
 var colors = ColorScheme.from_seed(Color.hex(0xE07A2E))  # orange
+var warning = ColorScheme.from_seed(  # the same, with a yellow error
+    Color.hex(0xE07A2E), error=Color.hex(0xE0B000)
+)
 ```

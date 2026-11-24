@@ -195,7 +195,21 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         return colors
 
     @staticmethod
-    def from_seed(seed: Color, *, dark: Bool = False) -> Self:
+    def from_seed(
+        seed: Color,
+        *,
+        dark: Bool = False,
+        primary: Optional[Color] = None,
+        on_primary: Optional[Color] = None,
+        secondary: Optional[Color] = None,
+        on_secondary: Optional[Color] = None,
+        tertiary: Optional[Color] = None,
+        on_tertiary: Optional[Color] = None,
+        error: Optional[Color] = None,
+        on_error: Optional[Color] = None,
+        surface: Optional[Color] = None,
+        on_surface: Optional[Color] = None,
+    ) -> Self:
         """The colours worked out from one colour, such as a game's own,
         as Material's dynamic colour does: light unless `dark`.
 
@@ -208,9 +222,14 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         between two paired roles keeps them readable together, whatever the
         seed. A grey seed gives grey colours.
 
+        The colours given replace those worked out, as in `light` and `dark`.
+
         ```mojo
         # In `create`, building the `colors` field:
         var colors = ColorScheme.from_seed(Color.hex(0xE07A2E))  # orange
+        var warning = ColorScheme.from_seed(  # the same, with a yellow error
+            Color.hex(0xE07A2E), error=Color.hex(0xE0B000)
+        )
         ```
         """
         var at = seed.to_oklch()
@@ -218,31 +237,31 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         # A seed with some colour gets a primary vivid enough to read as
         # that colour; a grey seed stays grey.
         var chroma = 0.0 if at[1] < 0.03 else min(max(at[1], 0.1), 0.16)
-        var primary = _Palette(hue, chroma)
-        var secondary = _Palette(hue, chroma / 3)
-        var tertiary = _Palette(hue + 60, chroma * 0.6)
+        var primary_palette = _Palette(hue, chroma)
+        var secondary_palette = _Palette(hue, chroma / 3)
+        var tertiary_palette = _Palette(hue + 60, chroma * 0.6)
         var neutral = _Palette(hue, min(chroma / 12, 0.012))
         var variant = _Palette(hue, min(chroma / 6, 0.025))
-        var error = _Palette(25, 0.17)
+        var error_palette = _Palette(25, 0.17)
         var colors: ColorScheme
         if dark:
             colors = ColorScheme(
-                primary=primary.tone(80),
-                on_primary=primary.tone(20),
-                primary_container=primary.tone(30),
-                on_primary_container=primary.tone(90),
-                secondary=secondary.tone(80),
-                on_secondary=secondary.tone(20),
-                secondary_container=secondary.tone(30),
-                on_secondary_container=secondary.tone(90),
-                tertiary=tertiary.tone(80),
-                on_tertiary=tertiary.tone(20),
-                tertiary_container=tertiary.tone(30),
-                on_tertiary_container=tertiary.tone(90),
-                error=error.tone(80),
-                on_error=error.tone(20),
-                error_container=error.tone(30),
-                on_error_container=error.tone(90),
+                primary=primary_palette.tone(80),
+                on_primary=primary_palette.tone(20),
+                primary_container=primary_palette.tone(30),
+                on_primary_container=primary_palette.tone(90),
+                secondary=secondary_palette.tone(80),
+                on_secondary=secondary_palette.tone(20),
+                secondary_container=secondary_palette.tone(30),
+                on_secondary_container=secondary_palette.tone(90),
+                tertiary=tertiary_palette.tone(80),
+                on_tertiary=tertiary_palette.tone(20),
+                tertiary_container=tertiary_palette.tone(30),
+                on_tertiary_container=tertiary_palette.tone(90),
+                error=error_palette.tone(80),
+                on_error=error_palette.tone(20),
+                error_container=error_palette.tone(30),
+                on_error_container=error_palette.tone(90),
                 surface=neutral.tone(6),
                 surface_dim=neutral.tone(6),
                 surface_bright=neutral.tone(24),
@@ -260,22 +279,22 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             )
         else:
             colors = ColorScheme(
-                primary=primary.tone(40),
-                on_primary=primary.tone(100),
-                primary_container=primary.tone(90),
-                on_primary_container=primary.tone(10),
-                secondary=secondary.tone(40),
-                on_secondary=secondary.tone(100),
-                secondary_container=secondary.tone(90),
-                on_secondary_container=secondary.tone(10),
-                tertiary=tertiary.tone(40),
-                on_tertiary=tertiary.tone(100),
-                tertiary_container=tertiary.tone(90),
-                on_tertiary_container=tertiary.tone(10),
-                error=error.tone(40),
-                on_error=error.tone(100),
-                error_container=error.tone(90),
-                on_error_container=error.tone(10),
+                primary=primary_palette.tone(40),
+                on_primary=primary_palette.tone(100),
+                primary_container=primary_palette.tone(90),
+                on_primary_container=primary_palette.tone(10),
+                secondary=secondary_palette.tone(40),
+                on_secondary=secondary_palette.tone(100),
+                secondary_container=secondary_palette.tone(90),
+                on_secondary_container=secondary_palette.tone(10),
+                tertiary=tertiary_palette.tone(40),
+                on_tertiary=tertiary_palette.tone(100),
+                tertiary_container=tertiary_palette.tone(90),
+                on_tertiary_container=tertiary_palette.tone(10),
+                error=error_palette.tone(40),
+                on_error=error_palette.tone(100),
+                error_container=error_palette.tone(90),
+                on_error_container=error_palette.tone(10),
                 surface=neutral.tone(98),
                 surface_dim=neutral.tone(87),
                 surface_bright=neutral.tone(98),
@@ -291,6 +310,18 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
                 background=neutral.tone(98),
                 on_background=neutral.tone(10),
             )
+        colors._override(
+            primary,
+            on_primary,
+            secondary,
+            on_secondary,
+            tertiary,
+            on_tertiary,
+            error,
+            on_error,
+            surface,
+            on_surface,
+        )
         return colors
 
     def _override(
