@@ -152,9 +152,10 @@ typed text, `placeholder_style` the placeholder (taking what it leaves unset fro
 `caret` a line and `selection` the rectangle behind selected text. `padding`, a number, is the gap
 between the field's sides and its text.
 
-`ui.style` takes every part too, named by the widget and the part: `slider_handle=`,
-`checkbox_tick=`, `text_field_caret=` and so on. The focus ring isn't a part: it comes from the
-`UI`'s `focus_ring` (see [Focus rings](focus.md#focus-rings)).
+`ui.style` takes every part too, named by the widget and the call's keyword for the part:
+`slider_handle=`, `checkbox_tick=`, `checkbox_label_style=`, `text_field_caret=` and so on. The
+focus ring isn't a part: it comes from the `UI`'s `focus_ring` (see [Focus
+rings](focus.md#focus-rings)).
 
 ## Styling a block
 

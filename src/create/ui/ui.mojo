@@ -31,11 +31,11 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var checkbox_box: Style
     var checkbox_checked_box: Style
     var checkbox_tick: Style
-    var checkbox_label: Style
+    var checkbox_label_style: Style
     var text_field_container: Style
     var text_field_focused: Style
-    var text_field_text: Style
-    var text_field_placeholder: Style
+    var text_field_text_style: Style
+    var text_field_placeholder_style: Style
     var text_field_caret: Style
     var text_field_selection: Style
 
@@ -50,11 +50,11 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.checkbox_box = Style()
         self.checkbox_checked_box = Style()
         self.checkbox_tick = Style()
-        self.checkbox_label = Style()
+        self.checkbox_label_style = Style()
         self.text_field_container = Style()
         self.text_field_focused = Style()
-        self.text_field_text = Style()
-        self.text_field_placeholder = Style()
+        self.text_field_text_style = Style()
+        self.text_field_placeholder_style = Style()
         self.text_field_caret = Style()
         self.text_field_selection = Style()
 
@@ -70,11 +70,13 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.checkbox_box.over(under.checkbox_box),
             self.checkbox_checked_box.over(under.checkbox_checked_box),
             self.checkbox_tick.over(under.checkbox_tick),
-            self.checkbox_label.over(under.checkbox_label),
+            self.checkbox_label_style.over(under.checkbox_label_style),
             self.text_field_container.over(under.text_field_container),
             self.text_field_focused.over(under.text_field_focused),
-            self.text_field_text.over(under.text_field_text),
-            self.text_field_placeholder.over(under.text_field_placeholder),
+            self.text_field_text_style.over(under.text_field_text_style),
+            self.text_field_placeholder_style.over(
+                under.text_field_placeholder_style
+            ),
             self.text_field_caret.over(under.text_field_caret),
             self.text_field_selection.over(under.text_field_selection),
         )

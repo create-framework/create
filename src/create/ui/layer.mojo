@@ -181,11 +181,11 @@ struct UILayer[
         checkbox_box: Style = Style(),
         checkbox_checked_box: Style = Style(),
         checkbox_tick: Style = Style(),
-        checkbox_label: Style = Style(),
+        checkbox_label_style: Style = Style(),
         text_field_container: Style = Style(),
         text_field_focused: Style = Style(),
-        text_field_text: Style = Style(),
-        text_field_placeholder: Style = Style(),
+        text_field_text_style: Style = Style(),
+        text_field_placeholder_style: Style = Style(),
         text_field_caret: Style = Style(),
         text_field_selection: Style = Style(),
     ) raises -> WidgetStyleGuard[Self.ui_origin]:
@@ -221,11 +221,11 @@ struct UILayer[
                 checkbox_box,
                 checkbox_checked_box,
                 checkbox_tick,
-                checkbox_label,
+                checkbox_label_style,
                 text_field_container,
                 text_field_focused,
-                text_field_text,
-                text_field_placeholder,
+                text_field_text_style,
+                text_field_placeholder_style,
                 text_field_caret,
                 text_field_selection,
             ),
@@ -829,14 +829,14 @@ struct UILayer[
         buffer.max_length = max_length
         var now = self._context[].time.elapsed
         var block = ui._current_styles()
-        var text_look = call_text.over(block.text_field_text).over(
+        var text_look = call_text.over(block.text_field_text_style).over(
             Style(text_color=colors.on_surface).over(_body_text())
         )
         var typed = _ResolvedStyle()
         typed.apply(text_look)
         var hint = _ResolvedStyle()
         hint.apply(
-            call_placeholder.over(block.text_field_placeholder).over(
+            call_placeholder.over(block.text_field_placeholder_style).over(
                 Style(text_color=colors.on_surface_variant).over(text_look)
             )
         )
@@ -1372,7 +1372,7 @@ struct UILayer[
         )
         var text = _ResolvedStyle()
         text.apply(
-            call_label.over(block.checkbox_label).over(
+            call_label.over(block.checkbox_label_style).over(
                 Style(text_color=self._ui[]._content_color()).over(_body_text())
             )
         )
