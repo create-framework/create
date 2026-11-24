@@ -552,8 +552,9 @@ struct UILayer[
 
         Pressing anywhere in `rect` moves the handle there, and dragging
         moves it on, even once the pointer leaves `rect`. `step` rounds the
-        value to multiples of it from `min`. A `value` outside `min` to
-        `max` is drawn at the nearer end, and left as it is until dragged.
+        value to multiples of it from `min`, and must be more than 0. A
+        `value` outside `min` to `max` is drawn at the nearer end, and left
+        as it is until dragged.
 
         Each part is a shape drawn in its own `Style`: `track` is a line, so
         its `stroke` and `stroke_thickness` are the track's colour and
@@ -1134,6 +1135,11 @@ struct UILayer[
         take_focus: Bool,
         disabled: Bool,
     ) raises:
+        if step and not step.value() > 0:  # NaN included
+            raise Error(
+                "ui.slider: step must be more than 0, not "
+                + String(step.value())
+            )
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
@@ -1179,7 +1185,7 @@ struct UILayer[
             var pointer = self._to_local.apply(self._context[].mouse.position)
             var t = clamp((pointer.x - left) / (right - left), 0.0, 1.0)
             var new_value = min + t * (max - min)
-            if step and step.value() > 0:
+            if step:
                 var size = step.value()
                 new_value = (
                     min + Float64(round((new_value - min) / size)) * size
@@ -1195,7 +1201,7 @@ struct UILayer[
         if (keys or pad) and max != min:
             ref keyboard = self._context[].keyboard
             # a step, or a twentieth of the range
-            var size = abs(step.value() if step else (max - min) / 20)
+            var size = step.value() if step else abs(max - min) / 20
             if max < min:
                 size = -size  # steps count from `min` towards `max`
             var low = min if min < max else max

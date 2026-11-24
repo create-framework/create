@@ -5,6 +5,7 @@ from std.testing import (
     assert_almost_equal,
     assert_equal,
     assert_false,
+    assert_raises,
     assert_true,
 )
 
@@ -98,6 +99,16 @@ def test_a_step_past_max_comes_back_inside_a_reversed_range() raises -> None:
     press(context, Point(105, 0))  # past the end: 0, which rounds to -2
     assert_true(_slider(ui, context, value, step=6, min=10, max=0))
     assert_equal(value, 4.0)  # the last step inside the range
+
+
+def test_a_step_of_zero_raises() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(300, 200)
+    var value = 0.5
+    with ui.screen(context, canvas) as layer:
+        with assert_raises(contains="step must be more than 0"):
+            layer.slider(value, 0, 1, _TRACK, step=0)
 
 
 def test_a_value_out_of_range_is_left_alone_until_dragged() raises -> None:
