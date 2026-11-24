@@ -175,6 +175,36 @@ def test_a_column_fills_a_rows_slot() raises -> None:
     _assert_rect(rects[2], 104, 0, 200, 200)
 
 
+def test_a_panel_without_a_rect_fills_a_rows_slot() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(500, 400)
+    with ui.screen(context, canvas) as layer:
+        with layer.row(columns=2, rect=Rectangle((0, 0), 408, 200)):
+            with layer.panel():
+                with layer.column():  # inset by 16 from the slot
+                    _ = layer.button("Inside")
+            with layer.panel():
+                pass
+    var panels = List[Rectangle]()
+    for hit in ui._hits:
+        if not hit.focusable:
+            panels.append(hit.rect)
+    _assert_rect(panels[0], -104, 0, 200, 200)
+    _assert_rect(panels[1], 104, 0, 200, 200)
+    _assert_rect(_placed(ui)[0], -104, 64, 168, 40)
+
+
+def test_a_panel_without_a_rect_outside_a_stack_raises() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(400, 400)
+    with ui.screen(context, canvas) as layer:
+        with assert_raises(contains="ui.panel: give it a rect"):
+            with layer.panel():
+                pass
+
+
 def test_a_column_in_a_column_takes_the_rest() raises -> None:
     var ui = UI()
     var context = Context()

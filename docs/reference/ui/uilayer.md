@@ -117,14 +117,14 @@ The colour for text here: the innermost panel's content colour, or the colours' 
 ```mojo
 def panel(
     self,
-    rect: Rectangle,
+    rect: Optional[Rectangle] = None,
     *,
     style: Style = Style(fill=Optional(None), fill_gradient=Optional(None), fill_enabled=Optional(None), stroke=Optional(None), stroke_thickness=_OptionalFloat64(None), stroke_enabled=Optional(None), stroke_alignment=Optional(None), stroke_cap=Optional(None), stroke_dash=Optional(None), corner_radius=_OptionalFloat64(None), text_color=Optional(None), font=Optional(None), font_size=_OptionalFloat64(None), font_weight=Optional(None), font_italic=Optional(None), text_alignment=Optional(None), tint=Optional(None), opacity=_OptionalFloat64(None), blend_mode=Optional(None), shadow=Optional(None), shadow_offset=Optional(None), shadow_blur=_OptionalFloat64(None), shadow_spread=_OptionalFloat64(None), shadow_inset=Optional(None), shadow_follows_transform=Optional(None), shadow_enabled=Optional(None)),
     id: _WidgetKey = None,
 ) raises -> PanelGuard[ui_origin]
 ```
 
-A surface filling `rect`, drawn beneath everything called inside its `with` block. Text on it takes its content colour, so a label on a dark panel turns light without being told, and it covers what is beneath it from the pointer. It doesn't place what is inside it.
+A surface filling `rect`, drawn beneath everything called inside its `with` block. Text on it takes its content colour, so a label on a dark panel turns light without being told, and it covers what is beneath it from the pointer. It doesn't place what is inside it. Without a `rect`, it fills what is around it, as `ui.column` does.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
