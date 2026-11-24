@@ -57,7 +57,7 @@ def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
     next_frame(context)
     point_at(context, Point(500, 300))
     assert_false(_slider(ui, context, value))  # already at the end
-    assert_true(ui.wants_mouse())
+    assert_true(ui.wants_mouse(context))
     next_frame(context)
     point_at(context, Point(-50, 300))  # still held: follows the pointer
     assert_true(_slider(ui, context, value))

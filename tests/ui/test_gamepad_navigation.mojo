@@ -122,7 +122,7 @@ def test_gamepad_focus_leaves_the_keyboard_to_the_game() raises -> None:
     grid.frame()
     grid.pad(GamepadButton.DPAD_DOWN)
     assert_true(grid.ui._focus_visible)  # a ring shows
-    assert_false(grid.ui.wants_keyboard())
+    assert_false(grid.ui.wants_keyboard(grid.context))
 
 
 def test_left_and_right_step_a_focused_slider() raises -> None:

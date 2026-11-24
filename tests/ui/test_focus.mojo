@@ -85,22 +85,22 @@ def test_a_click_gives_focus_without_a_ring_or_the_keyboard() raises -> None:
     _frame(ui, context)
     _click(ui, context, _A.position)
     assert_false(ui._focus_visible)
-    assert_false(ui.wants_keyboard())  # a game's keys still work
+    assert_false(ui.wants_keyboard(context))  # a game's keys still work
 
 
 def test_escape_takes_focus_away_and_keeps_the_key_that_frame() raises -> None:
     var ui = UI()
     var context = Context()
     _frame(ui, context, take=[True, False])
-    assert_true(ui.wants_keyboard())  # focus from code: keys act on it
+    assert_true(ui.wants_keyboard(context))  # focus from code: keys act on it
     next_frame(context)
     press_key(context, Key.ESCAPE)
     _frame(ui, context)
     assert_equal(_focused(ui), -1)
-    assert_true(ui.wants_keyboard())  # the Escape was the UI's
+    assert_true(ui.wants_keyboard(context))  # the Escape was the UI's
     next_frame(context)
     _frame(ui, context)
-    assert_false(ui.wants_keyboard())
+    assert_false(ui.wants_keyboard(context))
 
 
 def test_a_disabled_widget_cannot_take_focus() raises -> None:

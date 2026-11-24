@@ -63,7 +63,8 @@ Copying and pasting go through the system clipboard, which a program can also us
 `max_length=` caps how many characters the field can hold: typing and pasting stop adding once it is
 full. The text is the program's own `String`, so the program can set it at any time, for example
 `self.name = ""` to empty the field once it has been submitted. While a field has focus,
-`self.ui.wants_keyboard()` is true, so a game can leave the keys alone while the player types.
+`self.ui.wants_keyboard(context)` is true, so a game can leave the keys alone while the player
+types.
 
 **Drawing the text yourself.** `ui.text_editor()`, right after the field, gives its `TextEditor`,
 which says where its caret and selection are: `before_caret()` is the text before the caret,

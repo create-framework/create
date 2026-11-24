@@ -64,20 +64,21 @@ A game reads the same keyboard and mouse as its UI, so a click on a menu button 
 weapon, and typing a name with W in it could walk the player forward. Two readings on the `UI` say
 when the input is the UI's:
 
-- **`ui.wants_mouse()`** is true while the pointer is over a widget, or a widget is held, such as a
-  slider being dragged.
-- **`ui.wants_keyboard()`** is true while a text field has focus, while a widget has focus from the
-  keyboard (so the keys act on it), and in the frame a key took focus away, such as the Escape that
-  leaves a field.
+- **`ui.wants_mouse(context)`** is true while the pointer is over a widget, or a widget is held,
+  such as a slider being dragged.
+- **`ui.wants_keyboard(context)`** is true while a text field has focus, while a widget has focus
+  from the keyboard (so the keys act on it), and in the frame a key took focus away, such as the
+  Escape that leaves a field.
 
 Check them before reading input for the game itself. They are read on the `UI` field, so they work
-before or after the UI's block:
+before or after the UI's block. A `UI` that opened no layer this frame or last, such as a menu that
+has closed, wants neither:
 
 ```mojo
 # In `update`, with a `ui: UI` field:
-if context.mouse.pressed() and not self.ui.wants_mouse():
+if context.mouse.pressed() and not self.ui.wants_mouse(context):
     self.fire()
-if context.keyboard.pressed(Key.ESCAPE) and not self.ui.wants_keyboard():
+if context.keyboard.pressed(Key.ESCAPE) and not self.ui.wants_keyboard(context):
     self.paused = not self.paused
 ```
 

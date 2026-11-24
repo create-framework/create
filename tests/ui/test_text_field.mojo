@@ -86,11 +86,11 @@ def test_a_field_with_focus_wants_the_keyboard() raises -> None:
     var form = _Form()
     form.frame()
     form.click(_FIRST.position)
-    assert_true(form.ui.wants_keyboard())  # even from a click
+    assert_true(form.ui.wants_keyboard(form.context))  # even from a click
     form.click(Point(0, 95))  # nowhere
     next_frame(form.context)
     form.frame()
-    assert_false(form.ui.wants_keyboard())
+    assert_false(form.ui.wants_keyboard(form.context))
 
 
 def test_enter_submits_the_focused_field() raises -> None:
