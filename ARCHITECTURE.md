@@ -25,6 +25,7 @@ internals](#package-internals).
 | `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), the guards of its `with` blocks (`IDGuard`, `DisabledGuard`, `ColorsGuard`, `WidgetStyleGuard`, `PanelGuard`, `LayoutGuard`), `ColorScheme` (the colours a layer is drawn in) with `StateLayers` and `FocusRing`, and `ButtonVariant` and `TextEditor` (every widget is styled with `render`'s `Style`, one for each of its parts); widget IDs from call sites, the recorder that draws a layer in call order, and the text editing behind `text_field` (`_TextBuffer`) |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
+| `_optional` | `src/create/_optional.mojo` | Internal leaf: `_OptionalFloat64`, the type behind optional number keywords such as `corner_radius=8`, which takes an integer, a `Float64` or `None` |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_native` | `src/create/_native.mojo` | Internal leaf: opens the compiled library, `libcreate`, and passes values to it by address; `IN_LIBRARY` (see [The compiled library](#the-compiled-library)) |
 | `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
@@ -73,17 +74,17 @@ The packages form layers, and a package imports only from the layers below it:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
-| UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `image`, `text`, `math` |
+| UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `image`, `text`, `math`, `_optional` |
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
-| Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path`, `_native` |
+| Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
-| Values | `geometry`, `color`, `input` | `math` |
+| Values | `geometry`, `color`, `input` | `math`; `geometry` also `_optional` |
 | Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
-| Internal | `_window`, `_bytes`, `_library`, `_path`, `_native` | `_window`: `_library`; the others nothing |
+| Internal | `_window`, `_bytes`, `_library`, `_optional`, `_path`, `_native` | `_window`: `_library`; the others nothing |
 
-The same, as a graph; every arrow points down. The leaves `_bytes`, `_library`, `_path` and
-`_native` are left out, and so are `audio` and `data`, which import only those leaves and which no
-package here imports:
+The same, as a graph; every arrow points down. The leaves `_bytes`, `_library`, `_optional`, `_path`
+and `_native` are left out, and so are `audio` and `data`, which import only those leaves and which
+no package here imports:
 
 ```mermaid
 flowchart TD
@@ -124,13 +125,13 @@ The rules behind it, and what each one buys:
   for the widgets' rectangles and hit-testing, `color` and `text` for the widgets' colours and text,
   and `image` for the `image` widget.
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
-  `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library` and `_path`, so it works
-  without a run loop. The settings that map the design onto the window therefore reach `render` as
-  plain values: in `core`, `context._set_viewport(state, …)` passes the design size and autoscale
-  in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing settings live
-  on `_PersistentCanvasState` itself.
-- **`geometry`** depends only on `math`, so collision code (`overlaps`, `contains`) never sees
-  `render`; `render` imports it.
+  `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library`, `_optional` and `_path`,
+  so it works without a run loop. The settings that map the design onto the window therefore reach
+  `render` as plain values: in `core`, `context._set_viewport(state, …)` passes the design size and
+  autoscale in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing
+  settings live on `_PersistentCanvasState` itself.
+- **`geometry`** depends only on `math` and `_optional`, so collision code (`overlaps`, `contains`)
+  never sees `render`; `render` imports it.
 - **`color`** depends only on `math`; `image` and `render` both import it. It sits below `image` so
   that `Image.pixel` can return a `Color` without a `render`↔`image` cycle.
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
@@ -158,6 +159,9 @@ The rules behind it, and what each one buys:
   Library code calls the twin (`Image._load`), never the public function: called from the library,
   the public function would resolve the path against the library's own file.
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
+- **`_optional`** is a leaf imported by `geometry`, `render` and `ui`, re-exported by nothing. It
+  holds keyword plumbing rather than maths, so it sits beside the other leaves rather than in
+  `math`.
 - **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. A
   binding opens its library with `load_library("libname", version)`, where `version` is the soname's
   version, and never with `_DLHandle("libname.so")`. `load_library` decides the platform's file name

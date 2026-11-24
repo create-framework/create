@@ -1,6 +1,6 @@
 from std.math import min, max, sqrt
 from create.math import TAU, Point, Vector
-from create.math._optional_float64 import _OptionalFloat64
+from create._optional import _OptionalFloat64
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap

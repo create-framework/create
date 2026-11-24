@@ -1,6 +1,6 @@
 from std.math import min, max
 from create.math import PI, TAU, Point, Vector
-from create.math._optional_float64 import _OptionalFloat64
+from create._optional import _OptionalFloat64
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap

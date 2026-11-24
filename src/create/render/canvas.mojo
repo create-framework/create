@@ -45,7 +45,7 @@ from ._command import (
     text_command,
 )
 from .style import Style, _ResolvedStyle
-from create.math._optional_float64 import _OptionalFloat64
+from create._optional import _OptionalFloat64
 from create._path import _caller_relative
 from ._command import RenderCommand
 from ._shape_command import RegionCapture, curves_command, shape_command
