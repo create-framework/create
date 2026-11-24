@@ -179,8 +179,8 @@ described by the same angles: it is the curved edge of a sector, without the ins
   outside it, for `contains` and `overlaps` alike.
 - `center()` is `position`, the circle's centre, as for a `Circle`, rather than the balance point of
   the slice.
-- `canvas.sector` places its stroke by `stroke_alignment`, as for a circle. Inset shadows don't
-  apply to it.
+- `canvas.sector` places its stroke by `stroke_alignment`, as for a circle. A rounded sector is
+  drawn as a polygon, so inset shadows don't apply to it.
 - `corner_radius` rounds the tip and the two corners where the straight edges meet the curved one.
   Past a half turn, the tip points inwards, and its rounding fills in the notch. At exactly a half
   turn the tip is a straight line, so there is nothing there to round, and a whole circle has no

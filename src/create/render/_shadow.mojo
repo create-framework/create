@@ -90,12 +90,12 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
     """
     if not c.paint._shadow_visible() or not c.paint.shadow_inset:
         return False
-    # A sector or polygon ignores `shadow_inset` too: the inset regions are
-    # these three.
+    # A polygon ignores `shadow_inset` too: the inset regions are these.
     return (
         c.payload.isa[RectPayload]()
         or c.payload.isa[CirclePayload]()
         or c.payload.isa[TrianglePayload]()
+        or c.payload.isa[SectorPayload]()
     )
 
 

@@ -807,13 +807,14 @@ Draw the pie slice of the circle around `position` with `radius`, from `start_an
 Angles are radians, counter-clockwise from the +x axis (y is up); a
 negative sweep runs clockwise, and a full turn or more is the whole
 disc. The stroke is inset, as a circle's is: the fill stops where it
-starts, and a translucent sector composites once. It casts no inset
-shadow; a blurred drop shadow costs what a `bezier`'s does. A zero
-radius or sweep draws nothing.
+starts, and a translucent sector composites once. A blurred drop
+shadow or an inset one costs what a `bezier`'s blurred shadow does.
+A zero radius or sweep draws nothing.
 
 `corner_radius`, or the style's when not given, rounds the tip and
-both ends of the arc, as `Sector` describes. A rounded sector is drawn as a polygon, so it costs what
-a stroked `polygon` of its flattened outline does.
+both ends of the arc, as `Sector` describes. A rounded sector is
+drawn as a polygon, so it costs what a stroked `polygon` of its
+flattened outline does, and casts no inset shadow.
 
 ```mojo
 def sector(
@@ -1099,8 +1100,9 @@ coordinate.
 `inset=True` paints the shadow inside the shape instead, over its
 fill and within its stroke, as if the shape were a hole cut in a
 surface: the band shows on the side the offset points away from.
-Only rectangles, circles and triangles take an inset shadow; lines,
-text and images cast none while it is set.
+Only rectangles, circles, triangles and sectors take an inset
+shadow; polygons, ellipses, capsules, rounded sectors, lines, text
+and images cast none while it is set.
 
 The offset is fixed to the screen, so a rotated shape's shadow still
 falls the same way; see `shadow_follows_transform`. The shadow
