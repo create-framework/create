@@ -137,7 +137,7 @@ def screen(
     mut context: Context,
     mut canvas: Canvas,
     colors: ColorScheme = ColorScheme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
-) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
+) raises -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
 ```
 
 Open a layer drawn in screen space, on top of everything drawn before its block ends, whatever the camera and transform. Its widgets are drawn in `colors`, the light scheme unless given.
@@ -157,7 +157,7 @@ def world(
     mut context: Context,
     mut canvas: Canvas,
     colors: ColorScheme = ColorScheme.light(primary=Optional(None), on_primary=Optional(None), secondary=Optional(None), on_secondary=Optional(None), tertiary=Optional(None), on_tertiary=Optional(None), error=Optional(None), on_error=Optional(None), surface=Optional(None), on_surface=Optional(None)),
-) -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
+) raises -> UILayer[origin_of(self), origin_of(context), origin_of(canvas)]
 ```
 
 Open a layer drawn in the space that is current when the block opens, the camera and any transform included: for a button above a chest, a health bar over an enemy, or a label that turns with a ship.

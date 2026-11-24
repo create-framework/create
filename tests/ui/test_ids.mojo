@@ -126,5 +126,20 @@ def test_a_layer_used_in_a_later_frame_raises() raises -> None:
         kept.draw(Circle((0, 0), 5), Style(fill=Color.RED))
 
 
+def test_a_layer_inside_another_of_the_same_ui_raises() raises -> None:
+    var ui = UI()
+    var other = UI()
+    var context = Context()
+    var canvas = Canvas(64, 64)
+    with ui.screen(context, canvas):
+        with other.screen(context, canvas):  # another UI's layer is fine
+            pass
+        with assert_raises(contains="inside another layer"):
+            with ui.screen(context, canvas):
+                pass
+    with ui.screen(context, canvas):  # after the first ends, it opens
+        pass
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
