@@ -7,7 +7,7 @@ from create.core import Context
 from create.geometry import Circle, Drawable, Line, Rectangle
 from create.input import GamepadButton, Key
 from create.image import Image
-from create.math import Point, Transform, Vector
+from create.math import Point, Transform, Vector, clamp
 from create.text import FontWeight
 from create._optional import _OptionalFloat64
 from create.render import (
@@ -1177,7 +1177,7 @@ struct UILayer[
         var changed = False
         if dragging and right > left and max != min:
             var pointer = self._to_local.apply(self._context[].mouse.position)
-            var t = _clamp01((pointer.x - left) / (right - left))
+            var t = clamp((pointer.x - left) / (right - left), 0.0, 1.0)
             var new_value = min + t * (max - min)
             if step and step.value() > 0:
                 var size = step.value()
@@ -1230,7 +1230,7 @@ struct UILayer[
                     changed = True
         var t = 0.0
         if max != min:
-            t = _clamp01((value - min) / (max - min))
+            t = clamp((value - min) / (max - min), 0.0, 1.0)
         var handle_x = left + t * (right - left)
         if off:
             var states = self._ui[]._state_layers
@@ -1665,10 +1665,6 @@ def _layer_opacity(base: Color, layer: Color, step: Float64) -> Float64:
         else:
             low = middle
     return high
-
-
-def _clamp01(t: Float64) -> Float64:
-    return 0.0 if t < 0 else (1.0 if t > 1 else t)
 
 
 def _faded(color: Color, opacity: Float64) -> Color:
