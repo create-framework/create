@@ -88,7 +88,7 @@ and read back without one, like the run's settings on `Context`:
 
 | Setting | Default | What it sets |
 |---|---|---|
-| `corner_radius` | 16 | How round a panel's corners are. A text field is rounded by a quarter of it and a checkbox's box by an eighth, so `ui.corner_radius(0)` squares them all |
+| `corner_radius` | 16 | How round a panel's corners are. A text field is rounded by a quarter of it and a checkbox's box by an eighth, so `self.ui.corner_radius(0)` squares them all |
 | `spacing` | 8 | The gap between the widgets in a column or row. A panel's inside is inset by twice it, and `ui.space()` leaves twice it empty |
 | `control_height` | 40 | How tall a button, slider, checkbox or text field is in a column, and how tall a row is |
 | `state_layers` | | How strongly a widget shows that it is hovered, pressed or disabled (see [below](#hovered-pressed-and-disabled)) |
