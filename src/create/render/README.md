@@ -32,7 +32,7 @@ working on the package: the [user guide](../../../docs/guide/README.md) covers u
 | `stroke_dash.mojo` | The public `StrokeDash`: its presets, patterns and `_resolved`, a preset as lengths |
 | `_dash.mojo` | Dashed strokes for both replays: the stroke's middle per kind, the pattern walked along it (`dash_path`), each dash a `stroke_pieces` strip (`dashed_stroke`) |
 | `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (a rectangle's or circle's inset interior and cut) |
-| `_inset.mojo` | `inset_shadow_mask`: every other kind's inset shadow, cut from masks for both backends |
+| `_inset.mojo` | Inset shadows for both backends: `inset_uncovered` (how much of each interior pixel the silhouette leaves uncovered), `interior_pieces`, `inset_layer` (text or an image drawn with its shadow mixed in) |
 | `_pieces.mojo` | `Pieces`, a shape as convex device pieces (fill and stroke, quads and polygons); `fill_pieces`, the CPU's one way to fill them; `pieces_mask` and `pieces_shadow_mask`, their mask, sharp and blurred |
 | `_lower.mojo` | `shape_pieces`, the one lowering of every kind but rectangles and circles (lines, curves, sectors, polygons, triangles; and any dashed shape) to `Pieces`; `shape_shadow_mask`; `is_lowered`, `is_plain_triangle` |
 | `_curve.mojo` | Bézier stroke geometry: flattening in device pixels, the mitred quad strip and its caps (`stroke_pieces`) |
@@ -174,8 +174,9 @@ converts to a `FillPaint` implicitly, so stroke and shadow calls are untouched. 
 `FillPaint` overload is the choke point: a solid goes to the colour loop, a gradient to
 `_shade_span`, which steps the mapping along the row and `blend`s each pixel. Decide
 solid-or-gradient once per run (or per rect, in `fill_pixels`), never per pixel; a solid `FillPaint`
-is a colour and an empty `Optional`. `shadow_command` clears the gradient, since a shadow is one
-colour.
+is a colour and two empty `Optional`s. The other, `inset`, mixes an inset shadow over the paint per
+pixel (`_InsetShade`), which goes through `_shade_span` as a gradient does. `shadow_command` clears
+the gradient, since a shadow is one colour.
 
 **GPU:** the fill emitters take a `ramp_row`; after emitting a fill, `_shade_fill` rewrites that run
 of vertices to `MODE_GRADIENT` with the mapping's value at each vertex — the same post-pass
@@ -412,11 +413,10 @@ level can change without recreating the GL context.
 `canvas.antialiasing`) applies to the CPU replay of the shape kinds (rect, circle, line, Bézier,
 sector, polygon, triangle), through `CpuReplay._shape`. Clear, text, images, letterbox and blurred
 shadows are untouched; a hard shadow is a shape command, so it is antialiased like one. An inset
-shadow is clipped to the shape's inside on the same grid, so its edge is as smooth as the shape's:
-`_inset_shadow` counts the samples of each pixel within half a pixel's diagonal of the interior's
-edge, and a mask (`inset_shadow_mask`) is rasterised on the grid by `pieces_mask`. The GPU's
-multisampling doesn't reach a texture's contents, so `GLRenderer.render` builds its masks on the
-CPU's grid for the same level. An image that isn't upright has its edge antialiased on the same grid
+shadow is mixed into the shape's paint, so the grid antialiases it with the shape (see Shadows); a
+silhouette rasterised from pieces is drawn on the grid by `pieces_mask`. The GPU's multisampling
+doesn't reach a texture's contents, so `GLRenderer.render` builds its masks and layers on the CPU's
+grid for the same level. An image that isn't upright has its edge antialiased on the same grid
 inside `blit_image_mapped` (see Images).
 
 - **Record at `grid`×.** `_shape` replays the command through the kind's own rasteriser
@@ -637,22 +637,32 @@ Both replays handle a command's shadow around the command itself, in the command
   `pieces_shadow_mask`), but **uncached**: they have no stable id to key by, so each blurred Bézier,
   sector or polygon shadow costs one blur per frame, and on the GPU one texture upload plus one draw
   call; the textures are deleted after the frame's final flush.
-- **Inset** (`casts_inset_shadow`), *after* the command: the interior is the clip, the silhouette is
-  the interior shrunk by the spread and moved by the shadow transform, and alpha is `1 − coverage`.
-  Rectangles and circles (`insets_analytically`) evaluate it from their equations: the interior is
-  an `InsetRegion` (`inset_interior`), the CPU tests pixel centres in its box, and the GPU
-  tessellates it with the fill emitters and sets each vertex's silhouette parameters from its device
-  position (`MODE_INSET_BOX`). A hard inset on the GPU uses a steep sigma (1/64 px), not a step.
-  Every other kind is cut from masks (`inset_shadow_mask`, `_inset.mojo`): the interior's pieces
-  rasterised under the command's matrix, times what the silhouette's, rasterised under the shadow
-  transform and blurred, leaves uncovered. A line's or a curve's interior is its stroke, and its
-  silhouette the stroke thinned by twice the spread. Text's are its glyphs laid out and blitted into
-  a mask as `CpuReplay._text` draws them, its silhouette's blurred glyphs from the glyph cache, and
-  the spread ignored, as a text drop shadow ignores it. An image's are its opaque pixels blitted
-  white as `CpuReplay._image` blits them (`image_mask`), its spread ignored too. The CPU blits the
-  mask and the GPU draws it as a texture for the frame, as a blurred Bézier's shadow: uncached, one
-  mask a frame. A triangle is masked rather than analytic: its silhouette's corners are rounded, and
-  the GPU's analytic modes see a triangle only as its three edges, which would cut them sharp.
+- **Inset** (`casts_inset_shadow`), *with* the command: the shadow colour wherever the silhouette
+  (the interior moved by the shadow transform, shrunk by the spread and blurred) leaves the interior
+  uncovered. It is composited in the same pass as the command, never over the finished pixels: over
+  an antialiased edge pixel, the interior's share would then show the command's own colour through
+  the shadow. `_inset.mojo` describes the scheme.
+  - **CPU, regions and curves:** `CpuReplay._with_inset_shadow` draws the command with the shadow
+    mixed into the paint of its interior, a region's fill or a curve's stroke (`FillPaint.inset`),
+    from `inset_uncovered`, a mask of how much of each pixel the silhouette leaves uncovered. A
+    hidden fill is drawn transparent so its interior still takes the shadow. A rectangle's or
+    circle's silhouette (`insets_analytically`) is its `InsetRegion` shrunk, evaluated at pixel
+    centres; every other one is its interior's pieces (`interior_pieces`) under the shadow
+    transform, rasterised and blurred.
+  - **GPU, regions and curves:** a rectangle or a circle tessellates its interior with the fill
+    emitters and sets each vertex's silhouette parameters from its device position
+    (`MODE_INSET_BOX`); a hard one uses a steep sigma (1/64 px), not a step. Every other region or
+    curve draws its interior pieces again over itself, sampling the same `inset_uncovered` mask as a
+    texture (`emit_masked_pieces`), so multisampling covers each sample once. A triangle is masked
+    rather than analytic: its silhouette's corners are rounded, and the GPU's analytic modes see a
+    triangle only as its three edges, which would cut them sharp.
+  - **Text and images, both backends:** `inset_layer` draws the command on its own onto transparent
+    pixels, glyphs laid out as `CpuReplay._text` lays them out or the image blitted as
+    `CpuReplay._image` blits it, and mixes the shadow into each pixel's interior share (the white
+    silhouette's alpha). The CPU blits the layer and the GPU draws it as a texture, in place of the
+    command. Neither has a spread, as for its drop shadow.
+  - A line's or a curve's interior is its stroke, and its silhouette the stroke thinned by twice the
+    spread. Every mask and layer is uncached, built once a frame, as a blurred Bézier's shadow is.
 
 The offset is one transform (`shadow_transform`). A screen-fixed offset composes a device
 translation after the command transform; one that follows the transform composes

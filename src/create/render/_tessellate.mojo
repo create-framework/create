@@ -83,8 +83,9 @@ comptime MODE_SHADOW_EDGES: Float32 = 5.0
 three edges and `s3` its ring thickness, all over sigma."""
 comptime MODE_INSET_BOX: Float32 = 6.0
 """Inset shadow of a rectangle, rounded rectangle or circle: `MODE_SHADOW_BOX`'s
-parameters with no ring, the coverage inverted. Every other kind's inset
-shadow is a mask (`inset_shadow_mask`) drawn in `MODE_SILHOUETTE`."""
+parameters with no ring, the coverage inverted. Every other region's or
+curve's inset shadow is its interior drawn again in `MODE_SILHOUETTE`
+(`emit_masked_pieces`)."""
 
 comptime MODE_GRADIENT: Float32 = 8.0
 """Gradient fill: `uv` is the gradient's device mapping at the vertex (the
@@ -561,6 +562,35 @@ def emit_pieces(
             _emit_convex(vb, polygon, c.paint.stroke_color)
 
 
+def emit_masked_pieces(
+    mut vb: VertexBuffer,
+    pieces: Pieces,
+    color: Color,
+    x: Float64,
+    y: Float64,
+    w: Float64,
+    h: Float64,
+):
+    """`pieces`, fill and stroke alike, in `color`, its alpha scaled by a
+    mask on the image unit that lies one texel a pixel over the device rect
+    at `(x, y)`, `w` x `h`: an inset shadow's interior drawn again through
+    how much of it the silhouette leaves uncovered. Each vertex samples the
+    mask at its own device position, which interpolation carries exactly
+    across the pieces."""
+    var first = vb.count()
+    _emit_quads(vb, pieces.fill_quads, color)
+    for polygon in pieces.fill_polygons:
+        _emit_convex(vb, polygon, color)
+    _emit_quads(vb, pieces.stroke_quads, color)
+    for polygon in pieces.stroke_polygons:
+        _emit_convex(vb, polygon, color)
+    for i in range(first, vb.count()):
+        var at = i * _VERTEX_FLOATS
+        vb.data[at + 2] = Float32((Float64(vb.data[at]) - x) / w)
+        vb.data[at + 3] = Float32((Float64(vb.data[at + 1]) - y) / h)
+        vb.data[at + 8] = MODE_SILHOUETTE
+
+
 def emit_plain_triangle(
     mut vb: VertexBuffer, c: RenderCommand, ramp_row: Int = -1
 ):
@@ -688,17 +718,19 @@ def emit_silhouette_mask(
     w: Float64,
     h: Float64,
     color: Color,
+    mode: Float32 = MODE_SILHOUETTE,
 ):
-    """One quad in device pixels over a whole blurred mask on the image
-    unit, placed where `blit_alpha` would put it, so texels land one-to-one
-    on device pixels. `MODE_SILHOUETTE` scales `color`'s alpha by the
-    sampled alpha."""
-    vb.push(x, y, 0.0, 0.0, color, MODE_SILHOUETTE)
-    vb.push(x + w, y, 1.0, 0.0, color, MODE_SILHOUETTE)
-    vb.push(x + w, y + h, 1.0, 1.0, color, MODE_SILHOUETTE)
-    vb.push(x, y, 0.0, 0.0, color, MODE_SILHOUETTE)
-    vb.push(x + w, y + h, 1.0, 1.0, color, MODE_SILHOUETTE)
-    vb.push(x, y + h, 0.0, 1.0, color, MODE_SILHOUETTE)
+    """One quad in device pixels over a whole texture on the image unit,
+    placed where `blit_alpha` would put it, so texels land one-to-one on
+    device pixels. `MODE_SILHOUETTE` scales `color`'s alpha by the sampled
+    alpha, as for a blurred mask; `MODE_TEXTURE` draws the texture's
+    pixels, as for an inset shadow's layer."""
+    vb.push(x, y, 0.0, 0.0, color, mode)
+    vb.push(x + w, y, 1.0, 0.0, color, mode)
+    vb.push(x + w, y + h, 1.0, 1.0, color, mode)
+    vb.push(x, y, 0.0, 0.0, color, mode)
+    vb.push(x + w, y + h, 1.0, 1.0, color, mode)
+    vb.push(x, y + h, 0.0, 1.0, color, mode)
 
 
 def emit_glyph(

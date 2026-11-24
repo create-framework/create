@@ -52,7 +52,7 @@ from create.color.color import Color
 from ._blur import BlurredMask, PlacedMask
 from ._image_mapping import image_mapping, upright, upright_rect
 from ._raster import blit_image, blit_image_mapped
-from ._surface import MemorySurface
+from ._surface import MemorySurface, PlacedSurface
 from ._transform import stroke_thickness_px, pixel_scale
 from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
@@ -104,8 +104,9 @@ def _strokes_something(c: RenderCommand) -> Bool:
 
 def insets_analytically(c: RenderCommand) -> Bool:
     """Whether `c`'s inset shadow is evaluated per pixel from its equations
-    (`InsetRegion`) rather than cut from masks (`inset_shadow_mask`): a
-    rectangle or a circle, whose interior and silhouette are exact boxes."""
+    (`InsetRegion`) rather than rasterised from its pieces (see
+    `_inset.mojo`): a rectangle or a circle, whose interior and silhouette
+    are exact boxes."""
     return c.payload.isa[RectPayload]() or c.payload.isa[CirclePayload]()
 
 
@@ -200,22 +201,26 @@ def _spread(mut s: RenderCommand, d: Float64, grow_triangle: Bool):
         s.payload[PolygonPayload].grow += d
 
 
-def image_mask[
+def image_layer[
     so: Origin
 ](
-    c: RenderCommand, m: Transform, src: Pointer[UInt8, so], grid: Int = 1
-) -> PlacedMask:
-    """The opaque pixels of the image command `c`, its pixels at `src`, as
-    an alpha mask where `m` places them: the pixels the image covers, blitted
-    as `CpuReplay._image` blits it, its edge under a turn antialiased on a
-    `grid` x `grid` of samples a pixel."""
+    c: RenderCommand,
+    m: Transform,
+    src: Pointer[UInt8, so],
+    grid: Int = 1,
+    silhouette: Optional[Color] = None,
+) -> PlacedSurface:
+    """The image command `c`, its pixels at `src`, drawn on its own onto
+    transparent pixels where `m` places them: blitted as `CpuReplay._image`
+    blits it, in its tint or as a `silhouette` of one colour, its edge under
+    a turn antialiased on a `grid` x `grid` of samples a pixel."""
     ref image = c.payload[ImagePayload]
     if upright(m):
         var r = upright_rect(
             m, image.center.x, image.center.y, image.w, image.h
         )
         if r.width <= 0 or r.height <= 0:
-            return PlacedMask.empty()
+            return PlacedSurface.empty()
         var scratch = MemorySurface(r.width, r.height)
         blit_image(
             scratch.surface(),
@@ -226,11 +231,10 @@ def image_mask[
             0,
             r.width,
             r.height,
-            Optional(Color.WHITE),
+            silhouette,
+            image.tint,
         )
-        return PlacedMask(
-            BlurredMask(scratch.alpha(), r.width, r.height, 0), r.x, r.y
-        )
+        return PlacedSurface(scratch^, r.x, r.y)
     var mapping = image_mapping(
         m,
         image.center.x,
@@ -243,7 +247,7 @@ def image_mask[
     var width = mapping.x1 - mapping.x0
     var height = mapping.y1 - mapping.y0
     if width <= 0 or height <= 0:
-        return PlacedMask.empty()
+        return PlacedSurface.empty()
     var scratch = MemorySurface(width, height)
     blit_image_mapped(
         scratch.surface(),
@@ -251,12 +255,21 @@ def image_mask[
         image.image_w,
         image.image_h,
         mapping.translated(-mapping.x0, -mapping.y0),
-        Optional(Color.WHITE),
-        grid=grid,
+        silhouette,
+        image.tint,
+        grid,
     )
-    return PlacedMask(
-        BlurredMask(scratch.alpha(), width, height, 0), mapping.x0, mapping.y0
-    )
+    return PlacedSurface(scratch^, mapping.x0, mapping.y0)
+
+
+def image_mask[
+    so: Origin
+](
+    c: RenderCommand, m: Transform, src: Pointer[UInt8, so], grid: Int = 1
+) -> PlacedMask:
+    """The opaque pixels of the image command `c` as an alpha mask where `m`
+    places them: its `image_layer` as a white silhouette."""
+    return image_layer(c, m, src, grid, Optional(Color.WHITE)).mask()
 
 
 def image_shadow_mask[
@@ -740,8 +753,8 @@ struct InsetRegion(Copyable, Movable):
     runs — every region's stroke is an inset ring —
     so the interior is the shape shrunk by the stroke's inward extent. The
     radius is a `Float64` rather than the style's `Int`, because those
-    shrinks move it by fractions of a unit. Every other kind's inset shadow
-    is cut from masks instead (`inset_shadow_mask`).
+    shrinks move it by fractions of a unit. Every other kind's silhouette is
+    rasterised from its pieces instead (`_inset.mojo`).
     """
 
     var geom: Array[Float64, 4]
@@ -794,22 +807,17 @@ struct InsetRegion(Copyable, Movable):
         ref g = self.geom
         return (g[0] - g[2], g[1] - g[3], g[0] + g[2], g[1] + g[3])
 
-    def distance(self, x: Float64, y: Float64) -> Float64:
-        """How far local `(x, y)` is outside the region's edge, negative
-        inside; the largest `Float64` for an empty region."""
+    def contains(self, x: Float64, y: Float64) -> Bool:
+        """Whether local `(x, y)` is inside, its edge included."""
         if self.empty:
-            return Float64.MAX
+            return False
         ref g = self.geom
         var r = min(self.radius, min(g[2], g[3]))
         var qx = abs(x - g[0]) - (g[2] - r)
         var qy = abs(y - g[1]) - (g[3] - r)
         var ox = max(qx, 0.0)
         var oy = max(qy, 0.0)
-        return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0.0) - r
-
-    def contains(self, x: Float64, y: Float64) -> Bool:
-        """Whether local `(x, y)` is inside, its edge included."""
-        return self.distance(x, y) <= 0.0
+        return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0.0) <= r
 
 
 def inset_interior(c: RenderCommand, thickness: Float64) -> InsetRegion:

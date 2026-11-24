@@ -1,29 +1,39 @@
-"""Inset shadows cut from masks: every kind but rectangles and circles.
+"""Inset shadows, built on the CPU for both replays.
 
-A rectangle's or a circle's inset shadow is evaluated per pixel from its
-equations (`InsetRegion`, `_cpu_replay._inset_shadow`, `emit_inset_shadow`).
-Every other kind's interior has no such formula: a triangle's rounded
-corners blur through no closed form, and a sector, a polygon or a stroke
-along a curve has none to start from. So its shadow is built here, on the
-CPU, as an alpha mask in device pixels, which both replays composite in the
-shadow colour: the CPU with `blit_alpha`, the GPU as one texture drawn for
-the frame (`GLRenderer._mask_shadow`).
+An inset shadow lies over its command, inside it: the shadow colour wherever
+the **silhouette** (the interior moved by the shadow's offset, shrunk by its
+spread and blurred) leaves the **interior** uncovered. The interior is a
+region's fill inside its stroke, a line's or a curve's stroke, text's letters
+or an image's opaque pixels.
 
-The mask is the **interior** times what the **silhouette** leaves
-uncovered. The interior is what the shadow is clipped to, under the
-command's own matrix: a region's fill inside its stroke, or a line's or a
-curve's stroke, which is all the inside it has. The silhouette is
-the interior under the shadow transform, shrunk by the spread and blurred.
-Both are rasterised from the same pieces the shape is drawn with, so the
-shadow's edge lies on the fill's. A mask has no stable id to key a cache by,
-so each one costs a rasterisation and a blur per frame, as a blurred
-Bézier's shadow does.
+**The shadow composites with its command, not after it.** An antialiased
+edge pixel is covered only partly by the interior. Painting the shadow over
+the finished pixel at that share would leave the command's own colour
+showing through the shadow there, as a fringe. So the shadow is mixed into
+what the command paints, and composited in the same pass:
+
+- A region or a curve is drawn with the shadow mixed into its paint, pixel
+  by pixel (`FillPaint`'s inset): its fill, or a curve's stroke. What it
+  needs is how much of each pixel the silhouette leaves uncovered,
+  `inset_uncovered`. On the GPU, a rectangle or a circle is evaluated
+  analytically instead (`emit_inset_shadow`), and every other region or
+  curve draws its interior again, over itself, through that same mask as a
+  texture (`interior_pieces`); multisampling then covers each sample once,
+  as the CPU's mixing does.
+- Text and images are drawn off the device with their shadow mixed in
+  (`inset_layer`), and both replays composite those pixels in place of the
+  command.
+
+A rectangle's or a circle's silhouette is evaluated from its equations
+(`InsetRegion`, `BlurredSilhouette`); every other one is rasterised from the
+same pieces the shape is drawn with and blurred. A mask has no stable id to
+key a cache by, so each one costs a rasterisation, and a blur when soft, per
+frame, as a blurred Bézier's shadow does.
 """
 
-from std.math import max, min
+from std.math import floor, max, min
 
 from create.color.color import Color
-
 from create.math.transform import Transform
 
 from ._blur import BlurredMask, PlacedMask
@@ -36,14 +46,23 @@ from ._command import (
     TrianglePayload,
 )
 from ._image_mapping import mask_mapping
-from ._lower import shape_pieces
-from ._pieces import Pieces, pieces_mask
-from ._polygon import polygon_quads
-from ._sector import sector_quads
-from ._raster import blit_alpha, blit_alpha_mapped
 from ._interned_image import _InternedImage
-from ._shadow import _inradius, _spread, image_mask
-from ._surface import MemorySurface
+from ._lower import shape_pieces
+from ._pieces import Pieces, pieces_bounds, pieces_mask
+from ._polygon import polygon_quads
+from ._raster import blit_alpha, blit_alpha_mapped
+from ._sector import sector_quads
+from ._shadow import (
+    BlurredSilhouette,
+    _inradius,
+    _spread,
+    image_layer,
+    image_mask,
+    inset_interior,
+    insets_analytically,
+    local_stroke_thickness,
+)
+from ._surface import MemorySurface, PlacedSurface
 from ._text import PlacedGlyph, TextRenderer
 from ._transform import (
     glyph_transform,
@@ -54,57 +73,96 @@ from ._transform import (
 from ._triangle import triangle_pieces
 
 
-def inset_shadow_mask(
-    c: RenderCommand,
-    m: Transform,
-    sm: Transform,
-    scale: Float64,
-    grid: Int,
-    mut text: TextRenderer,
-    images: Dict[Int, _InternedImage],
-) raises -> PlacedMask:
-    """`c`'s inset shadow as a mask to composite in its shadow colour: `c`
-    casts one (`casts_inset_shadow`) but not analytically
-    (`insets_analytically`), `m` is its device matrix and `sm` its shadow
-    transform's (`shadow_transform`, under the same pre-matrix). `scale` is
-    the fallback pixel scale for a transform that is not uniform, and
-    `grid` the antialiasing's samples along each axis of a pixel
-    (`Antialiasing._cpu_grid`), so the mask's edge is as smooth as the
-    shape's. `text` lays out and rasterises a text command's glyphs, and
-    `images` holds an image command's pixels."""
-    if c.payload.isa[TextPayload]():
-        # Blurred where it is laid out, at its own scale, as a text drop
-        # shadow is; its glyphs are already antialiased.
-        var blur = Int(c.paint.shadow_blur * text_pixel_scale(sm, scale) + 0.5)
-        return _uncovered(
-            _text_mask(text, c, m, scale, 0),
-            _text_mask(text, c, sm, scale, blur),
-        )
+def inset_uncovered(
+    c: RenderCommand, m: Transform, sm: Transform, scale: Float64, grid: Int
+) -> Optional[PlacedMask]:
+    """How much of each pixel of the region or curve `c`'s interior its
+    silhouette leaves uncovered, 255 for all of it, over the device pixels
+    the interior lies in: where its inset shadow shows, and how strongly.
+    `None` when `c` has no interior, and so casts no inset shadow.
+
+    `m` is `c`'s device matrix and `sm` its shadow transform's
+    (`shadow_transform`, under the same pre-matrix). `scale` is the fallback
+    pixel scale for a transform that is not uniform, and `grid` the
+    antialiasing's samples along each axis of a pixel
+    (`Antialiasing._cpu_grid`), so a rasterised silhouette's edge is as
+    smooth as the shape's.
+    """
     var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
-    if c.payload.isa[ImagePayload]():
-        # An image has no spread to shrink it by, as for its drop shadow.
-        ref image = c.payload[ImagePayload]
-        if image.image not in images:
-            return PlacedMask.empty()
-        var src = images[image.image].pixels[].unsafe_ptr()
-        return _uncovered(
-            image_mask(c, m, src, grid),
-            image_mask(c, sm, src, grid).blurred(blur),
-        )
-    var interior = pieces_mask(_interior(c, m, scale), grid)
+    if insets_analytically(c):
+        return _analytic_uncovered(c, m, sm, scale, blur)
+    var box = pieces_bounds(interior_pieces(c, m, scale))
+    if not box:
+        return None
     var silhouette = PlacedMask.empty()
     var shrunk = _shrunk(c, c.paint.shadow_spread)
     if shrunk:
         silhouette = pieces_mask(
-            _interior(shrunk.value(), sm, scale), grid
+            interior_pieces(shrunk.value(), sm, scale), grid
         ).blurred(blur)
-    return _uncovered(interior, silhouette)
+    var x0, y0, width, height = box.value()
+    var out = List[UInt8](length=width * height, fill=255)
+    ref s = silhouette.mask
+    for y in range(height):
+        var sy = y0 + y - silhouette.y
+        if sy < 0 or sy >= s.height:
+            continue
+        for x in range(width):
+            var sx = x0 + x - silhouette.x
+            if sx >= 0 and sx < s.width:
+                out[y * width + x] = 255 - s.pixels[sy * s.width + sx]
+    return PlacedMask(BlurredMask(out^, width, height, 0), x0, y0)
 
 
-def _interior(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
-    """What `c`'s inset shadow is clipped to, mapped by `m`: a region's fill
-    inside its stroke, whether or not the fill is visible, since the shadow
-    is inside the shape, not on it; a line's or a curve's stroke."""
+def _analytic_uncovered(
+    c: RenderCommand, m: Transform, sm: Transform, scale: Float64, blur: Int
+) -> Optional[PlacedMask]:
+    """`inset_uncovered` for a rectangle or a circle, its silhouette
+    evaluated at each pixel's centre: blurred by the style's blur, or cut
+    hard when the blur comes to no whole device pixel."""
+    var interior = inset_interior(c, local_stroke_thickness(c, m, scale))
+    if interior.empty:
+        return None
+    var cut = interior.shrunk(c.paint.shadow_spread)
+    var soft = BlurredSilhouette(cut, c.paint.shadow_blur)
+    var lb = interior.bounds()
+    var x0 = Int.MAX
+    var y0 = Int.MAX
+    var x1 = Int.MIN
+    var y1 = Int.MIN
+    for corner in range(4):
+        var p = m._apply_xy(
+            lb[2] if corner == 1 or corner == 2 else lb[0],
+            lb[3] if corner >= 2 else lb[1],
+        )
+        x0 = min(x0, Int(floor(p[0])))
+        y0 = min(y0, Int(floor(p[1])))
+        x1 = max(x1, Int(floor(p[0])) + 2)
+        y1 = max(y1, Int(floor(p[1])) + 2)
+    var width = x1 - x0
+    var height = y1 - y0
+    var sminv = sm.inverse()
+    var out = List[UInt8](length=width * height, fill=255)
+    for y in range(height):
+        for x in range(width):
+            var l = sminv._apply_xy(
+                Float64(x0 + x) + 0.5, Float64(y0 + y) + 0.5
+            )
+            var covered: Float64
+            if blur > 0:
+                covered = soft.coverage(l[0], l[1])
+            else:
+                covered = 1.0 if cut.contains(l[0], l[1]) else 0.0
+            out[y * width + x] = UInt8(Int(255.0 * (1.0 - covered) + 0.5))
+    return PlacedMask(BlurredMask(out^, width, height, 0), x0, y0)
+
+
+def interior_pieces(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
+    """What the region or curve `c`'s inset shadow is clipped to, mapped by
+    `m`: a region's fill inside its stroke, whether or not the fill is
+    visible, since the shadow is inside the shape, not on it; a line's or a
+    curve's stroke. A rectangle's or a circle's is its `InsetRegion`
+    instead."""
     if not c.is_region():
         return shape_pieces(c, m, scale)
     # Tiled with the fill hidden, so a stroke too wide to leave any fill
@@ -144,17 +202,55 @@ def _shrunk(c: RenderCommand, d: Float64) -> Optional[RenderCommand]:
     return out^
 
 
-def _text_mask(
+def inset_layer(
+    c: RenderCommand,
+    m: Transform,
+    sm: Transform,
+    scale: Float64,
+    grid: Int,
+    mut text: TextRenderer,
+    images: Dict[Int, _InternedImage],
+) raises -> PlacedSurface:
+    """The text or image command `c` drawn on its own with its inset shadow
+    mixed in, to composite in its place: `m`, `sm`, `scale` and `grid` as
+    for `inset_uncovered`. `text` lays out a text command's glyphs, and
+    `images` holds an image command's pixels. Neither has a spread to
+    shrink it by, as for its drop shadow."""
+    if c.payload.isa[TextPayload]():
+        # Blurred where it is laid out, at its own scale, as a text drop
+        # shadow is; its glyphs are already antialiased.
+        var blur = Int(c.paint.shadow_blur * text_pixel_scale(sm, scale) + 0.5)
+        var ink = c.payload[TextPayload].style[].text_color
+        return _shadowed(
+            _text_layer(text, c, m, scale, 0, ink),
+            _text_layer(text, c, m, scale, 0, Color.WHITE).mask(),
+            _text_layer(text, c, sm, scale, blur, Color.WHITE).mask(),
+            c.paint.shadow_color,
+        )
+    ref image = c.payload[ImagePayload]
+    if image.image not in images:
+        return PlacedSurface.empty()
+    var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
+    var src = images[image.image].pixels[].unsafe_ptr()
+    return _shadowed(
+        image_layer(c, m, src, grid),
+        image_mask(c, m, src, grid),
+        image_mask(c, sm, src, grid).blurred(blur),
+        c.paint.shadow_color,
+    )
+
+
+def _text_layer(
     mut text: TextRenderer,
     c: RenderCommand,
     m: Transform,
     scale: Float64,
     blur: Int,
-) raises -> PlacedMask:
-    """The text command `c`'s glyphs, blurred by `blur` device pixels,
-    composited into one alpha mask where `m` places them: laid out and
-    blitted as `CpuReplay._text` draws them, so the mask covers what the
-    text paints."""
+    color: Color,
+) raises -> PlacedSurface:
+    """The text command `c`'s glyphs, blurred by `blur` device pixels, in
+    `color` on transparent pixels where `m` places them: laid out and
+    blitted as `CpuReplay._text` draws them."""
     ref payload = c.payload[TextPayload]
     var sf = text_pixel_scale(m, scale)
     var wrap = payload.wrap_pixels(sf)
@@ -189,7 +285,7 @@ def _text_mask(
                 x1 = max(x1, at.x1)
                 y1 = max(y1, at.y1)
     if x1 <= x0 or y1 <= y0:
-        return PlacedMask.empty()
+        return PlacedSurface.empty()
     var scratch = MemorySurface(x1 - x0, y1 - y0)
     var s = scratch.surface()
     for ref g in glyphs:
@@ -202,7 +298,7 @@ def _text_mask(
                 g.height,
                 g.x - x0,
                 g.y - y0,
-                Color.WHITE,
+                color,
             )
         else:
             blit_alpha_mapped(
@@ -213,32 +309,55 @@ def _text_mask(
                 mask_mapping(mapped, g.x, g.y, g.width, g.height).translated(
                     -x0, -y0
                 ),
-                Color.WHITE,
+                color,
             )
-    return PlacedMask(BlurredMask(scratch.alpha(), x1 - x0, y1 - y0, 0), x0, y0)
+    return PlacedSurface(scratch^, x0, y0)
 
 
-def _uncovered(interior: PlacedMask, silhouette: PlacedMask) -> PlacedMask:
-    """`interior` wherever `silhouette` doesn't cover it, over the interior's
-    pixels: each one's alpha times what the silhouette's leaves of it."""
-    ref a = interior.mask
+def _shadowed(
+    var ink: PlacedSurface,
+    interior: PlacedMask,
+    silhouette: PlacedMask,
+    shadow: Color,
+) -> PlacedSurface:
+    """`ink`, a command drawn on its own, with its inset shadow mixed in:
+    the `shadow` colour over each pixel's `interior` share, by as much as
+    `silhouette` leaves uncovered. `interior` lies on `ink`'s pixels.
+
+    In premultiplied terms the interior's share `c` of a pixel turns from
+    the ink's colour into the shadow over it, so with the shadow's alpha
+    `a` there, the pixel `L` becomes `L (1 - a) + c a S`: exactly what
+    drawing the command and then its shadow, sample by sample, leaves."""
+    ref data = ink.pixels.data
     ref s = silhouette.mask
-    var out = List[UInt8](length=a.width * a.height, fill=0)
-    var dx = interior.x - silhouette.x
-    var dy = interior.y - silhouette.y
-    for y in range(a.height):
-        var sy = y + dy
-        var row_inside = sy >= 0 and sy < s.height
-        for x in range(a.width):
-            var i = y * a.width + x
-            var alpha = Int(a.pixels[i])
-            if alpha == 0:
-                continue
-            var sx = x + dx
-            var covered = 0
-            if row_inside and sx >= 0 and sx < s.width:
-                covered = Int(s.pixels[sy * s.width + sx])
-            out[i] = UInt8((alpha * (255 - covered) + 127) // 255)
-    return PlacedMask(
-        BlurredMask(out^, a.width, a.height, 0), interior.x, interior.y
-    )
+    var width = ink.pixels.width
+    var dx = ink.x - silhouette.x
+    var dy = ink.y - silhouette.y
+    var sigma = Float64(shadow.a) / 255.0
+    for i in range(width * ink.pixels.height):
+        var inside = Float64(interior.mask.pixels[i]) / 255.0
+        if inside <= 0.0:
+            continue
+        var sx = i % width + dx
+        var sy = i // width + dy
+        var covered = 0.0
+        if sx >= 0 and sy >= 0 and sx < s.width and sy < s.height:
+            covered = Float64(s.pixels[sy * s.width + sx]) / 255.0
+        var a = sigma * (1.0 - covered)
+        if a <= 0.0:
+            continue
+        var alpha = Float64(data[i * 4 + 3]) / 255.0
+        var total = alpha * (1.0 - a) + inside * a
+        if total <= 0.0:
+            continue
+        for ch in range(3):
+            var shadow_ch = Float64(
+                shadow.r if ch == 0 else (shadow.g if ch == 1 else shadow.b)
+            )
+            var mixed = (
+                Float64(data[i * 4 + ch]) * alpha * (1.0 - a)
+                + shadow_ch * inside * a
+            ) / total
+            data[i * 4 + ch] = UInt8(min(Int(mixed + 0.5), 255))
+        data[i * 4 + 3] = UInt8(min(Int(total * 255.0 + 0.5), 255))
+    return ink^
