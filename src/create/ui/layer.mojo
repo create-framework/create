@@ -241,7 +241,7 @@ struct UILayer[
     @always_inline
     def panel(
         self,
-        rect: Rectangle,
+        rect: Optional[Rectangle] = None,
         *,
         style: Style = Style(),
         id: _WidgetKey = None,
@@ -250,6 +250,7 @@ struct UILayer[
         its `with` block. Text on it takes its content colour, so a label on
         a dark panel turns light without being told, and it covers what is
         beneath it from the pointer. It doesn't place what is inside it.
+        Without a `rect`, it fills what is around it, as `ui.column` does.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -259,7 +260,9 @@ struct UILayer[
         ```
         """
         return self._panel(
-            self._widget_id(call_location(), id._hash), rect, style
+            self._widget_id(call_location(), id._hash),
+            self._fill(rect, "ui.panel"),
+            style,
         )
 
     def _panel(
@@ -339,25 +342,32 @@ struct UILayer[
         ```
         """
         self._check_frame()
-        var area: Rectangle
-        if rect:
-            area = rect.value()
-        else:
-            ref layouts = self._ui[]._layouts
-            if not layouts:
-                raise Error(
-                    "ui.column: give it a rect, or open it inside a"
-                    + " ui.panel, ui.column or ui.row"
-                )
-            ref around = layouts[len(layouts) - 1]
-            if around.kind == _PANEL:
-                area = around.rect.inset(2 * self._ui[]._spacing)
-            else:
-                area = around.take_rest("ui.column")
+        var area = self._fill(rect, "ui.column")
         return LayoutGuard(
             _ui=self._ui[],
             _layout=_Layout(_COLUMN, area, gap.or_else(self._ui[]._spacing)),
         )
+
+    def _fill(
+        self, rect: Optional[Rectangle], what: String
+    ) raises -> Rectangle:
+        """Where a column or panel named `what` goes: `rect` when it is
+        given, or all that is left around it: a panel's inside, inset by
+        twice the UI's `spacing`, the rest of a column, or the next slot of
+        a row."""
+        if rect:
+            return rect.value()
+        ref layouts = self._ui[]._layouts
+        if not layouts:
+            raise Error(
+                what
+                + ": give it a rect, or open it inside a ui.panel, ui.column"
+                + " or ui.row"
+            )
+        ref around = layouts[len(layouts) - 1]
+        if around.kind == _PANEL:
+            return around.rect.inset(2 * self._ui[]._spacing)
+        return around.take_rest(what)
 
     def row(
         self,

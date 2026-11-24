@@ -165,17 +165,18 @@ with ui.panel(Rectangle((0, 0), 400, 240)):
   width in proportion to the weights: `ui.row(1, 3)` gives the first slot a quarter and the second
   three quarters. `ui.row(columns=4)` makes four equal slots. In a column, a row is `control_height`
   tall, or `height=` if given.
-- **Without a rectangle, a column or row fills what is around it:** the inside of the panel it is
-  in, short of its edges by twice the `UI`'s `spacing`, the rest of a column, or the next slot of a
-  row. Columns and rows nest, so a row of columns is a grid.
+- **Without a rectangle, a panel, column or row fills what is around it:** the inside of the panel
+  it is in, short of its edges by twice the `UI`'s `spacing`, the rest of a column, or the next slot
+  of a row. Columns and rows nest, so a row of columns is a grid, and a row of panels is a row of
+  cards.
 - **`ui.space()`** leaves a gap in a column, twice the `UI`'s `spacing` unless given, such as to set
   the buttons apart from the settings above them.
 - **A widget given a `rect` inside a column or row** goes where the `rect` says, and the column or
   row doesn't move on, so one widget can be placed by hand among the others.
 
 **A mistake raises an error that says what to do:** a widget called without a `rect` anywhere but in
-a column or row, a column or row without one anywhere but in a panel, column or row, and a widget
-called once every slot of a row is taken.
+a column or row, a panel, column or row without one anywhere but in a panel, column or row, and a
+widget called once every slot of a row is taken.
 
 **A column doesn't grow to fit what is in it.** Each widget is placed as it is called, so that it
 knows where it is and can answer in the same frame. So nothing can be sized from widgets called

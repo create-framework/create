@@ -71,7 +71,7 @@ struct _Layout(Copyable, Movable):
         )
 
     def take_rest(mut self, what: String) raises -> Rectangle:
-        """All that is left, for a column opened inside: the rest of a
+        """All that is left, for a column or panel opened inside: the rest of a
         column, or a row's next slot."""
         if self.kind == _COLUMN:
             var height = max(self.top - self.rect.bottom(), 0.0)
