@@ -73,7 +73,7 @@ def test_tab_moves_focus_in_call_order_and_wraps() raises -> None:
     p.key(Key.TAB)
     assert_equal(p.focused(), 0)
     assert_true(p.ui._focus_visible)
-    assert_true(p.ui.wants_keyboard())
+    assert_true(p.ui.wants_keyboard(p.context))
     p.key(Key.TAB)
     assert_equal(p.focused(), 1)
     p.key(Key.TAB)
@@ -169,7 +169,7 @@ def test_keys_do_not_act_on_focus_from_a_click() raises -> None:
     assert_equal(p.focused(), 0)
     p.key(Key.SPACE)
     assert_false(p.clicked[0])  # Space is the game's
-    assert_false(p.ui.wants_keyboard())
+    assert_false(p.ui.wants_keyboard(p.context))
 
 
 def main() raises:

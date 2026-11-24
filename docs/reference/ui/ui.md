@@ -101,28 +101,31 @@ Draw the focus ring as `ring` from now on.
 ### `wants_mouse`
 
 ```mojo
-def wants_mouse(self) -> Bool
+def wants_mouse(self, context: Context) -> Bool
 ```
 
-Whether the mouse is the UI's this frame: the pointer is over a widget, or a widget is held. A game checks it before using the mouse itself, so a click on a button doesn't also fire a weapon.
+Whether the mouse is the UI's this frame: the pointer is over a widget, or a widget is held. A game checks it before using the mouse itself, so a click on a button doesn't also fire a weapon. A UI that opened no layer this frame or last, such as a menu that has closed, never wants it.
 
 ```mojo
 # In `update`, before or after the UI's `with` block:
-if context.mouse.pressed() and not self.ui.wants_mouse():
+if context.mouse.pressed() and not self.ui.wants_mouse(context):
     self.fire()
 ```
 
 ### `wants_keyboard`
 
 ```mojo
-def wants_keyboard(self) -> Bool
+def wants_keyboard(self, context: Context) -> Bool
 ```
 
-Whether the keyboard is the UI's this frame. It is while a widget that takes typing has focus, and while a widget has focus from the keyboard, Tab say, rather than from a click or a gamepad, since the keys then act on it: Enter and Space press a button, the arrows move a slider. It is also in the frame a key moved or took away focus, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player.
+Whether the keyboard is the UI's this frame. It is while a widget that takes typing has focus, and while a widget has focus from the keyboard, such as from Tab, rather than from a click or a gamepad, since the keys then act on it: Enter and Space press a button, the arrows move a slider. It is also in the frame a key moved or took away focus, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player. A UI that opened no layer this frame or last never wants it.
 
 ```mojo
 # In `update`, before or after the UI's `with` block:
-if context.keyboard.pressed(Key.ESCAPE) and not self.ui.wants_keyboard():
+if (
+    context.keyboard.pressed(Key.ESCAPE)
+    and not self.ui.wants_keyboard(context)
+):
     context.quit()
 ```
 

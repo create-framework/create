@@ -88,24 +88,39 @@ def test_the_ui_wants_the_mouse_over_a_button_or_holding_one() raises -> None:
     _ = _buttons(ui, context, [_A])
     next_frame(context)
     _ = _buttons(ui, context, [_A])
-    assert_false(ui.wants_mouse())
+    assert_false(ui.wants_mouse(context))
     next_frame(context)
     point_at(context, _A.position)
     _ = _buttons(ui, context, [_A])
-    assert_true(ui.wants_mouse())
+    assert_true(ui.wants_mouse(context))
     next_frame(context)
     press(context, _A.position)
     _ = _buttons(ui, context, [_A])
     next_frame(context)
     point_at(context, Point(0, 45))
     _ = _buttons(ui, context, [_A])
-    assert_true(ui.wants_mouse())  # held, though the pointer has left
+    assert_true(ui.wants_mouse(context))  # held, though the pointer has left
     next_frame(context)
     release(context, Point(0, 45))
     _ = _buttons(ui, context, [_A])
     next_frame(context)
     _ = _buttons(ui, context, [_A])
-    assert_false(ui.wants_mouse())
+    assert_false(ui.wants_mouse(context))
+
+
+def test_a_ui_that_stops_drawing_stops_wanting_the_input() raises -> None:
+    var ui = UI()
+    var context = Context()
+    point_at(context, _A.position)
+    _ = _buttons(ui, context, [_A])
+    next_frame(context)
+    _ = _buttons(ui, context, [_A])
+    assert_true(ui.wants_mouse(context))
+    next_frame(context)
+    assert_true(ui.wants_mouse(context))  # before the block: last frame's
+    next_frame(context)  # the menu closed: no layer last frame or this
+    assert_false(ui.wants_mouse(context))
+    assert_false(ui.wants_keyboard(context))
 
 
 def _button_pixel(

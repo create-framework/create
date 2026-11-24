@@ -281,20 +281,24 @@ struct UI(Movable):
         """Draw the focus ring as `ring` from now on."""
         self._focus_ring = ring
 
-    def wants_mouse(self) -> Bool:
+    def wants_mouse(self, context: Context) -> Bool:
         """Whether the mouse is the UI's this frame: the pointer is over a
         widget, or a widget is held. A game checks it before using the mouse
-        itself, so a click on a button doesn't also fire a weapon.
+        itself, so a click on a button doesn't also fire a weapon. A UI that
+        opened no layer this frame or last, such as a menu that has closed,
+        never wants it.
 
         ```mojo
         # In `update`, before or after the UI's `with` block:
-        if context.mouse.pressed() and not self.ui.wants_mouse():
+        if context.mouse.pressed() and not self.ui.wants_mouse(context):
             self.fire()
         ```
         """
+        if not self._drawn_lately(context):
+            return False
         return Bool(self._hot) or Bool(self._held)
 
-    def wants_keyboard(self) -> Bool:
+    def wants_keyboard(self, context: Context) -> Bool:
         """Whether the keyboard is the UI's this frame. It is while a widget
         that takes typing has focus, and while a widget has focus from the
         keyboard, such as from Tab, rather than from a click or a gamepad,
@@ -302,15 +306,27 @@ struct UI(Movable):
         arrows move a slider. It is also in the frame a key moved or took
         away focus, such as Escape leaving a text field. A game checks it
         before reading keys itself, so typing a name with W in it doesn't
-        move the player.
+        move the player. A UI that opened no layer this frame or last never
+        wants it.
 
         ```mojo
         # In `update`, before or after the UI's `with` block:
-        if context.keyboard.pressed(Key.ESCAPE) and not self.ui.wants_keyboard():
+        if (
+            context.keyboard.pressed(Key.ESCAPE)
+            and not self.ui.wants_keyboard(context)
+        ):
             context.quit()
         ```
         """
+        if not self._drawn_lately(context):
+            return False
         return self._holds_keys() or self._key_used
+
+    def _drawn_lately(self, context: Context) -> Bool:
+        """Whether this UI opened a layer this frame or last. Its readings
+        are only kept up to date while it does: asked before its block,
+        they are last frame's, and once it stops drawing, they are stale."""
+        return self._frame >= context.frame_count() - 1
 
     def screen(
         mut self,
