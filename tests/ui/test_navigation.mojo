@@ -154,7 +154,10 @@ def test_arrow_steps_land_exactly_on_the_steps() raises -> None:
     assert_equal(p.value, 0.9)  # not 0.8999999999999999
     p.value = 0.53  # off the grid, as a drag can leave it
     p.key(Key.RIGHT)
-    assert_almost_equal(p.value, 0.6)  # the next step after the nearest
+    assert_almost_equal(p.value, 0.55)  # the next step, not the one after
+    p.value = 0.53
+    p.key(Key.LEFT)
+    assert_almost_equal(p.value, 0.5)
 
 
 def test_keys_do_not_act_on_focus_from_a_click() raises -> None:
