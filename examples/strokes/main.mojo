@@ -11,12 +11,22 @@ comptime COLORS = ColorScheme.dark()
 comptime BACKGROUND = COLORS.background
 comptime TEXT = COLORS.on_surface
 comptime GUIDE = COLORS.on_surface
-comptime STROKE = Color.CYAN.with_alpha(170)
-comptime FILL = Color.MAGENTA
-comptime INK = Color.YELLOW
+comptime FILL = COLORS.surface_container_highest
+comptime STROKE = Color.CYAN.with_alpha(150)
+comptime INK = Color.MAGENTA
 
 comptime COLUMN = 400.0
 """How far apart the three columns stand."""
+comptime ROW = 250.0
+"""How far apart the three rows stand."""
+comptime TOP_LABEL = 330.0
+"""Where the top row's label sits; each row's shapes sit below its label."""
+comptime LABEL_GAP = 110.0
+"""How far below its label a row's shapes are centred."""
+comptime SHAPE = 90.0
+"""How big each shape in the alignment row is."""
+comptime SHAPE_SPACING = 120.0
+"""How far apart the shapes in the alignment row stand."""
 comptime MAX_POINTS = 2000
 """The drawing stops growing past this many points."""
 
@@ -72,19 +82,22 @@ struct App(Program):
             StrokeCap.ROUND,
             StrokeCap.SQUARE,
         ]
+        var label = TOP_LABEL
+        var y = label - LABEL_GAP
         for i in range(3):
             var x = (Float64(i) - 1.0) * COLUMN
-            var start = Point(x - 120, 300)
-            var end = Point(x + 120, 300)
+            var start = Point(x - 110, y + 45)
+            var end = Point(x + 110, y + 45)
+            var arc_center = Point(x, y + 75)
             with canvas.style(
-                stroke=STROKE, stroke_thickness=36, stroke_cap=caps[i]
+                stroke=STROKE, stroke_thickness=28, stroke_cap=caps[i]
             ):
                 canvas.line(start, end)
-                canvas.arc((x, 120), 90, 0.4, 2.3)
+                canvas.arc(arc_center, 110, 1.25 * PI, 0.5 * PI)
             with canvas.style(stroke=GUIDE, stroke_thickness=1):
                 canvas.line(start, end)
-                canvas.arc((x, 120), 90, 0.4, 2.3)
-            canvas.text("stroke_cap " + cap_name(caps[i]), (x, 360))
+                canvas.arc(arc_center, 110, 1.25 * PI, 0.5 * PI)
+            canvas.text("stroke_cap " + cap_name(caps[i]), (x, label))
 
         # Alignment: the stroke inside the edge, centred on it, or around
         # it. The guide is the shape's true edge.
@@ -93,17 +106,23 @@ struct App(Program):
             StrokeAlign.CENTER,
             StrokeAlign.OUTSIDE,
         ]
+        label -= ROW
+        y = label - LABEL_GAP
+        var half = SHAPE / 2
         for i in range(3):
             var x = (Float64(i) - 1.0) * COLUMN
-            var rectangle = Rectangle((x - 110, -110), 90, 90)
+            var rectangle = Rectangle((x - SHAPE_SPACING, y), SHAPE, SHAPE)
             var triangle = Triangle(
-                (x - 45, -155), (x + 45, -155), (x, -65), corner_radius=10
+                (x - half, y - half),
+                (x + half, y - half),
+                (x, y + half),
+                corner_radius=10,
             )
-            var polygon = Polygon.star((x + 115, -110), 55, 25, 5)
+            var polygon = Polygon.star((x + SHAPE_SPACING, y), half + 5, 22, 5)
             with canvas.style(
                 fill=FILL,
                 stroke=STROKE,
-                stroke_thickness=16,
+                stroke_thickness=12,
                 stroke_alignment=alignments[i],
             ):
                 canvas.draw(rectangle)
@@ -116,7 +135,8 @@ struct App(Program):
                 canvas.draw(triangle)
                 canvas.draw(polygon)
             canvas.text(
-                "stroke_alignment " + alignment_name(alignments[i]), (x, -10)
+                "stroke_alignment " + alignment_name(alignments[i]),
+                (x, label),
             )
 
         # Dashes: a preset sized by the thickness, round dots, and exact
@@ -131,6 +151,8 @@ struct App(Program):
             "StrokeDash.DOTTED",
             "StrokeDash(24, 10, 4, 10)",
         ]
+        label -= ROW
+        y = label - LABEL_GAP
         for i in range(3):
             var x = (Float64(i) - 1.0) * COLUMN
             with canvas.style(
@@ -140,9 +162,9 @@ struct App(Program):
                 stroke_dash=dashes[i],
                 stroke_cap=StrokeCap.ROUND if i == 2 else StrokeCap.BUTT,
             ):
-                canvas.rectangle((x - 70, -250), 140, 80, corner_radius=14)
-                canvas.circle((x + 110, -250), 40)
-            canvas.text("stroke_dash " + dash_names[i], (x, -320))
+                canvas.rectangle((x - 55, y), 120, 80, corner_radius=14)
+                canvas.circle((x + 75, y), 40)
+            canvas.text("stroke_dash " + dash_names[i], (x, label))
 
         # The mouse drawing: each segment its own line, round-capped, so
         # the segments meet without a notch at any turn.
