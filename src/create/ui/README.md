@@ -14,7 +14,7 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `layer.mojo` | `UILayer`, the handle a layer's block gets: every widget, `_interact` (what the pointer and keys did to a widget), the focus ring, `ui.draw`, the scopes and panels, and the guards their `with` blocks return |
 | `_id.mojo` | Widget IDs: a call site's file, line and column, mixed into the keys of the open `ui.id` blocks |
 | `_layout.mojo` | `_Layout`, an open panel, column or row, and how it hands out the slots of the widgets called inside it |
-| `_key.mojo` | `_WidgetKey`, the `id=` keyword, which takes a string, an integer or `None` in one implicit conversion |
+| `_key.mojo` | `_WidgetKey`, the `id=` keyword, which takes any `Hashable` key, a literal or `None` in one implicit conversion |
 | `_recorder.mojo` | `_Recorder`, a `DrawTarget` a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |

@@ -4,6 +4,7 @@ from std.reflection import call_location
 from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
 from create import *
+from create.ui._key import _WidgetKey
 
 
 @always_inline
@@ -103,6 +104,35 @@ def test_an_id_key_on_one_call_keeps_it_apart() raises -> None:
     assert_equal(before[7], after[7])
     assert_equal(before[8], after[8])
     assert_true(before[7] != before[8])
+
+
+def _button_ids[K: Hashable & Copyable](keys: List[K]) raises -> List[UInt64]:
+    """The IDs of buttons called in a loop, each given the next key as its
+    `id=`."""
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(64, 64)
+    with ui.screen(context, canvas) as layer:
+        for key in keys:
+            _ = layer.button("", Rectangle((0, 0), 10, 10), id=key)
+    var ids = List[UInt64]()
+    for hit in ui._hits:
+        ids.append(hit.id)
+    return ids^
+
+
+def test_id_takes_any_hashable_key() raises -> None:
+    var small = _button_ids[UInt8]([UInt8(1), UInt8(2)])
+    var named = _button_ids[String](["ada", "bob"])
+    assert_true(small[0] != small[1])
+    assert_true(named[0] != named[1])
+    # a literal keys as its String or Int does
+    var name = String("ada")
+    var number = 3
+    assert_equal(
+        _WidgetKey("ada")._hash.value(), _WidgetKey(name)._hash.value()
+    )
+    assert_equal(_WidgetKey(3)._hash.value(), _WidgetKey(number)._hash.value())
 
 
 def test_two_layers_in_one_frame_share_the_counts() raises -> None:
