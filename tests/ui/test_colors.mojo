@@ -163,6 +163,18 @@ def test_a_seeded_tertiary_is_turned_round_the_wheel() raises -> None:
     assert_true(abs(turned - 60) < 8)
 
 
+def test_a_seeded_scheme_takes_colours_to_replace_its_own() raises -> None:
+    var seed = Color.hex(0x2050E0)
+    var seeded = ColorScheme.from_seed(seed)
+    var colors = ColorScheme.from_seed(seed, error=Color.ORANGE)
+    assert_equal(colors.error, Color.ORANGE)
+    assert_equal(colors.on_error, Color.BLACK)  # reads better on orange
+    assert_equal(colors.primary, seeded.primary)
+    var night = ColorScheme.from_seed(seed, dark=True, surface=Color.BLACK)
+    assert_equal(night.surface, Color.BLACK)
+    assert_equal(night.background, Color.BLACK)
+
+
 def test_a_ui_starts_with_the_default_tokens() raises -> None:
     var ui = UI()
     assert_equal(ui.corner_radius(), 16.0)

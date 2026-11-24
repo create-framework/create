@@ -81,6 +81,9 @@ that the two always read together, whatever the seed. The lightness is measured 
 which is what [OKLCH](../drawing/colours.md#lightness-that-looks-even) is for. A grey seed gives
 grey colours.
 
+`from_seed` takes colours to replace its own too, as `light` and `dark` do, such as an error colour
+of the game's: `ColorScheme.from_seed(Color.hex(0xE07A2E), error=Color.hex(0xE0B000))`.
+
 ## Sizes and states
 
 The `UI` keeps the rest of what every widget is drawn with. Each is a setting, set with an argument
