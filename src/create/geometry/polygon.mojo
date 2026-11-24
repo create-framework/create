@@ -4,7 +4,7 @@ from create._optional import _OptionalFloat64
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Shape
 from ._shared import (
     _FILLET_STEP,
     _arc_middles,
@@ -32,7 +32,7 @@ from .sector import Sector
 from .triangle import Triangle
 
 
-struct Polygon(Copyable, Equatable, Movable, Region, Writable):
+struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
     """A polygon through `vertices`, in order, closed back to the first:
     `regular`, `star`, `center`, `area`, `bounds`, `closest_point`,
     `contains`, `move_to`, `translate`.
@@ -44,7 +44,7 @@ struct Polygon(Copyable, Equatable, Movable, Region, Writable):
     counts as inside. With fewer than three vertices, or all of them in
     line, the polygon collapses to its edges.
 
-    It is a region: in every `overlaps` pair, `contains` both ways, and
+    It is a `Shape`: in every `overlaps` pair, `contains` both ways, and
     met by `Line.intersects` and `Arc.intersects`.
 
     Like a `Triangle`'s, the fields are the vertices and `center()` (the

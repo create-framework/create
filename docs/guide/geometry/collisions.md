@@ -33,7 +33,7 @@ struct Collisions(Program):
 
         var player = Circle(context.mouse.position, 30)
         canvas.stroke(Color.BLACK, 1)
-        if player.overlaps(self.wall):  # two regions touch
+        if player.overlaps(self.wall):  # two shapes touch
             canvas.fill(Color.RED)
         elif self.laser.intersects(player):  # a curve crosses a shape
             canvas.fill(Color.ORANGE)
@@ -41,7 +41,7 @@ struct Collisions(Program):
             canvas.fill(Color.GREEN)
         canvas.draw(player)
 
-        if self.wall.contains(context.mouse.position):  # a point is inside a region
+        if self.wall.contains(context.mouse.position):  # a point is inside a shape
             context.cursor(Cursor.HAND)
         else:
             context.cursor(Cursor.ARROW)
@@ -51,15 +51,15 @@ def main() raises:
     run[Collisions]("Collisions")
 ```
 
-- **`region.overlaps(other)`** asks whether two regions (`Rectangle`, `Circle`, `Ellipse`,
-  `Capsule`, `Triangle`, `Sector`, `Polygon`) share any point. It works both ways round:
-  `a.overlaps(b)` and `b.overlaps(a)` always agree.
+- **`shape.overlaps(other)`** asks whether two shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+  `Triangle`, `Sector`, `Polygon`) share any point. It works both ways round: `a.overlaps(b)` and
+  `b.overlaps(a)` always agree.
 - **`curve.intersects(x)`** asks whether a curve (`Line`, `Arc`, `Bezier`, `Spline`) crosses or
-  touches `x`, which can be any shape or a `Point`. It is a method of curves only, since crossing is
-  all a curve can do: write `line.intersects(circle)`, not the other way round.
-- **`region.contains(x)`** asks whether `x`, which can be a point, region or curve, lies wholly
-  inside the region. It works one way only: a big circle can contain a small one, but not the other
-  way round.
+  touches `x`, which can be any shape, curve or `Point`. It is a method of curves only, since
+  crossing is all a curve can do: write `line.intersects(circle)`, not the other way round.
+- **`shape.contains(x)`** asks whether `x`, which can be a point, shape or curve, lies wholly inside
+  the shape. It works one way only: a big circle can contain a small one, but not the other way
+  round.
 
 A curve has no inside, so `overlaps` never takes a `Line`; use `intersects` instead. All three tests
 take a shape's rounded corners into account.
@@ -67,8 +67,8 @@ take a shape's rounded corners into account.
 **How exact are they?** Tests involving a `Line` or an `Arc` are exact. A `Bezier` or `Spline` is
 tested as a chain of very short straight lines that follow it to within a ten-thousandth of its
 size. So a crossing is always found. Whether a curve just grazes a shape or just misses it is
-decided only to within that distance, which is far finer than anything visible. A region's
-`contains` treats an `Arc`, `Bezier` or `Spline` inside it the same way.
+decided only to within that distance, which is far finer than anything visible. A shape's `contains`
+treats an `Arc`, `Bezier` or `Spline` inside it the same way.
 
 ## Moving shapes
 
@@ -96,7 +96,7 @@ if Capsule(previous, self.position, self.radius).overlaps(self.wall):
 
 The tests only say whether shapes touch. To know how far apart a point and a shape are, use
 `closest_point`, which every shape has: `shape.closest_point(p)` is the point of the shape nearest
-`p`, and `p` itself when `p` is inside a region. So the distance is:
+`p`, and `p` itself when `p` is inside a shape. So the distance is:
 
 ```mojo
 # With a `point` and any `shape`:

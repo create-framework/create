@@ -1,5 +1,5 @@
 """Shapes and curves, the traits that make a type drawable, and the collision
-tests: each region's `overlaps` and `contains`, and each curve's
+tests: each shape's `overlaps` and `contains`, and each curve's
 `intersects`.
 """
 from .rectangle import Rectangle
@@ -13,4 +13,4 @@ from .sector import Sector
 from .polygon import Polygon
 from .bezier import Bezier
 from .spline import Spline
-from .drawable import Curve, Drawable, DrawTarget, Region, Shape
+from .drawable import Curve, Drawable, DrawTarget, Geometry, Shape

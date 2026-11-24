@@ -62,7 +62,7 @@ page:
 | [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
 | [tweens](docs/guide/motion/tweens.md) | `Tween` |
 | [animations](docs/guide/motion/animations.md) | `Animation` and `Animator` |
-| [shapes](docs/guide/geometry/shapes.md) | the regions (`Rectangle` … `Polygon`), `corner_radius`, cutting a `Rectangle` with `inset`, `rows` and `columns`, the `Shape` and `Region` traits |
+| [shapes](docs/guide/geometry/shapes.md) | the shapes (`Rectangle` … `Polygon`), `corner_radius`, cutting a `Rectangle` with `inset`, `rows` and `columns`, the `Geometry` and `Shape` traits |
 | [curves](docs/guide/geometry/curves.md) | `Line`, `Arc`, `Bezier`, `Spline`, the `Curve` trait, sampling along a curve |
 | [collisions](docs/guide/geometry/collisions.md) | `overlaps`/`contains`/`intersects`, their accuracy, `closest_point` |
 | [images](docs/guide/media/images.md) | `Image`, `canvas.image`, offscreen canvases |

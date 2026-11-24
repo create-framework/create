@@ -4,32 +4,36 @@
 trait Shape
 ```
 
-A geometric shape: a `Region` or a `Curve`. What every one of them answers, whichever it is, and a plain value generic code can keep, copy and drop. Tests between two shapes (`contains`, `intersects`, `overlaps`) are methods overloaded per shape they take, not part of this.
+Geometry with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` and `Polygon`, the types of `overlaps` and `contains`, and what `canvas.clip` takes. A curve has no inside, so it is not one.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`.
+Implements `Copyable`, `Deinitable`, `Drawable`, `Geometry`, `Movable`.
 
 ## Methods
 
-### `bounds`
+### `center`
 
 ```mojo
-def bounds(self) -> Rectangle
+def center(self) -> Point
 ```
 
-The tightest axis-aligned rectangle around the shape.
-
-### `closest_point`
+### `area`
 
 ```mojo
-def closest_point(self, p: Point) -> Point
+def area(self) -> Float64
 ```
 
-The point of the shape nearest `p`: `p` itself inside a region.
-
-### `translate`
+### `contains`
 
 ```mojo
-def translate(self, delta: Vector) -> Self
+def contains(self, p: Point) -> Bool
 ```
 
-The shape moved by `delta`; this one is unchanged.
+Whether `p` is inside, its boundary included.
+
+### `move_to`
+
+```mojo
+def move_to(self, position: Point) -> Self
+```
+
+The shape moved so its `position` (or, without one, its `center()`) is at `position`; this one is unchanged.

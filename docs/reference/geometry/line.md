@@ -8,7 +8,7 @@ A line segment from `start` to `end`: `length`, `at`, `tangent`, `at_distance`, 
 
 A `Curve`, like `Arc`, `Bezier` and `Spline`: a straight one, as in
 mathematics, with `t` proportional to distance. It has no interior, so
-unlike the `Region`s it has no `center()`, `area()` or `overlaps`, and
+unlike the `Shape`s it has no `center()`, `area()` or `overlaps`, and
 is the *subject* of `l.intersects(x)` -- see the comment above
 `intersects` for why that method exists only on curves.
 
@@ -18,7 +18,7 @@ zero-length line (`start == end`) is a degenerate point segment:
 `intersects` and `closest_point` remain exact for it (a point can
 still "intersect" the collapsed line if it coincides with it).
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`, `_Collider`.
 
 ## Fields
 

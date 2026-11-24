@@ -13,7 +13,7 @@ through its middle. Vertex winding does not matter, and the boundary
 counts as inside. With fewer than three vertices, or all of them in
 line, the polygon collapses to its edges.
 
-It is a region: in every `overlaps` pair, `contains` both ways, and
+It is a `Shape`: in every `overlaps` pair, `contains` both ways, and
 met by `Line.intersects` and `Arc.intersects`.
 
 Like a `Triangle`'s, the fields are the vertices and `center()` (the
@@ -28,7 +28,7 @@ rounds too, filling its notch. The tests use the rounded outline with
 each fillet flattened, so a point within about 0.1% of the radius of a
 fillet may fall either way.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Movable`, `Region`, `Shape`, `Writable`.
+Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 

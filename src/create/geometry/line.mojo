@@ -29,7 +29,7 @@ struct Line(
 
     A `Curve`, like `Arc`, `Bezier` and `Spline`: a straight one, as in
     mathematics, with `t` proportional to distance. It has no interior, so
-    unlike the `Region`s it has no `center()`, `area()` or `overlaps`, and
+    unlike the `Shape`s it has no `center()`, `area()` or `overlaps`, and
     is the *subject* of `l.intersects(x)` -- see the comment above
     `intersects` for why that method exists only on curves.
 

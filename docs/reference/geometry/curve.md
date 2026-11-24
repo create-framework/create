@@ -4,12 +4,12 @@
 trait Curve
 ```
 
-A shape with no inside, traced from one end to the other: `Line`, `Arc`, `Bezier` and `Spline`. A straight line is a curve too, as in mathematics.
+Geometry with no inside, traced from one end to the other: `Line`, `Arc`, `Bezier` and `Spline`. A straight line is a curve too, as in mathematics.
 
 `t` runs from 0 at the start to 1 at the end; only on a `Line` and an
 `Arc` is it proportional to distance, which `at_distance` always is.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Shape`.
+Implements `Copyable`, `Deinitable`, `Drawable`, `Geometry`, `Movable`.
 
 ## Methods
 

@@ -17,9 +17,10 @@ comptime GUIDE = COLORS.on_surface_variant
 comptime TEXT = COLORS.on_surface
 
 
-def reach[S: Shape](mut canvas: Canvas, shape: S, mouse: Point):
+def reach[S: Geometry](mut canvas: Canvas, shape: S, mouse: Point):
     """A line from the mouse to the nearest point of `shape`, and a dot
-    there. Any shape answers `closest_point`, so one function serves all."""
+    there. Any shape or curve answers `closest_point`, so one function serves all.
+    """
     var nearest = shape.closest_point(mouse)
     with canvas.style(stroke=GUIDE, stroke_thickness=2):
         canvas.line(mouse, nearest)

@@ -2,11 +2,11 @@
 
 Create's shapes are plain values: a `Circle` is a position and a radius, which you can keep in a
 field, move, draw with `canvas.draw` (see [The canvas](../drawing/canvas.md#shapes)) and test
-against other shapes (see [Collisions](collisions.md)). This page describes the **regions**, the
-shapes with an inside: what each one is, how it is built and what is particular about it. Lines and
-curves, which have no inside, are described in [Curves](curves.md).
+against other shapes (see [Collisions](collisions.md)). This page describes the shapes, the geometry
+with an inside: what each one is, how it is built and what is particular about it. Lines and curves,
+which have no inside, are described in [Curves](curves.md).
 
-## The regions
+## The shapes
 
 There are seven:
 
@@ -184,14 +184,14 @@ described by the same angles: it is the curved edge of a sector, without the ins
   turn the tip is a straight line, so there is nothing there to round, and a whole circle has no
   corners at all.
 
-## The `Shape` and `Region` traits
+## The `Geometry` and `Shape` traits
 
 The shapes share traits, so every shape answers the same methods, and a function can take any of
-them (`def f[R: Region](region: R)`):
+them (`def f[S: Shape](shape: S)`):
 
-- **`Shape`**, which every shape and curve conforms to: `bounds` (the smallest upright rectangle
-  round it), `closest_point` (the point of the shape nearest a given point) and `translate`.
-- **`Region`**, which the seven regions conform to, and which `canvas.clip` takes: `center`, `area`,
+- **`Geometry`**, which every shape and curve conforms to: `bounds` (the smallest upright rectangle
+  round it), `closest_point` (its point nearest a given point) and `translate`.
+- **`Shape`**, which the seven shapes conform to, and which `canvas.clip` takes: `center`, `area`,
   `contains(point)` and `move_to`.
 
 The tests between two shapes (`overlaps`, `contains(shape)` and `intersects`) are not trait methods,

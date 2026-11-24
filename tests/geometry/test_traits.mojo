@@ -11,10 +11,10 @@ from create.geometry import (
     Circle,
     Curve,
     Ellipse,
+    Geometry,
     Line,
     Polygon,
     Rectangle,
-    Region,
     Sector,
     Shape,
     Spline,
@@ -25,7 +25,7 @@ from create.math import PI, Point, Vector
 
 # Each helper is generic over one trait, so every shape below reaching it
 # is checked by the compiler to conform, and the result is checked here.
-def _moves_with_its_bounds[S: Shape](shape: S) raises:
+def _moves_with_its_bounds[S: Geometry](shape: S) raises:
     var before = shape.bounds()
     var moved = shape.translate(Vector(3.0, -2.0))
     var after = moved.bounds()
@@ -39,12 +39,12 @@ def _moves_with_its_bounds[S: Shape](shape: S) raises:
     assert_true(after.contains(moved.closest_point(far)))
 
 
-def _holds_its_center[R: Region](region: R) raises:
-    assert_true(region.contains(region.center()))
-    assert_true(region.area() > 0.0)
-    var moved = region.move_to((10.0, 10.0))
+def _holds_its_center[S: Shape](shape: S) raises:
+    assert_true(shape.contains(shape.center()))
+    assert_true(shape.area() > 0.0)
+    var moved = shape.move_to((10.0, 10.0))
     assert_true(moved.contains((10.0, 10.0)))
-    assert_true(region.contains(region.center()))
+    assert_true(shape.contains(shape.center()))
 
 
 def _runs_end_to_end[C: Curve](curve: C) raises:
@@ -80,7 +80,7 @@ def test_every_shape_moves_with_its_bounds() raises -> None:
     )
 
 
-def test_every_region_holds_its_center() raises -> None:
+def test_every_shape_holds_its_center() raises -> None:
     _holds_its_center(Rectangle((0.0, 0.0), 4.0, 2.0))
     _holds_its_center(Circle((1.0, 1.0), 2.0))
     _holds_its_center(Ellipse((1.0, 1.0), 6.0, 2.0))
@@ -100,7 +100,7 @@ def test_every_curve_runs_end_to_end() raises -> None:
     )
 
 
-def test_regions_contain_a_curve_wholly_inside() raises -> None:
+def test_shapes_contain_a_curve_wholly_inside() raises -> None:
     # A bulge reaching y = 3 between ends at y = 0: inside a box to y = 4,
     # not one to y = 2, though both hold its ends.
     var bulge = Bezier((-2.0, 0.0), (-2.0, 4.0), (2.0, 4.0), (2.0, 0.0))

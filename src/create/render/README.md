@@ -349,7 +349,7 @@ filled only, the same as circles.
 
 ## Clips
 
-`canvas.clip(region, invert)` records no command. It draws the `Region` into a `RegionCapture`, a
+`canvas.clip(shape, invert)` records no command. It draws the `Shape` into a `RegionCapture`, a
 `DrawTarget` that keeps the region's `shape_command` in `clip_style()` instead of recording it, so a
 clip and a fill of a shape are built by the same code. `ClipGuard` calls `CommandBuffer.push_clip`,
 which appends a `_Clip` to `CommandBuffer.clips` and makes it current (`CommandBuffer.clip`). The

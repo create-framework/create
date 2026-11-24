@@ -19,7 +19,7 @@ centre, which the arc passes through only when `radius` is zero, and
 `move_to` moves that centre. A zero `radius` or sweep collapses the arc to a
 point.
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Fields
 

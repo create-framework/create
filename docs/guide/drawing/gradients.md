@@ -6,10 +6,9 @@ explains how to build one, how it fits each shape and how it combines with the r
 
 ## Filling with a gradient
 
-A `Gradient` fills regions and backgrounds: `canvas.fill(gradient)` and
-`canvas.background(gradient)` work like their colour versions. Build a gradient once in `create` and
-keep it as a field (or in a `Style`): building one does some work up front, and every drawing of it
-then reuses that work:
+A `Gradient` fills shapes and backgrounds: `canvas.fill(gradient)` and `canvas.background(gradient)`
+work like their colour versions. Build a gradient once in `create` and keep it as a field (or in a
+`Style`): building one does some work up front, and every drawing of it then reuses that work:
 
 ```mojo
 # In `create`, building the `sky` and `glow` fields:

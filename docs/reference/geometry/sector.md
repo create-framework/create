@@ -27,7 +27,7 @@ has no corners. The tests use the rounded outline with each curve
 flattened, so a point within about 0.1% of the radii of the boundary
 may fall either way.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Region`, `Shape`, `Writable`.
+Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 

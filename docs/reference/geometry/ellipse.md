@@ -27,7 +27,7 @@ ellipse stands in as its outline polygon, within 1e-4 of its larger
 side; a curve is followed as closely, and a rounded shape is tested as
 its own outline, as everywhere.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Region`, `Shape`, `Writable`.
+Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 

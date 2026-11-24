@@ -23,7 +23,7 @@ Holding a `Sector`'s arc or an `Ellipse`, it follows them as a curve is
 followed, within 1e-4 of their size, and a rounded polygon or sector is
 tested as its outline, as everywhere. `radius` is assumed non-negative.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Region`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
 
 ## Fields
 
