@@ -213,6 +213,10 @@ def test_changed_reports_only_the_widget_called_last() raises -> None:
                 assert_true(layer.changed())
             _ = layer.button("OK", _BOX)
             assert_false(layer.changed())
+            if frame == 1:
+                layer.slider(value, 0, 1, _TRACK)
+                layer.label("Volume", _BOX)
+                assert_false(layer.changed())  # the label was called last
 
 
 def _drawn(

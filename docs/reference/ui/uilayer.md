@@ -405,7 +405,7 @@ if ui.submitted():
 def changed(self) -> Bool
 ```
 
-Whether the widget called last changed its value this frame: a slider its `value`, a checkbox its `checked`, a text field its `text`. It is `False` after a button, and before any widget is called.
+Whether the widget called last changed its value this frame: a slider its `value`, a checkbox its `checked`, a text field its `text`. It is `False` after a button, a label, an image or a panel, and before any widget is called.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:

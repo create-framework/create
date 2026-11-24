@@ -207,6 +207,14 @@ def test_the_editor_needs_a_text_field_called_last() raises -> None:
         _ = layer.button("OK", _SECOND)
         with assert_raises():
             _ = layer.text_editor()
+        layer.text_field(name, _FIRST)
+        layer.label("Name", _SECOND)
+        with assert_raises():
+            _ = layer.text_editor()
+        layer.text_field(name, _FIRST)
+        with layer.panel(_SECOND):
+            with assert_raises():
+                _ = layer.text_editor()
 
 
 def test_text_the_program_changes_is_what_the_field_shows() raises -> None:
