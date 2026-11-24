@@ -76,7 +76,7 @@ Make the controls `height` tall from now on.
 def state_layers(self) -> StateLayers
 ```
 
-How strongly a widget shows that it is hovered, focused, pressed, dragged or disabled.
+How strongly a widget shows that it is hovered, pressed, dragged or disabled. Focus shows as the focus ring instead.
 
 ```mojo
 def state_layers(mut self, layers: StateLayers)

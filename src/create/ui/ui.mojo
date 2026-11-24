@@ -270,8 +270,8 @@ struct UI(Movable):
         self._control_height = height
 
     def state_layers(self) -> StateLayers:
-        """How strongly a widget shows that it is hovered, focused, pressed,
-        dragged or disabled."""
+        """How strongly a widget shows that it is hovered, pressed, dragged
+        or disabled. Focus shows as the focus ring instead."""
         return self._state_layers
 
     def state_layers(mut self, layers: StateLayers):
