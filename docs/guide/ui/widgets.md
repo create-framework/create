@@ -67,8 +67,8 @@ if ui.changed():
     self.audio.volume(self.volume)
 ```
 
-It always answers for the last widget called, so ask right after the widget you mean. After a button
-it is `False`, since a button has no value to change.
+It always answers for the last widget called, so ask right after the widget you mean. After a
+button, a label, an image or a panel it is `False`, since none of them has a value to change.
 
 ## Layers
 
@@ -92,9 +92,10 @@ with self.ui.screen(context, canvas) as ui:
         self.paused = True
 ```
 
-A frame can have as many layers as it needs. Where they overlap, the one drawn last is on top, for
-the pointer as well as for the eye. A world layer is drawn beneath whatever is drawn after its
-block, so where the block sits decides what covers what.
+A frame can have as many layers as it needs, one after another: opening a layer inside another layer
+of the same `UI` raises an error. Where they overlap, the one drawn last is on top, for the pointer
+as well as for the eye. A world layer is drawn beneath whatever is drawn after its block, so where
+the block sits decides what covers what.
 
 **Open a new layer every frame.** The `ui` a block hands you belongs to that frame, and using it in
 a later one raises an error. A helper that draws part of the UI takes it as a parameter:
@@ -121,8 +122,9 @@ def settings(ui: UILayer, mut volume: Float64) raises:
   prominent it is: `ButtonVariant.FILLED` (the default) for the main action, `TONAL` for a secondary
   one, `OUTLINED` and `TEXT` for quieter ones.
 - **A slider** jumps to where it is pressed and follows the pointer while held, even off its track,
-  stopping at its ends. `step=` rounds the value to multiples of the step, counted from `min`. A
-  value outside `min` to `max` is drawn at the nearer end and left as it is until dragged.
+  stopping at its ends. `step=` rounds the value to multiples of the step, counted from `min`, and
+  must be more than 0. A value outside `min` to `max` is drawn at the nearer end and left as it is
+  until dragged.
 - **A checkbox** switches `checked` when clicked anywhere in its rectangle, its label included.
 - **A text field** is explained in [Typing](../interaction/typing.md#text-fields).
 - **A label** places its text by `alignment=`, or its style's `text_alignment` when the call gives
