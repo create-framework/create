@@ -182,7 +182,13 @@ outside, each without and then with a blurred shadow (`_draw_aligned`)."""
 comptime _SHAPE_DASHED = 114
 """The first of 20 dashed-stroke cases: the eight region kinds, a line and a
 Bézier, each without and then with a blurred shadow (`_draw_dashed`)."""
-comptime _SHAPE_COUNT = 134
+comptime _SHAPE_INSET = 134
+"""The first of the inset shadows cut from masks, one per kind
+(`_draw_inset`, named by `_INSET_NAMES`)."""
+comptime _INSET_NAMES: List[String] = [
+    "inset rounded triangle",
+]
+comptime _SHAPE_COUNT = _SHAPE_INSET + len(_INSET_NAMES)
 
 comptime _SHADOW_INK = Color(0x10, 0x10, 0x10)
 """Opaque and far from `_BACKGROUND`, so a shadow counts as ink and its
@@ -291,7 +297,21 @@ def _draw_region(mut canvas: Canvas, kind: Int) raises:
         canvas.triangle((-45, -30), (45, -30), (0, 40), corner_radius=8)
 
 
+def _draw_inset(mut canvas: Canvas, i: Int) raises:
+    """The `i`-th inset case: a hard, opaque inset shadow over a light fill,
+    or soft where the name says blurred."""
+    if i == 0:
+        # Rounded far more than the offset, so the silhouette's rounded
+        # corners land well inside the interior.
+        with canvas.style(
+            _inset(Style(fill=Color(0xF0, 0xE0, 0xC0), stroke_enabled=False))
+        ):
+            canvas.triangle((-60, -45), (50, -45), (-5, 50), corner_radius=30)
+
+
 def _shape_name(shape: Int) -> String:
+    if shape >= _SHAPE_INSET:
+        return materialize[_INSET_NAMES]()[shape - _SHAPE_INSET]
     if shape >= _SHAPE_DASHED:
         var parts = _dashed_parts(shape - _SHAPE_DASHED)
         var kinds: List[String] = [
@@ -531,7 +551,9 @@ struct _Parity(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(_BACKGROUND)
 
-        if self.shape >= _SHAPE_DASHED:
+        if self.shape >= _SHAPE_INSET:
+            _draw_inset(canvas, self.shape - _SHAPE_INSET)
+        elif self.shape >= _SHAPE_DASHED:
             _draw_dashed(canvas, self.shape - _SHAPE_DASHED)
         elif self.shape >= _SHAPE_ALIGNED:
             _draw_aligned(canvas, self.shape - _SHAPE_ALIGNED)

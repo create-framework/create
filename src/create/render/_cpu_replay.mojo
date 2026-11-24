@@ -66,11 +66,13 @@ from ._shadow import (
     casts_outer_shadow,
     image_shadow_mask,
     inset_interior,
+    insets_analytically,
     local_stroke_thickness,
     shadow_command,
     shadow_transform,
 )
 from create.geometry._fillet import rect_corner_radius
+from ._inset import inset_shadow_mask
 from ._surface import Surface
 from ._resources import Resources
 from .antialiasing import Antialiasing
@@ -840,8 +842,22 @@ struct CpuReplay(Movable):
         # An inset shadow lies over the command, inside its stroke.
         if casts_inset_shadow(c):
             var sm = pre @ shadow_transform(c, scale)
-            var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
-            _inset_shadow(t, c, scale, m, sm, blur)
+            if insets_analytically(c):
+                var blur = Int(
+                    c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5
+                )
+                _inset_shadow(t, c, scale, m, sm, blur)
+            else:
+                var placed = inset_shadow_mask(c, m, sm, scale)
+                blit_alpha(
+                    t,
+                    placed.mask.pixels.unsafe_ptr(),
+                    placed.mask.width,
+                    placed.mask.height,
+                    placed.x,
+                    placed.y,
+                    c.paint.shadow_color,
+                )
 
     def _shape[
         o: Origin[mut=True]

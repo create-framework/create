@@ -47,10 +47,9 @@ from ._command import (
     _GEOM_SLOTS,
     _grow_triangle,
 )
-from create.geometry._fillet import rect_corner_radius, triangle_corner_radius
+from create.geometry._fillet import rect_corner_radius
 from create.color.color import Color
-from ._blur import BlurredMask, blur_alpha
-from ._pieces import PlacedMask
+from ._blur import BlurredMask, PlacedMask, blur_alpha
 from ._image_mapping import image_mapping
 from ._raster import blit_image_mapped
 from ._surface import MemorySurface
@@ -98,6 +97,13 @@ def casts_inset_shadow(c: RenderCommand) -> Bool:
         or c.payload.isa[CirclePayload]()
         or c.payload.isa[TrianglePayload]()
     )
+
+
+def insets_analytically(c: RenderCommand) -> Bool:
+    """Whether `c`'s inset shadow is evaluated per pixel from its equations
+    (`InsetRegion`) rather than cut from masks (`inset_shadow_mask`): a
+    rectangle or a circle, whose interior and silhouette are exact boxes."""
+    return c.payload.isa[RectPayload]() or c.payload.isa[CirclePayload]()
 
 
 def shadow_transform(c: RenderCommand, scale: Float64) -> Transform:
@@ -606,19 +612,6 @@ struct BlurredSilhouette(Copyable, Movable):
         self.outer = Array[Float64, 9](fill=0.0)
         self.ring = 0.0
         ref g = region.geom
-        if region.kind == SIL_TRIANGLE and not region.empty:
-            self.kind = SIL_TRIANGLE
-            var xs = Array[Float64, 3](fill=0.0)
-            var ys = Array[Float64, 3](fill=0.0)
-            for k in range(3):
-                xs[k] = g[2 * k]
-                ys[k] = g[2 * k + 1]
-            self.outer = _triangle_edges(xs, ys)
-            self.x0 = min(xs[0], min(xs[1], xs[2]))
-            self.x1 = max(xs[0], max(xs[1], xs[2]))
-            self.y0 = min(ys[0], min(ys[1], ys[2]))
-            self.y1 = max(ys[0], max(ys[1], ys[2]))
-            return
         self.kind = SIL_RECT
         self.outer[0] = g[0]
         self.outer[1] = g[1]
@@ -701,26 +694,10 @@ def _inradius(g: Array[Float64, _GEOM_SLOTS]) -> Float64:
 # --- Inset shadows -----------------------------------------------------------
 
 
-def _segment_distance(
-    x: Float64, y: Float64, ax: Float64, ay: Float64, bx: Float64, by: Float64
-) -> Float64:
-    """How far `(x, y)` is from the segment `a`-`b`."""
-    var ex = bx - ax
-    var ey = by - ay
-    var l2 = ex * ex + ey * ey
-    var t = 0.0
-    if l2 > 0.0:
-        t = min(max(((x - ax) * ex + (y - ay) * ey) / l2, 0.0), 1.0)
-    var dx = x - (ax + t * ex)
-    var dy = y - (ay + t * ey)
-    return sqrt(dx * dx + dy * dy)
-
-
 struct InsetRegion(Copyable, Movable):
-    """A filled rectangle, circle or triangle with corners rounded by
-    `radius`: what an inset shadow is clipped to — the shape inside its
-    stroke — and, shifted and shrunk by the spread, the silhouette the
-    shadow is cut from.
+    """A filled rectangle or circle with corners rounded by `radius`: what
+    an inset shadow is clipped to — the shape inside its stroke — and,
+    shifted and shrunk by the spread, the silhouette the shadow is cut from.
 
     Shrinking by `d` is the reverse of `shadow_command`'s growing: every
     edge moves in by `d` and the corner radius drops by `d`, bottoming out
@@ -728,35 +705,24 @@ struct InsetRegion(Copyable, Movable):
     runs — every region's stroke is an inset ring —
     so the interior is the shape shrunk by the stroke's inward extent. The
     radius is a `Float64` rather than the style's `Int`, because those
-    shrinks move it by fractions of a unit.
+    shrinks move it by fractions of a unit. Every other kind's inset shadow
+    is cut from masks instead (`inset_shadow_mask`).
     """
 
-    var kind: Int
-    """`SIL_RECT` (a circle is a rectangle rounded all the way) or
-    `SIL_TRIANGLE`."""
-    var geom: Array[Float64, _GEOM_SLOTS]
-    """`[cx, cy, half_w, half_h]` for `SIL_RECT`, the three vertices for
-    `SIL_TRIANGLE`, all in the command's local units."""
+    var geom: Array[Float64, 4]
+    """`[cx, cy, half_w, half_h]`, in the command's local units; a circle is
+    a square rounded all the way."""
     var radius: Float64
     var empty: Bool
     """Shrunk past nothing: contains no point and covers nothing."""
 
     def __init__(out self, c: RenderCommand, inset: Float64):
-        """`c`'s filled shape (`c` a rect, circle or triangle), every edge
-        moved in by `inset` local units."""
-        self.geom = Array[Float64, _GEOM_SLOTS](fill=0.0)
+        """`c`'s filled shape (`c` a rect or circle), every edge moved in by
+        `inset` local units."""
+        self.geom = Array[Float64, 4](fill=0.0)
         self.empty = False
-        if c.payload.isa[TrianglePayload]():
-            ref triangle = c.payload[TrianglePayload]
-            ref g = triangle.corners
-            self.kind = SIL_TRIANGLE
-            self.geom = g.copy()
-            self.radius = triangle_corner_radius(
-                triangle.corner_radius, g[0], g[1], g[2], g[3], g[4], g[5]
-            )
-        elif c.payload.isa[CirclePayload]():
+        if c.payload.isa[CirclePayload]():
             ref circle = c.payload[CirclePayload]
-            self.kind = SIL_RECT
             self.geom[0] = circle.center.x
             self.geom[1] = circle.center.y
             self.geom[2] = circle.r
@@ -764,7 +730,6 @@ struct InsetRegion(Copyable, Movable):
             self.radius = circle.r
         else:
             ref rect = c.payload[RectPayload]
-            self.kind = SIL_RECT
             self.radius = rect_corner_radius(rect.corner_radius, rect.w, rect.h)
             self.geom[0] = rect.center.x
             self.geom[1] = rect.center.y
@@ -782,68 +747,29 @@ struct InsetRegion(Copyable, Movable):
     def _shrink(mut self, d: Float64):
         if self.empty or d == 0.0:
             return
-        if self.kind == SIL_RECT:
-            self.geom[2] -= d
-            self.geom[3] -= d
-            if self.geom[2] <= 0.0 or self.geom[3] <= 0.0:
-                self.empty = True
-                return
-        else:
-            if d >= _inradius(self.geom):
-                self.empty = True
-                return
-            _grow_triangle(self.geom, -d)
+        self.geom[2] -= d
+        self.geom[3] -= d
+        if self.geom[2] <= 0.0 or self.geom[3] <= 0.0:
+            self.empty = True
+            return
         self.radius = max(self.radius - d, 0.0)
 
     def bounds(self) -> Tuple[Float64, Float64, Float64, Float64]:
         """`(x0, y0, x1, y1)`, the local box the region fits in."""
         ref g = self.geom
-        if self.kind == SIL_RECT:
-            return (g[0] - g[2], g[1] - g[3], g[0] + g[2], g[1] + g[3])
-        return (
-            min(g[0], min(g[2], g[4])),
-            min(g[1], min(g[3], g[5])),
-            max(g[0], max(g[2], g[4])),
-            max(g[1], max(g[3], g[5])),
-        )
+        return (g[0] - g[2], g[1] - g[3], g[0] + g[2], g[1] + g[3])
 
     def contains(self, x: Float64, y: Float64) -> Bool:
         """Whether local `(x, y)` is inside, its edge included."""
         if self.empty:
             return False
         ref g = self.geom
-        if self.kind == SIL_RECT:
-            var r = min(self.radius, min(g[2], g[3]))
-            var qx = abs(x - g[0]) - (g[2] - r)
-            var qy = abs(y - g[1]) - (g[3] - r)
-            var ox = max(qx, 0.0)
-            var oy = max(qy, 0.0)
-            return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0.0) <= r
-        # A rounded triangle is its core — the triangle shrunk by the radius —
-        # grown by a disc: inside the core, or within `radius` of its edges.
-        var core = self.geom.copy()
-        if self.radius > 0.0:
-            _grow_triangle(core, -self.radius)
-        var xs = Array[Float64, 3](fill=0.0)
-        var ys = Array[Float64, 3](fill=0.0)
-        for k in range(3):
-            xs[k] = core[2 * k]
-            ys[k] = core[2 * k + 1]
-        var e = _triangle_edges(xs, ys)
-        var inside = True
-        for k in range(3):
-            if e[3 * k] * x + e[3 * k + 1] * y + e[3 * k + 2] < 0.0:
-                inside = False
-        if inside or self.radius <= 0.0:
-            return inside
-        for k in range(3):
-            var j = (k + 1) % 3
-            if (
-                _segment_distance(x, y, xs[k], ys[k], xs[j], ys[j])
-                <= self.radius
-            ):
-                return True
-        return False
+        var r = min(self.radius, min(g[2], g[3]))
+        var qx = abs(x - g[0]) - (g[2] - r)
+        var qy = abs(y - g[1]) - (g[3] - r)
+        var ox = max(qx, 0.0)
+        var oy = max(qy, 0.0)
+        return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0.0) <= r
 
 
 def inset_interior(c: RenderCommand, thickness: Float64) -> InsetRegion:

@@ -113,6 +113,15 @@ struct MemorySurface(Movable):
         """Borrow this buffer as a `Surface` for the raster primitives."""
         return Surface(self.data.unsafe_ptr(), self.width, self.height)
 
+    def alpha(self) -> List[UInt8]:
+        """The alpha channel alone, one byte per pixel, row-major: what a
+        mask rasterised here in white covers."""
+        var n = self.width * self.height
+        var out = List[UInt8](length=n, fill=0)
+        for i in range(n):
+            out[i] = self.data[i * 4 + 3]
+        return out^
+
     def save(self, path: String, opaque: Bool = True) raises:
         """Write this buffer to `path` as a PNG.
 

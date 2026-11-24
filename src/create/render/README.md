@@ -31,8 +31,9 @@ working on the package: the [user guide](../../../docs/guide/README.md) covers u
 | `stroke_cap.mojo` / `stroke_align.mojo` | The public `StrokeCap` and `StrokeAlign` enums |
 | `stroke_dash.mojo` | The public `StrokeDash`: its presets, patterns and `_resolved`, a preset as lengths |
 | `_dash.mojo` | Dashed strokes for both replays: the stroke's middle per kind, the pattern walked along it (`dash_path`), each dash a `stroke_pieces` strip (`dashed_stroke`) |
-| `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (an inset shadow's interior and cut) |
-| `_pieces.mojo` | `Pieces`, a shape as convex device pieces (fill and stroke, quads and polygons); `fill_pieces`, the CPU's one way to fill them; `pieces_shadow_mask`, their blurred mask; `PlacedMask` |
+| `_shadow.mojo` | Shadow geometry shared by both backends: `shadow_command` (the hard silhouette as a command, offset matrix composed in), `BlurredSilhouette` (analytic Gaussian coverage for shapes), `InsetRegion` (a rectangle's or circle's inset interior and cut) |
+| `_inset.mojo` | `inset_shadow_mask`: every other kind's inset shadow, cut from masks for both backends |
+| `_pieces.mojo` | `Pieces`, a shape as convex device pieces (fill and stroke, quads and polygons); `fill_pieces`, the CPU's one way to fill them; `pieces_mask` and `pieces_shadow_mask`, their mask, sharp and blurred |
 | `_lower.mojo` | `shape_pieces`, the one lowering of every kind but rectangles and circles (lines, curves, sectors, polygons, triangles; and any dashed shape) to `Pieces`; `shape_shadow_mask`; `is_lowered`, `is_plain_triangle` |
 | `_curve.mojo` | Bézier stroke geometry: flattening in device pixels, the mitred quad strip and its caps (`stroke_pieces`) |
 | `_sector.mojo` | Sector fill and stroke tiled into device quads (`sector_quads`, returning `Pieces`) |
@@ -40,7 +41,7 @@ working on the package: the [user guide](../../../docs/guide/README.md) covers u
 | `_triangle.mojo` | A rounded or stroked triangle as a convex fill and ring quads (`triangle_pieces`, returning `Pieces`) |
 | `_coverage.mojo` | CPU antialiasing: `composite_coverage` turns a shape's runs recorded on a finer grid into per-pixel coverage, composited once |
 | `_clip.mojo` | `_Clip` (one `canvas.clip` level: region command, invert, parent) and `_ClipRows`, the CPU replay's per-row runs of a clip, each with its coverage |
-| `_blur.mojo` | Three-box-blur approximation of a Gaussian over an alpha mask, for text and image shadows; the blurred-mask cache limit and key |
+| `_blur.mojo` | Three-box-blur approximation of a Gaussian over an alpha mask, for text and image shadows; `PlacedMask`, a mask placed on the device; the blurred-mask cache limit and key |
 | `_transform.mojo` | Shared by both replay paths (split out to avoid an import cycle, so both agree on the numbers) |
 | `_image_mapping.mojo` | Where an image lands, for both replays: `upright` (the plain blit's device rect, `upright_rect`) or not (`image_mapping`, the device-to-texel inverse; `image_corners`, the GL quad) |
 | `_gl_target.mojo` | Offscreen FBO of an exact size, for the parity test and headless GPU |
@@ -632,12 +633,18 @@ Both replays handle a command's shadow around the command itself, in the command
   `pieces_shadow_mask`), but **uncached**: they have no stable id to key by, so each blurred Bézier,
   sector or polygon shadow costs one blur per frame, and on the GPU one texture upload plus one draw
   call; the textures are deleted after the frame's final flush.
-- **Inset** (`casts_inset_shadow`), *after* the command: the interior (`inset_interior`) is the
-  clip, the silhouette is the interior shrunk by the spread and moved by the shadow transform, and
-  alpha is `1 − coverage`. The CPU tests pixel centres in the interior's box; the GPU tessellates
-  the interior with the fill emitters and sets each vertex's silhouette parameters from its device
-  position (`MODE_INSET_BOX`/`MODE_INSET_EDGES`). A hard inset on the GPU uses a steep sigma (1/64
-  px), not a step.
+- **Inset** (`casts_inset_shadow`), *after* the command: the interior is the clip, the silhouette is
+  the interior shrunk by the spread and moved by the shadow transform, and alpha is `1 − coverage`.
+  Rectangles and circles (`insets_analytically`) evaluate it from their equations: the interior is
+  an `InsetRegion` (`inset_interior`), the CPU tests pixel centres in its box, and the GPU
+  tessellates it with the fill emitters and sets each vertex's silhouette parameters from its device
+  position (`MODE_INSET_BOX`). A hard inset on the GPU uses a steep sigma (1/64 px), not a step.
+  Every other kind is cut from masks (`inset_shadow_mask`, `_inset.mojo`): the interior's pieces
+  rasterised under the command's matrix, times what the silhouette's, rasterised under the shadow
+  transform and blurred, leaves uncovered. The CPU blits the mask and the GPU draws it as a texture
+  for the frame, as a blurred Bézier's shadow: uncached, one mask a frame. A triangle is masked
+  rather than analytic: its silhouette's corners are rounded, and the GPU's analytic modes see a
+  triangle only as its three edges, which would cut them sharp.
 
 The offset is one transform (`shadow_transform`). A screen-fixed offset composes a device
 translation after the command transform; one that follows the transform composes
@@ -690,7 +697,7 @@ only ever hold quantities affine across a triangle, so interpolation evaluates t
 | `MODE_SILHOUETTE` | 3 | Image shadow: sampled alpha scales colour alpha |
 | `MODE_SHADOW_BOX` | 4 | Blurred rect/rounded rect/circle/butt or square line shadow; `s3` a ring |
 | `MODE_SHADOW_EDGES` | 5 | Blurred triangle shadow, three edge distances; `s3` a ring |
-| `MODE_INSET_BOX` / `MODE_INSET_EDGES` | 6 / 7 | 4 / 5 without ring, coverage inverted |
+| `MODE_INSET_BOX` | 6 | 4 without ring, coverage inverted |
 | `MODE_GRADIENT` | 8 | Gradient fill: `uv` the device mapping, `s0` radial, `s1` ramp row; samples unit 2, dithers |
 | `MODE_SHADOW_CAPSULE` | 9 | Blurred round-capped line shadow: `s0` the core's half-length, `s1` the radius |
 
