@@ -50,9 +50,11 @@ an inside: rectangles, circles, ellipses, capsules, triangles, sectors and polyg
 A line or a curve (an arc, a Bézier or a spline) has no inside but its stroke, so its inset shadow
 lies on the stroke, as if the stroke were a groove cut into the screen. Its spread thins the
 silhouette from both sides, and a round or square cap with it, but a butt end stays where it is.
-Text and images cast nothing while it is set.
 
-A rectangle's or circle's inset shadow is worked out directly. Any other shape's is drawn into an
+Text casts its inset shadow inside its letters, so they look stamped into the screen. The spread
+doesn't change it. Images cast nothing while it is set.
+
+A rectangle's or circle's inset shadow is worked out directly. Anything else's is drawn into an
 image every frame and blurred there, so it costs about as much as a blurred drop shadow.
 
 ## Shadows and the rest of the style

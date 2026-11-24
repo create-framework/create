@@ -193,6 +193,8 @@ comptime _INSET_NAMES: List[String] = [
     "blurred inset ellipse",
     "inset bezier",
     "blurred inset round line",
+    "inset text",
+    "blurred inset turned text",
 ]
 comptime _SHAPE_COUNT = _SHAPE_INSET + len(_INSET_NAMES)
 
@@ -366,6 +368,31 @@ def _draw_inset(mut canvas: Canvas, i: Int) raises:
             )
         ):
             canvas.line((-60, -30), (50, 30))
+    elif i == 7:
+        # Large and bold, so the stems have an inside away from their edges.
+        with canvas.style(
+            _inset(
+                Style(
+                    text_color=Color(0xF0, 0xE0, 0xC0),
+                    font_size=110,
+                    font_weight=FontWeight.BLACK,
+                )
+            )
+        ):
+            canvas.text("HI", (0, 0))
+    elif i == 8:
+        with canvas.style(
+            _inset(
+                Style(
+                    text_color=Color(0xF0, 0xE0, 0xC0),
+                    font_size=110,
+                    font_weight=FontWeight.BLACK,
+                ),
+                8.0,
+            )
+        ):
+            with canvas.transform(Transform(rotation=0.3)):
+                canvas.text("HI", (0, 0))
 
 
 def _shape_name(shape: Int) -> String:
