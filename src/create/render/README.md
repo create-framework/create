@@ -246,6 +246,14 @@ as the thickness does. A cut that falls on a vertex snaps to it (`_SNAP_PX`): a 
 error away would leave a segment of no direction for the next joint to mitre. A period under a
 device pixel, or more than `_MAX_DASHES` dashes, draws the path solid.
 
+**A resolved preset fits the path** (`_fit`, set by `_resolved`; a constructor's lengths never are).
+`dash_path` measures the path, and `_fitted` changes only the gap, by at most half a period shared
+among the gaps: a whole number of periods round a closed path, with the pattern started half a dash
+early so a dash is centred on the start, or a dash at each end of an open one. A fitted gap that
+isn't positive draws the path solid. On a closed path, a dash that is on at the start is held back
+and joined to the last one when the walk comes round, so a dash across the seam is one strip,
+mitred, rather than two capped ends meeting.
+
 **Shadows** decide on the shadow command, not the shape: a stroke-only shadow keeps the dashes and
 is lowered and masked (`blurs_analytically` is false for a dashed stroke), while a filled shape's
 shadow is its solid silhouette, which still blurs analytically.

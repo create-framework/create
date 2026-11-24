@@ -105,6 +105,7 @@ def dashed_stroke(
         width,
         c.paint.stroke_cap,
         device_x_axis(m),
+        fit=dash._fit,
     )
 
 
@@ -116,10 +117,18 @@ def dash_path(
     width: Float64,
     cap: StrokeCap,
     axis: Vector,
+    *,
+    fit: Bool = False,
 ) -> StrokePieces:
     """The polyline `points` (round to its start again if `closed`) cut by
     `pattern` (on, off, on, off, ... lengths, in the points' units) starting
     `offset` into it, each dash stroked `width` wide with `cap` on both ends.
+
+    With `fit`, an on/off `pattern`'s gap stretches or shrinks so the dashes
+    fit the path evenly (`_fitted`): a whole number of them round a
+    `closed` path, one centred on its start, or a dash at each end of an
+    open one. A dash running on past the end of a `closed` path joins the
+    one it started in, so the seam doesn't show.
 
     A dash of no length is a dot, turned along the path under `SQUARE`. A
     pattern too fine to see (`_MIN_PERIOD_PX`) or to cut into pieces
@@ -141,22 +150,38 @@ def dash_path(
         or path_length / total > Float64(_MAX_DASHES)
     ):
         return stroke_pieces(path, width, cap, axis)
+    var lengths = pattern.copy()
+    var start = offset
+    if fit and len(lengths) == 2:
+        var gap = _fitted(lengths[0], lengths[1], path_length, closed)
+        if gap <= 0.0:
+            return stroke_pieces(path, width, cap, axis)
+        lengths[1] = gap
+        total = lengths[0] + gap
+        if closed:
+            start += lengths[0] / 2
 
     # Find where in the pattern the path starts.
-    var n = len(pattern)
-    var phase = offset - floor(offset / total) * total
+    var n = len(lengths)
+    var phase = start - floor(start / total) * total
     var k = 0
-    while phase >= pattern[k] and phase > 0.0:
-        phase -= pattern[k]
+    while phase >= lengths[k] and phase > 0.0:
+        phase -= lengths[k]
         k = (k + 1) % n
-    var remaining = max(pattern[k] - phase, 0.0)
+    var remaining = max(lengths[k] - phase, 0.0)
     var on = k % 2 == 0
 
     var out = StrokePieces()
     var run = List[Point]()
     if on and len(path) > 0:
         run.append(path[0])
+    # A closed path that starts in a dash holds that dash back, to join the
+    # one the path ends in.
+    var holding = closed and on
+    var first = List[Point]()
+    var first_direction = Vector(1.0, 0.0)
     var direction = Vector(1.0, 0.0)
+    var travelled = 0.0
     for i in range(len(path) - 1):
         var a = path[i]
         var segment = path[i + 1] - a
@@ -165,8 +190,13 @@ def dash_path(
             continue
         direction = segment / length
         var position = 0.0
+        var last = path_length - travelled - length < _SNAP_PX
         # Every switch between dash and gap inside this segment.
         while remaining <= length - position:
+            # A closed path's end is its start, where the pattern already
+            # began: a switch there would draw the start's dash twice.
+            if closed and last and length - position - remaining < _SNAP_PX:
+                break
             position += remaining
             # A switch on the segment's end is that end exactly: a point a
             # rounding error short of it would make a segment of no
@@ -176,19 +206,54 @@ def dash_path(
             )
             if on:
                 _extend(run, p)
-                _add_dash(out, run, width, cap, direction)
+                if holding:
+                    first = run^
+                    first_direction = direction
+                    holding = False
+                else:
+                    _add_dash(out, run, width, cap, direction)
                 run = List[Point]()
             else:
                 run = [p]
             on = not on
             k = (k + 1) % n
-            remaining = pattern[k]
+            remaining = lengths[k]
         remaining -= length - position
+        travelled += length
         if on:
             _extend(run, path[i + 1])
+    if fit and not closed and not on and remaining < _SNAP_PX:
+        # The fitted pattern's last dash starts on the end itself, which
+        # rounding can leave just past it: a dot there, as fitting meant.
+        run = [path[len(path) - 1]]
+        on = True
+    if len(first) > 0:
+        if on:
+            # The last dash runs on round the start into the first.
+            for p in first:
+                _extend(run, p)
+        else:
+            _add_dash(out, first, width, cap, first_direction)
     if on and len(run) > 0:
         _add_dash(out, run, width, cap, direction)
     return out^
+
+
+def _fitted(
+    on: Float64, off: Float64, path_length: Float64, closed: Bool
+) -> Float64:
+    """The gap that fits dashes `on` long, about `off` apart, evenly along a
+    path `path_length` long: a whole number of dash-and-gap periods round a
+    `closed` path, or a dash at each end of an open one. Only the gap
+    changes, so a dash keeps its length and a dot its roundness, and by at
+    most half a period shared among every gap. Not positive when even one
+    gap can't fit, so the path is better drawn solid."""
+    var period = on + off
+    if closed:
+        var count = max(Int(round(path_length / period)), 1)
+        return path_length / Float64(count) - on
+    var count = max(Int(round((path_length + off) / period)), 2)
+    return (path_length - Float64(count) * on) / Float64(count - 1)
 
 
 def _extend(mut run: List[Point], p: Point):

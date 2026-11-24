@@ -9,16 +9,20 @@ How a stroke is broken into dashes along its length.
 | Value | Stroke |
 |---|---|
 | `SOLID` | Unbroken (the default) |
-| `DASHED` | Dashes 3 thicknesses long, 2 apart |
-| `DOTTED` | Round dots as wide as the stroke, 2 thicknesses apart |
+| `DASHED` | Dashes 3 thicknesses long, about 2 apart |
+| `DOTTED` | Round dots as wide as the stroke, about 2 thicknesses apart |
 | `StrokeDash(on, off)` | Dashes `on` long, `off` apart |
 | `StrokeDash(on, off, on, off, ...)` | Up to four on/off pairs, repeated |
 
 **A preset is a look; a constructor is exact control.** The presets
 scale with the stroke's thickness, so they suit any stroke as they are.
-A constructor's lengths are world units, scaled by autoscale, the
-camera and the transform as the thickness is, and keep their spacing
-whatever the thickness. A dot is a dash of no length: `DOTTED` is
+Their gaps also stretch or shrink a little so the dashes come out even:
+a whole number of them round a closed outline, with one centred where
+it starts, and one at each end of a line or curve. A line too short for
+a dash at each end is drawn solid. A constructor's lengths are exact:
+world units, scaled by autoscale, the camera and the transform as the
+thickness is, never stretched, and keeping their spacing whatever the
+thickness. A dot is a dash of no length: `DOTTED` is
 always round, while `StrokeDash(0, 8)` takes `stroke_cap`, so it draws
 dots under `ROUND`, squares under `SQUARE` and nothing under `BUTT`.
 
@@ -34,8 +38,9 @@ order. A rectangle starts at its top-left corner and a circle or
 ellipse at its right-most point, both running counter-clockwise. A
 sector starts at its tip, out along its start radius. `offset` starts
 the pattern that far into itself, so raising it every frame marches the
-dashes backwards along the stroke (`with_offset`). A closed outline
-doesn't stretch the pattern to fit: where it comes back round, a dash
+dashes backwards along the stroke (`with_offset`). On a closed outline,
+a dash that runs past the start is one dash with the dash there. Exact
+lengths aren't stretched to fit, so where they come back round, a dash
 can meet a shorter one.
 
 **Every dash is a stroke of its own:** `stroke_cap` finishes both its
