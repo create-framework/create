@@ -1,6 +1,6 @@
 # create.geometry
 
-Shapes and curves, the traits that make a type drawable, and the collision tests: each region's `overlaps` and `contains`, and each curve's `intersects`.
+Shapes and curves, the traits that make a type drawable, and the collision tests: each shape's `overlaps` and `contains`, and each curve's `intersects`.
 
 ## Types
 
@@ -22,8 +22,8 @@ Shapes and curves, the traits that make a type drawable, and the collision tests
 
 | Trait | Description |
 |---|---|
-| [`Curve`](curve.md) | A shape with no inside, traced from one end to the other: `Line`, `Arc`, `Bezier` and `Spline`. A straight line is a curve too, as in mathematics. |
+| [`Curve`](curve.md) | Geometry with no inside, traced from one end to the other: `Line`, `Arc`, `Bezier` and `Spline`. A straight line is a curve too, as in mathematics. |
 | [`Drawable`](drawable.md) | Something a `DrawTarget` can draw: a shape, a curve, or a program's own type made of them. |
 | [`DrawTarget`](drawtarget.md) | Somewhere shapes are drawn: `Canvas`. Its primitives, one per kind of shape, are the library's own; a program draws through `draw`. |
-| [`Region`](region.md) | A shape with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` and `Polygon`, the region types of `overlaps` and `contains`, and what `canvas.clip` takes. A curve has no inside, so it is not one. |
-| [`Shape`](shape.md) | A geometric shape: a `Region` or a `Curve`. What every one of them answers, whichever it is, and a plain value generic code can keep, copy and drop. Tests between two shapes (`contains`, `intersects`, `overlaps`) are methods overloaded per shape they take, not part of this. |
+| [`Geometry`](geometry.md) | A piece of geometry: a `Shape` or a `Curve`. What every one of them answers, whichever it is, and a plain value generic code can keep, copy and drop. Tests between two of them (`contains`, `intersects`, `overlaps`) are methods overloaded per type they take, not part of this. |
+| [`Shape`](shape.md) | Geometry with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` and `Polygon`, the types of `overlaps` and `contains`, and what `canvas.clip` takes. A curve has no inside, so it is not one. |

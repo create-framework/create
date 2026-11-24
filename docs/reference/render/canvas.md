@@ -306,26 +306,26 @@ For its position in world space, ask the camera:
 ### `clip`
 
 ```mojo
-def clip[R: Region](
+def clip[S: Shape](
     mut self,
-    region: R,
+    shape: S,
     invert: Bool = False,
 ) -> ClipGuard[origin_of(self)]
 ```
 
-Render only inside `region` for a `with` block — or, with `invert`, only outside it. `region` is any `Region`: a `Rectangle`, `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own `corner_radius`; a polygon's inside is by the nonzero rule.
+Render only inside `shape` for a `with` block — or, with `invert`, only outside it. `shape` is any `Shape`: a `Rectangle`, `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own `corner_radius`; a polygon's inside is by the nonzero rule.
 
 ```mojo
 with canvas.clip(Rectangle((0, 0), 200, 120)):
     canvas.image(self.photo, (0, 0))
 ```
 
-`region` is placed by the transform and camera current here, and
+`shape` is placed by the transform and camera current here, and
 stays there for the block: a `transform` or `overlay` inside it moves
 what is rendered, not the clip. A clip inside another keeps only what
 both keep. Every render call is clipped, its shadow and `background()`
 included; the letterbox is not. The clip's edge is the edge
-`canvas.draw(region)` would have.
+`canvas.draw(shape)` would have.
 
 Closes on exit, including on an early return or a raise.
 

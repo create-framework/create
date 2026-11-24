@@ -2,7 +2,7 @@ from std.math import cos, sin, sqrt
 from create.math import PI, TAU, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Shape
 from ._shared import _distance_squared, _swapped
 from .capsule import Capsule
 from .circle import Circle
@@ -96,7 +96,7 @@ def _closest_on_ellipse(a: Float64, b: Float64, p: Point) -> Point:
 
 
 struct Ellipse(
-    Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
+    Copyable, Equatable, ImplicitlyCopyable, Movable, Shape, Writable
 ):
     """An axis-aligned ellipse: `center`, `area`, `bounds`, `closest_point`,
     `contains`, `move_to`, `translate`.

@@ -32,10 +32,10 @@ Time: the run's frame clock (`Time`), the `Clock` a playhead keeps time by, and 
 
 ## [`create.geometry`](geometry/README.md)
 
-Shapes and curves, the traits that make a type drawable, and the collision tests: each region's `overlaps` and `contains`, and each curve's `intersects`.
+Shapes and curves, the traits that make a type drawable, and the collision tests: each shape's `overlaps` and `contains`, and each curve's `intersects`.
 
 - **Types:** [`Rectangle`](geometry/rectangle.md), [`Circle`](geometry/circle.md), [`Ellipse`](geometry/ellipse.md), [`Capsule`](geometry/capsule.md), [`Line`](geometry/line.md), [`Triangle`](geometry/triangle.md), [`Arc`](geometry/arc.md), [`Sector`](geometry/sector.md), [`Polygon`](geometry/polygon.md), [`Bezier`](geometry/bezier.md), [`Spline`](geometry/spline.md)
-- **Traits:** [`Curve`](geometry/curve.md), [`Drawable`](geometry/drawable.md), [`DrawTarget`](geometry/drawtarget.md), [`Region`](geometry/region.md), [`Shape`](geometry/shape.md)
+- **Traits:** [`Curve`](geometry/curve.md), [`Drawable`](geometry/drawable.md), [`DrawTarget`](geometry/drawtarget.md), [`Geometry`](geometry/geometry.md), [`Shape`](geometry/shape.md)
 
 ## [`create.color`](color/README.md)
 

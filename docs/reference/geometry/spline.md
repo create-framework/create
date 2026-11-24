@@ -28,9 +28,9 @@ Fewer than two distinct points make no curve: then `at` and
 `at_distance` give the one point (the origin if there is none), `length`
 is 0 and `flatten` gives no points.
 
-Like `Bezier`, a spline has no interior and is not a region.
+Like `Bezier`, a spline has no interior and is not a `Shape`.
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Movable`, `Shape`, `Writable`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `Movable`, `Writable`.
 
 ## Fields
 

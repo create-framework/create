@@ -62,7 +62,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 
 ## [Geometry](geometry/README.md)
 
-- [Shapes](geometry/shapes.md): the regions, from rectangles to polygons, and corner radius.
+- [Shapes](geometry/shapes.md): the shapes, from rectangles to polygons, and corner radius.
 - [Curves](geometry/curves.md): lines, arcs, Bézier curves and splines, and finding points along
   them.
 - [Collisions](geometry/collisions.md): testing whether shapes touch, fast-moving objects and

@@ -126,7 +126,7 @@ struct Bezier(
     curve SVG paths, fonts and vector editors use. For a smooth curve through
     given points instead, see `Spline`.
 
-    Like `Line`, a curve has no interior and is not a region: there is no
+    Like `Line`, a curve has no interior and is not a `Shape`: there is no
     `area`, `contains` or `overlaps` for it.
 
     `t` runs from 0 at `start` to 1 at `end`, but it is not proportional to

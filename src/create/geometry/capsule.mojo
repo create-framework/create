@@ -2,7 +2,7 @@ from std.math import atan2, min, sqrt
 from create.math import PI, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import _distance_squared, _unit
 from .arc import Arc
@@ -20,7 +20,7 @@ struct Capsule(
     Equatable,
     ImplicitlyCopyable,
     Movable,
-    Region,
+    Shape,
     Writable,
     _Collider,
 ):

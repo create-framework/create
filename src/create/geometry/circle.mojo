@@ -2,7 +2,7 @@ from std.math import sqrt
 from create.math import PI, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import _RADIUS_EPSILON, _distance_squared
 from .capsule import Capsule
@@ -19,7 +19,7 @@ struct Circle(
     Equatable,
     ImplicitlyCopyable,
     Movable,
-    Region,
+    Shape,
     Writable,
     _Collider,
 ):

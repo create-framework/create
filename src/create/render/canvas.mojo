@@ -16,7 +16,7 @@ from ._viewport import Viewport
 from .camera import Camera
 from create.geometry.bezier import Bezier
 from create.geometry.spline import Spline
-from create.geometry.drawable import DrawTarget, Region
+from create.geometry.drawable import DrawTarget, Shape
 from create.geometry import (
     Arc,
     Capsule,
@@ -785,10 +785,10 @@ struct Canvas(DrawTarget, Movable):
         return (self._camera.transform() @ self._user).apply(local)
 
     def clip[
-        R: Region
-    ](mut self, region: R, invert: Bool = False) -> ClipGuard[origin_of(self)]:
-        """Render only inside `region` for a `with` block — or, with
-        `invert`, only outside it. `region` is any `Region`: a `Rectangle`,
+        S: Shape
+    ](mut self, shape: S, invert: Bool = False) -> ClipGuard[origin_of(self)]:
+        """Render only inside `shape` for a `with` block — or, with
+        `invert`, only outside it. `shape` is any `Shape`: a `Rectangle`,
         `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own
         `corner_radius`; a polygon's inside is by the nonzero rule.
 
@@ -797,17 +797,17 @@ struct Canvas(DrawTarget, Movable):
             canvas.image(self.photo, (0, 0))
         ```
 
-        `region` is placed by the transform and camera current here, and
+        `shape` is placed by the transform and camera current here, and
         stays there for the block: a `transform` or `overlay` inside it moves
         what is rendered, not the clip. A clip inside another keeps only what
         both keep. Every render call is clipped, its shadow and `background()`
         included; the letterbox is not. The clip's edge is the edge
-        `canvas.draw(region)` would have.
+        `canvas.draw(shape)` would have.
 
         Closes on exit, including on an early return or a raise.
         """
         var capture = RegionCapture(self._transform, self._scale)
-        capture.draw(region)
+        capture.draw(shape)
         return ClipGuard[origin_of(self)](
             _canvas=self, _region=capture.command.take(), _invert=invert
         )

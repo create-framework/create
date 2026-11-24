@@ -105,8 +105,8 @@ spline.) `closed=True` carries it on from the last point back to the first, for 
 
 ## The `Curve` trait
 
-The four curves conform to **`Curve`**, as well as to `Shape` (see
-[Shapes](shapes.md#the-shape-and-region-traits)), so a function can take any of them (`def f[C:
+The four curves conform to **`Curve`**, as well as to `Geometry` (see
+[Shapes](shapes.md#the-geometry-and-shape-traits)), so a function can take any of them (`def f[C:
 Curve](curve: C)`). `Curve` gives `at`, `tangent`, `length`, `at_distance`, `flatten` and `beziers`.
 `move_to` exists only on `Line` (moving its midpoint) and `Arc` (moving its centre), and `split`
 only on `Line`, `Arc` and `Bezier`.

@@ -4,7 +4,7 @@ from create._optional import _OptionalFloat64
 from ._fillet import triangle_corner_radius
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import (
     _cross,
@@ -29,7 +29,7 @@ struct Triangle(
     Equatable,
     ImplicitlyCopyable,
     Movable,
-    Region,
+    Shape,
     Writable,
     _Collider,
 ):

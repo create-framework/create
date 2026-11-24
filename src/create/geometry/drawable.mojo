@@ -1,8 +1,8 @@
 """What can be drawn, and what it can be drawn onto.
 
-A shape knows which kind of shape it is; a canvas knows how to record one.
+A shape or curve knows which kind it is; a canvas knows how to record one.
 `Drawable` and `DrawTarget` meet in the middle without either package
-naming the other: a shape's `draw_to` calls the target's primitive for its
+naming the other: its `draw_to` calls the target's primitive for its
 kind, and `canvas.draw(shape)` is `shape.draw_to(canvas)`. So the geometry
 stays free of `render`, and collision code never sees a canvas.
 
@@ -46,30 +46,31 @@ trait Drawable:
         ...
 
 
-trait Shape(Copyable, Deinitable, Drawable):
-    """A geometric shape: a `Region` or a `Curve`. What every one of them
+trait Geometry(Copyable, Deinitable, Drawable):
+    """A piece of geometry: a `Shape` or a `Curve`. What every one of them
     answers, whichever it is, and a plain value generic code can keep, copy
-    and drop. Tests between two shapes (`contains`, `intersects`,
-    `overlaps`) are methods overloaded per shape they take, not part of
+    and drop. Tests between two of them (`contains`, `intersects`,
+    `overlaps`) are methods overloaded per type they take, not part of
     this."""
 
     def bounds(self) -> Rectangle:
-        """The tightest axis-aligned rectangle around the shape."""
+        """The tightest axis-aligned rectangle around it."""
         ...
 
     def closest_point(self, p: Point) -> Point:
-        """The point of the shape nearest `p`: `p` itself inside a region."""
+        """Its point nearest `p`: `p` itself inside a `Shape`."""
         ...
 
     def translate(self, delta: Vector) -> Self:
-        """The shape moved by `delta`; this one is unchanged."""
+        """It moved by `delta`; this one is unchanged."""
         ...
 
 
-trait Region(Shape):
-    """A shape with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`,
-    `Triangle`, `Sector` and `Polygon`, the region types of `overlaps` and `contains`, and what
-    `canvas.clip` takes. A curve has no inside, so it is not one."""
+trait Shape(Geometry):
+    """Geometry with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`,
+    `Triangle`, `Sector` and `Polygon`, the types of `overlaps` and
+    `contains`, and what `canvas.clip` takes. A curve has no inside, so it is
+    not one."""
 
     def center(self) -> Point:
         ...
@@ -82,13 +83,13 @@ trait Region(Shape):
         ...
 
     def move_to(self, position: Point) -> Self:
-        """The region moved so its `position` (or, without one, its
+        """The shape moved so its `position` (or, without one, its
         `center()`) is at `position`; this one is unchanged."""
         ...
 
 
-trait Curve(Shape):
-    """A shape with no inside, traced from one end to the other: `Line`,
+trait Curve(Geometry):
+    """Geometry with no inside, traced from one end to the other: `Line`,
     `Arc`, `Bezier` and `Spline`. A straight line is a curve too, as in
     mathematics.
 

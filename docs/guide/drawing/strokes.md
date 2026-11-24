@@ -24,10 +24,10 @@ numbers say, however thick the stroke.
 
 The fill always stops where the stroke starts, so with `OUTSIDE` the fill covers the whole shape.
 
-- Alignment applies only to regions, the shapes with an inside: rectangles, circles, ellipses,
-  capsules, triangles, sectors and polygons. Lines and curves have no inside, so their stroke is
-  always centred. A self-crossing polygon's seams, the edges that run through its inside, stay
-  centred under every alignment.
+- Alignment applies only to shapes, which have an inside: rectangles, circles, ellipses, capsules,
+  triangles, sectors and polygons. Lines and curves have no inside, so their stroke is always
+  centred. A self-crossing polygon's seams, the edges that run through its inside, stay centred
+  under every alignment.
 - With `INSIDE`, nothing is drawn outside the shape, so what you see is exactly what `contains`,
   `overlaps` and `clip` use.
 - Shadows and a gradient fill follow the shape, not the stroke, so a gradient spans the true shape

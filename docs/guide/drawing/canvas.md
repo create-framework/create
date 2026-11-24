@@ -178,8 +178,8 @@ edge should pass `antialiasing=Antialiasing.OFF`.
 
 ## Clipping
 
-Clipping limits drawing to a region, as painting through a stencil does: inside `with
-canvas.clip(region):`, only what falls inside `region` is drawn. `invert=True` keeps only what is
+Clipping limits drawing to a shape, as painting through a stencil does: inside `with
+canvas.clip(shape):`, only what falls inside `shape` is drawn. `invert=True` keeps only what is
 outside it instead, for fog or a spotlight:
 
 ```mojo
@@ -188,7 +188,7 @@ with canvas.clip(Circle(context.mouse.position, 120), invert=True):
     canvas.background(Color(0, 0, 0, 220))
 ```
 
-`region` can be any `Region`: a `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` or
+`shape` can be any `Shape`: a `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` or
 `Polygon`, the same types `contains` and `overlaps` take. It is rounded by its own `corner_radius`,
 as when it is drawn. Lines and curves can't be clips (that doesn't compile). A clip only works as a
 `with` block, so it can't accidentally stay on. See
@@ -205,4 +205,4 @@ as when it is drawn. Lines and curves can't be clips (that doesn't compile). A c
   hard-edged. Where the edges of nested clips pass through the same pixel, their smoothing combines:
   a pixel half inside each of two clips is drawn at a quarter strength.
 
-A clip is always a region: a gradient or an image's alpha can't be used as a soft mask.
+A clip is always a shape: a gradient or an image's alpha can't be used as a soft mask.

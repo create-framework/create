@@ -220,8 +220,8 @@ def curves_command(
 struct RegionCapture(DrawTarget):
     """A `DrawTarget` that keeps the command a region draws as, in
     `clip_style()`, instead of recording it: how `canvas.clip` turns any
-    `Region` into its clip's command. A region draws as exactly one shape;
-    a curve never reaches it, since a curve is not a `Region`."""
+    `Shape` into its clip's command. A shape draws as exactly one command;
+    a curve never reaches it, since a curve is not a `Shape`."""
 
     var transform: Transform
     var scale: Float64

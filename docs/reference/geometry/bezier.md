@@ -12,14 +12,14 @@ towards themselves and set the direction it leaves `start`
 curve SVG paths, fonts and vector editors use. For a smooth curve through
 given points instead, see `Spline`.
 
-Like `Line`, a curve has no interior and is not a region: there is no
+Like `Line`, a curve has no interior and is not a `Shape`: there is no
 `area`, `contains` or `overlaps` for it.
 
 `t` runs from 0 at `start` to 1 at `end`, but it is not proportional to
 distance along the curve — equal steps in `t` bunch up where the
 controls do.
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Fields
 

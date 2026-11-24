@@ -4,7 +4,7 @@ from create._optional import _OptionalFloat64
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Region
+from .drawable import Curve, DrawTarget, Shape
 from ._shared import (
     _FILLET_STEP,
     _RADIUS_EPSILON,
@@ -29,7 +29,7 @@ from .triangle import Triangle
 
 
 struct Sector(
-    Copyable, Equatable, ImplicitlyCopyable, Movable, Region, Writable
+    Copyable, Equatable, ImplicitlyCopyable, Movable, Shape, Writable
 ):
     """A sector -- a slice of pie: the region between two radii of the
     circle around `position` with radius `radius`, from `start_angle` round by
