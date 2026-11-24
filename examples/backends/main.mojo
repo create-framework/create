@@ -11,8 +11,7 @@ fills under a translucent stroke, a turning square whose stroke follows the
 turn, a fan of thin lines, a gradient inside a sweeping arc, and an image.
 In full screen the scene also has the letterbox bars of `FIT`: the 4:3
 design keeps its size, so on a 16:9 display the bars show from the first
-frame. A cycles the antialiasing level, to compare the edges at each, and
-Escape quits.
+frame. A cycles the antialiasing level, to compare the edges at each.
 """
 
 from std.sys import argv
@@ -59,8 +58,6 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
-        if context.keyboard.pressed(Key.ESCAPE):
-            context.quit()
         if context.keyboard.pressed(Key.A):
             # The level is the canvas's: it lasts until changed, and covers
             # this whole frame.
