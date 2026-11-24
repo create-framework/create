@@ -77,9 +77,20 @@ def test_a_pattern_of_no_length_is_solid() raises -> None:
 
 def test_a_preset_resolves_against_the_thickness() raises -> None:
     var dashed = StrokeDash.DASHED.with_offset(1)._resolved(4)
-    assert_equal(dashed, StrokeDash(12, 8, offset=1))
-    assert_equal(StrokeDash.DOTTED._resolved(4), StrokeDash(0, 8))
+    assert_equal(dashed._length(0), 12)
+    assert_equal(dashed._length(1), 8)
+    assert_equal(dashed.offset(), 1)
+    var dotted = StrokeDash.DOTTED._resolved(4)
+    assert_equal(dotted._length(0), 0)
+    assert_equal(dotted._length(1), 8)
     assert_equal(StrokeDash(5, 5)._resolved(4), StrokeDash(5, 5))
+
+
+def test_a_resolved_preset_fits_and_exact_lengths_do_not() raises -> None:
+    assert_true(StrokeDash.DASHED._resolved(4)._fit)
+    assert_true(StrokeDash.DOTTED._resolved(4)._fit)
+    assert_false(StrokeDash(12, 8)._resolved(4)._fit)
+    assert_true(StrokeDash.DASHED._resolved(4) != StrokeDash(12, 8))
 
 
 # Style and canvas.
@@ -101,7 +112,9 @@ def test_a_command_records_a_preset_as_lengths() raises -> None:
     var paint = _ResolvedStyle(
         stroke_thickness=3, stroke_dash=StrokeDash.DASHED
     )._paint()
-    assert_equal(paint.stroke_dash, StrokeDash(9, 6))
+    assert_equal(paint.stroke_dash, StrokeDash.DASHED._resolved(3))
+    assert_equal(paint.stroke_dash._length(0), 9)
+    assert_equal(paint.stroke_dash._length(1), 6)
     assert_equal(paint.stroke_cap, StrokeCap.BUTT)
 
 
@@ -262,6 +275,102 @@ def test_a_closed_path_runs_back_to_its_start() raises -> None:
     )
     # A dash on each half of each of the four sides.
     assert_equal(len(pieces.quads), 16)
+
+
+def test_a_fitted_line_ends_on_a_dash() raises -> None:
+    var pieces = dash_path(
+        [Point(0, 0), Point(105, 0)],
+        False,
+        [10.0, 10.0],
+        0.0,
+        2.0,
+        StrokeCap.BUTT,
+        Vector(1, 0),
+        fit=True,
+    )
+    # Six dashes 10 long, the gaps stretched to 9: [0, 10], [19, 29], ...
+    # [95, 105].
+    assert_equal(len(pieces.quads), 24)
+    assert_equal(pieces.quads[4].x, 19.0)
+    assert_equal(pieces.quads[21].x, 105.0)
+
+
+def test_fitted_dots_land_on_both_ends() raises -> None:
+    var pieces = dash_path(
+        [Point(0, 0), Point(100, 0)],
+        False,
+        [0.0, 12.0],
+        0.0,
+        4.0,
+        StrokeCap.ROUND,
+        Vector(1, 0),
+        fit=True,
+    )
+    # Nine dots 12.5 apart, from 0 to 100.
+    assert_equal(len(pieces.caps), 9)
+
+
+def test_fitted_dots_go_evenly_round_a_closed_path() raises -> None:
+    var pieces = dash_path(
+        [Point(0, 0), Point(0, -10), Point(10, -10), Point(10, 0)],
+        True,
+        [0.0, 9.0],
+        0.0,
+        4.0,
+        StrokeCap.ROUND,
+        Vector(1, 0),
+        fit=True,
+    )
+    # Round the 40 long square, four dots 10 apart, and none doubled where
+    # the path comes back to its start.
+    assert_equal(len(pieces.caps), 4)
+
+
+def test_a_fitted_closed_path_centres_a_dash_on_its_start() raises -> None:
+    var pieces = dash_path(
+        [Point(0, 0), Point(0, -10), Point(10, -10), Point(10, 0)],
+        True,
+        [6.0, 6.0],
+        0.0,
+        2.0,
+        StrokeCap.ROUND,
+        Vector(1, 0),
+        fit=True,
+    )
+    # Three dashes round the 40 long square, the first from (3, 0) round
+    # the start corner to (0, -3) as one dash: two round ends each.
+    assert_equal(len(pieces.caps), 6)
+    assert_equal(len(pieces.quads), 16)
+
+
+def test_a_dash_across_the_seam_is_one_dash() raises -> None:
+    var pieces = dash_path(
+        [Point(0, 0), Point(0, -10), Point(10, -10), Point(10, 0)],
+        True,
+        [10.0, 10.0],
+        -5.0,
+        2.0,
+        StrokeCap.ROUND,
+        Vector(1, 0),
+    )
+    # Exact lengths, started 5 back: a dash from (5, 0) round the start to
+    # (0, -5), and one from (10, -5) round to (5, -10).
+    assert_equal(len(pieces.caps), 4)
+
+
+def test_a_path_too_short_for_two_fitted_dashes_is_solid() raises -> None:
+    var pieces = dash_path(
+        [Point(0, 0), Point(15, 0)],
+        False,
+        [10.0, 10.0],
+        0.0,
+        2.0,
+        StrokeCap.ROUND,
+        Vector(1, 0),
+        fit=True,
+    )
+    assert_equal(len(pieces.caps), 2)
+    assert_equal(len(pieces.quads), 4)
 
 
 # Where the dashes land.

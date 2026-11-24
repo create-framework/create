@@ -60,8 +60,8 @@ takes exact lengths instead, in the same units as the thickness:
 | Value | Stroke |
 |---|---|
 | `StrokeDash.SOLID` | Unbroken (the default) |
-| `StrokeDash.DASHED` | Dashes 3 thicknesses long, 2 apart |
-| `StrokeDash.DOTTED` | Round dots as wide as the stroke, 2 thicknesses apart |
+| `StrokeDash.DASHED` | Dashes 3 thicknesses long, about 2 apart |
+| `StrokeDash.DOTTED` | Round dots as wide as the stroke, about 2 thicknesses apart |
 | `StrokeDash(12, 6)` | Dashes 12 long, 6 apart |
 | `StrokeDash(12, 4, 2, 4)` | Up to four pairs of dash and gap lengths, repeated (dash-dot here) |
 
@@ -71,6 +71,12 @@ var ants = StrokeDash(6, 6).with_offset(context.time.elapsed * 20)
 with canvas.style(stroke=Color.BLACK, fill_enabled=False, stroke_dash=ants):
     canvas.draw(self.selection)
 ```
+
+**The presets fit the stroke.** `DASHED` and `DOTTED` widen or narrow their gaps a little so the
+dashes come out even: a whole number of them round a closed outline, with one centred where the
+pattern starts, and one at each end of a line or a curve. A dash keeps its length and a dot its
+size; only the gaps change. A line too short for a dash at each end is drawn solid. The lengths
+given to `StrokeDash(...)` are exact, and never stretched.
 
 **Each dash is a stroke of its own.** `stroke_cap` finishes both its ends, and a dash that runs
 round a corner turns it with a sharp, pointed join. A dot is a dash of no length, so `StrokeDash(0,
@@ -86,8 +92,9 @@ whatever the cap. Caps that reach into each other overlap, which shows on a tran
 - a sector from its tip, out along its start radius.
 
 `with_offset(offset)` starts the pattern that far into it, so raising the offset a little every
-frame moves the dashes back along the stroke, as the marching ants above do. On a closed outline the
-pattern isn't stretched to fit, so where it comes round to its start a dash can meet a shorter one.
+frame moves the dashes back along the stroke, as the marching ants above do. On a closed outline, a
+dash that runs past the start is one dash with the dash there. Exact lengths aren't stretched to
+fit, so where they come round to the start, a dash can meet a shorter one; the presets always fit.
 
 A few more details:
 

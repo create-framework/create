@@ -12,16 +12,20 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     | Value | Stroke |
     |---|---|
     | `SOLID` | Unbroken (the default) |
-    | `DASHED` | Dashes 3 thicknesses long, 2 apart |
-    | `DOTTED` | Round dots as wide as the stroke, 2 thicknesses apart |
+    | `DASHED` | Dashes 3 thicknesses long, about 2 apart |
+    | `DOTTED` | Round dots as wide as the stroke, about 2 thicknesses apart |
     | `StrokeDash(on, off)` | Dashes `on` long, `off` apart |
     | `StrokeDash(on, off, on, off, ...)` | Up to four on/off pairs, repeated |
 
     **A preset is a look; a constructor is exact control.** The presets
     scale with the stroke's thickness, so they suit any stroke as they are.
-    A constructor's lengths are world units, scaled by autoscale, the
-    camera and the transform as the thickness is, and keep their spacing
-    whatever the thickness. A dot is a dash of no length: `DOTTED` is
+    Their gaps also stretch or shrink a little so the dashes come out even:
+    a whole number of them round a closed outline, with one centred where
+    it starts, and one at each end of a line or curve. A line too short for
+    a dash at each end is drawn solid. A constructor's lengths are exact:
+    world units, scaled by autoscale, the camera and the transform as the
+    thickness is, never stretched, and keeping their spacing whatever the
+    thickness. A dot is a dash of no length: `DOTTED` is
     always round, while `StrokeDash(0, 8)` takes `stroke_cap`, so it draws
     dots under `ROUND`, squares under `SQUARE` and nothing under `BUTT`.
 
@@ -37,8 +41,9 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     ellipse at its right-most point, both running counter-clockwise. A
     sector starts at its tip, out along its start radius. `offset` starts
     the pattern that far into itself, so raising it every frame marches the
-    dashes backwards along the stroke (`with_offset`). A closed outline
-    doesn't stretch the pattern to fit: where it comes back round, a dash
+    dashes backwards along the stroke (`with_offset`). On a closed outline,
+    a dash that runs past the start is one dash with the dash there. Exact
+    lengths aren't stretched to fit, so where they come back round, a dash
     can meet a shorter one.
 
     **Every dash is a stroke of its own:** `stroke_cap` finishes both its
@@ -57,6 +62,9 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     var _count: Int
     var _kind: Int
     var _offset: Float64
+    var _fit: Bool
+    """Whether the gaps stretch so the dashes fit the path evenly: true for
+    a preset once resolved, false for a constructor's exact lengths."""
 
     comptime SOLID = StrokeDash(_kind=_EXPLICIT)
     comptime DASHED = StrokeDash(_kind=_DASHED)
@@ -71,6 +79,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self._count = 2
         self._kind = _EXPLICIT
         self._offset = offset
+        self._fit = False
 
     def __init__(out self, *lengths: Float64, offset: Float64 = 0) raises:
         """The pattern `on, off, on, off, ...`, in world units, repeated
@@ -100,6 +109,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self._count = len(lengths)
         self._kind = _EXPLICIT
         self._offset = offset
+        self._fit = False
 
     def __init__(out self, *, _kind: Int, _offset: Float64 = 0):
         """A preset, or `SOLID` (an explicit pattern of no lengths)."""
@@ -107,6 +117,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self._count = 0
         self._kind = _kind
         self._offset = _offset
+        self._fit = False
 
     def with_offset(self, offset: Float64) -> StrokeDash:
         """This pattern starting `offset` world units into itself, for
@@ -125,6 +136,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             and self._count == other._count
             and self._offset == other._offset
             and self._lengths == other._lengths
+            and self._fit == other._fit
         )
 
     def __ne__(self, other: StrokeDash) -> Bool:
@@ -168,7 +180,9 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         """This pattern for a stroke `thickness` world units thick, as
         explicit lengths: a preset scaled by the thickness, a constructor's
         lengths as they are. Resolved when a command is recorded, so a
-        shadow that thickens the stroke keeps the shape's dashes."""
+        shadow that thickens the stroke keeps the shape's dashes. A resolved
+        preset is marked to fit (`_fit`), so the replay stretches its gaps
+        to the path."""
         if self._kind == _EXPLICIT:
             return self
         var out = StrokeDash(_kind=_EXPLICIT, _offset=self._offset)
@@ -179,6 +193,7 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             out._lengths[0] = 0.0
             out._lengths[1] = 2.0 * thickness
         out._count = 2
+        out._fit = True
         return out
 
     def _length(self, i: Int) -> Float64:
