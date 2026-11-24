@@ -1423,7 +1423,9 @@ struct UILayer[
             if ui._focused and ui._focused.value() == id:
                 ui._clear_focus()  # a disabled widget can't keep focus
             if ui._hot and ui._hot.value() == id and mouse.pressed():
-                ui._clear_focus()  # a click on it is a click on no widget
+                # a click on it is a click on no widget; `_begin_layer` saw
+                # last frame's hits, where it may not have been disabled yet
+                ui._clear_focus()
             return _Interaction(False, False, False, False, False, False)
         if take_focus:
             ui._focus(id, visible=True, takes_typing=takes_typing)
