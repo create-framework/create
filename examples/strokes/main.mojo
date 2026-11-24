@@ -1,8 +1,7 @@
 """Stroke caps, alignment and dashes side by side: each cap on a thick
 translucent line and arc, each alignment on a rectangle, a rounded triangle
 and a polygon, with a thin guide marking the true geometry, and three dash
-patterns, the last marching round. Drag the mouse to draw with round caps,
-which close the notches between segments; press Space to clear.
+patterns, the last marching round.
 """
 
 from create import *
@@ -13,13 +12,12 @@ comptime TEXT = COLORS.on_surface
 comptime GUIDE = COLORS.on_surface
 comptime FILL = COLORS.surface_container_highest
 comptime STROKE = Color.CYAN.with_alpha(150)
-comptime INK = Color.MAGENTA
 
 comptime COLUMN = 400.0
 """How far apart the three columns stand."""
 comptime ROW = 250.0
 """How far apart the three rows stand."""
-comptime TOP_LABEL = 330.0
+comptime TOP_LABEL = 322.0
 """Where the top row's label sits; each row's shapes sit below its label."""
 comptime LABEL_GAP = 110.0
 """How far below its label a row's shapes are centred."""
@@ -27,8 +25,6 @@ comptime SHAPE = 90.0
 """How big each shape in the alignment row is."""
 comptime SHAPE_SPACING = 120.0
 """How far apart the shapes in the alignment row stand."""
-comptime MAX_POINTS = 2000
-"""The drawing stops growing past this many points."""
 
 
 def cap_name(cap: StrokeCap) -> String:
@@ -49,27 +45,11 @@ def alignment_name(alignment: StrokeAlign) -> String:
 
 @fieldwise_init
 struct App(Program):
-    var drawing: List[List[Point]]
-    """The mouse strokes, one list of points per drag."""
-
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
-        return App(drawing=List[List[Point]]())
+        return App()
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        if context.keyboard.pressed(Key.SPACE):
-            self.drawing.clear()
-        if context.mouse.pressed():
-            self.drawing.append(List[Point]())
-        if context.mouse.down() and len(self.drawing) > 0:
-            var points = 0
-            for stroke in self.drawing:
-                points += len(stroke)
-            if points < MAX_POINTS:
-                self.drawing[len(self.drawing) - 1].append(
-                    context.mouse.position
-                )
-
         canvas.background(BACKGROUND)
         canvas.text_color(TEXT)
         canvas.font_size(18)
@@ -165,19 +145,6 @@ struct App(Program):
                 canvas.rectangle((x - 55, y), 120, 80, corner_radius=14)
                 canvas.circle((x + 75, y), 40)
             canvas.text("stroke_dash " + dash_names[i], (x, label))
-
-        # The mouse drawing: each segment its own line, round-capped, so
-        # the segments meet without a notch at any turn.
-        with canvas.style(
-            stroke=INK, stroke_thickness=14, stroke_cap=StrokeCap.ROUND
-        ):
-            for stroke in self.drawing:
-                for i in range(len(stroke)):
-                    canvas.line(stroke[max(i - 1, 0)], stroke[i])
-        canvas.text(
-            "Drag to draw with round caps, Space to clear",
-            (0, canvas.bottom() + 30),
-        )
 
 
 def main() raises:
