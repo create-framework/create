@@ -118,6 +118,7 @@ from ._gl import (
 from .antialiasing import Antialiasing
 from ._blur import (
     SHADOW_MASK_LIMIT,
+    BlurredMask,
     PlacedMask,
     blur_reach,
     blur_image_alpha,
@@ -130,11 +131,13 @@ from ._lower import (
     shape_pieces,
     shape_shadow_mask,
 )
-from ._inset import inset_shadow_mask
+from ._inset import inset_layer, inset_uncovered, interior_pieces
+from ._surface import PlacedSurface
 from ._image_mapping import upright, upright_rect
 from ._interned_image import _InternedImage
 from ._tessellate import (
     MODE_SOLID,
+    MODE_TEXTURE,
     VertexBuffer,
     _shade_fill,
     emit_blurred_shadow,
@@ -142,6 +145,7 @@ from ._tessellate import (
     emit_glyph,
     emit_inset_shadow,
     emit_letterbox,
+    emit_masked_pieces,
     emit_pieces,
     emit_plain_triangle,
     emit_rect,
@@ -1024,25 +1028,47 @@ struct GLRenderer(Movable):
                     shape_shadow_mask(sh, sh.transform, scale, blur),
                     c.paint.shadow_color,
                 )
+        # Text and images are drawn with their inset shadow mixed in, as the
+        # CPU builds them, in place of the command; see `_inset.mojo`.
+        var inset = casts_inset_shadow(c)
+        if inset and (
+            c.payload.isa[TextPayload]() or c.payload.isa[ImagePayload]()
+        ):
+            self._layer(
+                inset_layer(
+                    c,
+                    c.transform,
+                    shadow_transform(c, scale),
+                    scale,
+                    self.grid,
+                    text,
+                    images,
+                )
+            )
+            return
         self._one(c, images, text, width, height, scale)
-        # Over the command, clipped to its interior: a rectangle's or a
+        # Over the command, inside it, sample by sample: a rectangle's or a
         # circle's as solid-mode geometry, which batches with anything, and
-        # every other kind's as the CPU's mask.
-        if casts_inset_shadow(c):
+        # every other kind's as its interior again, through the CPU's mask
+        # of what the silhouette leaves uncovered.
+        if inset:
             if insets_analytically(c):
                 emit_inset_shadow(self.vertices, c, scale)
-            else:
-                self._mask_shadow(
-                    inset_shadow_mask(
-                        c,
-                        c.transform,
-                        shadow_transform(c, scale),
-                        scale,
-                        self.grid,
-                        text,
-                        images,
-                    ),
+                return
+            var uncovered = inset_uncovered(
+                c, c.transform, shadow_transform(c, scale), scale, self.grid
+            )
+            if uncovered:
+                ref placed = uncovered.value()
+                self._frame_texture(placed.mask)
+                emit_masked_pieces(
+                    self.vertices,
+                    interior_pieces(c, c.transform, scale),
                     c.paint.shadow_color,
+                    Float64(placed.x),
+                    Float64(placed.y),
+                    Float64(placed.mask.width),
+                    Float64(placed.mask.height),
                 )
 
     def _one(
@@ -1366,23 +1392,13 @@ struct GLRenderer(Movable):
         emit_image(self.vertices, c, scale, blur_reach(sigma))
 
     def _mask_shadow(mut self, placed: PlacedMask, color: Color) raises:
-        """A shadow built as a mask: a blurred curve's, sector's or polygon's,
-        or an inset one. The CPU replay's mask, uploaded for this frame
-        only and drawn as one quad where the CPU blits it."""
+        """A shadow built as a mask: a blurred curve's, sector's or
+        polygon's. The CPU replay's mask, uploaded for this frame only and
+        drawn as one quad where the CPU blits it."""
         ref mask = placed.mask
         if mask.width == 0 or mask.height == 0:
             return
-        # Uploading rebinds the image unit; see `_image_shadow`.
-        self._flush()
-        var rgba = List[UInt8](length=mask.width * mask.height * 4, fill=255)
-        for i in range(mask.width * mask.height):
-            rgba[i * 4 + 3] = mask.pixels[i]
-        var name = self._upload(
-            mask.width, mask.height, Int(rgba.unsafe_ptr()), GL_NEAREST
-        )
-        _ = rgba^
-        self.bound = name
-        self.frame_textures.append(name)
+        self._frame_texture(mask)
         emit_silhouette_mask(
             self.vertices,
             Float64(placed.x),
@@ -1391,6 +1407,47 @@ struct GLRenderer(Movable):
             Float64(mask.height),
             color,
         )
+
+    def _layer(mut self, layer: PlacedSurface) raises:
+        """A command drawn on the CPU with its inset shadow mixed in,
+        uploaded for this frame only and drawn one texel a pixel where the
+        CPU blits it."""
+        ref pixels = layer.pixels
+        if pixels.width == 0 or pixels.height == 0:
+            return
+        self._frame_texture(pixels.data, pixels.width, pixels.height)
+        emit_silhouette_mask(
+            self.vertices,
+            Float64(layer.x),
+            Float64(layer.y),
+            Float64(pixels.width),
+            Float64(pixels.height),
+            Color.WHITE,
+            MODE_TEXTURE,
+        )
+
+    def _frame_texture(mut self, mask: BlurredMask) raises:
+        """`mask` as a texture on the image unit for this frame only: white,
+        the mask in alpha, so `MODE_SILHOUETTE` reads it."""
+        var rgba = List[UInt8](length=mask.width * mask.height * 4, fill=255)
+        for i in range(mask.width * mask.height):
+            rgba[i * 4 + 3] = mask.pixels[i]
+        self._frame_texture(rgba, mask.width, mask.height)
+
+    def _frame_texture(
+        mut self, rgba: List[UInt8], width: Int, height: Int
+    ) raises:
+        """The `width` x `height` RGBA pixels `rgba` as a texture on the
+        image unit, bound, and deleted after the frame's final flush. Texels
+        land one-to-one on device pixels, so nearest sampling reads each
+        exactly."""
+        # Uploading rebinds the image unit; see `_image_shadow`.
+        self._flush()
+        var name = self._upload(
+            width, height, Int(rgba.unsafe_ptr()), GL_NEAREST
+        )
+        self.bound = name
+        self.frame_textures.append(name)
 
     def _upload(
         mut self, width: Int, height: Int, pixels: Int, filter: Int32

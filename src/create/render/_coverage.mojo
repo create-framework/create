@@ -50,21 +50,6 @@ struct CoverageScratch(Movable):
         self.coverage = List[Int]()
 
 
-def _paint_at(paint: FillPaint, x: Int, y: Int) -> Color:
-    """The colour `paint` gives pixel `(x, y)`, sampled at its centre as
-    `fill_span` would."""
-    if not paint.shader:
-        return paint.color
-    ref shader = paint.shader.value()
-    ref m = shader.mapping
-    var xc = Float64(x) + 0.5
-    var yc = Float64(y) + 0.5
-    var u = m.u[0] * xc + m.u[1] * yc + m.u[2]
-    var v = m.v[0] * xc + m.v[1] * yc + m.v[2]
-    var t = sqrt(u * u + v * v) if m.radial else u
-    return shader.gradient._sample(t, x, y)
-
-
 def _mixed(
     paints: List[FillPaint],
     coverage: List[Int],
@@ -76,7 +61,7 @@ def _mixed(
     paints mixed by their share of the samples, premultiplied, and as
     opaque as the share they cover together."""
     if len(paints) == 1:
-        var c = _paint_at(paints[0], x, y)
+        var c = paints[0]._at(x, y)
         return Color(c.r, c.g, c.b, UInt8(Int(c.a) * coverage[0] // full))
     var red = 0.0
     var green = 0.0
@@ -86,7 +71,7 @@ def _mixed(
         var samples = coverage[k]
         if samples <= 0:
             continue
-        var c = _paint_at(paints[k], x, y)
+        var c = paints[k]._at(x, y)
         var w = Float64(samples) * Float64(c.a)
         red += w * Float64(c.r)
         green += w * Float64(c.g)
@@ -181,7 +166,7 @@ def composite_coverage[
     var key_count = len(scratch.paints)
     var shaded = -1
     for k in range(key_count):
-        if scratch.paints[k].shader:
+        if scratch.paints[k]._per_pixel():
             shaded = k
     var row0 = y_lo >> shift
     var rows = (y_hi >> shift) + 1 - row0

@@ -109,20 +109,10 @@ def pieces_mask(pieces: Pieces, grid: Int = 1) -> PlacedMask:
     every pixel falls where it would on the device and the mask holds the
     coverage the pieces paint there. No pieces give an empty mask.
     """
-    var lo = Point(Float64.MAX, Float64.MAX)
-    var hi = Point(-Float64.MAX, -Float64.MAX)
-    _extend(lo, hi, pieces.fill_quads)
-    _extend(lo, hi, pieces.stroke_quads)
-    for polygon in pieces.fill_polygons:
-        _extend(lo, hi, polygon)
-    for polygon in pieces.stroke_polygons:
-        _extend(lo, hi, polygon)
-    if lo.x > hi.x:
+    var box = pieces_bounds(pieces)
+    if not box:
         return PlacedMask.empty()
-    var x0 = Int(floor(lo.x))
-    var y0 = Int(floor(lo.y))
-    var width = Int(ceil(hi.x)) - x0 + 1
-    var height = Int(ceil(hi.y)) - y0 + 1
+    var x0, y0, width, height = box.value()
 
     # Filled white on a scratch surface, so the mask is the coverage the
     # pieces paint; only its alpha is kept. Antialiased, they are recorded
@@ -145,6 +135,25 @@ def pieces_mask(pieces: Pieces, grid: Int = 1) -> PlacedMask:
         composite_coverage(s, runs, grid, Color.WHITE, coverage)
         _ = runs^
     return PlacedMask(BlurredMask(scratch.alpha(), width, height, 0), x0, y0)
+
+
+def pieces_bounds(pieces: Pieces) -> Optional[Tuple[Int, Int, Int, Int]]:
+    """`(x, y, width, height)`, the whole device pixels every piece lies
+    in, with a pixel to spare on the right and below; `None` for no
+    pieces."""
+    var lo = Point(Float64.MAX, Float64.MAX)
+    var hi = Point(-Float64.MAX, -Float64.MAX)
+    _extend(lo, hi, pieces.fill_quads)
+    _extend(lo, hi, pieces.stroke_quads)
+    for polygon in pieces.fill_polygons:
+        _extend(lo, hi, polygon)
+    for polygon in pieces.stroke_polygons:
+        _extend(lo, hi, polygon)
+    if lo.x > hi.x:
+        return None
+    var x0 = Int(floor(lo.x))
+    var y0 = Int(floor(lo.y))
+    return (x0, y0, Int(ceil(hi.x)) - x0 + 1, Int(ceil(hi.y)) - y0 + 1)
 
 
 def _fill_shifted[

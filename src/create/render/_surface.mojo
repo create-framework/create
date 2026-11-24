@@ -2,6 +2,7 @@ from std.memory import unsafe_memcpy
 
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
+from ._blur import BlurredMask, PlacedMask
 from ._clip import _ClipRows
 from ._png import write_png
 
@@ -148,4 +149,33 @@ struct MemorySurface(Movable):
             self.data[off + 1],
             self.data[off + 2],
             self.data[off + 3],
+        )
+
+
+struct PlacedSurface(Movable):
+    """Pixels drawn off the device, and where their top-left one lands on
+    it: a command drawn on its own, to be composited as one."""
+
+    var pixels: MemorySurface
+    var x: Int
+    var y: Int
+
+    def __init__(out self, var pixels: MemorySurface, x: Int, y: Int):
+        self.pixels = pixels^
+        self.x = x
+        self.y = y
+
+    @staticmethod
+    def empty() -> PlacedSurface:
+        """No pixels, which paint nothing."""
+        return PlacedSurface(MemorySurface(0, 0), 0, 0)
+
+    def mask(self) -> PlacedMask:
+        """The alpha alone, placed where the pixels are."""
+        return PlacedMask(
+            BlurredMask(
+                self.pixels.alpha(), self.pixels.width, self.pixels.height, 0
+            ),
+            self.x,
+            self.y,
         )

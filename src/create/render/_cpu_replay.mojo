@@ -10,9 +10,9 @@ rasteriser in `_raster.mojo` knows about any of them.
 
 from std.collections import Dict, Optional
 from std.math import max, min, abs, sqrt, ceil, floor
+from std.memory import ArcPointer
 
 from create.math.transform import Transform
-from create.math.vector import Vector
 
 from ._command import (
     CirclePayload,
@@ -40,6 +40,7 @@ from ._blur import (
 )
 from ._raster import (
     FillPaint,
+    _InsetShade,
     blend,
     blit_alpha,
     blit_image,
@@ -66,14 +67,12 @@ from ._shadow import (
     casts_inset_shadow,
     casts_outer_shadow,
     image_shadow_mask,
-    inset_interior,
-    insets_analytically,
     local_stroke_thickness,
     shadow_command,
     shadow_transform,
 )
 from create.geometry._fillet import rect_corner_radius
-from ._inset import inset_shadow_mask
+from ._inset import inset_layer, inset_uncovered
 from ._surface import Surface
 from ._resources import Resources
 from .antialiasing import Antialiasing
@@ -150,93 +149,6 @@ def _blurred_shadow[
         for px in range(b[0], b[2]):
             var l = minv._apply_xy(Float64(px) + 0.5, Float64(py) + 0.5)
             var a = Int(full * shape.coverage(l[0], l[1]) + 0.5)
-            if a >= Int(color.a):
-                if run < 0:
-                    run = px
-                continue
-            if run >= 0:
-                fill_span(s, row + run * 4, px - run, color)
-                run = -1
-            if a > 0:
-                blend(
-                    s, row + px * 4, Color(color.r, color.g, color.b, UInt8(a))
-                )
-        if run >= 0:
-            fill_span(s, row + run * 4, b[2] - run, color)
-
-
-def _inset_shadow[
-    o: Origin[mut=True]
-](
-    s: Surface[o],
-    c: RenderCommand,
-    scale: Float64,
-    m: Transform,
-    sm: Transform,
-    blur: Int,
-    grid: Int,
-):
-    """Paint `c`'s inset shadow over it: the shadow colour wherever the
-    silhouette — the interior moved by the offset (`sm`) and shrunk by the
-    spread — does not cover, clipped to the interior (`m`).
-
-    Tested at pixel centres like `_blurred_shadow`, since the alpha is
-    per pixel anyway wherever the shadow is soft; a `blur` of 0 cuts the
-    silhouette hard. The interior's edge is antialiased as the shape's is:
-    a pixel within reach of it counts its `grid` x `grid` samples inside.
-    Full-alpha runs go through `fill_span` together.
-    """
-    var interior = inset_interior(c, local_stroke_thickness(c, m, scale))
-    if interior.empty:
-        return
-    var cut = interior.shrunk(c.paint.shadow_spread)
-    var soft = BlurredSilhouette(cut, c.paint.shadow_blur)
-    var lb = interior.bounds()
-    var b = device_bounds(m, lb[0], lb[1], lb[2], lb[3], s.width, s.height)
-    var minv = m.inverse()
-    var sminv = sm.inverse()
-    # Half a pixel's diagonal in local units, at most: a pixel whose centre
-    # is further than this from the edge lies wholly on one side of it.
-    var reach = 0.5 * (
-        minv.apply(Vector.RIGHT).magnitude()
-        + minv.apply(Vector.DOWN).magnitude()
-    )
-    var samples = Float64(grid * grid)
-    var color = c.paint.shadow_color
-    var full = Float64(color.a)
-    for py in range(b[1], b[3]):
-        var row = py * s.width * 4
-        var run = -1
-        for px in range(b[0], b[2]):
-            var x = Float64(px) + 0.5
-            var y = Float64(py) + 0.5
-            var l = minv._apply_xy(x, y)
-            var d = interior.distance(l[0], l[1])
-            var inside: Float64
-            if grid == 1 or d < -reach:
-                inside = 1.0 if d <= 0.0 else 0.0
-            elif d > reach:
-                inside = 0.0
-            else:
-                var hits = 0
-                for sy in range(grid):
-                    for sx in range(grid):
-                        var p = minv._apply_xy(
-                            Float64(px) + (Float64(sx) + 0.5) / Float64(grid),
-                            Float64(py) + (Float64(sy) + 0.5) / Float64(grid),
-                        )
-                        if interior.contains(p[0], p[1]):
-                            hits += 1
-                inside = Float64(hits) / samples
-            var a = 0
-            if inside > 0.0:
-                var ls = sminv._apply_xy(x, y)
-                var cov: Float64
-                if blur > 0:
-                    cov = soft.coverage(ls[0], ls[1])
-                else:
-                    cov = 1.0 if cut.contains(ls[0], ls[1]) else 0.0
-                a = Int(full * inside * (1.0 - cov) + 0.5)
             if a >= Int(color.a):
                 if run < 0:
                     run = px
@@ -682,12 +594,16 @@ struct CpuReplay(Movable):
     var shadow_masks: Dict[Int, BlurredMask]
     """Blurred image silhouettes, keyed by `shadow_mask_key`: an image's
     shadow is blurred once per image, device size and blur, not per frame."""
+    var inset_paint: Optional[FillPaint]
+    """While `_with_inset_shadow` draws a region or a curve, its interior's
+    paint with the inset shadow mixed in."""
 
     def __init__(out self):
         self.antialiasing = Antialiasing.OFF
         self._coverage_runs = List[Int]()
         self._coverage = CoverageScratch()
         self.shadow_masks = Dict[Int, BlurredMask]()
+        self.inset_paint = None
 
     def replay[
         o: Origin[mut=True]
@@ -852,9 +768,13 @@ struct CpuReplay(Movable):
                     placed.y,
                     c.paint.shadow_color,
                 )
+        # An inset shadow is drawn with the command, inside it.
+        if casts_inset_shadow(c):
+            self._with_inset_shadow(res, t, c, scale, m, pre)
+            return
         if c.payload.isa[ClearPayload]():
             if c.paint.fill_gradient:
-                var paint = _fill_paint(c, m)
+                var paint = self._fill_paint(c, m)
                 for row in range(t.height):
                     fill_span(t, row * t.width * 4, t.width, paint)
             else:
@@ -867,35 +787,78 @@ struct CpuReplay(Movable):
             self._text(res, t, c, scale, m)
         elif c.payload.isa[LetterboxPayload]():
             self._letterbox(t, c)
-        # An inset shadow lies over the command, inside its stroke.
-        if casts_inset_shadow(c):
-            var sm = pre @ shadow_transform(c, scale)
-            if insets_analytically(c):
-                var blur = Int(
-                    c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5
-                )
-                _inset_shadow(
-                    t, c, scale, m, sm, blur, self.antialiasing._cpu_grid()
-                )
-            else:
-                var placed = inset_shadow_mask(
-                    c,
-                    m,
-                    sm,
-                    scale,
-                    self.antialiasing._cpu_grid(),
-                    res.text[],
-                    res.images,
-                )
-                blit_alpha(
-                    t,
-                    placed.mask.pixels.unsafe_ptr(),
-                    placed.mask.width,
-                    placed.mask.height,
-                    placed.x,
-                    placed.y,
-                    c.paint.shadow_color,
-                )
+
+    def _with_inset_shadow[
+        o: Origin[mut=True]
+    ](
+        mut self,
+        mut res: Resources,
+        s: Surface[o],
+        c: RenderCommand,
+        scale: Float64,
+        m: Transform,
+        pre: Transform,
+    ) raises:
+        """Draw `c` with its inset shadow composited in the same pass (see
+        `_inset.mojo`): text and images as one layer with the shadow mixed
+        in, a region or a curve with the shadow mixed into the paint of its
+        interior, its fill or a curve's stroke. A region whose fill is
+        hidden is drawn with a transparent one, so its interior still
+        takes the shadow."""
+        var sm = pre @ shadow_transform(c, scale)
+        var grid = self.antialiasing._cpu_grid()
+        if c.payload.isa[TextPayload]() or c.payload.isa[ImagePayload]():
+            var layer = inset_layer(
+                c, m, sm, scale, grid, res.text[], res.images
+            )
+            blit_image(
+                s,
+                layer.pixels.data.unsafe_ptr(),
+                layer.pixels.width,
+                layer.pixels.height,
+                layer.x,
+                layer.y,
+                layer.pixels.width,
+                layer.pixels.height,
+            )
+            return
+        var uncovered = inset_uncovered(c, m, sm, scale, grid)
+        if not uncovered:
+            # No interior to cast it in.
+            self._shape(s, c, scale, m)
+            return
+        var shade = _InsetShade(
+            c.paint.shadow_color, ArcPointer(uncovered.take())
+        )
+        var drawn = c.copy()
+        var base: FillPaint
+        if not c.is_region():
+            base = c.paint.stroke_color
+        elif c.paint._fill_visible():
+            base = _fill_paint(c, m)
+        else:
+            base = Color.TRANSPARENT
+            # Visible to every rasteriser's test; what it paints is `base`.
+            drawn.paint.fill_enabled = True
+            drawn.paint.fill_gradient = None
+            drawn.paint.fill_color = Color.WHITE
+        self.inset_paint = FillPaint(base, shade)
+        self._shape(s, drawn, scale, m)
+        self.inset_paint = None
+
+    def _fill_paint(self, c: RenderCommand, m: Transform) -> FillPaint:
+        """What the region `c`'s fill paints: its colour or gradient, with
+        the inset shadow mixed in while `_with_inset_shadow` draws it."""
+        if self.inset_paint and c.is_region():
+            return self.inset_paint.value()
+        return _fill_paint(c, m)
+
+    def _stroke_paint(self, c: RenderCommand) -> FillPaint:
+        """What `c`'s stroke paints: its colour, or for a line or a curve,
+        whose stroke is its interior, the inset shadow mixed into it."""
+        if self.inset_paint and not c.is_region():
+            return self.inset_paint.value()
+        return c.paint.stroke_color
 
     def _shape[
         o: Origin[mut=True]
@@ -930,7 +893,12 @@ struct CpuReplay(Movable):
         self._shape_pixels(fine, c, scale * g, Transform(scale=g) @ m)
         var scratch = self._coverage^
         self._coverage = CoverageScratch()
-        composite_coverage(s, runs, grid, _fill_paint(c, m), scratch)
+        # The one paint the per-pixel runs take: a region's fill, or a
+        # line's or a curve's stroke with its inset shadow.
+        var paint = self._fill_paint(c, m) if c.is_region() else (
+            self._stroke_paint(c)
+        )
+        composite_coverage(s, runs, grid, paint, scratch)
         self._coverage = scratch^
         self._coverage_runs = runs^
 
@@ -965,7 +933,7 @@ struct CpuReplay(Movable):
                     p2[1],
                     p3[0],
                     p3[1],
-                    _fill_paint(c, m),
+                    self._fill_paint(c, m),
                 )
         else:
             var pieces = shape_pieces(c, m, scale)
@@ -974,14 +942,14 @@ struct CpuReplay(Movable):
                     s,
                     pieces.fill_quads,
                     pieces.fill_polygons,
-                    _fill_paint(c, m),
+                    self._fill_paint(c, m),
                 )
             if pieces.has_stroke():
                 fill_pieces(
                     s,
                     pieces.stroke_quads,
                     pieces.stroke_polygons,
-                    c.paint.stroke_color,
+                    self._stroke_paint(c),
                 )
 
     def _rect[
@@ -1021,7 +989,7 @@ struct CpuReplay(Movable):
                     y0 + sw,
                     x0 + iw - sw,
                     y0 + ih - sw,
-                    _fill_paint(c, m),
+                    self._fill_paint(c, m),
                 )
             if sw > 0:
                 var sc = c.paint.stroke_color
@@ -1046,7 +1014,7 @@ struct CpuReplay(Movable):
             var sw = 0.0
             if c.paint._stroke_visible():
                 sw = Float64(stroke_thickness_px(c.paint, m, scale))
-            var fill_col = _fill_paint(c, m)
+            var fill_col = self._fill_paint(c, m)
             var stroke_col = c.paint.stroke_color
             for row in range(max(Int(y0), 0), min(Int(y0 + ih), s.height)):
                 var yc = Float64(row) + 0.5
@@ -1126,7 +1094,7 @@ struct CpuReplay(Movable):
             if r_local <= 0.0:
                 var fill_enabled = c.paint._fill_visible()
                 var stroke_enabled = c.paint._stroke_visible()
-                var fill_col = _fill_paint(c, m)
+                var fill_col = self._fill_paint(c, m)
                 var stroke_col = c.paint.stroke_color
                 for row in range(b[1], b[3]):
                     var local0 = minv._apply_xy(
@@ -1217,7 +1185,7 @@ struct CpuReplay(Movable):
                 # negative radius.
                 var fill_enabled = c.paint._fill_visible()
                 var stroke_enabled = c.paint._stroke_visible()
-                var fill_col = _fill_paint(c, m)
+                var fill_col = self._fill_paint(c, m)
                 var stroke_col = c.paint.stroke_color
                 var r2 = r_local * r_local
                 var a = step_x * step_x + step_y * step_y
@@ -1352,7 +1320,7 @@ struct CpuReplay(Movable):
             )
             var fill_enabled = c.paint._fill_visible()
             var stroke_enabled = c.paint._stroke_visible()
-            var fill_col = _fill_paint(c, m)
+            var fill_col = self._fill_paint(c, m)
             var stroke_col = c.paint.stroke_color
             for row in range(y0, y1):
                 var dy = Float64(row) - pcy
@@ -1388,7 +1356,7 @@ struct CpuReplay(Movable):
             var step_y = minv._yx
             var fill_enabled = c.paint._fill_visible()
             var stroke_enabled = c.paint._stroke_visible()
-            var fill_col = _fill_paint(c, m)
+            var fill_col = self._fill_paint(c, m)
             var stroke_col = c.paint.stroke_color
             var full_fill = not stroke_enabled or r_inner <= 0.0
             var a = step_x * step_x + step_y * step_y

@@ -56,25 +56,29 @@ def test_a_gradient_edge_is_partly_covered() raises -> None:
 
 
 @fieldwise_init
-struct InsetOffGrid[triangle: Bool](Program):
+struct InsetOffGrid[triangle: Bool, shadowed: Bool = True](Program):
     """A black shape on black with a red inset shadow banding its inside,
     its left edge at device x 40.25, as `OffGrid`'s: a rectangle, whose
-    inset shadow is analytic, or a right triangle, whose is a mask."""
+    inset shadow is analytic, or a right triangle, whose is a mask. Not
+    `shadowed`, the shape is red instead, to show what it covers."""
 
     var _unused: Int
 
     @staticmethod
     def create(
         mut context: Context, mut canvas: Canvas
-    ) raises -> InsetOffGrid[Self.triangle]:
-        return InsetOffGrid[Self.triangle](0)
+    ) raises -> InsetOffGrid[Self.triangle, Self.shadowed]:
+        return InsetOffGrid[Self.triangle, Self.shadowed](0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
-        canvas.fill(Color.BLACK)
-        canvas.shadow(Color.RED, offset=Vector(0, 0), blur=0, spread=4)
-        canvas.shadow(inset=True)
+        comptime if Self.shadowed:
+            canvas.fill(Color.BLACK)
+            canvas.shadow(Color.RED, offset=Vector(0, 0), blur=0, spread=4)
+            canvas.shadow(inset=True)
+        else:
+            canvas.fill(Color.RED)
         comptime if Self.triangle:
             canvas.triangle((-9.75, -30.0), (20.0, -30.0), (-9.75, 30.0))
         else:
@@ -92,10 +96,83 @@ def test_an_inset_shadow_edge_is_partly_covered() raises -> None:
     assert_equal(triangle.pixel(40, 50), Color(191, 0, 0, 255))
     assert_equal(triangle.pixel(41, 50), Color.RED)
     assert_equal(triangle.pixel(39, 50), Color.BLACK)
-    var hard = run_headless[InsetOffGrid[True]](
-        100, 100, antialiasing=Antialiasing.OFF
-    )
-    assert_equal(hard.pixel(40, 50), Color.RED)
+    # The shadow paints with the shape, so it covers what the shape's own
+    # edge covers, antialiased or not.
+    for aa in [Antialiasing.OFF, Antialiasing.MEDIUM]:
+        for triangle in [False, True]:
+            var shadowed: Image
+            var plain: Image
+            if triangle:
+                shadowed = run_headless[InsetOffGrid[True]](
+                    100, 100, antialiasing=aa
+                )
+                plain = run_headless[InsetOffGrid[True, False]](
+                    100, 100, antialiasing=aa
+                )
+            else:
+                shadowed = run_headless[InsetOffGrid[False]](
+                    100, 100, antialiasing=aa
+                )
+                plain = run_headless[InsetOffGrid[False, False]](
+                    100, 100, antialiasing=aa
+                )
+            for x in range(36, 44):  # the band, 4 deep from 40.25
+                assert_equal(
+                    Int(shadowed.pixel(x, 50).r),
+                    Int(plain.pixel(x, 50).r),
+                    String(x),
+                )
+
+
+@fieldwise_init
+struct WhollyShadowed[kind: Int](Program):
+    """A cyan shape on black under an opaque black inset shadow thrown so
+    far that it covers the whole of the shape's inside: a circle, whose
+    shadow is analytic, a rounded triangle, a Bézier or text."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(
+        mut context: Context, mut canvas: Canvas
+    ) raises -> WhollyShadowed[Self.kind]:
+        return WhollyShadowed[Self.kind](0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.BLACK)
+        canvas.fill(Color(0, 255, 255))
+        canvas.stroke(Color(0, 255, 255), 12)
+        canvas.text_color(Color(0, 255, 255))
+        canvas.font_size(60)
+        canvas.shadow(Color.BLACK, offset=Vector(500, -500), blur=0)
+        canvas.shadow(inset=True)
+        with canvas.transform(Transform(rotation=0.3)):
+            comptime if Self.kind == 0:
+                canvas.stroke_enabled(False)
+                canvas.circle((0.3, 0.0), 30.0)
+            elif Self.kind == 1:
+                canvas.stroke_enabled(False)
+                canvas.triangle((-30, -25), (30, -25), (0, 30), corner_radius=6)
+            elif Self.kind == 2:
+                canvas.bezier((-40, -30), (-40, 60), (40, -60), (40, 30))
+            else:
+                canvas.text("W", (0, 0))
+
+
+def _no_cyan(image: Image, name: String) raises:
+    for y in range(100):
+        for x in range(100):
+            assert_equal(Int(image.pixel(x, y).g), 0, name + String(x, ",", y))
+
+
+def test_an_inset_shadow_lets_nothing_through_at_the_edge() raises -> None:
+    # Drawn after the shape over a partly covered pixel, the shadow would
+    # leave some of the fill showing there: the shape's share, darkened by
+    # the shadow only as much as that share.
+    _no_cyan(run_headless[WhollyShadowed[0]](100, 100), "circle ")
+    _no_cyan(run_headless[WhollyShadowed[1]](100, 100), "triangle ")
+    _no_cyan(run_headless[WhollyShadowed[2]](100, 100), "bezier ")
+    _no_cyan(run_headless[WhollyShadowed[3]](100, 100), "text ")
 
 
 @fieldwise_init

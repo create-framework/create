@@ -1,4 +1,5 @@
 from std.collections import Optional
+from std.memory import ArcPointer
 from std.math import max, min, abs, ceil, floor, sqrt
 from std.sys import Endian
 
@@ -6,6 +7,7 @@ from create.color.blend_mode import BlendMode
 from create.color.color import Color, _multiplied
 from create.text.font import _GlyphInfo
 from create.color.gradient import Gradient, _DeviceMapping
+from ._blur import PlacedMask
 from ._surface import Surface
 from ._image_mapping import ImageMapping
 from create.math.point import Point
@@ -368,30 +370,90 @@ struct _Shader(Copyable, ImplicitlyCopyable, Movable):
     var mapping: _DeviceMapping
 
 
+@fieldwise_init
+struct _InsetShade(Copyable, ImplicitlyCopyable, Movable):
+    """An inset shadow mixed into a paint: `color` over the paint, by as much
+    as the silhouette leaves `uncovered` at each pixel (255 off the mask)."""
+
+    var color: Color
+    var uncovered: ArcPointer[PlacedMask]
+
+    def at(self, x: Int, y: Int) -> Color:
+        """The shadow's colour at device pixel `(x, y)`, its alpha scaled by
+        how much of the pixel the silhouette leaves uncovered."""
+        ref placed = self.uncovered[]
+        ref mask = placed.mask
+        var mx = x - placed.x
+        var my = y - placed.y
+        var uncovered = 255
+        if mx >= 0 and my >= 0 and mx < mask.width and my < mask.height:
+            uncovered = Int(mask.pixels[my * mask.width + mx])
+        var a = (Int(self.color.a) * uncovered + 127) // 255
+        return Color(self.color.r, self.color.g, self.color.b, UInt8(a))
+
+
 struct FillPaint(Copyable, ImplicitlyCopyable, Movable):
-    """What a fill's runs paint: one colour, or a gradient sampled per pixel.
+    """What a fill's runs paint: one colour, or a gradient sampled per pixel,
+    with an inset shadow mixed over it per pixel or not.
 
     `fill_span`, `fill_pixels`, `fill_quad` and `fill_triangle` take one, and
     a `Color` converts implicitly, so a caller painting a stroke or a
     shadow passes its colour as before; only the fill-colour call sites build
     a gradient one. The choice is made once per run, never per pixel of a
     solid fill, and a solid one is no more than its colour and a flag.
+
+    An inset shadow is mixed in here, rather than painted over the shape
+    afterwards, so that it composites in the same pass as the shape: an
+    antialiased edge pixel then takes the shadowed fill for its share, and
+    no fill shows through the shadow there.
     """
 
     var color: Color
     var shader: Optional[_Shader]
+    var inset: Optional[_InsetShade]
 
     @implicit
     @always_inline
     def __init__(out self, color: Color):
         self.color = color
         self.shader = None
+        self.inset = None
 
     def __init__(out self, gradient: Gradient, mapping: _DeviceMapping):
         self.color = Color.TRANSPARENT
         self.shader = _Shader(gradient, mapping)
+        self.inset = None
+
+    def __init__(out self, base: FillPaint, inset: _InsetShade):
+        """`base` with the inset shadow `inset` over it."""
+        self.color = base.color
+        self.shader = base.shader
+        self.inset = inset
+
+    def _per_pixel(self) -> Bool:
+        """Whether the colour changes from pixel to pixel: a gradient, or an
+        inset shadow mixed in."""
+        return Bool(self.shader) or Bool(self.inset)
+
+    def _at(self, x: Int, y: Int) -> Color:
+        """The colour this paints pixel `(x, y)`, sampled at its centre."""
+        var base = self.color
+        if self.shader:
+            ref shader = self.shader.value()
+            ref m = shader.mapping
+            var xc = Float64(x) + 0.5
+            var yc = Float64(y) + 0.5
+            var u = m.u[0] * xc + m.u[1] * yc + m.u[2]
+            var v = m.v[0] * xc + m.v[1] * yc + m.v[2]
+            var t = sqrt(u * u + v * v) if m.radial else u
+            base = shader.gradient._sample(t, x, y)
+        if self.inset:
+            return self.inset.value().at(x, y).over(base)
+        return base
 
     def _paints_nothing(self) -> Bool:
+        if self.inset:
+            return False
         if self.shader:
             return not self.shader.value().gradient._visible()
         return self.color.a == 0
@@ -399,21 +461,21 @@ struct FillPaint(Copyable, ImplicitlyCopyable, Movable):
 
 def _shade_span[
     o: Origin[mut=True]
-](
-    s: Surface[o],
-    off: Int,
-    count: Int,
-    gradient: Gradient,
-    m: _DeviceMapping,
-    cover: Int = 255,
-):
-    """`fill_span` for a gradient: each pixel's colour from its centre's
-    parameter, composited one at a time through `blend`, its alpha scaled by
-    a clip's `cover`. The parameter's inputs step by a constant per pixel
-    along the row, so only a radial gradient pays a `sqrt` per pixel."""
+](s: Surface[o], off: Int, count: Int, paint: FillPaint, cover: Int = 255):
+    """`fill_span` for a paint whose colour changes per pixel: each pixel's
+    colour from its centre, composited one at a time through `blend`, its
+    alpha scaled by a clip's `cover`. A gradient alone steps its parameter's
+    inputs by a constant per pixel along the row, so only a radial one pays
+    a `sqrt` per pixel."""
     var index = off // 4
     var y = index // s.width
     var x0 = index - y * s.width
+    if paint.inset:
+        for i in range(count):
+            blend(s, off + i * 4, _kept(paint._at(x0 + i, y), cover))
+        return
+    ref gradient = paint.shader.value().gradient
+    ref m = paint.shader.value().mapping
     var xc = Float64(x0) + 0.5
     var yc = Float64(y) + 0.5
     var u = m.u[0] * xc + m.u[1] * yc + m.u[2]
@@ -430,19 +492,18 @@ def fill_span[
     o: Origin[mut=True]
 ](s: Surface[o], off: Int, count: Int, paint: FillPaint):
     """`fill_span` for a `FillPaint`: the colour's own loop, or the
-    gradient's."""
-    if paint.shader and s._recording:
-        if paint.shader.value().gradient._visible():
+    per-pixel one of a gradient or an inset shadow."""
+    if paint._per_pixel() and s._recording:
+        if not paint._paints_nothing():
             var index = off // 4
             var row = index // s.width
             _record_run(s, row, index - row * s.width, count, GRADIENT_KEY)
         return
-    if paint.shader and s._clip:
+    if paint._per_pixel() and s._clip:
         _shade_span_clipped(s, off, count, paint)
         return
-    if paint.shader:
-        ref shader = paint.shader.value()
-        _shade_span(s, off, count, shader.gradient, shader.mapping)
+    if paint._per_pixel():
+        _shade_span(s, off, count, paint)
     else:
         fill_span(s, off, count, paint.color)
 
@@ -451,14 +512,13 @@ def fill_span[
 def _shade_span_clipped[
     o: Origin[mut=True]
 ](s: Surface[o], off: Int, count: Int, paint: FillPaint):
-    """A gradient `fill_span` on a clipped surface, cut once here so
+    """A per-pixel `fill_span` on a clipped surface, cut once here so
     `_shade_span`'s per-pixel `blend` need not test."""
     var u = s._with_clip(None)
     var index = off // 4
     var row = index // s.width
     var x0 = index - row * s.width
     ref rows = s._clip.value()[]
-    ref shader = paint.shader.value()
     for k in range(rows.starts[row], rows.starts[row + 1]):
         var lo = max(x0, rows.spans[2 * k])
         var hi = min(x0 + count, rows.spans[2 * k + 1])
@@ -467,8 +527,7 @@ def _shade_span_clipped[
                 u,
                 (row * s.width + lo) * 4,
                 hi - lo,
-                shader.gradient,
-                shader.mapping,
+                paint,
                 rows.covers[k],
             )
 
@@ -498,7 +557,7 @@ def fill_pixels[
     var c1 = min(x1, W)
     if c1 <= c0:
         return
-    if not c.shader:
+    if not c._per_pixel():
         # Solid, decided once for the whole rect rather than per row.
         var color = c.color
         for row in range(r0, r1):
