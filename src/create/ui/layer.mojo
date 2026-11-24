@@ -7,7 +7,7 @@ from create.core import Context
 from create.geometry import Circle, Drawable, Line, Rectangle
 from create.input import GamepadButton, Key
 from create.image import Image
-from create.math import Point, Transform, Vector, clamp
+from create.math import Point, Transform, Vector, ceil, clamp, floor
 from create.text import FontWeight
 from create._optional import _OptionalFloat64
 from create.render import (
@@ -1219,8 +1219,16 @@ struct UILayer[
             elif keyboard.typed(Key.LEFT) or keyboard.typed(Key.DOWN):
                 towards_max = -1
             if towards_max != 0:
-                var at = Float64(round(steps_from_min))
-                var next = at + Float64(towards_max)
+                # the next step along, so a value between two steps moves to
+                # the one ahead of it rather than past it
+                var nearest = Float64(round(steps_from_min))
+                if abs(steps_from_min - nearest) < 1e-9:
+                    steps_from_min = nearest  # on a step, give or take error
+                var next: Float64
+                if towards_max > 0:
+                    next = floor(steps_from_min) + 1
+                else:
+                    next = ceil(steps_from_min) - 1
                 moved = min + next * size
             elif keyboard.pressed(Key.HOME):
                 moved = min
