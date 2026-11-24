@@ -77,6 +77,21 @@ def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
     assert_almost_equal(value, 0.25)
 
 
+def test_a_release_off_the_track_moves_the_handle_there() raises -> None:
+    var ui = UI()
+    var context = Context()
+    var value = 0.5
+    point_at(context, Point(0, 0))
+    _ = _slider(ui, context, value)
+    next_frame(context)
+    press(context, Point(0, 0))
+    _ = _slider(ui, context, value)
+    next_frame(context)
+    release(context, Point(-50, 300))  # moved and let go off the track
+    assert_true(_slider(ui, context, value))
+    assert_almost_equal(value, 0.25)
+
+
 def test_a_step_rounds_the_value() raises -> None:
     var ui = UI()
     var context = Context()
