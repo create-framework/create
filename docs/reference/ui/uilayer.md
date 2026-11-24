@@ -45,7 +45,7 @@ ui.draw(Circle((0, 0), 20), Style(fill=Color.ORANGE))
 ### `colors`
 
 ```mojo
-def colors(self) -> ColorScheme
+def colors(self) raises -> ColorScheme
 ```
 
 The colours the widgets are drawn in here: the innermost `ui.colors` block's, or the layer's. A program's own widget draws in them to match.
@@ -107,7 +107,7 @@ with ui.style(button=Style(corner_radius=4)):
 ### `content_color`
 
 ```mojo
-def content_color(self) -> Color
+def content_color(self) raises -> Color
 ```
 
 The colour for text here: the innermost panel's content colour, or the colours' `on_surface`. A program's own widget draws its text in it to match the built-in ones.
@@ -402,7 +402,7 @@ if ui.submitted():
 ### `changed`
 
 ```mojo
-def changed(self) -> Bool
+def changed(self) raises -> Bool
 ```
 
 Whether the widget called last changed its value this frame: a slider its `value`, a checkbox its `checked`, a text field its `text`. It is `False` after a button, a label, an image or a panel, and before any widget is called.
@@ -417,7 +417,7 @@ if ui.changed():
 ### `submitted`
 
 ```mojo
-def submitted(self) -> Bool
+def submitted(self) raises -> Bool
 ```
 
 Whether Enter was pressed this frame in the widget called last, a text field. It is `False` after any other widget.

@@ -124,6 +124,14 @@ def test_a_layer_used_in_a_later_frame_raises() raises -> None:
     _next_frame(context)
     with assert_raises(contains="open a new layer"):
         kept.draw(Circle((0, 0), 5), Style(fill=Color.RED))
+    with assert_raises(contains="open a new layer"):
+        _ = kept.changed()
+    with assert_raises(contains="open a new layer"):
+        _ = kept.submitted()
+    with assert_raises(contains="open a new layer"):
+        _ = kept.colors()
+    with assert_raises(contains="open a new layer"):
+        _ = kept.content_color()
 
 
 def test_a_layer_inside_another_of_the_same_ui_raises() raises -> None:
