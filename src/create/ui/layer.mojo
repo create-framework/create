@@ -289,6 +289,7 @@ struct UILayer[
                 corner_radius=resolved.corner_radius,
             )
         )
+        ui._called(changed=False)
         return PanelGuard(_ui=ui, _content=content, _rect=rect)
 
     def id[K: Hashable](self, key: K) raises -> IDGuard[Self.ui_origin]:
@@ -523,6 +524,7 @@ struct UILayer[
         resolved.apply(look)
         resolved.text_alignment = alignment
         self._ui[]._recorder.text(text, _anchor(place, alignment), resolved)
+        self._ui[]._called(changed=False)
 
     def image(self, image: Image, rect: Optional[Rectangle] = None) raises:
         """`image` stretched to fill `rect`. Like a label, it reacts to
@@ -532,6 +534,7 @@ struct UILayer[
         self._ui[]._recorder.image(
             image, place.position, place.width, place.height, _ResolvedStyle()
         )
+        self._ui[]._called(changed=False)
 
     @always_inline
     def slider(
@@ -709,8 +712,8 @@ struct UILayer[
     def changed(self) -> Bool:
         """Whether the widget called last changed its value this frame: a
         slider its `value`, a checkbox its `checked`, a text field its
-        `text`. It is `False` after a button, and before any widget is
-        called.
+        `text`. It is `False` after a button, a label, an image or a panel,
+        and before any widget is called.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
