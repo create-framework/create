@@ -110,5 +110,45 @@ def test_a_disabled_button_is_drawn_faded() raises -> None:
     assert_true(abs(Int(pixel.b) - Int(expected.b)) <= 2)
 
 
+def _label_and_image(disabled: Bool) raises -> Canvas:
+    """A black label at `_A` and a red image under it, in a block disabled
+    or not, on white."""
+    var ui = UI()
+    var context = Context()
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    canvas.background(Color.WHITE)
+    var pixels = List[UInt8]()
+    for _ in range(4):
+        pixels += [255, 0, 0, 255]
+    var red = Image.from_rgba(2, 2, pixels)
+    with ui.screen(context, canvas) as layer:
+        with layer.disabled(disabled):
+            layer.image(red, Rectangle((0, -40), 40, 10))
+            layer.label(
+                "MMMM", _A, style=Style(text_color=Color.BLACK, font_size=30)
+            )
+    return canvas^
+
+
+def _darkest(mut canvas: Canvas) raises -> Int:
+    """The lowest red channel across `_A`: how dark the label's ink is."""
+    var darkest = 255
+    for x in range(-60, 60):
+        for y in range(-20, 20):
+            var pixel = canvas.color_at((Float64(x) + 0.5, Float64(y) + 0.5))
+            darkest = min(darkest, Int(pixel.r))
+    return darkest
+
+
+def test_a_disabled_block_fades_labels_and_images() raises -> None:
+    var usual = _label_and_image(False)
+    var faded = _label_and_image(True)
+    assert_equal(_darkest(usual), 0)
+    assert_true(_darkest(faded) > 100)  # black at 38%: a mid grey
+    assert_equal(usual.color_at((0, -40)), Color.RED)
+    var pink = faded.color_at((0, -40))
+    assert_true(pink.g > 100 and pink.r == 255)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

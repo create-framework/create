@@ -253,7 +253,7 @@ def label(
 ) raises
 ```
 
-Text placed in `rect`, by `alignment`: in its centre unless given, here or as the style's `text_alignment`, against its left edge with `Align.LEFT`, and so on. It reacts to nothing, so the pointer passes through it to what is beneath.
+Text placed in `rect`, by `alignment`: in its centre unless given, here or as the style's `text_alignment`, against its left edge with `Align.LEFT`, and so on. It reacts to nothing, so the pointer passes through it to what is beneath. In a `ui.disabled` block it fades, as a disabled widget's text does.
 
 ```mojo
 # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -266,7 +266,7 @@ ui.label("Volume", Rectangle((0, 40), 240, 24), alignment=Align.LEFT)
 def image(self, image: Image, rect: Optional[Rectangle] = None) raises
 ```
 
-`image` stretched to fill `rect`. Like a label, it reacts to nothing.
+`image` stretched to fill `rect`. Like a label, it reacts to nothing, and fades in a `ui.disabled` block.
 
 ### `slider`
 

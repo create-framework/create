@@ -521,7 +521,8 @@ struct UILayer[
         """Text placed in `rect`, by `alignment`: in its centre unless given,
         here or as the style's `text_alignment`, against its left edge with
         `Align.LEFT`, and so on. It reacts to nothing, so the pointer passes
-        through it to what is beneath.
+        through it to what is beneath. In a `ui.disabled` block it fades, as
+        a disabled widget's text does.
 
         ```mojo
         # In `update`, inside `with self.ui.screen(context, canvas) as ui:`:
@@ -539,16 +540,24 @@ struct UILayer[
             look.text_alignment.or_else(Align.CENTER)
         )
         resolved.text_alignment = placed
+        if self._disabled(False):
+            resolved.text_color = _faded(
+                resolved.text_color,
+                self._ui[]._state_layers.disabled_content,
+            )
         self._ui[]._recorder.text(text, _anchor(place, placed), resolved)
         self._ui[]._called(changed=False)
 
     def image(self, image: Image, rect: Optional[Rectangle] = None) raises:
         """`image` stretched to fill `rect`. Like a label, it reacts to
-        nothing."""
+        nothing, and fades in a `ui.disabled` block."""
         self._check_frame()
         var place = self._place_control(rect, "ui.image")
+        var look = _ResolvedStyle()
+        if self._disabled(False):
+            look.opacity = self._ui[]._state_layers.disabled_content
         self._ui[]._recorder.image(
-            image, place.position, place.width, place.height, _ResolvedStyle()
+            image, place.position, place.width, place.height, look
         )
         self._ui[]._called(changed=False)
 
