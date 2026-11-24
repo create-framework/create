@@ -311,29 +311,48 @@ var player = Image.load("assets/player.png")
 
 ## Multiple scenes
 
-A program with a menu, a game and a pause screen keeps each scene as a plain field of the root
-`Program` (not a `Program` itself) and switches between them with an `Int` field and `if`/`elif`:
+A program with a title screen, a game, a pause menu and a game-over screen keeps each scene as a
+plain struct, not a `Program`, in a field of the root `Program`. A field says which scene is
+showing, and each scene's `update` returns the scene to show next, its own to stay:
 
 ```mojo
-# From examples/scenes: `Menu` and `Paint` are plain structs.
+# From examples/scenes: `Title`, `Play`, `Pause` and `Over` are plain structs.
 def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-    if self.scene == MENU:
-        self.menu.update(context, canvas)
-        if self.menu.start_pressed:
-            self.paint.enter()
-            self.scene = DRAWING
+    var next: Scene
+    if self.scene == Scene.TITLE:
+        next = self.title.update(context, canvas, self.best)
+    elif self.scene == Scene.PLAY:
+        next = self.play.update(context, canvas)
+    elif self.scene == Scene.PAUSE:
+        self.play.draw(canvas)  # the game shows through, frozen
+        next = self.pause.update(context, canvas)
     else:
-        self.paint.update(context, canvas)
-        if self.paint.back_pressed:
-            self.scene = MENU
+        next = self.over.update(context, canvas)
+    if next != self.scene:
+        self.switch(next)
 ```
 
-A scene's `update` takes only what it uses: `context` to read input or time, `canvas` to draw. To
-reset a scene when switching to it, give it a plain `enter(...)` method for the parent to call
-first, taking whatever the switch passes on. There is no scene trait, on purpose: a trait would
-force the same `update` and `enter` signatures on every scene, and they need to differ. Mojo 1.2 has
-no dynamic trait dispatch either. To store values of different types side by side, use `Variant`
-from `std.utils`, and check which type it holds with `isa[T]()`. See
+`Scene` is a small struct wrapping an `Int`, with a named constant for each scene, as `WindowMode`
+is. Comparing with `Scene.PAUSE` reads better than with a bare number, and a typo is caught when the
+program is compiled.
+
+- **Change scenes in one place.** `switch` is the only method that sets `self.scene`, so whatever
+  has to happen on a change is found there: starting a new round when play begins, but not when it
+  resumes from the pause, or passing the score on as the round ends.
+- **Reset a scene with `enter`.** A scene that starts afresh each time it is shown has a plain
+  `enter(...)` method for `switch` to call, taking whatever the switch passes on, such as the
+  round's score for the game-over screen.
+- **Keep what outlasts a scene on the root.** The best score belongs to no one scene, so it is a
+  field of the root `Program`, passed to the scenes that show it as an argument.
+- **Draw one scene over another** by splitting its drawing from its `update`. The pause menu draws
+  the game with `play.draw`, which moves nothing on, then dims it and adds its buttons on top. Since
+  the game's `update` isn't called, the game stays where it was.
+
+A scene's `update` takes only what it uses: `context` to read input or time, `canvas` to draw, and
+anything else it needs from the root. There is no scene trait, on purpose: a trait would force the
+same `update` and `enter` signatures on every scene, and they need to differ. Mojo 1.2 has no
+dynamic trait dispatch either. To store values of different types side by side, use `Variant` from
+`std.utils`, and check which type it holds with `isa[T]()`. See
 [examples/scenes](../../../examples/scenes/main.mojo).
 
 ## The window's size on the first frame

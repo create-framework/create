@@ -86,8 +86,8 @@ struct Game(Program):
 - **`Self`**, inside a struct, is the struct's own type, so `Self(...)` above is `Game(...)`.
 
 A struct can also hold constants, and so can a file outside any struct. `comptime` introduces one: a
-value fixed when the program is compiled, such as `comptime MENU = 0`, which gives a number a name
-that says what it means (see [Multiple scenes](programs.md#multiple-scenes)).
+value fixed when the program is compiled, such as `comptime FALL_SPEED = 320.0`, which gives a
+number a name that says what it means.
 
 ## Lists and tuples
 
