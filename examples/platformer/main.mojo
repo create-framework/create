@@ -2,7 +2,9 @@
 platforms, and a camera that follows it through a world wider than the
 screen.
 
-A and D move, W jumps (again in the air); hold W to jump higher.
+A and D move, W jumps (again in the air); hold W to jump higher. W still
+jumps for 150 ms after running off a ledge (coyote time), and a press of W
+up to 150 ms before landing jumps on landing (jump buffering).
 """
 
 from create import *
@@ -74,11 +76,7 @@ struct Game(Program):
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Game:
         return Game(
-            player=Player(
-                position=Point(0.0, GROUND_TOP + Player.HEIGHT / 2.0),
-                velocity=Vector.ZERO,
-                jumps_left=Player.JUMPS,
-            ),
+            player=Player(Point(0.0, GROUND_TOP + Player.HEIGHT / 2.0)),
             platforms=platforms(),
             camera=Camera(),
         )
@@ -124,7 +122,7 @@ struct Game(Program):
                 text_color=HINT, font_size=20, text_alignment=Align.TOP_LEFT
             ):
                 canvas.text(
-                    "A/D: move   W: jump (again in the air)",
+                    "W: Jump \nA: Left\nD: Right",
                     (canvas.left() + 20.0, canvas.top() - 20.0),
                 )
 
