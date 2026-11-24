@@ -445,7 +445,7 @@ struct Backend(Movable):
             width,
             height,
             scale,
-            self.antialiasing._gpu_samples(),
+            self.antialiasing,
         )
         self.captures.flush_screenshot_gpu(gl, width, height)
         self._flush_image(cmds)

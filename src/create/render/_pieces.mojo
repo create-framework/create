@@ -22,6 +22,7 @@ from create.math.point import Point
 
 from ._blur import BlurredMask, PlacedMask
 from ._curve import StrokePieces
+from ._coverage import CoverageScratch, composite_coverage
 from ._raster import FillPaint, fill_convex, fill_quad
 from ._surface import MemorySurface, Surface
 
@@ -99,12 +100,14 @@ def fill_pieces[
         fill_convex(s, polygon, paint)
 
 
-def pieces_mask(pieces: Pieces) -> PlacedMask:
-    """Every piece, fill and stroke alike, rasterised into one alpha mask.
+def pieces_mask(pieces: Pieces, grid: Int = 1) -> PlacedMask:
+    """Every piece, fill and stroke alike, rasterised into one alpha mask,
+    antialiased on a `grid` x `grid` of samples a pixel as a shape is
+    (`Antialiasing._cpu_grid`; 1 tests pixel centres alone).
 
     The pieces are shifted by a whole number of pixels onto the mask, so
-    every pixel centre falls where it would on the device and the mask holds
-    the same pixels the pieces paint there. No pieces give an empty mask.
+    every pixel falls where it would on the device and the mask holds the
+    coverage the pieces paint there. No pieces give an empty mask.
     """
     var lo = Point(Float64.MAX, Float64.MAX)
     var hi = Point(-Float64.MAX, -Float64.MAX)
@@ -121,24 +124,46 @@ def pieces_mask(pieces: Pieces) -> PlacedMask:
     var width = Int(ceil(hi.x)) - x0 + 1
     var height = Int(ceil(hi.y)) - y0 + 1
 
-    # Filled white on a scratch surface, so the mask is the same pixels the
-    # hard pieces paint; only its alpha is kept.
+    # Filled white on a scratch surface, so the mask is the coverage the
+    # pieces paint; only its alpha is kept. Antialiased, they are recorded
+    # on a surface `grid` times finer and composited as coverage, as
+    # `CpuReplay._shape` draws a shape.
     var scratch = MemorySurface(width, height)
     var shift = Point(Float64(x0), Float64(y0))
+    var g = Float64(grid)
     var s = scratch.surface()
-    fill_pieces(
-        s,
-        _shifted(pieces.fill_quads, shift),
-        _shifted(pieces.fill_polygons, shift),
-        Color.WHITE,
-    )
-    fill_pieces(
-        s,
-        _shifted(pieces.stroke_quads, shift),
-        _shifted(pieces.stroke_polygons, shift),
-        Color.WHITE,
-    )
+    if grid == 1:
+        _fill_shifted(s, pieces, shift, g)
+    else:
+        var runs = List[Int]()
+        var recorder = Pointer(to=runs).unsafe_origin_cast[MutUntrackedOrigin]()
+        var fine = Surface(s.px, width * grid, height * grid)._recording_into(
+            recorder
+        )
+        _fill_shifted(fine, pieces, shift, g)
+        var coverage = CoverageScratch()
+        composite_coverage(s, runs, grid, Color.WHITE, coverage)
+        _ = runs^
     return PlacedMask(BlurredMask(scratch.alpha(), width, height, 0), x0, y0)
+
+
+def _fill_shifted[
+    o: Origin[mut=True]
+](s: Surface[o], pieces: Pieces, shift: Point, scale: Float64):
+    """Fill every piece white onto `s`, moved back by `shift` and then
+    scaled by `scale`."""
+    fill_pieces(
+        s,
+        _shifted(pieces.fill_quads, shift, scale),
+        _shifted(pieces.fill_polygons, shift, scale),
+        Color.WHITE,
+    )
+    fill_pieces(
+        s,
+        _shifted(pieces.stroke_quads, shift, scale),
+        _shifted(pieces.stroke_polygons, shift, scale),
+        Color.WHITE,
+    )
 
 
 def pieces_shadow_mask(pieces: Pieces, blur: Int) -> PlacedMask:
@@ -153,15 +178,17 @@ def _extend(mut lo: Point, mut hi: Point, points: List[Point]):
         hi = Point(max(hi.x, p.x), max(hi.y, p.y))
 
 
-def _shifted(points: List[Point], by: Point) -> List[Point]:
+def _shifted(points: List[Point], by: Point, scale: Float64) -> List[Point]:
     var out = List[Point](capacity=len(points))
     for p in points:
-        out.append(Point(p.x - by.x, p.y - by.y))
+        out.append(Point((p.x - by.x) * scale, (p.y - by.y) * scale))
     return out^
 
 
-def _shifted(polygons: List[List[Point]], by: Point) -> List[List[Point]]:
+def _shifted(
+    polygons: List[List[Point]], by: Point, scale: Float64
+) -> List[List[Point]]:
     var out = List[List[Point]](capacity=len(polygons))
     for polygon in polygons:
-        out.append(_shifted(polygon, by))
+        out.append(_shifted(polygon, by, scale))
     return out^

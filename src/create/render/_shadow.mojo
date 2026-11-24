@@ -759,17 +759,22 @@ struct InsetRegion(Copyable, Movable):
         ref g = self.geom
         return (g[0] - g[2], g[1] - g[3], g[0] + g[2], g[1] + g[3])
 
-    def contains(self, x: Float64, y: Float64) -> Bool:
-        """Whether local `(x, y)` is inside, its edge included."""
+    def distance(self, x: Float64, y: Float64) -> Float64:
+        """How far local `(x, y)` is outside the region's edge, negative
+        inside; the largest `Float64` for an empty region."""
         if self.empty:
-            return False
+            return Float64.MAX
         ref g = self.geom
         var r = min(self.radius, min(g[2], g[3]))
         var qx = abs(x - g[0]) - (g[2] - r)
         var qy = abs(y - g[1]) - (g[3] - r)
         var ox = max(qx, 0.0)
         var oy = max(qy, 0.0)
-        return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0.0) <= r
+        return sqrt(ox * ox + oy * oy) + min(max(qx, qy), 0.0) - r
+
+    def contains(self, x: Float64, y: Float64) -> Bool:
+        """Whether local `(x, y)` is inside, its edge included."""
+        return self.distance(x, y) <= 0.0
 
 
 def inset_interior(c: RenderCommand, thickness: Float64) -> InsetRegion:

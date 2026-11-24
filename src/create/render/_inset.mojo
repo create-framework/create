@@ -31,21 +31,24 @@ from ._triangle import triangle_pieces
 
 
 def inset_shadow_mask(
-    c: RenderCommand, m: Transform, sm: Transform, scale: Float64
+    c: RenderCommand, m: Transform, sm: Transform, scale: Float64, grid: Int
 ) -> PlacedMask:
     """`c`'s inset shadow as a mask to composite in its shadow colour: `c`
     casts one (`casts_inset_shadow`) but not analytically
     (`insets_analytically`), `m` is its device matrix and `sm` its shadow
     transform's (`shadow_transform`, under the same pre-matrix). `scale` is
-    the fallback pixel scale for a transform that is not uniform."""
+    the fallback pixel scale for a transform that is not uniform, and
+    `grid` the antialiasing's samples along each axis of a pixel
+    (`Antialiasing._cpu_grid`), so the mask's edge is as smooth as the
+    shape's."""
     var blur = Int(c.paint.shadow_blur * pixel_scale(sm, scale) + 0.5)
-    var interior = pieces_mask(_interior(c, m, scale))
+    var interior = pieces_mask(_interior(c, m, scale), grid)
     var silhouette = PlacedMask.empty()
     var shrunk = _shrunk(c, c.paint.shadow_spread)
     if shrunk:
-        silhouette = pieces_mask(_interior(shrunk.value(), sm, scale)).blurred(
-            blur
-        )
+        silhouette = pieces_mask(
+            _interior(shrunk.value(), sm, scale), grid
+        ).blurred(blur)
     return _uncovered(interior, silhouette)
 
 
