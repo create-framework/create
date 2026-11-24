@@ -240,6 +240,9 @@ with ui.disabled(not self.online):
         self.find_game()
 ```
 
+Labels and images in a `ui.disabled` block fade along with the widgets, so the whole section looks
+switched off.
+
 ## One UI for widgets that belong together
 
 Keep **one `UI` for every widget the player navigates together**, however many layers it draws them
