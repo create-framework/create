@@ -9,7 +9,7 @@ from create.input import GamepadButton, Key
 from create.image import Image
 from create.math import Point, Transform, Vector
 from create.text import FontWeight
-from create.math._optional_float64 import _OptionalFloat64
+from create._optional import _OptionalFloat64
 from create.render import (
     Align,
     Canvas,

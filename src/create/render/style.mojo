@@ -9,7 +9,7 @@ from create.color.color import Color
 from create.color.gradient import Gradient
 from create.text.font import Font, FontWeight
 from create.math.vector import Vector
-from create.math._optional_float64 import _OptionalFloat64
+from create._optional import _OptionalFloat64
 from ._paint import Paint, TextStyle
 
 
