@@ -6,6 +6,8 @@ from create.math import Point
 from create.render import Align, Canvas, Style, Text
 from create.render.style import _ResolvedStyle
 from ._theme import _Theme
+from .layout import _UNSIZED
+from .text_field import _measure
 from .widget import Widget
 
 
@@ -42,7 +44,7 @@ struct Label(Copyable, Movable, Widget):
     def __init__(
         out self,
         text: String,
-        rect: Rectangle,
+        rect: Rectangle = _UNSIZED,
         alignment: Optional[Align] = None,
         *,
         style: Style = Style(),
@@ -68,6 +70,15 @@ struct Label(Copyable, Movable, Widget):
         """`update` in `theme`, as a `UI` updates it; `disabled` fades it, as
         a disabled part of a `UI` does."""
         self._look = theme.label(self.style, self.alignment, disabled=disabled)
+
+    def _measure(
+        self, mut canvas: Canvas, theme: _Theme
+    ) raises -> Tuple[Float64, Float64]:
+        """The size it prefers in `theme`: its text's width, and one and a
+        half times its text's size tall."""
+        var look = theme.label(self.style, self.alignment, disabled=False)
+        var width = _measure(canvas, self.text, look)
+        return (width, look.font_size * 1.5)
 
     def draw_to(self, mut canvas: Canvas):
         with canvas._with_style(self._look):

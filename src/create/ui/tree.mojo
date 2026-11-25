@@ -17,6 +17,7 @@ from .button import Button
 from .checkbox import Checkbox
 from .colors import ColorScheme, FocusRing, StateLayers
 from .label import Label
+from .layout import Column, Row, Space, _sized
 from .panel import Panel
 from .slider import Slider
 from .text_field import TextField
@@ -30,7 +31,16 @@ from ._theme import (
 
 
 comptime _Widget = Variant[
-    Button, Checkbox, Label, Panel, Slider, TextField, Picture
+    Button,
+    Checkbox,
+    Label,
+    Panel,
+    Slider,
+    TextField,
+    Picture,
+    Column,
+    Row,
+    Space,
 ]
 """The kinds of widget a tree holds. Storage only: what each does is its
 own, reached through `_dispatch` and `_dispatch_mut`."""
@@ -54,10 +64,57 @@ struct _Node(Copyable, Movable):
     var widget: _Widget
     var parent: Optional[Int]
     var children: List[Int]
+    var sized_by_ui: Bool
+    """Added with no size of its own: the tree gives it the size it prefers
+    every frame, unless what it is in places it."""
 
 
-comptime _DRAW = 0
-comptime _HIT = 1
+comptime _UPDATE = 0
+comptime _MEASURE = 1
+comptime _PLACE = 2
+
+comptime _WIDGET = 0
+comptime _PANEL = 1
+comptime _COLUMN = 2
+comptime _ROW = 3
+comptime _SPACE = 4
+
+
+@fieldwise_init
+struct _Description(Copyable, Movable):
+    """What layout and hit-testing need to know about a node."""
+
+    var kind: Int
+    var rect: Rectangle
+    """Where it is now; a `Space` has none."""
+    var takes_pointer: Bool
+    """Whether it is hit where it is, rather than letting the pointer
+    through."""
+    var gap: Optional[Float64]
+    var weights: List[Float64]
+    var height: Optional[Float64]
+    """A row's height in a column, when set."""
+    var amount: Optional[Float64]
+    """A space's size, when set."""
+
+    def __init__(out self, kind: Int, rect: Rectangle, takes_pointer: Bool):
+        self.kind = kind
+        self.rect = rect
+        self.takes_pointer = takes_pointer
+        self.gap = None
+        self.weights = []
+        self.height = None
+        self.amount = None
+
+
+@fieldwise_init
+struct _Reply(Copyable, Movable):
+    """What `_dispatch_mut` gives back: the look of what sits on the node,
+    and, when measuring, the size it prefers."""
+
+    var theme: _Theme
+    var width: Float64
+    var height: Float64
 
 
 struct _Tree(Drawable, Movable):
@@ -67,8 +124,10 @@ struct _Tree(Drawable, Movable):
     ```mojo
     # In `create`, building the `ui` field and keeping a handle:
     var ui = _Tree()
-    var card = ui.add(Panel(Rectangle((0, 0), 320, 200)))
-    var play = ui.add(Button("Play", Rectangle((0, -40), 160, 48)), card)
+    var card = ui.add(Panel())  # fitted round its column
+    var list = ui.add(Column(), card)
+    _ = ui.add(Label("Ready?"), list)
+    var play = ui.add(Button("Play"), list)
 
     # In `update`:
     self.ui.update(context, canvas)
@@ -80,7 +139,13 @@ struct _Tree(Drawable, Movable):
 
     A widget added inside another is drawn after it, so on top of it, and
     takes the look of what it sits on: text on a panel takes the panel's
-    content colour. Where widgets overlap, only the topmost under the
+    content colour.
+
+    A widget added with no `rect` of its own is sized by the tree every
+    frame, to the size it prefers, unless what it is in places it: a
+    `Column` stacks what is inside it, a `Row` sets it side by side, and a
+    `Panel` places a column or row inside it in its inside. A panel with no
+    size fits the column or row inside it. Where widgets overlap, only the topmost under the
     pointer reacts to it, and a `Panel` covers what is beneath it.
 
     `update` hit-tests through `canvas.to_local`, so call it in the same
@@ -113,8 +178,9 @@ struct _Tree(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it."""
-        self._nodes.append(_Node(_Widget(widget^), None, []))
+        self._nodes.append(_Node(_Widget(widget^), None, [], False))
         var index = len(self._nodes) - 1
+        self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
         self._roots.append(index)
         return WidgetHandle[W](index)
 
@@ -123,8 +189,9 @@ struct _Tree(Drawable, Movable):
     ](mut self, var widget: W, parent: WidgetHandle[P]) -> WidgetHandle[W]:
         """Add `widget` inside `parent`: drawn after it and after what was
         added inside it before, and in the look of what it sits on."""
-        self._nodes.append(_Node(_Widget(widget^), parent._index, []))
+        self._nodes.append(_Node(_Widget(widget^), parent._index, [], False))
         var index = len(self._nodes) - 1
+        self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
         self._nodes[parent._index].children.append(index)
         return WidgetHandle[W](index)
 
@@ -225,9 +292,8 @@ struct _Tree(Drawable, Movable):
         """Update every widget, a parent before what is inside it, in the
         shared look: only the topmost widget under the pointer reacts to it.
         Call it before drawing the tree, in the same transform."""
-        var topmost = self._topmost(
-            canvas.to_local(context.mouse.position), canvas
-        )
+        self._lay_out(context, canvas)
+        var topmost = self._topmost(canvas.to_local(context.mouse.position))
         var theme = self._theme()
         for root in self._roots.copy():
             self._update_from(root, context, canvas, theme, topmost)
@@ -243,20 +309,20 @@ struct _Tree(Drawable, Movable):
         """Update the widget at `index` in `theme`, then what is inside it,
         in the look of what it sits on."""
         var free = Bool(topmost) and topmost.value() == index
-        var inside = self._dispatch_mut(index, context, canvas, theme, free)
+        var reply = self._dispatch_mut(
+            index, _UPDATE, context, canvas, theme, free=free
+        )
         for child in self._nodes[index].children.copy():
-            self._update_from(child, context, canvas, inside, topmost)
+            self._update_from(child, context, canvas, reply.theme, topmost)
 
-    def _topmost(self, pointer: Point, mut canvas: Canvas) -> Optional[Int]:
+    def _topmost(self, pointer: Point) -> Optional[Int]:
         """The widget drawn last of those the pointer is over, of the ones
-        that take the pointer: the one that reacts to it. `canvas` is only
-        passed through `_dispatch`, which draws nothing to find a hit
-        area."""
+        that take the pointer: the one that reacts to it."""
         var order = self._drawing_order()
         var i = len(order) - 1
         while i >= 0:
-            var area = self._dispatch(order[i], _HIT, canvas)
-            if area and area.value().contains(pointer):
+            var node = self._describe(order[i])
+            if node.takes_pointer and node.rect.contains(pointer):
                 return order[i]
             i -= 1
         return None
@@ -282,80 +348,283 @@ struct _Tree(Drawable, Movable):
 
     def draw_to(self, mut canvas: Canvas):
         for index in self._drawing_order():
-            _ = self._dispatch(index, _DRAW, canvas)
+            self._draw(index, canvas)
 
-    # ------------------------------------------------------------ dispatch
-    #
-    # The only two places that know which kinds of widget a tree holds.
-    # Each matches the node's kind and hands it to that widget's own
-    # methods, so a new kind needs a branch here and nothing else.
+    # -------------------------------------------------------------- layout
 
-    def _dispatch(
-        self, index: Int, action: Int, mut canvas: Canvas
-    ) -> Optional[Rectangle]:
-        """Read the widget at `index`: draw it (`_DRAW`), or give the area
-        where it takes the pointer (`_HIT`), `None` where the pointer passes
-        through it."""
-        ref widget = self._nodes[index].widget
-        if widget.isa[Button]():
-            ref button = widget[Button]
-            if action == _DRAW:
-                canvas.draw(button)
-            return button.rect
-        if widget.isa[Checkbox]():
-            ref checkbox = widget[Checkbox]
-            if action == _DRAW:
-                canvas.draw(checkbox)
-            return checkbox.rect
-        if widget.isa[Slider]():
-            ref slider = widget[Slider]
-            if action == _DRAW:
-                canvas.draw(slider)
-            return slider.rect
-        if widget.isa[TextField]():
-            ref field = widget[TextField]
-            if action == _DRAW:
-                canvas.draw(field)
-            return field.rect
-        if widget.isa[Panel]():
-            ref panel = widget[Panel]
-            if action == _DRAW:
-                canvas.draw(panel)
-            return panel.rect  # covers what is beneath it
-        if widget.isa[Label]():
-            if action == _DRAW:
-                canvas.draw(widget[Label])
-            return None  # the pointer passes through text
-        if action == _DRAW:
-            canvas.draw(widget[Picture])
-        return None
+    def _lay_out(mut self, mut context: Context, mut canvas: Canvas) raises:
+        """Size every widget, from what is inside it outwards, then place
+        them, from the top level inwards."""
+        var theme = self._theme()
+        var sizes = List[Tuple[Float64, Float64]](
+            length=len(self._nodes), fill=(0.0, 0.0)
+        )
+        # backwards through the drawing order: every node after what is in it
+        var order = self._drawing_order()
+        var i = len(order) - 1
+        while i >= 0:
+            self._measure(order[i], context, canvas, theme, sizes)
+            i -= 1
+        for root in self._roots.copy():
+            self._place_from(root, None, context, canvas, theme, sizes)
 
-    def _dispatch_mut(
+    def _measure(
         mut self,
         index: Int,
         mut context: Context,
         mut canvas: Canvas,
         theme: _Theme,
-        free: Bool,
-    ) raises -> _Theme:
-        """Update the widget at `index` in `theme`, `free` when it is the
-        topmost under the pointer; the look of what sits on it."""
+        mut sizes: List[Tuple[Float64, Float64]],
+    ) raises:
+        """Work out the size the node at `index` prefers, into `sizes`, from
+        the sizes of what is in it, already there."""
+        var children = self._nodes[index].children.copy()
+        var node = self._describe(index)
+        var width = 0.0
+        var height = 0.0
+        if node.kind == _COLUMN:
+            var gap = node.gap.or_else(theme.spacing)
+            for i in range(len(children)):
+                ref size = sizes[children[i]]
+                width = max(width, size[0])
+                height += size[1] + (gap if i > 0 else 0.0)
+        elif node.kind == _ROW:
+            var gap = node.gap.or_else(theme.spacing)
+            for i in range(len(children)):
+                ref size = sizes[children[i]]
+                width += size[0] + (gap if i > 0 else 0.0)
+                height = max(height, size[1])
+            height = node.height.or_else(height)
+        elif node.kind == _SPACE:
+            width = node.amount.or_else(2 * theme.spacing)
+            height = width
+        elif node.kind == _PANEL:
+            if _sized(node.rect):
+                width = node.rect.width
+                height = node.rect.height
+            else:
+                # fitted round the column or row inside it
+                for child in children:
+                    var inner = self._describe(child).kind
+                    if inner == _COLUMN or inner == _ROW:
+                        width = max(width, sizes[child][0])
+                        height = max(height, sizes[child][1])
+                width += 4 * theme.spacing
+                height += 4 * theme.spacing
+        else:
+            var reply = self._dispatch_mut(
+                index, _MEASURE, context, canvas, theme, free=False
+            )
+            width = reply.width
+            height = reply.height
+        sizes[index] = (width, height)
+
+    def _place_from(
+        mut self,
+        index: Int,
+        slot: Optional[Rectangle],
+        mut context: Context,
+        mut canvas: Canvas,
+        theme: _Theme,
+        sizes: List[Tuple[Float64, Float64]],
+    ) raises:
+        """Place the node at `index`: in `slot` when what it is in gives it
+        one, at the size it prefers when it was added with none, and where
+        it is otherwise; then what is inside it."""
+        var node = self._describe(index)
+        var rect = node.rect
+        if slot:
+            rect = slot.value()
+        elif self._nodes[index].sized_by_ui:
+            rect = Rectangle(
+                node.rect.position, sizes[index][0], sizes[index][1]
+            )
+        if slot or self._nodes[index].sized_by_ui:
+            _ = self._dispatch_mut(
+                index, _PLACE, context, canvas, theme, free=False, rect=rect
+            )
+        var children = self._nodes[index].children.copy()
+        if node.kind == _COLUMN:
+            var gap = node.gap.or_else(theme.spacing)
+            var top = rect.top()
+            for i in range(len(children)):
+                var child = children[i]
+                if i > 0:
+                    top -= gap
+                var height = sizes[child][1]
+                var strip = Rectangle(
+                    Point(rect.position.x, top - height / 2),
+                    rect.width,
+                    height,
+                )
+                self._place_from(child, strip, context, canvas, theme, sizes)
+                top -= height
+        elif node.kind == _ROW:
+            var gap = node.gap.or_else(theme.spacing)
+            var weights = node.weights.copy()
+            while len(weights) < len(children):
+                weights.append(1.0)
+            var slots = rect.columns(weights=weights, gap=gap)
+            for i in range(len(children)):
+                self._place_from(
+                    children[i], slots[i], context, canvas, theme, sizes
+                )
+        elif node.kind == _PANEL:
+            var inside = rect.inset(2 * theme.spacing)
+            for child in children:
+                var inner = self._describe(child).kind
+                var given: Optional[Rectangle] = None
+                if inner == _COLUMN or inner == _ROW:
+                    given = inside
+                self._place_from(child, given, context, canvas, theme, sizes)
+        else:
+            for child in children:
+                self._place_from(child, None, context, canvas, theme, sizes)
+
+    # ------------------------------------------------------------ dispatch
+    #
+    # The only three methods that know which kinds of node a tree holds:
+    # each matches the node's kind and hands it to that kind's own fields
+    # and methods, so a new kind needs a branch in each and nothing else.
+    # Reading, drawing and changing a node are three because each needs the
+    # tree and the canvas differently: `_describe` neither, `_draw` the
+    # canvas to draw on, `_dispatch_mut` the tree to change.
+
+    def _describe(self, index: Int) -> _Description:
+        """What layout and hit-testing need to know about the node at
+        `index`."""
         ref widget = self._nodes[index].widget
         if widget.isa[Button]():
-            widget[Button]._update(context, canvas, theme, free=free)
+            return _Description(_WIDGET, widget[Button].rect, True)
+        if widget.isa[Checkbox]():
+            return _Description(_WIDGET, widget[Checkbox].rect, True)
+        if widget.isa[Slider]():
+            return _Description(_WIDGET, widget[Slider].rect, True)
+        if widget.isa[TextField]():
+            return _Description(_WIDGET, widget[TextField].rect, True)
+        if widget.isa[Panel]():
+            # covers what is beneath it
+            return _Description(_PANEL, widget[Panel].rect, True)
+        if widget.isa[Label]():
+            # the pointer passes through text
+            return _Description(_WIDGET, widget[Label].rect, False)
+        if widget.isa[Picture]():
+            return _Description(_WIDGET, widget[Picture].bounds(), False)
+        if widget.isa[Column]():
+            ref column = widget[Column]
+            var described = _Description(_COLUMN, column.rect, False)
+            described.gap = column.gap
+            return described^
+        if widget.isa[Row]():
+            ref row = widget[Row]
+            var described = _Description(_ROW, row.rect, False)
+            described.gap = row.gap
+            described.weights = row.weights.copy()
+            described.height = row.height
+            return described^
+        var described = _Description(
+            _SPACE, Rectangle(Point(0.0, 0.0), 1.0, 1.0), False
+        )
+        described.amount = widget[Space].amount
+        return described^
+
+    def _draw(self, index: Int, mut canvas: Canvas):
+        """Draw the node at `index`; a column, row or space draws
+        nothing."""
+        ref widget = self._nodes[index].widget
+        if widget.isa[Button]():
+            canvas.draw(widget[Button])
         elif widget.isa[Checkbox]():
-            widget[Checkbox]._update(context, canvas, theme, free=free)
+            canvas.draw(widget[Checkbox])
         elif widget.isa[Slider]():
-            widget[Slider]._update(context, canvas, theme, free=free)
+            canvas.draw(widget[Slider])
         elif widget.isa[TextField]():
-            widget[TextField]._update(context, canvas, theme, free=free)
+            canvas.draw(widget[TextField])
+        elif widget.isa[Panel]():
+            canvas.draw(widget[Panel])
         elif widget.isa[Label]():
-            widget[Label]._update(context, canvas, theme, disabled=False)
+            canvas.draw(widget[Label])
+        elif widget.isa[Picture]():
+            canvas.draw(widget[Picture])
+
+    def _dispatch_mut(
+        mut self,
+        index: Int,
+        action: Int,
+        mut context: Context,
+        mut canvas: Canvas,
+        theme: _Theme,
+        *,
+        free: Bool,
+        rect: Rectangle = Rectangle(Point(0.0, 0.0), 0.0, 0.0),
+    ) raises -> _Reply:
+        """Update (`_UPDATE`), measure (`_MEASURE`) or place in `rect`
+        (`_PLACE`) the node at `index`, in `theme`; `free` when it is the
+        topmost under the pointer. Gives back the look of what sits on it
+        and, when measuring, the size it prefers."""
+        var reply = _Reply(theme.copy(), 0.0, 0.0)
+        ref widget = self._nodes[index].widget
+        if widget.isa[Button]():
+            ref button = widget[Button]
+            if action == _UPDATE:
+                button._update(context, canvas, theme, free=free)
+            elif action == _MEASURE:
+                reply.width, reply.height = button._measure(canvas, theme)
+            else:
+                button.rect = rect
+        elif widget.isa[Checkbox]():
+            ref checkbox = widget[Checkbox]
+            if action == _UPDATE:
+                checkbox._update(context, canvas, theme, free=free)
+            elif action == _MEASURE:
+                reply.width, reply.height = checkbox._measure(canvas, theme)
+            else:
+                checkbox.rect = rect
+        elif widget.isa[Slider]():
+            ref slider = widget[Slider]
+            if action == _UPDATE:
+                slider._update(context, canvas, theme, free=free)
+            elif action == _MEASURE:
+                reply.width, reply.height = slider._measure(canvas, theme)
+            else:
+                slider.rect = rect
+        elif widget.isa[TextField]():
+            ref field = widget[TextField]
+            if action == _UPDATE:
+                field._update(context, canvas, theme, free=free)
+            elif action == _MEASURE:
+                reply.width, reply.height = field._measure(canvas, theme)
+            else:
+                field.rect = rect
+        elif widget.isa[Label]():
+            ref label = widget[Label]
+            if action == _UPDATE:
+                label._update(context, canvas, theme, disabled=False)
+            elif action == _MEASURE:
+                reply.width, reply.height = label._measure(canvas, theme)
+            else:
+                label.rect = rect
         elif widget.isa[Panel]():
             ref panel = widget[Panel]
-            panel._update(context, canvas, theme)
-            var on_panel = theme.copy()
-            on_panel.surface = panel.surface_color()
-            on_panel.content = panel.content_color()
-            return on_panel^
-        return theme.copy()
+            if action == _UPDATE:
+                panel._update(context, canvas, theme)
+                reply.theme.surface = panel.surface_color()
+                reply.theme.content = panel.content_color()
+            elif action == _PLACE:
+                panel.rect = rect
+        elif widget.isa[Picture]():
+            ref picture = widget[Picture]
+            if action == _MEASURE:
+                reply.width = picture.width
+                reply.height = picture.height
+            elif action == _PLACE:
+                picture.position = rect.position
+                picture.width = rect.width
+                picture.height = rect.height
+        elif widget.isa[Column]():
+            if action == _PLACE:
+                widget[Column].rect = rect
+        elif widget.isa[Row]():
+            if action == _PLACE:
+                widget[Row].rect = rect
+        return reply^

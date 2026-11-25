@@ -5,6 +5,7 @@ from create.core import Context
 from create.geometry import Rectangle
 from create.render import Canvas, Style
 from ._theme import _PanelLook, _Theme
+from .layout import _UNSIZED
 from .widget import Widget
 
 
@@ -33,7 +34,9 @@ struct Panel(Copyable, Movable, Widget):
     """Its own style, over the default card."""
     var _look: _PanelLook
 
-    def __init__(out self, rect: Rectangle, *, style: Style = Style()):
+    def __init__(
+        out self, rect: Rectangle = _UNSIZED, *, style: Style = Style()
+    ):
         self.rect = rect
         self.style = style
         self._look = _Theme.default().panel(style)

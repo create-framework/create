@@ -6,6 +6,8 @@ from create.math import Point, Vector
 from create.render import Align, Canvas, Style, Text
 from ._pointer import _Pointer
 from ._theme import _CheckboxLook, _Theme
+from .layout import _UNSIZED
+from .text_field import _measure
 from .widget import Clickable, Widget
 
 
@@ -59,7 +61,7 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
     def __init__(
         out self,
         text: String,
-        rect: Rectangle,
+        rect: Rectangle = _UNSIZED,
         *,
         checked: Bool = False,
         box: Style = Style(),
@@ -124,6 +126,24 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
             pressed=self._pointer.looks_pressed(),
             disabled=not self.enabled,
         )
+
+    def _measure(
+        self, mut canvas: Canvas, theme: _Theme
+    ) raises -> Tuple[Float64, Float64]:
+        """The size it prefers in `theme`: its box, the gap and its text,
+        `control_height` tall."""
+        var look = theme.checkbox(
+            self.box,
+            self.checked_box,
+            self.tick,
+            self.text_style,
+            checked=self.checked,
+            hovered=False,
+            pressed=False,
+            disabled=False,
+        )
+        var width = _measure(canvas, self.text, look.text)
+        return (_BOX_SIZE + _TEXT_GAP + width, theme.control_height)
 
     def changed(self) -> Bool:
         """Whether its last `update` ticked or unticked it."""

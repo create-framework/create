@@ -57,7 +57,7 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 @staticmethod
 def __init__(
     out self,
-    rect: Rectangle,
+    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=_OptionalFloat64(SIMD(0)), rotation=_OptionalFloat64(SIMD(0))),
     text: String = "",
     *,
     placeholder: String = "",

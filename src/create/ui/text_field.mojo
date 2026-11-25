@@ -12,6 +12,8 @@ from ._pointer import _Pointer
 from ._text_buffer import _TextBuffer
 from ._theme import _TextFieldLook, _Theme, _fills, _text_look
 from .ui import UI
+from .layout import _UNSIZED
+from .slider import _CONTROL_WIDTH
 from .widget import Clickable, Widget
 
 
@@ -83,7 +85,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
 
     def __init__(
         out self,
-        rect: Rectangle,
+        rect: Rectangle = _UNSIZED,
         text: String = "",
         *,
         placeholder: String = "",
@@ -231,6 +233,13 @@ struct TextField(Clickable, Copyable, Movable, Widget):
             and self.enabled
             and (since < 0.5 or Int(since * 2) % 2 == 1)
         )
+
+    def _measure(
+        self, mut canvas: Canvas, theme: _Theme
+    ) raises -> Tuple[Float64, Float64]:
+        """The size it prefers in `theme`: as wide as a slider,
+        `control_height` tall."""
+        return (_CONTROL_WIDTH, theme.control_height)
 
     # ------------------------------------------------------------ queries
 

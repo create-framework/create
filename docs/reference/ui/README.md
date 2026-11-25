@@ -21,6 +21,9 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Sl
 | [`ButtonVariant`](buttonvariant.md) | Which of the colours a button is drawn in. |
 | [`Checkbox`](checkbox.md) | A box against the left edge of a rectangle, ticked while `checked`, with text beside it. A click anywhere in the rectangle ticks or unticks it. |
 | [`Label`](label.md) | Text placed in a rectangle, by an alignment: in its centre unless told otherwise, against its left edge with `Align.LEFT`, and so on. It reacts to nothing. |
+| [`Column`](column.md) | Widgets one under the other, from the top down, each across the column's whole width and as tall as it prefers: a button or a slider the `UI`'s `control_height`, a label one and a half times its text's size. A `gap` is left between each and the next. |
+| [`Row`](row.md) | Widgets side by side, from the left, each in a slot of its own as tall as the row. The slots share the row's width in proportion to `weights`, one for each widget, so `Row(1, 3)` gives the first a quarter of it and the second three quarters; with no weights, every widget gets an equal slot. A `gap` is left between each slot and the next. |
+| [`Space`](space.md) | Room left empty in a column, or a row, such as to set one group of widgets apart from the next: twice the `UI`'s `spacing` unless given an `amount`. |
 | [`Panel`](panel.md) | A surface filling a rectangle, for widgets to sit on: a rounded card in the light colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing. |
 | [`Slider`](slider.md) | A handle on a track, dragged to set `value` between `minimum` and `maximum`. |
 | [`TextEditor`](texteditor.md) | A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons. |
