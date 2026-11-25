@@ -1,7 +1,7 @@
 from std.math import abs, floor, max, min, sqrt
 from std.memory import ArcPointer
 
-from .color import Color, _tinted
+from create.color.color import Color, _tinted
 from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector

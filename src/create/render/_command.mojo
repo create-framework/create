@@ -1,7 +1,7 @@
 from std.math import sqrt
 
 from create.color.color import Color, _tinted
-from create.color.gradient import Gradient
+from create.render.gradient import Gradient
 from ._paint import Paint, TextStyle
 from ._text import NO_WRAP
 from .style import _ResolvedStyle

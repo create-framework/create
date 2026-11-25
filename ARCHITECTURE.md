@@ -12,8 +12,8 @@ internals](#package-internals).
 | root | `src/create/__init__.mojo` | The preamble: star-imports all thirteen subpackages below |
 | `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
-| `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
-| `color` | `src/create/color/` | `Color`, `Gradient` (with the ramp and dither both backends share), `BlendMode` |
+| `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `Gradient` (with the ramp and dither both backends share), `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
+| `color` | `src/create/color/` | `Color`, `BlendMode` |
 | `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Geometry`/`Shape`/`Curve` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. Values and tests only: how a shape is drawn is `render`'s. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
@@ -78,8 +78,8 @@ The packages form layers, and a package imports only from the layers below it:
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
-| Values | `geometry`, `color`, `input` | `math`; `geometry` also `_optional` |
-| Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
+| Values | `geometry`, `input` | `math`; `geometry` also `_optional` |
+| Foundations | `math`, `color`, `time`, `data` | `math`, `color` and `time`: nothing; `data`: `_path` |
 | Internal | `_window`, `_bytes`, `_library`, `_optional`, `_path`, `_native` | `_window`: `_library`; the others nothing |
 
 The same, as a graph; every arrow points down. The leaves `_bytes`, `_library`, `_optional`, `_path`
@@ -112,7 +112,6 @@ flowchart TD
     animation --> time
     geometry --> math
     image --> color
-    color --> math
     input --> math
 ```
 
@@ -132,8 +131,10 @@ The rules behind it, and what each one buys:
 - **`geometry`** depends only on `math` and `_optional`, so collision code (`overlaps`, `contains`)
   never sees `render`; `render` imports it. It holds values and their tests, and nothing about
   drawing: `render` decides how each shape and curve is drawn.
-- **`color`** depends only on `math`; `image` and `render` both import it. It sits below `image` so
-  that `Image.pixel` can return a `Color` without a `render`↔`image` cycle.
+- **`color`** imports nothing from `create`; `image` and `render` both import it. It sits below
+  `image` so that `Image.pixel` can return a `Color` without a `render`↔`image` cycle. `Gradient` is
+  `render`'s, not `color`'s: it has points, and a transform that fits it to a shape, so it is
+  drawing paint, like `StrokeDash`, rather than a colour value.
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
   through `atof`. Nothing imports it but the root.
 - **`time`** imports nothing from `create`; `core` and `animation` import it. Its run clock,

@@ -172,7 +172,7 @@ from ._transform import (
 )
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
-from create.color.gradient import Gradient, _RAMP_SIZE
+from create.render.gradient import Gradient, _RAMP_SIZE
 
 comptime _VERTEX_FLOATS = 13
 """Mirrors `_tessellate._VERTEX_FLOATS`, which the attribute layout below

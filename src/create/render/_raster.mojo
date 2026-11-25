@@ -6,7 +6,7 @@ from std.sys import Endian
 from create.color.blend_mode import BlendMode
 from create.color.color import Color, _multiplied
 from create.text.font import _GlyphInfo
-from create.color.gradient import Gradient, _DeviceMapping
+from create.render.gradient import Gradient, _DeviceMapping
 from ._blur import PlacedMask
 from ._surface import Surface
 from ._image_mapping import ImageMapping

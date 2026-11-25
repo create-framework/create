@@ -3,7 +3,7 @@ from std.testing import TestSuite, assert_equal, assert_true, assert_false
 from create.math.vector import Vector
 from create.math.transform import Transform
 from create.color.color import Color
-from create.color.gradient import Gradient
+from create.render.gradient import Gradient
 from create.render.style import Style
 from create.render._command import (
     CirclePayload,
