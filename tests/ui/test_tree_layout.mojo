@@ -142,5 +142,27 @@ def test_a_placed_widget_is_clicked_where_it_is_placed() raises -> None:
     assert_true(ui[b].released())
 
 
+def test_a_widget_with_its_own_rect_keeps_it_in_a_column() raises -> None:
+    var ui = UI()
+    var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
+    var first = ui.add(Button("A"), list)
+    var aside = ui.add(Button("Aside", Rectangle((150, -100), 80, 30)), list)
+    var second = ui.add(Button("B"), list)
+    _laid_out(ui)
+    assert_equal(ui[aside].rect, Rectangle((150, -100), 80, 30))
+    # it takes no room: B comes straight after A
+    assert_equal(ui[second].rect.top(), ui[first].rect.bottom() - _GAP)
+
+
+def test_a_column_with_its_own_rect_keeps_it_in_a_panel() raises -> None:
+    var ui = UI()
+    var card = ui.add(Panel(Rectangle((0, 0), 300, 200)))
+    var list = ui.add(Column(Rectangle((50, 0), 100, 100)), card)
+    var ok = ui.add(Button("OK"), list)
+    _laid_out(ui)
+    assert_equal(ui[list].rect, Rectangle((50, 0), 100, 100))
+    assert_equal(ui[ok].rect.width, 100.0)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

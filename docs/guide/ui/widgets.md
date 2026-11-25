@@ -173,8 +173,11 @@ for you, by what it is added inside:
   tallest widget, or `height=` if given.
 - **`Space(amount)`** leaves room in a column, twice the `UI`'s `spacing` unless given, such as to
   set the buttons apart from the settings above them.
-- **A panel places a column or row added inside it** across its inside, short of its edges by twice
-  the `UI`'s `spacing`. Other widgets added straight onto a panel keep their own `rect`.
+- **A panel places a column or row added inside it with no `rect`** across its inside, short of its
+  edges by twice the `UI`'s `spacing`. Other widgets added straight onto a panel keep their own
+  `rect`.
+- **A widget added with a `rect` keeps it**, even inside a column or row, and takes no room there,
+  so one widget can be placed by hand among the others.
 - **A widget, panel, column or row with no `rect` and nothing to place it** takes the size it
   prefers, centred on the origin. A panel with no size fits round the column or row inside it, and a
   column round its widgets.

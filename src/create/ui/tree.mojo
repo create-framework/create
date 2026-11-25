@@ -42,8 +42,8 @@ comptime _Widget = Variant[
     Row,
     Space,
 ]
-"""The kinds of widget a tree holds. Storage only: what each does is its
-own, reached through `_dispatch` and `_dispatch_mut`."""
+"""The kinds of node a tree holds. Storage only: what each does is its own,
+reached through `_describe`, `_draw` and `_dispatch_mut`."""
 
 
 @fieldwise_init
@@ -89,7 +89,7 @@ struct _Description(Copyable, Movable):
 
     var kind: Int
     var rect: Rectangle
-    """Where it is now; a `Space` has none."""
+    """Where it is now; a `Space` has none, and no size."""
     var takes_pointer: Bool
     """Whether it is hit where it is, rather than letting the pointer
     through."""
@@ -166,8 +166,9 @@ struct UI(Drawable, Movable):
     frame, to the size it prefers, unless what it is in places it: a
     `Column` stacks what is inside it, a `Row` sets it side by side, and a
     `Panel` places a column or row inside it in its inside. A panel with no
-    size fits the column or row inside it. Where widgets overlap, only the topmost under the
-    pointer reacts to it, and a `Panel` covers what is beneath it.
+    size fits the column or row inside it. Where widgets overlap, only the
+    topmost under the pointer reacts to it, and a `Panel` covers what is
+    beneath it.
 
     `update` hit-tests through `canvas.to_local`, so call it in the same
     transform and camera the tree is drawn in.
@@ -490,8 +491,9 @@ struct UI(Drawable, Movable):
 
     def enabled[W: Copyable](mut self, handle: WidgetHandle[W], enabled: Bool):
         """Let the widget `handle` names, and everything inside it, react,
-        or not: a disabled part of the tree is drawn faded, takes no focus,
-        and lets go of focus it has. Each widget's own `enabled` is kept,
+        or not: the widgets, labels and pictures in a disabled part of the
+        tree are drawn faded, take no focus, and let go of focus they have;
+        a panel keeps its colour. Each widget's own `enabled` is kept,
         so enabling the part again restores it."""
         self._nodes[handle._index].enabled = enabled
 
@@ -778,19 +780,22 @@ struct UI(Drawable, Movable):
         var node = self._describe(index)
         var width = 0.0
         var height = 0.0
-        if node.kind == _COLUMN:
+        if node.kind == _COLUMN or node.kind == _ROW:
+            # a widget with a size of its own keeps its place, and takes no
+            # room in the column or row
+            var placed = self._placed_children(index)
             var gap = node.gap.or_else(theme.spacing)
-            for i in range(len(children)):
-                ref size = sizes[children[i]]
-                width = max(width, size[0])
-                height += size[1] + (gap if i > 0 else 0.0)
-        elif node.kind == _ROW:
-            var gap = node.gap.or_else(theme.spacing)
-            for i in range(len(children)):
-                ref size = sizes[children[i]]
-                width += size[0] + (gap if i > 0 else 0.0)
-                height = max(height, size[1])
-            height = node.height.or_else(height)
+            for i in range(len(placed)):
+                ref size = sizes[placed[i]]
+                var between = gap if i > 0 else 0.0
+                if node.kind == _COLUMN:
+                    width = max(width, size[0])
+                    height += size[1] + between
+                else:
+                    width += size[0] + between
+                    height = max(height, size[1])
+            if node.kind == _ROW:
+                height = node.height.or_else(height)
         elif node.kind == _SPACE:
             width = node.amount.or_else(2 * theme.spacing)
             height = width
@@ -799,10 +804,9 @@ struct UI(Drawable, Movable):
                 width = node.rect.width
                 height = node.rect.height
             else:
-                # fitted round the column or row inside it
+                # fitted round the column or row it places
                 for child in children:
-                    var inner = self._describe(child).kind
-                    if inner == _COLUMN or inner == _ROW:
+                    if self._fills_panel(child):
                         width = max(width, sizes[child][0])
                         height = max(height, sizes[child][1])
                 width += 4 * theme.spacing
@@ -840,42 +844,61 @@ struct UI(Drawable, Movable):
                 index, _PLACE, context, canvas, theme, free=False, rect=rect
             )
         var children = self._nodes[index].children.copy()
-        if node.kind == _COLUMN:
+        if node.kind == _COLUMN or node.kind == _ROW:
+            var placed = self._placed_children(index)
+            var slots = List[Rectangle]()
             var gap = node.gap.or_else(theme.spacing)
-            var top = rect.top()
-            for i in range(len(children)):
-                var child = children[i]
-                if i > 0:
-                    top -= gap
-                var height = sizes[child][1]
-                var strip = Rectangle(
-                    Point(rect.position.x, top - height / 2),
-                    rect.width,
-                    height,
-                )
-                self._place_from(child, strip, context, canvas, theme, sizes)
-                top -= height
-        elif node.kind == _ROW:
-            var gap = node.gap.or_else(theme.spacing)
-            var weights = node.weights.copy()
-            while len(weights) < len(children):
-                weights.append(1.0)
-            var slots = rect.columns(weights=weights, gap=gap)
-            for i in range(len(children)):
-                self._place_from(
-                    children[i], slots[i], context, canvas, theme, sizes
-                )
+            if node.kind == _COLUMN:
+                var top = rect.top()
+                for child in placed:
+                    var height = sizes[child][1]
+                    slots.append(
+                        Rectangle(
+                            Point(rect.position.x, top - height / 2),
+                            rect.width,
+                            height,
+                        )
+                    )
+                    top -= height + gap
+            elif placed:
+                var weights = node.weights.copy()
+                while len(weights) < len(placed):
+                    weights.append(1.0)
+                slots = rect.columns(weights=weights, gap=gap)
+            var next = 0
+            for child in children:
+                var given: Optional[Rectangle] = None
+                if self._nodes[child].sized_by_ui:
+                    given = slots[next]
+                    next += 1
+                self._place_from(child, given, context, canvas, theme, sizes)
         elif node.kind == _PANEL:
             var inside = rect.inset(2 * theme.spacing)
             for child in children:
-                var inner = self._describe(child).kind
                 var given: Optional[Rectangle] = None
-                if inner == _COLUMN or inner == _ROW:
+                if self._fills_panel(child):
                     given = inside
                 self._place_from(child, given, context, canvas, theme, sizes)
         else:
             for child in children:
                 self._place_from(child, None, context, canvas, theme, sizes)
+
+    def _placed_children(self, index: Int) -> List[Int]:
+        """The children a column or row at `index` places: those added with
+        no size of their own. The rest keep their place."""
+        var placed = List[Int]()
+        for child in self._nodes[index].children:
+            if self._nodes[child].sized_by_ui:
+                placed.append(child)
+        return placed^
+
+    def _fills_panel(self, index: Int) -> Bool:
+        """Whether the node at `index`, inside a panel, fills the panel's
+        inside: a column or row added with no size of its own."""
+        var kind = self._describe(index).kind
+        return (kind == _COLUMN or kind == _ROW) and self._nodes[
+            index
+        ].sized_by_ui
 
     # ------------------------------------------------------------ dispatch
     #
@@ -939,8 +962,9 @@ struct UI(Drawable, Movable):
             described.weights = row.weights.copy()
             described.height = row.height
             return described^
+        # no size of its own: the column or row it is in sizes it
         var described = _Description(
-            _SPACE, Rectangle(Point(0.0, 0.0), 1.0, 1.0), False
+            _SPACE, Rectangle(Point(0.0, 0.0), 0.0, 0.0), False
         )
         described.amount = widget[Space].amount
         return described^

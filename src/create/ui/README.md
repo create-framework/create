@@ -76,7 +76,9 @@ widths, and a panel with no size fits round the column or row inside it. Then ev
 from the top level in: a column hands strips down its width, a row cuts its width with
 `Rectangle.columns`, and a panel hands its inside, inset by twice the `spacing`, to a column or row
 inside it. A node added with no size (`_UNSIZED`) is marked `sized_by_ui` and given its preferred
-size every frame, unless its parent places it.
+size every frame, unless its parent places it. A column or row places only such children, and a
+panel only such a column or row: a node added with a size of its own keeps its place and takes no
+room.
 
 ## Focus and the devices
 
