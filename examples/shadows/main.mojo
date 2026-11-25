@@ -34,44 +34,81 @@ comptime OFFSET = Vector(6, -6)
 comptime DARKNESS = 140.0
 
 
+def add_setting(
+    mut ui: UI,
+    column: WidgetHandle[Column],
+    name: String,
+    value: Float64,
+    minimum: Float64,
+    maximum: Float64,
+) -> WidgetHandle[Slider]:
+    """A line of the panel: `name`, and a slider beside it setting one part
+    of the shadow, in whole steps."""
+    var line = ui.add(Row(2, 3), column)
+    _ = ui.add(Label(name, alignment=Align.LEFT), line)
+    return ui.add(Slider(value, minimum, maximum, step=1), line)
+
+
 @fieldwise_init
 struct Shadows(Program):
     var ui: UI
-    var logo: Image
-    var blur: Float64
-    var spread: Float64
-    var offset_x: Float64
-    var offset_y: Float64
-    var darkness: Float64
+    var panel: WidgetHandle[Panel]
+    var blur: WidgetHandle[Slider]
+    var spread: WidgetHandle[Slider]
+    var offset_x: WidgetHandle[Slider]
+    var offset_y: WidgetHandle[Slider]
+    var darkness: WidgetHandle[Slider]
     """The shadow's alpha, 0 (invisible) to 255 (black)."""
-    var inset: Bool
-    var follows_transform: Bool
+    var inset: WidgetHandle[Checkbox]
+    var follows_transform: WidgetHandle[Checkbox]
+    var reset: WidgetHandle[Button]
+    var logo: Image
     var angle: Float64
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Shadows:
+        # The panel of widgets on the left, each setting one part of the
+        # shadow. `update` places the panel, and its column fills it.
+        var ui = UI()
+        ui.colors(COLORS)
+        var panel = ui.add(Panel())
+        var column = ui.add(Column(), panel)
+        _ = ui.add(Label("Shadows", style=Style(font_size=28)), column)
+        _ = ui.add(Space(), column)
+        var blur = add_setting(ui, column, "Blur", BLUR, 0, 40)
+        var spread = add_setting(ui, column, "Spread", SPREAD, 0, 20)
+        var offset_x = add_setting(ui, column, "Offset x", OFFSET.x, -20, 20)
+        var offset_y = add_setting(ui, column, "Offset y", OFFSET.y, -20, 20)
+        var darkness = add_setting(ui, column, "Darkness", DARKNESS, 0, 255)
+        _ = ui.add(Space(), column)
+        var inset = ui.add(Checkbox("Inset"), column)
+        var follows = ui.add(Checkbox("Follows transform"), column)
+        _ = ui.add(Space(), column)
+        var reset = ui.add(Button("Reset", variant=ButtonVariant.TONAL), column)
         return Shadows(
-            ui=UI(),
+            ui=ui^,
+            panel=panel,
+            blur=blur,
+            spread=spread,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            darkness=darkness,
+            inset=inset,
+            follows_transform=follows,
+            reset=reset,
             logo=Image.load("../../assets/logo/png/logo-light-cutout.png"),
-            blur=BLUR,
-            spread=SPREAD,
-            offset_x=OFFSET.x,
-            offset_y=OFFSET.y,
-            darkness=DARKNESS,
-            inset=False,
-            follows_transform=False,
             angle=0,
         )
 
-    def reset(mut self):
+    def put_back(mut self):
         """Put every control back as it starts."""
-        self.blur = BLUR
-        self.spread = SPREAD
-        self.offset_x = OFFSET.x
-        self.offset_y = OFFSET.y
-        self.darkness = DARKNESS
-        self.inset = False
-        self.follows_transform = False
+        self.ui[self.blur].value = BLUR
+        self.ui[self.spread].value = SPREAD
+        self.ui[self.offset_x].value = OFFSET.x
+        self.ui[self.offset_y].value = OFFSET.y
+        self.ui[self.darkness].value = DARKNESS
+        self.ui[self.inset].checked = False
+        self.ui[self.follows_transform].checked = False
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
@@ -80,7 +117,11 @@ struct Shadows(Program):
         var halves = (
             canvas.bounds().inset(MARGIN).columns(weights=[1, 3], gap=GAP)
         )
-        self.controls(context, canvas, halves[0])
+        self.ui[self.panel].rect = halves[0]
+        self.ui.update(context, canvas)
+        canvas.draw(self.ui)
+        if self.ui[self.reset].released():
+            self.put_back()
 
         # Every tile is drawn with the shadow the controls set. The tiles
         # themselves are drawn first, outside the block, so they cast none.
@@ -92,13 +133,20 @@ struct Shadows(Program):
                     tile.position, tile.width, tile.height, corner_radius=16
                 )
 
+        var darkness = self.ui[self.darkness].value
+        var offset_x = self.ui[self.offset_x].value
+        var offset_y = self.ui[self.offset_y].value
+        var blur = self.ui[self.blur].value
+        var spread = self.ui[self.spread].value
+        var inset = self.ui[self.inset].checked
+        var follows_transform = self.ui[self.follows_transform].checked
         with canvas.style(
-            shadow=SHADOW.with_alpha(UInt8(Int(self.darkness))),
-            shadow_offset=Vector(self.offset_x, self.offset_y),
-            shadow_blur=self.blur,
-            shadow_spread=self.spread,
-            shadow_inset=self.inset,
-            shadow_follows_transform=self.follows_transform,
+            shadow=SHADOW.with_alpha(UInt8(Int(darkness))),
+            shadow_offset=Vector(offset_x, offset_y),
+            shadow_blur=blur,
+            shadow_spread=spread,
+            shadow_inset=inset,
+            shadow_follows_transform=follows_transform,
         ):
             self.subjects(canvas, tiles)
 
@@ -115,38 +163,6 @@ struct Shadows(Program):
                 canvas.text(
                     captions[i], (tiles[i].center().x, tiles[i].bottom() + 30)
                 )
-
-    def controls(
-        mut self, mut context: Context, mut canvas: Canvas, area: Rectangle
-    ) raises:
-        """The panel of widgets on the left, each setting one part of the
-        shadow."""
-        with self.ui.screen(context, canvas, COLORS) as ui:
-            with ui.panel(area):
-                with ui.column():
-                    ui.label("Shadows", style=Style(font_size=28))
-                    ui.space()
-                    with ui.row(2, 3):
-                        ui.label("Blur", alignment=Align.LEFT)
-                        ui.slider(self.blur, 0, 40, step=1)
-                    with ui.row(2, 3):
-                        ui.label("Spread", alignment=Align.LEFT)
-                        ui.slider(self.spread, 0, 20, step=1)
-                    with ui.row(2, 3):
-                        ui.label("Offset x", alignment=Align.LEFT)
-                        ui.slider(self.offset_x, -20, 20, step=1)
-                    with ui.row(2, 3):
-                        ui.label("Offset y", alignment=Align.LEFT)
-                        ui.slider(self.offset_y, -20, 20, step=1)
-                    with ui.row(2, 3):
-                        ui.label("Darkness", alignment=Align.LEFT)
-                        ui.slider(self.darkness, 0, 255, step=1)
-                    ui.space()
-                    ui.checkbox("Inset", self.inset)
-                    ui.checkbox("Follows transform", self.follows_transform)
-                    ui.space()
-                    if ui.button("Reset", variant=ButtonVariant.TONAL):
-                        self.reset()
 
     def subjects(self, mut canvas: Canvas, tiles: List[Rectangle]):
         """One subject in each tile, a little above its middle to leave room

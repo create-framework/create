@@ -4,6 +4,7 @@ leaves the other's widgets alone."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 comptime _LEFT = Rectangle((-100, 0), 160, 40)
@@ -13,16 +14,16 @@ comptime _RIGHT = Rectangle((100, 0), 160, 40)
 struct _Split:
     """A text field in each of two UIs, sharing one context."""
 
-    var left: UI
-    var right: UI
+    var left: _ImmediateUI
+    var right: _ImmediateUI
     var context: Context
     var left_text: String
     var right_text: String
     var open_right: Bool
 
     def __init__(out self):
-        self.left = UI()
-        self.right = UI()
+        self.left = _ImmediateUI()
+        self.right = _ImmediateUI()
         self.context = Context()
         self.left_text = ""
         self.right_text = ""
@@ -92,8 +93,8 @@ def test_a_ui_that_stops_opening_layers_lets_go_of_the_keyboard() raises -> (
 
 
 def test_a_drag_in_one_ui_leaves_the_others_widgets_alone() raises -> None:
-    var top = UI()
-    var bottom = UI()
+    var top = _ImmediateUI()
+    var bottom = _ImmediateUI()
     var context = Context()
     var value = 0.5
     var clicked = False

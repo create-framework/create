@@ -10,6 +10,7 @@ from std.testing import (
 )
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 # The handle's centre runs from x = -100 to 100: the track, inset by the
@@ -19,7 +20,7 @@ comptime _BOX = Rectangle((0, -60), 200, 32)
 
 
 def _slider(
-    mut ui: UI,
+    mut ui: _ImmediateUI,
     mut context: Context,
     mut value: Float64,
     step: Float64 = 0,
@@ -36,7 +37,7 @@ def _slider(
 
 
 def test_pressing_the_track_moves_the_handle_there() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.0
     point_at(context, Point(50, 0))
@@ -48,7 +49,7 @@ def test_pressing_the_track_moves_the_handle_there() raises -> None:
 
 
 def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.5
     point_at(context, Point(0, 0))
@@ -78,7 +79,7 @@ def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
 
 
 def test_a_release_off_the_track_moves_the_handle_there() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.5
     point_at(context, Point(0, 0))
@@ -93,7 +94,7 @@ def test_a_release_off_the_track_moves_the_handle_there() raises -> None:
 
 
 def test_a_step_rounds_the_value() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.0
     point_at(context, Point(13, 0))
@@ -105,7 +106,7 @@ def test_a_step_rounds_the_value() raises -> None:
 
 
 def test_a_step_past_max_comes_back_inside_a_reversed_range() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 10.0
     point_at(context, Point(105, 0))
@@ -117,7 +118,7 @@ def test_a_step_past_max_comes_back_inside_a_reversed_range() raises -> None:
 
 
 def test_a_step_of_zero_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(300, 200)
     var value = 0.5
@@ -127,7 +128,7 @@ def test_a_step_of_zero_raises() raises -> None:
 
 
 def test_a_value_out_of_range_is_left_alone_until_dragged() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 3.0
     point_at(context, Point(80, 0))
@@ -138,7 +139,7 @@ def test_a_value_out_of_range_is_left_alone_until_dragged() raises -> None:
 
 
 def _checkbox(
-    mut ui: UI, mut context: Context, mut checked: Bool
+    mut ui: _ImmediateUI, mut context: Context, mut checked: Bool
 ) raises -> Bool:
     var canvas = Canvas(300, 200)
     with ui.screen(context, canvas) as layer:
@@ -147,7 +148,7 @@ def _checkbox(
 
 
 def test_a_click_anywhere_on_a_checkbox_switches_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var checked = False
     var on_label = _BOX.position + Vector(60.0, 0.0)
@@ -169,7 +170,7 @@ def test_a_click_anywhere_on_a_checkbox_switches_it() raises -> None:
 
 
 def test_a_widget_ignores_the_pointer_while_another_is_held() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.5
     var checked = False
@@ -195,7 +196,7 @@ def test_a_widget_ignores_the_pointer_while_another_is_held() raises -> None:
 
 
 def test_changed_reports_only_the_widget_called_last() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(300, 200)
     var value = 0.0
@@ -226,7 +227,7 @@ def _drawn(
     handle_outline: Style = Style(),
 ) raises -> Canvas:
     """One frame of a slider at `value`, in the parts' styles, unsmoothed."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(300, 200, antialiasing=Antialiasing.OFF)
     var shown = value
@@ -311,7 +312,7 @@ def test_a_handle_can_cast_a_shadow() raises -> None:
 
 
 def test_a_dragged_handle_is_tinted() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.5
     var colors = List[Color]()

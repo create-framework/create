@@ -35,10 +35,10 @@ struct App(Program):
         return App(
             scene=Scene.TITLE,
             best=0,
-            title=Title(UI()),
+            title=Title(),
             play=Play(),
-            pause=Pause(UI()),
-            over=Over(UI(), 0, 0),
+            pause=Pause(),
+            over=Over(),
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:

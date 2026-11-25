@@ -10,7 +10,6 @@ from std.testing import (
 )
 
 from create import *
-from create.ui.tree import _Tree
 from _input import (
     connect_pad,
     next_frame,
@@ -26,14 +25,14 @@ struct _Panel:
     """Three buttons in a row, the second possibly disabled, a slider under
     them, and a text field under that."""
 
-    var ui: _Tree
+    var ui: UI
     var context: Context
     var buttons: List[WidgetHandle[Button]]
     var slider: WidgetHandle[Slider]
     var field: WidgetHandle[TextField]
 
     def __init__(out self) raises:
-        self.ui = _Tree()
+        self.ui = UI()
         self.context = Context()
         self.buttons = []
         for i in range(3):

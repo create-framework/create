@@ -3,6 +3,7 @@ in that frame, and each part is drawn in a style of its own."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 comptime _ROW = Rectangle((0, 0), 200, 32)
@@ -118,7 +119,7 @@ def test_it_draws_as_the_ui_checkbox_does() raises -> None:
     var checkbox = Checkbox("Music", _ROW, checked=True)
     checkbox.update(context, drawn)
     drawn.draw(checkbox)
-    var ui = UI()
+    var ui = _ImmediateUI()
     var called = Canvas(300, 100, antialiasing=Antialiasing.OFF)
     var on = True
     with ui.screen(context, called) as layer:

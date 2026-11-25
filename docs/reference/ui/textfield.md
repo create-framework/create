@@ -191,6 +191,14 @@ def selected_text(self) -> String
 
 The selected text, empty when nothing is.
 
+### `before_selection`
+
+```mojo
+def before_selection(self) -> String
+```
+
+The text left of the selection: what to measure to place its highlight, and where typing lands. The same as `before_caret` when nothing is selected.
+
 ### `insert`
 
 ```mojo

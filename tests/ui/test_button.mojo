@@ -4,6 +4,7 @@ states are drawn."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from create.ui.colors import _contrast
 from _input import next_frame, point_at, press, release
 
@@ -12,7 +13,7 @@ comptime _B = Rectangle((60, 0), 100, 40)
 
 
 def _buttons(
-    mut ui: UI, mut context: Context, rects: List[Rectangle]
+    mut ui: _ImmediateUI, mut context: Context, rects: List[Rectangle]
 ) raises -> List[Bool]:
     """One frame of a button in each of `rects`, in order: what each
     returned."""
@@ -25,7 +26,7 @@ def _buttons(
 
 
 def test_a_press_and_release_over_a_button_clicks_it_once() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     assert_false(_buttons(ui, context, [_A])[0])
@@ -40,7 +41,7 @@ def test_a_press_and_release_over_a_button_clicks_it_once() raises -> None:
 
 
 def test_a_press_and_release_in_one_frame_clicks() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     _ = _buttons(ui, context, [_A])
@@ -51,7 +52,7 @@ def test_a_press_and_release_in_one_frame_clicks() raises -> None:
 
 
 def test_a_release_on_another_button_clicks_neither() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     _ = _buttons(ui, context, [_A, _B])
@@ -69,7 +70,7 @@ def test_a_release_on_another_button_clicks_neither() raises -> None:
 
 
 def test_only_the_topmost_of_two_overlapping_buttons_clicks() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     _ = _buttons(ui, context, [_A, _A])
@@ -82,7 +83,7 @@ def test_only_the_topmost_of_two_overlapping_buttons_clicks() raises -> None:
 
 
 def test_the_ui_wants_the_mouse_over_a_button_or_holding_one() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, Point(0, 45))
     _ = _buttons(ui, context, [_A])
@@ -109,7 +110,7 @@ def test_the_ui_wants_the_mouse_over_a_button_or_holding_one() raises -> None:
 
 
 def test_a_ui_that_stops_drawing_stops_wanting_the_input() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     _ = _buttons(ui, context, [_A])
@@ -124,7 +125,7 @@ def test_a_ui_that_stops_drawing_stops_wanting_the_input() raises -> None:
 
 
 def _button_pixel(
-    mut ui: UI, mut context: Context, colors: ColorScheme
+    mut ui: _ImmediateUI, mut context: Context, colors: ColorScheme
 ) raises -> Color:
     """The colour of a filled button, beside its text."""
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
@@ -135,7 +136,7 @@ def _button_pixel(
 
 def test_a_hovered_or_pressed_button_stands_out_in_any_scheme() raises -> None:
     for colors in [ColorScheme.light(), ColorScheme.dark()]:
-        var ui = UI()
+        var ui = _ImmediateUI()
         var context = Context()
         point_at(context, Point(0, 45))
         var rest = _button_pixel(ui, context, colors)
@@ -160,7 +161,7 @@ def test_a_hovered_or_pressed_button_stands_out_in_any_scheme() raises -> None:
 
 
 def test_an_outlined_button_draws_only_its_border() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     canvas.background(Color.WHITE)
@@ -179,7 +180,7 @@ def test_an_outlined_button_draws_only_its_border() raises -> None:
 
 
 def test_a_partial_style_keeps_the_variants_colours() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     with ui.screen(context, canvas) as layer:
@@ -190,7 +191,7 @@ def test_a_partial_style_keeps_the_variants_colours() raises -> None:
 
 
 def test_a_thickness_alone_outlines_a_filled_button() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     with ui.screen(context, canvas) as layer:
@@ -204,7 +205,7 @@ def test_a_thickness_alone_outlines_a_filled_button() raises -> None:
 
 
 def test_a_button_takes_a_gradient_fill() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     var fade = Gradient.linear(Color.RED, Color.BLUE, direction=Vector.RIGHT)
@@ -219,7 +220,7 @@ def test_a_button_takes_a_gradient_fill() raises -> None:
 
 
 def test_a_label_lets_the_pointer_through() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     var canvas = Canvas(200, 100)
@@ -238,7 +239,7 @@ def test_a_label_lets_the_pointer_through() raises -> None:
 def _ink_near_the_left(alignment: Optional[Align], style: Style) raises -> Bool:
     """Whether a label across the canvas, drawn by `alignment` and `style`,
     puts ink within its leftmost 20 units."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     canvas.background(Color.WHITE)
@@ -270,7 +271,7 @@ def test_a_label_takes_its_alignment_from_the_call_or_its_style() raises -> (
 def _corner_is_filled(corner_radius: Float64) raises -> Bool:
     """Whether a button at `_A`, in a `UI` of `corner_radius`, paints its
     top-left corner pixel."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     ui.corner_radius(corner_radius)
     var context = Context()
     var canvas = Canvas(300, 100, antialiasing=Antialiasing.OFF)
@@ -287,7 +288,7 @@ def test_a_buttons_corners_follow_the_uis_corner_radius() raises -> None:
 
 
 def test_an_image_fills_its_rectangle() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     var pixels = List[UInt8]()

@@ -4,6 +4,7 @@ from std.reflection import call_location
 from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from create.ui._key import _WidgetKey
 
 
@@ -18,7 +19,7 @@ def _next_frame(mut context: Context):
 
 
 def _after_optional(
-    mut ui: UI, mut context: Context, mut canvas: Canvas, show: Bool
+    mut ui: _ImmediateUI, mut context: Context, mut canvas: Canvas, show: Bool
 ) raises -> UInt64:
     with ui.screen(context, canvas) as layer:
         if show:
@@ -27,7 +28,7 @@ def _after_optional(
 
 
 def test_a_widget_shown_earlier_doesnt_shift_a_later_id() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var without = _after_optional(ui, context, canvas, False)
@@ -37,7 +38,7 @@ def test_a_widget_shown_earlier_doesnt_shift_a_later_id() raises -> None:
 
 
 def test_an_id_is_the_same_every_frame() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var first = _after_optional(ui, context, canvas, False)
@@ -47,7 +48,7 @@ def test_an_id_is_the_same_every_frame() raises -> None:
 
 
 def test_each_run_of_a_loop_gets_its_own_id() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var ids = List[UInt64]()
@@ -60,7 +61,10 @@ def test_each_run_of_a_loop_gets_its_own_id() raises -> None:
 
 
 def _keyed(
-    mut ui: UI, mut context: Context, mut canvas: Canvas, names: List[String]
+    mut ui: _ImmediateUI,
+    mut context: Context,
+    mut canvas: Canvas,
+    names: List[String],
 ) raises -> Dict[String, UInt64]:
     var ids = Dict[String, UInt64]()
     with ui.screen(context, canvas) as layer:
@@ -73,7 +77,7 @@ def _keyed(
 def test_a_keyed_widget_keeps_its_id_when_the_list_is_reordered() raises -> (
     None
 ):
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var before = _keyed(ui, context, canvas, ["ada", "bo", "cy"])
@@ -85,7 +89,10 @@ def test_a_keyed_widget_keeps_its_id_when_the_list_is_reordered() raises -> (
 
 
 def _keyed_calls(
-    mut ui: UI, mut context: Context, mut canvas: Canvas, keys: List[UInt64]
+    mut ui: _ImmediateUI,
+    mut context: Context,
+    mut canvas: Canvas,
+    keys: List[UInt64],
 ) raises -> Dict[UInt64, UInt64]:
     var ids = Dict[UInt64, UInt64]()
     with ui.screen(context, canvas) as layer:
@@ -95,7 +102,7 @@ def _keyed_calls(
 
 
 def test_an_id_key_on_one_call_keeps_it_apart() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var before = _keyed_calls(ui, context, canvas, [7, 8])
@@ -109,7 +116,7 @@ def test_an_id_key_on_one_call_keeps_it_apart() raises -> None:
 def _button_ids[K: Hashable & Copyable](keys: List[K]) raises -> List[UInt64]:
     """The IDs of buttons called in a loop, each given the next key as its
     `id=`."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     with ui.screen(context, canvas) as layer:
@@ -136,7 +143,7 @@ def test_id_takes_any_hashable_key() raises -> None:
 
 
 def test_two_layers_in_one_frame_share_the_counts() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var ids = List[UInt64]()
@@ -147,7 +154,7 @@ def test_two_layers_in_one_frame_share_the_counts() raises -> None:
 
 
 def test_a_layer_used_in_a_later_frame_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     var kept = ui.screen(context, canvas)
@@ -165,8 +172,8 @@ def test_a_layer_used_in_a_later_frame_raises() raises -> None:
 
 
 def test_a_layer_inside_another_of_the_same_ui_raises() raises -> None:
-    var ui = UI()
-    var other = UI()
+    var ui = _ImmediateUI()
+    var other = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(64, 64)
     with ui.screen(context, canvas):

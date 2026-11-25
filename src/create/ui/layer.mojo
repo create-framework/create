@@ -29,7 +29,7 @@ from .checkbox import _checkbox_box, _checkbox_text_at, _tick_lines
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor, _measure, _offset_at
 from .colors import ColorScheme, FocusRing
-from .ui import UI, _Hit
+from .ui import _ImmediateUI, _Hit
 from ._theme import _Styles, _fills, _text_look
 
 
@@ -78,7 +78,7 @@ struct UILayer[
     - `id=` adds a key to its ID, as a `ui.id` block around it would.
     """
 
-    var _ui: Pointer[UI, Self.ui_origin]
+    var _ui: Pointer[_ImmediateUI, Self.ui_origin]
     var _context: Pointer[Context, Self.context_origin]
     var _canvas: Pointer[Canvas, Self.canvas_origin]
     var _frame: Int
@@ -91,7 +91,7 @@ struct UILayer[
     def __init__(
         out self,
         *,
-        ref[Self.ui_origin] _ui: UI,
+        ref[Self.ui_origin] _ui: _ImmediateUI,
         ref[Self.context_origin] _context: Context,
         ref[Self.canvas_origin] _canvas: Canvas,
         _frame: Int,
@@ -1268,9 +1268,9 @@ struct IDGuard[origin: Origin[mut=True]](Movable):
     """Takes the key `ui.id` added off the widget IDs again, on scope exit.
     Only `ui.id` builds one."""
 
-    var _ui: Pointer[UI, Self.origin]
+    var _ui: Pointer[_ImmediateUI, Self.origin]
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, _key: UInt64):
+    def __init__(out self, *, ref[Self.origin] _ui: _ImmediateUI, _key: UInt64):
         var parent = _ui._keys[len(_ui._keys) - 1] if _ui._keys else 0
         _ui._keys.append(_mix(parent, _key))
         self._ui = Pointer(to=_ui)
@@ -1286,10 +1286,12 @@ struct DisabledGuard[origin: Origin[mut=True]](Movable):
     """Ends the `ui.disabled` block it was made for, on scope exit. Only
     `ui.disabled` builds one."""
 
-    var _ui: Pointer[UI, Self.origin]
+    var _ui: Pointer[_ImmediateUI, Self.origin]
     var _active: Bool
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, _active: Bool):
+    def __init__(
+        out self, *, ref[Self.origin] _ui: _ImmediateUI, _active: Bool
+    ):
         if _active:
             _ui._disabled_depth += 1
         self._ui = Pointer(to=_ui)
@@ -1307,9 +1309,11 @@ struct ColorsGuard[origin: Origin[mut=True]](Movable):
     """Ends the `ui.colors` block it was made for, on scope exit. Only
     `ui.colors` builds one."""
 
-    var _ui: Pointer[UI, Self.origin]
+    var _ui: Pointer[_ImmediateUI, Self.origin]
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, _colors: ColorScheme):
+    def __init__(
+        out self, *, ref[Self.origin] _ui: _ImmediateUI, _colors: ColorScheme
+    ):
         _ui._color_blocks.append(_colors)
         self._ui = Pointer(to=_ui)
 
@@ -1324,9 +1328,11 @@ struct WidgetStyleGuard[origin: Origin[mut=True]](Movable):
     """Ends the `ui.style` block it was made for, on scope exit. Only
     `ui.style` builds one."""
 
-    var _ui: Pointer[UI, Self.origin]
+    var _ui: Pointer[_ImmediateUI, Self.origin]
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, _styles: _Styles):
+    def __init__(
+        out self, *, ref[Self.origin] _ui: _ImmediateUI, _styles: _Styles
+    ):
         _ui._styles.append(_styles._over(_ui._current_styles()))
         self._ui = Pointer(to=_ui)
 
@@ -1341,12 +1347,12 @@ struct PanelGuard[origin: Origin[mut=True]](Movable):
     """Ends the `ui.panel` block it was made for, on scope exit. Only
     `ui.panel` builds one."""
 
-    var _ui: Pointer[UI, Self.origin]
+    var _ui: Pointer[_ImmediateUI, Self.origin]
 
     def __init__(
         out self,
         *,
-        ref[Self.origin] _ui: UI,
+        ref[Self.origin] _ui: _ImmediateUI,
         _surface: Color,
         _content: Color,
         _rect: Rectangle,
@@ -1369,9 +1375,11 @@ struct LayoutGuard[origin: Origin[mut=True]](Movable):
     """Ends the `ui.column` or `ui.row` block it was made for, on scope
     exit. Only `ui.column` and `ui.row` build one."""
 
-    var _ui: Pointer[UI, Self.origin]
+    var _ui: Pointer[_ImmediateUI, Self.origin]
 
-    def __init__(out self, *, ref[Self.origin] _ui: UI, var _layout: _Layout):
+    def __init__(
+        out self, *, ref[Self.origin] _ui: _ImmediateUI, var _layout: _Layout
+    ):
         _ui._layouts.append(_layout^)
         self._ui = Pointer(to=_ui)
 

@@ -4,13 +4,14 @@ still cover what is beneath them."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 comptime _A = Rectangle((0, 0), 120, 40)
 
 
 def _click(
-    mut ui: UI, mut context: Context, disabled: Bool, scoped: Bool
+    mut ui: _ImmediateUI, mut context: Context, disabled: Bool, scoped: Bool
 ) raises -> Bool:
     """Two frames of a button at `_A`, clicked in the second: what it
     returned then."""
@@ -30,26 +31,26 @@ def _click(
 def test_a_disabled_button_does_not_click() raises -> None:
     var context = Context()
     point_at(context, _A.position)
-    var ui = UI()
+    var ui = _ImmediateUI()
     assert_false(_click(ui, context, disabled=True, scoped=False))
 
 
 def test_a_disabled_block_disables_its_widgets() raises -> None:
     var context = Context()
     point_at(context, _A.position)
-    var ui = UI()
+    var ui = _ImmediateUI()
     assert_false(_click(ui, context, disabled=False, scoped=True))
 
 
 def test_a_block_disabled_on_a_false_condition_works_as_usual() raises -> None:
     var context = Context()
     point_at(context, _A.position)
-    var ui = UI()
+    var ui = _ImmediateUI()
     assert_true(_click(ui, context, disabled=False, scoped=False))
 
 
 def test_nested_blocks_end_where_they_end() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100)
     with ui.screen(context, canvas) as layer:
@@ -61,7 +62,7 @@ def test_nested_blocks_end_where_they_end() raises -> None:
 
 
 def test_a_disabled_widget_covers_what_is_beneath() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     var canvas = Canvas(200, 100)
@@ -78,7 +79,7 @@ def test_a_disabled_widget_covers_what_is_beneath() raises -> None:
 
 
 def test_a_disabled_slider_keeps_its_value() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var value = 0.5
     point_at(context, Point(40, 0))
@@ -94,7 +95,7 @@ def test_a_disabled_slider_keeps_its_value() raises -> None:
 
 
 def test_a_disabled_button_is_drawn_faded() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     canvas.background(ColorScheme.light().surface)
@@ -111,7 +112,7 @@ def test_a_disabled_button_is_drawn_faded() raises -> None:
 
 
 def test_a_disabled_widget_on_a_panel_is_drawn_against_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     var value = 0.5
@@ -134,7 +135,7 @@ def test_a_disabled_widget_on_a_panel_is_drawn_against_it() raises -> None:
 def _label_and_image(disabled: Bool) raises -> Canvas:
     """A black label at `_A` and a red image under it, in a block disabled
     or not, on white."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     canvas.background(Color.WHITE)

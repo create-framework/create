@@ -10,7 +10,6 @@ from std.testing import (
 )
 
 from create import *
-from create.ui.tree import _Tree
 from _input import next_frame, point_at, press, release
 
 # The defaults: `spacing` 8, `control_height` 40, a label's text 16.
@@ -20,7 +19,7 @@ comptime _LABEL = 24.0
 """A label's height: one and a half times its text's size."""
 
 
-def _laid_out(mut ui: _Tree) raises:
+def _laid_out(mut ui: UI) raises:
     var context = Context()
     point_at(context, (500, 500))
     var canvas = Canvas(400, 300)
@@ -28,7 +27,7 @@ def _laid_out(mut ui: _Tree) raises:
 
 
 def test_a_widget_with_no_size_takes_the_size_it_prefers() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var play = ui.add(Button("Play"))
     var placed = ui.add(Button("Placed", Rectangle((50, 50), 120, 30)))
     _laid_out(ui)
@@ -41,7 +40,7 @@ def test_a_widget_with_no_size_takes_the_size_it_prefers() raises -> None:
 
 
 def test_a_column_stacks_from_the_top_across_its_width() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
     var title = ui.add(Label("Title"), list)
     var first = ui.add(Button("A"), list)
@@ -56,7 +55,7 @@ def test_a_column_stacks_from_the_top_across_its_width() raises -> None:
 
 
 def test_a_space_leaves_room_in_a_column() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
     _ = ui.add(Button("A"), list)
     _ = ui.add(Space(30), list)
@@ -66,7 +65,7 @@ def test_a_space_leaves_room_in_a_column() raises -> None:
 
 
 def test_a_row_shares_its_width_by_weight() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var line = ui.add(Row(1, 3, rect=Rectangle((0, 0), 408, 40)))
     var name = ui.add(Label("Volume"), line)
     var volume = ui.add(Slider(0.5, 0, 1), line)
@@ -78,7 +77,7 @@ def test_a_row_shares_its_width_by_weight() raises -> None:
 
 
 def test_a_row_with_no_weights_gives_equal_slots() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var line = ui.add(Row(rect=Rectangle((0, 0), 214, 40)))
     var buttons = List[WidgetHandle[Button]]()
     for name in ["A", "B", "C"]:
@@ -89,7 +88,7 @@ def test_a_row_with_no_weights_gives_equal_slots() raises -> None:
 
 
 def test_a_row_in_a_column_is_as_tall_as_its_tallest() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
     var line = ui.add(Row(), list)
     var a = ui.add(Label("A"), line)
@@ -101,7 +100,7 @@ def test_a_row_in_a_column_is_as_tall_as_its_tallest() raises -> None:
 
 
 def test_a_panel_with_no_size_fits_round_its_column() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(Panel())
     var list = ui.add(Column(), card)
     var first = ui.add(Slider(0.5, 0, 1), list)
@@ -116,7 +115,7 @@ def test_a_panel_with_no_size_fits_round_its_column() raises -> None:
 
 
 def test_a_sized_panel_places_its_column_in_its_inside() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(Panel(Rectangle((0, 0), 300, 200)))
     var list = ui.add(Column(), card)
     var ok = ui.add(Button("OK"), list)
@@ -127,7 +126,7 @@ def test_a_sized_panel_places_its_column_in_its_inside() raises -> None:
 
 
 def test_a_placed_widget_is_clicked_where_it_is_placed() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
     _ = ui.add(Button("A"), list)
     var b = ui.add(Button("B"), list)

@@ -10,6 +10,7 @@ from std.testing import (
 )
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 # The handle's centre runs from x = -100 to 100: the track, inset by the
@@ -204,7 +205,7 @@ def test_it_draws_as_the_ui_slider_does() raises -> None:
     var drawn = _canvas()
     slider.update(context, drawn)
     drawn.draw(slider)
-    var ui = UI()
+    var ui = _ImmediateUI()
     var called = _canvas()
     var value = 0.3
     with ui.screen(context, called) as layer:

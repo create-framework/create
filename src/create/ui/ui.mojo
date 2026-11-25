@@ -48,7 +48,7 @@ struct _Hit(Copyable, ImplicitlyCopyable, Movable):
         return self.to_local.inverse().apply(self.rect.position)
 
 
-struct UI(Movable):
+struct _ImmediateUI(Movable):
     """The state of a program's widgets, kept from frame to frame under each
     widget's ID.
 

@@ -1,9 +1,6 @@
-"""The widget tree: widgets kept together, updated and drawn in one call
-each, in a shared look, with only the topmost under the pointer reacting
-to it.
-
-During the move from the immediate-mode `UI`, the tree is `_Tree`; it
-takes the name `UI` once that is gone. Its handles are `WidgetHandle`s.
+"""`UI`, the widget tree: widgets kept together, updated and drawn in one
+call each, in a shared look, with only the topmost under the pointer
+reacting to it; and `WidgetHandle`, how a program reaches a widget in it.
 """
 
 from std.utils import Variant
@@ -140,13 +137,13 @@ struct _Reply(Copyable, Movable):
     var height: Float64
 
 
-struct _Tree(Drawable, Movable):
+struct UI(Drawable, Movable):
     """Widgets kept together: added once, then updated and drawn each frame
     in one call each.
 
     ```mojo
     # In `create`, building the `ui` field and keeping a handle:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(Panel())  # fitted round its column
     var list = ui.add(Column(), card)
     _ = ui.add(Label("Ready?"), list)

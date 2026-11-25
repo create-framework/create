@@ -9,6 +9,7 @@ from std.testing import (
 )
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 comptime _COLUMN = Rectangle((0, 0), 200, 300)
@@ -24,7 +25,7 @@ def _assert_rect(
     assert_almost_equal(got.height, height, atol=1e-9)
 
 
-def _placed(ui: UI) -> List[Rectangle]:
+def _placed(ui: _ImmediateUI) -> List[Rectangle]:
     """Where this frame's buttons went, in call order."""
     var rects = List[Rectangle]()
     for hit in ui._hits:
@@ -34,7 +35,7 @@ def _placed(ui: UI) -> List[Rectangle]:
 
 
 def test_a_column_stacks_widgets_down_its_width() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -47,7 +48,7 @@ def test_a_column_stacks_widgets_down_its_width() raises -> None:
 
 
 def test_the_uis_spacing_and_control_height_lay_out_a_column() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     ui.spacing(20)
     ui.control_height(30)
     var context = Context()
@@ -65,7 +66,7 @@ def test_the_uis_spacing_and_control_height_lay_out_a_column() raises -> None:
 
 
 def test_a_gap_given_replaces_the_uis() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -76,7 +77,7 @@ def test_a_gap_given_replaces_the_uis() raises -> None:
 
 
 def test_a_label_is_as_tall_as_its_text_needs() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -91,7 +92,7 @@ def test_a_label_is_as_tall_as_its_text_needs() raises -> None:
 
 
 def test_a_row_splits_its_width_by_its_weights() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(500, 400)
     with ui.screen(context, canvas) as layer:
@@ -105,7 +106,7 @@ def test_a_row_splits_its_width_by_its_weights() raises -> None:
 
 
 def test_a_row_of_equal_columns() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(500, 400)
     with ui.screen(context, canvas) as layer:
@@ -121,7 +122,7 @@ def test_a_row_of_equal_columns() raises -> None:
 
 
 def test_a_rows_height_is_given_or_the_controls() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -136,7 +137,7 @@ def test_a_rows_height_is_given_or_the_controls() raises -> None:
 
 
 def test_a_rect_given_wins_and_takes_no_slot() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -149,7 +150,7 @@ def test_a_rect_given_wins_and_takes_no_slot() raises -> None:
 
 
 def test_a_column_fills_the_panel_around_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -160,7 +161,7 @@ def test_a_column_fills_the_panel_around_it() raises -> None:
 
 
 def test_a_column_fills_a_rows_slot() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(500, 400)
     with ui.screen(context, canvas) as layer:
@@ -176,7 +177,7 @@ def test_a_column_fills_a_rows_slot() raises -> None:
 
 
 def test_a_panel_without_a_rect_fills_a_rows_slot() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(500, 400)
     with ui.screen(context, canvas) as layer:
@@ -196,7 +197,7 @@ def test_a_panel_without_a_rect_fills_a_rows_slot() raises -> None:
 
 
 def test_a_panel_without_a_rect_outside_a_stack_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -206,7 +207,7 @@ def test_a_panel_without_a_rect_outside_a_stack_raises() raises -> None:
 
 
 def test_a_column_in_a_column_takes_the_rest() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -221,7 +222,7 @@ def test_a_column_in_a_column_takes_the_rest() raises -> None:
 
 
 def test_space_leaves_part_of_a_column_empty() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -237,7 +238,7 @@ def test_space_leaves_part_of_a_column_empty() raises -> None:
 
 
 def test_a_placed_button_is_clicked_where_it_is_drawn() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     var spot = Point(0, 82)  # the second button's centre
@@ -258,7 +259,7 @@ def test_a_placed_button_is_clicked_where_it_is_drawn() raises -> None:
 
 
 def test_a_placed_widget_keeps_its_id_from_frame_to_frame() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     var ids = List[UInt64]()
@@ -272,7 +273,7 @@ def test_a_placed_widget_keeps_its_id_from_frame_to_frame() raises -> None:
 
 
 def test_a_widget_without_a_rect_outside_a_stack_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -284,7 +285,7 @@ def test_a_widget_without_a_rect_outside_a_stack_raises() raises -> None:
 
 
 def test_a_column_without_a_rect_outside_a_panel_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -294,7 +295,7 @@ def test_a_column_without_a_rect_outside_a_panel_raises() raises -> None:
 
 
 def test_a_widget_past_a_rows_last_slot_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -307,7 +308,7 @@ def test_a_widget_past_a_rows_last_slot_raises() raises -> None:
 
 
 def test_a_row_needs_weights_or_columns_but_not_both() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -321,7 +322,7 @@ def test_a_row_needs_weights_or_columns_but_not_both() raises -> None:
 
 
 def test_space_outside_a_column_raises() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:
@@ -333,7 +334,7 @@ def test_space_outside_a_column_raises() raises -> None:
 
 
 def test_the_stacks_close_with_their_blocks() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 400)
     with ui.screen(context, canvas) as layer:

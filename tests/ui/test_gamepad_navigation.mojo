@@ -10,6 +10,7 @@ from std.testing import (
 )
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import connect_pad, next_frame, press_pad
 
 # A 2 x 2 grid, called in a shuffled order, so moving by direction can't
@@ -25,13 +26,13 @@ def _grid_rect(i: Int) -> Rectangle:
 
 
 struct _Grid:
-    var ui: UI
+    var ui: _ImmediateUI
     var context: Context
     var clicked: List[Bool]
     var first: Bool
 
     def __init__(out self, player: Optional[Int] = None):
-        self.ui = UI(player=player)
+        self.ui = _ImmediateUI(player=player)
         self.context = Context()
         self.clicked = [False, False, False, False]
         self.first = True
@@ -126,7 +127,7 @@ def test_gamepad_focus_leaves_the_keyboard_to_the_game() raises -> None:
 
 
 def test_left_and_right_step_a_focused_slider() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     connect_pad(context, 1)
     var value = 0.5

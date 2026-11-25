@@ -5,7 +5,7 @@ updates and draws with `canvas.draw`, and the traits they share (`Widget`,
 to frame, `UILayer`, the handle a `with` block gets to draw widgets with,
 and `ColorScheme`, the colours they are drawn in.
 """
-from .ui import UI
+from .tree import UI, WidgetHandle
 from .layer import (
     UILayer,
     IDGuard,
@@ -24,4 +24,3 @@ from .panel import Panel
 from .slider import Slider
 from .widget import Clickable, Hoverable, Widget
 from .text_field import TextEditor, TextField
-from .tree import WidgetHandle

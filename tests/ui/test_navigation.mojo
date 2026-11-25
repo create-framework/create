@@ -11,13 +11,14 @@ from std.testing import (
 )
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 
 struct _Panel:
     """Three buttons, the second one possibly disabled, and a slider."""
 
-    var ui: UI
+    var ui: _ImmediateUI
     var context: Context
     var clicked: List[Bool]
     var value: Float64
@@ -26,7 +27,7 @@ struct _Panel:
     var disable_second: Bool
 
     def __init__(out self):
-        self.ui = UI()
+        self.ui = _ImmediateUI()
         self.context = Context()
         self.clicked = [False, False, False]
         self.value = 0.5

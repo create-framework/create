@@ -2,6 +2,7 @@
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 
 comptime _PANEL = Rectangle((0, 0), 160, 80)
 comptime _LINE = Rectangle((0, 10), 140, 24)
@@ -28,7 +29,7 @@ def test_a_panel_and_label_draw_as_the_ui_ones_do() raises -> None:
     label.update(context, drawn)
     drawn.draw(panel)
     drawn.draw(label)
-    var ui = UI()
+    var ui = _ImmediateUI()
     var called = _canvas()
     with ui.screen(context, called) as layer:
         with layer.panel(_PANEL):
