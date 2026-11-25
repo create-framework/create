@@ -28,7 +28,7 @@ internals](#package-internals).
 | `_optional` | `src/create/_optional.mojo` | Internal leaf: `_OptionalFloat64`, the type behind optional number keywords such as `corner_radius=8`, which takes an integer, a `Float64` or `None` |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_native` | `src/create/_native.mojo` | Internal leaf: opens the compiled library, `libcreate`, and passes values to it by address; `IN_LIBRARY` (see [The compiled library](#the-compiled-library)) |
-| `_window` | `src/create/app/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
+| `_window` | `src/create/app/_window/` | `app`'s internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
 ## How a frame runs
 
@@ -70,21 +70,76 @@ differ only in how a frame starts and where its pixels go. The details are in th
 
 ## Layering
 
-The packages form layers, and a package imports only from the layers below it:
+The packages form five layers, named after what they hold. A package imports only from the layers
+further in and from the leaves; within a layer, `app` imports `input` and `animation` imports
+`image`:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
-| Run | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, `_window`, `_path`, `_native`; `input`: `math` |
-| Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
-| Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
-| Values | `geometry` | `math`, `_optional` |
-| Foundations | `math`, `color`, `time`, `data` | `math`, `color` and `time`: nothing; `data`: `_path` |
-| Internal | `_window`, `_bytes`, `_library`, `_optional`, `_path`, `_native` | `_window`: `_library`; the others nothing |
+| Application | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, its own `_window`, `_path`, `_native`; `input`: `math` |
+| Rendering | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
+| Media and data | `image`, `text`, `audio`, `animation`, `data` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path`; `data`: `_path` |
+| Core | `math`, `color`, `time`, `geometry` | `math`, `color` and `time`: nothing; `geometry`: `math`, `_optional` |
+| Leaves | `_bytes`, `_library`, `_optional`, `_path`, `_native` | Nothing |
 
-The same, as a graph; every arrow points down. The leaves `_bytes`, `_library`, `_optional`, `_path`
-and `_native` are left out, and so are `audio` and `data`, which import only those leaves and which
-no package here imports:
+Core is a layer's name, not a package: its four packages sit at the top level like the others. Each
+layer encloses the layers it may import from; the leaves sit outside, and every layer may use them:
+
+```mermaid
+flowchart TB
+    subgraph uiRing["Layer 5: UI"]
+        direction TB
+        ui["ui"]
+
+        subgraph appRing["Layer 4: Application"]
+            direction TB
+            subgraph appRow[" "]
+                direction LR
+                app["app"] ~~~ input["input"]
+            end
+
+            subgraph drawingRing["Layer 3: Rendering"]
+                direction TB
+                render["render"]
+
+                subgraph assetRing["Layer 2: Media and data"]
+                    direction TB
+                    subgraph assetRow[" "]
+                        direction LR
+                        image["image"] ~~~ textPkg["text"] ~~~ audio["audio"] ~~~ animation["animation"] ~~~ data["data"]
+                    end
+
+                    subgraph centre["Layer 1: Core"]
+                        direction LR
+                        math["math"] ~~~ colorPkg["color"] ~~~ timePkg["time"] ~~~ geometry["geometry"]
+                    end
+
+                    assetRow ~~~ centre
+                end
+
+                render ~~~ assetRing
+            end
+
+            appRow ~~~ drawingRing
+        end
+
+        ui ~~~ appRing
+    end
+
+    subgraph leaves["Shared top-level leaves"]
+        direction LR
+        bytes["_bytes.mojo"] ~~~ library["_library.mojo"] ~~~ optional["_optional.mojo"] ~~~ pathLeaf["_path.mojo"] ~~~ native["_native.mojo"]
+    end
+
+    uiRing ~~~ leaves
+    style assetRow fill:transparent,stroke:transparent
+    style appRow fill:transparent,stroke:transparent
+```
+
+Each package's imports, as a graph; every arrow points inwards. The leaves `_bytes`, `_library`,
+`_optional`, `_path` and `_native` are left out, and so are `audio` and `data`, which import only
+those leaves and which no package here imports:
 
 ```mermaid
 flowchart TD
@@ -128,19 +183,19 @@ The rules behind it, and what each one buys:
   `render` as plain values: in `app`, `context._set_viewport(state, …)` passes the design size and
   autoscale in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing
   settings live on `_PersistentCanvasState` itself.
-- **`geometry`** depends only on `math` and `_optional`, so collision code (`overlaps`, `contains`)
-  never sees `render`; `render` imports it. It holds values and their tests, and nothing about
-  drawing: `render` decides how each shape and curve is drawn.
-- **`color`** imports nothing from `create`; `image` and `render` both import it. It sits below
-  `image` so that `Image.pixel` can return a `Color` without a `render`↔`image` cycle. `Gradient` is
-  `render`'s, not `color`'s: it has points, and a transform that fits it to a shape, so it is
-  drawing paint, like `StrokeDash`, rather than a colour value.
+- **Core** is what every other layer builds on: `math`, `color` and `time` import nothing from
+  `create`, and `geometry` imports only `math` and `_optional`. It loads no libraries (`time`'s
+  `DateTime` calls libc directly), holds no platform code and knows nothing about drawing.
+  - **`geometry`** holds values and their tests, so collision code (`overlaps`, `contains`) never
+    sees `render`: `render` decides how each shape and curve is drawn.
+  - **`color`** sits below `image` so that `Image.pixel` can return a `Color` without a
+    `render`↔`image` cycle. `Gradient` is `render`'s, not `color`'s: it has points, and a transform
+    that fits it to a shape, so it is drawing paint, like `StrokeDash`, rather than a colour value.
+  - **`time`** holds the layer's only shared state, the run clock `_run_clock`. It is process-wide,
+    and `app` copies `Context.time` into it once a frame, so a playhead can read the time without
+    the clock being passed to it as an argument.
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
   through `atof`. Nothing imports it but the root.
-- **`time`** imports nothing from `create`; `app` and `animation` import it. Its run clock,
-  `_run_clock`, is process-wide state: once a frame, `app` copies `Context.time` into it, so a
-  playhead can read the time without the clock being passed to it as an argument. It is the
-  package's only shared state.
 - **`animation`** holds the playheads: `Tween`, and `Animator` with the asset it plays, `Animation`.
   This mirrors `audio`, which holds `Playback` beside the `Sound` it plays. It is the only package
   that reads the run clock, so `math` and `image` stay free of time. It imports `math` for the
@@ -148,11 +203,11 @@ The rules behind it, and what each one buys:
 - **`text`** depends only on `_bytes`, `_library` and `_path`. `render` uses `text` only by name, as
   it uses `image`: `Style`, `canvas.font` and text layout refer to the `Font` type, and
   `_raster.blit_glyph` takes a `_GlyphInfo` by its internal path.
-- **`input`** depends only on `math`, and only `app` and `ui` import it. It sits in the run layer
-  beside `app`, the code that fills it, so nothing in drawing, the assets or the values can depend
-  on what the user did. Its devices are plain state: `app`'s `apply_events` folds each window event
-  in through one `_`-prefixed method per kind (`keyboard._key_down`, `mouse._button_down`, …), so
-  `input` never sees an `Event` and `_window` stays `app`'s alone.
+- **`input`** depends only on `math`, and only `app` and `ui` import it. It sits in the application
+  layer beside `app`, the code that fills it, so nothing in rendering, media and data or Core can
+  depend on what the user did. Its devices are plain state: `app`'s `apply_events` folds each window
+  event in through one `_`-prefixed method per kind (`keyboard._key_down`, `mouse._button_down`, …),
+  so `input` never sees an `Event` and `_window` stays `app`'s alone.
 - **`_path`** is a leaf, imported by every package that has a public function taking a file path,
   and re-exported by nothing; `app`'s `source_path` is its public face. A public function that takes
   a path is `@always_inline`, and passes the path to `_caller_relative` directly from its own body.
@@ -169,8 +224,8 @@ The rules behind it, and what each one buys:
   version, and never with `_DLHandle("libname.so")`. `load_library` decides the platform's file name
   and search path. It opens the versioned name because the runtime package installs that one, so the
   library is found even on a system without `-devel` packages.
-- **`_window`** imports nothing from `create` but `_library`. `app` is the only package that uses
-  it, and nothing re-exports it.
+- **`_window`** is `app`'s platform layer, inside it as `app/_window`. It imports nothing from
+  `create` but `_library`, nothing outside `app` uses it, and nothing re-exports it.
 - **`_native`** is a leaf imported by `render` and `app`, the packages whose machinery the compiled
   library holds, and re-exported by nothing. See [The compiled library](#the-compiled-library).
 - **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads,
