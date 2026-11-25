@@ -4,13 +4,13 @@
 
 from std.os import setenv
 from std.testing import TestSuite, assert_equal, assert_true
-from create._window import Window, Resized
-from create._window._sdl import (
+from create.app._window import Window, Resized
+from create.app._window._sdl import (
     SDL_EVENT_WINDOW_RESIZED,
     _OFF_WINDOW_DATA1,
     _OFF_WINDOW_DATA2,
 )
-from create._window._sdl import SDL
+from create.app._window._sdl import SDL
 from _raw_event import new_event_buffer, write_i32, events_without_focus
 
 

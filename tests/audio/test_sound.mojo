@@ -1,6 +1,6 @@
 from std.testing import TestSuite, assert_equal, assert_true, assert_raises
 from create.audio import Sound
-from create.core import source_path
+from create.app import source_path
 
 
 def _fixture(name: String) -> String:

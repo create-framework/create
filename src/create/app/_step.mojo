@@ -1,5 +1,5 @@
 from create.render.canvas import Canvas, _PersistentCanvasState
-from create.core.context import Context
+from create.app.context import Context
 from ._driver import _Driver
 
 

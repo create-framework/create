@@ -1,6 +1,6 @@
 """`Slider`: a handle dragged along a track to set a value."""
 
-from create.core import Context
+from create.app import Context
 from create.geometry import Circle, Line, Rectangle
 from create.input import Key, Keyboard
 from create.math import Point, ceil, clamp, floor

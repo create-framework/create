@@ -55,7 +55,7 @@ if [ -n "$staged" ]; then
     fi
 fi
 
-smoke=tests/core/test_smoke.mojo
+smoke=tests/app/test_smoke.mojo
 if [ ! -f "$smoke" ]; then
     echo "$smoke is missing — commit aborted."
     exit 1

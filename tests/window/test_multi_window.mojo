@@ -8,7 +8,7 @@ assumption instead of just asserting it in prose.
 from std.os import setenv
 from std.testing import TestSuite, assert_true, assert_false
 
-from create._window import Window
+from create.app._window import Window
 from _raw_event import events_without_focus
 
 

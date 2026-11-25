@@ -1,7 +1,7 @@
 """Unit tests for `window.event` — Variant construction and field access."""
 
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
-from create._window import (
+from create.app._window import (
     Event,
     Quit,
     Resized,

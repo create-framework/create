@@ -1,14 +1,14 @@
 """Test-only helpers for building raw SDL_Event byte buffers, and for
 reading a window's events past the dummy driver's focus churn.
 
-Field offsets are imported from `create._window._sdl` rather than duplicated here,
+Field offsets are imported from `create.app._window._sdl` rather than duplicated here,
 so these helpers stay pinned to the same ABI layout `Window.events()` reads.
 """
 
 from std.ffi import c_char
 
-from create._window import Event, FocusLost, NativeWindow
-from create._window._sdl import SDL_EVENT_SIZE
+from create.app._window import Event, FocusLost, NativeWindow
+from create.app._window._sdl import SDL_EVENT_SIZE
 
 
 def new_event_buffer(kind: UInt32) -> Array[UInt8, SDL_EVENT_SIZE]:

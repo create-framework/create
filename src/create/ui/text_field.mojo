@@ -1,7 +1,7 @@
 """`TextField`, a field the keyboard types into, and the text measuring it
 places its caret by."""
 
-from create.core import Context
+from create.app import Context
 from create.geometry import Line, Rectangle
 from create.input import Key
 from create.math import Point

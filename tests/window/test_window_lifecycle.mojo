@@ -4,7 +4,7 @@
 
 from std.os import setenv
 from std.testing import TestSuite, assert_true, assert_false
-from create._window import (
+from create.app._window import (
     Window,
     SYSTEM_CURSOR_ARROW,
     SYSTEM_CURSOR_CROSSHAIR,

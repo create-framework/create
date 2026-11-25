@@ -24,8 +24,8 @@ from std.sys import argv
 
 from create import *
 from create._native import Slot
-from create.core._driver import _Driver, _Host
-from create.core._run_gl import run_gl
+from create.app._driver import _Driver, _Host
+from create.app._run_gl import run_gl
 
 comptime SHAPES = 2000
 """Shapes per frame. Chosen so the GPU path is still comfortable and the CPU

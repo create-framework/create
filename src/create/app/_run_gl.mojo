@@ -15,13 +15,13 @@ Everything else — the event arms, the clock, `step` — is shared code, so the
 two loops cannot drift in what a frame is.
 """
 
-from create._window import GLWindow
+from create.app._window import GLWindow
 
 from create.render.antialiasing import Antialiasing
 from create.render.autoscale import Autoscale
 from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
-from create.core.context import Context
+from create.app.context import Context
 
 from ._events import apply_events
 from ._step import first_step, step

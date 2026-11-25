@@ -127,7 +127,7 @@ Two tiers of automated checks, and a third run by hand:
 
 | Where | Runs |
 |---|---|
-| `pre-commit` hook (after `pixi run setup`) | Wraps staged Markdown at 100 columns and restages it, then checks the formatting of staged `.mojo` files and builds `tests/core/test_smoke.mojo`. Constant cost |
+| `pre-commit` hook (after `pixi run setup`) | Wraps staged Markdown at 100 columns and restages it, then checks the formatting of staged `.mojo` files and builds `tests/app/test_smoke.mojo`. Constant cost |
 | CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)), every PR and push to `main` | Formatting, `mojo precompile`, every example and benchmark, a `mojo build` program run outside the environment (`pixi run check-standalone`), the conda package (`pixi run check-package`), the test suite (where a GL test that skips fails the job) and the documentation site (`pixi run docs`), which fails when the committed `docs/reference` is out of date or Markdown isn't wrapped. Linux only |
 | macOS ([.github/workflows/macos.yml](.github/workflows/macos.yml)), by hand: Actions → macOS → Run workflow, on any branch | The examples, the standalone build and the test suite on Apple silicon (`macos-examples`, `macos-tests`). Not part of CI, because a macOS runner costs ten times a Linux one and nobody runs Create on a Mac yet. Run it before relying on a change that could behave differently there (windowing, GL, library search) |
 
@@ -174,7 +174,7 @@ Releases are cut by a maintainer, as [RELEASING.md](RELEASING.md) describes.
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
 `<type>(<package>): <Summary>`, the summary in the imperative and capitalised.
 
-- The scope is the subpackage the change is confined to (`render`, `geometry`, `core`, …, as in the
+- The scope is the subpackage the change is confined to (`render`, `geometry`, `app`, …, as in the
   [module table](ARCHITECTURE.md#module-layout)); leave it out when a change spans several packages
   or touches none, such as the root docs or CI.
 - The types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build` (pixi, the recipe,
@@ -184,7 +184,7 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ```text
 feat(geometry): Add Capsule
 fix(render): Clip a rotated image's edge to the frame
-refactor(core)!: Rename Context.window_size to Context.design_size
+refactor(app)!: Rename Context.window_size to Context.design_size
 docs: Move the release process to RELEASING.md
 ```
 

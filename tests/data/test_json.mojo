@@ -5,7 +5,7 @@ from std.testing import (
     assert_raises,
     assert_true,
 )
-from create.core import source_path
+from create.app import source_path
 from create.data import JSON, JSONKind
 from std.os import makedirs
 

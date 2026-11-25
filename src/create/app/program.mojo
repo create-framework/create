@@ -1,5 +1,5 @@
 from create.render.canvas import Canvas
-from create.core.context import Context
+from create.app.context import Context
 
 
 trait Program(Deinitable, Movable):

@@ -1,7 +1,7 @@
 """`Button`, and `ButtonVariant`: which of the colours a button is drawn
 in."""
 
-from create.core import Context
+from create.app import Context
 from create.geometry import Rectangle
 from create.render import Canvas, Style, Text
 from create.render.style import _ResolvedStyle

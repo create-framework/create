@@ -6,7 +6,7 @@ byte-offset decoders in isolation -- this exercises the real SDL round trip.
 
 from std.os import setenv
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
-from create._window import (
+from create.app._window import (
     Window,
     Quit,
     Resized,
@@ -20,7 +20,7 @@ from create._window import (
     GamepadAdded,
     GamepadRemoved,
 )
-from create._window._sdl import (
+from create.app._window._sdl import (
     SDL_EVENT_GAMEPAD_ADDED,
     SDL_EVENT_GAMEPAD_REMOVED,
     _OFF_GAMEPAD_ID,

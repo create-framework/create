@@ -130,7 +130,7 @@ boundary:
 - `_PersistentCanvasState`: the `Backend` and the `Viewport`, which `_release` moves in and back
   out, and the frame-wide settings a program sets on the canvas: `autoclear`, `letterbox_color`,
   and, through the backend, `antialiasing`.
-- `Context`, in `core`, owned by the loop and home to `time` and `input`. Its settings that map the
+- `Context`, in `app`, owned by the loop and home to `time` and `input`. Its settings that map the
   design onto the window reach `Canvas` as plain values, through `_set_viewport`.
 
 The transform stack, the style and the camera deliberately don't survive it.

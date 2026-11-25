@@ -1,7 +1,7 @@
 """Internal: focus as a `UI` hands it to a widget, and the gamepad reading
 and geometry focus moves by."""
 
-from create.core import Context
+from create.app import Context
 from create.input import Gamepad, GamepadButton
 from create.math import Point, Vector
 

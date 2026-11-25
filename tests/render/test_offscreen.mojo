@@ -7,7 +7,7 @@ A 100 x 60 canvas: screen x in -50..50, y in -30..30, y up.
 from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
 from create import *
-from create.core.headless import run_headless
+from create.app.headless import run_headless
 from create.render.render_backend import RenderBackend
 
 comptime _IMAGE = "/tmp/mojo_create_test_offscreen_image.png"

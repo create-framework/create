@@ -4,7 +4,7 @@
 from std.testing import TestSuite, assert_equal, assert_almost_equal
 
 from create import *
-from create.core.headless import run_headless
+from create.app.headless import run_headless
 from create.math.point import Point
 
 

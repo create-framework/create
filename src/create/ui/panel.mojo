@@ -1,7 +1,7 @@
 """`Panel`: a surface for widgets to sit on."""
 
 from create.color import Color
-from create.core import Context
+from create.app import Context
 from create.geometry import Rectangle
 from create.render import Canvas, Style
 from ._theme import _PanelLook, _Theme

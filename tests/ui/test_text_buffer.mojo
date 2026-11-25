@@ -1,12 +1,12 @@
 from std.sys.info import CompilationTarget
 from std.testing import TestSuite, assert_equal
 
-from create.core.context import Context
+from create.app.context import Context
 from create.ui._text_buffer import _TextBuffer
 from create.input.key import Key
-from create.core._events import apply_events
+from create.app._events import apply_events
 from create.render._viewport import Viewport
-from create._window.event import Event, KeyDown, KeyUp, TextInput
+from create.app._window.event import Event, KeyDown, KeyUp, TextInput
 
 
 def _type(mut field: _TextBuffer, var events: List[Event]) raises:

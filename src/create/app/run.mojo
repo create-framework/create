@@ -1,9 +1,9 @@
-from create._window.window import Window
+from create.app._window.window import Window
 from create.render.antialiasing import Antialiasing
 from create.render.autoscale import Autoscale
 from create.render.render_backend import RenderBackend
 from create.render.canvas import _PersistentCanvasState
-from create.core.context import Context
+from create.app.context import Context
 from ._events import apply_events
 from ._step import first_step, step
 from ._window_loop import (

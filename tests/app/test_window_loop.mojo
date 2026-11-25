@@ -4,14 +4,14 @@
 from std.testing import TestSuite, assert_equal
 
 from create import *
-from create._window import NativeWindow
-from create._window.event import Event
-from create.core._window_loop import (
+from create.app._window import NativeWindow
+from create.app._window.event import Event
+from create.app._window_loop import (
     _AppliedWindow,
     _apply_window_dials,
     _apply_window_mode,
 )
-from create._window import SYSTEM_CURSOR_ARROW, SYSTEM_CURSOR_CROSSHAIR
+from create.app._window import SYSTEM_CURSOR_ARROW, SYSTEM_CURSOR_CROSSHAIR
 
 
 struct CountingWindow(NativeWindow):

@@ -15,9 +15,9 @@ from every program.
 from std.sys import size_of
 
 from create._native import at, stale_source
-from create.core._driver import _Driver, _RunSettings
-from create.core.headless import _run_headless
-from create.core.run import _run
+from create.app._driver import _Driver, _RunSettings
+from create.app.headless import _run_headless
+from create.app.run import _run
 from create.geometry import Rectangle
 from create.image.image import Image
 from create.math.point import Point

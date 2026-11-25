@@ -1,6 +1,6 @@
 """`Checkbox`: a box the mouse ticks and unticks, with text beside it."""
 
-from create.core import Context
+from create.app import Context
 from create.geometry import Line, Rectangle
 from create.math import Point, Vector
 from create.render import Align, Canvas, Style, Text

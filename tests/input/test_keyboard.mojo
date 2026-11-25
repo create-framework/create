@@ -1,10 +1,10 @@
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 from create.input.keyboard import Keyboard
 from create.input.key import Key
-from create.core.context import Context
+from create.app.context import Context
 from create.render._viewport import Viewport
-from create.core._events import apply_events
-from create._window.event import Event, FocusLost, KeyDown, KeyUp, TextInput
+from create.app._events import apply_events
+from create.app._window.event import Event, FocusLost, KeyDown, KeyUp, TextInput
 
 
 def test_key_prints_as_its_constant() raises -> None:

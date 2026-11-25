@@ -11,13 +11,13 @@ from std.testing import (
     assert_true,
 )
 
-from create.core.context import Context
+from create.app.context import Context
 from create.time._run_clock import _scaled_now, _real_now, _set_run_clock
-from create.core.cursor import Cursor
-from create.core._events import apply_events
+from create.app.cursor import Cursor
+from create.app._events import apply_events
 from create.render._viewport import Viewport
-from create._window.event import ClipboardChanged, Event
-from create.core.window_mode import WindowMode
+from create.app._window.event import ClipboardChanged, Event
+from create.app.window_mode import WindowMode
 from create.render import Autoscale
 
 

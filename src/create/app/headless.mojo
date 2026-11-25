@@ -1,5 +1,5 @@
 from create.render.canvas import _PersistentCanvasState
-from create.core.context import Context
+from create.app.context import Context
 from create.render.antialiasing import Antialiasing
 from create.render.autoscale import Autoscale
 from create.render.render_backend import RenderBackend

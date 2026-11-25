@@ -1,6 +1,6 @@
-# `create.core` internals
+# `create.app` internals
 
-`create.core` runs a program: the windowed, GPU and headless loops, the `Context` they own and the
+`create.app` runs a program: the windowed, GPU and headless loops, the `Context` they own and the
 program reads, and how window events become input readings. This page is for working on the package:
 the [user guide](../../../docs/guide/README.md) covers using it,
 [ARCHITECTURE.md](../../../ARCHITECTURE.md) where it sits and the layering rules, and
@@ -53,7 +53,7 @@ with their frame; the mode goes after, since the frame just presented was laid o
 requests a window manager may refuse, so they never raise.
 
 **Cursors** map from `Cursor` to `_window`'s `SYSTEM_CURSOR_*` ids in `_system_cursor`, so no SDL
-name reaches `core`. `HIDDEN` is `show_cursor(False)` and sets no shape; leaving it shows the cursor
+name reaches `app`. `HIDDEN` is `show_cursor(False)` and sets no shape; leaving it shows the cursor
 before setting the new one. `_SDLWindow` creates each system cursor on first use and keeps it (SDL
 shows a cursor without holding it), freeing them before the window in `__deinit__`. A driver without
 cursors (dummy, offscreen) refuses them, which never raises. SDL's cursor belongs to the process,

@@ -2,7 +2,7 @@
 
 from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
-from create.core import source_path
+from create.app import source_path
 
 from create.text.font import (
     Font,
