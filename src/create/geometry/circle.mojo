@@ -2,7 +2,7 @@ from std.math import sqrt
 from create.math import PI, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Shape
+from .traits import Curve, Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import _RADIUS_EPSILON, _distance_squared
 from .capsule import Capsule
@@ -181,9 +181,6 @@ struct Circle(
         included: shapes that only touch, along an edge or at a corner,
         overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
         return _regions_overlap(other, self)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target._circle(self)
 
     def move_to(self, position: Point) -> Self:
         var moved = self.copy()

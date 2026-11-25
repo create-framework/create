@@ -32,7 +32,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`.
 ### `draw`
 
 ```mojo
-def draw[D: Drawable](self, shape: D, style: Style) raises
+def draw[G: Geometry](self, shape: G, style: Style) raises
 ```
 
 Draw `shape` in `style`, in order with the layer's widgets: above what was drawn through the layer before it, and below what comes after. A plain `canvas` call inside the block draws at once, beneath the whole layer.

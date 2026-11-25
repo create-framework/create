@@ -6,7 +6,7 @@ trait Geometry
 
 A piece of geometry: a `Shape` or a `Curve`. What every one of them answers, whichever it is, and a plain value generic code can keep, copy and drop. Tests between two of them (`contains`, `intersects`, `overlaps`) are methods overloaded per type they take, not part of this.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`.
+Implements `Copyable`, `Deinitable`, `Movable`.
 
 ## Methods
 

@@ -4,7 +4,7 @@ from create._optional import _OptionalFloat64
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Shape
+from .traits import Curve, Shape
 from ._shared import (
     _FILLET_STEP,
     _RADIUS_EPSILON,
@@ -395,9 +395,6 @@ struct Sector(
         included: shapes that only touch, along an edge or at a corner,
         overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
         return _regions_overlap(other, self)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target._sector(self)
 
     def move_to(self, position: Point) -> Self:
         var moved = self.copy()

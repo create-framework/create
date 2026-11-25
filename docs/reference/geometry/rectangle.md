@@ -39,7 +39,7 @@ upright rectangle turned, so a gradient fill, the rounding and the
 stroke turn with it, while a shadow's offset stays screen-fixed unless
 `shadow_follows_transform` is set, as for any turned shape.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
 
 ## Fields
 
@@ -162,12 +162,6 @@ def overlaps(self, other: Polygon) -> Bool
 ```
 
 Whether this and `other` share any point, their boundaries included: shapes that only touch, along an edge or at a corner, overlap. Symmetric: `other.overlaps(self)` gives the same answer.
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `move_to`
 

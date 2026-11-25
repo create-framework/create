@@ -19,7 +19,7 @@ Like `Line`, a curve has no interior and is not a `Shape`: there is no
 distance along the curve — equal steps in `t` bunch up where the
 controls do.
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Fields
 
@@ -36,12 +36,6 @@ def __init__(out self, start: Point, control1: Point, control2: Point, end: Poin
 ```
 
 ## Methods
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `at`
 

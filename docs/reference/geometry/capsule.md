@@ -23,7 +23,7 @@ Holding a `Sector`'s arc or an `Ellipse`, it follows them as a curve is
 followed, within 1e-4 of their size, and a rounded polygon or sector is
 tested as its outline, as everywhere. `radius` is assumed non-negative.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
 
 ## Fields
 
@@ -114,12 +114,6 @@ def overlaps(self, other: Polygon) -> Bool
 ```
 
 Whether this and `other` share any point, their boundaries included: shapes that only touch, along an edge or at a corner, overlap. Symmetric: `other.overlaps(self)` gives the same answer.
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `move_to`
 

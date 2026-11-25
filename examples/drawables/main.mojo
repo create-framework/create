@@ -36,15 +36,15 @@ struct Rocket(Copyable, Drawable, Movable):
         self.left_fin = Triangle((-30, -45), (-30, -100), (-70, -90))
         self.right_fin = Triangle((30, -45), (30, -100), (70, -90))
 
-    def draw_to[T: DrawTarget](self, mut target: T):
+    def draw_to(self, mut canvas: Canvas):
         # Each part is a shape of its own, all in the same style: so an
         # outline goes round every part, even where two overlap. The fins'
         # inner edges line up with the body's sides, so a centred outline
         # draws the edge they share as one line.
-        target.draw(self.nose)
-        target.draw(self.left_fin)
-        target.draw(self.right_fin)
-        target.draw(self.body)
+        canvas.draw(self.nose)
+        canvas.draw(self.left_fin)
+        canvas.draw(self.right_fin)
+        canvas.draw(self.body)
 
 
 @fieldwise_init

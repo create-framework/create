@@ -73,11 +73,11 @@ struct Rocket(Copyable, Drawable, Movable):
         self.left_fin = Triangle((-30, -45), (-30, -100), (-70, -90))
         self.right_fin = Triangle((30, -45), (30, -100), (70, -90))
 
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.nose)
-        target.draw(self.left_fin)
-        target.draw(self.right_fin)
-        target.draw(self.body)
+    def draw_to(self, mut canvas: Canvas):
+        canvas.draw(self.nose)
+        canvas.draw(self.left_fin)
+        canvas.draw(self.right_fin)
+        canvas.draw(self.body)
 ```
 
 `canvas.draw(rocket)` then draws every part. `draw_to` only draws shapes; it sets no style, so the
@@ -86,8 +86,10 @@ would. Each part is still a shape of its own: an outline goes round every part, 
 overlap, and so does a shadow. To give one part a colour of its own, such as a window, draw it with
 a separate call. See [examples/drawables](../../../examples/drawables/main.mojo).
 
-`Drawable` is what `canvas.draw` takes: every shape, or a program's own type that draws its parts.
-`DrawTarget` is what `draw_to` draws into, which is the canvas. To keep drawables of different types
+`canvas.draw` takes any shape or curve, which the canvas knows how to draw, or a program's own type
+that is `Drawable`. A shape knows nothing about drawing: it is a value and its tests, and the canvas
+decides how each kind is drawn. So a `Geometry` type of a program's own can't be passed to
+`canvas.draw`; draw the library's shapes it is made of instead. To keep drawables of different types
 in one list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple-scenes)).
 
 ## The background

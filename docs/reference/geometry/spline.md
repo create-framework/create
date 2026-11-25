@@ -30,7 +30,7 @@ is 0 and `flatten` gives no points.
 
 Like `Bezier`, a spline has no interior and is not a `Shape`.
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `Movable`, `Writable`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `Movable`, `Writable`.
 
 ## Fields
 
@@ -51,12 +51,6 @@ def __init__(
 ```
 
 ## Methods
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `beziers`
 

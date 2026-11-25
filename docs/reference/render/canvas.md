@@ -55,7 +55,7 @@ Every pixel write blends source-over, so a fill, stroke, image, glyph or
 `background` with `a < 255` composites with what is already there —
 unless `blend_mode` picks another way to combine them.
 
-Implements `Deinitable`, `DrawTarget`, `Movable`.
+Implements `Deinitable`, `Movable`, `_GeometryTarget`.
 
 ## Constructors
 
@@ -963,6 +963,20 @@ def triangle(
 ```
 
 Draw the triangle through `a`, `b` and `c`, its corners rounded by `corner_radius`, or by the style's when not given, as `Triangle` describes it.
+
+### `draw`
+
+```mojo
+def draw[G: Geometry](mut self, shape: G)
+```
+
+Draw `shape`, any shape or curve, in the current style and transform: `canvas.draw(Circle((0, 0), 20))` is `canvas.circle((0, 0), 20)`. A shape value carries its own `corner_radius`, so the style's doesn't round it.
+
+```mojo
+def draw[D: Drawable](mut self, drawable: D)
+```
+
+Draw a `Drawable` of the program's own: its `draw_to` draws its parts, each in the current style and transform.
 
 ### `image`
 

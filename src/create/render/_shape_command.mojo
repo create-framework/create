@@ -5,7 +5,7 @@ call records for it, in `style`, mapped by `transform`. Ellipses, capsules and
 rounded polygons and sectors are flattened here, as finely as a circle of their
 radius is drawn at that transform and `scale`, so every replay sees a plain
 polygon. `Canvas`'s
-`DrawTarget` primitives record these, and `RegionCapture` takes the one a
+geometry primitives record these, and `RegionCapture` takes the one a
 `clip` region draws as, so a clip and a fill of the same shape are the same
 command but for its style.
 """
@@ -14,7 +14,7 @@ from std.math import max
 from create.math import TAU
 
 from create.geometry.bezier import Bezier
-from create.geometry.drawable import DrawTarget
+from ._geometry_target import _GeometryTarget
 from create.geometry import (
     Capsule,
     Circle,
@@ -217,8 +217,8 @@ def curves_command(
     return bezier_chain_command(transform, style, points^)
 
 
-struct RegionCapture(DrawTarget):
-    """A `DrawTarget` that keeps the command a region draws as, in
+struct RegionCapture(_GeometryTarget):
+    """A geometry target that keeps the command a region draws as, in
     `clip_style()`, instead of recording it: how `canvas.clip` turns any
     `Shape` into its clip's command. A shape draws as exactly one command;
     a curve never reaches it, since a curve is not a `Shape`."""

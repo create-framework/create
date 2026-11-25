@@ -45,28 +45,5 @@ def test_a_screen_layer_ignores_the_camera() raises -> None:
     assert_equal(canvas.color_at((0, 0)), Color.BLUE)
 
 
-@fieldwise_init
-struct _Badge(Drawable):
-    var body: Rectangle
-    var dot: Circle
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.body)
-        target.draw(self.dot)
-
-
-def test_a_programs_own_drawable_is_drawn_as_its_shapes() raises -> None:
-    var ui = UI()
-    var context = Context()
-    var canvas = _canvas()
-    with ui.screen(context, canvas) as layer:
-        layer.draw(
-            _Badge(Rectangle((0, 0), 40, 40), Circle((0, 0), 5)),
-            Style(fill=Color.RED),
-        )
-    assert_equal(canvas.color_at((0, 0)), Color.RED)
-    assert_equal(canvas.color_at((15, 15)), Color.RED)
-
-
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

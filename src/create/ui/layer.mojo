@@ -4,7 +4,7 @@ from std.reflection import SourceLocation, call_location
 
 from create.color import Color
 from create.core import Context
-from create.geometry import Circle, Drawable, Line, Rectangle
+from create.geometry import Circle, Geometry, Line, Rectangle
 from create.input import GamepadButton, Key
 from create.image import Image
 from create.math import Point, Transform, Vector, ceil, clamp, floor
@@ -131,7 +131,7 @@ struct UILayer[
             with self._canvas[].overlay():
                 self._ui[]._recorder.replay(self._canvas[])
 
-    def draw[D: Drawable](self, shape: D, style: Style) raises:
+    def draw[G: Geometry](self, shape: G, style: Style) raises:
         """Draw `shape` in `style`, in order with the layer's widgets: above
         what was drawn through the layer before it, and below what comes
         after. A plain `canvas` call inside the block draws at once, beneath
@@ -1045,7 +1045,7 @@ struct UILayer[
     def _shows_ring(self, state: _Interaction, disabled: Bool) -> Bool:
         return state.focused and self._ui[]._focus_visible and not disabled
 
-    def _record_ring[S: Drawable](self, shape: S, look: FocusRing):
+    def _record_ring[S: Geometry](self, shape: S, look: FocusRing):
         ref ui = self._ui[]
         ui._rings.style = _ResolvedStyle(
             fill_enabled=False,

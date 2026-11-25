@@ -1,52 +1,17 @@
-"""What can be drawn, and what it can be drawn onto.
+"""The traits every shape and curve shares: `Geometry`, and its two kinds,
+`Shape` (with an inside) and `Curve` (without one).
 
-A shape or curve knows which kind it is; a canvas knows how to record one.
-`Drawable` and `DrawTarget` meet in the middle without either package
-naming the other: its `draw_to` calls the target's primitive for its
-kind, and `canvas.draw(shape)` is `shape.draw_to(canvas)`. So the geometry
-stays free of `render`, and collision code never sees a canvas.
-
-A program's own type can be `Drawable` too, as the shapes it is made of:
-
-```mojo
-@fieldwise_init
-struct Button(Drawable):
-    var body: Rectangle
-    var icon: Circle
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.body)
-        target.draw(self.icon)
-```
-
-Style is the target's, not the shape's: each part is drawn in whatever
-fill, stroke and transform the canvas has when `draw` is called.
+They describe the values and the tests between them, never how they are
+drawn: `render` decides that, so collision code never sees a canvas.
 """
 
 from .bezier import Bezier
-from .capsule import Capsule
-from .circle import Circle
-from .ellipse import Ellipse
-from .line import Line
-from .polygon import Polygon
 from .rectangle import Rectangle
-from .sector import Sector
-from .triangle import Triangle
 from create.math import Point
 from create.math import Vector
 
 
-trait Drawable:
-    """Something a `DrawTarget` can draw: a shape, a curve, or a program's
-    own type made of them."""
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        """Draw this onto `target`, through its `draw` or, for a shape, the
-        primitive for its kind."""
-        ...
-
-
-trait Geometry(Copyable, Deinitable, Drawable):
+trait Geometry(Copyable, Deinitable):
     """A piece of geometry: a `Shape` or a `Curve`. What every one of them
     answers, whichever it is, and a plain value generic code can keep, copy
     and drop. Tests between two of them (`contains`, `intersects`,
@@ -122,41 +87,3 @@ trait Curve(Geometry):
     def beziers(self) -> List[Bezier]:
         """The curve as cubic Béziers, each ending where the next starts."""
         ...
-
-
-trait DrawTarget:
-    """Somewhere shapes are drawn: `Canvas`. Its primitives, one per kind
-    of shape, are the library's own; a program draws through `draw`."""
-
-    def _rectangle(mut self, r: Rectangle):
-        ...
-
-    def _circle(mut self, c: Circle):
-        ...
-
-    def _ellipse(mut self, e: Ellipse):
-        ...
-
-    def _capsule(mut self, c: Capsule):
-        ...
-
-    def _triangle(mut self, t: Triangle):
-        ...
-
-    def _sector(mut self, s: Sector):
-        ...
-
-    def _polygon(mut self, p: Polygon):
-        ...
-
-    def _line(mut self, l: Line):
-        ...
-
-    def _curves(mut self, curves: List[Bezier]):
-        """A chain of Béziers, each starting where the last ends, stroked
-        as one: a `Bezier`, an `Arc` or a `Spline`."""
-        ...
-
-    def draw[D: Drawable](mut self, shape: D):
-        """Draw `shape` in the current style and transform."""
-        shape.draw_to(self)

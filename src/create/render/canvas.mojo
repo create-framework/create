@@ -16,7 +16,9 @@ from ._viewport import Viewport
 from .camera import Camera
 from create.geometry.bezier import Bezier
 from create.geometry.spline import Spline
-from create.geometry.drawable import DrawTarget, Shape
+from create.geometry import Geometry, Shape
+from ._geometry_target import _GeometryTarget, draw_geometry
+from .drawable import Drawable
 from create.geometry import (
     Arc,
     Capsule,
@@ -298,7 +300,7 @@ struct ClipGuard[origin: Origin[mut=True]](Movable):
         self._canvas[]._state._backend[].buffer.clip = self._saved
 
 
-struct Canvas(DrawTarget, Movable):
+struct Canvas(Movable, _GeometryTarget):
     """One frame: the geometry and the rendering API.
 
     This is the object a program is handed to render a frame with. `width`/`height`
@@ -807,7 +809,7 @@ struct Canvas(DrawTarget, Movable):
         Closes on exit, including on an early return or a raise.
         """
         var capture = RegionCapture(self._transform, self._scale)
-        capture.draw(shape)
+        draw_geometry(shape, capture)
         return ClipGuard[origin_of(self)](
             _canvas=self, _region=capture.command.take(), _invert=invert
         )
@@ -1784,10 +1786,22 @@ struct Canvas(DrawTarget, Movable):
             )
         )
 
-    # The `DrawTarget` primitives: the one place a shape becomes a recorded
+    def draw[G: Geometry](mut self, shape: G):
+        """Draw `shape`, any shape or curve, in the current style and
+        transform: `canvas.draw(Circle((0, 0), 20))` is
+        `canvas.circle((0, 0), 20)`. A shape value carries its own
+        `corner_radius`, so the style's doesn't round it."""
+        draw_geometry(shape, self)
+
+    def draw[D: Drawable](mut self, drawable: D):
+        """Draw a `Drawable` of the program's own: its `draw_to` draws its
+        parts, each in the current style and transform."""
+        drawable.draw_to(self)
+
+    # The geometry primitives: the one place a shape becomes a recorded
     # command, in the current style and transform. `draw(shape)` reaches
-    # them through the shape's `draw_to`, and every named method above
-    # through its shape.
+    # them through `draw_geometry`, and every named method above through
+    # its shape.
 
     def _rectangle(mut self, r: Rectangle):
         self._state._backend[].buffer.record(

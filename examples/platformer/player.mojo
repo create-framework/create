@@ -122,6 +122,6 @@ struct Player(Copyable, Drawable, Movable):
                 return True
         return False
 
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.body())
-        target.draw(self.head())
+    def draw_to(self, mut canvas: Canvas):
+        canvas.draw(self.body())
+        canvas.draw(self.head())

@@ -6,7 +6,7 @@ trait Shape
 
 Geometry with an inside: `Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector` and `Polygon`, the types of `overlaps` and `contains`, and what `canvas.clip` takes. A curve has no inside, so it is not one.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Geometry`, `Movable`.
+Implements `Copyable`, `Deinitable`, `Geometry`, `Movable`.
 
 ## Methods
 

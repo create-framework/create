@@ -9,7 +9,7 @@ from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
 from create.math import Point
-from .drawable import Curve, DrawTarget
+from .traits import Curve
 from .spline import Spline
 from create.math import Vector
 
@@ -161,9 +161,6 @@ struct Bezier(
 
     def __ne__(self, other: Bezier) -> Bool:
         return not (self == other)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target._curves([self])
 
     def write_to[W: Writer](self, mut writer: W):
         writer.write(

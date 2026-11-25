@@ -4,7 +4,7 @@ from create._optional import _OptionalFloat64
 from ._fillet import rect_corner_radius
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Shape
+from .traits import Curve, Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import (
     _distance_squared,
@@ -299,9 +299,6 @@ struct Rectangle(
         included: shapes that only touch, along an edge or at a corner,
         overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
         return _regions_overlap(other, self)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target._rectangle(self)
 
     def move_to(self, position: Point) -> Self:
         var moved = self.copy()
