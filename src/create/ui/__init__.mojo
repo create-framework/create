@@ -1,9 +1,9 @@
 """The user interface: widgets, such as `Button`, `Checkbox`, `Label`,
-`Panel` and `Slider`, which are values a program keeps, updates and draws
-with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`,
-`Clickable`); `UI`, which keeps the widgets' state from frame to frame,
-`UILayer`, the handle a `with` block gets to draw widgets with, and
-`ColorScheme`, the colours they are drawn in.
+`Panel`, `Slider` and `TextField`, which are values a program keeps,
+updates and draws with `canvas.draw`, and the traits they share (`Widget`,
+`Hoverable`, `Clickable`); `UI`, which keeps the widgets' state from frame
+to frame, `UILayer`, the handle a `with` block gets to draw widgets with,
+and `ColorScheme`, the colours they are drawn in.
 """
 from .ui import UI
 from .layer import (
@@ -22,4 +22,4 @@ from .label import Label
 from .panel import Panel
 from .slider import Slider
 from .widget import Clickable, Hoverable, Widget
-from .text_field import TextEditor
+from .text_field import TextEditor, TextField

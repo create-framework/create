@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel` and `Slider`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Slider` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -24,6 +24,7 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel` and 
 | [`Panel`](panel.md) | A surface filling a rectangle, for widgets to sit on: a rounded card in the light colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing. |
 | [`Slider`](slider.md) | A handle on a track, dragged to set `value` between `minimum` and `maximum`. |
 | [`TextEditor`](texteditor.md) | A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons. |
+| [`TextField`](textfield.md) | A field to type a line of text into. |
 
 ## Traits
 

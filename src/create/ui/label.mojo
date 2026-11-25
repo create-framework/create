@@ -53,14 +53,14 @@ struct Label(Copyable, Movable, Widget):
         self.style = style
         self._look = _Theme.default().label(style, alignment, disabled=False)
 
-    def update(mut self, mut context: Context, canvas: Canvas) raises:
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Work out its look from its fields: call it before drawing it."""
         self._update(context, canvas, _Theme.default(), disabled=False)
 
     def _update(
         mut self,
         mut context: Context,
-        canvas: Canvas,
+        mut canvas: Canvas,
         theme: _Theme,
         *,
         disabled: Bool,

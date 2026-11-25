@@ -38,12 +38,12 @@ struct Panel(Copyable, Movable, Widget):
         self.style = style
         self._look = _Theme.default().panel(style)
 
-    def update(mut self, mut context: Context, canvas: Canvas) raises:
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Work out its look from its fields: call it before drawing it."""
         self._update(context, canvas, _Theme.default())
 
     def _update(
-        mut self, mut context: Context, canvas: Canvas, theme: _Theme
+        mut self, mut context: Context, mut canvas: Canvas, theme: _Theme
     ) raises:
         """`update` in `theme`, as a `UI` updates it."""
         self._look = theme.panel(self.style)

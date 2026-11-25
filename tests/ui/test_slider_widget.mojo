@@ -24,17 +24,19 @@ def _canvas() raises -> Canvas:
 def _frame(mut slider: Slider, mut context: Context) raises -> Bool:
     """Update `slider` in a new frame: whether it changed."""
     next_frame(context)
-    slider.update(context, _canvas())
+    var canvas = _canvas()
+    slider.update(context, canvas)
     return slider.changed()
 
 
 def test_pressing_the_track_moves_the_handle_there() raises -> None:
     var slider = Slider(0, 0, 1, _TRACK)
     var context = Context()
+    var canvas = _canvas()
     point_at(context, (50, 0))
     assert_false(_frame(slider, context))
     press(context, (50, 0))
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     assert_true(slider.changed())
     assert_almost_equal(slider.value, 0.75)
 
@@ -42,9 +44,10 @@ def test_pressing_the_track_moves_the_handle_there() raises -> None:
 def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
     var slider = Slider(0.5, 0, 1, _TRACK)
     var context = Context()
+    var canvas = _canvas()
     point_at(context, (0, 0))
     press(context, (0, 0))
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     assert_false(slider.changed())  # pressed where it already is
     point_at(context, (400, 300))  # far past the end, off the track
     assert_true(_frame(slider, context))
@@ -57,7 +60,7 @@ def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
     assert_almost_equal(slider.value, 0.25)
     next_frame(context)
     release(context, (-50, 300))
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     point_at(context, (80, 0))
     assert_false(_frame(slider, context))  # let go: hovering moves nothing
     assert_almost_equal(slider.value, 0.25)
@@ -66,12 +69,13 @@ def test_a_drag_past_the_end_stops_at_the_end_and_keeps_going() raises -> None:
 def test_a_release_off_the_track_moves_the_handle_there() raises -> None:
     var slider = Slider(0.5, 0, 1, _TRACK)
     var context = Context()
+    var canvas = _canvas()
     point_at(context, (0, 0))
     press(context, (0, 0))
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     next_frame(context)
     release(context, (-50, 300))  # moved and let go off the track
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     assert_true(slider.changed())
     assert_almost_equal(slider.value, 0.25)
 
@@ -79,26 +83,29 @@ def test_a_release_off_the_track_moves_the_handle_there() raises -> None:
 def test_a_step_rounds_the_value() raises -> None:
     var slider = Slider(0, 0, 1, _TRACK, step=0.25)
     var context = Context()
+    var canvas = _canvas()
     point_at(context, (13, 0))
     press(context, (13, 0))  # 0.565, nearest step 0.5
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     assert_almost_equal(slider.value, 0.5)
 
 
 def test_a_step_past_the_maximum_comes_back_inside() raises -> None:
     var slider = Slider(10, 10, 0, _TRACK, step=6)
     var context = Context()
+    var canvas = _canvas()
     point_at(context, (105, 0))
     press(context, (105, 0))  # past the end: 0, which rounds to -2
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     assert_equal(slider.value, 4.0)  # the last step inside the range
 
 
 def test_a_step_of_zero_raises() raises -> None:
     var slider = Slider(0.5, 0, 1, _TRACK, step=0)
     var context = Context()
+    var canvas = _canvas()
     with assert_raises(contains="step must be more than 0"):
-        slider.update(context, _canvas())
+        slider.update(context, canvas)
 
 
 def test_a_value_out_of_range_is_left_alone_until_dragged() raises -> None:
@@ -113,9 +120,10 @@ def test_a_value_out_of_range_is_left_alone_until_dragged() raises -> None:
 def test_a_disabled_slider_cannot_be_dragged() raises -> None:
     var slider = Slider(0.5, 0, 1, _TRACK, enabled=False)
     var context = Context()
+    var canvas = _canvas()
     point_at(context, (50, 0))
     press(context, (50, 0))
-    slider.update(context, _canvas())
+    slider.update(context, canvas)
     assert_false(slider.changed())
     assert_equal(slider.value, 0.5)
 

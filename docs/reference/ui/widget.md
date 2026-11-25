@@ -28,7 +28,7 @@ Implements `Drawable`.
 ### `update`
 
 ```mojo
-def update(mut self, mut context: Context, canvas: Canvas) raises
+def update(mut self, mut context: Context, mut canvas: Canvas) raises
 ```
 
 Read what the input did to it this frame, and keep it.

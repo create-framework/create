@@ -38,11 +38,12 @@ def _click(mut checkbox: Checkbox, mut context: Context, at: Point) raises:
 def test_a_click_ticks_and_unticks_it() raises -> None:
     var checkbox = Checkbox("Music", _ROW)
     var context = Context()
+    var canvas = Canvas(300, 100)
     _click(checkbox, context, (40, 0))  # on its text: the whole row counts
     assert_true(checkbox.checked)
     assert_true(checkbox.changed())
     next_frame(context)
-    checkbox.update(context, Canvas(300, 100))
+    checkbox.update(context, canvas)
     assert_false(checkbox.changed())  # only in the frame it changed
     _click(checkbox, context, _BOX)
     assert_false(checkbox.checked)
@@ -52,9 +53,10 @@ def test_a_click_ticks_and_unticks_it() raises -> None:
 def test_a_press_alone_changes_nothing() raises -> None:
     var checkbox = Checkbox("Music", _ROW)
     var context = Context()
+    var canvas = Canvas(300, 100)
     point_at(context, _BOX)
     press(context, _BOX)
-    checkbox.update(context, Canvas(300, 100))
+    checkbox.update(context, canvas)
     assert_true(checkbox.pressed())
     assert_false(checkbox.checked or checkbox.changed())
 
