@@ -292,6 +292,30 @@ struct UI(Drawable, Movable):
     def corner_radius(mut self, radius: Float64):
         self._corner_radius = radius
 
+    def spacing(self) -> Float64:
+        """The gap a `Column` or `Row` leaves between its widgets unless
+        given one, and half the inset of a panel's inside: 8 unless set."""
+        return self._spacing
+
+    def spacing(mut self, spacing: Float64):
+        self._spacing = spacing
+
+    def control_height(self) -> Float64:
+        """How tall a button, checkbox, slider or text field is when the
+        `UI` sizes it: 40 unless set."""
+        return self._control_height
+
+    def control_height(mut self, height: Float64):
+        self._control_height = height
+
+    def focus_ring(self) -> FocusRing:
+        """How the ring round a widget focused from the keyboard, a gamepad
+        or code is drawn."""
+        return self._focus_ring
+
+    def focus_ring(mut self, ring: FocusRing):
+        self._focus_ring = ring
+
     def state_layers(self) -> StateLayers:
         """How far a hovered, pressed or dragged widget's colour steps."""
         return self._state_layers

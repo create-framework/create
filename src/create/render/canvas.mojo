@@ -203,44 +203,6 @@ struct OverlayGuard[origin: Origin[mut=True]](Movable):
         self._canvas[]._transform_inv = self._saved_transform_inv
 
 
-@fieldwise_init
-struct _View(Copyable, ImplicitlyCopyable, Movable):
-    """The camera and transform a canvas draws through, kept to draw through
-    again later: `ui.world` records one when its block opens and draws its
-    widgets through it when the block ends."""
-
-    var camera: Camera
-    var user: Transform
-
-    def to_local(self) -> Transform:
-        """Takes a screen point into this view's local space, as
-        `canvas.to_local` does."""
-        return self.user.inverse() @ self.camera.transform().inverse()
-
-
-struct _ViewGuard[origin: Origin[mut=True]](Movable):
-    """Draws through a recorded `_View` for a `with` block, then restores the
-    camera and transform the canvas had. Library-internal."""
-
-    var _canvas: Pointer[Canvas, Self.origin]
-    var _saved: _View
-
-    def __init__(out self, *, ref[Self.origin] _canvas: Canvas, _view: _View):
-        self._saved = _canvas._current_view()
-        _canvas._camera = _view.camera
-        _canvas._user = _view.user
-        _canvas._sync_transform()
-        self._canvas = Pointer(to=_canvas)
-
-    def __enter__(mut self):
-        pass
-
-    def __exit__(mut self):
-        self._canvas[]._camera = self._saved.camera
-        self._canvas[]._user = self._saved.user
-        self._canvas[]._sync_transform()
-
-
 struct StyleGuard[origin: Origin[mut=True]](Movable):
     """Restores the style the frame had when the scope was entered.
 
@@ -810,10 +772,6 @@ struct Canvas(Movable, _GeometryTarget):
         if len(self._transform_stack) > 0:
             self._user = self._transform_stack.pop()
             self._sync_transform()
-
-    def _current_view(self) -> _View:
-        """The camera and transform drawing goes through right now."""
-        return _View(self._camera, self._user)
 
     def _sync_transform(mut self):
         self._user_inv = self._user.inverse()

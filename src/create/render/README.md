@@ -80,13 +80,12 @@ no rounding and no visible stroke (`is_plain_triangle`), isn't lowered either: i
 `canvas.draw(shape)` calls `draw_geometry` (`_geometry_target.mojo`), which matches the shape's type
 to its kind when the program is compiled and calls the target's primitive for it (`_rectangle`,
 `_circle`, `_ellipse`, `_capsule`, `_triangle`, `_sector`, `_polygon`, `_line`, `_curves`); on
-`Canvas`, each records `shape_command(shape, transform, style, scale)`. The targets are `Canvas`,
-`RegionCapture` and `ui`'s recorder, each a `_GeometryTarget`. The named methods
-(`rectangle(position, width, height)`, …) only build the shape, resolving `corner_radius` against
-the style, and call `draw`. A program's own type is a `Drawable` (`drawable.mojo`), whose
-`draw_to(canvas)` draws its parts. A new shape kind needs a geometry type, a branch in
-`draw_geometry`, a primitive on `_GeometryTarget` and its targets, a `shape_command` overload, and
-the payload above.
+`Canvas`, each records `shape_command(shape, transform, style, scale)`. The targets are `Canvas` and
+`RegionCapture`, each a `_GeometryTarget`. The named methods (`rectangle(position, width, height)`,
+…) only build the shape, resolving `corner_radius` against the style, and call `draw`. A program's
+own type is a `Drawable` (`drawable.mojo`), whose `draw_to(canvas)` draws its parts. A new shape
+kind needs a geometry type, a branch in `draw_geometry`, a primitive on `_GeometryTarget` and its
+targets, a `shape_command` overload, and the payload above.
 
 **A command is a header and a payload.** The header — `transform`, `paint`, `clip`, `stroke_grow` —
 is every kind's; `payload` is a `Variant` of one struct per kind (`ClearPayload`, `RectPayload`,
@@ -103,8 +102,7 @@ its setters write and every command reads, is an internal `_ResolvedStyle` with 
 (`style.mojo`). `canvas.style(s)` applies `s` to it through `_ResolvedStyle.apply`, which mirrors
 the setters' rules, and its guard restores the whole resolved style; the keyword form calls the
 setters directly, which measured faster than building a `Style` to apply. `ui` resolves its widgets'
-looks the same way and replays them with `canvas._with_style`. Below, "the style" is the resolved
-one.
+looks the same way and draws them with `canvas._with_style`. Below, "the style" is the resolved one.
 
 **A command keeps what it paints with, not the `Style`.** `paint` is a `Paint` (`_paint.mojo`): the
 style's fill, stroke, shadow and blend mode, field for field, from `style._paint()`, with tint and

@@ -10,7 +10,7 @@ from create.core import Context
 
 struct _TextBuffer(Copyable, Movable):
     """The editing behind a text field: the text, a caret and a selection,
-    and what each key does to them. A `text_field` keeps one under its ID.
+    and what each key does to them. A `TextField` keeps one.
 
     `update` replays the frame's typing in the order it came, so text and
     editing keys typed within one frame land where they were typed:
@@ -51,10 +51,6 @@ struct _TextBuffer(Copyable, Movable):
     var last_change: Float64
     """When the text or caret last changed, in run seconds: the caret shows
     steadily for a moment after, rather than blinking while typing."""
-    var edited: Bool
-    """Whether `ui.text_editor` changed `text` since the field was last
-    called: the next call then hands `text` to the program, rather than
-    taking the program's text in."""
 
     def __init__(
         out self, text: String = "", *, max_length: Optional[Int] = None
@@ -66,7 +62,6 @@ struct _TextBuffer(Copyable, Movable):
         self._anchor = self._caret
         self.scroll = 0
         self.last_change = 0
-        self.edited = False
 
     # ------------------------------------------------------------- update
 
