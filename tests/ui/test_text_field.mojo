@@ -1,58 +1,36 @@
-"""`ui.text_field`: typing reaches only the focused field, Enter submits,
-clicking places the caret, and the UI switches `text_input` as focus comes
-and goes."""
-from std.testing import (
-    TestSuite,
-    assert_equal,
-    assert_false,
-    assert_raises,
-    assert_true,
-)
+"""`TextField` as a value: a click gives it focus, typing reaches only the
+field with focus, Enter submits, and it switches `text_input` as its focus
+comes and goes, with no `UI`."""
+from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 comptime _FIRST = Rectangle((0, 40), 300, 40)
 comptime _SECOND = Rectangle((0, -40), 300, 40)
+comptime _TOP_EDGE = Point(0.0, 59.5)
+"""On the first field's outline, along its top."""
 
 
 struct _Form:
-    """Two text fields, the first optionally disabled."""
+    """Two standalone text fields."""
 
-    var ui: _ImmediateUI
     var context: Context
-    var texts: List[String]
-    var changed: List[Bool]
-    var submitted: List[Bool]
-    var disable_first: Bool
+    var fields: List[TextField]
 
     def __init__(out self):
-        self.ui = _ImmediateUI()
         self.context = Context()
-        self.texts = ["", ""]
-        self.changed = [False, False]
-        self.submitted = [False, False]
-        self.disable_first = False
+        self.fields = [TextField(_FIRST), TextField(_SECOND)]
 
     def frame(mut self) raises:
         var canvas = Canvas(400, 200)
-        var rects = [_FIRST, _SECOND]
-        with self.ui.screen(self.context, canvas) as layer:
-            for i in range(2):
-                layer.text_field(
-                    self.texts[i],
-                    rects[i],
-                    disabled=self.disable_first and i == 0,
-                )
-                self.changed[i] = layer.changed()
-                self.submitted[i] = layer.submitted()
+        for ref field in self.fields:
+            field.update(self.context, canvas)
+            canvas.draw(field)
 
     def click(mut self, at: Point) raises:
         next_frame(self.context)
         point_at(self.context, at)
-        self.frame()
-        next_frame(self.context)
         press(self.context, at)
         release(self.context, at)
         self.frame()
@@ -73,76 +51,50 @@ def test_typing_reaches_only_the_focused_field() raises -> None:
     form.frame()
     form.click(_FIRST.position)
     form.type("ab")
-    assert_equal(form.texts[0], "ab")
-    assert_equal(form.texts[1], "")
-    assert_true(form.changed[0])
-    form.click(_SECOND.position)
+    assert_equal(form.fields[0].text(), "ab")
+    assert_equal(form.fields[1].text(), "")
+    assert_true(form.fields[0].changed())
+    form.click(_SECOND.position)  # clicking one unfocuses the other
+    assert_false(form.fields[0].focused())
+    assert_true(form.fields[1].focused())
     form.type("c")
-    assert_equal(form.texts[0], "ab")
-    assert_equal(form.texts[1], "c")
-    assert_false(form.changed[0])
-
-
-def test_a_field_with_focus_wants_the_keyboard() raises -> None:
-    var form = _Form()
-    form.frame()
-    form.click(_FIRST.position)
-    assert_true(form.ui.wants_keyboard(form.context))  # even from a click
-    form.click(Point(0, 95))  # nowhere
-    next_frame(form.context)
-    form.frame()
-    assert_false(form.ui.wants_keyboard(form.context))
+    assert_equal(form.fields[0].text(), "ab")
+    assert_equal(form.fields[1].text(), "c")
+    assert_false(form.fields[0].changed())
 
 
 def test_enter_submits_the_focused_field() raises -> None:
     var form = _Form()
-    form.frame()
     form.click(_FIRST.position)
     form.type("ok")
     form.key(Key.ENTER)
-    assert_true(form.submitted[0])
-    assert_false(form.submitted[1])
-    assert_equal(form.texts[0], "ok")
+    assert_true(form.fields[0].submitted())
+    assert_false(form.fields[1].submitted())
+    assert_equal(form.fields[0].text(), "ok")
     next_frame(form.context)
     form.frame()
-    assert_false(form.submitted[0])
+    assert_false(form.fields[0].submitted())
+
+
+def test_a_click_elsewhere_or_escape_takes_focus_away() raises -> None:
+    var form = _Form()
+    form.click(_FIRST.position)
+    form.click((0, 95))  # nowhere
+    assert_false(form.fields[0].focused())
+    form.click(_FIRST.position)
+    form.key(Key.ESCAPE)
+    assert_false(form.fields[0].focused())
 
 
 def test_a_click_places_the_caret() raises -> None:
     var form = _Form()
-    form.texts[0] = "hello"
+    form.fields[0].set_text("hello")
     form.frame()
+    assert_false(form.fields[0].changed())  # the program set it
     # the field's left edge plus its padding: before the first character
-    form.click(Point(_FIRST.position.x - _FIRST.width / 2 + 12, 40))
+    form.click((_FIRST.position.x - _FIRST.width / 2 + 12, 40))
     form.type("X")
-    assert_equal(form.texts[0], "Xhello")
-
-
-def test_tab_reaches_a_field_and_typing_follows() raises -> None:
-    var form = _Form()
-    form.frame()
-    form.key(Key.TAB)
-    form.type("a")
-    form.key(Key.TAB)
-    form.type("z")
-    assert_equal(form.texts[0], "a")
-    assert_equal(form.texts[1], "z")
-    form.key(Key.TAB)  # round to the first
-    form.type("b")
-    assert_equal(form.texts[0], "ab")
-    assert_equal(form.texts[1], "z")
-
-
-def test_tab_and_typing_in_one_frame_land_in_the_new_field() raises -> None:
-    var form = _Form()
-    form.frame()
-    form.click(_FIRST.position)
-    next_frame(form.context)
-    press_key(form.context, Key.TAB)
-    form.context.keyboard._type_text("q")
-    form.frame()
-    assert_equal(form.texts[0], "")
-    assert_equal(form.texts[1], "q")
+    assert_equal(form.fields[0].text(), "Xhello")
 
 
 def test_text_input_follows_focus_and_is_otherwise_left_alone() raises -> None:
@@ -152,107 +104,64 @@ def test_text_input_follows_focus_and_is_otherwise_left_alone() raises -> None:
     assert_false(form.context.text_input())  # no field has focus: untouched
     form.click(_FIRST.position)
     assert_true(form.context.text_input())
-    form.click(Point(0, 95))
-    next_frame(form.context)
-    form.frame()
-    assert_false(form.context.text_input())
-    form.context.text_input(True)  # the game's own use
+    form.click(_SECOND.position)  # focus moves from one field to the other
     next_frame(form.context)
     form.frame()
     assert_true(form.context.text_input())
+    form.click((0, 95))
+    assert_false(form.context.text_input())
 
 
 def test_a_disabled_field_ignores_typing() raises -> None:
     var form = _Form()
-    form.disable_first = True
-    form.frame()
+    form.fields[0].enabled = False
     form.click(_FIRST.position)
     form.type("ab")
-    assert_equal(form.texts[0], "")
+    assert_false(form.fields[0].focused())
+    assert_equal(form.fields[0].text(), "")
 
 
-def test_the_editor_edits_the_field_at_its_next_call() raises -> None:
-    var ui = _ImmediateUI()
-    var context = Context()
-    var canvas = Canvas(400, 200)
-    var name = String("Ada Lovelace")
-    for frame in range(2):
-        if frame == 1:
-            next_frame(context)
-        with ui.screen(context, canvas) as layer:
-            layer.text_field(name, _FIRST)
-            if frame == 1:
-                assert_true(layer.changed())
-                break
-            var editor = layer.text_editor()
-            assert_equal(editor.before_caret(), "Ada Lovelace")
-            editor.move_word_left()
-            editor.move_word_left(select=True)
-            assert_equal(editor.selected_text(), "Ada ")
-            editor.delete_backward()
-            editor.move_to_end()
-            editor.insert("!")
-            assert_equal(name, "Ada Lovelace")  # not until the next call
-    assert_equal(name, "Lovelace!")
-
-
-def test_the_editor_needs_a_text_field_called_last() raises -> None:
-    var ui = _ImmediateUI()
-    var context = Context()
-    var canvas = Canvas(400, 200)
-    var name = String("Ada")
-    with ui.screen(context, canvas) as layer:
-        with assert_raises():
-            _ = layer.text_editor()
-        layer.text_field(name, _FIRST)
-        _ = layer.button("OK", _SECOND)
-        with assert_raises():
-            _ = layer.text_editor()
-        layer.text_field(name, _FIRST)
-        layer.label("Name", _SECOND)
-        with assert_raises():
-            _ = layer.text_editor()
-        layer.text_field(name, _FIRST)
-        with layer.panel(_SECOND):
-            with assert_raises():
-                _ = layer.text_editor()
-
-
-def test_text_the_program_changes_is_what_the_field_shows() raises -> None:
+def test_editing_methods_edit_it_and_count_as_a_change() raises -> None:
     var form = _Form()
+    form.fields[0].set_text("hello")
     form.frame()
+    form.fields[0].select_all()
+    form.fields[0].delete_backward()
+    form.fields[0].insert("bye")
+    assert_equal(form.fields[0].text(), "bye")
+    next_frame(form.context)
+    form.frame()
+    assert_true(form.fields[0].changed())
+
+
+def test_max_length_caps_typing() raises -> None:
+    var form = _Form()
+    form.fields[0].max_length(3)
     form.click(_FIRST.position)
-    form.type("abc")
-    form.texts[0] = ""  # emptied by the program, as after submitting
-    form.type("d")
-    assert_equal(form.texts[0], "d")
+    form.type("abcdef")
+    assert_equal(form.fields[0].text(), "abc")
 
 
 def _field(
-    focus: Bool,
+    focused: Bool,
     container: Style = Style(),
-    focused: Style = Style(),
+    focused_container: Style = Style(),
     caret: Style = Style(),
 ) raises -> Canvas:
     """One frame of an empty field, focused or not, unsmoothed."""
-    var ui = _ImmediateUI()
     var context = Context()
+    point_at(context, (0, -90))
     var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
-    var text = String()
-    with ui.screen(context, canvas) as layer:
-        layer.text_field(
-            text,
-            _FIRST,
-            container=container,
-            focused=focused,
-            caret=caret,
-            take_focus=focus,
-        )
+    var field = TextField(
+        _FIRST,
+        container=container,
+        focused_container=focused_container,
+        caret=caret,
+    )
+    field.focus(focused)
+    field.update(context, canvas)
+    canvas.draw(field)
     return canvas^
-
-
-comptime _TOP_EDGE = Point(0.0, 59.5)
-"""Just inside the first field's top edge, where its outline is drawn."""
 
 
 def test_the_caret_takes_its_own_style() raises -> None:
@@ -276,28 +185,10 @@ def test_the_focused_look_is_layered_over_the_container() raises -> None:
     var canvas = _field(
         True,
         container=Style(fill=Color.WHITE, stroke=Color.BLUE),
-        focused=Style(stroke=Color.RED),
+        focused_container=Style(stroke=Color.RED),
     )
     assert_equal(canvas.color_at(_TOP_EDGE), Color.RED)
     assert_equal(canvas.color_at((0, 50)), Color.WHITE)
-
-
-def test_a_field_without_an_outline_keeps_none_when_focused() raises -> None:
-    var canvas = _field(
-        True, container=Style(fill=Color.WHITE, stroke_enabled=False)
-    )
-    assert_equal(canvas.color_at(_TOP_EDGE), Color.WHITE)
-
-
-def test_a_style_block_reaches_every_field() raises -> None:
-    var ui = _ImmediateUI()
-    var context = Context()
-    var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
-    var text = String()
-    with ui.screen(context, canvas) as layer:
-        with layer.style(text_field_caret=Style(stroke=Color.RED)):
-            layer.text_field(text, _FIRST, take_focus=True)
-    assert_equal(canvas.color_at((-138.5, 40)), Color.RED)
 
 
 def main() raises:

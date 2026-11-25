@@ -3,8 +3,7 @@
 A shape knows nothing of drawing. `_GeometryTarget` is what can take one
 primitive per kind of shape, and `draw_geometry` is the one place a generic
 `Geometry` is matched to its kind and handed to the target's primitive for
-it. `Canvas` records it, `RegionCapture` keeps it as a clip, and the `ui`
-recorder keeps it for later.
+it. `Canvas` records it, and `RegionCapture` keeps it as a clip.
 """
 
 from create.geometry import (

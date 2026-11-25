@@ -10,26 +10,20 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 
 | File | Role |
 |---|---|
-| `ui.mojo` | `_ImmediateUI`, the immediate-mode UI until it is removed: the state kept between frames (the widgets seen, focus, the held widget, text buffers, scope stacks, the device claims), its settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), the layer's colours, the per-frame reset in `_begin_layer`, Tab and gamepad navigation, `ui.screen` and `ui.world`; `_Hit`, a widget's place for hit-testing; `_theme()`, the `_Theme` a widget called here is drawn in |
-| `layer.mojo` | `UILayer`, the handle a layer's block gets: every widget, `_interact` (what the pointer and keys did to a widget), the focus ring, `ui.draw`, the scopes and panels, and the guards their `with` blocks return |
 | `_theme.mojo` | `_Theme`: the colours, the merged `ui.style` blocks (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
-| `_id.mojo` | Widget IDs: a call site's file, line and column, mixed into the keys of the open `ui.id` blocks |
-| `_layout.mojo` | `_Layout`, an open panel, column or row, and how it hands out the slots of the widgets called inside it |
-| `_key.mojo` | `_WidgetKey`, the `id=` keyword, which takes any `Hashable` key, a literal or `None` in one implicit conversion |
-| `_recorder.mojo` | `_Recorder`, what a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
 | `tree.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children and whether the tree enables it; `WidgetHandle`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
-| `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the gamepad reading and the nearest-in-a-direction choice, shared by the tree and the old `UI` |
+| `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the gamepad reading and the nearest-in-a-direction choice |
 | `layout.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes, and `_UNSIZED`, the size a widget leaves for the tree to choose |
 | `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
 | `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, dragged this frame, and this frame's press and click, kept between its `update`s |
-| `checkbox.mojo` | `Checkbox`, a widget value that owns whether it is ticked; the box, tick and text placement the old layer shares |
+| `checkbox.mojo` | `Checkbox`, a widget value that owns whether it is ticked; its box, tick and text placement |
 | `label.mojo` | `Label`, a widget value: text placed in a rectangle; `_anchor`, the point of a rectangle text is anchored to |
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
-| `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place and the dragged value, which the old layer shares |
+| `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place, and the value a drag or a key gives |
 | `button.mojo` | `Button`, a widget value; `ButtonVariant`. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
-| `text_field.mojo` | `TextField`, a widget value that owns a `_TextBuffer` and its own focus; `_measure` and `_offset_at`, which the old layer shares; `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
+| `text_field.mojo` | `TextField`, a widget value that owns a `_TextBuffer` and its own focus; `_measure` and `_offset_at`, how it measures text to place its caret |
 
 ## How a frame goes
 

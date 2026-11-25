@@ -2,7 +2,6 @@
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
-from create.ui.ui import _ImmediateUI
 
 comptime _PANEL = Rectangle((0, 0), 160, 80)
 comptime _LINE = Rectangle((0, 10), 140, 24)
@@ -18,23 +17,6 @@ def _assert_same(mut a: Canvas, mut b: Canvas) raises:
     for j in range(x.height()):
         for i in range(x.width()):
             assert_equal(x.pixel(i, j), y.pixel(i, j))
-
-
-def test_a_panel_and_label_draw_as_the_ui_ones_do() raises -> None:
-    var context = Context()
-    var panel = Panel(_PANEL)
-    var label = Label("Volume", _LINE, Align.LEFT)
-    var drawn = _canvas()
-    panel.update(context, drawn)
-    label.update(context, drawn)
-    drawn.draw(panel)
-    drawn.draw(label)
-    var ui = _ImmediateUI()
-    var called = _canvas()
-    with ui.screen(context, called) as layer:
-        with layer.panel(_PANEL):
-            layer.label("Volume", _LINE, alignment=Align.LEFT)
-    _assert_same(drawn, called)
 
 
 def test_a_label_is_placed_by_its_alignment() raises -> None:

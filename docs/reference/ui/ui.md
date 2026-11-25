@@ -99,6 +99,42 @@ How round its widgets are: at the default, 16, a button is a pill.
 def corner_radius(mut self, radius: Float64)
 ```
 
+### `spacing`
+
+```mojo
+def spacing(self) -> Float64
+```
+
+The gap a `Column` or `Row` leaves between its widgets unless given one, and half the inset of a panel's inside: 8 unless set.
+
+```mojo
+def spacing(mut self, spacing: Float64)
+```
+
+### `control_height`
+
+```mojo
+def control_height(self) -> Float64
+```
+
+How tall a button, checkbox, slider or text field is when the `UI` sizes it: 40 unless set.
+
+```mojo
+def control_height(mut self, height: Float64)
+```
+
+### `focus_ring`
+
+```mojo
+def focus_ring(self) -> FocusRing
+```
+
+How the ring round a widget focused from the keyboard, a gamepad or code is drawn.
+
+```mojo
+def focus_ring(mut self, ring: FocusRing)
+```
+
 ### `state_layers`
 
 ```mojo

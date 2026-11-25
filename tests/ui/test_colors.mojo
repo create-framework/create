@@ -1,12 +1,12 @@
 """`ColorScheme` and the UI's tokens: the light and dark schemes, colours
 given to replace their own, schemes from a seed colour, and the colours a
-layer is drawn in."""
+`UI` draws its widgets in."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.ui import _ImmediateUI
 from create.ui.colors import _contrast
 from create.ui._theme import _body_text, _label_text
+from _input import point_at
 
 
 def _pairs(c: ColorScheme) -> List[Tuple[Color, Color]]:
@@ -102,19 +102,19 @@ def test_a_surface_given_changes_the_colours_drawn_on_it() raises -> None:
     assert_true(colors.outline != ColorScheme.dark().outline)
 
 
-def test_a_layer_draws_in_the_colours_it_is_given() raises -> None:
-    var ui = _ImmediateUI()
+def test_a_ui_draws_in_the_colours_it_is_given() raises -> None:
+    var ui = UI()
+    assert_equal(ui.colors().surface, ColorScheme.light().surface)
+    ui.colors(ColorScheme.dark())
+    assert_equal(ui.colors().surface, ColorScheme.dark().surface)
+    var ok = ui.add(Button("OK", Rectangle((0, 0), 100, 40)))
     var context = Context()
-    var canvas = Canvas(16, 16)
-    with ui.screen(context, canvas) as layer:
-        assert_equal(layer.colors().surface, ColorScheme.light().surface)
-    with ui.screen(context, canvas, ColorScheme.dark()) as layer:
-        assert_equal(layer.colors().surface, ColorScheme.dark().surface)
-        with layer.colors(ColorScheme.light()):
-            assert_equal(layer.colors().surface, ColorScheme.light().surface)
-        assert_equal(layer.colors().surface, ColorScheme.dark().surface)
-    with ui.world(context, canvas, ColorScheme.dark()) as layer:
-        assert_equal(layer.colors().surface, ColorScheme.dark().surface)
+    point_at(context, (0, 100))
+    var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
+    ui.update(context, canvas)
+    canvas.draw(ui)
+    assert_equal(canvas.color_at((-45, 0)), ColorScheme.dark().primary)
+    _ = ok
 
 
 def _seeds() -> List[Color]:
@@ -177,7 +177,7 @@ def test_a_seeded_scheme_takes_colours_to_replace_its_own() raises -> None:
 
 
 def test_a_ui_starts_with_the_default_tokens() raises -> None:
-    var ui = _ImmediateUI()
+    var ui = UI()
     assert_equal(ui.corner_radius(), 16.0)
     assert_equal(ui.spacing(), 8.0)
     assert_equal(ui.control_height(), 40.0)
