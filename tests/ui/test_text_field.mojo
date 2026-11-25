@@ -191,5 +191,22 @@ def test_the_focused_look_is_layered_over_the_container() raises -> None:
     assert_equal(canvas.color_at((0, 50)), Color.WHITE)
 
 
+def test_focus_taken_away_by_the_program_switches_typing_off() raises -> None:
+    var field = TextField(_FIRST)
+    var context = Context()
+    var canvas = Canvas(400, 200)
+    field.focus()
+    field.update(context, canvas)
+    assert_true(context.text_input())
+    context.text_input(False)  # a game switches typing off for its keys
+    next_frame(context)
+    field.update(context, canvas)
+    assert_true(context.text_input())  # the focused field switches it back
+    field.focus(False)
+    next_frame(context)
+    field.update(context, canvas)
+    assert_false(context.text_input())
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

@@ -73,6 +73,9 @@ struct TextField(Clickable, Copyable, Movable, Widget):
     var _buffer: _TextBuffer
     var _pointer: _Pointer
     var _focused: Bool
+    var _typing_on: Bool
+    """Whether it last switched `context.text_input` on, on its own: it
+    switches it off once it no longer has focus, however focus went."""
     var _last_text: String
     var _changed: Bool
     var _submitted: Bool
@@ -112,6 +115,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         self._buffer = _TextBuffer(text, max_length=max_length)
         self._pointer = _Pointer()
         self._focused = False
+        self._typing_on = False
         self._last_text = text
         self._changed = False
         self._submitted = False
@@ -162,7 +166,6 @@ struct TextField(Clickable, Copyable, Movable, Widget):
             # the tree decides focus, and switches typing for it
             self._focused = focus.focused and enabled
         else:
-            var was_focused = self._focused
             if not enabled:
                 self._focused = False
             elif self._pointer.pressed:
@@ -171,8 +174,9 @@ struct TextField(Clickable, Copyable, Movable, Widget):
                 self._focused = False
             elif self._focused and context.keyboard.pressed(Key.ESCAPE):
                 self._focused = False
-            if self._focused != was_focused:
+            if self._focused != self._typing_on:
                 context.text_input(self._focused)
+                self._typing_on = self._focused
             elif self._focused and not context.text_input():
                 # another field let go after this one took focus
                 context.text_input(True)
