@@ -131,7 +131,8 @@ The rules behind it, and what each one buys:
   autoscale in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing
   settings live on `_PersistentCanvasState` itself.
 - **`geometry`** depends only on `math` and `_optional`, so collision code (`overlaps`, `contains`)
-  never sees `render`; `render` imports it.
+  never sees `render`; `render` imports it. It holds values and their tests, and nothing about
+  drawing: `render` decides how each shape and curve is drawn.
 - **`color`** depends only on `math`; `image` and `render` both import it. It sits below `image` so
   that `Image.pixel` can return a `Color` without a `render`↔`image` cycle.
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
@@ -171,9 +172,10 @@ The rules behind it, and what each one buys:
   it, and nothing re-exports it.
 - **`_native`** is a leaf imported by `render` and `core`, the packages whose machinery the compiled
   library holds, and re-exported by nothing. See [The compiled library](#the-compiled-library).
-- **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads and
-  `canvas.snapshot` name `Image`, and `canvas.image(animator, …)` names `Animator`. A `render`
-  function that needs pixels takes a pointer plus width/height, not an image type.
+- **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads,
+  `canvas.snapshot` and `Picture`, which holds the `Image` it draws, name `Image`, and
+  `canvas.image(animator, …)` names `Animator`. A `render` function that needs pixels takes a
+  pointer plus width/height, not an image type.
 
 ## The compiled library
 
