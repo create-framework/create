@@ -45,9 +45,9 @@ Colours: `Color` and `BlendMode`.
 
 ## [`create.render`](render/README.md)
 
-Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
 
-- **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`Autoscale`](render/autoscale.md), [`Gradient`](render/gradient.md), [`Style`](render/style.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`StyleGuard`](render/styleguard.md), [`TransformGuard`](render/transformguard.md), [`OverlayGuard`](render/overlayguard.md), [`ClipGuard`](render/clipguard.md), [`Text`](render/text.md), [`Picture`](render/picture.md)
+- **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`Autoscale`](render/autoscale.md), [`Gradient`](render/gradient.md), [`Style`](render/style.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`Text`](render/text.md), [`Picture`](render/picture.md)
 - **Traits:** [`Drawable`](render/drawable.md)
 
 ## [`create.image`](image/README.md)

@@ -1,4 +1,4 @@
-"""Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Text`,
+"""Drawing: `Canvas`, `Drawable`, `Text`,
 `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a
 frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`,
 `StrokeAlign`, `RenderBackend`).
@@ -13,13 +13,7 @@ from .autoscale import Autoscale
 from .gradient import Gradient
 from .style import Style
 from .camera import Camera
-from .canvas import (
-    Canvas,
-    StyleGuard as StyleGuard,
-    TransformGuard as TransformGuard,
-    OverlayGuard as OverlayGuard,
-    ClipGuard as ClipGuard,
-)
+from .canvas import Canvas
 from .drawable import Drawable
 from .text import Text
 from .picture import Picture
