@@ -1,7 +1,7 @@
 """Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Text`,
-`Style`, `Camera`, and the settings that shape a frame (`Antialiasing`,
-`Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`,
-`RenderBackend`).
+`Picture`, `Style`, `Camera`, and the settings that shape a frame
+(`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`,
+`StrokeAlign`, `RenderBackend`).
 """
 from .render_backend import RenderBackend
 from .antialiasing import Antialiasing
@@ -21,3 +21,4 @@ from .canvas import (
 )
 from .drawable import Drawable
 from .text import Text
+from .picture import Picture

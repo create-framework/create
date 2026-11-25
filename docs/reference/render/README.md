@@ -1,6 +1,6 @@
 # create.render
 
-Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Text`, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Text`, `Picture`, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
 
 ## Types
 
@@ -21,6 +21,7 @@ Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Text`, `Style`, `Cam
 | [`OverlayGuard`](overlayguard.md) | Restores the camera and transform `canvas.overlay` suspended, on scope exit. Only `canvas.overlay` builds one. |
 | [`ClipGuard`](clipguard.md) | Closes the clip `canvas.clip` opened, on scope exit. Only `canvas.clip` builds one. |
 | [`Text`](text.md) | A piece of text placed in the world, to draw with `canvas.draw`. |
+| [`Picture`](picture.md) | An `Image` placed in the world, to draw with `canvas.draw`. |
 
 ## Traits
 

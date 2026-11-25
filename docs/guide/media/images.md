@@ -52,6 +52,19 @@ def main() raises:
 
 See [examples/images](../../../examples/images/main.mojo).
 
+**A `Picture` is an image placed in the world**, as a value: `Picture(image, position)` at the
+image's own size, or `Picture(image, position, width, height)` stretched. `canvas.draw(picture)`
+draws what `canvas.image` draws, so a picture can be kept in a field and be one part of a [type of
+your own](../drawing/canvas.md#your-own-types), drawn beside its shapes. The `Image` stays the
+asset; a picture is one place it is drawn, so many pictures of one image share its pixels.
+`picture.bounds()` is the rectangle it covers:
+
+```mojo
+# In `update`, with a `portrait: Picture` field: the picture in a frame.
+canvas.draw(self.portrait.bounds().inset(-4), Style(fill=Color.WHITE))
+canvas.draw(self.portrait)
+```
+
 ## Drawing into an image
 
 An **offscreen canvas** is a canvas that draws into an image of its own rather than onto the screen.
