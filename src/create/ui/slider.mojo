@@ -7,7 +7,12 @@ from create.render import Canvas, Style
 from create._optional import _OptionalFloat64
 from ._pointer import _Pointer
 from ._theme import _SliderLook, _Theme
+from .layout import _UNSIZED
 from .widget import Clickable, Widget
+
+
+comptime _CONTROL_WIDTH = 200.0
+"""How wide a slider or a text field prefers to be."""
 
 
 struct Slider(Clickable, Copyable, Movable, Widget):
@@ -68,7 +73,7 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         value: Float64,
         minimum: Float64,
         maximum: Float64,
-        rect: Rectangle,
+        rect: Rectangle = _UNSIZED,
         *,
         step: _OptionalFloat64 = None,
         track: Style = Style(),
@@ -146,6 +151,13 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             if moved and moved.value() != self.value:
                 self.value = moved.value()
                 self._changed = True
+
+    def _measure(
+        self, mut canvas: Canvas, theme: _Theme
+    ) raises -> Tuple[Float64, Float64]:
+        """The size it prefers in `theme`: `_CONTROL_WIDTH` wide,
+        `control_height` tall."""
+        return (_CONTROL_WIDTH, theme.control_height)
 
     def changed(self) -> Bool:
         """Whether its last `update` changed `value`."""

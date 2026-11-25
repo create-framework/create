@@ -7,7 +7,14 @@ from create.render import Canvas, Style, Text
 from create.render.style import _ResolvedStyle
 from ._pointer import _Pointer
 from ._theme import _ButtonLook, _Theme
+from .layout import _UNSIZED
+from .text_field import _measure
 from .widget import Clickable, Widget
+
+
+comptime _BUTTON_PADDING = 24.0
+"""The room a button leaves either side of its text, at the size it
+prefers."""
 
 
 @fieldwise_init
@@ -92,7 +99,7 @@ struct Button(Clickable, Copyable, Movable, Widget):
     def __init__(
         out self,
         text: String,
-        rect: Rectangle,
+        rect: Rectangle = _UNSIZED,
         *,
         variant: ButtonVariant = ButtonVariant.FILLED,
         style: Style = Style(),
@@ -143,6 +150,22 @@ struct Button(Clickable, Copyable, Movable, Widget):
             pressed=self._pointer.looks_pressed(),
             disabled=not self.enabled,
         )
+
+    def _measure(
+        self, mut canvas: Canvas, theme: _Theme
+    ) raises -> Tuple[Float64, Float64]:
+        """The size it prefers in `theme`: its text with room either side,
+        `control_height` tall."""
+        var look = theme.button(
+            self.style,
+            self.variant,
+            theme.control_height,
+            hovered=False,
+            pressed=False,
+            disabled=False,
+        )
+        var width = _measure(canvas, self.text, look.text)
+        return (width + 2 * _BUTTON_PADDING, theme.control_height)
 
     def hovered(self) -> Bool:
         return self._pointer.hovered
