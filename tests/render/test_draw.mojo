@@ -314,5 +314,39 @@ def test_bounds_wrap_and_take_a_style() raises -> None:
     assert_equal(canvas.bounds(text), wrapped)  # the style is as it was
 
 
+comptime _IMAGE = "../fixtures/test_2x2.png"
+
+
+def test_picture_draws_what_canvas_image_draws() raises -> None:
+    var image = Image.load(_IMAGE)
+    var drawn = _canvas()
+    var named = _canvas()
+    drawn.draw(Picture(image, (-30.0, 20.0)))
+    named.image(image, (-30.0, 20.0))
+    drawn.draw(Picture(image, (10.0, -10.0), 40, 30))
+    named.image(image, (10.0, -10.0), 40, 30)
+    _assert_same(drawn, named, "picture")
+
+
+def test_picture_takes_a_style_of_its_own() raises -> None:
+    var image = Image.load(_IMAGE)
+    var drawn = _canvas()
+    var named = _canvas()
+    var tinted = Style(tint=Color.RED, opacity=0.5)
+    drawn.draw(Picture(image, (0.0, 0.0), 50.0, 50.0), tinted)
+    with named.style(tinted):
+        named.image(image, (0.0, 0.0), 50.0, 50.0)
+    _assert_same(drawn, named, "tinted picture")
+
+
+def test_picture_is_placed_as_a_value() raises -> None:
+    var picture = Picture(Image.load(_IMAGE), (5.0, 5.0), 40, 20)
+    assert_equal(picture.bounds(), Rectangle((5.0, 5.0), 40.0, 20.0))
+    assert_equal(Picture(picture.image, (0.0, 0.0)).bounds().width, 2.0)
+    assert_equal(picture.translate(Vector(10, 0)).position, Point(15.0, 5.0))
+    assert_equal(picture.move_to((0.0, 0.0)).position, Point(0.0, 0.0))
+    assert_equal(picture.position, Point(5.0, 5.0))
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
