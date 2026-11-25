@@ -16,6 +16,7 @@ from ._id import _mix
 from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
+from .label import _anchor
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor
 from .colors import ColorScheme, FocusRing
@@ -1329,38 +1330,6 @@ struct IDGuard[origin: Origin[mut=True]](Movable):
 
     def __exit__(mut self):
         _ = self._ui[]._keys.pop()
-
-
-def _anchor(rect: Rectangle, alignment: Align) -> Point:
-    """The point of `rect` that text placed by `alignment` is anchored to:
-    its centre, or the middle of the edge or the corner `alignment` names."""
-    var x = rect.position.x
-    var y = rect.position.y
-    if (
-        alignment == Align.LEFT
-        or alignment == Align.TOP_LEFT
-        or alignment == Align.BOTTOM_LEFT
-    ):
-        x -= rect.width / 2
-    elif (
-        alignment == Align.RIGHT
-        or alignment == Align.TOP_RIGHT
-        or alignment == Align.BOTTOM_RIGHT
-    ):
-        x += rect.width / 2
-    if (
-        alignment == Align.TOP
-        or alignment == Align.TOP_LEFT
-        or alignment == Align.TOP_RIGHT
-    ):
-        y += rect.height / 2
-    elif (
-        alignment == Align.BOTTOM
-        or alignment == Align.BOTTOM_LEFT
-        or alignment == Align.BOTTOM_RIGHT
-    ):
-        y -= rect.height / 2
-    return Point(x, y)
 
 
 struct DisabledGuard[origin: Origin[mut=True]](Movable):
