@@ -5,7 +5,7 @@ from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
 from create.ui.colors import _contrast
-from create.ui.layer import _body_text, _label_text
+from create.ui._theme import _body_text, _label_text
 
 
 def _pairs(c: ColorScheme) -> List[Tuple[Color, Color]]:

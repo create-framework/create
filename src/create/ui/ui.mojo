@@ -14,72 +14,13 @@ from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
 from .colors import ColorScheme, FocusRing, StateLayers
-
-
-@fieldwise_init
-struct _Styles(Copyable, ImplicitlyCopyable, Movable):
-    """What the open `ui.style` blocks set, merged: each widget's call style
-    sits over these."""
-
-    var button: Style
-    var label: Style
-    var panel: Style
-    var slider_track: Style
-    var slider_active_track: Style
-    var slider_handle: Style
-    var slider_handle_outline: Style
-    var checkbox_box: Style
-    var checkbox_checked_box: Style
-    var checkbox_tick: Style
-    var checkbox_label_style: Style
-    var text_field_container: Style
-    var text_field_focused: Style
-    var text_field_text_style: Style
-    var text_field_placeholder_style: Style
-    var text_field_caret: Style
-    var text_field_selection: Style
-
-    def __init__(out self):
-        self.button = Style()
-        self.label = Style()
-        self.panel = Style()
-        self.slider_track = Style()
-        self.slider_active_track = Style()
-        self.slider_handle = Style()
-        self.slider_handle_outline = Style()
-        self.checkbox_box = Style()
-        self.checkbox_checked_box = Style()
-        self.checkbox_tick = Style()
-        self.checkbox_label_style = Style()
-        self.text_field_container = Style()
-        self.text_field_focused = Style()
-        self.text_field_text_style = Style()
-        self.text_field_placeholder_style = Style()
-        self.text_field_caret = Style()
-        self.text_field_selection = Style()
-
-    def _over(self, under: Self) -> Self:
-        return _Styles(
-            self.button.over(under.button),
-            self.label.over(under.label),
-            self.panel.over(under.panel),
-            self.slider_track.over(under.slider_track),
-            self.slider_active_track.over(under.slider_active_track),
-            self.slider_handle.over(under.slider_handle),
-            self.slider_handle_outline.over(under.slider_handle_outline),
-            self.checkbox_box.over(under.checkbox_box),
-            self.checkbox_checked_box.over(under.checkbox_checked_box),
-            self.checkbox_tick.over(under.checkbox_tick),
-            self.checkbox_label_style.over(under.checkbox_label_style),
-            self.text_field_container.over(under.text_field_container),
-            self.text_field_focused.over(under.text_field_focused),
-            self.text_field_text_style.over(under.text_field_text_style),
-            self.text_field_placeholder_style.over(
-                under.text_field_placeholder_style
-            ),
-            self.text_field_caret.over(under.text_field_caret),
-            self.text_field_selection.over(under.text_field_selection),
-        )
+from ._theme import (
+    _CONTROL_HEIGHT,
+    _CORNER_RADIUS,
+    _SPACING,
+    _Styles,
+    _Theme,
+)
 
 
 @fieldwise_init
@@ -104,10 +45,6 @@ struct _Hit(Copyable, ImplicitlyCopyable, Movable):
     def centre(self) -> Point:
         """Its rectangle's centre, on the screen."""
         return self.to_local.inverse().apply(self.rect.position)
-
-
-comptime _CORNER_RADIUS = 16.0
-"""The `UI`'s `corner_radius` unless set, at which a button is a pill."""
 
 
 struct UI(Movable):
@@ -215,8 +152,8 @@ struct UI(Movable):
         self._colors = ColorScheme.light()
         self._color_blocks = []
         self._corner_radius = _CORNER_RADIUS
-        self._spacing = 8
-        self._control_height = 40
+        self._spacing = _SPACING
+        self._control_height = _CONTROL_HEIGHT
         self._state_layers = StateLayers()
         self._focus_ring = FocusRing()
         self._styles = []
@@ -555,6 +492,21 @@ struct UI(Movable):
         if self._surfaces:
             return self._surfaces[len(self._surfaces) - 1]
         return self._current_colors().surface
+
+    def _theme(self) -> _Theme:
+        """Everything that decides how a widget called here looks, but its
+        own style and state."""
+        return _Theme(
+            colors=self._current_colors(),
+            styles=self._current_styles(),
+            corner_radius=self._corner_radius,
+            spacing=self._spacing,
+            control_height=self._control_height,
+            state_layers=self._state_layers,
+            focus_ring=self._focus_ring,
+            surface=self._surface_color(),
+            content=self._content_color(),
+        )
 
     def _hot_focusable(self) -> Bool:
         """Whether the widget under the pointer can take focus: not a panel,
