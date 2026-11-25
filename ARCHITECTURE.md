@@ -1,8 +1,10 @@
 # Architecture
 
-How Create's source is organised: which package owns what, how a frame travels through them, which
-package may import which, and what makes a name public. Where a package's internals need more
-explaining, a README beside its code goes into the detail; see [Package
+This page describes how Create's source is organised. It covers which package owns what, how a frame
+passes through the packages, which package may import which, why much of Create's internal machinery
+is compiled into a shared library, `libcreate`, and what makes a name public. How to write the code
+itself is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md). Where a package's internals need more
+explaining, a README beside its code goes into the details; see [Package
 internals](#package-internals).
 
 ## Module layout
