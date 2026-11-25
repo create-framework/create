@@ -19,6 +19,7 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `_recorder.mojo` | `_Recorder`, what a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
+| `tree.mojo` | `_Tree`, the widget tree (to become `UI`): its nodes, each a `_Widget` variant of the built-in widgets, a parent and children; `WidgetHandle`; `update` (the topmost widget under the pointer, then every widget in drawing order, each panel passing its surface down) and `draw_to`; `_dispatch` and `_dispatch_mut`, the only code that knows which kinds of widget it holds |
 | `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
 | `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, dragged this frame, and this frame's press and click, kept between its `update`s |
 | `checkbox.mojo` | `Checkbox`, a widget value that owns whether it is ticked; the box, tick and text placement the old layer shares |
