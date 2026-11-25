@@ -20,7 +20,7 @@ from .label import _anchor
 from .slider import _check_step, _dragged_value, _handle_x, _slider_ends
 from .checkbox import _checkbox_box, _checkbox_text_at, _tick_lines
 from ._text_buffer import _TextBuffer
-from .text_field import TextEditor
+from .text_field import TextEditor, _measure, _offset_at
 from .colors import ColorScheme, FocusRing
 from .ui import UI, _Hit
 from ._theme import _Styles, _fills, _text_look
@@ -949,28 +949,14 @@ struct UILayer[
 
     def _measure(self, text: String, look: _ResolvedStyle) raises -> Float64:
         """How wide `text` is drawn in `look`'s font, size and weight."""
-        if not text:
-            return 0
-        with self._canvas[]._with_style(look):
-            return self._canvas[].text_width(text)
+        return _measure(self._canvas[], text, look)
 
     def _offset_at(
         self, text: String, x: Float64, look: _ResolvedStyle
     ) raises -> Int:
         """The byte offset of the character boundary in `text` nearest to
         `x` units from its start."""
-        var best = 0
-        var best_distance = abs(x)
-        var prefix = String()
-        var offset = 0
-        for character in text.codepoint_slices():
-            prefix += character
-            offset += character.byte_length()
-            var distance = abs(x - self._measure(prefix, look))
-            if distance < best_distance:
-                best = offset
-                best_distance = distance
-        return best
+        return _offset_at(self._canvas[], text, x, look)
 
     def _button(
         self,

@@ -72,7 +72,7 @@ def __init__(
 ### `update`
 
 ```mojo
-def update(mut self, mut context: Context, canvas: Canvas) raises
+def update(mut self, mut context: Context, mut canvas: Canvas) raises
 ```
 
 Read what the mouse did to it this frame, moving the handle while it is dragged, and work out its look: call it before drawing it. Raises if `step` isn't more than 0.

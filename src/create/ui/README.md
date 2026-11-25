@@ -26,7 +26,7 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
 | `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place and the dragged value, which the old layer shares |
 | `button.mojo` | `Button`, a widget value; `ButtonVariant`. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
-| `text_field.mojo` | `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
+| `text_field.mojo` | `TextField`, a widget value that owns a `_TextBuffer` and its own focus; `_measure` and `_offset_at`, which the old layer shares; `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
 
 ## How a frame goes
 

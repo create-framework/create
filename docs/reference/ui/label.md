@@ -47,7 +47,7 @@ def __init__(
 ### `update`
 
 ```mojo
-def update(mut self, mut context: Context, canvas: Canvas) raises
+def update(mut self, mut context: Context, mut canvas: Canvas) raises
 ```
 
 Work out its look from its fields: call it before drawing it.

@@ -89,7 +89,7 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
             disabled=not enabled,
         )
 
-    def update(mut self, mut context: Context, canvas: Canvas) raises:
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Read what the mouse did to it this frame, ticking or unticking it
         on a click, and work out its look: call it before drawing it."""
         self._update(context, canvas, _Theme.default(), free=True)
@@ -97,7 +97,7 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
     def _update(
         mut self,
         mut context: Context,
-        canvas: Canvas,
+        mut canvas: Canvas,
         theme: _Theme,
         *,
         free: Bool,
