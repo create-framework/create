@@ -4,6 +4,7 @@ comes and goes, with no `UI`."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 comptime _FIRST = Rectangle((0, 40), 300, 40)
@@ -198,7 +199,7 @@ def test_it_draws_as_the_ui_text_field_does() raises -> None:
     var drawn = Canvas(400, 200, antialiasing=Antialiasing.OFF)
     field.update(context, drawn)
     drawn.draw(field)
-    var ui = UI()
+    var ui = _ImmediateUI()
     var called = Canvas(400, 200, antialiasing=Antialiasing.OFF)
     var text = String("hello")
     with ui.screen(context, called) as layer:

@@ -4,7 +4,6 @@ the look is shared and passed down from a panel to what sits on it."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.tree import _Tree
 from _input import next_frame, point_at, press, release
 
 
@@ -13,7 +12,7 @@ def _canvas() raises -> Canvas:
 
 
 def test_a_handle_reaches_its_widget() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var play = ui.add(Button("Play", Rectangle((0, 0), 100, 40)))
     var volume = ui.add(Slider(0.5, 0, 1, Rectangle((0, -60), 200, 32)))
     assert_equal(ui[play].text, "Play")
@@ -24,7 +23,7 @@ def test_a_handle_reaches_its_widget() raises -> None:
 
 
 def test_a_click_reaches_a_button_in_the_tree() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var play = ui.add(Button("Play", Rectangle((0, 0), 100, 40)))
     var context = Context()
     var canvas = _canvas()
@@ -40,7 +39,7 @@ def test_a_click_reaches_a_button_in_the_tree() raises -> None:
 def test_only_the_topmost_of_two_overlapping_buttons_is_hovered() raises -> (
     None
 ):
-    var ui = _Tree()
+    var ui = UI()
     var below = ui.add(Button("Below", Rectangle((0, 0), 100, 40)))
     var above = ui.add(Button("Above", Rectangle((30, 0), 100, 40)))
     var context = Context()
@@ -55,7 +54,7 @@ def test_only_the_topmost_of_two_overlapping_buttons_is_hovered() raises -> (
 
 
 def test_a_panel_covers_what_is_beneath_it_and_text_does_not() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var under = ui.add(Button("Under", Rectangle((0, 0), 100, 40)))
     _ = ui.add(Label("Text", Rectangle((0, 0), 100, 40)))
     var context = Context()
@@ -69,7 +68,7 @@ def test_a_panel_covers_what_is_beneath_it_and_text_does_not() raises -> None:
 
 
 def test_a_widget_in_a_panel_is_drawn_on_it_and_hovered() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(Panel(Rectangle((0, 0), 200, 100)))
     var ok = ui.add(Button("OK", Rectangle((0, 0), 80, 40)), card)
     var context = Context()
@@ -84,7 +83,7 @@ def test_a_widget_in_a_panel_is_drawn_on_it_and_hovered() raises -> None:
 
 
 def test_text_on_a_dark_panel_takes_its_content_color() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(
         Panel(Rectangle((0, 0), 200, 100), style=Style(fill=Color.BLACK))
     )
@@ -101,7 +100,7 @@ def test_text_on_a_dark_panel_takes_its_content_color() raises -> None:
 
 
 def test_the_shared_style_and_colors_reach_every_widget() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     ui.style(button=Style(fill=Color.RED))
     _ = ui.add(Button("A", Rectangle((-60, 0), 80, 40)))
     _ = ui.add(
@@ -123,7 +122,7 @@ def test_the_shared_style_and_colors_reach_every_widget() raises -> None:
 
 
 def test_under_a_camera_the_tree_is_hit_where_it_is_drawn() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var play = ui.add(Button("Play", Rectangle((300, 0), 100, 40)))
     var context = Context()
     var canvas = _canvas()
@@ -134,7 +133,7 @@ def test_under_a_camera_the_tree_is_hit_where_it_is_drawn() raises -> None:
 
 
 def test_one_update_and_draw_run_every_kind_of_widget() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(Panel(Rectangle((0, 0), 280, 190)))
     _ = ui.add(Label("Settings", Rectangle((0, 80), 260, 24)), card)
     var name = ui.add(TextField(Rectangle((0, 45), 260, 32)), card)

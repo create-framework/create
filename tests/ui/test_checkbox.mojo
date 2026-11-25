@@ -3,6 +3,7 @@ each drawn in a `Style` of its own."""
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 
 comptime _ROW = Rectangle((0, 0), 200, 32)
 comptime _BOX = Point(-91, 0)
@@ -16,7 +17,7 @@ def _drawn(
     tick: Style = Style(),
 ) raises -> Canvas:
     """One frame of a checkbox, in the parts' styles, unsmoothed."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(300, 100, antialiasing=Antialiasing.OFF)
     var shown = checked
@@ -70,7 +71,7 @@ def test_a_ticked_box_can_be_styled_apart() raises -> None:
 
 
 def test_a_style_block_reaches_every_checkbox() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(300, 100, antialiasing=Antialiasing.OFF)
     var on = True

@@ -5,6 +5,7 @@ text on it."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 comptime _A = Rectangle((0, 0), 100, 40)
@@ -16,7 +17,7 @@ def _canvas() raises -> Canvas:
 
 
 def test_a_style_block_styles_its_widgets_and_a_call_beats_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var inside = _canvas()
     var called = _canvas()
@@ -35,7 +36,7 @@ def test_a_style_block_styles_its_widgets_and_a_call_beats_it() raises -> None:
 
 
 def test_nested_style_blocks_merge_field_by_field() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     canvas.background(Color.WHITE)
@@ -48,7 +49,7 @@ def test_nested_style_blocks_merge_field_by_field() raises -> None:
 
 
 def test_a_colors_block_draws_in_its_colours() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     with ui.screen(context, canvas) as layer:
@@ -60,7 +61,7 @@ def test_a_colors_block_draws_in_its_colours() raises -> None:
 
 
 def test_a_panel_is_drawn_beneath_what_is_inside_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     with ui.screen(context, canvas) as layer:
@@ -72,7 +73,7 @@ def test_a_panel_is_drawn_beneath_what_is_inside_it() raises -> None:
 
 
 def test_text_on_a_panel_takes_its_content_colour() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     var colors = ColorScheme.light()
@@ -87,7 +88,7 @@ def test_text_on_a_panel_takes_its_content_colour() raises -> None:
 
 
 def test_a_panels_text_colour_is_the_content_colour() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     with ui.screen(context, canvas) as layer:
@@ -96,7 +97,7 @@ def test_a_panels_text_colour_is_the_content_colour() raises -> None:
 
 
 def test_a_shadow_lifts_a_panel() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var flat = _canvas()
     var lifted = _canvas()
@@ -119,7 +120,7 @@ def test_a_shadow_lifts_a_panel() raises -> None:
 
 
 def test_the_uis_corner_radius_rounds_a_panel() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var round = _canvas()
     var square = _canvas()
@@ -140,7 +141,7 @@ def test_the_uis_corner_radius_rounds_a_panel() raises -> None:
 def test_a_panel_covers_what_is_beneath_and_a_click_on_it_clears_focus() raises -> (
     None
 ):
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var below_clicked = False
     for frame in range(3):

@@ -1,4 +1,5 @@
 from create import *
+from menu import Menu
 from scene import Scene
 
 comptime COLORS = ColorScheme.dark()
@@ -8,17 +9,21 @@ comptime HINT = COLORS.on_surface_variant
 comptime BUTTONS = Rectangle((0, -60), 240, 100)
 
 
-@fieldwise_init
-struct Over:
+struct Over(Movable):
     """The game-over scene: the round's score, and whether it beat the best.
 
     `enter` hands it the numbers as the round ends, so it keeps its own copy
     and needs nothing from the game afterwards.
     """
 
-    var ui: UI
+    var menu: Menu
     var score: Int
     var previous_best: Int
+
+    def __init__(out self):
+        self.menu = Menu("Play again", "Menu", BUTTONS)
+        self.score = 0
+        self.previous_best = 0
 
     def enter(mut self, score: Int, previous_best: Int):
         self.score = score
@@ -36,11 +41,9 @@ struct Over:
             else:
                 canvas.text("Best: " + String(self.previous_best), (0, 50))
 
-        var next = Scene.OVER
-        with self.ui.screen(context, canvas, COLORS) as ui:
-            with ui.column(BUTTONS):
-                if ui.button("Play again"):
-                    next = Scene.PLAY
-                if ui.button("Menu", variant=ButtonVariant.TONAL):
-                    next = Scene.TITLE
-        return next
+        self.menu.update(context, canvas)
+        if self.menu.first_clicked():
+            return Scene.PLAY
+        if self.menu.second_clicked():
+            return Scene.TITLE
+        return Scene.OVER

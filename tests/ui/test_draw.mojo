@@ -4,6 +4,7 @@ included."""
 from std.testing import TestSuite, assert_equal
 
 from create import *
+from create.ui.ui import _ImmediateUI
 
 
 def _canvas() raises -> Canvas:
@@ -11,7 +12,7 @@ def _canvas() raises -> Canvas:
 
 
 def test_layer_drawing_lands_in_call_order() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     with ui.screen(context, canvas) as layer:
@@ -22,7 +23,7 @@ def test_layer_drawing_lands_in_call_order() raises -> None:
 
 
 def test_a_canvas_call_in_the_block_draws_beneath_the_layer() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     with ui.screen(context, canvas) as layer:
@@ -34,7 +35,7 @@ def test_a_canvas_call_in_the_block_draws_beneath_the_layer() raises -> None:
 
 
 def test_a_screen_layer_ignores_the_camera() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = _canvas()
     var camera = Camera()

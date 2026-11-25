@@ -3,6 +3,7 @@ following its shape, and not after a click."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 # 100 x 40 with round ends: the ring, 2 away and 3 thick, runs from x = 52
@@ -10,7 +11,7 @@ from _input import next_frame, point_at, press, press_key, release
 comptime _A = Rectangle((0, 0), 100, 40)
 
 
-def _frame(mut ui: UI, mut context: Context) raises -> Canvas:
+def _frame(mut ui: _ImmediateUI, mut context: Context) raises -> Canvas:
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     canvas.background(Color.WHITE)
     with ui.screen(context, canvas) as layer:
@@ -19,7 +20,7 @@ def _frame(mut ui: UI, mut context: Context) raises -> Canvas:
 
 
 def test_tab_shows_a_ring_around_the_button() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _ = _frame(ui, context)
     next_frame(context)
@@ -33,7 +34,7 @@ def test_tab_shows_a_ring_around_the_button() raises -> None:
 
 
 def test_the_ring_follows_the_round_end() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _ = _frame(ui, context)
     next_frame(context)
@@ -44,7 +45,7 @@ def test_the_ring_follows_the_round_end() raises -> None:
 
 
 def test_a_click_shows_no_ring() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     point_at(context, _A.position)
     _ = _frame(ui, context)
@@ -57,7 +58,7 @@ def test_a_click_shows_no_ring() raises -> None:
 
 
 def test_a_ring_is_drawn_over_a_neighbour() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     for frame in range(2):
@@ -73,7 +74,7 @@ def test_a_ring_is_drawn_over_a_neighbour() raises -> None:
 
 
 def test_the_ui_can_change_the_ring() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var ring = FocusRing()
     ring.color = Color.RED

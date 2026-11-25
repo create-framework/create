@@ -1,4 +1,5 @@
 from create import *
+from menu import Menu
 from scene import Scene
 
 comptime COLORS = ColorScheme.dark()
@@ -8,12 +9,14 @@ comptime HINT = COLORS.on_surface_variant
 comptime BUTTONS = Rectangle((0, -60), 240, 100)
 
 
-@fieldwise_init
-struct Title:
+struct Title(Movable):
     """The title scene: the game's name, the best score so far, and buttons
     to play or quit."""
 
-    var ui: UI
+    var menu: Menu
+
+    def __init__(out self):
+        self.menu = Menu("Play", "Quit", BUTTONS)
 
     def update(
         mut self, mut context: Context, mut canvas: Canvas, best: Int
@@ -26,11 +29,9 @@ struct Title:
         with canvas.style(text_color=HINT, font_size=20):
             canvas.text("Best: " + String(best), (0, 50))
 
-        var next = Scene.TITLE
-        with self.ui.screen(context, canvas, COLORS) as ui:
-            with ui.column(BUTTONS):
-                if ui.button("Play"):
-                    next = Scene.PLAY
-                if ui.button("Quit", variant=ButtonVariant.TONAL):
-                    context.quit()
-        return next
+        self.menu.update(context, canvas)
+        if self.menu.second_clicked():
+            context.quit()
+        if self.menu.first_clicked():
+            return Scene.PLAY
+        return Scene.TITLE

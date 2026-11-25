@@ -1,6 +1,10 @@
 """A settings menu made with a `UI`, with every kind of widget: labels, a
 text field, a slider, checkboxes and the four kinds of button.
 
+The widgets are built once, in `create`, and the `UI` keeps them; each frame
+it updates them all, then draws them, and the program asks them what
+happened through the handles it kept.
+
 Click the widgets, or Tab through them and use Enter, Space and the arrows;
 a gamepad's d-pad and A button work too. Escape leaves the text field.
 """
@@ -18,54 +22,61 @@ comptime SHADOW = Style(
 @fieldwise_init
 struct Menu(Program):
     var ui: UI
-    var colors: ColorScheme
-    var name: String
-    var volume: Float64
-    var music: Bool
-    var dark: Bool
-    var message: String
+    var name: WidgetHandle[TextField]
+    var volume: WidgetHandle[Slider]
+    var music: WidgetHandle[Checkbox]
+    var dark: WidgetHandle[Checkbox]
+    var buttons: List[WidgetHandle[Button]]
+    var message: WidgetHandle[Label]
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Menu:
-        return Menu(UI(), ColorScheme.dark(), "", 0.6, True, True, "")
+        var ui = UI()
+        var panel = ui.add(Panel(PANEL, style=SHADOW))
+        # Each widget below takes the next place down the column.
+        var column = ui.add(Column(), panel)
+        _ = ui.add(Label("Settings", style=Style(font_size=22)), column)
+        var name = ui.add(
+            TextField(placeholder="Your name", max_length=16), column
+        )
+        var line = ui.add(Row(1, 3), column)  # a quarter for the label
+        _ = ui.add(Label("Volume", alignment=Align.LEFT), line)
+        var volume = ui.add(Slider(0.6, 0, 1, step=0.1), line)
+        var music = ui.add(Checkbox("Music", checked=True), column)
+        var dark = ui.add(Checkbox("Dark theme", checked=True), column)
+        _ = ui.add(Space(), column)
+        var row = ui.add(Row(), column)  # four equal slots
+        var buttons = List[WidgetHandle[Button]]()
+        buttons.append(ui.add(Button("Play"), row))
+        buttons.append(ui.add(Button("Load", variant=ButtonVariant.TONAL), row))
+        buttons.append(
+            ui.add(Button("Credits", variant=ButtonVariant.OUTLINED), row)
+        )
+        buttons.append(ui.add(Button("Quit", variant=ButtonVariant.TEXT), row))
+        var message = ui.add(Label(""), column)
+        return Menu(ui^, name, volume, music, dark, buttons^, message)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        self.colors = ColorScheme.dark() if self.dark else ColorScheme.light()
-        canvas.background(self.colors.background)
+        var dark = self.ui[self.dark].checked
+        var colors = ColorScheme.dark() if dark else ColorScheme.light()
+        self.ui.colors(colors)
+        self.ui[self.message].style = Style(
+            text_color=colors.on_surface_variant
+        )
+        canvas.background(colors.background)
 
-        with self.ui.screen(context, canvas, self.colors) as ui:
-            with ui.panel(PANEL, style=SHADOW):
-                # Each widget below takes the next place down the column.
-                with ui.column():
-                    ui.label("Settings", style=Style(font_size=22))
-                    ui.text_field(
-                        self.name, placeholder="Your name", max_length=16
-                    )
-                    if ui.submitted():
-                        self.message = "Hello, " + self.name
-                    with ui.row(1, 3):  # a quarter for the label
-                        ui.label("Volume", alignment=Align.LEFT)
-                        ui.slider(self.volume, 0, 1, step=0.1)
-                    ui.checkbox("Music", self.music)
-                    ui.checkbox("Dark theme", self.dark)
-                    ui.space()
-                    var names = ["Play", "Load", "Credits", "Quit"]
-                    var variants = [
-                        ButtonVariant.FILLED,
-                        ButtonVariant.TONAL,
-                        ButtonVariant.OUTLINED,
-                        ButtonVariant.TEXT,
-                    ]
-                    with ui.row(columns=4):
-                        for i in range(4):
-                            if ui.button(names[i], variant=variants[i]):
-                                if i == 3:
-                                    context.quit()
-                                self.message = "Pressed " + names[i]
-                    ui.label(
-                        self.message,
-                        style=Style(text_color=self.colors.on_surface_variant),
-                    )
+        self.ui.update(context, canvas)
+        canvas.draw(self.ui)
+
+        if self.ui[self.name].submitted():
+            var name = self.ui[self.name].text()
+            self.ui[self.message].text = "Hello, " + name
+        for i in range(len(self.buttons)):
+            if self.ui[self.buttons[i]].released():
+                if i == len(self.buttons) - 1:
+                    context.quit()
+                var pressed = self.ui[self.buttons[i]].text
+                self.ui[self.message].text = "Pressed " + pressed
 
 
 def main() raises:

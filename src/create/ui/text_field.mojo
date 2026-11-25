@@ -11,7 +11,7 @@ from create._optional import _OptionalFloat64
 from ._pointer import _Pointer
 from ._text_buffer import _TextBuffer
 from ._theme import _TextFieldLook, _Theme, _fills, _text_look
-from .ui import UI
+from .ui import _ImmediateUI
 from .layout import _UNSIZED
 from .slider import _CONTROL_WIDTH
 from ._navigation import _Focus
@@ -314,6 +314,12 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         """The selected text, empty when nothing is."""
         return self._buffer.selected_text()
 
+    def before_selection(self) -> String:
+        """The text left of the selection: what to measure to place its
+        highlight, and where typing lands. The same as `before_caret` when
+        nothing is selected."""
+        return self._buffer.before_selection()
+
     # ------------------------------------------------------------ editing
 
     def insert(mut self, typed: String):
@@ -461,14 +467,14 @@ struct TextEditor[
     ```
     """
 
-    var _ui: Pointer[UI, Self.ui_origin]
+    var _ui: Pointer[_ImmediateUI, Self.ui_origin]
     var _context: Pointer[Context, Self.context_origin]
     var _id: UInt64
 
     def __init__(
         out self,
         *,
-        ref[Self.ui_origin] _ui: UI,
+        ref[Self.ui_origin] _ui: _ImmediateUI,
         ref[Self.context_origin] _context: Context,
         _id: UInt64,
     ):

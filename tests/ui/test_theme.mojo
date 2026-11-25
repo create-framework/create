@@ -3,11 +3,12 @@ with no `UI`."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from create.ui._theme import _Theme
 
 
 def test_the_default_theme_is_a_fresh_uis() raises -> None:
-    var fresh = UI()._theme()
+    var fresh = _ImmediateUI()._theme()
     var default = _Theme.default()
     assert_equal(default.corner_radius, fresh.corner_radius)
     assert_equal(default.spacing, fresh.spacing)

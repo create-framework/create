@@ -3,6 +3,7 @@ the block opens, and clicked where they appear."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 
@@ -18,7 +19,7 @@ def _camera() -> Camera:
 comptime _CHEST = Rectangle((100, 0), 40, 20)
 
 
-def _world_click(mut ui: UI, at: Point) raises -> Bool:
+def _world_click(mut ui: _ImmediateUI, at: Point) raises -> Bool:
     """Two frames of a world-layer button at `_CHEST`, clicked at the screen
     point `at` in the second: what it returned then."""
     var context = Context()
@@ -37,20 +38,20 @@ def _world_click(mut ui: UI, at: Point) raises -> Bool:
 
 
 def test_a_world_button_is_clicked_where_it_appears() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     assert_true(_world_click(ui, Point(30, 0)))  # world (115, 0): inside
 
 
 def test_a_world_button_is_not_clicked_where_it_would_be_unzoomed() raises -> (
     None
 ):
-    var ui = UI()
+    var ui = _ImmediateUI()
     # world (125, 0): outside, though inside the button's unzoomed size
     assert_false(_world_click(ui, Point(50, 0)))
 
 
 def test_a_world_layer_draws_through_the_camera() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     canvas.camera(_camera())
@@ -60,7 +61,7 @@ def test_a_world_layer_draws_through_the_camera() raises -> None:
     assert_false(canvas.color_at((45, 0)) == Color.RED)
 
 
-def _turned_click(mut ui: UI, at: Point) raises -> Bool:
+def _turned_click(mut ui: _ImmediateUI, at: Point) raises -> Bool:
     """A world-layer button at (50, 0), 60 x 20, inside a quarter turn: on
     screen it stands upright at (0, 50)."""
     var context = Context()
@@ -79,14 +80,14 @@ def _turned_click(mut ui: UI, at: Point) raises -> Bool:
 
 
 def test_a_world_button_turns_with_the_transform() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     assert_true(_turned_click(ui, Point(0, 70)))
-    var other = UI()
+    var other = _ImmediateUI()
     assert_false(_turned_click(other, Point(20, 50)))
 
 
 def test_a_screen_layer_over_a_world_layer_takes_the_click() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var at = Point(0, 0)
     point_at(context, at)
@@ -108,7 +109,7 @@ def test_a_screen_layer_over_a_world_layer_takes_the_click() raises -> None:
 
 
 def test_drawing_after_a_world_layer_covers_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     with ui.world(context, canvas) as layer:
@@ -121,7 +122,7 @@ def test_drawing_after_a_world_layer_covers_it() raises -> None:
 
 
 def test_a_transform_changed_inside_the_block_does_not_move_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(200, 100, antialiasing=Antialiasing.OFF)
     with ui.world(context, canvas) as layer:

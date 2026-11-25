@@ -4,17 +4,16 @@ part of a tree reacts to nothing."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.tree import _Tree
 from _input import next_frame, point_at, press, press_key, release
 
 
-def _update(mut ui: _Tree, mut context: Context) raises:
+def _update(mut ui: UI, mut context: Context) raises:
     var canvas = Canvas(400, 300)
     ui.update(context, canvas)
 
 
 def test_wants_mouse_over_a_widget_or_while_one_is_held() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     _ = ui.add(Slider(0.5, 0, 1, Rectangle((0, 0), 200, 32)))
     var context = Context()
     point_at(context, (0, 100))
@@ -38,7 +37,7 @@ def test_wants_mouse_over_a_widget_or_while_one_is_held() raises -> None:
 
 
 def test_a_tree_not_updated_lately_wants_nothing() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     _ = ui.add(Button("OK", Rectangle((0, 0), 100, 40)))
     var context = Context()
     point_at(context, (0, 0))
@@ -50,7 +49,7 @@ def test_a_tree_not_updated_lately_wants_nothing() raises -> None:
 
 
 def test_wants_keyboard_follows_what_focus_takes_keys() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var ok = ui.add(Button("OK", Rectangle((0, 60), 100, 40)))
     _ = ui.add(TextField(Rectangle((0, -60), 200, 40)))
     var context = Context()
@@ -74,8 +73,8 @@ def test_wants_keyboard_follows_what_focus_takes_keys() raises -> None:
 
 
 def test_one_tab_focuses_one_field_across_trees() raises -> None:
-    var first = _Tree()
-    var second = _Tree()
+    var first = UI()
+    var second = UI()
     var a = first.add(TextField(Rectangle((0, 60), 200, 40)))
     var b = second.add(TextField(Rectangle((0, -60), 200, 40)))
     var context = Context()
@@ -88,8 +87,8 @@ def test_one_tab_focuses_one_field_across_trees() raises -> None:
 
 
 def test_a_click_in_one_tree_takes_the_keyboard_from_the_other() raises -> None:
-    var first = _Tree()
-    var second = _Tree()
+    var first = UI()
+    var second = UI()
     var a = first.add(TextField(Rectangle((0, 60), 200, 40)))
     var b = second.add(TextField(Rectangle((0, -60), 200, 40)))
     var context = Context()
@@ -109,8 +108,8 @@ def test_a_click_in_one_tree_takes_the_keyboard_from_the_other() raises -> None:
 
 
 def test_a_drag_in_one_tree_leaves_the_others_widgets_alone() raises -> None:
-    var first = _Tree()
-    var second = _Tree()
+    var first = UI()
+    var second = UI()
     var volume = first.add(Slider(0.5, 0, 1, Rectangle((0, 60), 200, 32)))
     var ok = second.add(Button("OK", Rectangle((0, -60), 100, 40)))
     var context = Context()
@@ -127,7 +126,7 @@ def test_a_drag_in_one_tree_leaves_the_others_widgets_alone() raises -> None:
 
 
 def test_a_disabled_part_reacts_to_nothing_until_enabled() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var card = ui.add(Panel(Rectangle((0, 0), 300, 200)))
     var ok = ui.add(Button("OK", Rectangle((0, 0), 100, 40)), card)
     ui.enabled(card, False)
@@ -150,7 +149,7 @@ def test_a_disabled_part_reacts_to_nothing_until_enabled() raises -> None:
 
 
 def test_a_disabled_part_is_drawn_faded_and_lets_go_of_focus() raises -> None:
-    var ui = _Tree()
+    var ui = UI()
     var row = ui.add(Row(rect=Rectangle((0, 0), 300, 40)))
     var ok = ui.add(Button("OK"), row)
     _ = ui.add(Label("Text"), row)

@@ -3,6 +3,7 @@ mouse did, with no `UI`."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, release
 
 comptime _RECT = Rectangle((0, 0), 100, 40)
@@ -111,7 +112,7 @@ def test_it_draws_as_the_ui_button_does() raises -> None:
     var drawn = _canvas()
     button.update(context, drawn)
     drawn.draw(button)
-    var ui = UI()
+    var ui = _ImmediateUI()
     var called = _canvas()
     with ui.screen(context, called) as layer:
         _ = layer.button("OK", _RECT, variant=ButtonVariant.OUTLINED)

@@ -4,6 +4,7 @@ code, the last widget to ask winning."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 comptime _A = Rectangle((-60, 0), 100, 40)
@@ -11,7 +12,7 @@ comptime _B = Rectangle((60, 0), 100, 40)
 
 
 def _frame(
-    mut ui: UI,
+    mut ui: _ImmediateUI,
     mut context: Context,
     take: List[Bool] = [False, False],
     disabled: List[Bool] = [False, False],
@@ -27,7 +28,7 @@ def _frame(
             )
 
 
-def _focused(ui: UI) -> Int:
+def _focused(ui: _ImmediateUI) -> Int:
     """Which of the buttons has focus, by the order they were called: -1 for
     none."""
     if not ui._focused:
@@ -38,7 +39,7 @@ def _focused(ui: UI) -> Int:
     return -1
 
 
-def _click(mut ui: UI, mut context: Context, at: Point) raises:
+def _click(mut ui: _ImmediateUI, mut context: Context, at: Point) raises:
     next_frame(context)
     point_at(context, at)
     _frame(ui, context)
@@ -49,7 +50,7 @@ def _click(mut ui: UI, mut context: Context, at: Point) raises:
 
 
 def test_a_click_gives_focus_and_a_click_elsewhere_moves_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context)
     assert_equal(_focused(ui), -1)
@@ -60,7 +61,7 @@ def test_a_click_gives_focus_and_a_click_elsewhere_moves_it() raises -> None:
 
 
 def test_a_click_on_no_widget_takes_focus_away() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context)
     _click(ui, context, _A.position)
@@ -69,7 +70,7 @@ def test_a_click_on_no_widget_takes_focus_away() raises -> None:
 
 
 def test_the_last_widget_to_take_focus_has_it() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context, take=[True, True])
     assert_equal(_focused(ui), 1)
@@ -80,7 +81,7 @@ def test_the_last_widget_to_take_focus_has_it() raises -> None:
 
 
 def test_a_click_gives_focus_without_a_ring_or_the_keyboard() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context)
     _click(ui, context, _A.position)
@@ -89,7 +90,7 @@ def test_a_click_gives_focus_without_a_ring_or_the_keyboard() raises -> None:
 
 
 def test_escape_takes_focus_away_and_keeps_the_key_that_frame() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context, take=[True, False])
     assert_true(ui.wants_keyboard(context))  # focus from code: keys act on it
@@ -104,14 +105,14 @@ def test_escape_takes_focus_away_and_keeps_the_key_that_frame() raises -> None:
 
 
 def test_a_disabled_widget_cannot_take_focus() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context, take=[True, False], disabled=[True, False])
     assert_equal(_focused(ui), -1)
 
 
 def test_a_widget_loses_focus_when_disabled() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context, take=[True, False])
     next_frame(context)
@@ -120,7 +121,7 @@ def test_a_widget_loses_focus_when_disabled() raises -> None:
 
 
 def test_a_widget_loses_focus_when_no_longer_called() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     _frame(ui, context, take=[False, True])
     next_frame(context)

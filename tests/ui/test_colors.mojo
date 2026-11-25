@@ -4,6 +4,7 @@ layer is drawn in."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from create.ui.colors import _contrast
 from create.ui._theme import _body_text, _label_text
 
@@ -102,7 +103,7 @@ def test_a_surface_given_changes_the_colours_drawn_on_it() raises -> None:
 
 
 def test_a_layer_draws_in_the_colours_it_is_given() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(16, 16)
     with ui.screen(context, canvas) as layer:
@@ -176,7 +177,7 @@ def test_a_seeded_scheme_takes_colours_to_replace_its_own() raises -> None:
 
 
 def test_a_ui_starts_with_the_default_tokens() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     assert_equal(ui.corner_radius(), 16.0)
     assert_equal(ui.spacing(), 8.0)
     assert_equal(ui.control_height(), 40.0)

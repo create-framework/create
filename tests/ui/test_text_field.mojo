@@ -10,6 +10,7 @@ from std.testing import (
 )
 
 from create import *
+from create.ui.ui import _ImmediateUI
 from _input import next_frame, point_at, press, press_key, release
 
 comptime _FIRST = Rectangle((0, 40), 300, 40)
@@ -19,7 +20,7 @@ comptime _SECOND = Rectangle((0, -40), 300, 40)
 struct _Form:
     """Two text fields, the first optionally disabled."""
 
-    var ui: UI
+    var ui: _ImmediateUI
     var context: Context
     var texts: List[String]
     var changed: List[Bool]
@@ -27,7 +28,7 @@ struct _Form:
     var disable_first: Bool
 
     def __init__(out self):
-        self.ui = UI()
+        self.ui = _ImmediateUI()
         self.context = Context()
         self.texts = ["", ""]
         self.changed = [False, False]
@@ -171,7 +172,7 @@ def test_a_disabled_field_ignores_typing() raises -> None:
 
 
 def test_the_editor_edits_the_field_at_its_next_call() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 200)
     var name = String("Ada Lovelace")
@@ -196,7 +197,7 @@ def test_the_editor_edits_the_field_at_its_next_call() raises -> None:
 
 
 def test_the_editor_needs_a_text_field_called_last() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 200)
     var name = String("Ada")
@@ -234,7 +235,7 @@ def _field(
     caret: Style = Style(),
 ) raises -> Canvas:
     """One frame of an empty field, focused or not, unsmoothed."""
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
     var text = String()
@@ -289,7 +290,7 @@ def test_a_field_without_an_outline_keeps_none_when_focused() raises -> None:
 
 
 def test_a_style_block_reaches_every_field() raises -> None:
-    var ui = UI()
+    var ui = _ImmediateUI()
     var context = Context()
     var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
     var text = String()
