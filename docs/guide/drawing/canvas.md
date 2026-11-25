@@ -80,11 +80,24 @@ struct Rocket(Copyable, Drawable, Movable):
         canvas.draw(self.body)
 ```
 
-`canvas.draw(rocket)` then draws every part. `draw_to` only draws shapes; it sets no style, so the
-whole rocket takes the style and transform current at the `canvas.draw` call, as a single shape
-would. Each part is still a shape of its own: an outline goes round every part, even where two
-overlap, and so does a shadow. To give one part a colour of its own, such as a window, draw it with
-a separate call. See [examples/drawables](../../../examples/drawables/main.mojo).
+`canvas.draw(rocket)` then draws every part. This `draw_to` sets no style, so the whole rocket takes
+the style and transform current at the `canvas.draw` call, as a single shape would. Each part is
+still a shape of its own: an outline goes round every part, even where two overlap, and so does a
+shadow. See [examples/drawables](../../../examples/drawables/main.mojo).
+
+**`canvas.draw(shape, style)` draws in a style for that call alone.** The parts `style` sets are
+applied over the current style, the rest are kept, and the style is as it was afterwards. So one
+part can take a colour of its own, such as a window on the rocket, while the rest take the style
+around the `canvas.draw` call:
+
+```mojo
+# In `Rocket.draw_to`, with a `window: Circle` field:
+canvas.draw(self.body)
+canvas.draw(self.window, Style(fill=Color.CYAN))
+```
+
+A `Drawable` takes a style the same way, `canvas.draw(rocket, Style(fill=Color.RED))`, and a part
+drawn in a style of its own applies that over it in turn.
 
 `canvas.draw` takes any shape or curve, which the canvas knows how to draw, or a program's own type
 that is `Drawable`. A shape knows nothing about drawing: it is a value and its tests, and the canvas

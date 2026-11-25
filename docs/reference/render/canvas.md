@@ -978,6 +978,29 @@ def draw[D: Drawable](mut self, drawable: D)
 
 Draw a `Drawable` of the program's own: its `draw_to` draws its parts, each in the current style and transform.
 
+```mojo
+def draw[G: Geometry](mut self, shape: G, style: Style)
+```
+
+Draw `shape` in `style`, applied over the current style for this call alone: the parts `style` sets are used, and the rest keep their current values. The style is as it was afterwards.
+
+```mojo
+canvas.draw(Circle((0, 0), 20), Style(fill=Color.ORANGE))
+```
+
+```mojo
+def draw[D: Drawable](mut self, drawable: D, style: Style)
+```
+
+Draw a `Drawable` of the program's own in `style`, applied over the current style for this call alone. Its parts are drawn in it, and a part drawn with a style of its own applies that over it in turn.
+
+```mojo
+# In a `Drawable`'s `draw_to`: the plate in the style around it, the
+# disc in that style but orange.
+canvas.draw(self.plate)
+canvas.draw(self.disc, Style(fill=Color.ORANGE))
+```
+
 ### `image`
 
 ```mojo

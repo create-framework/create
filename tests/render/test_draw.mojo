@@ -154,5 +154,53 @@ def test_draw_uses_the_current_style() raises -> None:
     assert_equal(canvas.color_at((35.0, 35.0)), Color.GREEN)
 
 
+def test_draw_in_a_style_applies_it_for_that_call_alone() raises -> None:
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.stroke_enabled(False)
+    canvas.fill(Color.GREEN)
+    canvas.draw(Rectangle((-25.0, 0.0), 40.0, 40.0), Style(fill=Color.RED))
+    canvas.draw(Rectangle((25.0, 0.0), 40.0, 40.0))
+    assert_equal(canvas.color_at((-25.0, 0.0)), Color.RED)
+    assert_equal(canvas.color_at((25.0, 0.0)), Color.GREEN)
+
+
+def test_draw_in_a_style_keeps_the_parts_it_leaves_unset() raises -> None:
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.fill(Color.GREEN)
+    canvas.stroke_enabled(False)
+    # names only the stroke: the fill stays green
+    canvas.draw(
+        Rectangle((0.0, 0.0), 60.0, 60.0),
+        Style(stroke=Color.BLUE, stroke_thickness=6),
+    )
+    assert_equal(canvas.color_at((0.0, 0.0)), Color.GREEN)
+    assert_equal(canvas.color_at((29.0, 0.0)), Color.BLUE)
+
+
+@fieldwise_init
+struct _Target(Drawable):
+    """A program's own type whose parts take styles of their own: a ring in
+    the style around it, and a blue bull's-eye."""
+
+    var ring: Circle
+    var centre: Circle
+
+    def draw_to(self, mut canvas: Canvas):
+        canvas.draw(self.ring)
+        canvas.draw(self.centre, Style(fill=Color.BLUE))
+
+
+def test_styles_nest_through_a_drawable() raises -> None:
+    var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
+    canvas.stroke_enabled(False)
+    canvas.fill(Color.GREEN)
+    var target = _Target(Circle((0.0, 0.0), 40.0), Circle((0.0, 0.0), 10.0))
+    canvas.draw(target, Style(fill=Color.RED))
+    canvas.draw(Circle((40.0, 40.0), 5.0))
+    assert_equal(canvas.color_at((0.0, 0.0)), Color.BLUE)
+    assert_equal(canvas.color_at((25.0, 0.0)), Color.RED)
+    assert_equal(canvas.color_at((40.0, 40.0)), Color.GREEN)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
