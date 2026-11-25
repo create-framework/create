@@ -3,6 +3,7 @@ call each, in a shared look, with only the topmost under the pointer
 reacting to it; and `WidgetHandle`, how a program reaches a widget in it.
 """
 
+from std.memory import ArcPointer
 from std.utils import Variant
 
 from create.color import Color
@@ -175,7 +176,10 @@ struct UI(Drawable, Movable):
     var _nodes: List[_Node]
     var _roots: List[Int]
     var _colors: ColorScheme
-    var _styles: _Styles
+    var _styles: ArcPointer[_Styles]
+    """What `style` sets, on the heap: seventeen `Style`s inline made a `UI`
+    12 KB, and moving one through a pointer, as `run` moves a program,
+    took the compiler gigabytes."""
     var _corner_radius: Float64
     var _spacing: Float64
     var _control_height: Float64
@@ -221,7 +225,7 @@ struct UI(Drawable, Movable):
         self._nodes = []
         self._roots = []
         self._colors = ColorScheme.light()
-        self._styles = _Styles()
+        self._styles = ArcPointer(_Styles())
         self._corner_radius = _CORNER_RADIUS
         self._spacing = _SPACING
         self._control_height = _CONTROL_HEIGHT
@@ -347,24 +351,26 @@ struct UI(Drawable, Movable):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
         Replaces what an earlier call set."""
-        self._styles = _Styles(
-            button,
-            label,
-            panel,
-            slider_track,
-            slider_active_track,
-            slider_handle,
-            slider_handle_outline,
-            checkbox_box,
-            checkbox_checked_box,
-            checkbox_tick,
-            checkbox_text_style,
-            text_field_container,
-            text_field_focused_container,
-            text_field_text_style,
-            text_field_placeholder_style,
-            text_field_caret,
-            text_field_selection,
+        self._styles = ArcPointer[_Styles](
+            _Styles(
+                button,
+                label,
+                panel,
+                slider_track,
+                slider_active_track,
+                slider_handle,
+                slider_handle_outline,
+                checkbox_box,
+                checkbox_checked_box,
+                checkbox_tick,
+                checkbox_text_style,
+                text_field_container,
+                text_field_focused_container,
+                text_field_text_style,
+                text_field_placeholder_style,
+                text_field_caret,
+                text_field_selection,
+            )
         )
 
     def _theme(self) -> _Theme:
