@@ -28,7 +28,7 @@ struct CommandBuffer(Movable):
     reset with the command buffer."""
     var clip: Int
     """The clip a command recorded now is rendered under: the innermost
-    open `canvas.clip`, or 0. `ClipGuard` sets it back on exit."""
+    open `canvas.clip`, or 0. `_ClipGuard` sets it back on exit."""
     var recorded: Int
     """Records ever made, a clock for `frame_read`: a read is current while
     nothing has been recorded since. A count of commands would not do, since

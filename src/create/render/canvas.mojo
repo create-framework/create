@@ -150,7 +150,7 @@ struct _PersistentCanvasState(Movable):
         self._view.set_size(pixel_w, pixel_h)
 
 
-struct TransformGuard[origin: Origin[mut=True]](Movable):
+struct _TransformGuard[origin: Origin[mut=True]](Movable):
     """Pops the matrix `canvas.transform` pushed, on scope exit.
 
     Only `canvas.transform` builds one: its constructor's `_`-keywords are
@@ -168,7 +168,7 @@ struct TransformGuard[origin: Origin[mut=True]](Movable):
         self._canvas[]._pop_transform()
 
 
-struct OverlayGuard[origin: Origin[mut=True]](Movable):
+struct _OverlayGuard[origin: Origin[mut=True]](Movable):
     """Restores the camera and transform `canvas.overlay` suspended, on scope
     exit. Only `canvas.overlay` builds one."""
 
@@ -203,7 +203,7 @@ struct OverlayGuard[origin: Origin[mut=True]](Movable):
         self._canvas[]._transform_inv = self._saved_transform_inv
 
 
-struct StyleGuard[origin: Origin[mut=True]](Movable):
+struct _StyleGuard[origin: Origin[mut=True]](Movable):
     """Restores the style the frame had when the scope was entered.
 
     `Style` is a plain value, so the guard carries its own snapshot and no
@@ -233,12 +233,12 @@ struct StyleGuard[origin: Origin[mut=True]](Movable):
         self._canvas[]._style = self._saved
 
 
-struct ClipGuard[origin: Origin[mut=True]](Movable):
+struct _ClipGuard[origin: Origin[mut=True]](Movable):
     """Closes the clip `canvas.clip` opened, on scope exit. Only `canvas.clip`
     builds one.
 
     Holds the clip that was current before it rather than popping a stack, so
-    nesting works the way `StyleGuard`'s does.
+    nesting works the way `_StyleGuard`'s does.
     """
 
     var _canvas: Pointer[Canvas, Self.origin]
@@ -588,7 +588,7 @@ struct Canvas(Movable, _GeometryTarget):
         negative value mirrors. See `translate`."""
         self._apply_transform(Transform(scale_x=sx, scale_y=sy))
 
-    def transform(mut self) -> TransformGuard[origin_of(self)]:
+    def transform(mut self) -> _TransformGuard[origin_of(self)]:
         """Keep the current transform for a `with` block, and restore it when
         the block ends, as Processing's `pushMatrix` and `popMatrix` do.
 
@@ -604,9 +604,9 @@ struct Canvas(Movable, _GeometryTarget):
         ```
         """
         self._push_transform(Transform())
-        return TransformGuard[origin_of(self)](_canvas=self)
+        return _TransformGuard[origin_of(self)](_canvas=self)
 
-    def transform(mut self, t: Transform) -> TransformGuard[origin_of(self)]:
+    def transform(mut self, t: Transform) -> _TransformGuard[origin_of(self)]:
         """Apply `t` to everything drawn inside a `with` block, on top of the
         current transform, and restore the current transform when the block
         ends.
@@ -620,7 +620,7 @@ struct Canvas(Movable, _GeometryTarget):
         return or a raise.
         """
         self._push_transform(t)
-        return TransformGuard[origin_of(self)](_canvas=self)
+        return _TransformGuard[origin_of(self)](_canvas=self)
 
     def style(
         mut self,
@@ -651,7 +651,7 @@ struct Canvas(Movable, _GeometryTarget):
         shadow_inset: Optional[Bool] = None,
         shadow_follows_transform: Optional[Bool] = None,
         shadow_enabled: Optional[Bool] = None,
-    ) -> StyleGuard[origin_of(self)]:
+    ) -> _StyleGuard[origin_of(self)]:
         """Scope style changes to a `with` block, restoring the previous style
         on exit.
 
@@ -667,7 +667,7 @@ struct Canvas(Movable, _GeometryTarget):
             canvas.circle(position, 10)
         ```
         """
-        var guard = StyleGuard[origin_of(self)](_canvas=self)
+        var guard = _StyleGuard[origin_of(self)](_canvas=self)
         if fill:
             self.fill(fill.value())
         # After the colour, which clears a gradient: given both, the gradient
@@ -726,7 +726,7 @@ struct Canvas(Movable, _GeometryTarget):
             self.shadow_enabled(shadow_enabled.value())
         return guard^
 
-    def style(mut self, style: Style) -> StyleGuard[origin_of(self)]:
+    def style(mut self, style: Style) -> _StyleGuard[origin_of(self)]:
         """Apply the parts `style` sets for a `with` block, then restore the
         whole style as it was.
 
@@ -741,16 +741,16 @@ struct Canvas(Movable, _GeometryTarget):
             canvas.text("Score", (0, canvas.top() - 20))
         ```
         """
-        var guard = StyleGuard[origin_of(self)](_canvas=self)
+        var guard = _StyleGuard[origin_of(self)](_canvas=self)
         self._style.apply(style)
         return guard^
 
     def _with_style(
         mut self, style: _ResolvedStyle
-    ) -> StyleGuard[origin_of(self)]:
+    ) -> _StyleGuard[origin_of(self)]:
         """`style(s)` for a style already resolved: how the library applies
         the looks it built itself, such as a widget's."""
-        return StyleGuard[origin_of(self)](_canvas=self, _style=style)
+        return _StyleGuard[origin_of(self)](_canvas=self, _style=style)
 
     def _push_transform(mut self, m: Transform):
         # Parent first, then child: a point is mapped by the innermost matrix
@@ -791,7 +791,7 @@ struct Canvas(Movable, _GeometryTarget):
 
     def clip[
         S: Shape
-    ](mut self, shape: S, invert: Bool = False) -> ClipGuard[origin_of(self)]:
+    ](mut self, shape: S, invert: Bool = False) -> _ClipGuard[origin_of(self)]:
         """Render only inside `shape` for a `with` block — or, with
         `invert`, only outside it. `shape` is any `Shape`: a `Rectangle`,
         `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own
@@ -813,7 +813,7 @@ struct Canvas(Movable, _GeometryTarget):
         """
         var capture = RegionCapture(self._transform, self._scale)
         draw_geometry(shape, capture)
-        return ClipGuard[origin_of(self)](
+        return _ClipGuard[origin_of(self)](
             _canvas=self, _region=capture.command.take(), _invert=invert
         )
 
@@ -841,7 +841,7 @@ struct Canvas(Movable, _GeometryTarget):
         self._camera = camera
         self._sync_transform()
 
-    def overlay(mut self) -> OverlayGuard[origin_of(self)]:
+    def overlay(mut self) -> _OverlayGuard[origin_of(self)]:
         """Suspend the camera and any active transform for a `with` block, so
         what's rendered inside lands in screen space regardless of where the
         camera looks — for a HUD or other UI that must stay put.
@@ -849,7 +849,7 @@ struct Canvas(Movable, _GeometryTarget):
         Pops back to whatever camera and transform were active on exit,
         including on an early return or a raise.
         """
-        return OverlayGuard[origin_of(self)](_canvas=self)
+        return _OverlayGuard[origin_of(self)](_canvas=self)
 
     def fill(mut self, color: Optional[Color] = None):
         """Paint the inside of shapes, switching the fill on. A `color`

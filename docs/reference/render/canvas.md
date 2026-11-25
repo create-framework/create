@@ -219,7 +219,7 @@ Stretch everything drawn after this, until the end of the frame, by `sx` across 
 ### `transform`
 
 ```mojo
-def transform(mut self) -> TransformGuard[origin_of(self)]
+def transform(mut self) -> _TransformGuard[origin_of(self)]
 ```
 
 Keep the current transform for a `with` block, and restore it when the block ends, as Processing's `pushMatrix` and `popMatrix` do.
@@ -236,7 +236,7 @@ with canvas.transform():
 ```
 
 ```mojo
-def transform(mut self, t: Transform) -> TransformGuard[origin_of(self)]
+def transform(mut self, t: Transform) -> _TransformGuard[origin_of(self)]
 ```
 
 Apply `t` to everything drawn inside a `with` block, on top of the current transform, and restore the current transform when the block ends.
@@ -281,7 +281,7 @@ def style(
     shadow_inset: Optional[Bool] = None,
     shadow_follows_transform: Optional[Bool] = None,
     shadow_enabled: Optional[Bool] = None,
-) -> StyleGuard[origin_of(self)]
+) -> _StyleGuard[origin_of(self)]
 ```
 
 Scope style changes to a `with` block, restoring the previous style on exit.
@@ -299,7 +299,7 @@ with canvas.style(fill=Color.RED, stroke_enabled=False):
 ```
 
 ```mojo
-def style(mut self, style: Style) -> StyleGuard[origin_of(self)]
+def style(mut self, style: Style) -> _StyleGuard[origin_of(self)]
 ```
 
 Apply the parts `style` sets for a `with` block, then restore the whole style as it was.
@@ -333,7 +333,7 @@ def clip[S: Shape](
     mut self,
     shape: S,
     invert: Bool = False,
-) -> ClipGuard[origin_of(self)]
+) -> _ClipGuard[origin_of(self)]
 ```
 
 Render only inside `shape` for a `with` block — or, with `invert`, only outside it. `shape` is any `Shape`: a `Rectangle`, `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own `corner_radius`; a polygon's inside is by the nonzero rule.
@@ -378,7 +378,7 @@ with canvas.overlay():
 ### `overlay`
 
 ```mojo
-def overlay(mut self) -> OverlayGuard[origin_of(self)]
+def overlay(mut self) -> _OverlayGuard[origin_of(self)]
 ```
 
 Suspend the camera and any active transform for a `with` block, so what's rendered inside lands in screen space regardless of where the camera looks — for a HUD or other UI that must stay put.
