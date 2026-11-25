@@ -208,21 +208,14 @@ The rules behind it, and what each one buys:
   event in through one `_`-prefixed method per kind (`keyboard._key_down`, `mouse._button_down`, …),
   so `input` never sees an `Event` and `_window` stays `app`'s alone.
 - **`_path`** is a leaf, imported by every package that has a public function taking a file path,
-  and re-exported by nothing; `app`'s `source_path` is its public face. A public function that takes
-  a path is `@always_inline`, and passes the path to `_caller_relative` directly from its own body.
-  `call_location` counts exactly those two inlined calls, so the path resolves against the caller's
-  file. The function then hands the absolute path to a `_`-named twin that does the work. Library
-  code calls the twin (`Image._load`), never the public function: called from the library, the
-  public function would resolve the path against the library's own file.
+  and re-exported by nothing; `app`'s `source_path` is its public face. How such a function uses it
+  is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md#file-paths).
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
 - **`_optional`** is a leaf imported by `geometry`, `render` and `ui`, re-exported by nothing. It
   holds keyword plumbing rather than maths, so it sits beside the other leaves rather than in
   `math`.
-- **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. A
-  binding opens its library with `load_library("libname", version)`, where `version` is the soname's
-  version, and never with `_DLHandle("libname.so")`. `load_library` decides the platform's file name
-  and search path. It opens the versioned name because the runtime package installs that one, so the
-  library is found even on a system without `-devel` packages.
+- **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. How a
+  binding uses it is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md#shared-libraries).
 - **`_window`** is `app`'s platform layer, inside it as `app/_window`. It imports nothing from
   `create` but `_library`, nothing outside `app` uses it, and nothing re-exports it.
 - **`_native`** is a leaf imported by `render` and `app`, the packages whose machinery the compiled
