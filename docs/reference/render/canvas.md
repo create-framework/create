@@ -115,6 +115,29 @@ def bounds(self) -> Rectangle
 
 The screen as a rectangle in screen space, `left()` to `right()` and `bottom()` to `top()`: centred on the origin, `width()` by `height()`. What `snapshot` and `clip` take, and what `contains` asks whether something is on the screen.
 
+```mojo
+def bounds(self, text: Text) raises -> Rectangle
+```
+
+The rectangle `text` covers when drawn in the current style: as wide as its widest line and as tall as `text_height` measures it, placed where `text_alignment` anchors it on `text.position`.
+
+```mojo
+# In `update`, with a `caption: Text` field: a plate behind it.
+var plate = canvas.bounds(self.caption).inset(-8)
+canvas.draw(plate, Style(fill=Color.BLACK))
+canvas.draw(self.caption, Style(text_color=Color.WHITE))
+```
+
+It is in the space the text is drawn in, as a shape's `bounds` is,
+and measured at the current transform's scale, so it matches what
+`canvas.draw(text)` draws there.
+
+```mojo
+def bounds(mut self, text: Text, style: Style) raises -> Rectangle
+```
+
+The rectangle `text` covers when drawn in `style`, applied over the current style as `canvas.draw(text, style)` applies it.
+
 ### `pixel_scale`
 
 ```mojo

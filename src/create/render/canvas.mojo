@@ -19,6 +19,7 @@ from create.geometry.spline import Spline
 from create.geometry import Geometry, Shape
 from ._geometry_target import _GeometryTarget, draw_geometry
 from .drawable import Drawable
+from .text import Text
 from create.geometry import (
     Arc,
     Capsule,
@@ -494,6 +495,50 @@ struct Canvas(Movable, _GeometryTarget):
         `height()`. What `snapshot` and `clip` take, and what `contains`
         asks whether something is on the screen."""
         return Rectangle(Point(0.0, 0.0), self._width, self._height)
+
+    def bounds(self, text: Text) raises -> Rectangle:
+        """The rectangle `text` covers when drawn in the current style: as
+        wide as its widest line and as tall as `text_height` measures it,
+        placed where `text_alignment` anchors it on `text.position`.
+
+        ```mojo
+        # In `update`, with a `caption: Text` field: a plate behind it.
+        var plate = canvas.bounds(self.caption).inset(-8)
+        canvas.draw(plate, Style(fill=Color.BLACK))
+        canvas.draw(self.caption, Style(text_color=Color.WHITE))
+        ```
+
+        It is in the space the text is drawn in, as a shape's `bounds` is,
+        and measured at the current transform's scale, so it matches what
+        `canvas.draw(text)` draws there.
+        """
+        var wrap = text._wrap()
+        var width = self._measure_width(text.value, wrap)
+        var height = self._measure_height(text.value, wrap)
+        var align = self._style.text_alignment
+        var center = text.position
+        if align._left():
+            center.x += width / 2
+        elif align._right():
+            center.x -= width / 2
+        if align._top():
+            center.y -= height / 2
+        elif align._bottom():
+            center.y += height / 2
+        return Rectangle(center, width, height)
+
+    def bounds(mut self, text: Text, style: Style) raises -> Rectangle:
+        """The rectangle `text` covers when drawn in `style`, applied over the
+        current style as `canvas.draw(text, style)` applies it."""
+        var saved = self._style
+        self._style.apply(style)
+        try:
+            var covered = self.bounds(text)
+            self._style = saved
+            return covered
+        except error:
+            self._style = saved
+            raise error^
 
     def pixel_scale(self) -> Float64:
         """Window pixels per screen unit: what font size, stroke thickness
