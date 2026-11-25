@@ -69,6 +69,9 @@ struct _Node(Copyable, Movable):
     var sized_by_ui: Bool
     """Added with no size of its own: the tree gives it the size it prefers
     every frame, unless what it is in places it."""
+    var enabled: Bool
+    """Whether the tree lets it and what is inside it react: `ui.enabled`
+    sets it, apart from each widget's own `enabled`."""
 
 
 comptime _UPDATE = 0
@@ -108,6 +111,8 @@ struct _Description(Copyable, Movable):
     """The shape its focus ring goes round, when it is a rectangle."""
     var ring_circle: Optional[Circle]
     """The shape its focus ring goes round, when it is a circle."""
+    var held: Bool
+    """Whether the mouse holds it: pressed on it and not let go."""
 
     def __init__(out self, kind: Int, rect: Rectangle, takes_pointer: Bool):
         self.kind = kind
@@ -122,6 +127,7 @@ struct _Description(Copyable, Movable):
         self.adjusts = False
         self.ring = None
         self.ring_circle = None
+        self.held = False
 
 
 @fieldwise_init
@@ -189,6 +195,17 @@ struct _Tree(Drawable, Movable):
     var _pad_move: Vector
     """This frame's push on a gamepad, which a focused slider may take."""
     var _typing_was: Bool
+    var _claimant: Int
+    """Its number for claiming the keyboard and mouse, from
+    `Context._new_claimant()`; 0 until its first `update`."""
+    var _frame: Int
+    """The frame it was last updated in."""
+    var _pointed_at: Bool
+    """Whether the pointer was over one of its widgets at its last
+    `update`."""
+    var _key_used: Bool
+    """Whether a key acted on it at its last `update`: moved or took away
+    focus, or pressed, stepped or typed into the focused widget."""
 
     def __init__(out self, *, player: Optional[Int] = None):
         """A tree whose focus any gamepad moves, unless `player` names one,
@@ -200,6 +217,10 @@ struct _Tree(Drawable, Movable):
         self._stick_was = Vector.ZERO
         self._pad_move = Vector.ZERO
         self._typing_was = False
+        self._claimant = 0
+        self._frame = -1
+        self._pointed_at = False
+        self._key_used = False
         self._nodes = []
         self._roots = []
         self._colors = ColorScheme.light()
@@ -215,7 +236,7 @@ struct _Tree(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it."""
-        self._nodes.append(_Node(_Widget(widget^), None, [], False))
+        self._nodes.append(_Node(_Widget(widget^), None, [], False, True))
         var index = len(self._nodes) - 1
         self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
         self._roots.append(index)
@@ -226,7 +247,9 @@ struct _Tree(Drawable, Movable):
     ](mut self, var widget: W, parent: WidgetHandle[P]) -> WidgetHandle[W]:
         """Add `widget` inside `parent`: drawn after it and after what was
         added inside it before, and in the look of what it sits on."""
-        self._nodes.append(_Node(_Widget(widget^), parent._index, [], False))
+        self._nodes.append(
+            _Node(_Widget(widget^), parent._index, [], False, True)
+        )
         var index = len(self._nodes) - 1
         self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
         self._nodes[parent._index].children.append(index)
@@ -329,12 +352,121 @@ struct _Tree(Drawable, Movable):
         """Update every widget, a parent before what is inside it, in the
         shared look: only the topmost widget under the pointer reacts to it.
         Call it before drawing the tree, in the same transform."""
+        if self._claimant == 0:
+            self._claimant = context._new_claimant()
+        var frame = context.frame_count()
+        self._frame = frame
         self._lay_out(context, canvas)
-        var topmost = self._topmost(canvas.to_local(context.mouse.position))
+        # another tree holding the mouse: this one leaves it alone
+        var topmost = Optional[Int](None)
+        if not context.mouse._claim.held_by_other(self._claimant, frame):
+            topmost = self._topmost(canvas.to_local(context.mouse.position))
+        self._pointed_at = Bool(topmost)
         self._navigate(context, topmost)
         var theme = self._theme()
         for root in self._roots.copy():
             self._update_from(root, context, canvas, theme, topmost)
+        self._claim(context)
+
+    def wants_mouse(self, context: Context) -> Bool:
+        """Whether the mouse is the tree's this frame: the pointer is over
+        one of its widgets, or one is held. A game checks it before using
+        the mouse itself, so a click on a button doesn't also fire a weapon.
+        It reads the tree's last `update`, and a tree not updated this frame
+        or last, such as a menu that has closed, never wants it.
+
+        ```mojo
+        # In `update`, after the tree's `update`:
+        if context.mouse.pressed() and not self.ui.wants_mouse(context):
+            self.fire()
+        ```
+        """
+        if not self._updated_lately(context):
+            return False
+        return self._pointed_at or self._holds_mouse()
+
+    def wants_keyboard(self, context: Context) -> Bool:
+        """Whether the keyboard is the tree's this frame: a text field has
+        focus, or a widget has focus from the keyboard or code, so keys act
+        on it; and in the frame a key moved or took away focus, such as
+        Escape leaving a text field. A game checks it before reading keys
+        itself, so typing a name with W in it doesn't move the player. A
+        tree not updated this frame or last never wants it.
+
+        ```mojo
+        # In `update`, after the tree's `update`:
+        if (
+            context.keyboard.pressed(Key.ESCAPE)
+            and not self.ui.wants_keyboard(context)
+        ):
+            context.quit()
+        ```
+        """
+        if not self._updated_lately(context):
+            return False
+        return self._holds_keys() or self._key_used
+
+    def _updated_lately(self, context: Context) -> Bool:
+        return self._frame >= context.frame_count() - 1
+
+    def _holds_keys(self) -> Bool:
+        """Whether its focus takes keys: from the keyboard or code, or on a
+        text field. Focus from a click on a button or from a gamepad
+        doesn't."""
+        if not self._focused:
+            return False
+        if self._focus_visible and not self._focus_from_gamepad:
+            return True
+        return self._describe(self._focused.value()).takes_typing
+
+    def _holds_mouse(self) -> Bool:
+        """Whether one of its widgets is held."""
+        for index in range(len(self._nodes)):
+            if self._describe(index).held:
+                return True
+        return False
+
+    def _claim(self, mut context: Context):
+        """Claim the keyboard while its focus takes keys, and the mouse while
+        one of its widgets is held, renewing the claims every frame, so
+        another tree leaves them alone; let go of them otherwise."""
+        var frame = context.frame_count()
+        if self._holds_keys():
+            context.keyboard._claim.claim(self._claimant, frame)
+        else:
+            context.keyboard._claim.release(self._claimant)
+        if self._holds_mouse():
+            context.mouse._claim.claim(self._claimant, frame)
+        else:
+            context.mouse._claim.release(self._claimant)
+
+    # ------------------------------------------------------------ enabled
+
+    def enabled[W: Copyable](self, handle: WidgetHandle[W]) -> Bool:
+        """Whether the tree lets the widget `handle` names react, apart from
+        its own `enabled`: `True` unless set."""
+        return self._nodes[handle._index].enabled
+
+    def enabled[W: Copyable](mut self, handle: WidgetHandle[W], enabled: Bool):
+        """Let the widget `handle` names, and everything inside it, react,
+        or not: a disabled part of the tree is drawn faded, takes no focus,
+        and lets go of focus it has. Each widget's own `enabled` is kept,
+        so enabling the part again restores it."""
+        self._nodes[handle._index].enabled = enabled
+
+    def _disabled(self, index: Int) -> Bool:
+        """Whether the node at `index` is in a part of the tree that is
+        disabled: it, or something it is inside."""
+        var at = Optional[Int](index)
+        while at:
+            ref node = self._nodes[at.value()]
+            if not node.enabled:
+                return True
+            at = node.parent
+        return False
+
+    def _can_focus(self, index: Int) -> Bool:
+        return self._describe(index).focusable and not self._disabled(index)
 
     def _update_from(
         mut self,
@@ -355,6 +487,7 @@ struct _Tree(Drawable, Movable):
             theme,
             free=free,
             focus=self._focus_for(index, context),
+            disabled=self._disabled(index),
         )
         for child in self._nodes[index].children.copy():
             self._update_from(child, context, canvas, reply.theme, topmost)
@@ -415,7 +548,7 @@ struct _Tree(Drawable, Movable):
         """Give the widget `handle` names focus, with its ring showing, as
         Tab would: a dialog gives its first field focus as it opens. A
         widget that can't take focus, such as a label, takes nothing."""
-        if self._describe(handle._index).focusable:
+        if self._can_focus(handle._index):
             self._focus_on(handle._index, visible=True, from_gamepad=False)
 
     def clear_focus(mut self):
@@ -439,21 +572,34 @@ struct _Tree(Drawable, Movable):
         onto a clicked widget; along for Tab; and towards a gamepad's
         push. Then switch typing on while a text field has focus."""
         ref keyboard = context.keyboard
+        var frame = context.frame_count()
+        var keyboard_taken = keyboard._claim.held_by_other(
+            self._claimant, frame
+        )
+        var mouse_taken = context.mouse._claim.held_by_other(
+            self._claimant, frame
+        )
+        self._key_used = False
+        if keyboard_taken and self._holds_keys():
+            self.clear_focus()  # another tree has taken the keyboard
+        if self._focused and not self._can_focus(self._focused.value()):
+            self.clear_focus()  # disabled, or no longer a widget that can
         if (
             self._focused
-            and not self._describe(self._focused.value()).focusable
+            and keyboard.pressed(Key.ESCAPE)
+            and not keyboard_taken
         ):
-            self.clear_focus()  # disabled, or no longer a widget that can
-        if self._focused and keyboard.pressed(Key.ESCAPE):
             self.clear_focus()
-        if context.mouse.pressed():
-            if topmost and self._describe(topmost.value()).focusable:
+            self._key_used = True
+        if context.mouse.pressed() and not mouse_taken:
+            if topmost and self._can_focus(topmost.value()):
                 self._focus_on(
                     topmost.value(), visible=False, from_gamepad=False
                 )
             else:
                 self.clear_focus()  # a click on nothing, or on a panel
-        if keyboard.typed(Key.TAB):
+        if keyboard.typed(Key.TAB) and not keyboard_taken:
+            self._key_used = True
             self._tab(
                 backwards=keyboard.down(Key.LEFT_SHIFT)
                 or keyboard.down(Key.RIGHT_SHIFT)
@@ -481,7 +627,7 @@ struct _Tree(Drawable, Movable):
         the order Tab goes through them."""
         var focusable = List[Int]()
         for index in self._drawing_order():
-            if self._describe(index).focusable:
+            if self._can_focus(index):
                 focusable.append(index)
         return focusable^
 
@@ -521,13 +667,27 @@ struct _Tree(Drawable, Movable):
         if best:
             self._focus_on(order[best.value()], visible=True, from_gamepad=True)
 
-    def _focus_for(self, index: Int, context: Context) -> _Focus:
+    def _focus_for(mut self, index: Int, context: Context) -> _Focus:
         """What the tree's focus means for the node at `index` this
         frame."""
         var focused = Bool(self._focused) and self._focused.value() == index
         var shown = focused and self._focus_visible
-        var keys = shown and not self._focus_from_gamepad
         ref keyboard = context.keyboard
+        var keyboard_free = not keyboard._claim.held_by_other(
+            self._claimant, context.frame_count()
+        )
+        var keys = shown and not self._focus_from_gamepad and keyboard_free
+        if keys and (
+            keyboard.pressed(Key.ENTER)
+            or keyboard.pressed(Key.SPACE)
+            or keyboard.typed(Key.LEFT)
+            or keyboard.typed(Key.RIGHT)
+            or keyboard.typed(Key.UP)
+            or keyboard.typed(Key.DOWN)
+            or keyboard.pressed(Key.HOME)
+            or keyboard.pressed(Key.END)
+        ):
+            self._key_used = True
         var activated = (
             keys
             and (keyboard.pressed(Key.ENTER) or keyboard.pressed(Key.SPACE))
@@ -694,12 +854,14 @@ struct _Tree(Drawable, Movable):
             var described = _Description(_WIDGET, button.rect, True)
             described.focusable = button.enabled
             described.ring = button._ring()
+            described.held = button.down()
             return described^
         if widget.isa[Checkbox]():
             ref checkbox = widget[Checkbox]
             var described = _Description(_WIDGET, checkbox.rect, True)
             described.focusable = checkbox.enabled
             described.ring = checkbox._ring()
+            described.held = checkbox.down()
             return described^
         if widget.isa[Slider]():
             ref slider = widget[Slider]
@@ -707,12 +869,14 @@ struct _Tree(Drawable, Movable):
             described.focusable = slider.enabled
             described.adjusts = True
             described.ring_circle = slider._ring()
+            described.held = slider.down()
             return described^
         if widget.isa[TextField]():
             ref field = widget[TextField]
             var described = _Description(_WIDGET, field.rect, True)
             described.focusable = field.enabled
             described.takes_typing = True
+            described.held = field.down()
             return described^
         if widget.isa[Panel]():
             # covers what is beneath it
@@ -757,7 +921,13 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[Label]():
             canvas.draw(widget[Label])
         elif widget.isa[Picture]():
-            canvas.draw(widget[Picture])
+            if self._disabled(index):
+                canvas.draw(
+                    widget[Picture],
+                    Style(opacity=self._state_layers.disabled_content),
+                )
+            else:
+                canvas.draw(widget[Picture])
 
     def _dispatch_mut(
         mut self,
@@ -769,6 +939,7 @@ struct _Tree(Drawable, Movable):
         *,
         free: Bool,
         focus: _Focus = _Focus.standalone(),
+        disabled: Bool = False,
         rect: Rectangle = Rectangle(Point(0.0, 0.0), 0.0, 0.0),
     ) raises -> _Reply:
         """Update (`_UPDATE`), measure (`_MEASURE`) or place in `rect`
@@ -780,7 +951,14 @@ struct _Tree(Drawable, Movable):
         if widget.isa[Button]():
             ref button = widget[Button]
             if action == _UPDATE:
-                button._update(context, canvas, theme, free=free, focus=focus)
+                button._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
             elif action == _MEASURE:
                 reply.width, reply.height = button._measure(canvas, theme)
             else:
@@ -788,7 +966,14 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[Checkbox]():
             ref checkbox = widget[Checkbox]
             if action == _UPDATE:
-                checkbox._update(context, canvas, theme, free=free, focus=focus)
+                checkbox._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
             elif action == _MEASURE:
                 reply.width, reply.height = checkbox._measure(canvas, theme)
             else:
@@ -796,7 +981,14 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[Slider]():
             ref slider = widget[Slider]
             if action == _UPDATE:
-                slider._update(context, canvas, theme, free=free, focus=focus)
+                slider._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
             elif action == _MEASURE:
                 reply.width, reply.height = slider._measure(canvas, theme)
             else:
@@ -804,7 +996,14 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[TextField]():
             ref field = widget[TextField]
             if action == _UPDATE:
-                field._update(context, canvas, theme, free=free, focus=focus)
+                field._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
             elif action == _MEASURE:
                 reply.width, reply.height = field._measure(canvas, theme)
             else:
@@ -812,7 +1011,7 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[Label]():
             ref label = widget[Label]
             if action == _UPDATE:
-                label._update(context, canvas, theme, disabled=False)
+                label._update(context, canvas, theme, disabled=disabled)
             elif action == _MEASURE:
                 reply.width, reply.height = label._measure(canvas, theme)
             else:
