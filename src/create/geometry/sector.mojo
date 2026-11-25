@@ -1,6 +1,6 @@
 from std.math import min, max, sqrt
 from create.math import TAU, Point, Vector
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
@@ -72,7 +72,7 @@ struct Sector(
         start_angle: Float64,
         sweep_angle: Float64,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ):
         self.position = position
         self.radius = radius
@@ -87,7 +87,7 @@ struct Sector(
         start_angle: Float64,
         sweep_angle: Float64,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ):
         self = Sector(
             position,

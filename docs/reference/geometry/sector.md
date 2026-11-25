@@ -48,7 +48,7 @@ def __init__(
     start_angle: Float64,
     sweep_angle: Float64,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 )
 @staticmethod
 def __init__(
@@ -58,7 +58,7 @@ def __init__(
     start_angle: Float64,
     sweep_angle: Float64,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 )
 ```
 

@@ -16,7 +16,7 @@ internals](#package-internals).
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `Gradient` (with the ramp and dither both backends share), `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `BlendMode` |
-| `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, `lerp`, `map` and the other scalar helpers, re-exported `std.math` functions |
+| `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `OptionalNumber` (the type of number keywords such as `blur=12`), `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, `lerp`, `map` and the other scalar helpers, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock that playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Geometry`/`Shape`/`Curve` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. Values and tests only: how a shape is drawn is `render`'s. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
 | `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer` |
@@ -27,7 +27,6 @@ internals](#package-internals).
 | `ui` | `src/create/ui/` | The widgets, each a value a program updates and draws with `canvas.draw` (`Button`, `Checkbox`, `Slider`, `TextField`, `Label`, `Panel`, with `ButtonVariant`), and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, the tree that keeps widgets together, lays them out (`Column`, `Row`, `Space`), moves focus between them and shares the devices with other `UI`s, reached through `WidgetHandle`s; `ColorScheme` (the colours widgets are drawn in) with `StateLayers` and `FocusRing`; the theme a widget's look is resolved from, and the text editing behind `TextField` (`_TextBuffer`) |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
-| `_optional` | `src/create/_optional.mojo` | Internal leaf: `_OptionalFloat64`, the type behind optional number keywords such as `corner_radius=8`, which takes an integer, a `Float64` or `None` |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_native` | `src/create/_native.mojo` | Internal leaf: opens the compiled library, `libcreate`, and passes values to it by address; `IN_LIBRARY` (see [The compiled library](#the-compiled-library)) |
 | `_window` | `src/create/app/_window/` | `app`'s internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
@@ -78,12 +77,12 @@ further in and from the leaves; within a layer, `app` imports `input` and `anima
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
-| UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
+| UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math` |
 | Application | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, `_path`, `_native`; `input`: `math` |
-| Rendering | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
+| Rendering | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path`, `_native` |
 | Media and data | `image`, `text`, `audio`, `animation`, `data` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path`; `data`: `_path` |
-| Core | `math`, `color`, `time`, `geometry` | `math`, `color` and `time`: nothing; `geometry`: `math`, `_optional` |
-| Leaves | `_bytes`, `_library`, `_optional`, `_path`, `_native` | Nothing |
+| Core | `math`, `color`, `time`, `geometry` | `math`, `color` and `time`: nothing; `geometry`: `math` |
+| Leaves | `_bytes`, `_library`, `_path`, `_native` | Nothing |
 
 Core is a layer's name, not a package: its four packages sit at the top level like the others. Each
 layer encloses the layers it may import from; the leaves sit outside, and every layer may use them:
@@ -131,7 +130,7 @@ flowchart TB
 
     subgraph leaves["Shared top-level leaves"]
         direction LR
-        bytes["_bytes.mojo"] ~~~ library["_library.mojo"] ~~~ optional["_optional.mojo"] ~~~ pathLeaf["_path.mojo"] ~~~ native["_native.mojo"]
+        bytes["_bytes.mojo"] ~~~ library["_library.mojo"] ~~~ pathLeaf["_path.mojo"] ~~~ native["_native.mojo"]
     end
 
     uiRing ~~~ leaves
@@ -140,8 +139,8 @@ flowchart TB
 ```
 
 Each package's imports, as a graph; every arrow points inwards. The leaves `_bytes`, `_library`,
-`_optional`, `_path` and `_native` are left out, and so are `audio` and `data`, which import only
-those leaves and which no package here imports:
+`_path` and `_native` are left out, and so are `audio` and `data`, which import only those leaves
+and which no package here imports:
 
 ```mermaid
 flowchart TD
@@ -212,8 +211,6 @@ The rules behind it, and what each one buys:
     [src/CONTRIBUTING.md](src/CONTRIBUTING.md#file-paths).
   - **`_library`** is imported by every package with FFI bindings, `_window` included. How a binding
     uses it is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md#shared-libraries).
-  - **`_optional`** holds keyword plumbing rather than maths, so it is a leaf rather than part of
-    `math`.
   - **`_native`** is how `render` and `app` reach the compiled library, which holds their machinery.
     See [The compiled library](#the-compiled-library).
 

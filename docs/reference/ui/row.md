@@ -34,8 +34,8 @@ def __init__(
     out self,
     *weights: Float64,
     *,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=_OptionalFloat64(SIMD(0)), rotation=_OptionalFloat64(SIMD(0))),
-    gap: _OptionalFloat64 = None,
-    height: _OptionalFloat64 = None,
+    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    gap: OptionalNumber = None,
+    height: OptionalNumber = None,
 )
 ```

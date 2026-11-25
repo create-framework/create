@@ -33,8 +33,8 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 @staticmethod
 def __init__(
     out self,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=_OptionalFloat64(SIMD(0)), rotation=_OptionalFloat64(SIMD(0))),
+    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
-    gap: _OptionalFloat64 = None,
+    gap: OptionalNumber = None,
 )
 ```

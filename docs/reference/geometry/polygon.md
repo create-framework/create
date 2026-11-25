@@ -39,13 +39,13 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `Movable`, `Shape`
 
 ```mojo
 @staticmethod
-def __init__(out self, *vertices: Point, *, corner_radius: _OptionalFloat64 = SIMD(0))
+def __init__(out self, *vertices: Point, *, corner_radius: OptionalNumber = SIMD(0))
 @staticmethod
 def __init__(
     out self,
     var vertices: List[Point],
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 )
 ```
 
@@ -59,7 +59,7 @@ def regular(
     sides: Int,
     start_angle: Float64 = 1.5707963267948966,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
 ```
 
@@ -73,7 +73,7 @@ def regular(
     sides: Int,
     start_angle: Float64 = 1.5707963267948966,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
 ```
 
@@ -88,7 +88,7 @@ def star(
     tips: Int,
     start_angle: Float64 = 1.5707963267948966,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
 ```
 
@@ -103,7 +103,7 @@ def star(
     tips: Int,
     start_angle: Float64 = 1.5707963267948966,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
 ```
 

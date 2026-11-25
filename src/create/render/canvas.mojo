@@ -48,7 +48,7 @@ from ._command import (
     text_command,
 )
 from .style import Style, _ResolvedStyle
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from create._path import _caller_relative
 from ._command import RenderCommand
 from ._shape_command import RegionCapture, curves_command, shape_command
@@ -82,7 +82,7 @@ struct _RecordingRequest(Movable):
     """`start_recording`'s arguments, passed to the library in one."""
 
     var path: String
-    var seconds: _OptionalFloat64
+    var seconds: OptionalNumber
     var frames: Optional[Int]
     var fps: Float64
     var scale: Float64
@@ -629,25 +629,25 @@ struct Canvas(Movable, _GeometryTarget):
         fill_gradient: Optional[Gradient] = None,
         fill_enabled: Optional[Bool] = None,
         stroke: Optional[Color] = None,
-        stroke_thickness: _OptionalFloat64 = None,
+        stroke_thickness: OptionalNumber = None,
         stroke_enabled: Optional[Bool] = None,
         stroke_alignment: Optional[StrokeAlign] = None,
         stroke_cap: Optional[StrokeCap] = None,
         stroke_dash: Optional[StrokeDash] = None,
-        corner_radius: _OptionalFloat64 = None,
+        corner_radius: OptionalNumber = None,
         text_color: Optional[Color] = None,
         font: Optional[Font] = None,
-        font_size: _OptionalFloat64 = None,
+        font_size: OptionalNumber = None,
         font_weight: Optional[FontWeight] = None,
         font_italic: Optional[Bool] = None,
         text_alignment: Optional[Align] = None,
         tint: Optional[Color] = None,
-        opacity: _OptionalFloat64 = None,
+        opacity: OptionalNumber = None,
         blend_mode: Optional[BlendMode] = None,
         shadow: Optional[Color] = None,
         shadow_offset: Optional[Vector] = None,
-        shadow_blur: _OptionalFloat64 = None,
-        shadow_spread: _OptionalFloat64 = None,
+        shadow_blur: OptionalNumber = None,
+        shadow_spread: OptionalNumber = None,
         shadow_inset: Optional[Bool] = None,
         shadow_follows_transform: Optional[Bool] = None,
         shadow_enabled: Optional[Bool] = None,
@@ -880,7 +880,7 @@ struct Canvas(Movable, _GeometryTarget):
     def stroke(
         mut self,
         color: Optional[Color] = None,
-        thickness: _OptionalFloat64 = None,
+        thickness: OptionalNumber = None,
     ):
         """Stroke shapes, switching the stroke on if `stroke_enabled(False)`
         had turned it off. `color`/`thickness` left unset keep their current
@@ -1305,7 +1305,7 @@ struct Canvas(Movable, _GeometryTarget):
         mut self,
         path: String,
         *,
-        seconds: _OptionalFloat64 = None,
+        seconds: OptionalNumber = None,
         frames: Optional[Int] = None,
         fps: Float64 = 30.0,
         pixel_scale: Float64 = 1.0,
@@ -1384,7 +1384,7 @@ struct Canvas(Movable, _GeometryTarget):
     def _start_recording(
         mut self,
         path: String,
-        seconds: _OptionalFloat64,
+        seconds: OptionalNumber,
         frames: Optional[Int],
         fps: Float64,
         scale: Float64,
@@ -1410,7 +1410,7 @@ struct Canvas(Movable, _GeometryTarget):
     def _start_recording_here(
         mut self,
         path: String,
-        seconds: _OptionalFloat64,
+        seconds: OptionalNumber,
         frames: Optional[Int],
         fps: Float64,
         scale: Float64,
@@ -1504,8 +1504,8 @@ struct Canvas(Movable, _GeometryTarget):
         width: Float64,
         height: Float64,
         *,
-        corner_radius: _OptionalFloat64 = None,
-        rotation: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = None,
+        rotation: OptionalNumber = 0.0,
     ):
         """Draw the `width` by `height` rectangle centred on `position`, its
         corners rounded by `corner_radius`, or by the style's when not given
@@ -1527,8 +1527,8 @@ struct Canvas(Movable, _GeometryTarget):
         width: Int,
         height: Int,
         *,
-        corner_radius: _OptionalFloat64 = None,
-        rotation: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = None,
+        rotation: OptionalNumber = 0.0,
     ):
         self.rectangle(
             position,
@@ -1589,7 +1589,7 @@ struct Canvas(Movable, _GeometryTarget):
         start_angle: Float64,
         sweep_angle: Float64,
         *,
-        corner_radius: _OptionalFloat64 = None,
+        corner_radius: OptionalNumber = None,
     ):
         """Draw the pie slice of the circle around `position` with `radius`,
         from `start_angle` round by `sweep_angle`: a `Sector`, its tip at
@@ -1624,7 +1624,7 @@ struct Canvas(Movable, _GeometryTarget):
         start_angle: Float64,
         sweep_angle: Float64,
         *,
-        corner_radius: _OptionalFloat64 = None,
+        corner_radius: OptionalNumber = None,
     ):
         self.sector(
             position,
@@ -1635,7 +1635,7 @@ struct Canvas(Movable, _GeometryTarget):
         )
 
     def polygon(
-        mut self, *vertices: Point, corner_radius: _OptionalFloat64 = None
+        mut self, *vertices: Point, corner_radius: OptionalNumber = None
     ):
         """Draw the polygon through `vertices`, closed back to the first.
 
@@ -1660,7 +1660,7 @@ struct Canvas(Movable, _GeometryTarget):
     def polygon(
         mut self,
         var vertices: List[Point],
-        corner_radius: _OptionalFloat64 = None,
+        corner_radius: OptionalNumber = None,
     ):
         """Draw the polygon through `vertices`, a list built at run time:
         otherwise as the variadic `polygon`, and like `spline`'s `points`."""
@@ -1775,7 +1775,7 @@ struct Canvas(Movable, _GeometryTarget):
         b: Point,
         c: Point,
         *,
-        corner_radius: _OptionalFloat64 = None,
+        corner_radius: OptionalNumber = None,
     ):
         """Draw the triangle through `a`, `b` and `c`, its corners rounded
         by `corner_radius`, or by the style's when not given, as `Triangle`
@@ -2028,8 +2028,8 @@ struct Canvas(Movable, _GeometryTarget):
         mut self,
         color: Optional[Color] = None,
         offset: Optional[Vector] = None,
-        blur: _OptionalFloat64 = None,
-        spread: _OptionalFloat64 = None,
+        blur: OptionalNumber = None,
+        spread: OptionalNumber = None,
         inset: Optional[Bool] = None,
     ):
         """Cast a shadow behind what is rendered next, switching shadows on.

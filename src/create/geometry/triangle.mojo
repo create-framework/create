@@ -1,6 +1,6 @@
 from std.math import min, max, sqrt
 from create.math import PI, Point, Vector
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from ._fillet import triangle_corner_radius
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
@@ -68,7 +68,7 @@ struct Triangle(
         b: Point,
         c: Point,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ):
         self.a = a
         self.b = b

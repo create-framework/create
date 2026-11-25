@@ -44,7 +44,7 @@ def __init__(
     b: Point,
     c: Point,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
 )
 ```
 

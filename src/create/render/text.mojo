@@ -2,7 +2,7 @@ from std.collections import Optional
 
 from create.math.point import Point
 from create.math.vector import Vector
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from .canvas import Canvas
 from .drawable import Drawable
 from ._text import NO_WRAP
@@ -47,7 +47,7 @@ struct Text(Copyable, Drawable, Equatable, Movable, Writable):
         out self,
         value: String,
         position: Point,
-        width: _OptionalFloat64 = None,
+        width: OptionalNumber = None,
     ):
         self.value = value
         self.position = position
