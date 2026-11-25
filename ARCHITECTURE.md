@@ -75,10 +75,10 @@ The packages form layers, and a package imports only from the layers below it:
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
-| Run | `app` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
+| Run | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, `_window`, `_path`, `_native`; `input`: `math` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
-| Values | `geometry`, `input` | `math`; `geometry` also `_optional` |
+| Values | `geometry` | `math`, `_optional` |
 | Foundations | `math`, `color`, `time`, `data` | `math`, `color` and `time`: nothing; `data`: `_path` |
 | Internal | `_window`, `_bytes`, `_library`, `_optional`, `_path`, `_native` | `_window`: `_library`; the others nothing |
 
@@ -148,10 +148,11 @@ The rules behind it, and what each one buys:
 - **`text`** depends only on `_bytes`, `_library` and `_path`. `render` uses `text` only by name, as
   it uses `image`: `Style`, `canvas.font` and text layout refer to the `Font` type, and
   `_raster.blit_glyph` takes a `_GlyphInfo` by its internal path.
-- **`input`** depends only on `math`; `app` imports it. Its devices are plain state: `app`'s
-  `apply_events` folds each window event in through one `_`-prefixed method per kind
-  (`keyboard._key_down`, `mouse._button_down`, …), so `input` never sees an `Event` and `_window`
-  stays `app`'s alone.
+- **`input`** depends only on `math`, and only `app` and `ui` import it. It sits in the run layer
+  beside `app`, the code that fills it, so nothing in drawing, the assets or the values can depend
+  on what the user did. Its devices are plain state: `app`'s `apply_events` folds each window event
+  in through one `_`-prefixed method per kind (`keyboard._key_down`, `mouse._button_down`, …), so
+  `input` never sees an `Event` and `_window` stays `app`'s alone.
 - **`_path`** is a leaf, imported by every package that has a public function taking a file path,
   and re-exported by nothing; `app`'s `source_path` is its public face. A public function that takes
   a path is `@always_inline`, and passes the path to `_caller_relative` directly from its own body.
