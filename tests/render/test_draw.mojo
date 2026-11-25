@@ -202,5 +202,117 @@ def test_styles_nest_through_a_drawable() raises -> None:
     assert_equal(canvas.color_at((40.0, 40.0)), Color.GREEN)
 
 
+def _text_canvas() raises -> Canvas:
+    var canvas = Canvas(120, 100, antialiasing=Antialiasing.OFF)
+    canvas.text_color(Color.BLACK)
+    canvas.font_size(14)
+    return canvas^
+
+
+def test_text_draws_what_canvas_text_draws() raises -> None:
+    var drawn = _text_canvas()
+    var named = _text_canvas()
+    drawn.draw(Text("Hello", (0.0, 20.0)))
+    named.text("Hello", (0.0, 20.0))
+    drawn.text_alignment(Align.TOP_LEFT)
+    named.text_alignment(Align.TOP_LEFT)
+    drawn.draw(Text("one two three four", (-55.0, 0.0), width=60))
+    named.text("one two three four", (-55.0, 0.0), 60.0)
+    _assert_same(drawn, named, "text")
+
+
+def test_text_takes_a_style_of_its_own() raises -> None:
+    var drawn = _text_canvas()
+    var named = _text_canvas()
+    drawn.draw(Text("Red", (0.0, 0.0)), Style(text_color=Color.RED))
+    with named.style(text_color=Color.RED):
+        named.text("Red", (0.0, 0.0))
+    _assert_same(drawn, named, "styled text")
+
+
+def test_text_moves_as_a_value() raises -> None:
+    var text = Text("Hi", (1.0, 2.0))
+    assert_equal(text.translate(Vector(10, 0)).position, Point(11.0, 2.0))
+    assert_equal(text.move_to((5.0, 5.0)).position, Point(5.0, 5.0))
+    assert_equal(text.position, Point(1.0, 2.0))
+    assert_true(text == Text("Hi", (1.0, 2.0)))
+    assert_true(text != Text("Hi", (1.0, 2.0), width=40))
+
+
+def test_text_prints_as_source() raises -> None:
+    assert_equal(
+        String(Text("Hi", (1.0, 2.0))),
+        'Text(value="Hi", position=Point(1.0, 2.0))',
+    )
+    assert_equal(
+        String(Text('say "hi"\n', (0.0, 0.0), width=50)),
+        'Text(value="say \\"hi\\"\\n", position=Point(0.0, 0.0), width=50.0)',
+    )
+
+
+def _ink_inside(mut canvas: Canvas, bounds: Rectangle, what: String) raises:
+    """Every pixel the text inked lies within `bounds`, give or take a pixel,
+    and the ink reaches near each of its four sides."""
+    var image = canvas.snapshot()
+    var grown = bounds.inset(-1.0)
+    var reach_left = False
+    var reach_right = False
+    var reach_top = False
+    var reach_bottom = False
+    for j in range(image.height()):
+        for i in range(image.width()):
+            if image.pixel(i, j).a == 0:
+                continue
+            var p = Point(Float64(i) - 59.5, 49.5 - Float64(j))
+            assert_true(grown.contains(p), what + ": ink outside " + String(p))
+            reach_left = reach_left or p.x < bounds.left() + 3
+            reach_right = reach_right or p.x > bounds.right() - 3
+            # The box runs from the font's ascent to its descent, which
+            # leave room above capitals for accents.
+            reach_top = reach_top or p.y > bounds.top() - bounds.height * 0.4
+            reach_bottom = reach_bottom or (
+                p.y < bounds.bottom() + bounds.height * 0.4
+            )
+    assert_true(reach_left and reach_right, what + ": ink misses a side")
+    assert_true(reach_top and reach_bottom, what + ": ink misses top or bottom")
+
+
+def test_bounds_cover_the_drawn_text_under_each_alignment() raises -> None:
+    var alignments = [Align.TOP_LEFT, Align.CENTER, Align.BOTTOM_RIGHT]
+    for align in alignments:
+        var canvas = Canvas(120, 100, antialiasing=Antialiasing.OFF)
+        canvas.background(Color.TRANSPARENT)
+        canvas.text_color(Color.BLACK)
+        canvas.font_size(16)
+        canvas.text_alignment(align)
+        var text = Text("Hilly", (5.0, -5.0))
+        canvas.draw(text)
+        _ink_inside(canvas, canvas.bounds(text), String(align))
+
+
+def test_bounds_follow_the_alignment() raises -> None:
+    var canvas = _text_canvas()
+    var text = Text("Hello", (10.0, 20.0))
+    canvas.text_alignment(Align.TOP_LEFT)
+    var corner = canvas.bounds(text)
+    assert_equal(corner.left(), 10.0)
+    assert_equal(corner.top(), 20.0)
+    assert_equal(corner.width, canvas.text_width("Hello"))
+    assert_equal(corner.height, canvas.text_height("Hello"))
+    canvas.text_alignment(Align.CENTER)
+    assert_equal(canvas.bounds(text).position, Point(10.0, 20.0))
+
+
+def test_bounds_wrap_and_take_a_style() raises -> None:
+    var canvas = _text_canvas()
+    var text = Text("one two three four", (0.0, 0.0), width=60)
+    var wrapped = canvas.bounds(text)
+    assert_equal(wrapped.width, canvas.text_width(text.value, width=60))
+    assert_equal(wrapped.height, canvas.text_height(text.value, width=60))
+    var bigger = canvas.bounds(text, Style(font_size=28))
+    assert_true(bigger.height > wrapped.height)
+    assert_equal(canvas.bounds(text), wrapped)  # the style is as it was
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

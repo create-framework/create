@@ -18,6 +18,27 @@ canvas.text("Hello", (0, 0))
 Text has its own colour, set by `text_color`, separate from the fill and the stroke: `fill` never
 colours text. Text is black until you set it.
 
+**A `Text` is a piece of text as a value**, placed in the world as a shape is: `Text("Score", (0,
+200))`, with a `width` to wrap at if you give one. `canvas.draw(text)` draws what `canvas.text`
+draws, so a `Text` can be kept in a field and be one part of a [type of your
+own](canvas.md#your-own-types), drawn beside its shapes in a style of its own:
+
+```mojo
+# In a `Drawable`'s `draw_to`, with `plate: Rectangle` and `text: Text` fields:
+canvas.draw(self.plate)
+canvas.draw(self.text, Style(text_color=Color.WHITE))
+```
+
+How big a `Text` is depends on the font it is drawn in, so the canvas measures it:
+`canvas.bounds(text)` is the rectangle it covers in the current style, placed by its alignment, and
+`canvas.bounds(text, style)` the one it covers in `style`. A plate behind a caption is one line:
+
+```mojo
+# In `update`, with a `caption: Text` field:
+canvas.draw(canvas.bounds(self.caption).inset(-8), Style(fill=Color.BLACK))
+canvas.draw(self.caption, Style(text_color=Color.WHITE))
+```
+
 ## Fonts
 
 Fonts are part of the style: set one with `canvas.font(f)`, `Style(font=f)` or `with
