@@ -8,16 +8,8 @@ from create.geometry import Circle, Geometry, Line, Rectangle
 from create.input import GamepadButton, Key
 from create.image import Image
 from create.math import Point, Transform, Vector, ceil, clamp, floor
-from create.text import FontWeight
 from create._optional import _OptionalFloat64
-from create.render import (
-    Align,
-    Canvas,
-    StrokeAlign,
-    StrokeCap,
-    StrokeDash,
-    Style,
-)
+from create.render import Align, Canvas, Style
 from create.render.style import _ResolvedStyle
 from create.render.canvas import _View, _ViewGuard
 from ._id import _mix
@@ -26,22 +18,9 @@ from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor
-from .colors import ColorScheme, FocusRing, _readable_on
-from .ui import UI, _CORNER_RADIUS, _Hit, _Styles
-
-
-comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
-"""The inset shadow a pressed filled or tonal button is drawn with."""
-
-
-def _body_text() -> Style:
-    """The text of labels, checkboxes and text fields, unless styled."""
-    return Style(font_size=16, font_weight=FontWeight.REGULAR)
-
-
-def _label_text() -> Style:
-    """The text on buttons, unless styled."""
-    return Style(font_size=14, font_weight=FontWeight.MEDIUM)
+from .colors import ColorScheme, FocusRing
+from .ui import UI, _Hit
+from ._theme import _Styles, _fills, _text_look
 
 
 @fieldwise_init
@@ -269,23 +248,12 @@ struct UILayer[
         self, id: UInt64, rect: Rectangle, style: Style
     ) raises -> PanelGuard[Self.ui_origin]:
         ref ui = self._ui[]
-        var colors = ui._current_colors()
         # a surface the pointer can't reach through, nor focus
         ui._hits.append(_Hit(id, rect, self._to_local, False, False, False))
-        var look = style.over(ui._current_styles().panel).over(
-            Style(
-                fill=colors.surface_container,
-                stroke_enabled=False,
-                corner_radius=self._ui[]._corner_radius,
-            )
-        )
-        var resolved = _ResolvedStyle()
-        resolved.apply(look)
-        # a panel with no fill shows what is beneath it
-        var surface = (
-            resolved.fill_color if resolved.fill_enabled else ui._surface_color()
-        )
-        var content = look.text_color.or_else(_content_on(colors, surface))
+        var look = ui._theme().panel(style)
+        var resolved = look.style
+        var surface = look.surface
+        var content = look.content
         ui._recorder.style = resolved
         ui._recorder.draw(
             Rectangle(
@@ -533,21 +501,13 @@ struct UILayer[
         ```
         """
         self._check_frame()
-        var look = style.over(self._ui[]._current_styles().label).over(
-            Style(text_color=self._ui[]._content_color()).over(_body_text())
+        var resolved = (
+            self._ui[]
+            ._theme()
+            .label(style, alignment, disabled=self._disabled(False))
         )
-        var place = self._place(rect, _size(look) * 1.5, "ui.label")
-        var resolved = _ResolvedStyle()
-        resolved.apply(look)
-        var placed = alignment.or_else(
-            look.text_alignment.or_else(Align.CENTER)
-        )
-        resolved.text_alignment = placed
-        if self._disabled(False):
-            resolved.text_color = _faded(
-                resolved.text_color,
-                self._ui[]._state_layers.disabled_content,
-            )
+        var place = self._place(rect, resolved.font_size * 1.5, "ui.label")
+        var placed = resolved.text_alignment
         self._ui[]._recorder.text(text, _anchor(place, placed), resolved)
         self._ui[]._called(changed=False)
 
@@ -817,7 +777,6 @@ struct UILayer[
         var state = self._interact(id, rect, off, take_focus, takes_typing=True)
         ref ui = self._ui[]
         ui._sync_text_input(self._context[])
-        var colors = ui._current_colors()
         if id not in ui._buffers:
             ui._buffers[id] = _TextBuffer(text)
         var changed = False
@@ -831,18 +790,18 @@ struct UILayer[
             buffer.text = text
         buffer.max_length = max_length
         var now = self._context[].time.elapsed
-        var block = ui._current_styles()
-        var text_look = call_text.over(block.text_field_text_style).over(
-            Style(text_color=colors.on_surface).over(_body_text())
+        var parts = ui._theme().text_field(
+            call_container,
+            call_focused,
+            call_text,
+            call_placeholder,
+            call_caret,
+            call_selection,
+            hovered=state.hovered,
+            focused=state.focused,
+            disabled=off,
         )
-        var typed = _ResolvedStyle()
-        typed.apply(text_look)
-        var hint = _ResolvedStyle()
-        hint.apply(
-            call_placeholder.over(block.text_field_placeholder_style).over(
-                Style(text_color=colors.on_surface_variant).over(text_look)
-            )
-        )
+        var typed = parts.typed
         var look = _text_look(typed, Align.LEFT)
         var left = rect.position.x - rect.width / 2 + padding
         var inner = rect.width - 2 * padding
@@ -881,58 +840,7 @@ struct UILayer[
         buffer.scroll = min(buffer.scroll, max(0.0, whole - inner))
 
         # the field
-        var container_look = call_container.over(
-            block.text_field_container
-        ).over(
-            Style(
-                fill=colors.surface_container_highest,
-                stroke=colors.outline,
-                stroke_thickness=1,
-                corner_radius=self._ui[]._corner_radius / 4,
-            )
-        )
-        var field = _ResolvedStyle()
-        field.apply(container_look)
-        if state.focused and not off:
-            # by default, the outline turns `primary` and twice as thick,
-            # and a field with no outline stays without one
-            var outlined = Style()
-            if field.stroke_enabled:
-                outlined = Style(
-                    stroke=colors.primary,
-                    stroke_thickness=field.stroke_thickness * 2,
-                )
-            field = _ResolvedStyle()
-            field.apply(
-                call_focused.over(block.text_field_focused)
-                .over(outlined)
-                .over(container_look)
-            )
-        if off:
-            var states = self._ui[]._state_layers
-            # the field's own colours, faded: the colours' text colour by
-            # default, and a transparent one stays transparent
-            typed.text_color = _faded(typed.text_color, states.disabled_content)
-            hint.text_color = _faded(hint.text_color, states.disabled_content)
-            if _fills(field):
-                field.fill_color = _faded(
-                    colors.on_surface, states.disabled_container
-                )
-                field.fill_gradient = None
-            field.stroke_color = _faded(
-                colors.on_surface, states.disabled_container
-            )
-        elif (
-            state.hovered
-            and not state.focused
-            and _fills(field)
-            and not field.fill_gradient
-        ):
-            field.fill_color = _stepped(
-                field.fill_color,
-                colors.on_surface,
-                self._ui[]._state_layers.hovered,
-            )
+        var field = parts.container
         var shape = Rectangle(
             rect.position,
             rect.width,
@@ -956,15 +864,7 @@ struct UILayer[
         if state.focused and buffer.selected_text():
             var start = self._measure(buffer.before_selection(), look)
             var width = self._measure(buffer.selected_text(), look)
-            var highlight = _ResolvedStyle()
-            highlight.apply(
-                call_selection.over(block.text_field_selection).over(
-                    Style(
-                        fill=colors.primary.with_alpha(70), stroke_enabled=False
-                    )
-                )
-            )
-            recorder.style = highlight
+            recorder.style = parts.selection
             recorder.draw(
                 Rectangle(
                     Point(origin_x + start + width / 2, y),
@@ -982,7 +882,7 @@ struct UILayer[
             recorder.text(
                 placeholder,
                 Point(left, y),
-                _text_look(hint, Align.LEFT),
+                _text_look(parts.hint, Align.LEFT),
             )
         # the caret: steady for a moment after a change, then blinking
         var since = now - buffer.last_change
@@ -992,13 +892,7 @@ struct UILayer[
             and (since < 0.5 or Int(since * 2) % 2 == 1)
         ):
             var x = origin_x + caret_x
-            var bar = _ResolvedStyle()
-            bar.apply(
-                call_caret.over(block.text_field_caret).over(
-                    Style(stroke=colors.primary, stroke_thickness=2)
-                )
-            )
-            recorder.style = bar
+            recorder.style = parts.caret
             recorder.draw(
                 Line(
                     Point(x, y - typed.font_size * 0.65),
@@ -1047,12 +941,7 @@ struct UILayer[
 
     def _record_ring[S: Geometry](self, shape: S, look: FocusRing):
         ref ui = self._ui[]
-        ui._rings.style = _ResolvedStyle(
-            fill_enabled=False,
-            stroke=look.color.or_else(ui._current_colors().secondary),
-            stroke_thickness=look.thickness,
-            stroke_alignment=StrokeAlign.OUTSIDE,
-        )
+        ui._rings.style = ui._theme().ring()
         ui._rings.draw(shape)
 
     def _measure(self, text: String, look: _ResolvedStyle) raises -> Float64:
@@ -1092,73 +981,33 @@ struct UILayer[
     ) raises -> Bool:
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus)
-        var colors = self._ui[]._current_colors()
-        var look = call_style.over(self._ui[]._current_styles().button).over(
-            _variant_look(variant, colors).over(_label_text())
-        )
-        var resolved = _ResolvedStyle()
-        resolved.apply(look)
-        if off:
-            # Material's disabled look: everything in the text colour,
-            # faded, whatever the variant
-            var states = self._ui[]._state_layers
-            resolved.text_color = _faded(
-                colors.on_surface, states.disabled_content
+        var look = (
+            self._ui[]
+            ._theme()
+            .button(
+                call_style,
+                variant,
+                rect.height,
+                hovered=state.hovered,
+                pressed=state.pressed,
+                disabled=off,
             )
-            if _fills(resolved):
-                resolved.fill_color = _faded(
-                    colors.on_surface, states.disabled_container
-                )
-                resolved.fill_gradient = None
-            if resolved.stroke_enabled:
-                resolved.stroke_color = _faded(
-                    colors.on_surface, states.disabled_container
-                )
-        # a pill at the default corner radius, squaring as it shrinks
-        var roundness = clamp(
-            self._ui[]._corner_radius / _CORNER_RADIUS, 0.0, 1.0
         )
-        var radius = look.corner_radius.or_else(roundness * rect.height / 2)
         var shape = Rectangle(
-            rect.position, rect.width, rect.height, corner_radius=radius
+            rect.position,
+            rect.width,
+            rect.height,
+            corner_radius=look.corner_radius,
         )
         ref recorder = self._ui[]._recorder
-        # a hovered or pressed button steps its fill's lightness towards its
-        # text
-        var step = 0.0
-        if state.pressed:
-            step = self._ui[]._state_layers.pressed
-        elif state.hovered:
-            step = self._ui[]._state_layers.hovered
-        var solid = _fills(resolved) and not resolved.fill_gradient
-        if step > 0 and solid:
-            resolved.fill_color = _stepped(
-                resolved.fill_color, resolved.text_color, step
-            )
-        if _fills(resolved) or resolved.stroke_enabled:
-            recorder.style = resolved
-            if state.pressed and _fills(resolved):
-                # pressed in: a soft shadow along the inside of the top edge
-                recorder.style.shadow_color = _PRESSED_SHADOW
-                recorder.style.shadow_offset = Vector(0, -2)
-                recorder.style.shadow_blur = 4
-                recorder.style.shadow_spread = 0
-                recorder.style.shadow_inset = True
-                recorder.style.shadow_enabled = True
+        if look.body:
+            recorder.style = look.body.value()
             recorder.draw(shape)
-        if step > 0 and not solid:
-            # no solid fill to step: a layer of the text colour, as strong as
-            # the step would be over the surface beneath
-            var opacity = _layer_opacity(
-                self._ui[]._surface_color(), resolved.text_color, step
-            )
-            recorder.style = _ResolvedStyle(
-                fill=resolved.text_color.with_alpha(UInt8(opacity * 255 + 0.5)),
-                stroke_enabled=False,
-            )
+        if look.layer:
+            recorder.style = look.layer.value()
             recorder.draw(shape)
         self._ring_around(shape, state, off)
-        recorder.text(text, rect.position, _text_look(resolved, Align.CENTER))
+        recorder.text(text, rect.position, look.text)
         self._ui[]._called(changed=False)
         return state.clicked or state.activated
 
@@ -1185,36 +1034,16 @@ struct UILayer[
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
-        var colors = ui._current_colors()
-        var block = ui._current_styles()
-        var track_look = call_track.over(block.slider_track).over(
-            Style(
-                stroke=colors.secondary_container,
-                stroke_thickness=4,
-                stroke_cap=StrokeCap.ROUND,
-            )
+        var look = ui._theme().slider(
+            call_track,
+            call_active_track,
+            call_handle,
+            call_handle_outline,
+            hovered=state.hovered,
+            dragging=state.held,
+            disabled=off,
         )
-        var track = _ResolvedStyle()
-        track.apply(track_look)
-        var active = _ResolvedStyle()
-        active.apply(
-            call_active_track.over(block.slider_active_track).over(
-                Style(stroke=colors.primary).over(track_look)
-            )
-        )
-        var handle = _ResolvedStyle()
-        handle.apply(
-            call_handle.over(block.slider_handle).over(
-                Style(stroke=colors.primary, stroke_thickness=20)
-            )
-        )
-        var outline = _ResolvedStyle()
-        outline.apply(
-            call_handle_outline.over(block.slider_handle_outline).over(
-                Style(fill_enabled=False, stroke_enabled=False)
-            )
-        )
-        var knob_radius = handle.stroke_thickness / 2
+        var knob_radius = look.handle.stroke_thickness / 2
         var left = rect.position.x - rect.width / 2 + knob_radius
         var right = rect.position.x + rect.width / 2 - knob_radius
         var y = rect.position.y
@@ -1286,47 +1115,18 @@ struct UILayer[
         if max != min:
             t = clamp((value - min) / (max - min), 0.0, 1.0)
         var handle_x = left + t * (right - left)
-        if off:
-            var states = self._ui[]._state_layers
-            active.stroke_color = _faded(
-                colors.on_surface, states.disabled_content
-            )
-            track.stroke_color = _faded(
-                colors.on_surface, states.disabled_container
-            )
-            # solid, so the track doesn't show through it
-            handle.stroke_color = (
-                self._ui[]
-                ._surface_color()
-                .lerp(colors.on_surface, states.disabled_content)
-            )
         ref recorder = ui._recorder
-        recorder.style = track
+        recorder.style = look.track
         recorder.draw(Line(Point(left, y), Point(right, y)))
         if handle_x > left:
-            recorder.style = active
+            recorder.style = look.active
             recorder.draw(Line(Point(left, y), Point(handle_x, y)))
-        # a hovered or dragged handle is tinted, as a button is
-        var tint = _readable_on(handle.stroke_color)
-        if dragging:
-            handle.stroke_color = _stepped(
-                handle.stroke_color, tint, self._ui[]._state_layers.dragged
-            )
-        elif state.hovered:
-            handle.stroke_color = _stepped(
-                handle.stroke_color, tint, self._ui[]._state_layers.hovered
-            )
-        # a point, as `canvas.point` draws one: round unless square, and
-        # never dashed
-        if handle.stroke_cap != StrokeCap.SQUARE:
-            handle.stroke_cap = StrokeCap.ROUND
-        handle.stroke_dash = StrokeDash.SOLID
         var centre = Point(handle_x, y)
-        recorder.style = handle
+        recorder.style = look.handle
         recorder.draw(Line(centre, centre))
         var knob = Circle(centre, knob_radius)
-        if outline.fill_enabled or outline.stroke_enabled:
-            recorder.style = outline
+        if look.outline.fill_enabled or look.outline.stroke_enabled:
+            recorder.style = look.outline
             recorder.draw(knob)
         self._ring_around(knob, state, off)
         self._ui[]._called(changed=changed)
@@ -1348,43 +1148,21 @@ struct UILayer[
         var state = self._interact(id, rect, off, take_focus)
         if state.clicked or state.activated:
             checked = not checked
-        var colors = self._ui[]._current_colors()
-        var block = self._ui[]._current_styles()
-        var box_look = call_box.over(block.checkbox_box).over(
-            Style(
-                fill_enabled=False,
-                stroke=colors.on_surface_variant,
-                stroke_thickness=2,
-                corner_radius=self._ui[]._corner_radius / 8,
+        var parts = (
+            self._ui[]
+            ._theme()
+            .checkbox(
+                call_box,
+                call_checked_box,
+                call_tick,
+                call_label,
+                checked=checked,
+                hovered=state.hovered,
+                pressed=state.pressed,
+                disabled=off,
             )
         )
-        var look = _ResolvedStyle()
-        if checked:
-            look.apply(
-                call_checked_box.over(block.checkbox_checked_box).over(
-                    Style(fill=colors.primary, stroke_enabled=False).over(
-                        box_look
-                    )
-                )
-            )
-        else:
-            look.apply(box_look)
-        var tick = _ResolvedStyle()
-        tick.apply(
-            call_tick.over(block.checkbox_tick).over(
-                Style(
-                    stroke=colors.on_primary,
-                    stroke_thickness=2,
-                    stroke_cap=StrokeCap.ROUND,
-                )
-            )
-        )
-        var text = _ResolvedStyle()
-        text.apply(
-            call_label.over(block.checkbox_label_style).over(
-                Style(text_color=self._ui[]._content_color()).over(_body_text())
-            )
-        )
+        var look = parts.box
         comptime size = 18.0
         var left = rect.position.x - rect.width / 2
         # the box against the left edge, the label a gap after it
@@ -1392,48 +1170,17 @@ struct UILayer[
         var box = Rectangle(
             centre, size, size, corner_radius=look.corner_radius
         )
-        if off:
-            var faded = _faded(
-                colors.on_surface, self._ui[]._state_layers.disabled_content
-            )
-            if _fills(look):
-                look.fill_color = faded
-                look.fill_gradient = None
-            look.stroke_color = faded
-            tick.stroke_color = self._ui[]._surface_color()
-            text.text_color = faded
-        # a hovered or pressed box is tinted, as a button is: a filled one
-        # towards its tick, an empty one with the text colour inside it
-        var step = 0.0
-        if state.pressed:
-            step = self._ui[]._state_layers.pressed
-        elif state.hovered:
-            step = self._ui[]._state_layers.hovered
-        if step > 0:
-            if _fills(look) and not look.fill_gradient:
-                look.fill_color = _stepped(
-                    look.fill_color, tick.stroke_color, step
-                )
-            elif not _fills(look):
-                var layer = _layer_opacity(
-                    self._ui[]._surface_color(), colors.on_surface, step
-                )
-                look.fill_color = colors.on_surface.with_alpha(
-                    UInt8(layer * 255 + 0.5)
-                )
-                look.fill_gradient = None
-                look.fill_enabled = True
         ref recorder = self._ui[]._recorder
         recorder.style = look
         recorder.draw(box)
         if checked:
-            recorder.style = tick
+            recorder.style = parts.tick
             var corner = centre + Vector(-1.5, -4.0)
             recorder.draw(Line(centre + Vector(-5.0, 0.5), corner))
             recorder.draw(Line(corner, centre + Vector(5.0, 5.0)))
         self._ring_around(box, state, off)
         var text_left = Point(left + size + 12, rect.position.y)
-        recorder.text(label, text_left, _text_look(text, Align.LEFT))
+        recorder.text(label, text_left, parts.text)
         self._ui[]._called(changed=state.clicked or state.activated)
 
     def _interact(
@@ -1616,104 +1363,6 @@ def _anchor(rect: Rectangle, alignment: Align) -> Point:
     return Point(x, y)
 
 
-def _text_look(style: _ResolvedStyle, alignment: Align) -> _ResolvedStyle:
-    """Only the text parts of `style`, placed by `alignment`: the text drawn
-    on a widget, which leaves the widget's fill, stroke and shadow to the
-    shape beneath it."""
-    var look = _ResolvedStyle()
-    look.text_color = style.text_color
-    look.font = style.font
-    look.font_size = style.font_size
-    look.font_weight = style.font_weight
-    look.font_italic = style.font_italic
-    look.tint = style.tint
-    look.opacity = style.opacity
-    look.blend_mode = style.blend_mode
-    look.text_alignment = alignment
-    return look^
-
-
-def _fills(style: _ResolvedStyle) -> Bool:
-    """Whether `style` paints a fill that shows: switched on, and either a
-    gradient or a colour that isn't transparent."""
-    return style.fill_enabled and (
-        Bool(style.fill_gradient) or style.fill_color.a > 0
-    )
-
-
-def _variant_look(variant: ButtonVariant, colors: ColorScheme) -> Style:
-    """How a button of `variant` looks in `colors`, before its own style:
-    the fill behind it, its outline and its text's colour. Each carries the
-    outline's colour, so a style that gives only a thickness gets it."""
-    if variant == ButtonVariant.TONAL:
-        return Style(
-            fill=colors.secondary_container,
-            stroke=colors.outline,
-            stroke_enabled=False,
-            text_color=colors.on_secondary_container,
-        )
-    if variant == ButtonVariant.OUTLINED:
-        return Style(
-            fill_enabled=False,
-            stroke=colors.outline,
-            stroke_thickness=1,
-            text_color=colors.primary,
-        )
-    if variant == ButtonVariant.TEXT:
-        return Style(
-            fill_enabled=False,
-            stroke=colors.outline,
-            stroke_enabled=False,
-            text_color=colors.primary,
-        )
-    return Style(
-        fill=colors.primary,
-        stroke=colors.outline,
-        stroke_enabled=False,
-        text_color=colors.on_primary,
-    )
-
-
-def _size(type: Style) -> Float64:
-    """The size `type` sets its text in: a fresh frame's when unset."""
-    return type.font_size.or_else(16.0)
-
-
-def _stepped(base: Color, toward: Color, step: Float64) -> Color:
-    """`base` with its OKLCH lightness moved `step` towards `toward`'s,
-    keeping its chroma and hue: a hovered or pressed widget's colour. A step
-    of lightness looks like the same change on any colour, so every widget
-    shows its state about as clearly, a pale fill as much as a dark one."""
-    var at = base.to_oklch()
-    var target = toward.to_oklch()[0]
-    var lightness = at[0] + step if target > at[0] else at[0] - step
-    return Color.oklch(lightness, at[1], at[2]).with_alpha(base.a)
-
-
-def _layer_opacity(base: Color, layer: Color, step: Float64) -> Float64:
-    """The opacity at which `layer`, drawn over `base`, moves its OKLCH
-    lightness by `step`: for a widget with no fill of its own, such as an
-    outlined button, whose state is a translucent layer over the surface."""
-    var start = base.to_oklch()[0]
-    var reach = abs(layer.to_oklch()[0] - start)
-    if reach <= step:
-        return 1.0
-    var low = 0.0
-    var high = 1.0
-    for _ in range(16):
-        var middle = (low + high) / 2
-        if abs(base.lerp(layer, middle).to_oklch()[0] - start) >= step:
-            high = middle
-        else:
-            low = middle
-    return high
-
-
-def _faded(color: Color, opacity: Float64) -> Color:
-    """`color` at `opacity` of its own alpha."""
-    return color.with_alpha(UInt8(Float64(color.a) * opacity + 0.5))
-
-
 struct DisabledGuard[origin: Origin[mut=True]](Movable):
     """Ends the `ui.disabled` block it was made for, on scope exit. Only
     `ui.disabled` builds one."""
@@ -1733,41 +1382,6 @@ struct DisabledGuard[origin: Origin[mut=True]](Movable):
     def __exit__(mut self):
         if self._active:
             self._ui[]._disabled_depth -= 1
-
-
-def _content_on(colors: ColorScheme, color: Color) -> Color:
-    """The colour for text on `color`: its `on_` partner when it is one of
-    the scheme's roles, otherwise black or white, whichever reads better."""
-    if color == colors.primary:
-        return colors.on_primary
-    if color == colors.primary_container:
-        return colors.on_primary_container
-    if color == colors.secondary:
-        return colors.on_secondary
-    if color == colors.secondary_container:
-        return colors.on_secondary_container
-    if color == colors.tertiary:
-        return colors.on_tertiary
-    if color == colors.tertiary_container:
-        return colors.on_tertiary_container
-    if color == colors.error:
-        return colors.on_error
-    if color == colors.error_container:
-        return colors.on_error_container
-    if color == colors.background:
-        return colors.on_background
-    if (
-        color == colors.surface
-        or color == colors.surface_dim
-        or color == colors.surface_bright
-        or color == colors.surface_container_lowest
-        or color == colors.surface_container_low
-        or color == colors.surface_container
-        or color == colors.surface_container_high
-        or color == colors.surface_container_highest
-    ):
-        return colors.on_surface
-    return _readable_on(color)
 
 
 struct ColorsGuard[origin: Origin[mut=True]](Movable):

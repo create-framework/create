@@ -10,8 +10,9 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 
 | File | Role |
 |---|---|
-| `ui.mojo` | `UI`: the state kept between frames (the widgets seen, focus, the held widget, text buffers, scope stacks, the device claims), its settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), the layer's colours, the per-frame reset in `_begin_layer`, Tab and gamepad navigation, `ui.screen` and `ui.world`; `_Hit`, a widget's place for hit-testing; `_Styles`, the merged `ui.style` blocks |
+| `ui.mojo` | `UI`: the state kept between frames (the widgets seen, focus, the held widget, text buffers, scope stacks, the device claims), its settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), the layer's colours, the per-frame reset in `_begin_layer`, Tab and gamepad navigation, `ui.screen` and `ui.world`; `_Hit`, a widget's place for hit-testing; `_theme()`, the `_Theme` a widget called here is drawn in |
 | `layer.mojo` | `UILayer`, the handle a layer's block gets: every widget, `_interact` (what the pointer and keys did to a widget), the focus ring, `ui.draw`, the scopes and panels, and the guards their `with` blocks return |
+| `_theme.mojo` | `_Theme`: the colours, the merged `ui.style` blocks (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
 | `_id.mojo` | Widget IDs: a call site's file, line and column, mixed into the keys of the open `ui.id` blocks |
 | `_layout.mojo` | `_Layout`, an open panel, column or row, and how it hands out the slots of the widgets called inside it |
 | `_key.mojo` | `_WidgetKey`, the `id=` keyword, which takes any `Hashable` key, a literal or `None` in one implicit conversion |
@@ -102,6 +103,12 @@ panel have one part; a slider, a checkbox and a text field have several, each a 
 it is drawn as: a slider's track is a `Line`, so its stroke is the track; its handle is a point, a
 zero-length round-capped `Line` as `canvas.point` draws it, so its stroke thickness is the handle's
 diameter.
+
+**A widget's look is worked out from a `_Theme` and its state, with no `UI`.** `UI._theme()` gathers
+what decides it where the widget is called (the colours, the `ui.style` blocks, the settings and the
+surface), and the theme's method for the widget (`button`, `slider`, …) resolves every part for the
+widget's state: hovered, pressed, dragged, focused or disabled. The layer only places and draws the
+parts. `_Theme.default()` is what a widget is drawn in outside any `UI`.
 
 A part's look is resolved when it is drawn: `call.over(block).over(defaults)`. `block` is the
 innermost `ui.style` block's style for that part (each block is stored already layered over the ones
