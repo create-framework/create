@@ -1,5 +1,5 @@
-"""Internal: focus as a tree hands it to a widget, and the gamepad reading
-and geometry focus moves by, shared by the widget tree and the old `UI`."""
+"""Internal: focus as a `UI` hands it to a widget, and the gamepad reading
+and geometry focus moves by."""
 
 from create.core import Context
 from create.input import Gamepad, GamepadButton

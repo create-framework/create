@@ -8,9 +8,9 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Sl
 |---|---|
 | [`UI`](ui.md) | Widgets kept together: added once, then updated and drawn each frame in one call each. |
 | [`WidgetHandle`](widgethandle.md) | Where a widget of type `W` is in a `UI`: what `ui.add` returns, and how the program reaches the widget again, as `ui[handle]`. |
-| [`ColorScheme`](colorscheme.md) | The colours widgets are drawn in, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. A program keeps its scheme in a field, passes it to `ui.screen` or `ui.world`, and draws its own things in it, such as `canvas.background(self.colors.background)`. |
+| [`ColorScheme`](colorscheme.md) | The colours widgets are drawn in, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. A program gives its scheme to a `UI` with `ui.colors(scheme)`, and draws its own things in it too, such as `canvas.background(scheme.background)`. |
 | [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
-| [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
+| [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `ui.focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`Button`](button.md) | A button with a line of text on it, which the mouse clicks. |
 | [`ButtonVariant`](buttonvariant.md) | Which of the colours a button is drawn in. |
 | [`Checkbox`](checkbox.md) | A box against the left edge of a rectangle, ticked while `checked`, with text beside it. A click anywhere in the rectangle ticks or unticks it. |

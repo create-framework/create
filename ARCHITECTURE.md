@@ -22,7 +22,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `ui` | `src/create/ui/` | `UI` (the widgets' state, kept from frame to frame), `UILayer` (the handle a `ui.screen` block draws widgets with), the guards of its `with` blocks (`IDGuard`, `DisabledGuard`, `ColorsGuard`, `WidgetStyleGuard`, `PanelGuard`, `LayoutGuard`), `ColorScheme` (the colours a layer is drawn in) with `StateLayers` and `FocusRing`, and `ButtonVariant` and `TextEditor` (every widget is styled with `render`'s `Style`, one for each of its parts); widget IDs from call sites, the recorder that draws a layer in call order, and the text editing behind `text_field` (`_TextBuffer`) |
+| `ui` | `src/create/ui/` | The widgets, each a value a program updates and draws with `canvas.draw` (`Button`, `Checkbox`, `Slider`, `TextField`, `Label`, `Panel`, with `ButtonVariant`), and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, the tree that keeps widgets together, lays them out (`Column`, `Row`, `Space`), moves focus between them and shares the devices with other `UI`s, reached through `WidgetHandle`s; `ColorScheme` (the colours widgets are drawn in) with `StateLayers` and `FocusRing`; the theme a widget's look is resolved from, and the text editing behind `TextField` (`_TextBuffer`) |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_optional` | `src/create/_optional.mojo` | Internal leaf: `_OptionalFloat64`, the type behind optional number keywords such as `corner_radius=8`, which takes an integer, a `Float64` or `None` |
@@ -74,7 +74,7 @@ The packages form layers, and a package imports only from the layers below it:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
-| UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `image`, `text`, `math`, `_optional` |
+| UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
@@ -94,7 +94,6 @@ flowchart TD
     ui --> color
     ui --> text
     ui --> input
-    ui --> image
     ui --> math
     core --> _window
     core --> math
@@ -119,10 +118,11 @@ flowchart TD
 
 The rules behind it, and what each one buys:
 
-- **`ui`** is the top layer, and nothing imports it. It needs `core` for the `Context` its layers
-  read the frame and the pointer from, `render` for the canvas they draw on, `geometry` and `math`
-  for the widgets' rectangles and hit-testing, `color` and `text` for the widgets' colours and text,
-  and `image` for the `image` widget.
+- **`ui`** is the top layer, and nothing imports it. It needs `core` for the `Context` a widget's
+  `update` reads the input and the frame from, `render` for the canvas widgets draw on and the
+  `Drawable` trait they conform to, `input` for the keys and buttons focus moves by, `geometry` and
+  `math` for the widgets' rectangles and hit-testing, and `color` and `text` for their colours and
+  text. An image in a `UI` is `render`'s `Picture`, so `ui` doesn't name `image`.
 - **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
   `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library`, `_optional` and `_path`,
   so it works without a run loop. The settings that map the design onto the window therefore reach
@@ -252,6 +252,7 @@ Where a package's internals need explaining, its README does so:
   and how each feature (gradients, curves, clips, shadows, text, …) reaches them.
 - [`src/create/core/README.md`](src/create/core/README.md): the run loops, their order at startup,
   and how events, the window's settings and the clipboard flow.
-- [`src/create/ui/README.md`](src/create/ui/README.md): how a frame goes, hit-testing, widget IDs,
-  focus and the device claims, and how styles and state colours are resolved.
+- [`src/create/ui/README.md`](src/create/ui/README.md): a widget's update and look, how a `UI` lays
+  out, hit-tests and draws its widgets, focus and the device claims, and how styles and state
+  colours are resolved.
 - [`tests/README.md`](tests/README.md): how tests are written and run, and how the GPU is covered.

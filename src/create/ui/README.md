@@ -1,16 +1,17 @@
 # `create.ui` internals
 
-`create.ui` draws widgets and keeps the state they need from frame to frame. A widget is a call made
-every frame inside a layer's `with` block; the `UI` the program keeps holds everything that outlives
-the call. This page is for working on the package: the [user
-guide](../../../docs/guide/ui/README.md) covers using it, and
-[ARCHITECTURE.md](../../../ARCHITECTURE.md) where it sits and the layering rules.
+`create.ui` is the widgets and the `UI` that keeps them together. A widget is a value: the program
+keeps it, calls its `update` with the frame's input, draws it with `canvas.draw`, and asks it what
+happened. A `UI` holds built-in widgets in a tree, and updates, lays out and draws them in one call
+each. This page is for working on the package: the [user guide](../../../docs/guide/ui/README.md)
+covers using it, and [ARCHITECTURE.md](../../../ARCHITECTURE.md) where it sits and the layering
+rules.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `_theme.mojo` | `_Theme`: the colours, the merged `ui.style` blocks (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
+| `_theme.mojo` | `_Theme`: the colours, the `ui.style` styles (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
 | `tree.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children and whether the tree enables it; `WidgetHandle`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
@@ -25,121 +26,109 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `button.mojo` | `Button`, a widget value; `ButtonVariant`. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
 | `text_field.mojo` | `TextField`, a widget value that owns a `_TextBuffer` and its own focus; `_measure` and `_offset_at`, how it measures text to place its caret |
 
-## How a frame goes
+## A widget on its own
 
-**The first layer of a frame resets the per-frame state.** `ui.screen` and `ui.world` both call
-`_begin_layer`, which recognises a new frame by `context.frame_count()`. Several layers in one frame
-share the call-site counts, the hit list and focus, so the reset happens once, at the first. It:
+**`update` reads the input; `draw_to` only draws.** A widget's `update(context, canvas)` finds the
+pointer with `canvas.to_local`, so a widget under a camera or a transform is hit where it is drawn,
+and feeds it to the widget's `_Pointer`, which keeps whether it is hovered and held and this frame's
+press and click. It then resolves the widget's look for that state from a `_Theme` and keeps it, so
+`draw_to` only places the parts and draws each in its resolved style through `canvas._with_style`.
+Hover shows in the frame it happens. Anything that can fail, such as measuring text, happens in
+`update`, since `draw_to` can't raise.
 
-1. swaps this frame's hits into `_last_hits`, and works out `_hot`, the topmost widget under the
-   pointer, from them;
-2. lets go of the held widget once the button is up, and of focus when its widget wasn't called last
-   frame, Escape or a gamepad's east button was pressed, or a click landed on nothing focusable;
-3. moves focus for Tab and for a d-pad or stick push;
-4. drops the text buffers of fields not called last frame, switches `context.text_input` when focus
-   moved onto or off a text field, and renews or releases the device claims.
+**Each widget's public `update` calls a private `_update`** with `_Theme.default()` and no tree. A
+`UI` calls `_update` itself, with its own theme, whether the widget is the topmost under the pointer
+(`free`), what its focus means for it (`_Focus`) and whether its part of the tree is disabled. A
+widget's own `enabled` field is left as the program set it: the tree's `disabled` is a separate
+argument, so enabling a part of the tree again restores each widget as it was.
 
-**Hit-testing uses the previous frame's widgets.** A widget learns whether it is hovered when it is
-called, before the widgets called after it have said where they are, so this frame's hits can't
-decide it. Last frame's hits, in drawing order across every layer, can: the last one containing the
-pointer is on top. A widget is therefore hoverable from its second frame. Each `_Hit` keeps the
-transform that takes a screen point into its layer's space, so world layers are hit-tested through
-their camera.
+## The tree
 
-**A layer draws when its block ends.** Widgets draw into the `UI`'s `_Recorder`, never onto the
-canvas. `UILayer.__exit__` adds the focus ring last, so nothing covers it, then replays everything
-in call order: inside `canvas.overlay()` for a screen layer, or through the `_View` (camera and
-transform) recorded when a world layer opened. Clips nest: `_ClipBegin` and `_ClipEnd` commands
-replay through a recursive `_replay_from`, each inside the canvas's own clip guard.
+`UI` (`tree.mojo`) keeps its widgets as `_Node`s: a `_Widget`, a `Variant` of every built-in kind
+and the layout nodes, with a parent and children. The `Variant` is storage only. Three methods are
+the only code that knows which kinds it holds, each matching a node's kind and handing it to that
+kind's own fields and methods: `_describe` (what layout, hit-testing and focus need to know about a
+node: its kind, rect, whether it takes the pointer or focus, its ring), `_draw`, and `_dispatch_mut`
+(update, measure, place). A new kind needs a branch in each and nothing else. Reading and changing
+are separate methods because each needs the tree and the canvas differently. The public API never
+shows the `Variant`: `ui.add` returns a typed `WidgetHandle[W]`, and `ui[handle]` is a reference to
+the `W` inside it.
+
+**`update` runs in a fixed order:**
+
+1. lay out every node (below);
+2. find the topmost node under the pointer, walking the drawing order backwards, unless another `UI`
+   holds the mouse;
+3. move focus for this frame's clicks, Tab, Escape and gamepad (below);
+4. update every node in drawing order, a parent before what is inside it, each with its theme: a
+   panel passes its surface and content colours down to what is inside it;
+5. renew or release the device claims.
+
+`draw_to` draws every node in the same order, then the focus ring, so nothing covers it.
 
 ## Layout
 
-**A widget called without a rect is placed by the innermost open column or row.** `UI._layouts` is a
-stack of `_Layout`s: `ui.panel`, `ui.column` and `ui.row` each push one, and their guards pop it. A
-widget's public method resolves its rect through `UILayer._place` before it calls its body, so the
-body, the hit-testing and the ID never see the difference. A column hands out strips from its `top`
-edge down, each as tall as the widget asks: the `UI`'s `control_height`, or one and a half times a
-label's text size. A row is cut into its slots when it opens, with `Rectangle.columns`.
-
-**Layout is one pass.** Every slot is known when it is asked for, so a widget knows where it is when
-it is called, and answers in the same frame. The cost is that nothing can be sized from what is
-inside it, such as a panel fitted round its widgets: that would need the sizes of widgets not yet
-called. A panel hands out no slots, only its inside, inset, to a column or row opened directly in
-it.
-
-## IDs
-
-A widget's ID is its call site, mixed into the key of the innermost open `ui.id` block, then mixed
-with how many times that site has run this frame. Every public widget is `@always_inline` and calls
-`call_location()` in its own body, so the site is the program's line, not the library's. A helper
-the library calls would see its own line instead, so every widget method keeps that call in the
-public method and hands the ID to a non-inline `_`-named body. A widget's state is kept under its ID
-in the `UI`; text buffers are dropped when their ID isn't seen for a frame.
-
-## The widget called last
-
-A value widget returns nothing; what it did is read afterwards. Each reacting widget's body ends by
-calling `UI._called`, which records whether it changed its value, whether Enter was pressed in it
-and, for a text field, its ID. `ui.changed()`, `ui.submitted()` and `ui.text_editor()` read those
-back, and the first layer of a frame clears them. A `TextEditor` edits the field's buffer and marks
-it `edited`; the field's next call then hands the buffer's text to the program, rather than taking
-the program's text in, and reports the change.
+**Layout is two passes, every frame, before hit-testing.** First every node is measured, from what
+is inside it outwards: walking the drawing order backwards reaches every child before its parent. A
+widget's `_measure` gives the size it prefers in the theme (a control `control_height` tall, a label
+one and a half times its text size); a column sums its children's heights with its gaps, a row their
+widths, and a panel with no size fits round the column or row inside it. Then every node is placed,
+from the top level in: a column hands strips down its width, a row cuts its width with
+`Rectangle.columns`, and a panel hands its inside, inset by twice the `spacing`, to a column or row
+inside it. A node added with no size (`_UNSIZED`) is marked `sized_by_ui` and given its preferred
+size every frame, unless its parent places it.
 
 ## Focus and the devices
 
-The `UI` keeps one focused ID, and how it got there: `_focus_visible` (from the keyboard, a gamepad
-or `take_focus`, so a ring shows), `_focused_takes_typing` (a text field) and `_focus_from_gamepad`.
-Keys act on the focused widget only when focus is visible and not from a gamepad, so a game's own
-keys keep working after a click, and a split-screen pad doesn't take the keyboard.
+The `UI` keeps one focused node and how focus got there: `_focus_visible` (from the keyboard, a
+gamepad or `ui.focus`, so a ring shows) and `_focus_from_gamepad`. `_navigate` moves it before any
+widget acts, and `_focus_for` tells each node what focus means for it as a `_Focus`: whether keys
+act on it (focus visible, not from a gamepad, and the keyboard not held by another `UI`), whether
+Enter, Space or the south button activated it, and which way a gamepad stepped a slider. A
+`TextField` on its own keeps its own focus; in a tree, it takes the tree's.
 
 **Several `UI`s take turns at the keyboard and mouse** through an opaque claim on each device
-(`input`'s `_Claim`). A `UI` gets a claimant number from `Context._new_claimant()` when it first
-opens a layer, claims the keyboard while `_holds_keys()` and the mouse while a widget is held, and
-renews the claims every frame. A claim not renewed for a frame lapses, so a `UI` that stops drawing
-can't hold a device. A `UI` that sees a device claimed by another ignores it.
+(`input`'s `_Claim`). A `UI` gets a claimant number from `Context._new_claimant()` on its first
+`update`, claims the keyboard while `_holds_keys()` and the mouse while a widget is held, and renews
+the claims every frame. A claim not renewed for a frame lapses, so a `UI` that stops updating can't
+hold a device. A `UI` that sees a device claimed by another ignores it.
 
 ## Styling
 
 **Every part of a widget is a shape drawn in a `Style`,** `render`'s own. A button, a label and a
-panel have one part; a slider, a checkbox and a text field have several, each a keyword of the call
-(`handle=`) and of `ui.style` (`slider_handle=`). What a part's style means follows from the shape
-it is drawn as: a slider's track is a `Line`, so its stroke is the track; its handle is a point, a
-zero-length round-capped `Line` as `canvas.point` draws it, so its stroke thickness is the handle's
-diameter.
+panel have one part; a slider, a checkbox and a text field have several, each a field of the widget
+(`handle`) and a keyword of `ui.style` (`slider_handle=`). What a part's style means follows from
+the shape it is drawn as: a slider's track is a `Line`, so its stroke is the track; its handle is a
+point, a zero-length round-capped `Line` as `canvas.point` draws it, so its stroke thickness is the
+handle's diameter.
 
-**A widget's look is worked out from a `_Theme` and its state, with no `UI`.** `UI._theme()` gathers
-what decides it where the widget is called (the colours, the `ui.style` blocks, the settings and the
-surface), and the theme's method for the widget (`button`, `slider`, …) resolves every part for the
-widget's state: hovered, pressed, dragged, focused or disabled. The layer only places and draws the
-parts. `_Theme.default()` is what a widget is drawn in outside any `UI`.
-
-A part's look is resolved when it is drawn: `call.over(block).over(defaults)`. `block` is the
-innermost `ui.style` block's style for that part (each block is stored already layered over the ones
-outside it, in `_Styles`), and `defaults` is built from the colours, the innermost `ui.colors`
-block's or the layer's, and from the `UI`'s settings, such as its `corner_radius`. `Style.over`
-means applying the base and then the style, so a part named on top switches on what the defaults
-switched off. One part can take what it leaves unset from another: a slider's active track from its
-track, a checkbox's ticked box from its box, a text field's placeholder from its text and its
-focused look from its container. The result is resolved into a `_ResolvedStyle` and recorded. A
-widget's text keeps only the text parts of its style (`_text_look`), so a shadow or outline given to
-a button belongs to its shape, not its letters. Panels push a content colour (their style's
-`text_color`, or the `on_` partner of their fill), which labels and checkbox labels use unless their
-style sets one.
+**A widget's look is resolved from a `_Theme` and its state.** `_Theme` (`_theme.mojo`) holds the
+colours, the `ui.style` styles (`_Styles`), the settings and the surface the widget sits on, and one
+method per widget (`button`, `slider`, …) resolves every part for the widget's state: hovered,
+pressed, dragged, focused or disabled. A part's look is `own.over(kind).over(defaults)`: the
+widget's own style for the part, over the `UI`'s style for that kind, over the defaults built from
+the colours and settings. `Style.over` means applying the base and then the style, so a part named
+on top switches on what the defaults switched off. One part can take what it leaves unset from
+another: a slider's active track from its track, a checkbox's ticked box from its box, a text
+field's placeholder from its text and its focused look from its container. A widget's text keeps
+only the text parts of its style (`_text_look`), so a shadow or outline given to a button belongs to
+its shape, not its letters.
 
 **State colours step OKLCH lightness.** A hovered, pressed or dragged part's paint, its fill for a
-region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the `UI`'s
+region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the
 `StateLayers` step towards its text colour, its chroma and hue kept. A widget with no fill of its
 own draws a translucent layer whose opacity `_layer_opacity` chooses to move the surface's lightness
-by the same step. The surface is what the widget sits on: the innermost panel's fill
-(`UI._surface_color`), or the colours' `surface` outside any panel; disabled parts drawn solid, such
-as a slider's handle, are mixed from it too. Disabled widgets fade their colours by `_faded`, which
-scales the colour's own alpha, so a transparent colour stays transparent.
+by the same step. The surface is what the widget sits on: the innermost panel's fill, or the
+colours' `surface` outside any panel; disabled parts drawn solid, such as a slider's handle, are
+mixed from it too. Disabled widgets fade their colours by `_faded`, which scales the colour's own
+alpha, so a transparent colour stays transparent.
 
 ## Testing
 
-Tests in `tests/ui/` build a `UI`, a `Context` and an offscreen `Canvas` directly, and feed input
-through the devices' `_` methods between frames, with the helpers in `tests/ui/_input.mojo`
-(`next_frame`, `point_at`, `press`, `release`, `press_key`, `connect_pad`, `press_pad`). A widget is
-hoverable from its second frame, so a test of the pointer draws a frame first, then acts. Tests
-reach internals such as `ui._focused` and `ui._hits` by path; the pixel tests read colours with
+Tests in `tests/ui/` build widgets or a `UI`, a `Context` and an offscreen `Canvas` directly, and
+feed input through the devices' `_` methods between frames, with the helpers in
+`tests/ui/_input.mojo` (`next_frame`, `point_at`, `press`, `release`, `press_key`, `connect_pad`,
+`press_pad`). A widget answers in the frame it is updated, so a test sets the input, updates, then
+asks. A fresh `Context` has the mouse at the origin, so a test that wants nothing hovered points
+away first. Tests reach internals such as `ui._focused` by path; the pixel tests read colours with
 `canvas.color_at`.

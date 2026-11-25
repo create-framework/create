@@ -8,9 +8,9 @@ from create.color import Color
 struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The colours widgets are drawn in, as pairs of roles: each colour a
     widget is filled with, and the `on_` colour for text and icons drawn on
-    it, chosen to read well together. A program keeps its scheme in a field,
-    passes it to `ui.screen` or `ui.world`, and draws its own things in it,
-    such as `canvas.background(self.colors.background)`.
+    it, chosen to read well together. A program gives its scheme to a `UI`
+    with `ui.colors(scheme)`, and draws its own things in it too, such as
+    `canvas.background(scheme.background)`.
 
     - **`primary`** is for the most important actions, such as a filled
       button; **`secondary`** and **`tertiary`** for less prominent ones and
@@ -489,7 +489,7 @@ struct StateLayers(Copyable, ImplicitlyCopyable, Movable, Writable):
 @fieldwise_init
 struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The ring drawn around a widget focused from the keyboard, a gamepad
-    or `take_focus`: its `thickness`, the `gap` between it and the widget,
+    or `ui.focus`: its `thickness`, the `gap` between it and the widget,
     and its `color`, the scheme's `secondary` unless given. It follows the
     widget's shape, its corners rounded by the widget's own radius grown by
     the gap."""

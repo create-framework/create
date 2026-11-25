@@ -53,12 +53,12 @@ page:
 | [pixels](docs/guide/drawing/pixels.md) | `color_at`, `snapshot`, `PixelBuffer`, `image.pixel` |
 | [input](docs/guide/interaction/input.md) | what all devices share: `down`/`pressed`/`released`, focus loss, `from_name` |
 | [keyboard](docs/guide/interaction/keyboard.md) | `Key`, keys by position, modifiers, key bindings |
-| [typing](docs/guide/interaction/typing.md) | `keyboard.text`, `typed`, `text_input`, `text_field`, the clipboard |
+| [typing](docs/guide/interaction/typing.md) | `keyboard.text`, `typed`, `text_input`, `TextField`, the clipboard |
 | [mouse](docs/guide/interaction/mouse.md) | `Mouse`, `MouseButton`, picking under the pointer, `lock_mouse`, `Cursor` |
 | [gamepads](docs/guide/interaction/gamepads.md) | `Gamepad`, `GamepadButton`, sticks, triggers, rumble |
-| [widgets](docs/guide/ui/widgets.md) | the `ui` package: `UI`, `ui.screen`/`ui.world` layers, `button`, `slider`, `checkbox`, `label`, `image`, laying widgets out with `column`, `row` and `space`, widget IDs and `ui.id`, `ui.draw`, disabled widgets |
-| [focus and navigation](docs/guide/ui/focus.md) | focus, `take_focus`, Tab and keys on widgets, gamepad navigation, focus rings, `wants_keyboard`/`wants_mouse`, several `UI`s |
-| [themes and styling](docs/guide/ui/themes.md) | `ColorScheme` and its roles, a program's `colors` passed to `ui.screen`/`ui.world`, `ColorScheme.from_seed`, the `UI`'s settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), styling widgets with `Style` (one keyword per part, each part a shape), `ui.style`/`ui.colors` blocks, panels |
+| [widgets](docs/guide/ui/widgets.md) | the `ui` package: widgets as values (`Button`, `Checkbox`, `Slider`, `Label`, `Panel`), `update` then `canvas.draw`, `pressed`/`down`/`released`/`changed`, the `UI` tree with `add`, `WidgetHandle`, `ui[handle]` and `ui.get`, screen or world by `canvas.overlay()`, laying out with `Column`, `Row` and `Space`, drawing your own things among widgets, disabled widgets and `ui.enabled` |
+| [focus and navigation](docs/guide/ui/focus.md) | focus in a `UI`, `ui.focus`/`clear_focus`/`has_focus`, Tab and keys on widgets, gamepad navigation, focus rings, `wants_keyboard`/`wants_mouse`, several `UI`s |
+| [themes and styling](docs/guide/ui/themes.md) | `ColorScheme` and its roles, `ui.colors`, `ColorScheme.from_seed`, the `UI`'s settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), styling a widget with `Style` (one keyword per part, each part a shape), `ui.style` for every widget of a kind, panels |
 | [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
 | [tweens](docs/guide/motion/tweens.md) | `Tween` |
 | [animations](docs/guide/motion/animations.md) | `Animation` and `Animator` |
