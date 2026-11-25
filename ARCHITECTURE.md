@@ -143,31 +143,31 @@ those leaves and which no package here imports:
 
 ```mermaid
 flowchart TD
-    ui --> app
-    ui --> render
-    ui --> geometry
-    ui --> color
-    ui --> text
-    ui --> input
+    image --> color
     ui --> math
     app --> _window
-    app --> math
-    app --> render
-    app --> image
-    app --> input
-    app --> time
-    render --> math
-    render --> text
-    render --> geometry
     render --> color
-    render --> image
-    render --> animation
-    animation --> image
-    animation --> math
+    app --> render
+    ui --> color
+    render --> geometry
+    ui --> render
+    render --> math
+    app --> input
     animation --> time
+    animation --> image
     geometry --> math
-    image --> color
+    render --> animation
+    render --> image
+    render --> text
+    ui --> geometry
+    app --> time
+    ui --> input
+    app --> math
+    ui --> text
+    app --> image
+    animation --> math
     input --> math
+    ui --> app
 ```
 
 The rules behind it, and what each one buys:
