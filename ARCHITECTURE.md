@@ -77,7 +77,7 @@ further in and from the leaves; within a layer, `app` imports `input` and `anima
 | Layer | Packages | Import from `create` |
 |---|---|---|
 | UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
-| Application | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, its own `_window`, `_path`, `_native`; `input`: `math` |
+| Application | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, `_path`, `_native`; `input`: `math` |
 | Rendering | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
 | Media and data | `image`, `text`, `audio`, `animation`, `data` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path`; `data`: `_path` |
 | Core | `math`, `color`, `time`, `geometry` | `math`, `color` and `time`: nothing; `geometry`: `math`, `_optional` |
@@ -145,7 +145,6 @@ those leaves and which no package here imports:
 flowchart TD
     image --> color
     ui --> math
-    app --> _window
     render --> color
     app --> render
     ui --> color
