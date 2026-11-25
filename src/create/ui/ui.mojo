@@ -14,6 +14,7 @@ from ._recorder import _Recorder
 from ._text_buffer import _TextBuffer
 from .layer import UILayer
 from .colors import ColorScheme, FocusRing, StateLayers
+from ._navigation import _nearest, _pad_pressed, _pad_push
 from ._theme import (
     _CONTROL_HEIGHT,
     _CORNER_RADIUS,
@@ -526,43 +527,15 @@ struct UI(Movable):
             or self._focused_takes_typing
         )
 
-    def _pads(self, context: Context) -> List[Gamepad]:
-        """The gamepads that drive this UI: its player's, or every one."""
-        if self._player:
-            return [context.gamepad(self._player.value())]
-        return context._gamepads._slots.copy()
-
     def _pad_pressed(self, context: Context, button: GamepadButton) -> Bool:
         """Whether `button` went down this frame on a pad that drives this
         UI."""
-        for pad in self._pads(context):
-            if pad.connected and pad.pressed(button):
-                return True
-        return False
+        return _pad_pressed(context, self._player, button)
 
     def _pad_push(mut self, context: Context) -> Vector:
         """This frame's push on the d-pad, or the left stick tipped past
         halfway: up, down, left or right, once per push."""
-        if self._pad_pressed(context, GamepadButton.DPAD_UP):
-            return Vector.UP
-        if self._pad_pressed(context, GamepadButton.DPAD_DOWN):
-            return Vector.DOWN
-        if self._pad_pressed(context, GamepadButton.DPAD_LEFT):
-            return Vector.LEFT
-        if self._pad_pressed(context, GamepadButton.DPAD_RIGHT):
-            return Vector.RIGHT
-        var stick = Vector.ZERO
-        for pad in self._pads(context):
-            if pad.connected and pad.left_stick.magnitude() > 0.5:
-                var s = pad.left_stick
-                if abs(s.x) > abs(s.y):
-                    stick = Vector.RIGHT if s.x > 0 else Vector.LEFT
-                else:
-                    stick = Vector.UP if s.y > 0 else Vector.DOWN
-                break
-        var push = stick if stick != self._stick_was else Vector.ZERO
-        self._stick_was = stick
-        return push
+        return _pad_push(context, self._player, self._stick_was)
 
     def _steps_focused(self, push: Vector) -> Bool:
         """Whether `push` changes the focused widget rather than moving
@@ -579,29 +552,17 @@ struct UI(Movable):
         the widgets were drawn last frame; from no focus, to the first one.
         A widget straight ahead beats a nearer one off to the side."""
         var at = Optional[Point](None)
+        var focusable = List[_Hit]()
+        var centres = List[Point]()
         for hit in self._last_hits:
             if self._focused and hit.id == self._focused.value():
                 at = hit.centre()
-        var best = -1
-        var best_score = 0.0
-        for i in range(len(self._last_hits)):
-            ref hit = self._last_hits[i]
-            if not hit.focusable:
-                continue
-            if not at:
-                best = i  # nothing focused: the first that can be
-                break
-            var offset = hit.centre() - at.value()
-            var ahead = offset.dot(direction)
-            if ahead <= 1:
-                continue
-            var aside = abs(offset.x * direction.y - offset.y * direction.x)
-            var score = ahead + 2 * aside
-            if best == -1 or score < best_score:
-                best = i
-                best_score = score
-        if best != -1:
-            ref hit = self._last_hits[best]
+            if hit.focusable:
+                focusable.append(hit)
+                centres.append(hit.centre())
+        var best = _nearest(at, direction, centres)
+        if best:
+            ref hit = focusable[best.value()]
             self._focus(
                 hit.id,
                 visible=True,

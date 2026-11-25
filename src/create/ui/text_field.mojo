@@ -14,6 +14,7 @@ from ._theme import _TextFieldLook, _Theme, _fills, _text_look
 from .ui import UI
 from .layout import _UNSIZED
 from .slider import _CONTROL_WIDTH
+from ._navigation import _Focus
 from .widget import Clickable, Widget
 
 
@@ -146,26 +147,33 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         theme: _Theme,
         *,
         free: Bool,
+        focus: _Focus = _Focus.standalone(),
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
-        another widget is over it at the pointer."""
+        another widget is over it at the pointer, and `focus` is what the
+        `UI`'s focus means for it."""
         ref mouse = context.mouse
         var pointer = canvas.to_local(mouse.position)
         var inside = self.rect.contains(pointer)
         self._pointer.update(mouse, inside, free=free, enabled=self.enabled)
-        var was_focused = self._focused
-        if not self.enabled:
-            self._focused = False
-        elif self._pointer.pressed:
-            self._focused = True
-        elif mouse.pressed() and not inside:
-            self._focused = False
-        elif self._focused and context.keyboard.pressed(Key.ESCAPE):
-            self._focused = False
-        if self._focused != was_focused:
-            context.text_input(self._focused)
-        elif self._focused and not context.text_input():
-            context.text_input(True)  # another field let go after we took it
+        if focus.in_tree:
+            # the tree decides focus, and switches typing for it
+            self._focused = focus.focused and self.enabled
+        else:
+            var was_focused = self._focused
+            if not self.enabled:
+                self._focused = False
+            elif self._pointer.pressed:
+                self._focused = True
+            elif mouse.pressed() and not inside:
+                self._focused = False
+            elif self._focused and context.keyboard.pressed(Key.ESCAPE):
+                self._focused = False
+            if self._focused != was_focused:
+                context.text_input(self._focused)
+            elif self._focused and not context.text_input():
+                # another field let go after this one took focus
+                context.text_input(True)
 
         self._look = theme.text_field(
             self.container,

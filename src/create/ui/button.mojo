@@ -9,6 +9,7 @@ from ._pointer import _Pointer
 from ._theme import _ButtonLook, _Theme
 from .layout import _UNSIZED
 from .text_field import _measure
+from ._navigation import _Focus
 from .widget import Clickable, Widget
 
 
@@ -94,6 +95,7 @@ struct Button(Clickable, Copyable, Movable, Widget):
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled button is faded."""
     var _pointer: _Pointer
+    var _activated: Bool
     var _look: _ButtonLook
 
     def __init__(
@@ -111,6 +113,7 @@ struct Button(Clickable, Copyable, Movable, Widget):
         self.style = style
         self.enabled = enabled
         self._pointer = _Pointer()
+        self._activated = False
         self._look = _Theme.default().button(
             style,
             variant,
@@ -132,9 +135,11 @@ struct Button(Clickable, Copyable, Movable, Widget):
         theme: _Theme,
         *,
         free: Bool,
+        focus: _Focus = _Focus.standalone(),
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
-        another widget is over it at the pointer."""
+        another widget is over it at the pointer, and `focus` is what the
+        `UI`'s focus means for it."""
         var pointer = canvas.to_local(context.mouse.position)
         self._pointer.update(
             context.mouse,
@@ -142,6 +147,7 @@ struct Button(Clickable, Copyable, Movable, Widget):
             free=free,
             enabled=self.enabled,
         )
+        self._activated = focus.activated and self.enabled
         self._look = theme.button(
             self.style,
             self.variant,
@@ -177,7 +183,16 @@ struct Button(Clickable, Copyable, Movable, Widget):
         return self._pointer.held
 
     def released(self) -> Bool:
-        return self._pointer.released
+        """Whether it was clicked this frame: let go over it after being
+        pressed on it, or, in a `UI`, pressed with Enter, Space or a
+        gamepad's south button while it has focus."""
+        return self._pointer.released or self._activated
+
+    def _ring(self) -> Rectangle:
+        """The shape its focus ring goes round."""
+        var shape = self.rect.copy()
+        shape.corner_radius = self._look.corner_radius
+        return shape^
 
     def draw_to(self, mut canvas: Canvas):
         var shape = self.rect.copy()

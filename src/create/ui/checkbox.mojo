@@ -8,6 +8,7 @@ from ._pointer import _Pointer
 from ._theme import _CheckboxLook, _Theme
 from .layout import _UNSIZED
 from .text_field import _measure
+from ._navigation import _Focus
 from .widget import Clickable, Widget
 
 
@@ -103,9 +104,11 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
         theme: _Theme,
         *,
         free: Bool,
+        focus: _Focus = _Focus.standalone(),
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
-        another widget is over it at the pointer."""
+        another widget is over it at the pointer, and `focus` is what the
+        `UI`'s focus means for it."""
         var pointer = canvas.to_local(context.mouse.position)
         self._pointer.update(
             context.mouse,
@@ -113,7 +116,9 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
             free=free,
             enabled=self.enabled,
         )
-        self._changed = self._pointer.released
+        self._changed = self._pointer.released or (
+            focus.activated and self.enabled
+        )
         if self._changed:
             self.checked = not self.checked
         self._look = theme.checkbox(
@@ -144,6 +149,10 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
         )
         var width = _measure(canvas, self.text, look.text)
         return (_BOX_SIZE + _TEXT_GAP + width, theme.control_height)
+
+    def _ring(self) -> Rectangle:
+        """The shape its focus ring goes round: its box."""
+        return _checkbox_box(self.rect, self._look.box.corner_radius)
 
     def changed(self) -> Bool:
         """Whether its last `update` ticked or unticked it."""

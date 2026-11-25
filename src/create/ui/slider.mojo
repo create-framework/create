@@ -2,12 +2,14 @@
 
 from create.core import Context
 from create.geometry import Circle, Line, Rectangle
-from create.math import Point, clamp
+from create.input import Key, Keyboard
+from create.math import Point, ceil, clamp, floor
 from create.render import Canvas, Style
 from create._optional import _OptionalFloat64
 from ._pointer import _Pointer
 from ._theme import _SliderLook, _Theme
 from .layout import _UNSIZED
+from ._navigation import _Focus
 from .widget import Clickable, Widget
 
 
@@ -117,9 +119,11 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         theme: _Theme,
         *,
         free: Bool,
+        focus: _Focus = _Focus.standalone(),
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
-        another widget is over it at the pointer."""
+        another widget is over it at the pointer, and `focus` is what the
+        `UI`'s focus means for it."""
         _check_step(self.step, "Slider")
         var pointer = canvas.to_local(context.mouse.position)
         self._pointer.update(
@@ -151,6 +155,22 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             if moved and moved.value() != self.value:
                 self.value = moved.value()
                 self._changed = True
+        if self.enabled and (focus.keys or focus.step != 0):
+            var towards_max = focus.step
+            if towards_max == 0:
+                towards_max = _arrow_direction(context.keyboard)
+            var keyed = _keyed_value(
+                self.value,
+                self.minimum,
+                self.maximum,
+                self.step,
+                towards_max,
+                home=focus.keys and context.keyboard.pressed(Key.HOME),
+                end=focus.keys and context.keyboard.pressed(Key.END),
+            )
+            if keyed[1] != self.value:
+                self.value = keyed[1]
+                self._changed = True
 
     def _measure(
         self, mut canvas: Canvas, theme: _Theme
@@ -175,6 +195,15 @@ struct Slider(Clickable, Copyable, Movable, Widget):
 
     def released(self) -> Bool:
         return self._pointer.released
+
+    def _ring(self) -> Circle:
+        """The shape its focus ring goes round: its handle."""
+        var radius = self._knob_radius()
+        var ends = _slider_ends(self.rect, radius)
+        var x = _handle_x(
+            self.value, self.minimum, self.maximum, ends[0], ends[1]
+        )
+        return Circle(Point(x, self.rect.position.y), radius)
 
     def _knob_radius(self) -> Float64:
         return self._look.handle.stroke_thickness / 2
@@ -257,3 +286,61 @@ def _dragged_value(
             # a step past `maximum` comes back inside, towards `minimum`
             value -= size if maximum > minimum else -size
     return value
+
+
+def _arrow_direction(keyboard: Keyboard) -> Int:
+    """Which way the arrow keys typed this frame step a slider: 1 towards
+    its maximum (Right or Up), -1 towards its minimum (Left or Down), 0 for
+    neither."""
+    if keyboard.typed(Key.RIGHT) or keyboard.typed(Key.UP):
+        return 1
+    if keyboard.typed(Key.LEFT) or keyboard.typed(Key.DOWN):
+        return -1
+    return 0
+
+
+def _keyed_value(
+    value: Float64,
+    minimum: Float64,
+    maximum: Float64,
+    step: Optional[Float64],
+    towards_max: Int,
+    *,
+    home: Bool,
+    end: Bool,
+) -> Tuple[Bool, Float64]:
+    """A slider's value stepped by a key: one step towards `maximum` (1) or
+    `minimum` (-1), or to an end for Home or End. A step is `step`, or a
+    twentieth of the range. Whether the key acted, and the value it gives,
+    kept inside the range."""
+    if maximum == minimum:
+        return (False, value)
+    var size = step.value() if step else abs(maximum - minimum) / 20
+    if maximum < minimum:
+        size = -size  # steps count from `minimum` towards `maximum`
+    var low = minimum if minimum < maximum else maximum
+    var high = maximum if minimum < maximum else minimum
+    # Steps land on the grid of steps counted from `minimum`, so they don't
+    # gather floating-point error: 1.0 stepped down by 0.05 twice is 0.9,
+    # not 0.8999999999999999.
+    var steps_from_min = (value - minimum) / size
+    var moved = value
+    if towards_max != 0:
+        # the next step along, so a value between two steps moves to the
+        # one ahead of it rather than past it
+        var nearest = Float64(round(steps_from_min))
+        if abs(steps_from_min - nearest) < 1e-9:
+            steps_from_min = nearest  # on a step, give or take error
+        var next: Float64
+        if towards_max > 0:
+            next = floor(steps_from_min) + 1
+        else:
+            next = ceil(steps_from_min) - 1
+        moved = minimum + next * size
+    elif home:
+        moved = minimum
+    elif end:
+        moved = maximum
+    if moved == value:
+        return (False, value)
+    return (True, low if moved < low else (high if moved > high else moved))
