@@ -23,3 +23,4 @@ from .panel import Panel
 from .slider import Slider
 from .widget import Clickable, Hoverable, Widget
 from .text_field import TextEditor, TextField
+from .tree import WidgetHandle
