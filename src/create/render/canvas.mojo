@@ -2,7 +2,7 @@ from std.collections import Optional
 from std.math import ceil, floor
 
 from create.color.color import Color
-from create.color.gradient import Gradient
+from create.render.gradient import Gradient
 from .align import Align
 from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap

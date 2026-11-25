@@ -163,7 +163,7 @@ replaced the clear stays. Switching it on inserts the clear at index 0. Either w
 
 A fill gradient rides on the command's `Paint` (`fill_gradient`); tint and opacity multiply its
 stops at record time. Everything a replay needs comes from three pieces in
-`create/color/gradient.mojo`, shared so the backends agree:
+`create/render/gradient.mojo`, shared so the backends agree:
 - **The ramp:** `_RAMP_SIZE` (256) colours sampled from the stops at construction, behind an
   `ArcPointer` with the stops, so copying a `Gradient` (and the `Style` or `Paint` holding one) is a
   refcount.

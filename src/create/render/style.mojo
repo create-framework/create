@@ -6,7 +6,7 @@ from .stroke_cap import StrokeCap
 from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
-from create.color.gradient import Gradient
+from create.render.gradient import Gradient
 from create.text.font import Font, FontWeight
 from create.math.vector import Vector
 from create._optional import _OptionalFloat64

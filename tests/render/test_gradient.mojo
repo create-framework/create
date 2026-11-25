@@ -6,7 +6,7 @@ from std.testing import (
     assert_true,
 )
 from create.color.color import Color
-from create.color.gradient import Gradient
+from create.render.gradient import Gradient
 from create.math.point import Point
 from create.math.vector import Vector
 from create.math.transform import Transform
