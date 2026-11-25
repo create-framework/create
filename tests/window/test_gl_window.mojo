@@ -14,7 +14,7 @@ event-translation logic `GLWindow.events()` relies on is covered in
 
 from std.os import setenv
 from std.testing import TestSuite, assert_raises
-from create._window import GLWindow
+from create.app._window import GLWindow
 
 
 def test_construction_fails_cleanly_under_dummy_driver() raises -> None:

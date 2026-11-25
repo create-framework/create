@@ -7,20 +7,20 @@
 # rather than once per case.
 
 
-from create._window import GLWindow
+from create.app._window import GLWindow
 
 from create import *
 from create.render._surface import MemorySurface
 from create._native import Slot
-from create.core._driver import _Driver, _Host
-from create.core._step import first_step, step
+from create.app._driver import _Driver, _Host
+from create.app._step import first_step, step
 from create.render._gl import GL
 from create.render._gl_target import _GLTarget
 from create.render.autoscale import Autoscale
 from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
 from create.image.image import Image
-from create.core.headless import run_headless
+from create.app.headless import run_headless
 from std.testing import TestSuite, assert_equal, assert_true
 
 comptime _GRID = 20

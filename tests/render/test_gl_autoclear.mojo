@@ -5,13 +5,13 @@
 
 from std.testing import TestSuite, assert_equal, assert_true
 
-from create._window import GLWindow
+from create.app._window import GLWindow
 
 from create import *
 from create._native import Slot
-from create.core._driver import _Driver, _Host
-from create.core._step import first_step, step
-from create.core.headless import run_headless
+from create.app._driver import _Driver, _Host
+from create.app._step import first_step, step
+from create.app.headless import run_headless
 from create.render._gl import GL, GL_COLOR_BUFFER_BIT
 from create.render._gl_backend import GLRenderer
 from create.render._gl_target import _GLTarget

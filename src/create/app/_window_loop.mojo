@@ -4,7 +4,7 @@ import and which must not pull in a window."""
 
 from std.time import sleep
 
-from create._window import (
+from create.app._window import (
     NativeWindow,
     SYSTEM_CURSOR_ARROW,
     SYSTEM_CURSOR_CROSSHAIR,
@@ -19,9 +19,9 @@ from create._window import (
     SYSTEM_CURSOR_TEXT,
     SYSTEM_CURSOR_WAIT,
 )
-from create.core.context import Context
-from create.core.cursor import Cursor
-from create.core.window_mode import WindowMode
+from create.app.context import Context
+from create.app.cursor import Cursor
+from create.app.window_mode import WindowMode
 
 
 struct _AppliedWindow(Movable):

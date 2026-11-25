@@ -10,7 +10,7 @@ from std.os import remove
 from _gif_decode import DecodedGif, decode_gif
 
 from create import *
-from create.core.headless import run_headless
+from create.app.headless import run_headless
 from create.render.render_backend import RenderBackend
 from create.image.image import Image
 from std.testing import TestSuite, assert_equal

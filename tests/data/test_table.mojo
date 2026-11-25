@@ -5,7 +5,7 @@ from std.testing import (
     assert_raises,
     assert_true,
 )
-from create.core import source_path
+from create.app import source_path
 from create.data import Table
 from create.data.table import _parse_delimited
 from std.os import makedirs

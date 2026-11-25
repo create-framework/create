@@ -2,13 +2,13 @@
 
 This is the complete API reference for Create, one page per subpackage. How importing works is described in the [Imports](../guide/basics/mojo.md#imports) page in the user guide.
 
-## [`create.core`](core/README.md)
+## [`create.app`](app/README.md)
 
 The run: the `Program` trait, `run` and `run_headless`, the run's state (`Context`) and its settings (`WindowMode`, `Cursor`), and `source_path`.
 
-- **Types:** [`Context`](core/context.md), [`WindowMode`](core/windowmode.md), [`Cursor`](core/cursor.md)
-- **Traits:** [`Program`](core/program.md)
-- **Functions:** [`source_path`](core/source_path.md), [`run`](core/run.md), [`run_headless`](core/run_headless.md)
+- **Types:** [`Context`](app/context.md), [`WindowMode`](app/windowmode.md), [`Cursor`](app/cursor.md)
+- **Traits:** [`Program`](app/program.md)
+- **Functions:** [`source_path`](app/source_path.md), [`run`](app/run.md), [`run_headless`](app/run_headless.md)
 
 ## [`create.input`](input/README.md)
 

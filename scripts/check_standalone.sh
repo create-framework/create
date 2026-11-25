@@ -14,7 +14,7 @@ trap 'rm -rf "$out"' EXIT
 # Against a precompiled package, as the tests and examples are built.
 mojo precompile src/create -o "$out/create.mojoc"
 library=$(sh scripts/build_native.sh "$out")
-mojo build -I "$out" tests/core/test_smoke.mojo -o "$out/smoke"
+mojo build -I "$out" tests/app/test_smoke.mojo -o "$out/smoke"
 # A source checkout has nowhere the program would find the compiled library
 # on its own, so it is named; an installed package keeps it in the
 # environment's lib directory, on the binary's run path.

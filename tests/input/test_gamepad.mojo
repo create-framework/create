@@ -5,12 +5,12 @@ from std.testing import (
     assert_false,
     assert_true,
 )
-from create.core.context import Context
+from create.app.context import Context
 from create.input.gamepad import Gamepad
 from create.input.gamepad_button import GamepadButton
-from create.core._events import apply_events
+from create.app._events import apply_events
 from create.render._viewport import Viewport
-from create._window.event import (
+from create.app._window.event import (
     Event,
     GamepadAdded,
     GamepadAxisMoved,

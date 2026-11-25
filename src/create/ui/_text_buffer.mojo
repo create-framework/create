@@ -5,7 +5,7 @@ from std.sys.info import CompilationTarget
 from create.input.key import Key
 from create.input.keyboard import _Stroke
 
-from create.core import Context
+from create.app import Context
 
 
 struct _TextBuffer(Copyable, Movable):

@@ -10,7 +10,7 @@ internals](#package-internals).
 | Module | Path | Responsibility |
 |---|---|---|
 | root | `src/create/__init__.mojo` | The preamble: star-imports all thirteen subpackages below |
-| `core` | `src/create/core/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path` |
+| `app` | `src/create/app/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `Gradient` (with the ramp and dither both backends share), `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `BlendMode` |
@@ -28,15 +28,15 @@ internals](#package-internals).
 | `_optional` | `src/create/_optional.mojo` | Internal leaf: `_OptionalFloat64`, the type behind optional number keywords such as `corner_radius=8`, which takes an integer, a `Float64` or `None` |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
 | `_native` | `src/create/_native.mojo` | Internal leaf: opens the compiled library, `libcreate`, and passes values to it by address; `IN_LIBRARY` (see [The compiled library](#the-compiled-library)) |
-| `_window` | `src/create/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
+| `_window` | `src/create/app/_window/` | Internal platform layer: `Window`, `GLWindow`, typed `Event`s, SDL3 video bindings |
 
 ## How a frame runs
 
-A program's frame passes through three packages: `core` runs the loop, `input` holds what the user
+A program's frame passes through three packages: `app` runs the loop, `input` holds what the user
 did, and `render` turns drawing into pixels.
 
-1. **`run[P]` starts the run** (`core`). It seeds the `Context` from its arguments, and branches
-   once on `backend` into the CPU loop or the GL one; `run_headless` has a loop of each kind too.
+1. **`run[P]` starts the run** (`app`). It seeds the `Context` from its arguments, and branches once
+   on `backend` into the CPU loop or the GL one; `run_headless` has a loop of each kind too.
 2. **Frame 1 is `create`'s.** The loop derives the viewport (the design size mapped onto the
    window), then `first_step` calls `create`, presents what it drew, and starts the clock.
 3. **Every later frame**, the loop pumps the window's events (from `_window`) and folds them into
@@ -66,7 +66,7 @@ flowchart TD
 
 Every loop runs frame 1 through `first_step` and every later one through `step`, so the loops can
 differ only in how a frame starts and where its pixels go. The details are in the
-[`core`](src/create/core/README.md) and [`render`](src/create/render/README.md) READMEs.
+[`app`](src/create/app/README.md) and [`render`](src/create/render/README.md) READMEs.
 
 ## Layering
 
@@ -74,8 +74,8 @@ The packages form layers, and a package imports only from the layers below it:
 
 | Layer | Packages | Import from `create` |
 |---|---|---|
-| UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
-| Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
+| UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math`, `_optional` |
+| Run | `app` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
 | Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `input` | `math`; `geometry` also `_optional` |
@@ -88,19 +88,19 @@ no package here imports:
 
 ```mermaid
 flowchart TD
-    ui --> core
+    ui --> app
     ui --> render
     ui --> geometry
     ui --> color
     ui --> text
     ui --> input
     ui --> math
-    core --> _window
-    core --> math
-    core --> render
-    core --> image
-    core --> input
-    core --> time
+    app --> _window
+    app --> math
+    app --> render
+    app --> image
+    app --> input
+    app --> time
     render --> math
     render --> text
     render --> geometry
@@ -117,15 +117,15 @@ flowchart TD
 
 The rules behind it, and what each one buys:
 
-- **`ui`** is the top layer, and nothing imports it. It needs `core` for the `Context` a widget's
+- **`ui`** is the top layer, and nothing imports it. It needs `app` for the `Context` a widget's
   `update` reads the input and the frame from, `render` for the canvas widgets draw on and the
   `Drawable` trait they conform to, `input` for the keys and buttons focus moves by, `geometry` and
   `math` for the widgets' rectangles and hit-testing, and `color` and `text` for their colours and
   text. An image in a `UI` is `render`'s `Picture`, so `ui` doesn't name `image`.
-- **`render` never imports `core`** (it would be a cycle). `render` depends only on `math`,
+- **`render` never imports `app`** (it would be a cycle). `render` depends only on `math`,
   `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library`, `_optional` and `_path`,
   so it works without a run loop. The settings that map the design onto the window therefore reach
-  `render` as plain values: in `core`, `context._set_viewport(state, …)` passes the design size and
+  `render` as plain values: in `app`, `context._set_viewport(state, …)` passes the design size and
   autoscale in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing
   settings live on `_PersistentCanvasState` itself.
 - **`geometry`** depends only on `math` and `_optional`, so collision code (`overlaps`, `contains`)
@@ -137,8 +137,8 @@ The rules behind it, and what each one buys:
   drawing paint, like `StrokeDash`, rather than a colour value.
 - **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
   through `atof`. Nothing imports it but the root.
-- **`time`** imports nothing from `create`; `core` and `animation` import it. Its run clock,
-  `_run_clock`, is process-wide state: once a frame, `core` copies `Context.time` into it, so a
+- **`time`** imports nothing from `create`; `app` and `animation` import it. Its run clock,
+  `_run_clock`, is process-wide state: once a frame, `app` copies `Context.time` into it, so a
   playhead can read the time without the clock being passed to it as an argument. It is the
   package's only shared state.
 - **`animation`** holds the playheads: `Tween`, and `Animator` with the asset it plays, `Animation`.
@@ -148,17 +148,17 @@ The rules behind it, and what each one buys:
 - **`text`** depends only on `_bytes`, `_library` and `_path`. `render` uses `text` only by name, as
   it uses `image`: `Style`, `canvas.font` and text layout refer to the `Font` type, and
   `_raster.blit_glyph` takes a `_GlyphInfo` by its internal path.
-- **`input`** depends only on `math`; `core` imports it. Its devices are plain state: `core`'s
+- **`input`** depends only on `math`; `app` imports it. Its devices are plain state: `app`'s
   `apply_events` folds each window event in through one `_`-prefixed method per kind
   (`keyboard._key_down`, `mouse._button_down`, …), so `input` never sees an `Event` and `_window`
-  stays `core`'s alone.
+  stays `app`'s alone.
 - **`_path`** is a leaf, imported by every package that has a public function taking a file path,
-  and re-exported by nothing; `core`'s `source_path` is its public face. A public function that
-  takes a path is `@always_inline`, and passes the path to `_caller_relative` directly from its own
-  body. `call_location` counts exactly those two inlined calls, so the path resolves against the
-  caller's file. The function then hands the absolute path to a `_`-named twin that does the work.
-  Library code calls the twin (`Image._load`), never the public function: called from the library,
-  the public function would resolve the path against the library's own file.
+  and re-exported by nothing; `app`'s `source_path` is its public face. A public function that takes
+  a path is `@always_inline`, and passes the path to `_caller_relative` directly from its own body.
+  `call_location` counts exactly those two inlined calls, so the path resolves against the caller's
+  file. The function then hands the absolute path to a `_`-named twin that does the work. Library
+  code calls the twin (`Image._load`), never the public function: called from the library, the
+  public function would resolve the path against the library's own file.
 - **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
 - **`_optional`** is a leaf imported by `geometry`, `render` and `ui`, re-exported by nothing. It
   holds keyword plumbing rather than maths, so it sits beside the other leaves rather than in
@@ -168,9 +168,9 @@ The rules behind it, and what each one buys:
   version, and never with `_DLHandle("libname.so")`. `load_library` decides the platform's file name
   and search path. It opens the versioned name because the runtime package installs that one, so the
   library is found even on a system without `-devel` packages.
-- **`_window`** imports nothing from `create` but `_library`. `core` is the only package that uses
+- **`_window`** imports nothing from `create` but `_library`. `app` is the only package that uses
   it, and nothing re-exports it.
-- **`_native`** is a leaf imported by `render` and `core`, the packages whose machinery the compiled
+- **`_native`** is a leaf imported by `render` and `app`, the packages whose machinery the compiled
   library holds, and re-exported by nothing. See [The compiled library](#the-compiled-library).
 - **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads,
   `canvas.snapshot` and `Picture`, which holds the `Image` it draws, name `Image`, and
@@ -251,8 +251,8 @@ Where a package's internals need explaining, its README does so:
 
 - [`src/create/render/README.md`](src/create/render/README.md): the command buffer, both backends,
   and how each feature (gradients, curves, clips, shadows, text, …) reaches them.
-- [`src/create/core/README.md`](src/create/core/README.md): the run loops, their order at startup,
-  and how events, the window's settings and the clipboard flow.
+- [`src/create/app/README.md`](src/create/app/README.md): the run loops, their order at startup, and
+  how events, the window's settings and the clipboard flow.
 - [`src/create/ui/README.md`](src/create/ui/README.md): a widget's update and look, how a `UI` lays
   out, hit-tests and draws its widgets, focus and the device claims, and how styles and state
   colours are resolved.

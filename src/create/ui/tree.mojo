@@ -7,7 +7,7 @@ from std.memory import ArcPointer
 from std.utils import Variant
 
 from create.color import Color
-from create.core import Context
+from create.app import Context
 from create.geometry import Circle, Rectangle
 from create.input import GamepadButton, Key
 from create.math import Point, Vector

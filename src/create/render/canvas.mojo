@@ -143,7 +143,7 @@ struct _PersistentCanvasState(Movable):
         rather than stored here, so there is one authority for both and a
         dial the last frame turned is picked up at exactly one place — the
         top of the next frame. Plain values rather than the `Context`, which
-        lives in `core` above this package.
+        lives in `app` above this package.
         """
         self._view.autoscale = autoscale
         self._view.set_design(design_w, design_h)

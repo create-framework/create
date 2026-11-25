@@ -26,7 +26,7 @@ Fixtures are named relative to the test file, since Create resolves every path i
 **Rendering is tested for real.** `run_headless` returns the last frame as an `Image`, and
 `image.pixel(x, y)` reads it back: assert on pixels rather than judging by eye. It antialiases at
 `MEDIUM` like `run`: a test pinning an edge pixel's exact colour passes
-`antialiasing=Antialiasing.OFF`. `core/test_step.mojo` scripts `context.mouse` and calls `step`
+`antialiasing=Antialiasing.OFF`. `app/test_step.mojo` scripts `context.mouse` and calls `step`
 directly for input-driven behaviour.
 
 **GPU coverage, three tiers:**
@@ -51,5 +51,5 @@ tests skip on a machine with a working driver, suspect the environment's librari
 host driver's: `scripts/activate.sh` preloads the system libdrm for that reason. Window tests that
 open a window pin `SDL_VIDEODRIVER=dummy` in their own `main`.
 
-`core/test_smoke.mojo` is built on every commit and run by the suite. Its uncalled
+`app/test_smoke.mojo` is built on every commit and run by the suite. Its uncalled
 `_windowed_entry_point` still gets type-checked, which gates the windowed path. Keep it minimal.

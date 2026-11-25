@@ -12,7 +12,7 @@ from std.testing import (
 )
 
 from create import *
-from create.core.headless import run_headless
+from create.app.headless import run_headless
 from create.image.image import Image
 from create.geometry import (
     Circle,

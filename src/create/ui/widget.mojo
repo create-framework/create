@@ -1,7 +1,7 @@
 """`Widget`, `Hoverable` and `Clickable`: what a widget is, and what can be
 asked of one after its `update`."""
 
-from create.core import Context
+from create.app import Context
 from create.render import Canvas, Drawable
 
 

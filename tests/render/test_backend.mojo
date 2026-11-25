@@ -7,7 +7,7 @@ from std.memory import ArcPointer
 from std.testing import TestSuite, assert_equal, assert_true
 
 from create import *
-from create.core.headless import run_headless
+from create.app.headless import run_headless
 from create.render._surface import MemorySurface
 from create.render._viewport import Viewport
 from create.render.style import Style

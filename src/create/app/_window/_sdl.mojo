@@ -90,7 +90,7 @@ concrete value, not the byte-order-generic macro."""
 
 comptime SDL_TEXTUREACCESS_STREAMING: Int32 = 1
 
-# `SDL_SystemCursor`, the ones `core` maps `Cursor` onto.
+# `SDL_SystemCursor`, the ones `app` maps `Cursor` onto.
 comptime SDL_SYSTEM_CURSOR_DEFAULT = 0
 comptime SDL_SYSTEM_CURSOR_TEXT = 1
 comptime SDL_SYSTEM_CURSOR_WAIT = 2

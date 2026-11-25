@@ -1,7 +1,7 @@
 """Raw SDL3 audio bindings via `std.ffi._DLHandle`.
 
 Internal only — nothing here is re-exported from the package `__init__`.
-Mirrors the FFI idiom of `create/_window/_sdl.mojo`: opaque `Int` handles
+Mirrors the FFI idiom of `create/app/_window/_sdl.mojo`: opaque `Int` handles
 for everything SDL returns a pointer for, `get_error()` on every failure, and
 its own `load_library("libSDL3", 0)` rather than importing the window's, since
 `audio` has no business depending on the platform window. A second `dlopen`
@@ -17,7 +17,7 @@ three packed 4-byte fields, no padding (verified against
 `SDL_LoadWAV`'s `Uint8 **audio_buf` out-param is a pointer-to-pointer, one
 level deeper than any existing binding handles. It's read back with
 `Pointer[UInt8, MutUntrackedOrigin](unsafe_from_address=...)`, the same
-raw-address-to-Pointer idiom `_window/gl_window.mojo` uses for
+raw-address-to-Pointer idiom `app/_window/gl_window.mojo` uses for
 `SDL_GL_GetProcAddress` results.
 """
 

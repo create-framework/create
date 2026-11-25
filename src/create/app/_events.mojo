@@ -10,7 +10,7 @@ The window itself is deliberately absent: the arms only ever need to say
 `Window` and `GLWindow` without being generic over either.
 """
 
-from create._window.event import (
+from create.app._window.event import (
     ClipboardChanged,
     Event,
     FocusLost,
@@ -33,7 +33,7 @@ from create._window.event import (
 from create.math.point import Point
 from create.math.vector import Vector
 
-from create.core.context import Context
+from create.app.context import Context
 from create.input.gamepad_button import GamepadButton
 from create.input.key import Key
 from create.input.mouse_button import MouseButton

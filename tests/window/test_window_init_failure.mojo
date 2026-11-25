@@ -7,7 +7,7 @@ any other test.
 
 from std.os import setenv, getenv
 from std.testing import TestSuite, assert_raises
-from create._window import Window
+from create.app._window import Window
 
 
 def test_init_video_failure_reports_sdl_error() raises -> None:

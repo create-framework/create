@@ -3,14 +3,14 @@
 from std.os import remove
 from std.testing import TestSuite, assert_equal, assert_true
 
-from create.core import source_path
+from create.app import source_path
 from create.data import JSON
 
 
 def test_a_relative_path_resolves_against_this_file() raises -> None:
     var path = source_path("x.png")
     assert_true(path.startswith("/"), path)
-    assert_true(path.endswith("/tests/core/x.png"), path)
+    assert_true(path.endswith("/tests/app/x.png"), path)
 
 
 def test_an_absolute_path_is_kept() raises -> None:

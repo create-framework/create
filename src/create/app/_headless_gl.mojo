@@ -11,7 +11,7 @@ Does **not** cover the drawable-size-versus-logical-size distinction that
 window manager to disagree with it. That stays a windowed-only concern.
 """
 
-from create._window import GLWindow
+from create.app._window import GLWindow
 
 from create.render._gl import GL
 from create.render._gl_target import _GLTarget
@@ -19,7 +19,7 @@ from create.render.antialiasing import Antialiasing
 from create.render.autoscale import Autoscale
 from create.render._gl_backend import GLRenderer
 from create.render.canvas import _PersistentCanvasState
-from create.core.context import Context
+from create.app.context import Context
 from create.render._surface import MemorySurface
 
 from ._step import first_step, step

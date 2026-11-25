@@ -1,4 +1,4 @@
-# create.core
+# create.app
 
 The run: the `Program` trait, `run` and `run_headless`, the run's state (`Context`) and its settings (`WindowMode`, `Cursor`), and `source_path`.
 

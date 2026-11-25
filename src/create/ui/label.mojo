@@ -1,6 +1,6 @@
 """`Label`: text placed in a rectangle."""
 
-from create.core import Context
+from create.app import Context
 from create.geometry import Rectangle
 from create.math import Point
 from create.render import Align, Canvas, Style, Text

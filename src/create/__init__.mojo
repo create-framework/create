@@ -3,7 +3,7 @@ importing works is described in the [Imports](../guide/basics/mojo.md#imports)
 page in the user guide.
 """
 
-from create.core import *
+from create.app import *
 from create.input import *
 from create.math import *
 from create.time import *

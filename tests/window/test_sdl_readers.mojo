@@ -1,4 +1,4 @@
-"""Unit tests for the SDL_Event field readers in `create._window._sdl`.
+"""Unit tests for the SDL_Event field readers in `create.app._window._sdl`.
 
 Builds synthetic byte buffers at the documented offsets and checks each
 reader decodes the value written there -- guards the offset comments in
@@ -6,7 +6,7 @@ reader decodes the value written there -- guards the offset comments in
 """
 
 from std.testing import TestSuite, assert_equal, assert_true
-from create._window._sdl import (
+from create.app._window._sdl import (
     SDL,
     SDL_EVENT_QUIT,
     SDL_EVENT_WINDOW_RESIZED,

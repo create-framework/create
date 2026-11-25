@@ -206,7 +206,7 @@ Instead of the star, a program can import each name it uses from the subpackage 
 [API reference](../../reference/README.md) lists every name under its subpackage:
 
 ```mojo
-from create.core import Program, Context, run
+from create.app import Program, Context, run
 from create.render import Canvas
 from create.color import Color
 from create.math import Point, sin

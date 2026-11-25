@@ -5,7 +5,7 @@ Builds synthetic buffers directly (same technique as
 """
 
 from std.testing import TestSuite, assert_equal, assert_true, assert_false
-from create._window import (
+from create.app._window import (
     Event,
     KeyDown,
     KeyUp,
@@ -19,7 +19,7 @@ from create._window import (
     GamepadButtonDown,
     GamepadButtonUp,
 )
-from create._window._sdl import (
+from create.app._window._sdl import (
     SDL_EVENT_GAMEPAD_ADDED,
     SDL_EVENT_GAMEPAD_REMOVED,
     SDL_EVENT_GAMEPAD_AXIS_MOTION,
@@ -51,7 +51,7 @@ from create._window._sdl import (
     _OFF_WHEEL_X,
     _OFF_WHEEL_Y,
 )
-from create._window.event import translate_event
+from create.app._window.event import translate_event
 from _raw_event import (
     new_event_buffer,
     write_u8,
