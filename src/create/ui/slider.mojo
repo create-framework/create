@@ -120,17 +120,20 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         *,
         free: Bool,
         focus: _Focus = _Focus.standalone(),
+        disabled: Bool = False,
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
         another widget is over it at the pointer, and `focus` is what the
-        `UI`'s focus means for it."""
+        `UI`'s focus means for it, and `disabled` disables it as part of a
+        disabled part of the `UI`, whatever its own `enabled`."""
+        var enabled = self.enabled and not disabled
         _check_step(self.step, "Slider")
         var pointer = canvas.to_local(context.mouse.position)
         self._pointer.update(
             context.mouse,
             self.rect.contains(pointer),
             free=free,
-            enabled=self.enabled,
+            enabled=enabled,
         )
         self._look = theme.slider(
             self.track,
@@ -139,7 +142,7 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             self.handle_outline,
             hovered=self._pointer.hovered,
             dragging=self._pointer.dragged,
-            disabled=not self.enabled,
+            disabled=not enabled,
         )
         self._changed = False
         if self._pointer.dragged:
@@ -155,7 +158,7 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             if moved and moved.value() != self.value:
                 self.value = moved.value()
                 self._changed = True
-        if self.enabled and (focus.keys or focus.step != 0):
+        if enabled and (focus.keys or focus.step != 0):
             var towards_max = focus.step
             if towards_max == 0:
                 towards_max = _arrow_direction(context.keyboard)

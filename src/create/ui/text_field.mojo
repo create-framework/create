@@ -148,20 +148,23 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         *,
         free: Bool,
         focus: _Focus = _Focus.standalone(),
+        disabled: Bool = False,
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
         another widget is over it at the pointer, and `focus` is what the
-        `UI`'s focus means for it."""
+        `UI`'s focus means for it, and `disabled` disables it as part of a
+        disabled part of the `UI`, whatever its own `enabled`."""
+        var enabled = self.enabled and not disabled
         ref mouse = context.mouse
         var pointer = canvas.to_local(mouse.position)
         var inside = self.rect.contains(pointer)
-        self._pointer.update(mouse, inside, free=free, enabled=self.enabled)
+        self._pointer.update(mouse, inside, free=free, enabled=enabled)
         if focus.in_tree:
             # the tree decides focus, and switches typing for it
-            self._focused = focus.focused and self.enabled
+            self._focused = focus.focused and enabled
         else:
             var was_focused = self._focused
-            if not self.enabled:
+            if not enabled:
                 self._focused = False
             elif self._pointer.pressed:
                 self._focused = True
@@ -184,7 +187,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
             self.selection,
             hovered=self._pointer.hovered,
             focused=self._focused,
-            disabled=not self.enabled,
+            disabled=not enabled,
         )
         var look = _text_look(self._look.typed, Align.LEFT)
         var left = self.rect.position.x - self.rect.width / 2 + self.padding
@@ -238,7 +241,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         var since = now - buffer.last_change
         self._caret_shown = (
             self._focused
-            and self.enabled
+            and enabled
             and (since < 0.5 or Int(since * 2) % 2 == 1)
         )
 

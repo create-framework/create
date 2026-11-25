@@ -136,25 +136,28 @@ struct Button(Clickable, Copyable, Movable, Widget):
         *,
         free: Bool,
         focus: _Focus = _Focus.standalone(),
+        disabled: Bool = False,
     ) raises:
         """`update` in `theme`, as a `UI` updates it; `free` is false when
         another widget is over it at the pointer, and `focus` is what the
-        `UI`'s focus means for it."""
+        `UI`'s focus means for it, and `disabled` disables it as part of a
+        disabled part of the `UI`, whatever its own `enabled`."""
+        var enabled = self.enabled and not disabled
         var pointer = canvas.to_local(context.mouse.position)
         self._pointer.update(
             context.mouse,
             self.rect.contains(pointer),
             free=free,
-            enabled=self.enabled,
+            enabled=enabled,
         )
-        self._activated = focus.activated and self.enabled
+        self._activated = focus.activated and enabled
         self._look = theme.button(
             self.style,
             self.variant,
             self.rect.height,
             hovered=self._pointer.hovered,
             pressed=self._pointer.looks_pressed(),
-            disabled=not self.enabled,
+            disabled=not enabled,
         )
 
     def _measure(
