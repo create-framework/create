@@ -49,7 +49,7 @@ did, and `render` turns drawing into pixels.
    Pixel reads and captures replay on the CPU either way, so both backends read the same pixels.
 
 ```mermaid
-flowchart TD
+flowchart LR
     run["run[P]: seed the Context, pick the backend"] --> viewport["Derive the viewport"]
     viewport --> first["first_step: create draws frame 1"]
     first --> record["Render calls record commands<br/>into the frame's Backend"]
