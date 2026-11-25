@@ -1,7 +1,7 @@
 """Internal: `_Theme`, everything that decides how a widget looks, and the
 looks it resolves for each kind of widget.
 
-A widget's look depends on the colours, the `ui.style` blocks, the settings
+A widget's look depends on the colours, the `ui.style` styles, the settings
 and the surface it sits on, and on its state: hovered, pressed, dragged,
 focused or disabled. `_Theme` holds the first four as one value, and each of
 its widget methods turns a widget's own styles and state into the resolved
@@ -9,6 +9,8 @@ styles its parts are drawn in. So a look needs no `UI` to be worked out: a
 `UI` builds its theme with `UI._theme()`, and a widget on its own draws in
 `_Theme.default()`.
 """
+
+from std.memory import ArcPointer
 
 from create.color import Color
 from create.math import Vector, clamp
@@ -34,7 +36,7 @@ comptime _PRESSED_SHADOW = Color(0, 0, 0, 45)
 
 @fieldwise_init
 struct _Styles(Copyable, ImplicitlyCopyable, Movable):
-    """What the open `ui.style` blocks set, merged: each widget's call style
+    """What `ui.style` sets for every widget of a kind: each widget's own style
     sits over these."""
 
     var button: Style
@@ -163,11 +165,14 @@ struct _TextFieldLook(Copyable, Movable):
 @fieldwise_init
 struct _Theme(Copyable, Movable):
     """Everything that decides how a widget looks but its own style and
-    state: the colours, the `ui.style` blocks, the settings, and the
+    state: the colours, the `ui.style` styles, the settings, and the
     surface it sits on with the colour for text there."""
 
     var colors: ColorScheme
-    var styles: _Styles
+    var styles: ArcPointer[_Styles]
+    """What `ui.style` sets, shared rather than copied: the styles are
+    large, and a theme is copied for every panel and widget a `UI`
+    updates."""
     var corner_radius: Float64
     var spacing: Float64
     var control_height: Float64
@@ -187,7 +192,7 @@ struct _Theme(Copyable, Movable):
         var colors = ColorScheme.light()
         return Self(
             colors=colors,
-            styles=_Styles(),
+            styles=ArcPointer(_Styles()),
             corner_radius=_CORNER_RADIUS,
             spacing=_SPACING,
             control_height=_CONTROL_HEIGHT,
@@ -218,7 +223,7 @@ struct _Theme(Copyable, Movable):
     ) -> _ButtonLook:
         """A button `height` tall, styled `call`, in its state."""
         var colors = self.colors
-        var look = call.over(self.styles.button).over(
+        var look = call.over(self.styles[].button).over(
             _variant_look(variant, colors).over(_label_text())
         )
         var resolved = _ResolvedStyle()
@@ -279,7 +284,7 @@ struct _Theme(Copyable, Movable):
 
     def panel(self, call: Style) -> _PanelLook:
         """A panel styled `call`."""
-        var look = call.over(self.styles.panel).over(
+        var look = call.over(self.styles[].panel).over(
             Style(
                 fill=self.colors.surface_container,
                 stroke_enabled=False,
@@ -300,7 +305,7 @@ struct _Theme(Copyable, Movable):
     ) -> _ResolvedStyle:
         """A label's text styled `call`, aligned by `alignment`, else by its
         style's `text_alignment`, else centred."""
-        var look = call.over(self.styles.label).over(
+        var look = call.over(self.styles[].label).over(
             Style(text_color=self.content).over(_body_text())
         )
         var resolved = _ResolvedStyle()
@@ -327,7 +332,7 @@ struct _Theme(Copyable, Movable):
     ) -> _SliderLook:
         """A slider's parts, styled by the call's styles for each."""
         var colors = self.colors
-        var block = self.styles
+        ref block = self.styles[]
         var track_look = call_track.over(block.slider_track).over(
             Style(
                 stroke=colors.secondary_container,
@@ -398,7 +403,7 @@ struct _Theme(Copyable, Movable):
     ) -> _CheckboxLook:
         """A checkbox's parts, styled by the call's styles for each."""
         var colors = self.colors
-        var block = self.styles
+        ref block = self.styles[]
         var box_look = call_box.over(block.checkbox_box).over(
             Style(
                 fill_enabled=False,
@@ -478,7 +483,7 @@ struct _Theme(Copyable, Movable):
     ) -> _TextFieldLook:
         """A text field's parts, styled by the call's styles for each."""
         var colors = self.colors
-        var block = self.styles
+        ref block = self.styles[]
         var text_look = call_text.over(block.text_field_text_style).over(
             Style(text_color=colors.on_surface).over(_body_text())
         )
