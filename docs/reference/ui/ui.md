@@ -30,8 +30,9 @@ A widget added with no `rect` of its own is sized by the tree every
 frame, to the size it prefers, unless what it is in places it: a
 `Column` stacks what is inside it, a `Row` sets it side by side, and a
 `Panel` places a column or row inside it in its inside. A panel with no
-size fits the column or row inside it. Where widgets overlap, only the topmost under the
-pointer reacts to it, and a `Panel` covers what is beneath it.
+size fits the column or row inside it. Where widgets overlap, only the
+topmost under the pointer reacts to it, and a `Panel` covers what is
+beneath it.
 
 `update` hit-tests through `canvas.to_local`, so call it in the same
 transform and camera the tree is drawn in.
@@ -226,7 +227,7 @@ Whether the tree lets the widget `handle` names react, apart from its own `enabl
 def enabled[W: Copyable](mut self, handle: WidgetHandle[W], enabled: Bool)
 ```
 
-Let the widget `handle` names, and everything inside it, react, or not: a disabled part of the tree is drawn faded, takes no focus, and lets go of focus it has. Each widget's own `enabled` is kept, so enabling the part again restores it.
+Let the widget `handle` names, and everything inside it, react, or not: the widgets, labels and pictures in a disabled part of the tree are drawn faded, take no focus, and let go of focus they have; a panel keeps its colour. Each widget's own `enabled` is kept, so enabling the part again restores it.
 
 ### `draw_to`
 
