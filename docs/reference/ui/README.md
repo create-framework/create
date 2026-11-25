@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Label` and `Panel`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -19,6 +19,8 @@ The user interface: widgets, such as `Button`, which are values a program keeps,
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`Button`](button.md) | A button with a line of text on it, which the mouse clicks. |
 | [`ButtonVariant`](buttonvariant.md) | Which of the colours a button is drawn in. |
+| [`Label`](label.md) | Text placed in a rectangle, by an alignment: in its centre unless told otherwise, against its left edge with `Align.LEFT`, and so on. It reacts to nothing. |
+| [`Panel`](panel.md) | A surface filling a rectangle, for widgets to sit on: a rounded card in the light colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing. |
 | [`TextEditor`](texteditor.md) | A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons. |
 
 ## Traits
