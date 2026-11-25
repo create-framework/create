@@ -257,8 +257,22 @@ struct UI(Drawable, Movable):
     ](ref self, handle: WidgetHandle[W]) -> ref[
         self._nodes[handle._index].widget[W]
     ] W:
-        """The widget `handle` names, to read or change."""
+        """The widget `handle` names, to read or change:
+        `ui[play].text = "Go"`, or `if ui[play].released():`.
+
+        It is the widget itself, inside the `UI`, so while one is in use no
+        other can be: `Vector(ui[x].value, ui[y].value)` doesn't compile in a
+        method that changes the `UI`. Read each into a variable first, or
+        read with `get`, which hands back a copy."""
         return self._nodes[handle._index].widget[W]
+
+    def get[W: Copyable](self, handle: WidgetHandle[W]) -> W:
+        """A copy of the widget `handle` names, to read: as many can be read
+        in one expression as you like, as in
+        `Vector(ui.get(x).value, ui.get(y).value)`. Changing the copy
+        changes nothing in the `UI`; change a widget through `ui[handle]`.
+        """
+        return self._nodes[handle._index].widget[W].copy()
 
     # ----------------------------------------------------------- the look
 

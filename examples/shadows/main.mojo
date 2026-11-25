@@ -133,20 +133,16 @@ struct Shadows(Program):
                     tile.position, tile.width, tile.height, corner_radius=16
                 )
 
-        var darkness = self.ui[self.darkness].value
-        var offset_x = self.ui[self.offset_x].value
-        var offset_y = self.ui[self.offset_y].value
-        var blur = self.ui[self.blur].value
-        var spread = self.ui[self.spread].value
-        var inset = self.ui[self.inset].checked
-        var follows_transform = self.ui[self.follows_transform].checked
+        ref ui = self.ui
         with canvas.style(
-            shadow=SHADOW.with_alpha(UInt8(Int(darkness))),
-            shadow_offset=Vector(offset_x, offset_y),
-            shadow_blur=blur,
-            shadow_spread=spread,
-            shadow_inset=inset,
-            shadow_follows_transform=follows_transform,
+            shadow=SHADOW.with_alpha(UInt8(Int(ui.get(self.darkness).value))),
+            shadow_offset=Vector(
+                ui.get(self.offset_x).value, ui.get(self.offset_y).value
+            ),
+            shadow_blur=ui.get(self.blur).value,
+            shadow_spread=ui.get(self.spread).value,
+            shadow_inset=ui.get(self.inset).checked,
+            shadow_follows_transform=ui.get(self.follows_transform).checked,
         ):
             self.subjects(canvas, tiles)
 

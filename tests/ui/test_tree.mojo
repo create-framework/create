@@ -153,5 +153,15 @@ def test_one_update_and_draw_run_every_kind_of_widget() raises -> None:
     assert_equal(canvas.color_at((120, -80)), Color.RED)
 
 
+def test_get_reads_several_widgets_in_one_expression() raises -> None:
+    var ui = UI()
+    var x = ui.add(Slider(3, 0, 10, Rectangle((0, 0), 200, 32)))
+    var y = ui.add(Slider(4, 0, 10, Rectangle((0, -40), 200, 32)))
+    assert_equal(Vector(ui.get(x).value, ui.get(y).value), Vector(3, 4))
+    var copy = ui.get(x)
+    copy.value = 9
+    assert_equal(ui[x].value, 3.0)  # a copy: the UI's widget is unchanged
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

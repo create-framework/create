@@ -67,6 +67,14 @@ def add[W: Copyable, P: Copyable](
 
 Add `widget` inside `parent`: drawn after it and after what was added inside it before, and in the look of what it sits on.
 
+### `get`
+
+```mojo
+def get[W: Copyable](self, handle: WidgetHandle[W]) -> W
+```
+
+A copy of the widget `handle` names, to read: as many can be read in one expression as you like, as in `Vector(ui.get(x).value, ui.get(y).value)`. Changing the copy changes nothing in the `UI`; change a widget through `ui[handle]`.
+
 ### `colors`
 
 ```mojo
@@ -225,4 +233,9 @@ def __getitem__[W: Copyable](
 ) -> ref[self._nodes["element"].widget["value"]] W
 ```
 
-The widget `handle` names, to read or change.
+The widget `handle` names, to read or change: `ui[play].text = "Go"`, or `if ui[play].released():`.
+
+It is the widget itself, inside the `UI`, so while one is in use no
+other can be: `Vector(ui[x].value, ui[y].value)` doesn't compile in a
+method that changes the `UI`. Read each into a variable first, or
+read with `get`, which hands back a copy.
