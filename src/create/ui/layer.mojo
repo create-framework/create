@@ -17,6 +17,7 @@ from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from .label import _anchor
+from .checkbox import _checkbox_box, _checkbox_text_at, _tick_lines
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor
 from .colors import ColorScheme, FocusRing
@@ -1164,24 +1165,18 @@ struct UILayer[
             )
         )
         var look = parts.box
-        comptime size = 18.0
-        var left = rect.position.x - rect.width / 2
         # the box against the left edge, the label a gap after it
-        var centre = Point(left + size / 2, rect.position.y)
-        var box = Rectangle(
-            centre, size, size, corner_radius=look.corner_radius
-        )
+        var box = _checkbox_box(rect, look.corner_radius)
         ref recorder = self._ui[]._recorder
         recorder.style = look
         recorder.draw(box)
         if checked:
             recorder.style = parts.tick
-            var corner = centre + Vector(-1.5, -4.0)
-            recorder.draw(Line(centre + Vector(-5.0, 0.5), corner))
-            recorder.draw(Line(corner, centre + Vector(5.0, 5.0)))
+            var lines = _tick_lines(box.position)
+            recorder.draw(lines[0])
+            recorder.draw(lines[1])
         self._ring_around(box, state, off)
-        var text_left = Point(left + size + 12, rect.position.y)
-        recorder.text(label, text_left, parts.text)
+        recorder.text(label, _checkbox_text_at(rect), parts.text)
         self._ui[]._called(changed=state.clicked or state.activated)
 
     def _interact(
