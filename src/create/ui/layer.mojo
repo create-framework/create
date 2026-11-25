@@ -7,7 +7,7 @@ from create.core import Context
 from create.geometry import Circle, Geometry, Line, Rectangle
 from create.input import GamepadButton, Key
 from create.image import Image
-from create.math import Point, Transform, Vector, ceil, clamp, floor
+from create.math import Point, Transform, Vector, ceil, floor
 from create._optional import _OptionalFloat64
 from create.render import Align, Canvas, Style
 from create.render.style import _ResolvedStyle
@@ -17,6 +17,7 @@ from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from .label import _anchor
+from .slider import _check_step, _dragged_value, _handle_x, _slider_ends
 from .checkbox import _checkbox_box, _checkbox_text_at, _tick_lines
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor
@@ -1028,11 +1029,7 @@ struct UILayer[
         take_focus: Bool,
         disabled: Bool,
     ) raises:
-        if step and not step.value() > 0:  # NaN included
-            raise Error(
-                "ui.slider: step must be more than 0, not "
-                + String(step.value())
-            )
+        _check_step(step, "ui.slider")
         var off = self._disabled(disabled)
         var state = self._interact(id, rect, off, take_focus, adjusts=True)
         ref ui = self._ui[]
@@ -1046,25 +1043,17 @@ struct UILayer[
             disabled=off,
         )
         var knob_radius = look.handle.stroke_thickness / 2
-        var left = rect.position.x - rect.width / 2 + knob_radius
-        var right = rect.position.x + rect.width / 2 - knob_radius
+        var ends = _slider_ends(rect, knob_radius)
+        var left = ends[0]
+        var right = ends[1]
         var y = rect.position.y
         var dragging = state.held  # the frame it is let go of included
         var changed = False
-        if dragging and right > left and max != min:
+        if dragging:
             var pointer = self._to_local.apply(self._context[].mouse.position)
-            var t = clamp((pointer.x - left) / (right - left), 0.0, 1.0)
-            var new_value = min + t * (max - min)
-            if step:
-                var size = step.value()
-                new_value = (
-                    min + Float64(round((new_value - min) / size)) * size
-                )
-                if (max - min) * (new_value - max) > 0:
-                    # a step past `max` comes back inside, towards `min`
-                    new_value -= size if max > min else -size
-            if new_value != value:
-                value = new_value
+            var moved = _dragged_value(pointer.x, left, right, min, max, step)
+            if moved and moved.value() != value:
+                value = moved.value()
                 changed = True
         var keys = self._keys_act(state.focused)
         var pad = state.focused and ui._focus_visible and ui._pad_move.x != 0
@@ -1113,10 +1102,7 @@ struct UILayer[
                 if moved != value:
                     value = moved
                     changed = True
-        var t = 0.0
-        if max != min:
-            t = clamp((value - min) / (max - min), 0.0, 1.0)
-        var handle_x = left + t * (right - left)
+        var handle_x = _handle_x(value, min, max, left, right)
         ref recorder = ui._recorder
         recorder.style = look.track
         recorder.draw(Line(Point(left, y), Point(right, y)))

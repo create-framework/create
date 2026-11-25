@@ -20,10 +20,11 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
 | `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
-| `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, and this frame's press and click, kept between its `update`s |
+| `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, dragged this frame, and this frame's press and click, kept between its `update`s |
 | `checkbox.mojo` | `Checkbox`, a widget value that owns whether it is ticked; the box, tick and text placement the old layer shares |
 | `label.mojo` | `Label`, a widget value: text placed in a rectangle; `_anchor`, the point of a rectangle text is anchored to |
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
+| `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place and the dragged value, which the old layer shares |
 | `button.mojo` | `Button`, a widget value; `ButtonVariant`. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
 | `text_field.mojo` | `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
 

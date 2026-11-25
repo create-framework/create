@@ -17,12 +17,17 @@ struct _Pointer(Copyable, ImplicitlyCopyable, Movable):
     var released: Bool
     """The button came up over it this frame, after being pressed on it:
     a click."""
+    var dragged: Bool
+    """Held at some point this frame, the frame it is let go in included,
+    wherever the pointer is: a slider follows the pointer while this is
+    true."""
 
     def __init__(out self):
         self.hovered = False
         self.held = False
         self.pressed = False
         self.released = False
+        self.dragged = False
 
     def update(
         mut self, mouse: Mouse, inside: Bool, *, free: Bool, enabled: Bool
@@ -34,6 +39,7 @@ struct _Pointer(Copyable, ImplicitlyCopyable, Movable):
         go and reacts to nothing."""
         self.pressed = False
         self.released = False
+        self.dragged = False
         if not enabled:
             self.hovered = False
             self.held = False
@@ -42,6 +48,7 @@ struct _Pointer(Copyable, ImplicitlyCopyable, Movable):
         if self.hovered and mouse.pressed():
             self.pressed = True
             self.held = True
+        self.dragged = self.held
         if self.held and mouse.released():
             self.released = self.hovered
             self.held = False
