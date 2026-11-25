@@ -32,10 +32,10 @@ Time: the run's frame clock (`Time`), the `Clock` a playhead keeps time by, and 
 
 ## [`create.geometry`](geometry/README.md)
 
-Shapes and curves, the traits that make a type drawable, and the collision tests: each shape's `overlaps` and `contains`, and each curve's `intersects`.
+Shapes and curves, the traits they share, and the collision tests: each shape's `overlaps` and `contains`, and each curve's `intersects`. How they are drawn is `render`'s.
 
 - **Types:** [`Rectangle`](geometry/rectangle.md), [`Circle`](geometry/circle.md), [`Ellipse`](geometry/ellipse.md), [`Capsule`](geometry/capsule.md), [`Line`](geometry/line.md), [`Triangle`](geometry/triangle.md), [`Arc`](geometry/arc.md), [`Sector`](geometry/sector.md), [`Polygon`](geometry/polygon.md), [`Bezier`](geometry/bezier.md), [`Spline`](geometry/spline.md)
-- **Traits:** [`Curve`](geometry/curve.md), [`Drawable`](geometry/drawable.md), [`DrawTarget`](geometry/drawtarget.md), [`Geometry`](geometry/geometry.md), [`Shape`](geometry/shape.md)
+- **Traits:** [`Curve`](geometry/curve.md), [`Geometry`](geometry/geometry.md), [`Shape`](geometry/shape.md)
 
 ## [`create.color`](color/README.md)
 
@@ -45,9 +45,10 @@ Colours: `Color`, `Gradient` and `BlendMode`.
 
 ## [`create.render`](render/README.md)
 
-Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
 
 - **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`Autoscale`](render/autoscale.md), [`Style`](render/style.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`StyleGuard`](render/styleguard.md), [`TransformGuard`](render/transformguard.md), [`OverlayGuard`](render/overlayguard.md), [`ClipGuard`](render/clipguard.md)
+- **Traits:** [`Drawable`](render/drawable.md)
 
 ## [`create.image`](image/README.md)
 

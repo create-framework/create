@@ -27,7 +27,7 @@ ellipse stands in as its outline polygon, within 1e-4 of its larger
 side; a curve is followed as closely, and a rounded shape is tested as
 its own outline, as everywhere.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 
@@ -129,12 +129,6 @@ def overlaps(self, other: Polygon) -> Bool
 ```
 
 Whether this and `other` share any point, their boundaries included: shapes that only touch, along an edge or at a corner, overlap. Symmetric: `other.overlaps(self)` gives the same answer.
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `move_to`
 

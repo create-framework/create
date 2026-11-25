@@ -13,7 +13,9 @@ working on the package: the [user guide](../../../docs/guide/README.md) covers u
 | `canvas.mojo` | `Canvas` (records commands, touches no pixels), `_PersistentCanvasState`, the guards |
 | `_command.mojo` | `RenderCommand`, its `RenderPayload` variant (one struct per kind) and their builders; `_fill_box`, the box a fill gradient spans |
 | `_paint.mojo` | `Paint`, what a command paints with (fill, stroke, shadow, blend mode), and `TextStyle`, what text is set in |
-| `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the `DrawTarget` a clip draws its region into |
+| `drawable.mojo` | `Drawable`, a program's own type that draws its parts onto a canvas |
+| `_geometry_target.mojo` | `_GeometryTarget`, what takes one primitive per kind of shape, and `draw_geometry`, the one place a generic `Geometry` is matched to its kind |
+| `_shape_command.mojo` | `shape_command` (one overload per kind) and `curves_command`: a shape as the command that records it, ellipses, capsules and rounded polygons and sectors flattened; `RegionCapture`, the geometry target a clip draws its region into |
 | `_backend.mojo` | `Backend` — the command buffer, reads and captures; replays commands via `present` (CPU) or `present_gpu` (through the GL loop's `GLRenderer`) |
 | `_backend_handle.mojo` | `BackendHandle` — how `_PersistentCanvasState` holds its `Backend`: on the heap, built and dropped by the compiled library, reached through `handle[]` |
 | `_resources.mojo` | `Resources` — the text renderer and the interned images, which every replay draws from |
@@ -74,13 +76,17 @@ shadows blur analytically, unless their stroke is dashed (see Dashes). A plain t
 no rounding and no visible stroke (`is_plain_triangle`), isn't lowered either: it is one
 `fill_triangle` pass on the CPU, or one triangle on the GPU.
 
-**Shapes reach the canvas through `DrawTarget`** (in `create.geometry`). `canvas.draw(shape)` is
-`shape.draw_to(canvas)`, which calls the primitive for the shape's kind (`_rectangle`, `_circle`,
-`_ellipse`, `_capsule`, `_triangle`, `_sector`, `_polygon`, `_line`, `_curves`); each records
-`shape_command(shape, transform, style, scale)`. The named methods (`rectangle(position, width,
-height)`, …) only build the shape, resolving `corner_radius` against the style, and call `draw`. A
-new shape kind needs a geometry type with `draw_to`, a primitive on `DrawTarget` and `Canvas`, a
-`shape_command` overload, and the payload above.
+**`render` decides how every shape is drawn; a shape knows nothing of drawing.**
+`canvas.draw(shape)` calls `draw_geometry` (`_geometry_target.mojo`), which matches the shape's type
+to its kind when the program is compiled and calls the target's primitive for it (`_rectangle`,
+`_circle`, `_ellipse`, `_capsule`, `_triangle`, `_sector`, `_polygon`, `_line`, `_curves`); on
+`Canvas`, each records `shape_command(shape, transform, style, scale)`. The targets are `Canvas`,
+`RegionCapture` and `ui`'s recorder, each a `_GeometryTarget`. The named methods
+(`rectangle(position, width, height)`, …) only build the shape, resolving `corner_radius` against
+the style, and call `draw`. A program's own type is a `Drawable` (`drawable.mojo`), whose
+`draw_to(canvas)` draws its parts. A new shape kind needs a geometry type, a branch in
+`draw_geometry`, a primitive on `_GeometryTarget` and its targets, a `shape_command` overload, and
+the payload above.
 
 **A command is a header and a payload.** The header — `transform`, `paint`, `clip`, `stroke_grow` —
 is every kind's; `payload` is a `Variant` of one struct per kind (`ClearPayload`, `RectPayload`,
@@ -350,14 +356,14 @@ filled only, the same as circles.
 ## Clips
 
 `canvas.clip(shape, invert)` records no command. It draws the `Shape` into a `RegionCapture`, a
-`DrawTarget` that keeps the region's `shape_command` in `clip_style()` instead of recording it, so a
-clip and a fill of a shape are built by the same code. `ClipGuard` calls `CommandBuffer.push_clip`,
-which appends a `_Clip` to `CommandBuffer.clips` and makes it current (`CommandBuffer.clip`). The
-clip holds the region as an ordinary `RenderCommand` in `clip_style()` (an opaque white fill and
-nothing else), its parent and `invert`. `CommandBuffer.record`/`record_clear` stamp the current id
-on every command (`RenderCommand.clip`, 0 for none), so no command builder knows about clips. The
-guard restores the previous id; `clips` resets with the command buffer. A clipped clear never
-replaces the clear before it.
+geometry target that keeps the region's `shape_command` in `clip_style()` instead of recording it,
+so a clip and a fill of a shape are built by the same code. `ClipGuard` calls
+`CommandBuffer.push_clip`, which appends a `_Clip` to `CommandBuffer.clips` and makes it current
+(`CommandBuffer.clip`). The clip holds the region as an ordinary `RenderCommand` in `clip_style()`
+(an opaque white fill and nothing else), its parent and `invert`.
+`CommandBuffer.record`/`record_clear` stamp the current id on every command (`RenderCommand.clip`, 0
+for none), so no command builder knows about clips. The guard restores the previous id; `clips`
+resets with the command buffer. A clipped clear never replaces the clear before it.
 
 Each replay rasterises the region **with the code that draws that shape**, so a clip and a fill of
 the same shape cover the same pixels:

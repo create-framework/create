@@ -18,7 +18,7 @@ zero-length line (`start == end`) is a degenerate point segment:
 `intersects` and `closest_point` remain exact for it (a point can
 still "intersect" the collapsed line if it coincides with it).
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`, `_Collider`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`, `_Collider`.
 
 ## Fields
 
@@ -123,12 +123,6 @@ def closest_point(self, p: Point) -> Point
 
 ```mojo
 def midpoint(self) -> Point
-```
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
 ```
 
 ### `move_to`

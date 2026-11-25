@@ -27,7 +27,7 @@ has no corners. The tests use the rounded outline with each curve
 flattened, so a point within about 0.1% of the radii of the boundary
 may fall either way.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 
@@ -142,12 +142,6 @@ def overlaps(self, other: Polygon) -> Bool
 ```
 
 Whether this and `other` share any point, their boundaries included: shapes that only touch, along an edge or at a corner, overlap. Symmetric: `other.overlaps(self)` gives the same answer.
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `move_to`
 

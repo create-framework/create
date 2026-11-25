@@ -1,6 +1,6 @@
 # create.render
 
-Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Style`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
 
 ## Types
 
@@ -20,3 +20,9 @@ Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the settin
 | [`TransformGuard`](transformguard.md) | Pops the matrix `canvas.transform` pushed, on scope exit. |
 | [`OverlayGuard`](overlayguard.md) | Restores the camera and transform `canvas.overlay` suspended, on scope exit. Only `canvas.overlay` builds one. |
 | [`ClipGuard`](clipguard.md) | Closes the clip `canvas.clip` opened, on scope exit. Only `canvas.clip` builds one. |
+
+## Traits
+
+| Trait | Description |
+|---|---|
+| [`Drawable`](drawable.md) | Something drawn onto a canvas through `canvas.draw`: a program's own type, made of the shapes and curves it draws. |

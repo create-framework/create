@@ -2,7 +2,7 @@ from std.math import min, max, sqrt
 from create.math import Point, Vector
 from .bezier import Bezier
 from .spline import Spline
-from .drawable import Curve, DrawTarget
+from .traits import Curve
 from ._collider import _Collider, _Core, _overlaps
 from ._shared import (
     _closest_on_segment,
@@ -183,9 +183,6 @@ struct Line(
 
     def midpoint(self) -> Point:
         return self.start.lerp(self.end, 0.5)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target._line(self)
 
     def move_to(self, position: Point) -> Self:
         return self.translate(position - self.midpoint())

@@ -4,7 +4,7 @@ from create._optional import _OptionalFloat64
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .drawable import Curve, DrawTarget, Shape
+from .traits import Curve, Shape
 from ._shared import (
     _FILLET_STEP,
     _arc_middles,
@@ -430,9 +430,6 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         included: shapes that only touch, along an edge or at a corner,
         overlap. Symmetric: `other.overlaps(self)` gives the same answer."""
         return _regions_overlap(self, other)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target._polygon(self)
 
     def move_to(self, position: Point) -> Self:
         return self.translate(position - self.center())

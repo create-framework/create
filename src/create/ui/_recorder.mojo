@@ -7,9 +7,8 @@ from create.geometry import (
     Bezier,
     Capsule,
     Circle,
-    DrawTarget,
-    Drawable,
     Ellipse,
+    Geometry,
     Line,
     Polygon,
     Rectangle,
@@ -19,6 +18,7 @@ from create.geometry import (
 from create.image import Image
 from create.math import Point
 from create.render import Canvas
+from create.render._geometry_target import _GeometryTarget, draw_geometry
 from create.render.style import _ResolvedStyle
 
 
@@ -72,11 +72,9 @@ struct _DrawCommand(Copyable, Movable):
     var style: _ResolvedStyle
 
 
-struct _Recorder(DrawTarget, Movable):
-    """A `DrawTarget` that keeps each primitive with the style it was drawn
-    in. A shape draws itself into it through `draw_to`, so a program's own
-    `Drawable` types are recorded as the shapes they are made of, and no
-    dynamic dispatch is needed to replay them."""
+struct _Recorder(Movable, _GeometryTarget):
+    """A geometry target that keeps each primitive with the style it was
+    drawn in, to replay in order when the layer's block ends."""
 
     var commands: List[_DrawCommand]
     var style: _ResolvedStyle
@@ -84,6 +82,10 @@ struct _Recorder(DrawTarget, Movable):
     def __init__(out self):
         self.commands = []
         self.style = _ResolvedStyle()
+
+    def draw[G: Geometry](mut self, shape: G):
+        """Record `shape` in the recorder's current `style`."""
+        draw_geometry(shape, self)
 
     def _rectangle(mut self, r: Rectangle):
         self.commands.append(_DrawCommand(_Shape(r), self.style))

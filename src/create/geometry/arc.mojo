@@ -2,7 +2,7 @@ from std.math import acos, ceil, cos, min, max, sin, sqrt, tan
 from create.math import TAU, Point, Vector
 from .bezier import Bezier, _curve_segments
 from .spline import Spline
-from .drawable import Curve, DrawTarget
+from .traits import Curve
 from ._shared import (
     _MAX_ARC_BEZIER_ANGLE,
     _MAX_ARC_FLATTEN_SEGMENTS,
@@ -376,11 +376,6 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     def intersects(self, s: Spline) -> Bool:
         return s.intersects(self)
-
-    def draw_to[T: DrawTarget](self, mut target: T):
-        # Converted here, in local space: the transform maps Béziers
-        # exactly, so a non-uniform scale draws the arc of an ellipse.
-        target._curves(self.beziers())
 
     def move_to(self, position: Point) -> Self:
         var moved = self.copy()

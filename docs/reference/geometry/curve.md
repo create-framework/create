@@ -9,7 +9,7 @@ Geometry with no inside, traced from one end to the other: `Line`, `Arc`, `Bezie
 `t` runs from 0 at the start to 1 at the end; only on a `Line` and an
 `Arc` is it proportional to distance, which `at_distance` always is.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Geometry`, `Movable`.
+Implements `Copyable`, `Deinitable`, `Geometry`, `Movable`.
 
 ## Methods
 

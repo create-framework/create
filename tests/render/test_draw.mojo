@@ -1,6 +1,6 @@
-"""`canvas.draw(shape)`: every shape and curve is `Drawable`, and drawing one
-paints exactly what the named method for its kind paints. A program's own
-type made of shapes draws the same way.
+"""`canvas.draw(shape)`: the canvas draws every shape and curve itself, and
+drawing one paints exactly what the named method for its kind paints. A
+program's own `Drawable` made of shapes draws as its parts.
 
 Offscreen 120 x 100 canvases, antialiasing off, compared pixel for pixel.
 """
@@ -106,9 +106,9 @@ struct _Badge(Drawable):
     var plate: Rectangle
     var disc: Circle
 
-    def draw_to[T: DrawTarget](self, mut target: T):
-        target.draw(self.plate)
-        target.draw(self.disc)
+    def draw_to(self, mut canvas: Canvas):
+        canvas.draw(self.plate)
+        canvas.draw(self.disc)
 
 
 def test_a_compound_drawable_draws_its_parts() raises -> None:
@@ -124,12 +124,12 @@ def test_a_compound_drawable_draws_its_parts() raises -> None:
     _assert_same(drawn, parts, "badge")
 
 
-def _draw_all[T: Drawable & Copyable](mut canvas: Canvas, shapes: List[T]):
+def _draw_all[G: Geometry](mut canvas: Canvas, shapes: List[G]):
     for shape in shapes:
         canvas.draw(shape)
 
 
-def test_a_generic_helper_draws_any_drawable() raises -> None:
+def test_a_generic_helper_draws_any_geometry() raises -> None:
     var circles: List[Circle] = [
         Circle((-30.0, 0.0), 10.0),
         Circle((0.0, 0.0), 10.0),

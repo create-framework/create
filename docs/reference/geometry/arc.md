@@ -19,7 +19,7 @@ centre, which the arc passes through only when `radius` is zero, and
 `move_to` moves that centre. A zero `radius` or sweep collapses the arc to a
 point.
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Fields
 
@@ -149,12 +149,6 @@ def intersects(self, s: Sector) -> Bool
 def intersects(self, p: Polygon) -> Bool
 def intersects(self, b: Bezier) -> Bool
 def intersects(self, s: Spline) -> Bool
-```
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
 ```
 
 ### `move_to`

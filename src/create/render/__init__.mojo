@@ -1,6 +1,6 @@
-"""Drawing: `Canvas` and its `with`-block guards, `Style`, `Camera`, and the
-settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`,
-`StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+"""Drawing: `Canvas` and its `with`-block guards, `Drawable`, `Style`,
+`Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`,
+`Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
 """
 from .render_backend import RenderBackend
 from .antialiasing import Antialiasing
@@ -18,3 +18,4 @@ from .canvas import (
     OverlayGuard as OverlayGuard,
     ClipGuard as ClipGuard,
 )
+from .drawable import Drawable

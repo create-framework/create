@@ -17,7 +17,7 @@ circumference. A zero `radius` collapses the circle to a point; `contains`
 then holds only for that exact point, and `overlaps`/`intersects`
 remain exact rather than always-false. `radius` is assumed non-negative.
 
-Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
 
 ## Fields
 
@@ -103,12 +103,6 @@ def overlaps(self, other: Polygon) -> Bool
 ```
 
 Whether this and `other` share any point, their boundaries included: shapes that only touch, along an edge or at a corner, overlap. Symmetric: `other.overlaps(self)` gives the same answer.
-
-### `draw_to`
-
-```mojo
-def draw_to[T: DrawTarget](self, mut target: T)
-```
 
 ### `move_to`
 

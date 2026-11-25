@@ -224,8 +224,8 @@ if ui.button("", Rectangle((0, 0), 48, 48)):
 ui.draw(Circle((0, 0), 10), Style(fill=ui.colors().on_primary))  # on top of the button
 ```
 
-It takes any `Drawable`, your own types included (see [The canvas](../drawing/canvas.md)). Text and
-images go through `ui.label` and `ui.image`, which also draw in order.
+It takes any shape or curve. Text and images go through `ui.label` and `ui.image`, which also draw
+in order.
 
 ## Disabled widgets
 
