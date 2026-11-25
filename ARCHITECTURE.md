@@ -171,20 +171,31 @@ flowchart TD
 
 The rules behind it, and what each one buys:
 
-- **`ui`** is the top layer, and nothing imports it. It needs `app` for the `Context` a widget's
-  `update` reads the input and the frame from, `render` for the canvas widgets draw on and the
-  `Drawable` trait they conform to, `input` for the keys and buttons focus moves by, `geometry` and
-  `math` for the widgets' rectangles and hit-testing, and `color` and `text` for their colours and
-  text. An image in a `UI` is `render`'s `Picture`, so `ui` doesn't name `image`.
-- **`render` never imports `app`** (it would be a cycle). `render` depends only on `math`,
-  `geometry`, `color`, `image`, `animation`, `text`, `_bytes`, `_library`, `_optional` and `_path`,
-  so it works without a run loop. The settings that map the design onto the window therefore reach
-  `render` as plain values: in `app`, `context._set_viewport(state, …)` passes the design size and
-  autoscale in, and `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing
-  settings live on `_PersistentCanvasState` itself.
-- **Core** is what every other layer builds on: `math`, `color` and `time` import nothing from
-  `create`, and `geometry` imports only `math` and `_optional`. It loads no libraries (`time`'s
-  `DateTime` calls libc directly), holds no platform code and knows nothing about drawing.
+- **`ui`** is the top layer, and nothing imports it. An image in a `UI` is `render`'s `Picture`, so
+  `ui` doesn't name `image`.
+- **`_window`** is `app`'s platform layer, inside it as `app/_window`. It imports nothing from
+  `create` but `_library`, nothing outside `app` uses it, and nothing re-exports it.
+- **`input`** sits in the application layer beside `app`, the code that fills it, and only `app` and
+  `ui` import it, so nothing in rendering, media and data or Core can depend on what the user did.
+  Its devices are plain state: `app`'s `apply_events` folds each window event in through one
+  `_`-prefixed method per kind (`keyboard._key_down`, `mouse._button_down`, …), so `input` never
+  sees an `Event` and `_window` stays `app`'s alone.
+- **`render` never imports `app`** (it would be a cycle), so it works without a run loop. The
+  settings that map the design onto the window therefore reach `render` as plain values: in `app`,
+  `context._set_viewport(state, …)` passes the design size and autoscale in, and
+  `context._new_canvas(state^)` builds the frame's canvas. Frame-wide drawing settings live on
+  `_PersistentCanvasState` itself.
+- **`render` uses `image`, `animation` and `text` only by name.** Only `canvas.image`'s overloads,
+  `canvas.snapshot` and `Picture`, which holds the `Image` it draws, name `Image`, and
+  `canvas.image(animator, …)` names `Animator`. `Style`, `canvas.font` and text layout refer to the
+  `Font` type, and `_raster.blit_glyph` takes a `_GlyphInfo` by its internal path. A `render`
+  function that needs pixels takes a pointer plus width/height, not an image type.
+- **`animation`** holds the playheads: `Tween`, and `Animator` with the asset it plays, `Animation`.
+  This mirrors `audio`, which holds `Playback` beside the `Sound` it plays. It is the only package
+  that reads the run clock, so `math` and `image` stay free of time. It imports `math` for the
+  easing curves and `image` for the frames.
+- **Core** is what every other layer builds on. It loads no libraries (`time`'s `DateTime` calls
+  libc directly), holds no platform code and knows nothing about drawing.
   - **`geometry`** holds values and their tests, so collision code (`overlaps`, `contains`) never
     sees `render`: `render` decides how each shape and curve is drawn.
   - **`color`** sits below `image` so that `Image.pixel` can return a `Color` without a
@@ -193,37 +204,16 @@ The rules behind it, and what each one buys:
   - **`time`** holds the layer's only shared state, the run clock `_run_clock`. It is process-wide,
     and `app` copies `Context.time` into it once a frame, so a playhead can read the time without
     the clock being passed to it as an argument.
-- **`data`** imports nothing from `create` but `_path`: files through the stdlib's `open()`, numbers
-  through `atof`. Nothing imports it but the root.
-- **`animation`** holds the playheads: `Tween`, and `Animator` with the asset it plays, `Animation`.
-  This mirrors `audio`, which holds `Playback` beside the `Sound` it plays. It is the only package
-  that reads the run clock, so `math` and `image` stay free of time. It imports `math` for the
-  easing curves and `image` for the frames.
-- **`text`** depends only on `_bytes`, `_library` and `_path`. `render` uses `text` only by name, as
-  it uses `image`: `Style`, `canvas.font` and text layout refer to the `Font` type, and
-  `_raster.blit_glyph` takes a `_GlyphInfo` by its internal path.
-- **`input`** depends only on `math`, and only `app` and `ui` import it. It sits in the application
-  layer beside `app`, the code that fills it, so nothing in rendering, media and data or Core can
-  depend on what the user did. Its devices are plain state: `app`'s `apply_events` folds each window
-  event in through one `_`-prefixed method per kind (`keyboard._key_down`, `mouse._button_down`, …),
-  so `input` never sees an `Event` and `_window` stays `app`'s alone.
-- **`_path`** is a leaf, imported by every package that has a public function taking a file path,
-  and re-exported by nothing; `app`'s `source_path` is its public face. How such a function uses it
-  is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md#file-paths).
-- **`_bytes`** is a leaf imported by `image`, `text`, `audio` and `render`, re-exported by nothing.
-- **`_optional`** is a leaf imported by `geometry`, `render` and `ui`, re-exported by nothing. It
-  holds keyword plumbing rather than maths, so it sits beside the other leaves rather than in
-  `math`.
-- **`_library`** is a leaf imported by every package with FFI bindings, `_window` included. How a
-  binding uses it is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md#shared-libraries).
-- **`_window`** is `app`'s platform layer, inside it as `app/_window`. It imports nothing from
-  `create` but `_library`, nothing outside `app` uses it, and nothing re-exports it.
-- **`_native`** is a leaf imported by `render` and `app`, the packages whose machinery the compiled
-  library holds, and re-exported by nothing. See [The compiled library](#the-compiled-library).
-- **`render` uses `image` and `animation` only by name:** only `canvas.image`'s overloads,
-  `canvas.snapshot` and `Picture`, which holds the `Image` it draws, name `Image`, and
-  `canvas.image(animator, …)` names `Animator`. A `render` function that needs pixels takes a
-  pointer plus width/height, not an image type.
+- **The leaves** are re-exported by nothing.
+  - **`_path`** is imported by every package that has a public function taking a file path; `app`'s
+    `source_path` is its public face. How such a function uses it is in
+    [src/CONTRIBUTING.md](src/CONTRIBUTING.md#file-paths).
+  - **`_library`** is imported by every package with FFI bindings, `_window` included. How a binding
+    uses it is in [src/CONTRIBUTING.md](src/CONTRIBUTING.md#shared-libraries).
+  - **`_optional`** holds keyword plumbing rather than maths, so it is a leaf rather than part of
+    `math`.
+  - **`_native`** is how `render` and `app` reach the compiled library, which holds their machinery.
+    See [The compiled library](#the-compiled-library).
 
 ## The compiled library
 
