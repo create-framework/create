@@ -4,6 +4,7 @@ reacting to it; and `WidgetHandle`, how a program reaches a widget in it.
 """
 
 from std.memory import ArcPointer
+from std.os import abort
 from std.utils import Variant
 
 from create.color import Color
@@ -51,12 +52,22 @@ struct WidgetHandle[W: Copyable](
     Copyable, Equatable, ImplicitlyCopyable, Movable
 ):
     """Where a widget of type `W` is in a `UI`: what `ui.add` returns, and
-    how the program reaches the widget again, as `ui[handle]`."""
+    how the program reaches the widget again, as `ui[handle]`.
+
+    Once `ui.remove` has removed the widget, its handle names nothing: using
+    it stops the program with a message saying so, even after a new widget
+    has taken the old one's place."""
 
     var _index: Int
+    var _generation: Int
+    """How many widgets had been at `_index` before this one: a handle to
+    one of them is told apart from a handle to the widget there now."""
 
     def __eq__(self, other: Self) -> Bool:
-        return self._index == other._index
+        return (
+            self._index == other._index
+            and self._generation == other._generation
+        )
 
 
 @fieldwise_init
@@ -70,6 +81,13 @@ struct _Node(Copyable, Movable):
     var enabled: Bool
     """Whether the tree lets it and what is inside it react: `ui.enabled`
     sets it, apart from each widget's own `enabled`."""
+    var visible: Bool
+    """Whether it and what is inside it are shown: `ui.visible` sets it."""
+    var generation: Int
+    """How many nodes had been at its place in the list before it."""
+    var removed: Bool
+    """Whether `ui.remove` has removed it, leaving its place free for the
+    next node added."""
 
 
 comptime _UPDATE = 0
@@ -170,12 +188,19 @@ struct UI(Drawable, Movable):
     topmost under the pointer reacts to it, and a `Panel` covers what is
     beneath it.
 
+    `ui.visible(handle, False)` hides a widget and everything inside it until
+    it is shown again, and `ui.remove(handle)` takes them out of the tree for
+    good.
+
     `update` hit-tests through `canvas.to_local`, so call it in the same
     transform and camera the tree is drawn in.
     """
 
     var _nodes: List[_Node]
     var _roots: List[Int]
+    var _free: List[Int]
+    """The places in `_nodes` that removed nodes left, for the next nodes
+    added."""
     var _colors: ColorScheme
     var _styles: ArcPointer[_Styles]
     """What `style` sets, on the heap: seventeen `Style`s inline made a `UI`
@@ -225,6 +250,7 @@ struct UI(Drawable, Movable):
         self._key_used = False
         self._nodes = []
         self._roots = []
+        self._free = []
         self._colors = ColorScheme.light()
         self._styles = ArcPointer(_Styles())
         self._corner_radius = _CORNER_RADIUS
@@ -238,24 +264,53 @@ struct UI(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it."""
-        self._nodes.append(_Node(_Widget(widget^), None, [], False, True))
-        var index = len(self._nodes) - 1
-        self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
-        self._roots.append(index)
-        return WidgetHandle[W](index)
+        var handle = self._new_node[W](_Widget(widget^), None)
+        self._roots.append(handle._index)
+        return handle
 
     def add[
         W: Copyable, P: Copyable
     ](mut self, var widget: W, parent: WidgetHandle[P]) -> WidgetHandle[W]:
         """Add `widget` inside `parent`: drawn after it and after what was
         added inside it before, and in the look of what it sits on."""
-        self._nodes.append(
-            _Node(_Widget(widget^), parent._index, [], False, True)
-        )
-        var index = len(self._nodes) - 1
+        var inside = self._index_of(parent)
+        var handle = self._new_node[W](_Widget(widget^), inside)
+        self._nodes[inside].children.append(handle._index)
+        return handle
+
+    def _new_node[
+        W: Copyable
+    ](mut self, var widget: _Widget, parent: Optional[Int]) -> WidgetHandle[W]:
+        """Keep `widget` in a node of its own, in a place a removed node
+        left when there is one, and hand back its handle."""
+        var index: Int
+        var generation = 0
+        if self._free:
+            index = self._free.pop()
+            generation = self._nodes[index].generation + 1
+            self._nodes[index] = _Node(
+                widget^, parent, [], False, True, True, generation, False
+            )
+        else:
+            index = len(self._nodes)
+            self._nodes.append(
+                _Node(widget^, parent, [], False, True, True, 0, False)
+            )
         self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
-        self._nodes[parent._index].children.append(index)
-        return WidgetHandle[W](index)
+        return WidgetHandle[W](index, generation)
+
+    def _index_of[W: Copyable](self, handle: WidgetHandle[W]) -> Int:
+        """Where the node `handle` names is, stopping the program when its
+        widget has been removed."""
+        if handle._index >= len(self._nodes):
+            abort("create: a WidgetHandle used on a UI it doesn't belong to")
+        ref node = self._nodes[handle._index]
+        if node.removed or node.generation != handle._generation:
+            abort(
+                "create: a WidgetHandle used after its widget was removed"
+                " from the UI"
+            )
+        return handle._index
 
     def __getitem__[
         W: Copyable
@@ -269,7 +324,7 @@ struct UI(Drawable, Movable):
         other can be: `Vector(ui[x].value, ui[y].value)` doesn't compile in a
         method that changes the `UI`. Read each into a variable first, or
         read with `get`, which hands back a copy."""
-        return self._nodes[handle._index].widget[W]
+        return self._nodes[self._index_of(handle)].widget[W]
 
     def get[W: Copyable](self, handle: WidgetHandle[W]) -> W:
         """A copy of the widget `handle` names, to read: as many can be read
@@ -277,7 +332,73 @@ struct UI(Drawable, Movable):
         `Vector(ui.get(x).value, ui.get(y).value)`. Changing the copy
         changes nothing in the `UI`; change a widget through `ui[handle]`.
         """
-        return self._nodes[handle._index].widget[W].copy()
+        return self._nodes[self._index_of(handle)].widget[W].copy()
+
+    def remove[W: Copyable](mut self, handle: WidgetHandle[W]):
+        """Take the widget `handle` names out of the tree, and everything
+        inside it, for good: they are no longer laid out, updated or drawn,
+        and the focus leaves them. Their handles name nothing afterwards, so
+        drop them; to take a widget away for a while, hide it with
+        `visible` instead.
+
+        ```mojo
+        # In `update`, with `ui: UI` and `items: List[WidgetHandle[Button]]`
+        # fields: the item clicked is used up.
+        for i in range(len(self.items)):
+            if self.ui[self.items[i]].released():
+                self.ui.remove(self.items.pop(i))
+                break
+        ```
+        """
+        var index = self._index_of(handle)
+        var parent = self._nodes[index].parent
+        if parent:
+            _drop(self._nodes[parent.value()].children, index)
+        else:
+            _drop(self._roots, index)
+        var pending: List[Int] = [index]
+        while pending:
+            var at = pending.pop()
+            if self._focused and self._focused.value() == at:
+                self.clear_focus()
+            ref node = self._nodes[at]
+            pending.extend(node.children.copy())
+            node.children = []
+            node.widget = _Widget(Space())  # lets go of what it held
+            node.parent = None
+            node.removed = True
+            self._free.append(at)
+
+    def visible[W: Copyable](self, handle: WidgetHandle[W]) -> Bool:
+        """Whether the tree shows the widget `handle` names, apart from what
+        it is inside: `True` unless set."""
+        return self._nodes[self._index_of(handle)].visible
+
+    def visible[W: Copyable](mut self, handle: WidgetHandle[W], visible: Bool):
+        """Show the widget `handle` names, and everything inside it, or hide
+        them: a hidden part of the tree isn't drawn, takes no room in a
+        column or row, reacts to nothing, takes no focus and lets go of
+        focus it has. Its widgets keep their fields, so showing it again
+        brings it back as it was.
+
+        ```mojo
+        # In `update`: the advanced settings show while their box is ticked.
+        var ticked = self.ui[self.advanced].checked
+        self.ui.visible(self.advanced_settings, ticked)
+        ```
+        """
+        self._nodes[self._index_of(handle)].visible = visible
+
+    def _hidden(self, index: Int) -> Bool:
+        """Whether the node at `index` is in a part of the tree that is
+        hidden: it, or something it is inside."""
+        var at = Optional[Int](index)
+        while at:
+            ref node = self._nodes[at.value()]
+            if not node.visible:
+                return True
+            at = node.parent
+        return False
 
     # ----------------------------------------------------------- the look
 
@@ -463,7 +584,7 @@ struct UI(Drawable, Movable):
 
     def _holds_mouse(self) -> Bool:
         """Whether one of its widgets is held."""
-        for index in range(len(self._nodes)):
+        for index in self._drawing_order():
             if self._describe(index).held:
                 return True
         return False
@@ -487,7 +608,7 @@ struct UI(Drawable, Movable):
     def enabled[W: Copyable](self, handle: WidgetHandle[W]) -> Bool:
         """Whether the tree lets the widget `handle` names react, apart from
         its own `enabled`: `True` unless set."""
-        return self._nodes[handle._index].enabled
+        return self._nodes[self._index_of(handle)].enabled
 
     def enabled[W: Copyable](mut self, handle: WidgetHandle[W], enabled: Bool):
         """Let the widget `handle` names, and everything inside it, react,
@@ -495,7 +616,7 @@ struct UI(Drawable, Movable):
         tree are drawn faded, take no focus, and let go of focus they have;
         a panel keeps its colour. Each widget's own `enabled` is kept,
         so enabling the part again restores it."""
-        self._nodes[handle._index].enabled = enabled
+        self._nodes[self._index_of(handle)].enabled = enabled
 
     def _disabled(self, index: Int) -> Bool:
         """Whether the node at `index` is in a part of the tree that is
@@ -509,7 +630,11 @@ struct UI(Drawable, Movable):
         return False
 
     def _can_focus(self, index: Int) -> Bool:
-        return self._describe(index).focusable and not self._disabled(index)
+        return (
+            self._describe(index).focusable
+            and not self._disabled(index)
+            and not self._hidden(index)
+        )
 
     def _update_from(
         mut self,
@@ -520,17 +645,25 @@ struct UI(Drawable, Movable):
         topmost: Optional[Int],
     ) raises:
         """Update the widget at `index` in `theme`, then what is inside it,
-        in the look of what it sits on."""
+        in the look of what it sits on. A hidden widget is updated as a
+        disabled one, so it lets go and keeps no click or change from before
+        it was hidden to report while it is."""
         var free = Bool(topmost) and topmost.value() == index
+        var hidden = self._hidden(index)
+        var focus = _Focus(
+            in_tree=True, focused=False, keys=False, activated=False, step=0
+        )
+        if not hidden:
+            focus = self._focus_for(index, context)
         var reply = self._dispatch_mut(
             index,
             _UPDATE,
             context,
             canvas,
             theme,
-            free=free,
-            focus=self._focus_for(index, context),
-            disabled=self._disabled(index),
+            free=free and not hidden,
+            focus=focus,
+            disabled=hidden or self._disabled(index),
         )
         for child in self._nodes[index].children.copy():
             self._update_from(child, context, canvas, reply.theme, topmost)
@@ -548,8 +681,8 @@ struct UI(Drawable, Movable):
         return None
 
     def _drawing_order(self) -> List[Int]:
-        """Every widget, a parent before what is inside it: the order they
-        are drawn in."""
+        """Every widget shown, a parent before what is inside it: the order
+        they are drawn in. A hidden part of the tree is left out."""
         var order = List[Int](capacity=len(self._nodes))
         var pending = List[Int]()
         var r = len(self._roots) - 1
@@ -558,6 +691,8 @@ struct UI(Drawable, Movable):
             r -= 1
         while pending:
             var index = pending.pop()
+            if not self._nodes[index].visible:
+                continue  # hidden, with everything inside it
             order.append(index)
             ref children = self._nodes[index].children
             var c = len(children) - 1
@@ -570,7 +705,11 @@ struct UI(Drawable, Movable):
         for index in self._drawing_order():
             self._draw(index, canvas)
         # the focus ring last, so nothing covers it
-        if self._focused and self._focus_visible:
+        if (
+            self._focused
+            and self._focus_visible
+            and not self._hidden(self._focused.value())
+        ):
             var node = self._describe(self._focused.value())
             var gap = self._focus_ring.gap
             with canvas._with_style(self._theme().ring()):
@@ -591,8 +730,9 @@ struct UI(Drawable, Movable):
         """Give the widget `handle` names focus, with its ring showing, as
         Tab would: a dialog gives its first field focus as it opens. A
         widget that can't take focus, such as a label, takes nothing."""
-        if self._can_focus(handle._index):
-            self._focus_on(handle._index, visible=True, from_gamepad=False)
+        var index = self._index_of(handle)
+        if self._can_focus(index):
+            self._focus_on(index, visible=True, from_gamepad=False)
 
     def clear_focus(mut self):
         """Take focus away from whatever has it, as Escape does."""
@@ -602,7 +742,8 @@ struct UI(Drawable, Movable):
 
     def has_focus[W: Copyable](self, handle: WidgetHandle[W]) -> Bool:
         """Whether the widget `handle` names has focus."""
-        return Bool(self._focused) and self._focused.value() == handle._index
+        var index = self._index_of(handle)
+        return Bool(self._focused) and self._focused.value() == index
 
     def _focus_on(mut self, index: Int, *, visible: Bool, from_gamepad: Bool):
         self._focused = index
@@ -830,7 +971,10 @@ struct UI(Drawable, Movable):
     ) raises:
         """Place the node at `index`: in `slot` when what it is in gives it
         one, at the size it prefers when it was added with none, and where
-        it is otherwise; then what is inside it."""
+        it is otherwise; then what is inside it. A hidden node is left
+        where it is."""
+        if not self._nodes[index].visible:
+            return
         var node = self._describe(index)
         var rect = node.rect
         if slot:
@@ -868,7 +1012,8 @@ struct UI(Drawable, Movable):
             var next = 0
             for child in children:
                 var given: Optional[Rectangle] = None
-                if self._nodes[child].sized_by_ui:
+                ref child_node = self._nodes[child]
+                if child_node.sized_by_ui and child_node.visible:
                     given = slots[next]
                     next += 1
                 self._place_from(child, given, context, canvas, theme, sizes)
@@ -884,11 +1029,12 @@ struct UI(Drawable, Movable):
                 self._place_from(child, None, context, canvas, theme, sizes)
 
     def _placed_children(self, index: Int) -> List[Int]:
-        """The children a column or row at `index` places: those added with
-        no size of their own. The rest keep their place."""
+        """The children a column or row at `index` places: those shown and
+        added with no size of their own. The rest keep their place."""
         var placed = List[Int]()
         for child in self._nodes[index].children:
-            if self._nodes[child].sized_by_ui:
+            ref node = self._nodes[child]
+            if node.sized_by_ui and node.visible:
                 placed.append(child)
         return placed^
 
@@ -896,9 +1042,12 @@ struct UI(Drawable, Movable):
         """Whether the node at `index`, inside a panel, fills the panel's
         inside: a column or row added with no size of its own."""
         var kind = self._describe(index).kind
-        return (kind == _COLUMN or kind == _ROW) and self._nodes[
-            index
-        ].sized_by_ui
+        ref node = self._nodes[index]
+        return (
+            (kind == _COLUMN or kind == _ROW)
+            and node.sized_by_ui
+            and node.visible
+        )
 
     # ------------------------------------------------------------ dispatch
     #
@@ -1105,3 +1254,11 @@ struct UI(Drawable, Movable):
             if action == _PLACE:
                 widget[Row].rect = rect
         return reply^
+
+
+def _drop(mut indices: List[Int], index: Int):
+    """Take `index` out of `indices`, where it is once."""
+    for i in range(len(indices)):
+        if indices[i] == index:
+            _ = indices.pop(i)
+            return

@@ -34,6 +34,10 @@ size fits the column or row inside it. Where widgets overlap, only the
 topmost under the pointer reacts to it, and a `Panel` covers what is
 beneath it.
 
+`ui.visible(handle, False)` hides a widget and everything inside it until
+it is shown again, and `ui.remove(handle)` takes them out of the tree for
+good.
+
 `update` hit-tests through `canvas.to_local`, so call it in the same
 transform and camera the tree is drawn in.
 
@@ -75,6 +79,43 @@ def get[W: Copyable](self, handle: WidgetHandle[W]) -> W
 ```
 
 A copy of the widget `handle` names, to read: as many can be read in one expression as you like, as in `Vector(ui.get(x).value, ui.get(y).value)`. Changing the copy changes nothing in the `UI`; change a widget through `ui[handle]`.
+
+### `remove`
+
+```mojo
+def remove[W: Copyable](mut self, handle: WidgetHandle[W])
+```
+
+Take the widget `handle` names out of the tree, and everything inside it, for good: they are no longer laid out, updated or drawn, and the focus leaves them. Their handles name nothing afterwards, so drop them; to take a widget away for a while, hide it with `visible` instead.
+
+```mojo
+# In `update`, with `ui: UI` and `items: List[WidgetHandle[Button]]`
+# fields: the item clicked is used up.
+for i in range(len(self.items)):
+    if self.ui[self.items[i]].released():
+        self.ui.remove(self.items.pop(i))
+        break
+```
+
+### `visible`
+
+```mojo
+def visible[W: Copyable](self, handle: WidgetHandle[W]) -> Bool
+```
+
+Whether the tree shows the widget `handle` names, apart from what it is inside: `True` unless set.
+
+```mojo
+def visible[W: Copyable](mut self, handle: WidgetHandle[W], visible: Bool)
+```
+
+Show the widget `handle` names, and everything inside it, or hide them: a hidden part of the tree isn't drawn, takes no room in a column or row, reacts to nothing, takes no focus and lets go of focus it has. Its widgets keep their fields, so showing it again brings it back as it was.
+
+```mojo
+# In `update`: the advanced settings show while their box is ticked.
+var ticked = self.ui[self.advanced].checked
+self.ui.visible(self.advanced_settings, ticked)
+```
 
 ### `colors`
 
