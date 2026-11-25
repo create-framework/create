@@ -217,14 +217,16 @@ The rules behind it, and what each one buys:
 
 ## The compiled library
 
-A program is compiled from source, and so is every function in Create it reaches. Most of what `run`
-reaches is machinery the program never names: the loops, the window, both replays, text layout and
-the capture encoders. Compiled into every program, it took most of each build, about 16 of hello's
-17 seconds, and the compiler's cache can't help, since an entry is per program and any edit to the
-program misses it. So that machinery is compiled once, into a shared library, `libcreate`
-(`src/native/libcreate.mojo`, built by `pixi run native`), and a program calls into it. What a
-program does name, such as the value types and `Canvas`'s recording calls, stays source and is
-inlined as before.
+Create's machinery, the parts of the library a program reaches through `run` but never names, is
+compiled once into a shared library, `libcreate` (`src/native/libcreate.mojo`, built by `pixi run
+native`), and a program calls into it. That machinery is the loops, the window, both replays, text
+layout and the capture encoders.
+
+The reason is build time. A program is compiled from source, along with every function in Create it
+reaches. If this machinery were compiled into each program, it would make even small programs
+compile very slowly. The compiler's cache wouldn't help, since its entries are per program and any
+edit to the program misses them. What a program does name, such as the value types and `Canvas`'s
+recording calls, is compiled into the program itself and inlined there.
 
 - **Both halves come from the same source,** so a struct has the same layout in each, and a value
   crosses as its address: `_native.address(canvas)` on the program's side, `_native.at[Canvas](…)`
