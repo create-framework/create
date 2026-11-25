@@ -239,6 +239,35 @@ self.ui.enabled(self.online_panel, self.connected)
 Labels and pictures in a disabled part of a `UI` fade along with the widgets, so the whole section
 looks switched off.
 
+## Hiding and removing widgets
+
+**`ui.visible(handle, False)` hides a widget and everything inside it** until `ui.visible(handle,
+True)` shows them again. A hidden part of the tree isn't drawn, reacts to nothing and takes no
+focus; a widget that had focus loses it. It takes no room either, so the widgets after it in a
+column or row close up. Each widget keeps its fields while hidden, so a slider comes back at the
+value it had:
+
+```mojo
+# In `update`: the advanced settings show while their box is ticked.
+var ticked = self.ui[self.advanced].checked
+self.ui.visible(self.advanced_settings, ticked)
+```
+
+**`ui.remove(handle)` takes a widget and everything inside it out of the `UI` for good**, such as an
+item used up from an inventory, or the rows of a list being rebuilt. Hide a widget that will come
+back, and remove one that won't. A removed widget's handle names nothing: using it stops the program
+with a message saying so, so drop it along with the widget. A widget added later never takes over an
+old handle, even when it takes the removed widget's place:
+
+```mojo
+# In `update`, with `ui: UI` and `items: List[WidgetHandle[Button]]` fields:
+# the item clicked is used up.
+for i in range(len(self.items)):
+    if self.ui[self.items[i]].released():
+        self.ui.remove(self.items.pop(i))
+        break
+```
+
 ## One UI for widgets that belong together
 
 Keep **one `UI` for every widget the player navigates together**: it is what Tab moves through, and

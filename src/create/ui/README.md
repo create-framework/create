@@ -14,7 +14,7 @@ rules.
 | `_theme.mojo` | `_Theme`: the colours, the `ui.style` styles (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
-| `tree.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children and whether the tree enables it; `WidgetHandle`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
+| `tree.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `WidgetHandle`; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
 | `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the gamepad reading and the nearest-in-a-direction choice |
 | `layout.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes, and `_UNSIZED`, the size a widget leaves for the tree to choose |
 | `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
@@ -53,6 +53,17 @@ node: its kind, rect, whether it takes the pointer or focus, its ring), `_draw`,
 are separate methods because each needs the tree and the canvas differently. The public API never
 shows the `Variant`: `ui.add` returns a typed `WidgetHandle[W]`, and `ui[handle]` is a reference to
 the `W` inside it.
+
+**A hidden node is skipped, and a removed one frees its place.** `ui.visible` sets a node's
+`visible`, and every walk of the tree leaves a hidden node out along with what is inside it:
+`_drawing_order`, which hit-testing, focus and drawing go by, and layout, where a hidden node takes
+no slot. `update` still updates a hidden node, as a disabled one, so it lets go of the mouse and
+reports no click while hidden. `ui.remove` takes a node and what is inside it off their parent,
+swaps each widget for a `Space` so it lets go of what it held, and frees its place in `_nodes` for
+the next node added. Each node counts its `generation`, how many nodes had its place before it, and
+a `WidgetHandle` carries the one it was made for, so `_index_of`, which every handle goes through,
+stops the program when a handle outlives its widget rather than reaching the node that took its
+place.
 
 **`update` runs in a fixed order:**
 
