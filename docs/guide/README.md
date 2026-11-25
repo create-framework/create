@@ -39,19 +39,21 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 - [Input](interaction/input.md): what the keyboard, mouse and gamepads have in common: held, pressed
   and released.
 - [Keyboard](interaction/keyboard.md): keys by position, modifier keys and key bindings.
-- [Typing](interaction/typing.md): typed text, and text fields with `text_field`.
+- [Typing](interaction/typing.md): typed text, and text fields with `TextField`.
 - [Mouse](interaction/mouse.md): buttons, position and movement, picking what is under the pointer,
   locking the mouse and the cursor.
 - [Gamepads](interaction/gamepads.md): players, sticks, triggers, buttons and rumble.
 
 ## [User interface](ui/README.md)
 
-- [Widgets](ui/widgets.md): the `UI` and its layers, buttons, sliders, checkboxes, labels and
-  images, how widgets are told apart, drawing your own things among them, and disabled widgets.
+- [Widgets](ui/widgets.md): widgets as values, buttons, sliders, checkboxes, labels and panels,
+  keeping them together in a `UI` and laying them out, drawing your own things among them, and
+  disabled widgets.
 - [Focus and navigation](ui/focus.md): focus, Tab and the keys, gamepads, focus rings, keeping the
   game's input apart from the UI's, and several `UI`s.
 - [Themes and styling](ui/themes.md): the colours widgets are drawn in, colours from one colour, the
-  sizes the `UI` keeps, styling one widget or a block, panels, and how widgets show their state.
+  sizes the `UI` keeps, styling one widget or every widget of a kind, panels, and how widgets show
+  their state.
 
 ## [Motion](motion/README.md)
 

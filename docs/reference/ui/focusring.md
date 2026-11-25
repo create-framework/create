@@ -4,7 +4,7 @@
 struct FocusRing
 ```
 
-The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap.
+The ring drawn around a widget focused from the keyboard, a gamepad or `ui.focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap.
 
 Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
