@@ -16,8 +16,8 @@ internals](#package-internals).
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `Gradient` (with the ramp and dither both backends share), `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `BlendMode` |
-| `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, util functions, re-exported `std.math` functions |
-| `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock playheads read (`_run_clock`), `DateTime` (the wall clock) |
+| `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, `lerp`, `map` and the other scalar helpers, re-exported `std.math` functions |
+| `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock that playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Geometry`/`Shape`/`Curve` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. Values and tests only: how a shape is drawn is `render`'s. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
 | `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer` |
 | `animation` | `src/create/animation/` | The playheads: `Tween`, and `Animation` (a sprite's frames) with its `Animator`. Each keeps time off the run clock |
@@ -173,8 +173,8 @@ flowchart TD
 
 The rules behind it, and what each one buys:
 
-- **`ui`** is the top layer, and nothing imports it. An image in a `UI` is `render`'s `Picture`, so
-  `ui` doesn't name `image`.
+- **`ui`** is the top layer's only package, and nothing imports it. An image in a `UI` is `render`'s
+  `Picture`, so `ui` doesn't name `image`.
 - **`_window`** is `app`'s platform layer, inside it as `app/_window`. It imports nothing from
   `create` but `_library`, nothing outside `app` uses it, and nothing re-exports it.
 - **`input`** sits in the application layer beside `app`, the code that fills it, and only `app` and
@@ -230,11 +230,12 @@ compile very slowly. The compiler's cache wouldn't help, since its entries are p
 edit to the program misses them. What a program does name, such as the value types and `Canvas`'s
 recording calls, is compiled into the program itself and inlined there.
 
-- **Both halves come from the same source,** so a struct has the same layout in each, and a value
-  crosses as its address: `_native.address(canvas)` on the program's side, `_native.at[Canvas](…)`
-  on the library's. Both allocate through the Mojo runtime's shared allocator, and `_Global`s are
-  process-wide, so a value allocated on one side may be dropped on the other. The library refuses a
-  program whose `Context`, `Canvas` or `Backend` has a different size, the sign of another version.
+- **Both halves, the program and the library, come from the same source,** so a struct has the same
+  layout in each, and a value crosses as its address: `_native.address(canvas)` on the program's
+  side, `_native.at[Canvas](…)` on the library's. Both allocate through the Mojo runtime's shared
+  allocator, and `_Global`s are process-wide, so a value allocated on one side may be dropped on the
+  other. The library refuses a program whose `Context`, `Canvas` or `Backend` has a different size,
+  the sign of another version.
 - **A call site picks its half at compile time.** The library is built with `-D
   CREATE_LIBRARY_BUILD`, so `_native.IN_LIBRARY` is true there, and a call site that reaches the
   machinery calls it directly; in a program it calls the library's entry point through
@@ -248,8 +249,8 @@ recording calls, is compiled into the program itself and inlined there.
   is dropped after its last use. For the same reason, `BackendHandle[]` returns a reference tied to
   the handle's origin, never an untracked one, or the handle could be dropped while the reference is
   in use.
-- **What crosses:** `run` and `run_headless` hand the library a `_Driver` (`core/_driver.mojo`), the
-  program's `create` and `update` as two C callbacks, and the loops call it where they called the
+- **What crosses:** `run` and `run_headless` hand the library a `_Driver` (`app/_driver.mojo`), the
+  program's `create` and `update` as two C callbacks, and the loops call it wherever they need the
   program. `Canvas` keeps its `Backend` behind a `BackendHandle`, which the library builds and
   drops, and calls into it for the reads, captures, text measurement and image interning; the
   recording calls write the command buffer through `handle[]`.
@@ -268,10 +269,10 @@ doesn't is the function count of hello's IR: `mojo build --emit llvm` and count 
 
 ## Imports and public surface
 
-A program writes `from create import *`. Otherwise import by name from the package that owns the
-name (`from create.geometry import Circle`). Starring a single subpackage is no substitute for the
-root import: a subpackage exports only the names it owns, so it leaves out the types its own
-functions take.
+A program writes `from create import *`. Code inside the library imports by name from the package
+that owns the name (`from create.geometry import Circle`). Starring a single subpackage is no
+substitute for the root import: a subpackage exports only the names it owns, so it leaves out the
+types its own functions take.
 
 - The root has no names of its own: it star-imports the thirteen subpackages. Never add a name
   there; add it to the owning subpackage.
@@ -298,4 +299,5 @@ Where a package's internals need explaining, its README does so:
 - [`src/create/ui/README.md`](src/create/ui/README.md): a widget's update and look, how a `UI` lays
   out, hit-tests and draws its widgets, focus and the device claims, and how styles and state
   colours are resolved.
-- [`tests/README.md`](tests/README.md): how tests are written and run, and how the GPU is covered.
+
+How tests are written and run, and how the GPU is covered, is in [tests/README.md](tests/README.md).
