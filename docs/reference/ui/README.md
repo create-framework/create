@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps the widgets' state from frame to frame, `UILayer`, the handle a `with` block gets to draw widgets with, and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -17,5 +17,14 @@ The user interface: `UI`, which keeps the widgets' state from frame to frame, `U
 | [`ColorScheme`](colorscheme.md) | The colours widgets are drawn in, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. A program keeps its scheme in a field, passes it to `ui.screen` or `ui.world`, and draws its own things in it, such as `canvas.background(self.colors.background)`. |
 | [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `take_focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
+| [`Button`](button.md) | A button with a line of text on it, which the mouse clicks. |
 | [`ButtonVariant`](buttonvariant.md) | Which of the colours a button is drawn in. |
 | [`TextEditor`](texteditor.md) | A text field's caret, selection and editing, from `ui.text_editor()` right after the field. It reads where the caret and selection are, to draw beside them, and edits the field through the same methods typing uses, so a program can drive it from its own keys or buttons. |
+
+## Traits
+
+| Trait | Description |
+|---|---|
+| [`Clickable`](clickable.md) | A widget the mouse presses, in the words the input devices use: *pressed* and *released* are the edges, true only in the frame they happen, and *down* is held. Each is as of its last `update`. |
+| [`Hoverable`](hoverable.md) | A widget the pointer can be over. |
+| [`Widget`](widget.md) | A value that reacts to input and draws itself: a `Button`, say. |

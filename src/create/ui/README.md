@@ -19,7 +19,9 @@ guide](../../../docs/guide/ui/README.md) covers using it, and
 | `_recorder.mojo` | `_Recorder`, what a layer draws on: shapes, text, images and clips, replayed in call order when the block ends |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
-| `button.mojo` | `ButtonVariant`; a button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
+| `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
+| `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, and this frame's press and click, kept between its `update`s |
+| `button.mojo` | `Button`, a widget value; `ButtonVariant`. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
 | `text_field.mojo` | `TextEditor`, the caret, selection and editing `ui.text_editor()` hands a program |
 
 ## How a frame goes
