@@ -77,7 +77,7 @@ The packages form layers, and a package imports only from the layers below it:
 | UI | `ui` | `core`, `render`, `input`, `geometry`, `color`, `image`, `text`, `math`, `_optional` |
 | Run | `core` | `render`, `input`, `image`, `math`, `time`, `_window`, `_path`, `_native` |
 | Drawing | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_optional`, `_path`, `_native` |
-| Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `math`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
+| Assets | `animation`, `image`, `text`, `audio` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path` |
 | Values | `geometry`, `color`, `input` | `math`; `geometry` also `_optional` |
 | Foundations | `math`, `time`, `data` | `math` and `time`: nothing; `data`: `_path` |
 | Internal | `_window`, `_bytes`, `_library`, `_optional`, `_path`, `_native` | `_window`: `_library`; the others nothing |
@@ -113,7 +113,6 @@ flowchart TD
     animation --> time
     geometry --> math
     image --> color
-    image --> math
     color --> math
     input --> math
 ```
