@@ -47,6 +47,26 @@ Resource handles (`Image`, `PixelBuffer`, `Sound`, `Audio`, `Playback`) and shar
 italic_path="..."` when it has one). `JSON` prints as compact JSON text, its own source form;
 `Table` and `TableRow` are containers and not printable.
 
+## File paths
+
+A relative path given to Create resolves against the source file that makes the call, as [File
+paths](../docs/guide/basics/programs.md#file-paths) describes. A public function that takes a path
+does three things to make that work:
+
+- It is `@always_inline`, and passes the path to `_caller_relative` (in `_path.mojo`) directly from
+  its own body. `call_location` counts exactly those two inlined calls, so the path resolves against
+  the caller's file.
+- It hands the absolute path to a `_`-named twin that does the work, such as `Image._load`.
+- Library code calls the twin, never the public function: called from the library, the public
+  function would resolve the path against the library's own file.
+
+## Shared libraries
+
+A binding opens its library with `load_library("libname", version)` from `_library.mojo`, where
+`version` is the soname's version, and never with `_DLHandle("libname.so")`. `load_library` decides
+the platform's file name and search path. It opens the versioned name because the runtime package
+installs that one, so the library is found even on a system without `-devel` packages.
+
 ## Mojo
 
 Create is on Mojo 1.2, and some older forms are gone or deprecated:
