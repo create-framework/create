@@ -10,13 +10,15 @@ from std.utils import Variant
 
 from create.color import Color
 from create.core import Context
-from create.geometry import Rectangle
-from create.math import Point
+from create.geometry import Circle, Rectangle
+from create.input import GamepadButton, Key
+from create.math import Point, Vector
 from create.render import Canvas, Drawable, Picture, Style
 from .button import Button
 from .checkbox import Checkbox
 from .colors import ColorScheme, FocusRing, StateLayers
 from .label import Label
+from ._navigation import _Focus, _nearest, _pad_pressed, _pad_push
 from .layout import Column, Row, Space, _sized
 from .panel import Panel
 from .slider import Slider
@@ -96,6 +98,16 @@ struct _Description(Copyable, Movable):
     """A row's height in a column, when set."""
     var amount: Optional[Float64]
     """A space's size, when set."""
+    var focusable: Bool
+    """Whether it can take focus: a widget that reacts, while enabled."""
+    var takes_typing: Bool
+    var adjusts: Bool
+    """Whether a gamepad's left and right change it, as they step a slider,
+    rather than move focus away."""
+    var ring: Optional[Rectangle]
+    """The shape its focus ring goes round, when it is a rectangle."""
+    var ring_circle: Optional[Circle]
+    """The shape its focus ring goes round, when it is a circle."""
 
     def __init__(out self, kind: Int, rect: Rectangle, takes_pointer: Bool):
         self.kind = kind
@@ -105,6 +117,11 @@ struct _Description(Copyable, Movable):
         self.weights = []
         self.height = None
         self.amount = None
+        self.focusable = False
+        self.takes_typing = False
+        self.adjusts = False
+        self.ring = None
+        self.ring_circle = None
 
 
 @fieldwise_init
@@ -161,8 +178,28 @@ struct _Tree(Drawable, Movable):
     var _control_height: Float64
     var _state_layers: StateLayers
     var _focus_ring: FocusRing
+    var _player: Optional[Int]
+    var _focused: Optional[Int]
+    """The node with focus."""
+    var _focus_visible: Bool
+    """Whether focus came from the keyboard, a gamepad or code, so its ring
+    shows; a click gives focus without one."""
+    var _focus_from_gamepad: Bool
+    var _stick_was: Vector
+    var _pad_move: Vector
+    """This frame's push on a gamepad, which a focused slider may take."""
+    var _typing_was: Bool
 
-    def __init__(out self):
+    def __init__(out self, *, player: Optional[Int] = None):
+        """A tree whose focus any gamepad moves, unless `player` names one,
+        as each player's menu in a split-screen game would."""
+        self._player = player
+        self._focused = None
+        self._focus_visible = False
+        self._focus_from_gamepad = False
+        self._stick_was = Vector.ZERO
+        self._pad_move = Vector.ZERO
+        self._typing_was = False
         self._nodes = []
         self._roots = []
         self._colors = ColorScheme.light()
@@ -294,6 +331,7 @@ struct _Tree(Drawable, Movable):
         Call it before drawing the tree, in the same transform."""
         self._lay_out(context, canvas)
         var topmost = self._topmost(canvas.to_local(context.mouse.position))
+        self._navigate(context, topmost)
         var theme = self._theme()
         for root in self._roots.copy():
             self._update_from(root, context, canvas, theme, topmost)
@@ -310,7 +348,13 @@ struct _Tree(Drawable, Movable):
         in the look of what it sits on."""
         var free = Bool(topmost) and topmost.value() == index
         var reply = self._dispatch_mut(
-            index, _UPDATE, context, canvas, theme, free=free
+            index,
+            _UPDATE,
+            context,
+            canvas,
+            theme,
+            free=free,
+            focus=self._focus_for(index, context),
         )
         for child in self._nodes[index].children.copy():
             self._update_from(child, context, canvas, reply.theme, topmost)
@@ -349,6 +393,157 @@ struct _Tree(Drawable, Movable):
     def draw_to(self, mut canvas: Canvas):
         for index in self._drawing_order():
             self._draw(index, canvas)
+        # the focus ring last, so nothing covers it
+        if self._focused and self._focus_visible:
+            var node = self._describe(self._focused.value())
+            var gap = self._focus_ring.gap
+            with canvas._with_style(self._theme().ring()):
+                if node.ring:
+                    ref shape = node.ring.value()
+                    var ring = shape.copy()
+                    ring.width += 2 * gap
+                    ring.height += 2 * gap
+                    ring.corner_radius = shape.corner_radius + gap
+                    canvas.draw(ring)
+                elif node.ring_circle:
+                    ref circle = node.ring_circle.value()
+                    canvas.draw(Circle(circle.position, circle.radius + gap))
+
+    # --------------------------------------------------------------- focus
+
+    def focus[W: Copyable](mut self, handle: WidgetHandle[W]):
+        """Give the widget `handle` names focus, with its ring showing, as
+        Tab would: a dialog gives its first field focus as it opens. A
+        widget that can't take focus, such as a label, takes nothing."""
+        if self._describe(handle._index).focusable:
+            self._focus_on(handle._index, visible=True, from_gamepad=False)
+
+    def clear_focus(mut self):
+        """Take focus away from whatever has it, as Escape does."""
+        self._focused = None
+        self._focus_visible = False
+        self._focus_from_gamepad = False
+
+    def has_focus[W: Copyable](self, handle: WidgetHandle[W]) -> Bool:
+        """Whether the widget `handle` names has focus."""
+        return Bool(self._focused) and self._focused.value() == handle._index
+
+    def _focus_on(mut self, index: Int, *, visible: Bool, from_gamepad: Bool):
+        self._focused = index
+        self._focus_visible = visible
+        self._focus_from_gamepad = from_gamepad
+
+    def _navigate(mut self, mut context: Context, topmost: Optional[Int]):
+        """Move focus for this frame's input, before any widget acts: away
+        for Escape, a gamepad's east button or a click on nothing focusable;
+        onto a clicked widget; along for Tab; and towards a gamepad's
+        push. Then switch typing on while a text field has focus."""
+        ref keyboard = context.keyboard
+        if (
+            self._focused
+            and not self._describe(self._focused.value()).focusable
+        ):
+            self.clear_focus()  # disabled, or no longer a widget that can
+        if self._focused and keyboard.pressed(Key.ESCAPE):
+            self.clear_focus()
+        if context.mouse.pressed():
+            if topmost and self._describe(topmost.value()).focusable:
+                self._focus_on(
+                    topmost.value(), visible=False, from_gamepad=False
+                )
+            else:
+                self.clear_focus()  # a click on nothing, or on a panel
+        if keyboard.typed(Key.TAB):
+            self._tab(
+                backwards=keyboard.down(Key.LEFT_SHIFT)
+                or keyboard.down(Key.RIGHT_SHIFT)
+            )
+        var push = _pad_push(context, self._player, self._stick_was)
+        self._pad_move = push
+        if _pad_pressed(context, self._player, GamepadButton.EAST):
+            self.clear_focus()  # back out, as Escape does
+        elif push != Vector.ZERO:
+            var steps = False
+            if self._focused and push.y == 0:
+                steps = self._describe(self._focused.value()).adjusts
+            if not steps:
+                self._move_focus(push)
+        var typing = (
+            Bool(self._focused)
+            and self._describe(self._focused.value()).takes_typing
+        )
+        if typing != self._typing_was:
+            context.text_input(typing)
+            self._typing_was = typing
+
+    def _focusable(self) -> List[Int]:
+        """The widgets that can take focus, in the order they are drawn:
+        the order Tab goes through them."""
+        var focusable = List[Int]()
+        for index in self._drawing_order():
+            if self._describe(index).focusable:
+                focusable.append(index)
+        return focusable^
+
+    def _tab(mut self, backwards: Bool):
+        """Move focus to the next widget that can take it, or the previous
+        one `backwards`; from no focus, to the first or the last. The order
+        wraps round."""
+        var order = self._focusable()
+        if not order:
+            return
+        var at = -1
+        if self._focused:
+            for i in range(len(order)):
+                if order[i] == self._focused.value():
+                    at = i
+                    break
+        var next: Int
+        if at == -1:
+            next = len(order) - 1 if backwards else 0
+        elif backwards:
+            next = (at - 1 + len(order)) % len(order)
+        else:
+            next = (at + 1) % len(order)
+        self._focus_on(order[next], visible=True, from_gamepad=False)
+
+    def _move_focus(mut self, direction: Vector):
+        """Move focus to the nearest widget in `direction`, judged from where
+        the widgets are; from no focus, to the first."""
+        var order = self._focusable()
+        var centres = List[Point]()
+        for index in order:
+            centres.append(self._describe(index).rect.position)
+        var at = Optional[Point](None)
+        if self._focused:
+            at = self._describe(self._focused.value()).rect.position
+        var best = _nearest(at, direction, centres)
+        if best:
+            self._focus_on(order[best.value()], visible=True, from_gamepad=True)
+
+    def _focus_for(self, index: Int, context: Context) -> _Focus:
+        """What the tree's focus means for the node at `index` this
+        frame."""
+        var focused = Bool(self._focused) and self._focused.value() == index
+        var shown = focused and self._focus_visible
+        var keys = shown and not self._focus_from_gamepad
+        ref keyboard = context.keyboard
+        var activated = (
+            keys
+            and (keyboard.pressed(Key.ENTER) or keyboard.pressed(Key.SPACE))
+        ) or (
+            shown and _pad_pressed(context, self._player, GamepadButton.SOUTH)
+        )
+        var step = 0
+        if shown and self._pad_move.x != 0:
+            step = 1 if self._pad_move.x > 0 else -1
+        return _Focus(
+            in_tree=True,
+            focused=focused,
+            keys=keys,
+            activated=activated,
+            step=step,
+        )
 
     # -------------------------------------------------------------- layout
 
@@ -495,13 +690,30 @@ struct _Tree(Drawable, Movable):
         `index`."""
         ref widget = self._nodes[index].widget
         if widget.isa[Button]():
-            return _Description(_WIDGET, widget[Button].rect, True)
+            ref button = widget[Button]
+            var described = _Description(_WIDGET, button.rect, True)
+            described.focusable = button.enabled
+            described.ring = button._ring()
+            return described^
         if widget.isa[Checkbox]():
-            return _Description(_WIDGET, widget[Checkbox].rect, True)
+            ref checkbox = widget[Checkbox]
+            var described = _Description(_WIDGET, checkbox.rect, True)
+            described.focusable = checkbox.enabled
+            described.ring = checkbox._ring()
+            return described^
         if widget.isa[Slider]():
-            return _Description(_WIDGET, widget[Slider].rect, True)
+            ref slider = widget[Slider]
+            var described = _Description(_WIDGET, slider.rect, True)
+            described.focusable = slider.enabled
+            described.adjusts = True
+            described.ring_circle = slider._ring()
+            return described^
         if widget.isa[TextField]():
-            return _Description(_WIDGET, widget[TextField].rect, True)
+            ref field = widget[TextField]
+            var described = _Description(_WIDGET, field.rect, True)
+            described.focusable = field.enabled
+            described.takes_typing = True
+            return described^
         if widget.isa[Panel]():
             # covers what is beneath it
             return _Description(_PANEL, widget[Panel].rect, True)
@@ -556,6 +768,7 @@ struct _Tree(Drawable, Movable):
         theme: _Theme,
         *,
         free: Bool,
+        focus: _Focus = _Focus.standalone(),
         rect: Rectangle = Rectangle(Point(0.0, 0.0), 0.0, 0.0),
     ) raises -> _Reply:
         """Update (`_UPDATE`), measure (`_MEASURE`) or place in `rect`
@@ -567,7 +780,7 @@ struct _Tree(Drawable, Movable):
         if widget.isa[Button]():
             ref button = widget[Button]
             if action == _UPDATE:
-                button._update(context, canvas, theme, free=free)
+                button._update(context, canvas, theme, free=free, focus=focus)
             elif action == _MEASURE:
                 reply.width, reply.height = button._measure(canvas, theme)
             else:
@@ -575,7 +788,7 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[Checkbox]():
             ref checkbox = widget[Checkbox]
             if action == _UPDATE:
-                checkbox._update(context, canvas, theme, free=free)
+                checkbox._update(context, canvas, theme, free=free, focus=focus)
             elif action == _MEASURE:
                 reply.width, reply.height = checkbox._measure(canvas, theme)
             else:
@@ -583,7 +796,7 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[Slider]():
             ref slider = widget[Slider]
             if action == _UPDATE:
-                slider._update(context, canvas, theme, free=free)
+                slider._update(context, canvas, theme, free=free, focus=focus)
             elif action == _MEASURE:
                 reply.width, reply.height = slider._measure(canvas, theme)
             else:
@@ -591,7 +804,7 @@ struct _Tree(Drawable, Movable):
         elif widget.isa[TextField]():
             ref field = widget[TextField]
             if action == _UPDATE:
-                field._update(context, canvas, theme, free=free)
+                field._update(context, canvas, theme, free=free, focus=focus)
             elif action == _MEASURE:
                 reply.width, reply.height = field._measure(canvas, theme)
             else:

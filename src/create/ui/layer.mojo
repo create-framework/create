@@ -17,7 +17,14 @@ from ._key import _WidgetKey
 from ._layout import _Layout, _COLUMN, _PANEL, _ROW
 from .button import ButtonVariant
 from .label import _anchor
-from .slider import _check_step, _dragged_value, _handle_x, _slider_ends
+from .slider import (
+    _arrow_direction,
+    _check_step,
+    _dragged_value,
+    _handle_x,
+    _keyed_value,
+    _slider_ends,
+)
 from .checkbox import _checkbox_box, _checkbox_text_at, _tick_lines
 from ._text_buffer import _TextBuffer
 from .text_field import TextEditor, _measure, _offset_at
@@ -1043,51 +1050,27 @@ struct UILayer[
                 changed = True
         var keys = self._keys_act(state.focused)
         var pad = state.focused and ui._focus_visible and ui._pad_move.x != 0
-        if (keys or pad) and max != min:
+        if keys or pad:
             ref keyboard = self._context[].keyboard
-            # a step, or a twentieth of the range
-            var size = step.value() if step else abs(max - min) / 20
-            if max < min:
-                size = -size  # steps count from `min` towards `max`
-            var low = min if min < max else max
-            var high = max if min < max else min
-            # Steps land on the grid of steps counted from `min`, so they
-            # don't gather floating-point error: 1.0 stepped down by 0.05
-            # twice is 0.9, not 0.8999999999999999.
-            var steps_from_min = (value - min) / size
-            var moved = value
-            var towards_max = 0
+            var towards_max: Int
             if pad:
                 towards_max = 1 if ui._pad_move.x > 0 else -1
-            elif keyboard.typed(Key.RIGHT) or keyboard.typed(Key.UP):
-                towards_max = 1
-            elif keyboard.typed(Key.LEFT) or keyboard.typed(Key.DOWN):
-                towards_max = -1
-            if towards_max != 0:
-                # the next step along, so a value between two steps moves to
-                # the one ahead of it rather than past it
-                var nearest = Float64(round(steps_from_min))
-                if abs(steps_from_min - nearest) < 1e-9:
-                    steps_from_min = nearest  # on a step, give or take error
-                var next: Float64
-                if towards_max > 0:
-                    next = floor(steps_from_min) + 1
-                else:
-                    next = ceil(steps_from_min) - 1
-                moved = min + next * size
-            elif keyboard.pressed(Key.HOME):
-                moved = min
-            elif keyboard.pressed(Key.END):
-                moved = max
-            if moved != value:
-                if keys:
-                    self._ui[]._key_used = True
-                moved = low if moved < low else (
-                    high if moved > high else moved
-                )
-                if moved != value:
-                    value = moved
-                    changed = True
+            else:
+                towards_max = _arrow_direction(keyboard)
+            var keyed = _keyed_value(
+                value,
+                min,
+                max,
+                step,
+                towards_max,
+                home=not pad and keyboard.pressed(Key.HOME),
+                end=not pad and keyboard.pressed(Key.END),
+            )
+            if keyed[0] and keys:
+                self._ui[]._key_used = True
+            if keyed[1] != value:
+                value = keyed[1]
+                changed = True
         var handle_x = _handle_x(value, min, max, left, right)
         ref recorder = ui._recorder
         recorder.style = look.track
