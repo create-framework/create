@@ -42,7 +42,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Equatable`, `Movable`, `Writab
 
 ```mojo
 @staticmethod
-def __init__(out self, value: String, position: Point, width: _OptionalFloat64 = None)
+def __init__(out self, value: String, position: Point, width: OptionalNumber = None)
 ```
 
 ## Methods

@@ -16,5 +16,5 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 
 ```mojo
 @staticmethod
-def __init__(out self, amount: _OptionalFloat64 = None)
+def __init__(out self, amount: OptionalNumber = None)
 ```

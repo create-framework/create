@@ -1,6 +1,6 @@
 from std.math import cos, min, max, sin
 from create.math import PI, Point, Vector
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from ._fillet import rect_corner_radius
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
@@ -84,8 +84,8 @@ struct Rectangle(
         width: Float64,
         height: Float64,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
-        rotation: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
+        rotation: OptionalNumber = 0.0,
     ):
         self.position = position
         self.width = width
@@ -99,8 +99,8 @@ struct Rectangle(
         width: Int,
         height: Int,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
-        rotation: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
+        rotation: OptionalNumber = 0.0,
     ):
         self = Rectangle(
             position,

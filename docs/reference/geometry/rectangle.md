@@ -59,8 +59,8 @@ def __init__(
     width: Float64,
     height: Float64,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
-    rotation: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
+    rotation: OptionalNumber = SIMD(0),
 )
 @staticmethod
 def __init__(
@@ -69,8 +69,8 @@ def __init__(
     width: Int,
     height: Int,
     *,
-    corner_radius: _OptionalFloat64 = SIMD(0),
-    rotation: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = SIMD(0),
+    rotation: OptionalNumber = SIMD(0),
 )
 ```
 

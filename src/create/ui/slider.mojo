@@ -5,7 +5,7 @@ from create.geometry import Circle, Line, Rectangle
 from create.input import Key, Keyboard
 from create.math import Point, ceil, clamp, floor
 from create.render import Canvas, Style
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from ._pointer import _Pointer
 from ._theme import _SliderLook, _Theme
 from .layout import _UNSIZED
@@ -77,7 +77,7 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         maximum: Float64,
         rect: Rectangle = _UNSIZED,
         *,
-        step: _OptionalFloat64 = None,
+        step: OptionalNumber = None,
         track: Style = Style(),
         active_track: Style = Style(),
         handle: Style = Style(),

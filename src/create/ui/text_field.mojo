@@ -7,7 +7,7 @@ from create.input import Key
 from create.math import Point
 from create.render import Align, Canvas, Style, Text
 from create.render.style import _ResolvedStyle
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from ._pointer import _Pointer
 from ._text_buffer import _TextBuffer
 from ._theme import _TextFieldLook, _Theme, _fills, _text_look
@@ -93,7 +93,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         *,
         placeholder: String = "",
         max_length: Optional[Int] = None,
-        padding: _OptionalFloat64 = None,
+        padding: OptionalNumber = None,
         container: Style = Style(),
         focused_container: Style = Style(),
         text_style: Style = Style(),

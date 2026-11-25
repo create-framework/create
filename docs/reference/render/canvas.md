@@ -259,25 +259,25 @@ def style(
     fill_gradient: Optional[Gradient] = None,
     fill_enabled: Optional[Bool] = None,
     stroke: Optional[Color] = None,
-    stroke_thickness: _OptionalFloat64 = None,
+    stroke_thickness: OptionalNumber = None,
     stroke_enabled: Optional[Bool] = None,
     stroke_alignment: Optional[StrokeAlign] = None,
     stroke_cap: Optional[StrokeCap] = None,
     stroke_dash: Optional[StrokeDash] = None,
-    corner_radius: _OptionalFloat64 = None,
+    corner_radius: OptionalNumber = None,
     text_color: Optional[Color] = None,
     font: Optional[Font] = None,
-    font_size: _OptionalFloat64 = None,
+    font_size: OptionalNumber = None,
     font_weight: Optional[FontWeight] = None,
     font_italic: Optional[Bool] = None,
     text_alignment: Optional[Align] = None,
     tint: Optional[Color] = None,
-    opacity: _OptionalFloat64 = None,
+    opacity: OptionalNumber = None,
     blend_mode: Optional[BlendMode] = None,
     shadow: Optional[Color] = None,
     shadow_offset: Optional[Vector] = None,
-    shadow_blur: _OptionalFloat64 = None,
-    shadow_spread: _OptionalFloat64 = None,
+    shadow_blur: OptionalNumber = None,
+    shadow_spread: OptionalNumber = None,
     shadow_inset: Optional[Bool] = None,
     shadow_follows_transform: Optional[Bool] = None,
     shadow_enabled: Optional[Bool] = None,
@@ -409,7 +409,7 @@ color is kept meanwhile, so `fill(color)` alone brings a solid back.
 ### `stroke`
 
 ```mojo
-def stroke(mut self, color: Optional[Color] = None, thickness: _OptionalFloat64 = None)
+def stroke(mut self, color: Optional[Color] = None, thickness: OptionalNumber = None)
 ```
 
 Stroke shapes, switching the stroke on if `stroke_enabled(False)` had turned it off. `color`/`thickness` left unset keep their current values. Worth knowing stroke is *on* by default, in black, 1 unit thick — a `rectangle` rendered without `stroke_enabled(False)` gets one nobody asked for.
@@ -642,7 +642,7 @@ def start_recording(
     mut self,
     path: String,
     *,
-    seconds: _OptionalFloat64 = None,
+    seconds: OptionalNumber = None,
     frames: Optional[Int] = None,
     fps: Float64 = 30,
     pixel_scale: Float64 = 1,
@@ -743,8 +743,8 @@ def rectangle(
     width: Float64,
     height: Float64,
     *,
-    corner_radius: _OptionalFloat64 = None,
-    rotation: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = None,
+    rotation: OptionalNumber = SIMD(0),
 )
 ```
 
@@ -757,8 +757,8 @@ def rectangle(
     width: Int,
     height: Int,
     *,
-    corner_radius: _OptionalFloat64 = None,
-    rotation: _OptionalFloat64 = SIMD(0),
+    corner_radius: OptionalNumber = None,
+    rotation: OptionalNumber = SIMD(0),
 )
 ```
 
@@ -821,7 +821,7 @@ def sector(
     start_angle: Float64,
     sweep_angle: Float64,
     *,
-    corner_radius: _OptionalFloat64 = None,
+    corner_radius: OptionalNumber = None,
 )
 ```
 
@@ -847,14 +847,14 @@ def sector(
     start_angle: Float64,
     sweep_angle: Float64,
     *,
-    corner_radius: _OptionalFloat64 = None,
+    corner_radius: OptionalNumber = None,
 )
 ```
 
 ### `polygon`
 
 ```mojo
-def polygon(mut self, *vertices: Point, *, corner_radius: _OptionalFloat64 = None)
+def polygon(mut self, *vertices: Point, *, corner_radius: OptionalNumber = None)
 ```
 
 Draw the polygon through `vertices`, closed back to the first.
@@ -873,7 +873,7 @@ rounded corner adds vertices, and so cost. A `Polygon` value is drawn
 with `draw`.
 
 ```mojo
-def polygon(mut self, var vertices: List[Point], corner_radius: _OptionalFloat64 = None)
+def polygon(mut self, var vertices: List[Point], corner_radius: OptionalNumber = None)
 ```
 
 Draw the polygon through `vertices`, a list built at run time: otherwise as the variadic `polygon`, and like `spline`'s `points`.
@@ -981,7 +981,7 @@ def triangle(
     b: Point,
     c: Point,
     *,
-    corner_radius: _OptionalFloat64 = None,
+    corner_radius: OptionalNumber = None,
 )
 ```
 
@@ -1141,8 +1141,8 @@ def shadow(
     mut self,
     color: Optional[Color] = None,
     offset: Optional[Vector] = None,
-    blur: _OptionalFloat64 = None,
-    spread: _OptionalFloat64 = None,
+    blur: OptionalNumber = None,
+    spread: OptionalNumber = None,
     inset: Optional[Bool] = None,
 )
 ```

@@ -3,7 +3,7 @@
 
 from create.geometry import Rectangle
 from create.math import Point
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 
 
 comptime _UNSIZED = Rectangle(Point(0.0, 0.0), 0.0, 0.0)
@@ -39,7 +39,7 @@ struct Column(Copyable, Movable):
     when `None`."""
 
     def __init__(
-        out self, rect: Rectangle = _UNSIZED, *, gap: _OptionalFloat64 = None
+        out self, rect: Rectangle = _UNSIZED, *, gap: OptionalNumber = None
     ):
         self.rect = rect
         self.gap = gap._value
@@ -80,8 +80,8 @@ struct Row(Copyable, Movable):
         out self,
         *weights: Float64,
         rect: Rectangle = _UNSIZED,
-        gap: _OptionalFloat64 = None,
-        height: _OptionalFloat64 = None,
+        gap: OptionalNumber = None,
+        height: OptionalNumber = None,
     ):
         self.weights = []
         for weight in weights:
@@ -98,7 +98,7 @@ struct Space(Copyable, Movable):
 
     var amount: Optional[Float64]
 
-    def __init__(out self, amount: _OptionalFloat64 = None):
+    def __init__(out self, amount: OptionalNumber = None):
         self.amount = amount._value
 
 

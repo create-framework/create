@@ -1,6 +1,6 @@
 from std.math import min, max
 from create.math import PI, TAU, Point, Vector
-from create._optional import _OptionalFloat64
+from create.math import OptionalNumber
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
@@ -65,7 +65,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
     """How far each corner is rounded; 0 is sharp."""
 
     def __init__(
-        out self, *vertices: Point, corner_radius: _OptionalFloat64 = 0.0
+        out self, *vertices: Point, corner_radius: OptionalNumber = 0.0
     ):
         self.vertices = List[Point](capacity=len(vertices))
         for v in vertices:
@@ -76,7 +76,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         out self,
         var vertices: List[Point],
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ):
         self.vertices = vertices^
         self.corner_radius = corner_radius.or_else(0.0)
@@ -88,7 +88,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         sides: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
         """A regular polygon of `sides` vertices on the circle around
         `position` with radius `radius`, the first at `start_angle` (radians
@@ -107,7 +107,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         sides: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
         return Polygon.regular(
             position,
@@ -125,7 +125,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         tips: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
         """A star of `tips` points about `position`: its tips on `radius`, the
         first at `start_angle` (straight up by default), and between each two
@@ -148,7 +148,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         tips: Int,
         start_angle: Float64 = TAU / 4.0,
         *,
-        corner_radius: _OptionalFloat64 = 0.0,
+        corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
         return Polygon.star(
             position,
