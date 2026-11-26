@@ -1,4 +1,4 @@
-"""The user interface: widgets, such as `Button`, `Checkbox`, `Label`,
+"""The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `Label`,
 `Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps,
 updates and draws with `canvas.draw`, and the traits they share (`Widget`,
 `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them
@@ -14,6 +14,7 @@ from .focus_ring import FocusRing
 from .button import Button
 from .button_variant import ButtonVariant
 from .checkbox import Checkbox
+from .switch import Switch
 from .label import Label
 from .column import Column
 from .row import Row

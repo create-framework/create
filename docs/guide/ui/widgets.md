@@ -61,6 +61,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 |---|---|---|
 | `Button(text, rect)` | A button showing `text` | `released()`, the click, and `pressed()`, `down()` and `hovered()` |
 | `Checkbox(text, rect, checked=)` | A box, ticked or not, with `text` beside it | `checked`, and `changed()` in the frame a click ticks or unticks it |
+| `Switch(text, rect, on=)` | A track with a handle, on or off, with `text` beside it | `on`, and `changed()` in the frame a click turns it over |
 | `Slider(value, minimum, maximum, rect)` | A track with a handle setting `value` | `value`, and `changed()` in the frame it moves |
 | `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
 | `ProgressBar(value, rect)` | A bar filled as far as `value` has got, from 0 to 1 | Nothing |
@@ -71,6 +72,10 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   for the main action, `TONAL` for a secondary one, `OUTLINED` and `TEXT` for quieter ones.
 - **A checkbox** ticks or unticks when clicked anywhere in its rectangle, its text included. Its
   `checked` field is the program's to set too.
+- **A switch** turns over when clicked anywhere in its rectangle, as a checkbox does, and its `on`
+  field is the program's to set too. Use a switch for a setting that applies the moment it is
+  turned, such as music or full screen, and a checkbox for a choice made before something else
+  happens, such as the options of a new game.
 - **A slider** jumps to where it is pressed and follows the pointer while held, even off its track,
   stopping at its ends. `step=` rounds the value to multiples of the step, counted from `minimum`,
   and must be more than 0. A value outside `minimum` to `maximum` is drawn at the nearer end and

@@ -62,6 +62,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var scroll_area_thumb: Style
     var progress_bar_track: Style
     var progress_bar_indicator: Style
+    var switch_track: Style
+    var switch_on_track: Style
+    var switch_handle: Style
+    var switch_text_style: Style
 
     def __init__(out self):
         self.button = Style()
@@ -85,6 +89,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.scroll_area_thumb = Style()
         self.progress_bar_track = Style()
         self.progress_bar_indicator = Style()
+        self.switch_track = Style()
+        self.switch_on_track = Style()
+        self.switch_handle = Style()
+        self.switch_text_style = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -111,6 +119,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.scroll_area_thumb.over(under.scroll_area_thumb),
             self.progress_bar_track.over(under.progress_bar_track),
             self.progress_bar_indicator.over(under.progress_bar_indicator),
+            self.switch_track.over(under.switch_track),
+            self.switch_on_track.over(under.switch_on_track),
+            self.switch_handle.over(under.switch_handle),
+            self.switch_text_style.over(under.switch_text_style),
         )
 
 
@@ -159,6 +171,16 @@ struct _ProgressBarLook(Copyable, Movable):
 
     var track: _ResolvedStyle
     var indicator: _ResolvedStyle
+
+
+@fieldwise_init
+struct _SwitchLook(Copyable, Movable):
+    """A switch's parts, resolved for its state. The handle is a point."""
+
+    var track: _ResolvedStyle
+    var handle: _ResolvedStyle
+    var text: _ResolvedStyle
+    """Its text's style, aligned left."""
 
 
 @fieldwise_init
@@ -450,6 +472,81 @@ struct _Theme(Copyable, Movable):
                 colors.on_surface, states.disabled_container
             )
         return _ProgressBarLook(track, indicator)
+
+    def switch(
+        self,
+        call_track: Style,
+        call_on_track: Style,
+        call_handle: Style,
+        call_text: Style,
+        *,
+        on: Bool,
+        hovered: Bool,
+        pressed: Bool,
+        disabled: Bool,
+    ) -> _SwitchLook:
+        """A switch's parts, styled by the call's styles for each: while
+        off, an outlined track with a small handle in the outline's colour;
+        while on, a filled track with a larger handle on it."""
+        var colors = self.colors
+        ref block = self.styles[]
+        var track_look = call_track.over(block.switch_track).over(
+            Style(
+                fill=colors.surface_container_highest,
+                stroke=colors.outline,
+                stroke_thickness=2,
+            )
+        )
+        var track = _ResolvedStyle()
+        if on:
+            track.apply(
+                call_on_track.over(block.switch_on_track).over(
+                    Style(fill=colors.primary, stroke_enabled=False).over(
+                        track_look
+                    )
+                )
+            )
+        else:
+            track.apply(track_look)
+        var handle = _ResolvedStyle()
+        handle.apply(
+            call_handle.over(block.switch_handle).over(
+                Style(
+                    stroke=colors.on_primary if on else colors.outline,
+                    stroke_thickness=18 if on else 14,
+                )
+            )
+        )
+        var text = _ResolvedStyle()
+        text.apply(
+            call_text.over(block.switch_text_style).over(
+                Style(text_color=self.content).over(_body_text())
+            )
+        )
+        if disabled:
+            var states = self.state_layers
+            var faded = _faded(colors.on_surface, states.disabled_content)
+            track.fill_color = _faded(
+                colors.on_surface, states.disabled_container
+            )
+            track.fill_gradient = None
+            track.stroke_color = faded
+            handle.stroke_color = self.surface if on else faded
+            text.text_color = faded
+        else:
+            # a hovered or pressed handle is tinted, as a slider's is
+            var step = self._step(hovered, pressed)
+            if step > 0:
+                handle.stroke_color = _stepped(
+                    handle.stroke_color,
+                    _readable_on(handle.stroke_color),
+                    step,
+                )
+        # a point, as `canvas.point` draws one: round unless square
+        if handle.stroke_cap != StrokeCap.SQUARE:
+            handle.stroke_cap = StrokeCap.ROUND
+        handle.stroke_dash = StrokeDash.SOLID
+        return _SwitchLook(track, handle, _text_look(text, Align.LEFT))
 
     def ring_reach(self) -> Float64:
         """How far the focus ring reaches outside a widget: its gap and its
