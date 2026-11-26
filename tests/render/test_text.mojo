@@ -7,9 +7,9 @@ from std.testing import TestSuite, assert_equal, assert_true, assert_false
 
 from create.render.align import Align
 from create.color.color import Color
+from create.text.font_weight import FontWeight
 from create.text.font import (
     Font,
-    FontWeight,
     _default_font,
     _fallback_font,
     _GlyphInfo,

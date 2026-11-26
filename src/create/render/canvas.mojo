@@ -10,7 +10,8 @@ from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from .antialiasing import Antialiasing
 from .autoscale import Autoscale
-from create.text.font import Font, FontWeight
+from create.text.font import Font
+from create.text.font_weight import FontWeight
 from ._surface import MemorySurface
 from ._viewport import Viewport
 from .camera import Camera

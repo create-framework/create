@@ -18,7 +18,8 @@ from create.color.blend_mode import BlendMode
 from create.color.color import Color
 from create.render.gradient import Gradient
 from create.math.vector import Vector
-from create.text.font import Font, FontWeight
+from create.text.font import Font
+from create.text.font_weight import FontWeight
 
 
 @fieldwise_init
