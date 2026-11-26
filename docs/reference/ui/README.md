@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar`, `TextField` and `NumberField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -26,6 +26,7 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGrou
 | [`Slider`](slider.md) | A handle on a track, dragged to set `value` between `minimum` and `maximum`. |
 | [`ProgressBar`](progressbar.md) | A bar filled as far as `value` has got from `minimum` to `maximum`, such as a level loading, a health bar or a cooldown. It reacts to nothing. |
 | [`TextField`](textfield.md) | A field to type a line of text into. |
+| [`NumberField`](numberfield.md) | A number between `minimum` and `maximum`, typed into a field or stepped with the − and + buttons beside it, such as a count of players or a volume in whole percent. |
 
 ## Traits
 

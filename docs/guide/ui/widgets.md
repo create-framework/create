@@ -66,6 +66,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `Tabs(options, rect, selected=)` | A row of tabs, one of them selected | `selected`, `selected_text()`, and `changed()` in the frame another is selected |
 | `Slider(value, minimum, maximum, rect)` | A track with a handle setting `value` | `value`, and `changed()` in the frame it moves |
 | `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
+| `NumberField(value, minimum, maximum, rect)` | A number to type, with − and + buttons beside it | `value`, and `changed()` in the frame typing, a button, an arrow or a gamepad changes it |
 | `ProgressBar(value, rect)` | A bar filled as far as `value` has got, from 0 to 1 | Nothing |
 | `Label(text, rect, alignment)` | Text placed in `rect` | Nothing |
 | `Panel(rect)` | A surface for other widgets to sit on | Nothing |
@@ -92,6 +93,11 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   stopping at its ends. `step=` rounds the value to multiples of the step, counted from `minimum`,
   and must be more than 0. A value outside `minimum` to `maximum` is drawn at the nearer end and
   left as it is until dragged.
+- **A number field** holds a number between `minimum` and `maximum`. Type into it as into a text
+  field: what was typed becomes the `value` on Enter, or when the field loses focus, kept within the
+  range and rounded to `decimals=` places (whole numbers unless given). Text that isn't a number
+  puts the value back. The − and + buttons step it by `step=`, 1 unless given, and so do the up and
+  down arrows while it has focus, and a gamepad's push in a `UI`.
 - **A progress bar** shows how far something has got, such as a level loading or a health bar. Set
   its `value` as that moves on; `minimum=` and `maximum=` change its range from 0 to 1. A value
   outside the range fills it no further than its ends, and `fraction()` gives how full it is.

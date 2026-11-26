@@ -169,6 +169,11 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A number field is a text field with two buttons, and is styled as they are: `container` and
+`text_style` are its field's, as a text field's are, and `buttons` is the `style` of both buttons.
+`ui.style(number_field_container=...)` and the like style every number field; the `UI`'s text field
+and button styles apply beneath those.
+
 Tabs' `tab` is each tab, a rectangle with its text, bare unless its style gives it a fill or an
 outline; `selected_tab` is the selected one, taking what it leaves unset from `tab`; and `indicator`
 is the line beneath the selected tab.
