@@ -1,9 +1,10 @@
 # Widgets
 
-A widget is a button, a slider, a checkbox, a text field, a label or a panel: something drawn on the
-screen that the player can point at, click, drag or type into. This page explains what a widget is,
-how a program updates and draws one, how a `UI` keeps many together and lays them out, and how to
-draw things of your own among them.
+A widget is a button, a slider, a checkbox, a switch, a choice group, tabs, a dropdown, a text or
+number field, a progress bar, a label or a panel: something drawn on the screen that the player can
+point at, click, drag or type into, or that shows them something. This page explains what a widget
+is, how a program updates and draws one, how a `UI` keeps many together, lays them out and gives
+them tooltips, and how to draw things of your own among them.
 
 ## A widget is a value
 
