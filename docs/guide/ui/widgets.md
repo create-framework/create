@@ -165,39 +165,42 @@ with canvas.overlay():  # on the screen, whatever the camera is doing
 so a button can sit over a chest or in a corner of the screen. One added without a `rect` is placed
 for you, by what it is added inside:
 
-- **`Column(rect)`** places the widgets in it one under the other, from the top down, each across
-  the column's whole width and as tall as it prefers: a button, checkbox, slider or text field is
+- **`Column(rect)`** places the widgets in it one under the other, from the top down, each as tall
+  as it prefers and stretched across the column's width: a button, checkbox, slider or text field is
   the `UI`'s `control_height` tall, 40 unless changed, and a label one and a half times the size of
   its text. `gap=` sets the space between them, the `UI`'s `spacing` unless given.
-- **`Row(rect)`** places them side by side, from the left, each as tall as the row and as wide as it
-  prefers. In a column, a row is as tall as its tallest widget.
+- **`Row(rect)`** places them side by side, from the left, each as wide as it prefers and stretched
+  across the row's height. In a column, a row is as tall as its tallest widget.
 - **`Space(amount)`** leaves room in a column, twice the `UI`'s `spacing` unless given, such as to
   set the buttons apart from the settings above them.
 - **A panel places a column or row added inside it with no `rect`** across its inside, short of its
   edges by its `padding`: twice the `UI`'s `spacing` unless given, as in `Panel(padding=8)`. Other
   widgets added straight onto a panel keep their own `rect`.
-- **`width=` and `height=` on `ui.add` set the size a widget starts from** in a column or row, in
-  place of the one it prefers: `ui.add(Button("OK"), buttons, width=120)`. Two buttons given the
-  same `width` are as wide as each other, whatever their text. A negative size stops the program.
-- **`grow=` on `ui.add` shares out the room left over.** Once every widget in a column or row has
-  the size it starts from, what is left of the column's height, or the row's width, goes to the
-  widgets added with a `grow`, in proportion to it. A slider beside a label with `grow=1` takes the
-  rest of the row. Two widgets with `grow=1` and `grow=3` take a quarter and three quarters of what
-  is left, and with `width=0` as well they take exactly a quarter and three quarters of the row.
-  When nothing is left over, nothing grows.
-- **A `Space` that grows is a spring.** `ui.add(Space(), column, grow=1)` pushes what comes after it
-  to the bottom of the column; one before and one after a widget centre it.
-- **`align=` sets widgets at the width they prefer, across a column, or the height across a row.**
-  By default each is stretched across, but `Column(align=Align.CENTER)` centres each at its own
-  width, and `Align.LEFT` or `Align.RIGHT` sets them against a side. A row reads `Align.TOP`,
-  `CENTER` or `BOTTOM` the same way. `align=` on `ui.add` sets one widget apart from the rest:
-  `ui.add(Label("Title"), column, align=Align.LEFT)`. A widget given a `width` in a column, or a
-  `height` in a row, is centred unless it is aligned.
 - **A widget added with a `rect` keeps it**, even inside a column or row, and takes no room there,
   so one widget can be placed by hand among the others.
 - **A widget, panel, column or row with no `rect` and nothing to place it** takes the size it
   prefers, centred on the origin. A panel with no size fits round the column or row inside it, and a
   column round its widgets.
+
+**How a widget fits in its column or row is set when it is added**, with keywords on `ui.add`:
+
+- **`width=` and `height=` set the size it starts from**, in place of the one it prefers:
+  `ui.add(Button("OK"), buttons, width=120)`. Two buttons given the same `width` are as wide as each
+  other, whatever their text. A negative size stops the program.
+- **`grow=` shares out the room left over.** Once every widget in a column or row has the size it
+  starts from, what is left of the column's height, or the row's width, goes to the widgets added
+  with a `grow`, in proportion to it. A slider beside a label with `grow=1` takes the rest of the
+  row. Two widgets with `grow=1` and `grow=3` take a quarter and three quarters of what is left, and
+  with `width=0` as well they take exactly a quarter and three quarters of the row. When nothing is
+  left over, nothing grows.
+- **A `Space` that grows is a spring.** `ui.add(Space(), column, grow=1)` pushes what comes after it
+  to the bottom of the column; one before and one after a widget centre it.
+- **`align=` sets it at the width it prefers across a column, or the height across a row**, rather
+  than stretched. `Column(align=Align.CENTER)` does so for every widget in the column, centring
+  each, and `Align.LEFT` or `Align.RIGHT` sets them against a side; a row reads `Align.TOP`,
+  `CENTER` or `BOTTOM` the same way. `align=` on `ui.add` sets one widget apart from the rest:
+  `ui.add(Label("Title"), column, align=Align.LEFT)`. A widget given a `width` in a column, or a
+  `height` in a row, is centred unless it is aligned.
 
 ```mojo
 # In `create`, building the `ui` field: a card of settings.
