@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Slider` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -21,6 +21,7 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Sl
 | [`ScrollArea`](scrollarea.md) | A window onto a column of widgets, showing the part of it that fits. |
 | [`Panel`](panel.md) | A surface filling a rectangle, for widgets to sit on: a rounded card in its colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing. |
 | [`Slider`](slider.md) | A handle on a track, dragged to set `value` between `minimum` and `maximum`. |
+| [`ProgressBar`](progressbar.md) | A bar filled as far as `value` has got from `minimum` to `maximum`, such as a level loading, a health bar or a cooldown. It reacts to nothing. |
 | [`TextField`](textfield.md) | A field to type a line of text into. |
 
 ## Traits
