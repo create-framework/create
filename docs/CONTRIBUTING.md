@@ -29,6 +29,12 @@ How the reference is laid out decides how a docstring should be written:
   `-> Self`, so declare a factory's return type as `Self`, not by the type's name.
 - **A function's overloads share one page.** Consecutive overloads with the same documentation are
   shown as one block of signatures.
+- **Internal names stay out of it.** A trait whose name starts with `_` is left out of a type's
+  "Implements" line. An argument's type must be public, so that the reference documents everything a
+  program passes: `pixi run reference` fails on an argument with an internal type. An internal type
+  may still be returned, as the guards that `canvas.style` and the other `with`-block methods return
+  are, since a program never names it. A docstring describes how to use what it documents, so leave
+  internal names out of it too.
 
 Write Markdown without minding line length: the pre-commit hook wraps prose at 100 columns
 ([scripts/wrap_markdown.py](../scripts/wrap_markdown.py)), never splitting a word, and leaves code,

@@ -18,7 +18,7 @@ zero-length line (`start == end`) is a degenerate point segment:
 `intersects` and `closest_point` remain exact for it (a point can
 still "intersect" the collapsed line if it coincides with it).
 
-Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`, `_Collider`.
+Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Writable`.
 
 ## Fields
 

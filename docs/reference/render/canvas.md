@@ -20,8 +20,8 @@ setting, the clock or input: everything that outlives a frame is in
 change something it is not around to see the effect of.
 
 The canvas the loop hands to `create` and `update` is built fresh each
-frame and dropped before the frame is presented. The machinery that must
-survive the frame goes in and out through `_PersistentCanvasState`.
+frame and dropped before the frame is presented, so don't keep it in a
+field.
 
 `Canvas(width, height)` builds an *offscreen* canvas instead: a program's
 own, drawn into with the same calls and read back with `color_at` and
@@ -55,7 +55,7 @@ Every pixel write blends source-over, so a fill, stroke, image, glyph or
 `background` with `a < 255` composites with what is already there —
 unless `blend_mode` picks another way to combine them.
 
-Implements `Deinitable`, `Movable`, `_GeometryTarget`.
+Implements `Deinitable`, `Movable`.
 
 ## Constructors
 

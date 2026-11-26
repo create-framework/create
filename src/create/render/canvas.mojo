@@ -280,8 +280,8 @@ struct Canvas(Movable, _GeometryTarget):
     change something it is not around to see the effect of.
 
     The canvas the loop hands to `create` and `update` is built fresh each
-    frame and dropped before the frame is presented. The machinery that must
-    survive the frame goes in and out through `_PersistentCanvasState`.
+    frame and dropped before the frame is presented, so don't keep it in a
+    field.
 
     `Canvas(width, height)` builds an *offscreen* canvas instead: a program's
     own, drawn into with the same calls and read back with `color_at` and
