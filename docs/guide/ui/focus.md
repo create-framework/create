@@ -29,8 +29,8 @@ ways, each worked out in `ui.update` before any widget acts:
 
 **Focus brings its widget into view.** When Tab, an arrow, a gamepad or `ui.focus` moves focus onto
 a widget in a [scroll area](widgets.md#scroll-areas) that has scrolled it out of sight, the scroll
-area scrolls by the least that shows all of it, so the player never loses the focus off the edge of
-a list. A click doesn't scroll, since what was clicked is in view already.
+area scrolls by the least that shows all of it, its ring included, so the player never loses the
+focus off the edge of a list. A click doesn't scroll, since what was clicked is in view already.
 
 ```mojo
 # In `update`, with `ui: UI` and `name: WidgetHandle[TextField]` fields:

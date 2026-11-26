@@ -110,7 +110,8 @@ so a column or row places it from that. A node added with no size (`_UNSIZED`) i
 places only such children, and a panel only such a column or row: a node added with a size of its
 own keeps its place and takes no room.
 
-**A `ScrollArea` places one column, at its full height, moved up by its `offset`.** Placing the
+**A `ScrollArea` places one column, at its full height, moved up by its `offset`, inset all round by
+the focus ring's reach (`_Theme.ring_reach`), so a ring is never cut at its edges.** Placing the
 scroll area clamps the offset between 0 and the column's height less the window's. Every node keeps
 a `clip`, the windows of the scroll areas it is in overlapped (`_overlap`), which placing sets from
 the top level in. Hit-testing leaves out a node where its clip leaves out the pointer, and drawing
@@ -128,9 +129,9 @@ over the gaps between its widgets. When any scroll area moved (its update's `_Re
 **Bringing a node into view waits for `update`.** `_focus_on` with a visible focus, and `scroll_to`,
 keep the node in `_reveal`. `update` acts on it after moving focus and before any widget is updated:
 `_scroll_into_view` walks out from the node, and moves each scroll area round it by the least that
-puts the node's rect, as last placed, inside the area's window, moving the rect along for the areas
-further out. So a widget's update sees where it is drawn, though hover was found from where it was
-before.
+puts the node's rect, as last placed and grown by the ring's reach, inside the area's window, moving
+the rect along for the areas further out. So a widget's update sees where it is drawn, though hover
+was found from where it was before.
 
 ## Focus and the devices
 

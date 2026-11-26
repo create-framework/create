@@ -405,6 +405,12 @@ struct _Theme(Copyable, Movable):
         handle.stroke_dash = StrokeDash.SOLID
         return _SliderLook(track, active, handle, outline)
 
+    def ring_reach(self) -> Float64:
+        """How far the focus ring reaches outside a widget: its gap and its
+        thickness. A scroll area leaves this much room round its column, so
+        a ring isn't cut at its edges."""
+        return self.focus_ring.gap + self.focus_ring.thickness
+
     def scroll_bar_width(self) -> Float64:
         """How wide a scroll area's bar is: a share of `control_height`, so
         the bar grows with the controls."""
