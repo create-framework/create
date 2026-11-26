@@ -187,6 +187,12 @@ for you, by what it is added inside:
   When nothing is left over, nothing grows.
 - **A `Space` that grows is a spring.** `ui.add(Space(), column, grow=1)` pushes what comes after it
   to the bottom of the column; one before and one after a widget centre it.
+- **`align=` sets widgets at the width they prefer, across a column, or the height across a row.**
+  By default each is stretched across, but `Column(align=Align.CENTER)` centres each at its own
+  width, and `Align.LEFT` or `Align.RIGHT` sets them against a side. A row reads `Align.TOP`,
+  `CENTER` or `BOTTOM` the same way. `align=` on `ui.add` sets one widget apart from the rest:
+  `ui.add(Label("Title"), column, align=Align.LEFT)`. A widget given a `width` in a column, or a
+  `height` in a row, is centred unless it is aligned.
 - **A widget added with a `rect` keeps it**, even inside a column or row, and takes no room there,
   so one widget can be placed by hand among the others.
 - **A widget, panel, column or row with no `rect` and nothing to place it** takes the size it

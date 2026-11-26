@@ -15,6 +15,10 @@ var volume = ui.add(Slider(0.8, 0, 1), list)
 var done = ui.add(Button("Done"), list)
 ```
 
+`Column(align=Align.CENTER)` sets each widget at the width it prefers
+instead, centred; `Align.LEFT` and `Align.RIGHT` set them against a
+side. A widget added with an `align` of its own goes by that instead.
+
 It fills the inside of the panel it is in, or the slot a column or row
 gives it. Elsewhere, with no `rect` of its own, it is as big as what is
 inside it, centred on its `rect`'s position. It draws nothing itself,
@@ -25,6 +29,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 ## Fields
 
 - `rect: Rectangle`: Where it is: given, or set by what it is in.
+- `align: Optional[Align]`: Where its widgets sit across it, each as wide as it prefers: at the left, centre or right. Each stretches across it when `None`.
 - `gap: Optional[Float64]`: What is left between each widget and the next: the `UI`'s `spacing` when `None`.
 
 ## Constructors
@@ -36,5 +41,6 @@ def __init__(
     rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     gap: OptionalNumber = None,
+    align: Optional[Align] = None,
 )
 ```

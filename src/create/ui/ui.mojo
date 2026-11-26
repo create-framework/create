@@ -28,7 +28,7 @@ from ._navigation import (
     _pad_pressed,
     _pad_push,
 )
-from ._layout import _Placement, _shares, _sized
+from ._layout import _Placement, _across, _shares, _sized
 from .column import Column
 from .row import Row
 from .space import Space
@@ -116,6 +116,9 @@ struct _Description(Copyable, Movable):
     """Whether it is hit where it is, rather than letting the pointer
     through."""
     var gap: Optional[Float64]
+    var align: Optional[Align]
+    """Where a column or row sets its children across it: stretched when
+    `None`."""
     var amount: Optional[Float64]
     """A space's size, when set."""
     var padding: Optional[Float64]
@@ -141,6 +144,7 @@ struct _Description(Copyable, Movable):
         self.rect = rect
         self.takes_pointer = takes_pointer
         self.gap = None
+        self.align = None
         self.amount = None
         self.padding = None
         self.focusable = False
@@ -316,8 +320,11 @@ struct UI(Drawable, Movable):
         The room a column or row has left over, once each widget has the
         size it starts from, goes to the widgets added with a `grow`, in
         proportion to it. A `width` of 0 with a `grow` gives exact shares:
-        `grow=1` and `grow=3` take a quarter and three quarters. `align` is
-        kept for the column or row to read. A negative `grow`, `width` or
+        `grow=1` and `grow=3` take a quarter and three quarters. `align`
+        sets where it sits across the column or row, in place of the
+        column's or row's own `align`, and a widget given a `width` in a
+        column, or a `height` in a row, is centred across it unless aligned.
+        A negative `grow`, `width` or
         `height` stops the program.
         """
         comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
@@ -1171,7 +1178,18 @@ struct UI(Drawable, Movable):
                 var given: Optional[Rectangle] = None
                 ref child_node = self._nodes[child]
                 if child_node.sized_by_ui and child_node.visible:
-                    given = slots[next]
+                    # across: stretched, or set by its own or the
+                    # column's or row's `align`
+                    ref placement = child_node.placement
+                    given = _across(
+                        slots[next],
+                        sizes[child][0] if column else sizes[child][1],
+                        placement.align if placement.align else node.align,
+                        Bool(placement.width) if column else Bool(
+                            placement.height
+                        ),
+                        column,
+                    )
                     next += 1
                 self._place_from(child, given, context, canvas, theme, sizes)
         elif node.kind == _PANEL:
@@ -1264,11 +1282,13 @@ struct UI(Drawable, Movable):
             ref column = widget[Column]
             var described = _Description(_COLUMN, column.rect, False)
             described.gap = column.gap
+            described.align = column.align
             return described^
         if widget.isa[Row]():
             ref row = widget[Row]
             var described = _Description(_ROW, row.rect, False)
             described.gap = row.gap
+            described.align = row.align
             return described^
         # no size of its own: the column or row it is in sizes it
         var described = _Description(

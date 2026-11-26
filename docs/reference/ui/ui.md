@@ -91,8 +91,11 @@ var cancel = ui.add(Button("Cancel"), buttons, width=120)
 The room a column or row has left over, once each widget has the
 size it starts from, goes to the widgets added with a `grow`, in
 proportion to it. A `width` of 0 with a `grow` gives exact shares:
-`grow=1` and `grow=3` take a quarter and three quarters. `align` is
-kept for the column or row to read. A negative `grow`, `width` or
+`grow=1` and `grow=3` take a quarter and three quarters. `align`
+sets where it sits across the column or row, in place of the
+column's or row's own `align`, and a widget given a `width` in a
+column, or a `height` in a row, is centred across it unless aligned.
+A negative `grow`, `width` or
 `height` stops the program.
 
 ### `get`
