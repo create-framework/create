@@ -85,6 +85,20 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises
 
 Read what the mouse and keyboard did to it this frame, taking focus on a click and typing while it has it, and work out its look: call it before drawing it.
 
+It is drawn in the light colours; give it others with `colors`.
+
+```mojo
+def update(
+    mut self,
+    mut context: Context,
+    mut canvas: Canvas,
+    *,
+    colors: ColorScheme,
+) raises
+```
+
+`update`, drawn in `colors`, such as `ColorScheme.dark()` on a dark screen.
+
 ### `text`
 
 ```mojo

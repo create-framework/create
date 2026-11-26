@@ -64,6 +64,20 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises
 
 Read what the mouse did to it this frame, ticking or unticking it on a click, and work out its look: call it before drawing it.
 
+It is drawn in the light colours; give it others with `colors`.
+
+```mojo
+def update(
+    mut self,
+    mut context: Context,
+    mut canvas: Canvas,
+    *,
+    colors: ColorScheme,
+) raises
+```
+
+`update`, drawn in `colors`, such as `ColorScheme.dark()` on a dark screen.
+
 ### `changed`
 
 ```mojo

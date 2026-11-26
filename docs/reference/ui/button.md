@@ -25,7 +25,8 @@ if self.play.released():
 pressed on it. `pressed()` is the press, `down()` whether it is held,
 and `hovered()` whether the pointer is over it.
 
-Its look comes from its `variant`, in the light colours, with its own
+Its look comes from its `variant`, in the colours `update` is given
+(the light ones unless told otherwise), with its own
 `style` over that: `Style(corner_radius=4)` squares its corners. It
 steps lighter or darker while hovered and pressed, and fades while not
 `enabled`, when it reacts to nothing.
@@ -64,6 +65,20 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises
 ```
 
 Read what the mouse did to it this frame, and work out its look: call it before drawing it.
+
+It is drawn in the light colours; give it others with `colors`.
+
+```mojo
+def update(
+    mut self,
+    mut context: Context,
+    mut canvas: Canvas,
+    *,
+    colors: ColorScheme,
+) raises
+```
+
+`update`, drawn in `colors`, such as `ColorScheme.dark()` on a dark screen.
 
 ### `hovered`
 

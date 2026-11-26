@@ -42,11 +42,12 @@ press and click. It then resolves the widget's look for that state from a `_Them
 Hover shows in the frame it happens. Anything that can fail, such as measuring text, happens in
 `update`, since `draw_to` can't raise.
 
-**Each widget's public `update` calls a private `_update`** with `_Theme.default()` and no tree. A
-`UI` calls `_update` itself, with its own theme, whether the widget is the topmost under the pointer
-(`free`), what its focus means for it (`_Focus`) and whether its part of the tree is disabled. A
-widget's own `enabled` field is left as the program set it: the tree's `disabled` is a separate
-argument, so enabling a part of the tree again restores each widget as it was.
+**Each widget's public `update` calls a private `_update`** with `_Theme.default(colors)`, in the
+light colours unless `update` is given others, and no tree. A `UI` calls `_update` itself, with its
+own theme, whether the widget is the topmost under the pointer (`free`), what its focus means for it
+(`_Focus`) and whether its part of the tree is disabled. A widget's own `enabled` field is left as
+the program set it: the tree's `disabled` is a separate argument, so enabling a part of the tree
+again restores each widget as it was.
 
 ## The tree
 

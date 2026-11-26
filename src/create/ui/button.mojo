@@ -5,6 +5,7 @@ from create.geometry import Rectangle
 from create.render import Canvas, Style, Text
 from create.render.style import _ResolvedStyle
 from ._pointer import _Pointer
+from .color_scheme import ColorScheme
 from ._theme import _ButtonLook, _Theme
 from ._layout import _UNSIZED
 from .text_field import _measure
@@ -41,7 +42,8 @@ struct Button(Clickable, Copyable, Movable, Widget):
     pressed on it. `pressed()` is the press, `down()` whether it is held,
     and `hovered()` whether the pointer is over it.
 
-    Its look comes from its `variant`, in the light colours, with its own
+    Its look comes from its `variant`, in the colours `update` is given
+    (the light ones unless told otherwise), with its own
     `style` over that: `Style(corner_radius=4)` squares its corners. It
     steps lighter or darker while hovered and pressed, and fades while not
     `enabled`, when it reacts to nothing.
@@ -88,8 +90,21 @@ struct Button(Clickable, Copyable, Movable, Widget):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Read what the mouse did to it this frame, and work out its look:
-        call it before drawing it."""
+        call it before drawing it.
+
+        It is drawn in the light colours; give it others with `colors`."""
         self._update(context, canvas, _Theme.default(), free=True)
+
+    def update(
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        *,
+        colors: ColorScheme,
+    ) raises:
+        """`update`, drawn in `colors`, such as `ColorScheme.dark()` on a
+        dark screen."""
+        self._update(context, canvas, _Theme.default(colors), free=True)
 
     def _update(
         mut self,

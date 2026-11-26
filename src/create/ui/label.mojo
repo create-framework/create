@@ -5,6 +5,7 @@ from create.geometry import Rectangle
 from create.math import Point
 from create.render import Align, Canvas, Style, Text
 from create.render.style import _ResolvedStyle
+from .color_scheme import ColorScheme
 from ._theme import _Theme
 from ._layout import _UNSIZED
 from .text_field import _measure
@@ -25,7 +26,7 @@ struct Label(Copyable, Movable, Widget):
     canvas.draw(self.title)
     ```
 
-    Its text is drawn in the light colours' text colour, in its own `style`
+    Its text is drawn in its colours' text colour, in its own `style`
     over that; `Style(font_size=22)` makes a heading of it. The text is not
     wrapped or cut to the rectangle: the rectangle only places it.
     """
@@ -56,8 +57,21 @@ struct Label(Copyable, Movable, Widget):
         self._look = _Theme.default().label(style, alignment, disabled=False)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        """Work out its look from its fields: call it before drawing it."""
+        """Work out its look from its fields: call it before drawing it.
+
+        It is drawn in the light colours; give it others with `colors`."""
         self._update(context, canvas, _Theme.default(), disabled=False)
+
+    def update(
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        *,
+        colors: ColorScheme,
+    ) raises:
+        """`update`, drawn in `colors`, such as `ColorScheme.dark()` on a
+        dark screen."""
+        self._update(context, canvas, _Theme.default(colors), disabled=False)
 
     def _update(
         mut self,

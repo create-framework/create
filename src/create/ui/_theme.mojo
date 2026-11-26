@@ -188,10 +188,10 @@ struct _Theme(Copyable, Movable):
     `on_surface`."""
 
     @staticmethod
-    def default() -> Self:
-        """The light colours and the settings' defaults, outside any panel:
-        what a widget is drawn in on its own."""
-        var colors = ColorScheme.light()
+    def default(colors: ColorScheme = ColorScheme.light()) -> Self:
+        """`colors`, the light ones unless given, and the settings'
+        defaults, outside any panel: what a widget is drawn in on its own.
+        """
         return Self(
             colors=colors,
             styles=ArcPointer(_Styles()),
