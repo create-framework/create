@@ -1,6 +1,6 @@
 """`UI`, the widget tree: widgets kept together, updated and drawn in one
 call each, in a shared look, with only the topmost under the pointer
-reacting to it; and `WidgetHandle`, how a program reaches a widget in it.
+reacting to it.
 """
 
 from std.memory import ArcPointer
@@ -14,8 +14,11 @@ from create.input import GamepadButton, Key
 from create.math import Point, Vector
 from create.render import Canvas, Drawable, Picture, Style
 from .button import Button
+from .widget_handle import WidgetHandle
 from .checkbox import Checkbox
-from .colors import ColorScheme, FocusRing, StateLayers
+from .color_scheme import ColorScheme
+from .focus_ring import FocusRing
+from .state_layers import StateLayers
 from .label import Label
 from ._navigation import (
     _Focus,
@@ -25,7 +28,10 @@ from ._navigation import (
     _pad_pressed,
     _pad_push,
 )
-from .layout import Column, Row, Space, _sized
+from ._layout import _sized
+from .column import Column
+from .row import Row
+from .space import Space
 from .panel import Panel
 from .slider import Slider
 from .text_field import TextField
@@ -52,29 +58,6 @@ comptime _Widget = Variant[
 ]
 """The kinds of node a tree holds. Storage only: what each does is its own,
 reached through `_describe`, `_draw` and `_dispatch_mut`."""
-
-
-@fieldwise_init
-struct WidgetHandle[W: Copyable](
-    Copyable, Equatable, ImplicitlyCopyable, Movable
-):
-    """Where a widget of type `W` is in a `UI`: what `ui.add` returns, and
-    how the program reaches the widget again, as `ui[handle]`.
-
-    Once `ui.remove` has removed the widget, its handle names nothing: using
-    it stops the program with a message saying so, even after a new widget
-    has taken the old one's place."""
-
-    var _index: Int
-    var _generation: Int
-    """How many widgets had been at `_index` before this one: a handle to
-    one of them is told apart from a handle to the widget there now."""
-
-    def __eq__(self, other: Self) -> Bool:
-        return (
-            self._index == other._index
-            and self._generation == other._generation
-        )
 
 
 @fieldwise_init

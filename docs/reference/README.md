@@ -85,4 +85,4 @@ Data files: `Table` and `TableRow` for CSV and TSV, and `JSON`.
 The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Slider` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together and lays them out with `Column`, `Row` and `Space`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
 
 - **Types:** [`UI`](ui/ui.md), [`WidgetHandle`](ui/widgethandle.md), [`ColorScheme`](ui/colorscheme.md), [`StateLayers`](ui/statelayers.md), [`FocusRing`](ui/focusring.md), [`Button`](ui/button.md), [`ButtonVariant`](ui/buttonvariant.md), [`Checkbox`](ui/checkbox.md), [`Label`](ui/label.md), [`Column`](ui/column.md), [`Row`](ui/row.md), [`Space`](ui/space.md), [`Panel`](ui/panel.md), [`Slider`](ui/slider.md), [`TextField`](ui/textfield.md)
-- **Traits:** [`Clickable`](ui/clickable.md), [`Hoverable`](ui/hoverable.md), [`Widget`](ui/widget.md)
+- **Traits:** [`Widget`](ui/widget.md), [`Hoverable`](ui/hoverable.md), [`Clickable`](ui/clickable.md)

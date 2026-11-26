@@ -11,10 +11,11 @@ from create.math import OptionalNumber
 from ._pointer import _Pointer
 from ._text_buffer import _TextBuffer
 from ._theme import _TextFieldLook, _Theme, _fills, _text_look
-from .layout import _UNSIZED
+from ._layout import _UNSIZED
 from .slider import _CONTROL_WIDTH
 from ._navigation import _Focus
-from .widget import Clickable, Widget
+from .clickable import Clickable
+from .widget import Widget
 
 
 comptime _PADDING = 12.0

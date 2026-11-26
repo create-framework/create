@@ -26,6 +26,6 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Sl
 
 | Trait | Description |
 |---|---|
-| [`Clickable`](clickable.md) | A widget the mouse presses, in the words the input devices use: *pressed* and *released* are the edges, true only in the frame they happen, and *down* is held. Each is as of its last `update`. |
-| [`Hoverable`](hoverable.md) | A widget the pointer can be over. |
 | [`Widget`](widget.md) | A value that reacts to input and draws itself: a `Button`, say. |
+| [`Hoverable`](hoverable.md) | A widget the pointer can be over. |
+| [`Clickable`](clickable.md) | A widget the mouse presses, in the words the input devices use: *pressed* and *released* are the edges, true only in the frame they happen, and *down* is held. Each is as of its last `update`. |

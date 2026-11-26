@@ -5,7 +5,7 @@ from create.app import Context
 from create.geometry import Rectangle
 from create.render import Canvas, Style
 from ._theme import _PanelLook, _Theme
-from .layout import _UNSIZED
+from ._layout import _UNSIZED
 from .widget import Widget
 
 

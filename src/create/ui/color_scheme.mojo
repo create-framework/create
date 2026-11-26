@@ -1,5 +1,4 @@
-"""`ColorScheme`, the colours widgets are drawn in, and the tokens for how
-they show their state and focus: `StateLayers` and `FocusRing`."""
+"""`ColorScheme`, the colours widgets are drawn in."""
 
 from create.color import Color
 
@@ -458,47 +457,3 @@ struct _Palette(Copyable, ImplicitlyCopyable, Movable):
         var t = min(max(tone, 0.0), 100.0)
         var luminance = ((t + 16) / 116) ** 3 if t > 8 else t / 903.2963
         return Color.oklch(luminance ** (1.0 / 3.0), self.chroma, self.hue)
-
-
-@fieldwise_init
-struct StateLayers(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """How strongly a widget shows its state.
-
-    A hovered, pressed or dragged widget moves its OKLCH lightness
-    by that step towards its text colour: 0.09 is a clear but quiet change,
-    and the same step looks like the same change on any colour. A disabled
-    widget instead fades, its content to `disabled_content` of its opacity
-    and its fill to `disabled_container`. Focus has no step: it shows as
-    the `FocusRing`.
-    """
-
-    var hovered: Float64
-    var pressed: Float64
-    var dragged: Float64
-    var disabled_content: Float64
-    var disabled_container: Float64
-
-    def __init__(out self):
-        self.hovered = 0.09
-        self.pressed = 0.16
-        self.dragged = 0.16
-        self.disabled_content = 0.38
-        self.disabled_container = 0.12
-
-
-@fieldwise_init
-struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
-    """The ring drawn around a widget focused from the keyboard, a gamepad
-    or `ui.focus`: its `thickness`, the `gap` between it and the widget,
-    and its `color`, the scheme's `secondary` unless given. It follows the
-    widget's shape, its corners rounded by the widget's own radius grown by
-    the gap."""
-
-    var thickness: Float64
-    var gap: Float64
-    var color: Optional[Color]
-
-    def __init__(out self):
-        self.thickness = 3
-        self.gap = 2
-        self.color = None
