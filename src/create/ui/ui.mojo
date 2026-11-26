@@ -37,6 +37,7 @@ from .panel import Panel
 from .progress_bar import ProgressBar
 from .slider import Slider
 from .switch import Switch
+from .choice_group import ChoiceGroup
 from .text_field import TextField
 from ._theme import (
     _CONTROL_HEIGHT,
@@ -51,6 +52,7 @@ comptime _Widget = Variant[
     Button,
     Checkbox,
     Switch,
+    ChoiceGroup,
     Label,
     Panel,
     Slider,
@@ -70,7 +72,8 @@ comptime _Container = Variant[Panel, Column, Row, ScrollArea]
 """The kinds of node another can be added inside."""
 
 comptime _NOT_A_NODE = (
-    "ui.add takes a Button, Checkbox, Switch, Label, Panel, Slider, TextField,"
+    "ui.add takes a Button, Checkbox, Switch, ChoiceGroup, Label, Panel,"
+    " Slider, TextField,"
     " Picture, ProgressBar, Column, Row, Space or ScrollArea"
 )
 comptime _NOT_A_CONTAINER = (
@@ -316,8 +319,8 @@ struct UI(Drawable, Movable):
 
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
-        before it. It is a `Button`, `Checkbox`, `Switch`, `Label`, `Panel`,
-        `Slider`,
+        before it. It is a `Button`, `Checkbox`, `Switch`, `ChoiceGroup`,
+        `Label`, `Panel`, `Slider`,
         `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or
         `ScrollArea`;
         anything else doesn't compile."""
@@ -604,6 +607,10 @@ struct UI(Drawable, Movable):
         switch_on_track: Optional[Style] = None,
         switch_handle: Optional[Style] = None,
         switch_text_style: Optional[Style] = None,
+        choice_group_circle: Optional[Style] = None,
+        choice_group_selected_circle: Optional[Style] = None,
+        choice_group_dot: Optional[Style] = None,
+        choice_group_text_style: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -672,6 +679,16 @@ struct UI(Drawable, Movable):
             styles.switch_handle = switch_handle.value()
         if switch_text_style:
             styles.switch_text_style = switch_text_style.value()
+        if choice_group_circle:
+            styles.choice_group_circle = choice_group_circle.value()
+        if choice_group_selected_circle:
+            styles.choice_group_selected_circle = (
+                choice_group_selected_circle.value()
+            )
+        if choice_group_dot:
+            styles.choice_group_dot = choice_group_dot.value()
+        if choice_group_text_style:
+            styles.choice_group_text_style = choice_group_text_style.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -1526,6 +1543,14 @@ struct UI(Drawable, Movable):
             described.ring = switch._ring()
             described.held = switch.down()
             return described^
+        if widget.isa[ChoiceGroup]():
+            ref group = widget[ChoiceGroup]
+            var described = _Description(_WIDGET, group.rect, True)
+            described.focusable = group.enabled
+            described.adjusts_y = True
+            described.ring_circle = group._ring()
+            described.held = group.down()
+            return described^
         if widget.isa[Slider]():
             ref slider = widget[Slider]
             var described = _Description(_WIDGET, slider.rect, True)
@@ -1595,6 +1620,8 @@ struct UI(Drawable, Movable):
             canvas.draw(widget[Checkbox])
         elif widget.isa[Switch]():
             canvas.draw(widget[Switch])
+        elif widget.isa[ChoiceGroup]():
+            canvas.draw(widget[ChoiceGroup])
         elif widget.isa[Slider]():
             canvas.draw(widget[Slider])
         elif widget.isa[TextField]():
@@ -1684,6 +1711,21 @@ struct UI(Drawable, Movable):
                 reply.width, reply.height = switch._measure(canvas, theme)
             else:
                 switch.rect = rect
+        elif widget.isa[ChoiceGroup]():
+            ref group = widget[ChoiceGroup]
+            if action == _UPDATE:
+                group._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
+            elif action == _MEASURE:
+                reply.width, reply.height = group._measure(canvas, theme)
+            else:
+                group.rect = rect
         elif widget.isa[Slider]():
             ref slider = widget[Slider]
             if action == _UPDATE:

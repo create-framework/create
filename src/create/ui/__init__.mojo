@@ -1,10 +1,10 @@
-"""The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `Label`,
-`Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps,
-updates and draws with `canvas.draw`, and the traits they share (`Widget`,
-`Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them
-out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`,
-reached through `WidgetHandle`s; and `ColorScheme`, the colours they are
-drawn in.
+"""The user interface: widgets, such as `Button`, `Checkbox`, `Switch`,
+`ChoiceGroup`, `Label`, `Panel`, `Slider`, `ProgressBar` and `TextField`,
+which are values a program keeps, updates and draws with `canvas.draw`, and
+the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which
+keeps widgets together, lays them out with `Column`, `Row` and `Space` and
+scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and
+`ColorScheme`, the colours they are drawn in.
 """
 from .ui import UI
 from .widget_handle import WidgetHandle
@@ -15,6 +15,7 @@ from .button import Button
 from .button_variant import ButtonVariant
 from .checkbox import Checkbox
 from .switch import Switch
+from .choice_group import ChoiceGroup
 from .label import Label
 from .column import Column
 from .row import Row

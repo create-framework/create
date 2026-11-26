@@ -66,6 +66,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var switch_on_track: Style
     var switch_handle: Style
     var switch_text_style: Style
+    var choice_group_circle: Style
+    var choice_group_selected_circle: Style
+    var choice_group_dot: Style
+    var choice_group_text_style: Style
 
     def __init__(out self):
         self.button = Style()
@@ -93,6 +97,10 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.switch_on_track = Style()
         self.switch_handle = Style()
         self.switch_text_style = Style()
+        self.choice_group_circle = Style()
+        self.choice_group_selected_circle = Style()
+        self.choice_group_dot = Style()
+        self.choice_group_text_style = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -123,6 +131,12 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.switch_on_track.over(under.switch_on_track),
             self.switch_handle.over(under.switch_handle),
             self.switch_text_style.over(under.switch_text_style),
+            self.choice_group_circle.over(under.choice_group_circle),
+            self.choice_group_selected_circle.over(
+                under.choice_group_selected_circle
+            ),
+            self.choice_group_dot.over(under.choice_group_dot),
+            self.choice_group_text_style.over(under.choice_group_text_style),
         )
 
 
@@ -181,6 +195,19 @@ struct _SwitchLook(Copyable, Movable):
     var handle: _ResolvedStyle
     var text: _ResolvedStyle
     """Its text's style, aligned left."""
+
+
+@fieldwise_init
+struct _ChoiceGroupLook(Copyable, Movable):
+    """A choice group's parts, resolved for its state. The dot is a point,
+    and the halo is drawn behind the option under the pointer."""
+
+    var circle: _ResolvedStyle
+    var selected_circle: _ResolvedStyle
+    var dot: _ResolvedStyle
+    var text: _ResolvedStyle
+    """Its options' style, aligned left."""
+    var halo: _ResolvedStyle
 
 
 @fieldwise_init
@@ -547,6 +574,76 @@ struct _Theme(Copyable, Movable):
             handle.stroke_cap = StrokeCap.ROUND
         handle.stroke_dash = StrokeDash.SOLID
         return _SwitchLook(track, handle, _text_look(text, Align.LEFT))
+
+    def choice_group(
+        self,
+        call_circle: Style,
+        call_selected_circle: Style,
+        call_dot: Style,
+        call_text: Style,
+        *,
+        hovered: Bool,
+        pressed: Bool,
+        disabled: Bool,
+    ) -> _ChoiceGroupLook:
+        """A choice group's parts, styled by the call's styles for each:
+        outlined circles, the chosen one in `primary` with a dot, and a
+        halo behind the option under the pointer, as deep as a checkbox's
+        state layer."""
+        var colors = self.colors
+        ref block = self.styles[]
+        var circle_look = call_circle.over(block.choice_group_circle).over(
+            Style(
+                fill_enabled=False,
+                stroke=colors.on_surface_variant,
+                stroke_thickness=2,
+            )
+        )
+        var circle = _ResolvedStyle()
+        circle.apply(circle_look)
+        var selected = _ResolvedStyle()
+        selected.apply(
+            call_selected_circle.over(block.choice_group_selected_circle).over(
+                Style(stroke=colors.primary).over(circle_look)
+            )
+        )
+        var dot = _ResolvedStyle()
+        dot.apply(
+            call_dot.over(block.choice_group_dot).over(
+                Style(stroke=colors.primary, stroke_thickness=10)
+            )
+        )
+        var text = _ResolvedStyle()
+        text.apply(
+            call_text.over(block.choice_group_text_style).over(
+                Style(text_color=self.content).over(_body_text())
+            )
+        )
+        var halo = _ResolvedStyle(fill=Color(0, 0, 0, 0), stroke_enabled=False)
+        if disabled:
+            var faded = _faded(
+                colors.on_surface, self.state_layers.disabled_content
+            )
+            circle.stroke_color = faded
+            selected.stroke_color = faded
+            dot.stroke_color = faded
+            text.text_color = faded
+        else:
+            var step = self._step(hovered, pressed)
+            if step > 0:
+                var layer = _layer_opacity(
+                    self.surface, colors.on_surface, step
+                )
+                halo.fill_color = colors.on_surface.with_alpha(
+                    UInt8(layer * 255 + 0.5)
+                )
+        # a point, as `canvas.point` draws one: round unless square
+        if dot.stroke_cap != StrokeCap.SQUARE:
+            dot.stroke_cap = StrokeCap.ROUND
+        dot.stroke_dash = StrokeDash.SOLID
+        return _ChoiceGroupLook(
+            circle, selected, dot, _text_look(text, Align.LEFT), halo
+        )
 
     def ring_reach(self) -> Float64:
         """How far the focus ring reaches outside a widget: its gap and its
