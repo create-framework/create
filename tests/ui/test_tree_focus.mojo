@@ -221,5 +221,77 @@ def test_the_dpad_moves_focus_by_where_widgets_are() raises -> None:
     assert_equal(panel.focused(), -1)
 
 
+def test_the_arrows_move_focus_once_keys_act_on_it() raises -> None:
+    var panel = _Panel()
+    _ = panel.frame()
+    panel.key(Key.TAB)
+    assert_equal(panel.focused(), 0)
+    panel.key(Key.RIGHT)
+    assert_equal(panel.focused(), 1)
+    panel.key(Key.DOWN)
+    assert_equal(panel.focused(), 3)  # the slider, below
+    panel.key(Key.RIGHT)  # steps the slider, keeps focus
+    assert_equal(panel.focused(), 3)
+    assert_almost_equal(panel.ui[panel.slider].value, 0.55)
+    panel.key(Key.DOWN)  # Down leaves a slider
+    assert_equal(panel.focused(), 4)
+    assert_almost_equal(panel.ui[panel.slider].value, 0.55)
+    panel.key(Key.UP)  # the field's caret takes it
+    assert_equal(panel.focused(), 4)
+
+
+def test_the_arrows_are_the_games_after_a_click() raises -> None:
+    var panel = _Panel()
+    _ = panel.frame()
+    panel.click((-120, 60))  # the first button
+    panel.key(Key.RIGHT)
+    assert_equal(panel.focused(), 0)
+    assert_false(panel.ui.wants_keyboard(panel.context))
+
+
+def test_an_arrow_onto_a_slider_doesnt_step_it() raises -> None:
+    var ui = UI()
+    var ok = ui.add(Button("OK", Rectangle((-150, 0), 100, 40)))
+    var slider = ui.add(Slider(0.5, 0, 1, Rectangle((100, 0), 200, 32)))
+    var context = Context()
+    point_at(context, (0, 95))
+    for key in [Key.TAB, Key.RIGHT]:
+        next_frame(context)
+        press_key(context, key)
+        var canvas = Canvas(400, 200)
+        ui.update(context, canvas)
+        next_frame(context)
+        context.keyboard._key_up(key)
+    assert_true(ui.has_focus(slider))
+    assert_false(ui.has_focus(ok))
+    assert_equal(ui[slider].value, 0.5)
+
+
+def test_a_held_dpad_moves_focus_again_after_a_while() raises -> None:
+    var panel = _Panel()
+    _ = panel.frame()
+    next_frame(panel.context)
+    panel.context._gamepads._button_down(1, GamepadButton.DPAD_DOWN)
+    _ = panel.frame()
+    assert_equal(panel.focused(), 0)  # from nothing: the first
+    for time in [0.2, 0.39]:
+        next_frame(panel.context)
+        panel.context.time.real_elapsed = time
+        _ = panel.frame()
+        assert_equal(panel.focused(), 0)  # held, not yet repeating
+    next_frame(panel.context)
+    panel.context.time.real_elapsed = 0.41
+    _ = panel.frame()
+    assert_equal(panel.focused(), 3)
+    next_frame(panel.context)
+    panel.context.time.real_elapsed = 0.45
+    _ = panel.frame()
+    assert_equal(panel.focused(), 3)
+    next_frame(panel.context)
+    panel.context.time.real_elapsed = 0.52
+    _ = panel.frame()
+    assert_equal(panel.focused(), 4)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

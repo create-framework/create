@@ -293,11 +293,11 @@ def _dragged_value(
 
 def _arrow_direction(keyboard: Keyboard) -> Int:
     """Which way the arrow keys typed this frame step a slider: 1 towards
-    its maximum (Right or Up), -1 towards its minimum (Left or Down), 0 for
-    neither."""
-    if keyboard.typed(Key.RIGHT) or keyboard.typed(Key.UP):
+    its maximum (Right), -1 towards its minimum (Left), 0 for neither. Up
+    and Down are the tree's, to move focus on."""
+    if keyboard.typed(Key.RIGHT):
         return 1
-    if keyboard.typed(Key.LEFT) or keyboard.typed(Key.DOWN):
+    if keyboard.typed(Key.LEFT):
         return -1
     return 0
 

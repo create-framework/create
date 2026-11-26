@@ -1,8 +1,8 @@
-"""Internal: focus as a `UI` hands it to a widget, and the gamepad reading
-and geometry focus moves by."""
+"""Internal: focus as a `UI` hands it to a widget, the arrow and gamepad
+readings that move it, and the geometry it moves by."""
 
 from create.app import Context
-from create.input import Gamepad, GamepadButton
+from create.input import Gamepad, GamepadButton, Key, Keyboard
 from create.math import Point, Vector
 
 
@@ -52,32 +52,95 @@ def _pad_pressed(
     return False
 
 
+comptime _REPEAT_DELAY = 0.4
+"""Seconds a direction is held on a gamepad before it pushes again."""
+comptime _REPEAT_INTERVAL = 0.1
+"""Seconds between pushes while a direction stays held after that."""
+
+
+struct _PadRepeat(Copyable, ImplicitlyCopyable, Movable):
+    """The direction held on a tree's gamepads, kept between frames, and
+    when a held direction pushes next."""
+
+    var direction: Vector
+    var next: Float64
+    """The real time, in seconds, it pushes again while still held."""
+
+    def __init__(out self):
+        self.direction = Vector.ZERO
+        self.next = 0.0
+
+
 def _pad_push(
-    context: Context, player: Optional[Int], mut stick_was: Vector
+    context: Context, player: Optional[Int], mut repeat: _PadRepeat
 ) -> Vector:
     """This frame's push on the d-pad, or the left stick tipped past
-    halfway: up, down, left or right, once per push. `stick_was` keeps the
-    stick's direction between frames, so a held stick pushes once."""
-    if _pad_pressed(context, player, GamepadButton.DPAD_UP):
-        return Vector.UP
-    if _pad_pressed(context, player, GamepadButton.DPAD_DOWN):
-        return Vector.DOWN
-    if _pad_pressed(context, player, GamepadButton.DPAD_LEFT):
-        return Vector.LEFT
-    if _pad_pressed(context, player, GamepadButton.DPAD_RIGHT):
-        return Vector.RIGHT
-    var stick = Vector.ZERO
+    halfway: up, down, left or right. A push comes once when a direction is
+    pressed, and again every `_REPEAT_INTERVAL` once it has been held for
+    `_REPEAT_DELAY`, by the real clock, so a paused game's menu repeats
+    too."""
+    var now = context.time.real_elapsed
+    var pressed = _direction(
+        up=_pad_pressed(context, player, GamepadButton.DPAD_UP),
+        down=_pad_pressed(context, player, GamepadButton.DPAD_DOWN),
+        left=_pad_pressed(context, player, GamepadButton.DPAD_LEFT),
+        right=_pad_pressed(context, player, GamepadButton.DPAD_RIGHT),
+    )
+    if pressed != Vector.ZERO:
+        repeat.direction = pressed
+        repeat.next = now + _REPEAT_DELAY
+        return pressed
+    var held = Vector.ZERO
     for pad in _pads(context, player):
-        if pad.connected and pad.left_stick.magnitude() > 0.5:
+        if not pad.connected:
+            continue
+        held = _direction(
+            up=pad.down(GamepadButton.DPAD_UP),
+            down=pad.down(GamepadButton.DPAD_DOWN),
+            left=pad.down(GamepadButton.DPAD_LEFT),
+            right=pad.down(GamepadButton.DPAD_RIGHT),
+        )
+        if held == Vector.ZERO and pad.left_stick.magnitude() > 0.5:
             var s = pad.left_stick
             if abs(s.x) > abs(s.y):
-                stick = Vector.RIGHT if s.x > 0 else Vector.LEFT
+                held = Vector.RIGHT if s.x > 0 else Vector.LEFT
             else:
-                stick = Vector.UP if s.y > 0 else Vector.DOWN
+                held = Vector.UP if s.y > 0 else Vector.DOWN
+        if held != Vector.ZERO:
             break
-    var push = stick if stick != stick_was else Vector.ZERO
-    stick_was = stick
-    return push
+    if held != repeat.direction:
+        repeat.direction = held
+        repeat.next = now + _REPEAT_DELAY
+        return held  # nothing, when let go
+    if held != Vector.ZERO and now >= repeat.next:
+        repeat.next = now + _REPEAT_INTERVAL
+        return held
+    return Vector.ZERO
+
+
+def _direction(*, up: Bool, down: Bool, left: Bool, right: Bool) -> Vector:
+    """The direction of whichever of the four is true, up first; none when
+    none is."""
+    if up:
+        return Vector.UP
+    if down:
+        return Vector.DOWN
+    if left:
+        return Vector.LEFT
+    if right:
+        return Vector.RIGHT
+    return Vector.ZERO
+
+
+def _arrow_push(keyboard: Keyboard) -> Vector:
+    """The arrow typed this frame, as a direction: typed, so a held arrow
+    repeats as the system's key repeat does."""
+    return _direction(
+        up=keyboard.typed(Key.UP),
+        down=keyboard.typed(Key.DOWN),
+        left=keyboard.typed(Key.LEFT),
+        right=keyboard.typed(Key.RIGHT),
+    )
 
 
 def _nearest(
