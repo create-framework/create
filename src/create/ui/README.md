@@ -19,7 +19,7 @@ rules.
 | `ui.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
 | `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the arrows' and the gamepad's push, with `_PadRepeat` repeating a held direction, and the nearest-in-a-direction choice |
 | `widget_handle.mojo` | `WidgetHandle`, where a widget is in a `UI`: its index, its generation and which `UI` made it |
-| `_layout.mojo` | `_UNSIZED`, the size a widget leaves for the tree to choose, and `_sized` |
+| `_layout.mojo` | `_UNSIZED`, the size a widget leaves for the tree to choose, `_sized`, and `_Placement`, how a node fits in its column or row |
 | `column.mojo`, `row.mojo`, `space.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes |
 | `widget.mojo` | `Widget`, the trait every widget value shares: `update`, then drawn with `canvas.draw` |
 | `hoverable.mojo`, `clickable.mojo` | `Hoverable` and `Clickable`, what can be asked of a widget after its `update` |
@@ -96,10 +96,12 @@ one and a half times its text size); a column sums its children's heights with i
 widths, and a panel with no size fits round the column or row inside it. Then every node is placed,
 from the top level in: a column hands strips down its width, a row cuts its width with
 `Rectangle.columns`, and a panel hands its inside, inset by its `padding` (twice the `spacing`
-unless set), to a column or row inside it. A node added with no size (`_UNSIZED`) is marked
-`sized_by_ui` and given its preferred size every frame, unless its parent places it. A column or row
-places only such children, and a panel only such a column or row: a node added with a size of its
-own keeps its place and takes no room.
+unless set), to a column or row inside it. A node's `_Placement` is what `ui.add` was told about how
+it fits in its column or row: a `width` or `height` given there replaces the measured one, so a
+column or row places it from that. A node added with no size (`_UNSIZED`) is marked `sized_by_ui`
+and given its preferred size every frame, unless its parent places it. A column or row places only
+such children, and a panel only such a column or row: a node added with a size of its own keeps its
+place and takes no room.
 
 ## Focus and the devices
 

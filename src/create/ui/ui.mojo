@@ -11,8 +11,8 @@ from create.color import Color
 from create.app import Context
 from create.geometry import Circle, Rectangle
 from create.input import GamepadButton, Key
-from create.math import Point, Vector
-from create.render import Canvas, Drawable, Picture, Style
+from create.math import OptionalNumber, Point, Vector
+from create.render import Align, Canvas, Drawable, Picture, Style
 from .button import Button
 from .widget_handle import WidgetHandle
 from .checkbox import Checkbox
@@ -28,7 +28,7 @@ from ._navigation import (
     _pad_pressed,
     _pad_push,
 )
-from ._layout import _sized
+from ._layout import _Placement, _sized
 from .column import Column
 from .row import Row
 from .space import Space
@@ -90,6 +90,8 @@ struct _Node(Copyable, Movable):
     var removed: Bool
     """Whether `ui.remove` has removed it, leaving its place free for the
     next node added."""
+    var placement: _Placement
+    """How it fits in the column or row it is in: what `ui.add` was told."""
 
 
 comptime _UPDATE = 0
@@ -284,27 +286,61 @@ struct UI(Drawable, Movable):
         `TextField`, `Picture`, `Column`, `Row` or `Space`; anything else
         doesn't compile."""
         comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
-        var handle = self._new_node[W](_Widget(widget^), None)
+        var handle = self._new_node[W](_Widget(widget^), None, _Placement())
         self._roots.append(handle._index)
         return handle
 
     def add[
         W: Copyable, P: Copyable
-    ](mut self, var widget: W, parent: WidgetHandle[P]) -> WidgetHandle[W]:
+    ](
+        mut self,
+        var widget: W,
+        parent: WidgetHandle[P],
+        *,
+        grow: OptionalNumber = None,
+        width: OptionalNumber = None,
+        height: OptionalNumber = None,
+        align: Optional[Align] = None,
+    ) -> WidgetHandle[W]:
         """Add `widget` inside `parent`: drawn after it and after what was
         added inside it before, and in the look of what it sits on. Only a
         `Panel`, `Column` or `Row` can be a parent; anything else doesn't
-        compile."""
+        compile.
+
+        In a column or row, `width` and `height` set the size it starts
+        from, in place of the one it prefers, so two buttons given the same
+        `width` are as wide as each other:
+
+        ```mojo
+        # In `create`: two buttons of one width, side by side.
+        var buttons = ui.add(Row(), column)
+        var ok = ui.add(Button("OK"), buttons, width=120)
+        var cancel = ui.add(Button("Cancel"), buttons, width=120)
+        ```
+
+        `grow` and `align` are kept for the column or row to read. A
+        negative `grow`, `width` or `height` stops the program.
+        """
         comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
         comptime assert _Container.is_type_supported[P](), _NOT_A_CONTAINER
+        if grow.or_else(0) < 0 or width.or_else(0) < 0 or height.or_else(0) < 0:
+            abort("create: ui.add given a negative grow, width or height")
         var inside = self._index_of(parent)
-        var handle = self._new_node[W](_Widget(widget^), inside)
+        var placement = _Placement(
+            grow.or_else(0), width._value, height._value, align
+        )
+        var handle = self._new_node[W](_Widget(widget^), inside, placement^)
         self._nodes[inside].children.append(handle._index)
         return handle
 
     def _new_node[
         W: Copyable
-    ](mut self, var widget: _Widget, parent: Optional[Int]) -> WidgetHandle[W]:
+    ](
+        mut self,
+        var widget: _Widget,
+        parent: Optional[Int],
+        var placement: _Placement,
+    ) -> WidgetHandle[W]:
         """Keep `widget` in a node of its own, in a place a removed node
         left when there is one, and hand back its handle."""
         var index: Int
@@ -313,12 +349,22 @@ struct UI(Drawable, Movable):
             index = self._free.pop()
             generation = self._nodes[index].generation + 1
             self._nodes[index] = _Node(
-                widget^, parent, [], False, True, True, generation, False
+                widget^,
+                parent,
+                [],
+                False,
+                True,
+                True,
+                generation,
+                False,
+                placement^,
             )
         else:
             index = len(self._nodes)
             self._nodes.append(
-                _Node(widget^, parent, [], False, True, True, 0, False)
+                _Node(
+                    widget^, parent, [], False, True, True, 0, False, placement^
+                )
             )
         self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
         return WidgetHandle[W](index, generation, self._id())
@@ -1053,7 +1099,12 @@ struct UI(Drawable, Movable):
             )
             width = reply.width
             height = reply.height
-        sizes[index] = (width, height)
+        # the size `ui.add` was given wins over the one it prefers
+        ref placement = self._nodes[index].placement
+        sizes[index] = (
+            placement.width.or_else(width),
+            placement.height.or_else(height),
+        )
 
     def _place_from(
         mut self,
