@@ -167,6 +167,10 @@ struct _Description(Copyable, Movable):
     """The shape its focus ring goes round, when it is a circle."""
     var held: Bool
     """Whether the mouse holds it: pressed on it and not let go."""
+    var captures_keys: Bool
+    """Whether it takes every key and push itself while focused, such as a
+    dropdown with its list open: the arrows, Enter, Space, Escape and the
+    gamepad's buttons, which then move and clear no focus."""
     var popup: Optional[Rectangle]
     """What it draws over everything else, such as a dropdown's open list,
     while it does."""
@@ -193,6 +197,7 @@ struct _Description(Copyable, Movable):
         self.ring = None
         self.ring_circle = None
         self.held = False
+        self.captures_keys = False
         self.popup = None
         self.focus_request = None
 
@@ -282,6 +287,9 @@ struct UI(Drawable, Movable):
     var _arrow_moved: Bool
     """Whether an arrow key moved focus this frame, so it doesn't also
     step the slider it lands on."""
+    var _back: Bool
+    """Whether Escape or the east button backed out of the focused widget
+    this frame, rather than taking its focus away."""
     var _pad_move: Vector
     """This frame's push on a gamepad, which a focused slider may take."""
     var _typing_was: Bool
@@ -307,6 +315,7 @@ struct UI(Drawable, Movable):
         self._pad_repeat = _PadRepeat()
         self._arrow_moved = False
         self._pad_move = Vector.ZERO
+        self._back = False
         self._typing_was = False
         self._claimant = 0
         self._frame = -1
@@ -830,7 +839,16 @@ struct UI(Drawable, Movable):
             return False
         if self._focus_visible and not self._focus_from_gamepad:
             return True
-        return self._describe(self._focused.value()).takes_typing
+        var node = self._describe(self._focused.value())
+        return node.takes_typing or node.captures_keys
+
+    def _captures(self) -> Bool:
+        """Whether the focused widget takes every key and push itself, as an
+        open dropdown does."""
+        return (
+            Bool(self._focused)
+            and self._describe(self._focused.value()).captures_keys
+        )
 
     def _holds_mouse(self) -> Bool:
         """Whether one of its widgets is held."""
@@ -909,6 +927,7 @@ struct UI(Drawable, Movable):
             keys=False,
             activated=False,
             push=Vector.ZERO,
+            back=False,
         )
         if not hidden:
             focus = self._focus_for(index, context)
@@ -1143,12 +1162,16 @@ struct UI(Drawable, Movable):
             self.clear_focus()  # another tree has taken the keyboard
         if self._focused and not self._can_focus(self._focused.value()):
             self.clear_focus()  # disabled, or no longer a widget that can
+        self._back = False
         if (
             self._focused
             and keyboard.pressed(Key.ESCAPE)
             and not keyboard_taken
         ):
-            self.clear_focus()
+            if self._captures():
+                self._back = True  # for the widget to back out of
+            else:
+                self.clear_focus()
             self._key_used = True
         if context.mouse.pressed() and not mouse_taken:
             if topmost and self._can_focus(topmost.value()):
@@ -1173,7 +1196,10 @@ struct UI(Drawable, Movable):
         var push = _pad_push(context, self._player, self._pad_repeat)
         self._pad_move = push
         if _pad_pressed(context, self._player, GamepadButton.EAST):
-            self.clear_focus()  # back out, as Escape does
+            if self._captures():
+                self._back = True
+            else:
+                self.clear_focus()  # back out, as Escape does
         elif push != Vector.ZERO:
             if not self._focused or not self._adjusts(
                 self._focused.value(), push
@@ -1239,8 +1265,11 @@ struct UI(Drawable, Movable):
         caret, and a widget the arrows along an axis it adjusts, as a
         slider takes left and right to step it."""
         var focused = self._focused.value()
-        return self._describe(focused).takes_typing or self._adjusts(
-            focused, arrow
+        var node = self._describe(focused)
+        return (
+            node.takes_typing
+            or node.captures_keys
+            or self._adjusts(focused, arrow)
         )
 
     def _adjusts(self, index: Int, direction: Vector) -> Bool:
@@ -1248,6 +1277,8 @@ struct UI(Drawable, Movable):
         `direction` itself, along an axis it adjusts, rather than letting
         it move focus."""
         var node = self._describe(index)
+        if node.captures_keys:
+            return True
         if direction.y == 0:
             return node.adjusts_x
         return direction.x == 0 and node.adjusts_y
@@ -1273,13 +1304,15 @@ struct UI(Drawable, Movable):
         frame."""
         var focused = Bool(self._focused) and self._focused.value() == index
         var shown = focused and self._focus_visible
+        # a widget that captures the keys has them however it got focus,
+        # such as a dropdown opened by a click
+        var captures = focused and self._describe(index).captures_keys
         ref keyboard = context.keyboard
         var keyboard_free = not keyboard._claim.held_by_other(
             self._claimant, context.frame_count()
         )
         var keys = (
-            shown
-            and not self._focus_from_gamepad
+            (shown and not self._focus_from_gamepad or captures)
             and keyboard_free
             and not self._arrow_moved
         )
@@ -1298,14 +1331,16 @@ struct UI(Drawable, Movable):
             keys
             and (keyboard.pressed(Key.ENTER) or keyboard.pressed(Key.SPACE))
         ) or (
-            shown and _pad_pressed(context, self._player, GamepadButton.SOUTH)
+            (shown or captures)
+            and _pad_pressed(context, self._player, GamepadButton.SOUTH)
         )
         return _Focus(
             in_tree=True,
             focused=focused,
             keys=keys,
             activated=activated,
-            push=self._pad_move if shown else Vector.ZERO,
+            push=self._pad_move if shown or captures else Vector.ZERO,
+            back=focused and self._back,
         )
 
     # -------------------------------------------------------------- layout
@@ -1640,6 +1675,7 @@ struct UI(Drawable, Movable):
             # an open list holds the mouse, so another tree leaves it alone
             described.held = dropdown.down() or dropdown.is_open()
             described.popup = dropdown._popup()
+            described.captures_keys = dropdown.is_open()
             return described^
         if widget.isa[Panel]():
             # covers what is beneath it

@@ -26,6 +26,13 @@ The list opens below the field, or above it where that leaves more
 room, and shows at most `max_items` at once: the mouse wheel scrolls
 the rest into view.
 
+In a `UI`, it works without a mouse too. While it has focus, Enter,
+Space or a gamepad's south button opens its list; then the up and down
+arrows or the gamepad's push move the mark, Enter, Space or the south
+button choose the marked item, and Escape or the east button close the
+list without choosing, keeping focus on it. Tab closes it and moves
+on.
+
 In a `UI`, its list is drawn after every other widget and outside any
 scroll area's window, and while it is open, a click anywhere reaches
 only the dropdown. On its own, draw it after everything else, and keep

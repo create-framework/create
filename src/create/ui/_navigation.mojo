@@ -29,6 +29,10 @@ struct _Focus(Copyable, ImplicitlyCopyable, Movable):
     shown: up, down, left or right, for a widget to step along the axis it
     takes, as a slider does left and right; `Vector.ZERO` otherwise, and in
     the frame a push moved focus onto it."""
+    var back: Bool
+    """Escape or a gamepad's east button while it captures the keys, such
+    as a dropdown with its list open: for it to back out of, rather than
+    the tree taking its focus away."""
 
     @staticmethod
     def standalone() -> Self:
@@ -38,6 +42,7 @@ struct _Focus(Copyable, ImplicitlyCopyable, Movable):
             keys=False,
             activated=False,
             push=Vector.ZERO,
+            back=False,
         )
 
 
