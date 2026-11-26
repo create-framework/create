@@ -131,6 +131,9 @@ struct _Description(Copyable, Movable):
     """The shape its focus ring goes round, when it is a circle."""
     var held: Bool
     """Whether the mouse holds it: pressed on it and not let go."""
+    var focus_request: Optional[Bool]
+    """Whether the program asked the widget itself for focus (`True`) or
+    for it to let go (`False`) since its last update."""
 
     def __init__(out self, kind: Int, rect: Rectangle, takes_pointer: Bool):
         self.kind = kind
@@ -146,6 +149,7 @@ struct _Description(Copyable, Movable):
         self.ring = None
         self.ring_circle = None
         self.held = False
+        self.focus_request = None
 
 
 @fieldwise_init
@@ -803,8 +807,11 @@ struct UI(Drawable, Movable):
         """Move focus for this frame's input, before any widget acts: away
         for Escape, a gamepad's east button or a click on nothing focusable;
         onto a clicked widget; along for Tab; and towards an arrow, while
-        keys act on the focus, or a gamepad's push. Then switch typing on while a text field has focus.
-        """
+        keys act on the focus, or a gamepad's push. First, though, do what
+        a widget was asked for itself, such as `ui[field].focus()`, as
+        `ui.focus` would. Then switch typing on while a text field has
+        focus."""
+        self._take_focus_requests()
         ref keyboard = context.keyboard
         var frame = context.frame_count()
         var keyboard_taken = keyboard._claim.held_by_other(
@@ -862,6 +869,19 @@ struct UI(Drawable, Movable):
         if typing != self._typing_was:
             context.text_input(typing)
             self._typing_was = typing
+
+    def _take_focus_requests(mut self):
+        """Give focus to a widget the program asked for it, as `ui.focus`
+        does, and take it from one asked to let go."""
+        for index in self._drawing_order():
+            var request = self._describe(index).focus_request
+            if not request:
+                continue
+            if request.value():
+                if self._can_focus(index):
+                    self._focus_on(index, visible=True, from_gamepad=False)
+            elif self._focused and self._focused.value() == index:
+                self.clear_focus()
 
     def _focusable(self) -> List[Int]:
         """The widgets that can take focus, in the order they are drawn:
@@ -1161,6 +1181,7 @@ struct UI(Drawable, Movable):
             described.focusable = field.enabled
             described.takes_typing = True
             described.held = field.down()
+            described.focus_request = field._focus_request
             return described^
         if widget.isa[Panel]():
             # covers what is beneath it

@@ -190,6 +190,19 @@ def test_code_gives_focus_with_its_ring() raises -> None:
     assert_equal(canvas.color_at((right + 3.5, 60)), ring)
 
 
+def test_a_field_asked_for_focus_itself_takes_the_trees() raises -> None:
+    var panel = _Panel()
+    panel.ui[panel.field].focus()
+    _ = panel.frame()
+    assert_equal(panel.focused(), 4)
+    assert_true(panel.ui[panel.field].focused())
+    assert_true(panel.context.text_input())
+    panel.ui[panel.field].focus(False)
+    _ = panel.frame()
+    assert_equal(panel.focused(), -1)
+    assert_false(panel.ui[panel.field].focused())
+
+
 def test_a_click_shows_no_ring() raises -> None:
     var panel = _Panel()
     _ = panel.frame()

@@ -77,6 +77,9 @@ struct TextField(Clickable, Copyable, Movable, Widget):
     var _buffer: _TextBuffer
     var _pointer: _Pointer
     var _focused: Bool
+    var _focus_request: Optional[Bool]
+    """What `focus` last asked for, until the next `update`: in a `UI`,
+    the tree gives or takes focus for it."""
     var _typing_on: Bool
     """Whether it last switched `context.text_input` on, on its own: it
     switches it off once it no longer has focus, however focus went."""
@@ -119,6 +122,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         self._buffer = _TextBuffer(text, max_length=max_length)
         self._pointer = _Pointer()
         self._focused = False
+        self._focus_request = None
         self._typing_on = False
         self._last_text = text
         self._changed = False
@@ -179,6 +183,7 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         var pointer = canvas.to_local(mouse.position)
         var inside = self.rect.contains(pointer)
         self._pointer.update(mouse, inside, free=free, enabled=enabled)
+        self._focus_request = None  # the tree has acted on it, if in one
         if focus.in_tree:
             # the tree decides focus, and switches typing for it
             self._focused = focus.focused and enabled
@@ -298,8 +303,13 @@ struct TextField(Clickable, Copyable, Movable, Widget):
 
     def focus(mut self, focused: Bool = True):
         """Give it focus, or take it away, as a click on it or elsewhere
-        would. It switches `context.text_input` at its next `update`."""
+        would. It switches `context.text_input` at its next `update`.
+
+        In a `UI`, `ui[field].focus()` does what `ui.focus(field)` does, at
+        the `UI`'s next `update`, and `ui[field].focus(False)` takes focus
+        away from it."""
         self._focused = focused and self.enabled
+        self._focus_request = focused
 
     def changed(self) -> Bool:
         """Whether its text changed between its last two `update`s, by
