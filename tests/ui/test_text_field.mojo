@@ -20,7 +20,7 @@ struct _Form:
 
     def __init__(out self):
         self.context = Context()
-        self.fields = [TextField(_FIRST), TextField(_SECOND)]
+        self.fields = [TextField(rect=_FIRST), TextField(rect=_SECOND)]
 
     def frame(mut self) raises:
         var canvas = Canvas(400, 200)
@@ -153,7 +153,7 @@ def _field(
     point_at(context, (0, -90))
     var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
     var field = TextField(
-        _FIRST,
+        rect=_FIRST,
         container=container,
         focused_container=focused_container,
         caret=caret,
@@ -192,7 +192,7 @@ def test_the_focused_look_is_layered_over_the_container() raises -> None:
 
 
 def test_focus_taken_away_by_the_program_switches_typing_off() raises -> None:
-    var field = TextField(_FIRST)
+    var field = TextField(rect=_FIRST)
     var context = Context()
     var canvas = Canvas(400, 200)
     field.focus()

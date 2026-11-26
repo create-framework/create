@@ -37,7 +37,7 @@ clipboard. Like every widget, it is a value the program keeps, updates and draws
 
 ```mojo
 # In `create`, building the `name` field:
-var name = TextField(Rectangle((0, 0), 320, 40), placeholder="Your name")
+var name = TextField(rect=Rectangle((0, 0), 320, 40), placeholder="Your name")
 
 # In `update`:
 self.name.update(context, canvas)

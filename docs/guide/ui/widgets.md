@@ -62,7 +62,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `Button(text, rect)` | A button showing `text` | `released()`, the click, and `pressed()`, `down()` and `hovered()` |
 | `Checkbox(text, rect, checked=)` | A box, ticked or not, with `text` beside it | `checked`, and `changed()` in the frame a click ticks or unticks it |
 | `Slider(value, minimum, maximum, rect)` | A track with a handle setting `value` | `value`, and `changed()` in the frame it moves |
-| `TextField(rect)` | A field to type a line of text into | `text()`, `changed()` and `submitted()` |
+| `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
 | `Label(text, rect, alignment)` | Text placed in `rect` | Nothing |
 | `Panel(rect)` | A surface for other widgets to sit on | Nothing |
 

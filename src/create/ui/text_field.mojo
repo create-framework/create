@@ -32,7 +32,9 @@ struct TextField(Clickable, Copyable, Movable, Widget):
 
     ```mojo
     # In `create`, building the `name` field:
-    var name = TextField(Rectangle((0, 0), 320, 40), placeholder="Your name")
+    var name = TextField(
+        rect=Rectangle((0, 0), 320, 40), placeholder="Your name"
+    )
 
     # In `update`:
     self.name.update(context, canvas)
@@ -89,8 +91,8 @@ struct TextField(Clickable, Copyable, Movable, Widget):
 
     def __init__(
         out self,
-        rect: Rectangle = _UNSIZED,
         text: String = "",
+        rect: Rectangle = _UNSIZED,
         *,
         placeholder: String = "",
         max_length: Optional[Int] = None,

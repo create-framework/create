@@ -51,7 +51,7 @@ def test_a_tree_not_updated_lately_wants_nothing() raises -> None:
 def test_wants_keyboard_follows_what_focus_takes_keys() raises -> None:
     var ui = UI()
     var ok = ui.add(Button("OK", Rectangle((0, 60), 100, 40)))
-    _ = ui.add(TextField(Rectangle((0, -60), 200, 40)))
+    _ = ui.add(TextField(rect=Rectangle((0, -60), 200, 40)))
     var context = Context()
     point_at(context, (0, 60))
     press(context, (0, 60))
@@ -75,8 +75,8 @@ def test_wants_keyboard_follows_what_focus_takes_keys() raises -> None:
 def test_one_tab_focuses_one_field_across_trees() raises -> None:
     var first = UI()
     var second = UI()
-    var a = first.add(TextField(Rectangle((0, 60), 200, 40)))
-    var b = second.add(TextField(Rectangle((0, -60), 200, 40)))
+    var a = first.add(TextField(rect=Rectangle((0, 60), 200, 40)))
+    var b = second.add(TextField(rect=Rectangle((0, -60), 200, 40)))
     var context = Context()
     point_at(context, (0, 140))
     press_key(context, Key.TAB)
@@ -89,8 +89,8 @@ def test_one_tab_focuses_one_field_across_trees() raises -> None:
 def test_a_click_in_one_tree_takes_the_keyboard_from_the_other() raises -> None:
     var first = UI()
     var second = UI()
-    var a = first.add(TextField(Rectangle((0, 60), 200, 40)))
-    var b = second.add(TextField(Rectangle((0, -60), 200, 40)))
+    var a = first.add(TextField(rect=Rectangle((0, 60), 200, 40)))
+    var b = second.add(TextField(rect=Rectangle((0, -60), 200, 40)))
     var context = Context()
     point_at(context, (0, 60))
     press(context, (0, 60))
