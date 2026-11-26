@@ -55,7 +55,17 @@ What acts on the focused widget:
 | Button | Enter or Space presses it; the arrows move focus on | South (A on Xbox) presses it |
 | Checkbox | Enter or Space ticks or unticks it; the arrows move focus on | South ticks or unticks it |
 | Slider | Left and right step it, Home and End jump to its ends; up and down move focus on | Left and right step it; up and down move focus on |
+| Switch | Enter or Space turns it over; the arrows move focus on | South turns it over |
+| Choice group | Up and down move the choice; left and right move focus on | Up and down move the choice; left and right move focus on |
+| Tabs | Left and right move the selection; up and down move focus on | Left and right move the selection; up and down move focus on |
 | Text field | Typing and the editing keys, the arrows included (see [Typing](../interaction/typing.md#text-fields)); Enter submits | The d-pad moves focus on |
+| Number field | As a text field, and up and down step it | Up and down step it; left and right move focus on |
+| Dropdown | Enter or Space opens it; while open, up and down move the mark, Enter or Space chooses, Escape closes it, Tab closes it and moves on | South opens it; while open, up and down move the mark, south chooses, east closes it |
+
+**An open dropdown takes every key itself.** While its list is open, the arrows and the gamepad's
+push move the mark in it rather than focus, and Escape or the east button close the list rather than
+taking focus away, so the player backs out one step at a time. This holds even when a click opened
+it.
 
 A button pressed with a key or the gamepad reports it as `released()`, as a click does, so one `if`
 handles both. A slider steps by its `step`, or by a twentieth of its range without one, and always

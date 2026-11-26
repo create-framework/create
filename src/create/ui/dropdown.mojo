@@ -3,6 +3,7 @@ the options over everything else."""
 
 from create.app import Context
 from create.geometry import Line, Rectangle
+from create.input import Key
 from create.math import Point, Vector, clamp
 from create.render import Canvas, Style, Text
 from ._pointer import _Pointer
@@ -53,6 +54,13 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
     room, and shows at most `max_items` at once: the mouse wheel scrolls
     the rest into view.
 
+    In a `UI`, it works without a mouse too. While it has focus, Enter,
+    Space or a gamepad's south button opens its list; then the up and down
+    arrows or the gamepad's push move the mark, Enter, Space or the south
+    button choose the marked item, and Escape or the east button close the
+    list without choosing, keeping focus on it. Tab closes it and moves
+    on.
+
     In a `UI`, its list is drawn after every other widget and outside any
     scroll area's window, and while it is open, a click anywhere reaches
     only the dropdown. On its own, draw it after everything else, and keep
@@ -84,6 +92,10 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
     var _open: Bool
     var _pressed_item: Int
     var _hovered_item: Int
+    var _highlight: Int
+    """The item the open list marks: the one under the pointer, or the one
+    the arrows or a gamepad moved to; Enter, Space and the south button
+    choose it."""
     var _scroll: Float64
     """How far down the items the open list shows."""
     var _list_rect: Rectangle
@@ -115,6 +127,7 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
         self._open = False
         self._pressed_item = -1
         self._hovered_item = -1
+        self._highlight = -1
         self._scroll = 0
         self._list_rect = _UNSIZED
         self._changed = False
@@ -172,9 +185,15 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
         self._pointer.update(
             mouse, in_field or in_list, free=free, enabled=enabled
         )
+        var was_hovered = self._hovered_item
         self._hovered_item = -1
         if in_list and self._pointer.hovered:
             self._hovered_item = self._item_at(pointer)
+        if self._hovered_item >= 0 and self._hovered_item != was_hovered:
+            self._highlight = self._hovered_item  # the mouse marks it
+        # in a tree, focus moving away, such as by Tab, closes it
+        if self._open and focus.in_tree and not focus.focused:
+            self._open = False
         if enabled and self._open:
             if mouse.pressed():
                 self._pressed_item = self._hovered_item
@@ -189,7 +208,11 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
                 self._open = False  # a click anywhere else closes it
             if self._open and in_list and mouse.wheel.y != 0:
                 self._scroll_by(-mouse.wheel.y * self._item_height())
-        elif enabled and self._pointer.released and in_field:
+            if self._open:
+                self._keys_while_open(context, focus)
+        elif enabled and (
+            (self._pointer.released and in_field) or focus.activated
+        ):
             self._open_list(canvas, theme)
         self._changed = self.selected != before
         self._look = theme.dropdown(
@@ -201,9 +224,40 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
             disabled=not enabled,
         )
 
+    def _keys_while_open(mut self, context: Context, focus: _Focus):
+        """Move the mark with the arrows or a gamepad's push, choose the
+        marked item with Enter, Space or the south button, and close the
+        list without choosing on Escape or the east button."""
+        if focus.back:
+            self._open = False
+            return
+        if focus.activated:
+            if self._highlight >= 0 and self._highlight < len(self.options):
+                self.selected = self._highlight
+            self._open = False
+            return
+        var by = 0
+        if focus.keys:
+            if context.keyboard.typed(Key.UP):
+                by = -1
+            elif context.keyboard.typed(Key.DOWN):
+                by = 1
+        if focus.push.y > 0:
+            by = -1
+        elif focus.push.y < 0:
+            by = 1
+        if by != 0 and self.options:
+            var last = len(self.options) - 1
+            if self._highlight < 0:
+                self._highlight = 0 if by > 0 else last
+            else:
+                self._highlight = min(max(self._highlight + by, 0), last)
+            self._show_item(self._highlight)
+
     def _open_list(mut self, mut canvas: Canvas, theme: _Theme):
-        """Open the list, scrolled to show the chosen item."""
+        """Open the list, scrolled to show the chosen item, which it marks."""
         self._open = True
+        self._highlight = self.selected
         self._pressed_item = -1
         self._list_rect = self._place_list(canvas, theme)
         self._scroll = 0
@@ -382,7 +436,7 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
                     height,
                     corner_radius=self._look.list.corner_radius / 2,
                 )
-                if i == self._hovered_item:
+                if i == self._highlight:
                     with canvas._with_style(self._look.layer):
                         canvas.draw(row)
                 with canvas._with_style(

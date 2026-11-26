@@ -3,7 +3,15 @@ over everything in a `UI`, scrolling a long list, and opening upwards."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from _input import next_frame, point_at, press, release
+from _input import (
+    connect_pad,
+    next_frame,
+    point_at,
+    press,
+    press_key,
+    press_pad,
+    release,
+)
 
 comptime _FIELD = Rectangle((0, 50), 200, 40)
 """Its field: from 30 to 70 up. The open list below it has its items' middles
@@ -102,6 +110,103 @@ def test_its_list_opens_upwards_near_the_canvas_s_foot() raises -> None:
     _click(ui, context, (0, -110))
     var list = ui[size]._popup().value()
     assert_true(list.bottom() > -90)  # above the field, which ends 90 up
+
+
+struct _Keys:
+    """A `UI` with a dropdown and a button after it, focus on the dropdown,
+    and the keyboard and a gamepad to drive it."""
+
+    var ui: UI
+    var size: WidgetHandle[Dropdown]
+    var after: WidgetHandle[Button]
+    var context: Context
+
+    def __init__(out self, var options: List[String]) raises:
+        self.ui = UI()
+        self.size = self.ui.add(Dropdown(options^, _FIELD))
+        self.after = self.ui.add(Button("OK", Rectangle((0, -120), 100, 40)))
+        self.ui.focus(self.size)
+        self.context = Context()
+        point_at(self.context, (180, 140))
+        connect_pad(self.context)
+        self.frame()
+
+    def frame(mut self) raises:
+        var canvas = Canvas(400, 300)
+        self.ui.update(self.context, canvas)
+
+    def key(mut self, key: Key) raises:
+        next_frame(self.context)
+        press_key(self.context, key)
+        self.frame()
+        self.context.keyboard._key_up(key)
+
+    def pad(mut self, button: GamepadButton) raises:
+        next_frame(self.context)
+        press_pad(self.context, button)
+        self.frame()
+
+
+def test_the_keys_open_it_move_the_mark_and_choose() raises -> None:
+    var keys = _Keys(_options())
+    keys.key(Key.ENTER)
+    assert_true(keys.ui[keys.size].is_open())
+    keys.key(Key.DOWN)
+    keys.key(Key.DOWN)
+    assert_equal(keys.ui[keys.size].selected, 0)  # only marked so far
+    keys.key(Key.ENTER)
+    assert_false(keys.ui[keys.size].is_open())
+    assert_equal(keys.ui[keys.size].selected, 2)
+    assert_true(keys.ui[keys.size].changed())
+    assert_true(keys.ui.has_focus(keys.size))
+
+
+def test_a_gamepad_opens_it_moves_the_mark_and_chooses() raises -> None:
+    var keys = _Keys(_options())
+    keys.pad(GamepadButton.SOUTH)
+    assert_true(keys.ui[keys.size].is_open())
+    keys.pad(GamepadButton.DPAD_DOWN)
+    assert_true(keys.ui.has_focus(keys.size))  # the push moved no focus
+    keys.pad(GamepadButton.SOUTH)
+    assert_equal(keys.ui[keys.size].selected, 1)
+    assert_false(keys.ui[keys.size].is_open())
+
+
+def test_escape_and_the_east_button_close_it_keeping_focus() raises -> None:
+    var keys = _Keys(_options())
+    keys.key(Key.ENTER)
+    keys.key(Key.DOWN)
+    keys.key(Key.ESCAPE)
+    assert_false(keys.ui[keys.size].is_open())
+    assert_equal(keys.ui[keys.size].selected, 0)  # nothing chosen
+    assert_true(keys.ui.has_focus(keys.size))
+    keys.pad(GamepadButton.SOUTH)
+    keys.pad(GamepadButton.EAST)
+    assert_false(keys.ui[keys.size].is_open())
+    assert_true(keys.ui.has_focus(keys.size))
+
+
+def test_tab_closes_it_and_moves_on() raises -> None:
+    var keys = _Keys(_options())
+    keys.key(Key.ENTER)
+    keys.key(Key.TAB)
+    assert_true(keys.ui.has_focus(keys.after))
+    keys.frame()
+    assert_false(keys.ui[keys.size].is_open())
+
+
+def test_the_mark_scrolls_a_long_list() raises -> None:
+    var options = List[String]()
+    for i in range(20):
+        options.append(String("Level ", i + 1))
+    var keys = _Keys(options^)
+    keys.ui[keys.size].max_items = 4
+    keys.key(Key.ENTER)
+    for _ in range(6):
+        keys.key(Key.DOWN)
+    assert_equal(keys.ui[keys.size]._highlight, 6)
+    # the seventh item's foot at the list's: 3 items' heights scrolled
+    assert_equal(keys.ui[keys.size]._scroll, 3 * 40.0)
 
 
 def main() raises:

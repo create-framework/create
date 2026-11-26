@@ -96,7 +96,9 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   the field, or above it where that leaves more room, and shows at most `max_items=` at once, 6
   unless given: the mouse wheel scrolls the rest into view. In a `UI`, the open list is drawn over
   every other widget and outside any scroll area's window, and a click anywhere while it is open
-  only closes it. On its own, draw it after everything else, so its list is on top.
+  only closes it. It works from the keys and a gamepad too, as [The keys and
+  buttons](focus.md#the-keys-and-buttons) lists. On its own, draw it after everything else, so its
+  list is on top.
 - **A slider** jumps to where it is pressed and follows the pointer while held, even off its track,
   stopping at its ends. `step=` rounds the value to multiples of the step, counted from `minimum`,
   and must be more than 0. A value outside `minimum` to `maximum` is drawn at the nearer end and
