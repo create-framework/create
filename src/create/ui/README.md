@@ -15,7 +15,7 @@ rules.
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
 | `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
 | `tree.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `WidgetHandle`; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
-| `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the gamepad reading and the nearest-in-a-direction choice |
+| `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the arrows' and the gamepad's push, with `_PadRepeat` repeating a held direction, and the nearest-in-a-direction choice |
 | `layout.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes, and `_UNSIZED`, the size a widget leaves for the tree to choose |
 | `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
 | `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, dragged this frame, and this frame's press and click, kept between its `update`s |
@@ -95,10 +95,13 @@ room.
 
 The `UI` keeps one focused node and how focus got there: `_focus_visible` (from the keyboard, a
 gamepad or `ui.focus`, so a ring shows) and `_focus_from_gamepad`. `_navigate` moves it before any
-widget acts, and `_focus_for` tells each node what focus means for it as a `_Focus`: whether keys
-act on it (focus visible, not from a gamepad, and the keyboard not held by another `UI`), whether
-Enter, Space or the south button activated it, and which way a gamepad stepped a slider. A
-`TextField` on its own keeps its own focus; in a tree, it takes the tree's.
+widget acts, along for Tab and towards an arrow or a gamepad's push. An arrow moves focus only while
+keys act on it, and not when the focused widget takes the arrow itself (`_takes_arrow`: a text
+field's caret, a slider's left and right); `_arrow_moved` keeps an arrow that moved focus from also
+stepping the slider it lands on. `_focus_for` tells each node what focus means for it as a `_Focus`:
+whether keys act on it (focus visible, not from a gamepad, and the keyboard not held by another
+`UI`), whether Enter, Space or the south button activated it, and which way a gamepad stepped a
+slider. A `TextField` on its own keeps its own focus; in a tree, it takes the tree's.
 
 **Several `UI`s take turns at the keyboard and mouse** through an opaque claim on each device
 (`input`'s `_Claim`). A `UI` gets a claimant number from `Context._new_claimant()` on its first

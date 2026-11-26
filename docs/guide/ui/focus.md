@@ -13,13 +13,17 @@ ways, each worked out in `ui.update` before any widget acts:
 - **A click** on a button, checkbox, slider or text field gives it focus. A click where there is no
   widget, or on a panel's background, takes focus away.
 - **Tab and Shift+Tab** move it to the next or previous widget, in the order they are drawn,
-  skipping disabled ones and wrapping round at the ends.
-- **A gamepad's d-pad or left stick** moves it to the nearest widget in that direction, judged from
-  where the widgets are on the screen rather than the order they were added.
+  skipping disabled and hidden ones and wrapping round at the ends.
+- **The arrow keys, and a gamepad's d-pad or left stick,** move it to the nearest widget in that
+  direction, judged from where the widgets are on the screen rather than the order they were added.
+  The arrows move it only once keys act on the focus (see [The keys and
+  buttons](#the-keys-and-buttons)), so a menu that opens with `ui.focus` on its first button is
+  ready for them. A direction held on a gamepad moves focus once, then again and again after a
+  moment, as a held key repeats.
 - **`ui.focus(handle)`** gives a widget focus from the program, with its ring showing. A dialog
   gives its first field focus as it opens.
 - **Escape**, or a gamepad's east button, takes focus away, and so does `ui.clear_focus()`. So does
-  disabling the focused widget.
+  disabling, hiding or removing the focused widget.
 
 `ui.has_focus(handle)` asks whether a widget has it.
 
@@ -42,10 +46,10 @@ What acts on the focused widget:
 
 | Widget | Keyboard | Gamepad |
 |---|---|---|
-| Button | Enter or Space presses it | South (A on Xbox) presses it |
-| Checkbox | Enter or Space ticks or unticks it | South ticks or unticks it |
-| Slider | The arrows step it, Home and End jump to its ends | Left and right step it |
-| Text field | Typing and the editing keys (see [Typing](../interaction/typing.md#text-fields)); Enter submits | The d-pad moves focus on |
+| Button | Enter or Space presses it; the arrows move focus on | South (A on Xbox) presses it |
+| Checkbox | Enter or Space ticks or unticks it; the arrows move focus on | South ticks or unticks it |
+| Slider | Left and right step it, Home and End jump to its ends; up and down move focus on | Left and right step it; up and down move focus on |
+| Text field | Typing and the editing keys, the arrows included (see [Typing](../interaction/typing.md#text-fields)); Enter submits | The d-pad moves focus on |
 
 A button pressed with a key or the gamepad reports it as `released()`, as a click does, so one `if`
 handles both. A slider steps by its `step`, or by a twentieth of its range without one, and always
@@ -53,7 +57,8 @@ lands on a whole number of steps from its `minimum`.
 
 **Keys act only on focus from the keyboard, a gamepad or `ui.focus`, not on focus from a click.** A
 button the player just clicked has focus, but Space doesn't press it again: in a game, Space usually
-belongs to the game. A text field is the exception, since it takes typing however it got focus.
+belongs to the game. The arrows are the same: after a click they still move the player, not the
+focus. A text field is the exception, since it takes typing however it got focus.
 
 ## Focus rings
 

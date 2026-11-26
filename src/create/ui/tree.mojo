@@ -17,7 +17,14 @@ from .button import Button
 from .checkbox import Checkbox
 from .colors import ColorScheme, FocusRing, StateLayers
 from .label import Label
-from ._navigation import _Focus, _nearest, _pad_pressed, _pad_push
+from ._navigation import (
+    _Focus,
+    _PadRepeat,
+    _arrow_push,
+    _nearest,
+    _pad_pressed,
+    _pad_push,
+)
 from .layout import Column, Row, Space, _sized
 from .panel import Panel
 from .slider import Slider
@@ -218,7 +225,10 @@ struct UI(Drawable, Movable):
     """Whether focus came from the keyboard, a gamepad or code, so its ring
     shows; a click gives focus without one."""
     var _focus_from_gamepad: Bool
-    var _stick_was: Vector
+    var _pad_repeat: _PadRepeat
+    var _arrow_moved: Bool
+    """Whether an arrow key moved focus this frame, so it doesn't also
+    step the slider it lands on."""
     var _pad_move: Vector
     """This frame's push on a gamepad, which a focused slider may take."""
     var _typing_was: Bool
@@ -241,7 +251,8 @@ struct UI(Drawable, Movable):
         self._focused = None
         self._focus_visible = False
         self._focus_from_gamepad = False
-        self._stick_was = Vector.ZERO
+        self._pad_repeat = _PadRepeat()
+        self._arrow_moved = False
         self._pad_move = Vector.ZERO
         self._typing_was = False
         self._claimant = 0
@@ -753,8 +764,9 @@ struct UI(Drawable, Movable):
     def _navigate(mut self, mut context: Context, topmost: Optional[Int]):
         """Move focus for this frame's input, before any widget acts: away
         for Escape, a gamepad's east button or a click on nothing focusable;
-        onto a clicked widget; along for Tab; and towards a gamepad's
-        push. Then switch typing on while a text field has focus."""
+        onto a clicked widget; along for Tab; and towards an arrow, while
+        keys act on the focus, or a gamepad's push. Then switch typing on while a text field has focus.
+        """
         ref keyboard = context.keyboard
         var frame = context.frame_count()
         var keyboard_taken = keyboard._claim.held_by_other(
@@ -788,7 +800,14 @@ struct UI(Drawable, Movable):
                 backwards=keyboard.down(Key.LEFT_SHIFT)
                 or keyboard.down(Key.RIGHT_SHIFT)
             )
-        var push = _pad_push(context, self._player, self._stick_was)
+        self._arrow_moved = False
+        if not keyboard_taken and self._holds_keys():
+            var arrow = _arrow_push(keyboard)
+            if arrow != Vector.ZERO and not self._takes_arrow(arrow):
+                self._move_focus(arrow, from_gamepad=False)
+                self._key_used = True
+                self._arrow_moved = True
+        var push = _pad_push(context, self._player, self._pad_repeat)
         self._pad_move = push
         if _pad_pressed(context, self._player, GamepadButton.EAST):
             self.clear_focus()  # back out, as Escape does
@@ -797,7 +816,7 @@ struct UI(Drawable, Movable):
             if self._focused and push.y == 0:
                 steps = self._describe(self._focused.value()).adjusts
             if not steps:
-                self._move_focus(push)
+                self._move_focus(push, from_gamepad=True)
         var typing = (
             Bool(self._focused)
             and self._describe(self._focused.value()).takes_typing
@@ -837,7 +856,14 @@ struct UI(Drawable, Movable):
             next = (at + 1) % len(order)
         self._focus_on(order[next], visible=True, from_gamepad=False)
 
-    def _move_focus(mut self, direction: Vector):
+    def _takes_arrow(self, arrow: Vector) -> Bool:
+        """Whether the focused widget takes `arrow` itself rather than
+        letting it move focus: a text field takes every arrow, for its
+        caret, and a slider left and right, to step it."""
+        var focused = self._describe(self._focused.value())
+        return focused.takes_typing or (focused.adjusts and arrow.y == 0)
+
+    def _move_focus(mut self, direction: Vector, *, from_gamepad: Bool):
         """Move focus to the nearest widget in `direction`, judged from where
         the widgets are; from no focus, to the first."""
         var order = self._focusable()
@@ -849,7 +875,9 @@ struct UI(Drawable, Movable):
             at = self._describe(self._focused.value()).rect.position
         var best = _nearest(at, direction, centres)
         if best:
-            self._focus_on(order[best.value()], visible=True, from_gamepad=True)
+            self._focus_on(
+                order[best.value()], visible=True, from_gamepad=from_gamepad
+            )
 
     def _focus_for(mut self, index: Int, context: Context) -> _Focus:
         """What the tree's focus means for the node at `index` this
@@ -860,7 +888,12 @@ struct UI(Drawable, Movable):
         var keyboard_free = not keyboard._claim.held_by_other(
             self._claimant, context.frame_count()
         )
-        var keys = shown and not self._focus_from_gamepad and keyboard_free
+        var keys = (
+            shown
+            and not self._focus_from_gamepad
+            and keyboard_free
+            and not self._arrow_moved
+        )
         if keys and (
             keyboard.pressed(Key.ENTER)
             or keyboard.pressed(Key.SPACE)
