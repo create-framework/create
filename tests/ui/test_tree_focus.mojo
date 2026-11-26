@@ -234,6 +234,23 @@ def test_the_dpad_moves_focus_by_where_widgets_are() raises -> None:
     assert_equal(panel.focused(), -1)
 
 
+def test_a_push_that_moves_focus_onto_a_slider_doesnt_step_it() raises -> None:
+    var ui = UI()
+    var ok = ui.add(Button("OK", Rectangle((-150, 0), 100, 40)))
+    var volume = ui.add(Slider(0.5, 0, 1, Rectangle((50, 0), 200, 32)))
+    var context = Context()
+    point_at(context, (0, 140))
+    connect_pad(context)
+    var canvas = Canvas(400, 200)
+    for button in [GamepadButton.DPAD_DOWN, GamepadButton.DPAD_RIGHT]:
+        next_frame(context)
+        press_pad(context, button)
+        ui.update(context, canvas)
+    assert_true(ui.has_focus(volume))  # from the button on its left
+    assert_almost_equal(ui[volume].value, 0.5)  # arrived, not stepped
+    _ = ok
+
+
 def test_the_arrows_move_focus_once_keys_act_on_it() raises -> None:
     var panel = _Panel()
     _ = panel.frame()

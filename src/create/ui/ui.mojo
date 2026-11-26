@@ -1106,6 +1106,8 @@ struct UI(Drawable, Movable):
                 steps = self._describe(self._focused.value()).adjusts
             if not steps:
                 self._move_focus(push, from_gamepad=True)
+                # what focus lands on doesn't also take the push
+                self._pad_move = Vector.ZERO
         var typing = (
             Bool(self._focused)
             and self._describe(self._focused.value()).takes_typing
