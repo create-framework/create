@@ -39,6 +39,7 @@ from .slider import Slider
 from .switch import Switch
 from .choice_group import ChoiceGroup
 from .tabs import Tabs
+from .number_field import NumberField
 from .text_field import TextField
 from ._theme import (
     _CONTROL_HEIGHT,
@@ -59,6 +60,7 @@ comptime _Widget = Variant[
     Panel,
     Slider,
     TextField,
+    NumberField,
     Picture,
     ProgressBar,
     Column,
@@ -74,9 +76,9 @@ comptime _Container = Variant[Panel, Column, Row, ScrollArea]
 """The kinds of node another can be added inside."""
 
 comptime _NOT_A_NODE = (
-    "ui.add takes a Button, Checkbox, Switch, ChoiceGroup, Tabs, Label, Panel,"
-    " Slider, TextField,"
-    " Picture, ProgressBar, Column, Row, Space or ScrollArea"
+    "ui.add takes a Button, Checkbox, Switch, ChoiceGroup, Tabs, Label,"
+    " Panel, Slider, TextField, NumberField, Picture, ProgressBar, Column,"
+    " Row, Space or ScrollArea"
 )
 comptime _NOT_A_CONTAINER = (
     "ui.add adds a widget inside a Panel, Column, Row or ScrollArea only"
@@ -322,7 +324,7 @@ struct UI(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it. It is a `Button`, `Checkbox`, `Switch`, `ChoiceGroup`,
-        `Tabs`, `Label`, `Panel`, `Slider`,
+        `Tabs`, `Label`, `Panel`, `Slider`, `NumberField`,
         `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or
         `ScrollArea`;
         anything else doesn't compile."""
@@ -616,6 +618,9 @@ struct UI(Drawable, Movable):
         tabs_tab: Optional[Style] = None,
         tabs_selected_tab: Optional[Style] = None,
         tabs_indicator: Optional[Style] = None,
+        number_field_container: Optional[Style] = None,
+        number_field_text_style: Optional[Style] = None,
+        number_field_buttons: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -700,6 +705,12 @@ struct UI(Drawable, Movable):
             styles.tabs_selected_tab = tabs_selected_tab.value()
         if tabs_indicator:
             styles.tabs_indicator = tabs_indicator.value()
+        if number_field_container:
+            styles.number_field_container = number_field_container.value()
+        if number_field_text_style:
+            styles.number_field_text_style = number_field_text_style.value()
+        if number_field_buttons:
+            styles.number_field_buttons = number_field_buttons.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -1586,6 +1597,14 @@ struct UI(Drawable, Movable):
             described.held = field.down()
             described.focus_request = field._focus_request
             return described^
+        if widget.isa[NumberField]():
+            ref number = widget[NumberField]
+            var described = _Description(_WIDGET, number.rect, True)
+            described.focusable = number.enabled
+            described.takes_typing = True
+            described.adjusts_y = True
+            described.held = number.down()
+            return described^
         if widget.isa[Panel]():
             # covers what is beneath it
             ref panel = widget[Panel]
@@ -1647,6 +1666,8 @@ struct UI(Drawable, Movable):
             canvas.draw(widget[Slider])
         elif widget.isa[TextField]():
             canvas.draw(widget[TextField])
+        elif widget.isa[NumberField]():
+            canvas.draw(widget[NumberField])
         elif widget.isa[Panel]():
             canvas.draw(widget[Panel])
         elif widget.isa[Label]():
@@ -1762,6 +1783,21 @@ struct UI(Drawable, Movable):
                 reply.width, reply.height = tabs._measure(canvas, theme)
             else:
                 tabs.rect = rect
+        elif widget.isa[NumberField]():
+            ref number = widget[NumberField]
+            if action == _UPDATE:
+                number._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
+            elif action == _MEASURE:
+                reply.width, reply.height = number._measure(canvas, theme)
+            else:
+                number.rect = rect
         elif widget.isa[Slider]():
             ref slider = widget[Slider]
             if action == _UPDATE:

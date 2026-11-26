@@ -73,6 +73,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var tabs_tab: Style
     var tabs_selected_tab: Style
     var tabs_indicator: Style
+    var number_field_container: Style
+    var number_field_text_style: Style
+    var number_field_buttons: Style
 
     def __init__(out self):
         self.button = Style()
@@ -107,6 +110,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.tabs_tab = Style()
         self.tabs_selected_tab = Style()
         self.tabs_indicator = Style()
+        self.number_field_container = Style()
+        self.number_field_text_style = Style()
+        self.number_field_buttons = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -146,6 +152,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.tabs_tab.over(under.tabs_tab),
             self.tabs_selected_tab.over(under.tabs_selected_tab),
             self.tabs_indicator.over(under.tabs_indicator),
+            self.number_field_container.over(under.number_field_container),
+            self.number_field_text_style.over(under.number_field_text_style),
+            self.number_field_buttons.over(under.number_field_buttons),
         )
 
 
