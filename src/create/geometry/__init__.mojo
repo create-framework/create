@@ -13,4 +13,6 @@ from .sector import Sector
 from .polygon import Polygon
 from .bezier import Bezier
 from .spline import Spline
-from .traits import Curve, Geometry, Shape
+from .curve import Curve
+from .geometry import Geometry
+from .shape import Shape

@@ -4,7 +4,8 @@ from create.math import OptionalNumber
 from ._fillet import triangle_corner_radius
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .traits import Curve, Shape
+from .curve import Curve
+from .shape import Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import (
     _cross,

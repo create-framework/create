@@ -9,7 +9,7 @@ from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
 from create.math import Point
-from .traits import Curve
+from .curve import Curve
 from .spline import Spline
 from create.math import Vector
 
