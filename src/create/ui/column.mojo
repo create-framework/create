@@ -2,6 +2,7 @@
 
 from create.geometry import Rectangle
 from create.math import OptionalNumber
+from create.render import Align
 from ._layout import _UNSIZED
 
 
@@ -23,6 +24,10 @@ struct Column(Copyable, Movable):
     var done = ui.add(Button("Done"), list)
     ```
 
+    `Column(align=Align.CENTER)` sets each widget at the width it prefers
+    instead, centred; `Align.LEFT` and `Align.RIGHT` set them against a
+    side. A widget added with an `align` of its own goes by that instead.
+
     It fills the inside of the panel it is in, or the slot a column or row
     gives it. Elsewhere, with no `rect` of its own, it is as big as what is
     inside it, centred on its `rect`'s position. It draws nothing itself,
@@ -31,12 +36,20 @@ struct Column(Copyable, Movable):
 
     var rect: Rectangle
     """Where it is: given, or set by what it is in."""
+    var align: Optional[Align]
+    """Where its widgets sit across it, each as wide as it prefers: at
+    the left, centre or right. Each stretches across it when `None`."""
     var gap: Optional[Float64]
     """What is left between each widget and the next: the `UI`'s `spacing`
     when `None`."""
 
     def __init__(
-        out self, rect: Rectangle = _UNSIZED, *, gap: OptionalNumber = None
+        out self,
+        rect: Rectangle = _UNSIZED,
+        *,
+        gap: OptionalNumber = None,
+        align: Optional[Align] = None,
     ):
         self.rect = rect
         self.gap = gap._value
+        self.align = align

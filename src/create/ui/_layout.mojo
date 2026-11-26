@@ -1,7 +1,7 @@
 """What every widget and layout node shares about its size: `_UNSIZED`,
 the size a widget leaves for its `UI` to choose, `_sized`, `_Placement`,
-how a node fits in the column or row it is in, and `_shares`, how a column
-or row shares out its length."""
+how a node fits in the column or row it is in, `_shares`, how a column or
+row shares out its length, and `_across`, where a node sits across it."""
 
 from create.geometry import Rectangle
 from create.math import Point
@@ -60,3 +60,45 @@ def _shares(
         for i in range(len(lengths)):
             lengths[i] += left * grows[i] / total_grow
     return lengths^
+
+
+def _across(
+    slot: Rectangle,
+    size: Float64,
+    align: Optional[Align],
+    sized: Bool,
+    column: Bool,
+) -> Rectangle:
+    """Where a node goes in `slot`, the strip of a column (`column`) or the
+    slot of a row it is given. Placed by `align`, it is `size` across, at
+    the side `align` names: a column reads its left or right, and a row its
+    top or bottom, so `TOP_LEFT` in a column is its left. With no `align`,
+    it stretches across the whole slot, unless it was `sized` across by
+    `ui.add`, when it is centred."""
+    if not align and not sized:
+        return slot
+    var x = slot.position.x
+    var y = slot.position.y
+    if align:
+        var a = align.value()
+        if column:
+            if a == Align.LEFT or a == Align.TOP_LEFT or a == Align.BOTTOM_LEFT:
+                x = slot.left() + size / 2
+            elif (
+                a == Align.RIGHT
+                or a == Align.TOP_RIGHT
+                or a == Align.BOTTOM_RIGHT
+            ):
+                x = slot.right() - size / 2
+        else:
+            if a == Align.TOP or a == Align.TOP_LEFT or a == Align.TOP_RIGHT:
+                y = slot.top() - size / 2
+            elif (
+                a == Align.BOTTOM
+                or a == Align.BOTTOM_LEFT
+                or a == Align.BOTTOM_RIGHT
+            ):
+                y = slot.bottom() + size / 2
+    if column:
+        return Rectangle(Point(x, y), size, slot.height)
+    return Rectangle(Point(x, y), slot.width, size)

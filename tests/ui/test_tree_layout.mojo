@@ -196,6 +196,38 @@ def test_a_height_given_to_add_sets_a_row_s_strip() raises -> None:
     assert_equal(ui[under].rect.top(), 150.0 - 60 - _GAP)
 
 
+def test_a_column_aligned_sets_its_widgets_at_their_width() raises -> None:
+    var ui = UI()
+    var list = ui.add(Column(Rectangle((0, 0), 200, 300), align=Align.CENTER))
+    var ok = ui.add(Button("OK"), list, width=80)
+    var title = ui.add(Label("Title"), list, align=Align.LEFT)
+    _laid_out(ui)
+    assert_equal(ui[ok].rect.width, 80.0)
+    assert_equal(ui[ok].rect.position.x, 0.0)
+    assert_equal(ui[title].rect.left(), -100.0)  # its own align wins
+    assert_true(ui[title].rect.width < 200)
+
+
+def test_a_row_aligned_to_the_bottom_sets_its_widgets_there() raises -> None:
+    var ui = UI()
+    var line = ui.add(Row(Rectangle((0, 0), 300, 100), align=Align.BOTTOM))
+    var ok = ui.add(Button("OK"), line)
+    _laid_out(ui)
+    assert_equal(ui[ok].rect.height, _CONTROL)
+    assert_equal(ui[ok].rect.bottom(), -50.0)
+
+
+def test_a_width_given_with_no_align_is_centred() raises -> None:
+    var ui = UI()
+    var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
+    var ok = ui.add(Button("OK"), list, width=80)
+    var wide = ui.add(Button("Wide"), list)
+    _laid_out(ui)
+    assert_equal(ui[ok].rect.width, 80.0)
+    assert_equal(ui[ok].rect.position.x, 0.0)
+    assert_equal(ui[wide].rect.width, 200.0)  # stretched, as by default
+
+
 def test_a_placed_widget_is_clicked_where_it_is_placed() raises -> None:
     var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
