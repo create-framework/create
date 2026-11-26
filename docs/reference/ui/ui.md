@@ -29,8 +29,9 @@ content colour.
 A widget added with no `rect` of its own is sized by the tree every
 frame, to the size it prefers, unless what it is in places it: a
 `Column` stacks what is inside it, a `Row` sets it side by side, and a
-`Panel` places a column or row inside it in its inside. A panel with no
-size fits the column or row inside it. Where widgets overlap, only the
+`Panel` places a column or row inside it in its inside, and a `ScrollArea`
+shows part of a column taller than itself. A panel with no size fits
+the column or row inside it. Where widgets overlap, only the
 topmost under the pointer reacts to it, and a `Panel` covers what is
 beneath it.
 
@@ -60,7 +61,7 @@ A tree whose focus any gamepad moves, unless `player` names one, as each player'
 def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]
 ```
 
-Add `widget` at the top level, drawn above everything added before it. It is a `Button`, `Checkbox`, `Label`, `Panel`, `Slider`, `TextField`, `Picture`, `Column`, `Row` or `Space`; anything else doesn't compile.
+Add `widget` at the top level, drawn above everything added before it. It is a `Button`, `Checkbox`, `Label`, `Panel`, `Slider`, `TextField`, `Picture`, `Column`, `Row`, `Space` or `ScrollArea`; anything else doesn't compile.
 
 ```mojo
 def add[W: Copyable, P: Copyable](
@@ -75,7 +76,7 @@ def add[W: Copyable, P: Copyable](
 ) -> WidgetHandle[W]
 ```
 
-Add `widget` inside `parent`: drawn after it and after what was added inside it before, and in the look of what it sits on. Only a `Panel`, `Column` or `Row` can be a parent; anything else doesn't compile.
+Add `widget` inside `parent`: drawn after it and after what was added inside it before, and in the look of what it sits on. Only a `Panel`, `Column`, `Row` or `ScrollArea` can be a parent; anything else doesn't compile.
 
 In a column or row, `width` and `height` set the size it starts
 from, in place of the one it prefers, so two buttons given the same

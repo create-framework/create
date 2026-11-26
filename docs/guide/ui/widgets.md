@@ -221,6 +221,27 @@ just placed.
 The same cuts, without the widgets, are `Rectangle`'s `inset`, `rows` and `columns`, for laying out
 what you draw on the canvas (see [Shapes](../geometry/shapes.md#rectangle)).
 
+### Scroll areas
+
+**A `ScrollArea` shows part of a column that is taller than the room it has**, such as a long list
+of levels in a menu. Add one column inside it: the column is as tall as its widgets, and the scroll
+area is a window onto it. What falls outside the window is neither drawn nor clicked.
+
+```mojo
+# In `create`: a list of levels, never taller than 240.
+var window = ui.add(ScrollArea(max_height=240), column)
+var levels = ui.add(Column(), window)
+for name in ["Forest", "Caves", "Castle", "Sky", "Moon"]:
+    _ = ui.add(Button(name), levels)
+```
+
+- **Its size:** with no `rect` of its own, a scroll area is as wide as its column and as tall as it
+  too, up to `max_height`. In a column or row it can also take a `height`, or `grow` into the room
+  left over, like any other widget.
+- **`offset` is how far down the column the window shows**, from 0 at the top. Set it to scroll from
+  code, such as `self.ui[self.window].offset = 0` to go back to the top. Each layout keeps it
+  between 0 and as far as the column goes, so setting it too far shows the end of the column.
+
 ## Drawing your own things
 
 **Draw your own things before or after the `UI`.** What is drawn before `canvas.draw(ui)` is beneath
