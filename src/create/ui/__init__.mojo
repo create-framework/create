@@ -1,7 +1,7 @@
 """The user interface: widgets, such as `Button`, `Checkbox`, `Switch`,
 `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar`,
-`TextField` and `NumberField`, which are values a program keeps, updates
-and draws with `canvas.draw`, and the traits they share (`Widget`,
+`TextField`, `NumberField` and `Dropdown`, which are values a program keeps,
+updates and draws with `canvas.draw`, and the traits they share (`Widget`,
 `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them
 out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`,
 reached through `WidgetHandle`s; and `ColorScheme`, the colours they are
@@ -31,3 +31,4 @@ from .hoverable import Hoverable
 from .clickable import Clickable
 from .text_field import TextField
 from .number_field import NumberField
+from .dropdown import Dropdown

@@ -29,6 +29,7 @@ rules.
 | `choice_group.mojo` | `ChoiceGroup`, a widget value that owns which option is chosen; its options' rows, circles and the halo behind the one under the pointer |
 | `tabs.mojo` | `Tabs`, a widget value that owns which tab is selected; the tabs' equal shares of its width, the indicator and the layer over the tab under the pointer |
 | `number_field.mojo` | `NumberField`, a widget value built from a `TextField` and two `Button`s of its own: what was typed becomes its value on Enter or as focus leaves, and the buttons, arrows and push step it |
+| `dropdown.mojo` | `Dropdown`, a widget value that owns its chosen option and whether its list is open; where the list opens, its scrolling, and its field and list drawn apart, so a `UI` can draw the list last |
 | `label.mojo` | `Label`, a widget value: text placed in a rectangle; `_anchor`, the point of a rectangle text is anchored to |
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
 | `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place, and the value a drag or a key gives |
@@ -137,6 +138,13 @@ keep the node in `_reveal`. `update` acts on it after moving focus and before an
 puts the node's rect, as last placed and grown by the ring's reach, inside the area's window, moving
 the rect along for the areas further out. So a widget's update sees where it is drawn, though hover
 was found from where it was before.
+
+**A widget can draw over everything: a popup.** `_describe` gives a node's `popup`, the area it
+draws over everything else, such as a dropdown's open list. `draw_to` draws each popup after the
+whole tree, through `_draw_popup`, outside any scroll area's clip, and before the focus ring. While
+a popup is open, `_topmost` gives its owner for every pointer, so a click elsewhere reaches only the
+owner, which closes it; the owner reports itself `held`, so it holds the mouse against other `UI`s
+too.
 
 ## Focus and the devices
 

@@ -40,6 +40,7 @@ from .switch import Switch
 from .choice_group import ChoiceGroup
 from .tabs import Tabs
 from .number_field import NumberField
+from .dropdown import Dropdown
 from .text_field import TextField
 from ._theme import (
     _CONTROL_HEIGHT,
@@ -61,6 +62,7 @@ comptime _Widget = Variant[
     Slider,
     TextField,
     NumberField,
+    Dropdown,
     Picture,
     ProgressBar,
     Column,
@@ -77,8 +79,8 @@ comptime _Container = Variant[Panel, Column, Row, ScrollArea]
 
 comptime _NOT_A_NODE = (
     "ui.add takes a Button, Checkbox, Switch, ChoiceGroup, Tabs, Label,"
-    " Panel, Slider, TextField, NumberField, Picture, ProgressBar, Column,"
-    " Row, Space or ScrollArea"
+    " Panel, Slider, TextField, NumberField, Dropdown, Picture, ProgressBar,"
+    " Column, Row, Space or ScrollArea"
 )
 comptime _NOT_A_CONTAINER = (
     "ui.add adds a widget inside a Panel, Column, Row or ScrollArea only"
@@ -165,6 +167,9 @@ struct _Description(Copyable, Movable):
     """The shape its focus ring goes round, when it is a circle."""
     var held: Bool
     """Whether the mouse holds it: pressed on it and not let go."""
+    var popup: Optional[Rectangle]
+    """What it draws over everything else, such as a dropdown's open list,
+    while it does."""
     var focus_request: Optional[Bool]
     """Whether the program asked the widget itself for focus (`True`) or
     for it to let go (`False`) since its last update."""
@@ -188,6 +193,7 @@ struct _Description(Copyable, Movable):
         self.ring = None
         self.ring_circle = None
         self.held = False
+        self.popup = None
         self.focus_request = None
 
 
@@ -324,7 +330,7 @@ struct UI(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it. It is a `Button`, `Checkbox`, `Switch`, `ChoiceGroup`,
-        `Tabs`, `Label`, `Panel`, `Slider`, `NumberField`,
+        `Tabs`, `Label`, `Panel`, `Slider`, `NumberField`, `Dropdown`,
         `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or
         `ScrollArea`;
         anything else doesn't compile."""
@@ -621,6 +627,9 @@ struct UI(Drawable, Movable):
         number_field_container: Optional[Style] = None,
         number_field_text_style: Optional[Style] = None,
         number_field_buttons: Optional[Style] = None,
+        dropdown_field: Optional[Style] = None,
+        dropdown_list: Optional[Style] = None,
+        dropdown_item: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -711,6 +720,12 @@ struct UI(Drawable, Movable):
             styles.number_field_text_style = number_field_text_style.value()
         if number_field_buttons:
             styles.number_field_buttons = number_field_buttons.value()
+        if dropdown_field:
+            styles.dropdown_field = dropdown_field.value()
+        if dropdown_list:
+            styles.dropdown_list = dropdown_list.value()
+        if dropdown_item:
+            styles.dropdown_item = dropdown_item.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -969,6 +984,13 @@ struct UI(Drawable, Movable):
         """The widget drawn last of those the pointer is over, of the ones
         that take the pointer: the one that reacts to it."""
         var order = self._drawing_order()
+        # an open popup takes every pointer, so a click anywhere else only
+        # closes it
+        var p = len(order) - 1
+        while p >= 0:
+            if self._describe(order[p]).popup:
+                return order[p]
+            p -= 1
         var i = len(order) - 1
         while i >= 0:
             var node = self._describe(order[i])
@@ -1006,6 +1028,11 @@ struct UI(Drawable, Movable):
     def draw_to(self, mut canvas: Canvas):
         for root in self._roots:
             self._draw_from(root, canvas)
+        # what widgets draw over everything, such as an open dropdown's
+        # list, outside any scroll area's window
+        for index in self._drawing_order():
+            if self._describe(index).popup:
+                self._draw_popup(index, canvas)
         # the focus ring last, so nothing covers it, and no further than
         # the scroll areas it is in show
         if (
@@ -1605,6 +1632,15 @@ struct UI(Drawable, Movable):
             described.adjusts_y = True
             described.held = number.down()
             return described^
+        if widget.isa[Dropdown]():
+            ref dropdown = widget[Dropdown]
+            var described = _Description(_WIDGET, dropdown.rect, True)
+            described.focusable = dropdown.enabled
+            described.ring = dropdown._ring()
+            # an open list holds the mouse, so another tree leaves it alone
+            described.held = dropdown.down() or dropdown.is_open()
+            described.popup = dropdown._popup()
+            return described^
         if widget.isa[Panel]():
             # covers what is beneath it
             ref panel = widget[Panel]
@@ -1648,6 +1684,12 @@ struct UI(Drawable, Movable):
         described.amount = widget[Space].amount
         return described^
 
+    def _draw_popup(self, index: Int, mut canvas: Canvas):
+        """Draw what the node at `index` draws over everything else."""
+        ref widget = self._nodes[index].widget
+        if widget.isa[Dropdown]():
+            widget[Dropdown]._draw_list(canvas)
+
     def _draw(self, index: Int, mut canvas: Canvas):
         """Draw the node at `index`: a scroll area its bar; a column, row or
         space nothing."""
@@ -1668,6 +1710,8 @@ struct UI(Drawable, Movable):
             canvas.draw(widget[TextField])
         elif widget.isa[NumberField]():
             canvas.draw(widget[NumberField])
+        elif widget.isa[Dropdown]():
+            widget[Dropdown]._draw_field(canvas)  # its list comes later
         elif widget.isa[Panel]():
             canvas.draw(widget[Panel])
         elif widget.isa[Label]():
@@ -1798,6 +1842,21 @@ struct UI(Drawable, Movable):
                 reply.width, reply.height = number._measure(canvas, theme)
             else:
                 number.rect = rect
+        elif widget.isa[Dropdown]():
+            ref dropdown = widget[Dropdown]
+            if action == _UPDATE:
+                dropdown._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
+            elif action == _MEASURE:
+                reply.width, reply.height = dropdown._measure(canvas, theme)
+            else:
+                dropdown.rect = rect
         elif widget.isa[Slider]():
             ref slider = widget[Slider]
             if action == _UPDATE:

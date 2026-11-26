@@ -169,6 +169,10 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A dropdown's `field` is its field, a rectangle with the chosen option's text; `list` is the open
+list, a rectangle, raised with a shadow by default; and `item` is each item's text, the chosen one
+in `primary`.
+
 A number field is a text field with two buttons, and is styled as they are: `container` and
 `text_style` are its field's, as a text field's are, and `buttons` is the `style` of both buttons.
 `ui.style(number_field_container=...)` and the like style every number field; the `UI`'s text field
