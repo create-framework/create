@@ -5,8 +5,8 @@ value the program keeps, updates and draws with `canvas.draw`, on its own or kep
 others in a `UI`. Start with Widgets, which explains both.
 
 - [Widgets](widgets.md): a widget as a value, updating and drawing it, each widget, keeping widgets
-  together in a `UI`, laying them out with `Column`, `Row` and `Space`, drawing your own things
-  among them, and disabled widgets.
+  together in a `UI`, laying them out with `Column`, `Row` and `Space`, scrolling them in a
+  `ScrollArea`, drawing your own things among them, and disabled widgets.
 - [Focus and navigation](focus.md): which widget has focus, Tab and the keys, gamepads, focus rings,
   and keeping the game's own keys and clicks apart from the UI's.
 - [Themes and styling](themes.md): the colours widgets are drawn in, colours from one colour, the
@@ -15,4 +15,4 @@ others in a `UI`. Start with Widgets, which explains both.
 Text fields are explained with typed text, in [Typing](../interaction/typing.md#text-fields).
 
 [examples/ui](../../../examples/ui/main.mojo) puts it together: a settings menu with every kind of
-widget.
+widget and a scrolling list.
