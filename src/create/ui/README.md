@@ -140,12 +140,15 @@ was found from where it was before.
 The `UI` keeps one focused node and how focus got there: `_focus_visible` (from the keyboard, a
 gamepad or `ui.focus`, so a ring shows) and `_focus_from_gamepad`. `_navigate` moves it before any
 widget acts, along for Tab and towards an arrow or a gamepad's push. An arrow moves focus only while
-keys act on it, and not when the focused widget takes the arrow itself (`_takes_arrow`: a text
-field's caret, a slider's left and right); `_arrow_moved` keeps an arrow that moved focus from also
-stepping the slider it lands on. `_focus_for` tells each node what focus means for it as a `_Focus`:
-whether keys act on it (focus visible, not from a gamepad, and the keyboard not held by another
-`UI`), whether Enter, Space or the south button activated it, and which way a gamepad stepped a
-slider. A `TextField` on its own keeps its own focus; in a tree, it takes the tree's. What its
+keys act on it, and not when the focused widget takes the arrow itself (`_takes_arrow`: every arrow
+for a text field's caret, and the arrows along an axis a widget adjusts, `adjusts_x` or `adjusts_y`,
+as a slider takes left and right). A gamepad's push is kept from moving focus the same way
+(`_adjusts`). `_arrow_moved` keeps an arrow that moved focus from also stepping the widget it lands
+on, and a push that moved focus is cleared from `_pad_move` for the same reason. `_focus_for` tells
+each node what focus means for it as a `_Focus`: whether keys act on it (focus visible, not from a
+gamepad, and the keyboard not held by another `UI`), whether Enter, Space or the south button
+activated it, and which way a gamepad pushed on it (`push`), for it to step along the axis it
+adjusts. A `TextField` on its own keeps its own focus; in a tree, it takes the tree's. What its
 `focus` method asked for is kept as `_focus_request` until its next update, and `_navigate` first
 acts on it (`_take_focus_requests`), so `ui[field].focus()` works as `ui.focus(field)` does.
 

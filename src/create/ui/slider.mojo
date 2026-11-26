@@ -173,8 +173,10 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             if moved and moved.value() != self.value:
                 self.value = moved.value()
                 self._changed = True
-        if enabled and (focus.keys or focus.step != 0):
-            var towards_max = focus.step
+        if enabled and (focus.keys or focus.push.x != 0):
+            var towards_max = 0
+            if focus.push.x != 0:
+                towards_max = 1 if focus.push.x > 0 else -1
             if towards_max == 0:
                 towards_max = _arrow_direction(context.keyboard)
             var keyed = _keyed_value(
