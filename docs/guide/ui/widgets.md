@@ -178,6 +178,9 @@ for you, by what it is added inside:
 - **A panel places a column or row added inside it with no `rect`** across its inside, short of its
   edges by its `padding`: twice the `UI`'s `spacing` unless given, as in `Panel(padding=8)`. Other
   widgets added straight onto a panel keep their own `rect`.
+- **`width=` and `height=` on `ui.add` set the size a widget starts from** in a column or row, in
+  place of the one it prefers: `ui.add(Button("OK"), buttons, width=120)`. Two buttons given the
+  same `width` are as wide as each other, whatever their text. A negative size stops the program.
 - **A widget added with a `rect` keeps it**, even inside a column or row, and takes no room there,
   so one widget can be placed by hand among the others.
 - **A widget, panel, column or row with no `rect` and nothing to place it** takes the size it

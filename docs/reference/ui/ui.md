@@ -67,10 +67,29 @@ def add[W: Copyable, P: Copyable](
     mut self,
     var widget: W,
     parent: WidgetHandle[P],
+    *,
+    grow: OptionalNumber = None,
+    width: OptionalNumber = None,
+    height: OptionalNumber = None,
+    align: Optional[Align] = None,
 ) -> WidgetHandle[W]
 ```
 
 Add `widget` inside `parent`: drawn after it and after what was added inside it before, and in the look of what it sits on. Only a `Panel`, `Column` or `Row` can be a parent; anything else doesn't compile.
+
+In a column or row, `width` and `height` set the size it starts
+from, in place of the one it prefers, so two buttons given the same
+`width` are as wide as each other:
+
+```mojo
+# In `create`: two buttons of one width, side by side.
+var buttons = ui.add(Row(), column)
+var ok = ui.add(Button("OK"), buttons, width=120)
+var cancel = ui.add(Button("Cancel"), buttons, width=120)
+```
+
+`grow` and `align` are kept for the column or row to read. A
+negative `grow`, `width` or `height` stops the program.
 
 ### `get`
 

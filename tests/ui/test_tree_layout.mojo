@@ -137,6 +137,28 @@ def test_a_panel_s_padding_sets_how_far_in_its_column_is() raises -> None:
     assert_equal(ui[first].rect.left(), ui[card].rect.left() + 8)
 
 
+def test_a_width_given_to_add_replaces_the_one_preferred() raises -> None:
+    var ui = UI()
+    var list = ui.add(Column())  # as wide as its widest
+    var ok = ui.add(Button("OK"), list, width=120)
+    var cancel = ui.add(Button("Cancel"), list, width=120)
+    _laid_out(ui)
+    assert_equal(ui[list].rect.width, 120.0)
+    assert_equal(ui[ok].rect.width, 120.0)
+    assert_equal(ui[cancel].rect.width, 120.0)
+
+
+def test_a_height_given_to_add_sets_a_row_s_strip() raises -> None:
+    var ui = UI()
+    var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
+    var line = ui.add(Row(), list, height=60)
+    var a = ui.add(Button("A"), line)
+    var under = ui.add(Button("B"), list)
+    _laid_out(ui)
+    assert_equal(ui[a].rect.height, 60.0)
+    assert_equal(ui[under].rect.top(), 150.0 - 60 - _GAP)
+
+
 def test_a_placed_widget_is_clicked_where_it_is_placed() raises -> None:
     var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
