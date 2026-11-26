@@ -169,13 +169,17 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A scroll area's bar has two parts, each a line: `track`, the length the thumb runs along, and
+`thumb`, whose length shows how much of the column the window shows. The stroke of each is its
+colour and thickness. The thumb steps like a button when hovered or dragged.
+
 ## Styling every widget of a kind
 
 **`ui.style(button=..., slider_handle=..., ...)`** sets style fields for every widget of a kind in a
 `UI`. A widget's own style wins over it, field by field: a button styled `Style(fill=Color.RED)` in
 a `UI` whose buttons are `Style(corner_radius=4)` is red and square. Each part is named by the
 widget and its keyword for the part: `slider_handle=`, `checkbox_tick=`, `checkbox_text_style=`,
-`text_field_caret=` and so on.
+`text_field_caret=`, `scroll_area_thumb=` and so on.
 
 **Each call changes only the kinds it names.** A keyword given replaces what an earlier call set for
 that kind, and a kind left out keeps its style, so the styles can be set a few at a time. Give a

@@ -83,7 +83,8 @@ and a parent a kind `_Container` holds.
 3. move focus for this frame's clicks, Tab, Escape and gamepad (below);
 4. update every node in drawing order, a parent before what is inside it, each with its theme: a
    panel passes its surface and content colours down to what is inside it;
-5. renew or release the device claims.
+5. lay out again, if a scroll area moved;
+6. renew or release the device claims.
 
 `draw_to` draws every node in the same order, walking the tree from the roots so it can clip what is
 inside a scroll area to its window, then the focus ring, so nothing covers it.
@@ -114,6 +115,14 @@ a `clip`, the windows of the scroll areas it is in overlapped (`_overlap`), whic
 the top level in. Hit-testing leaves out a node where its clip leaves out the pointer, and drawing
 clips what is inside a scroll area with `canvas.clip`, which nests, so one scroll area inside
 another shows only what both show.
+
+**A scroll area moves in its own update.** While its column is taller than it, it reserves a bar
+`scroll_bar_width()` wide down its right edge, and its column is placed that much narrower. Its
+`_update` drags its thumb with a `_Pointer`, as a slider is dragged, and takes the wheel when the
+`UI` passes `wheel`: `_wheel_target` picks the innermost scroll area that can scroll, from the
+topmost node under the pointer outwards. A scroll area takes the pointer, so the wheel reaches it
+over the gaps between its widgets. When any scroll area moved (its update's `_Reply.scrolled`),
+`update` lays the tree out again before it returns, so the column is drawn where its bar says.
 
 ## Focus and the devices
 
