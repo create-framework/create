@@ -58,6 +58,8 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var text_field_placeholder_style: Style
     var text_field_caret: Style
     var text_field_selection: Style
+    var scroll_area_track: Style
+    var scroll_area_thumb: Style
 
     def __init__(out self):
         self.button = Style()
@@ -77,6 +79,8 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.text_field_placeholder_style = Style()
         self.text_field_caret = Style()
         self.text_field_selection = Style()
+        self.scroll_area_track = Style()
+        self.scroll_area_thumb = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -99,6 +103,8 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             ),
             self.text_field_caret.over(under.text_field_caret),
             self.text_field_selection.over(under.text_field_selection),
+            self.scroll_area_track.over(under.scroll_area_track),
+            self.scroll_area_thumb.over(under.scroll_area_thumb),
         )
 
 
@@ -139,6 +145,14 @@ struct _SliderLook(Copyable, Movable):
     var active: _ResolvedStyle
     var handle: _ResolvedStyle
     var outline: _ResolvedStyle
+
+
+@fieldwise_init
+struct _ScrollAreaLook(Copyable, Movable):
+    """A scroll area's bar, resolved for its state: two lines."""
+
+    var track: _ResolvedStyle
+    var thumb: _ResolvedStyle
 
 
 @fieldwise_init
@@ -390,6 +404,67 @@ struct _Theme(Copyable, Movable):
             handle.stroke_cap = StrokeCap.ROUND
         handle.stroke_dash = StrokeDash.SOLID
         return _SliderLook(track, active, handle, outline)
+
+    def scroll_bar_width(self) -> Float64:
+        """How wide a scroll area's bar is: a share of `control_height`, so
+        the bar grows with the controls."""
+        return 0.3 * self.control_height
+
+    def scroll_area(
+        self,
+        call_track: Style,
+        call_thumb: Style,
+        *,
+        hovered: Bool,
+        dragging: Bool,
+        disabled: Bool,
+    ) -> _ScrollAreaLook:
+        """A scroll area's bar, styled by the call's styles for each part:
+        a faint track, which shows on any surface, and a thumb that steps
+        when hovered or dragged."""
+        var colors = self.colors
+        ref block = self.styles[]
+        var thickness = self.scroll_bar_width() / 2
+        var track = _ResolvedStyle()
+        track.apply(
+            call_track.over(block.scroll_area_track).over(
+                Style(
+                    # translucent, so it shows on any surface
+                    stroke=_faded(colors.on_surface, 0.12),
+                    stroke_thickness=thickness,
+                    stroke_cap=StrokeCap.ROUND,
+                )
+            )
+        )
+        var thumb = _ResolvedStyle()
+        thumb.apply(
+            call_thumb.over(block.scroll_area_thumb).over(
+                Style(
+                    stroke=colors.outline,
+                    stroke_thickness=thickness,
+                    stroke_cap=StrokeCap.ROUND,
+                )
+            )
+        )
+        if disabled:
+            var states = self.state_layers
+            track.stroke_color = _faded(
+                track.stroke_color, states.disabled_container
+            )
+            thumb.stroke_color = _faded(
+                thumb.stroke_color, states.disabled_content
+            )
+        else:
+            var tint = _readable_on(thumb.stroke_color)
+            if dragging:
+                thumb.stroke_color = _stepped(
+                    thumb.stroke_color, tint, self.state_layers.dragged
+                )
+            elif hovered:
+                thumb.stroke_color = _stepped(
+                    thumb.stroke_color, tint, self.state_layers.hovered
+                )
+        return _ScrollAreaLook(track, thumb)
 
     def checkbox(
         self,

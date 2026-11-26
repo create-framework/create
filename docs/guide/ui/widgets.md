@@ -238,6 +238,12 @@ for name in ["Forest", "Caves", "Castle", "Sky", "Moon"]:
 - **Its size:** with no `rect` of its own, a scroll area is as wide as its column and as tall as it
   too, up to `max_height`. In a column or row it can also take a `height`, or `grow` into the room
   left over, like any other widget.
+- **The wheel and the scroll bar scroll it.** While the column is taller than the window, a scroll
+  bar runs down the window's right edge, and the column leaves room for it. Turning the mouse wheel
+  over the window scrolls it by a control's height a notch: in a scroll area inside another, the
+  inner one scrolls. Dragging the bar's thumb scrolls it too, and holds the mouse until the button
+  is let go, as dragging a slider does. Its look is set as other widgets' parts are, with `track=`
+  and `thumb=` (see [Themes and styling](themes.md)).
 - **`offset` is how far down the column the window shows**, from 0 at the top. Set it to scroll from
   code, such as `self.ui[self.window].offset = 0` to go back to the top. Each layout keeps it
   between 0 and as far as the column goes, so setting it too far shows the end of the column.

@@ -239,6 +239,8 @@ def style(
     text_field_placeholder_style: Optional[Style] = None,
     text_field_caret: Optional[Style] = None,
     text_field_selection: Optional[Style] = None,
+    scroll_area_track: Optional[Style] = None,
+    scroll_area_thumb: Optional[Style] = None,
 )
 ```
 

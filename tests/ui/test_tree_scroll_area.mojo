@@ -102,5 +102,98 @@ def test_a_scroll_draws_only_inside_its_window() raises -> None:
     assert_equal(canvas.color_at((0, -60)), canvas.color_at((180, -60)))
 
 
+comptime _BAR = 0.3 * _CONTROL
+"""The scroll bar's width: a share of `control_height`."""
+
+
+def test_the_wheel_over_a_scroll_area_scrolls_it() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 100)))
+    _ = _list(ui, window)
+    var context = Context()
+    var canvas = Canvas(400, 300)
+    point_at(context, (180, 140))  # away from it
+    context.mouse._scroll(Vector(0, -1))
+    ui.update(context, canvas)
+    assert_equal(ui[window].offset, 0.0)
+    next_frame(context)
+    point_at(context, (0, 0))
+    context.mouse._scroll(Vector(0, -1))  # towards you: down the column
+    ui.update(context, canvas)
+    assert_equal(ui[window].offset, _CONTROL)
+    assert_true(ui.wants_mouse(context))
+
+
+def test_the_inner_of_two_scroll_areas_takes_the_wheel() raises -> None:
+    var ui = UI()
+    var outer = ui.add(ScrollArea(Rectangle((0, 0), 300, 200)))
+    var column = ui.add(Column(), outer)
+    var inner = ui.add(ScrollArea(max_height=100), column)
+    _ = _list(ui, inner)
+    _ = ui.add(Space(300), column)  # makes the outer column taller too
+    var context = Context()
+    var canvas = Canvas(400, 300)
+    ui.update(context, canvas)
+    next_frame(context)
+    point_at(context, ui[inner].rect.position)
+    context.mouse._scroll(Vector(0, -1))
+    ui.update(context, canvas)
+    assert_equal(ui[inner].offset, _CONTROL)
+    assert_equal(ui[outer].offset, 0.0)
+
+
+def test_dragging_the_thumb_scrolls_and_holds_the_mouse() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 100)))
+    var buttons = _list(ui, window)
+    var context = Context()
+    var canvas = Canvas(400, 300)
+    ui.update(context, canvas)
+    # the thumb starts at the top of the bar, down the window's right edge
+    var x = 100 - _BAR / 2
+    var start = Point(x, 50 - _BAR)
+    next_frame(context)
+    point_at(context, start)
+    press(context, start)
+    ui.update(context, canvas)
+    next_frame(context)
+    point_at(context, (300, start.y - 1000))  # far below, and off it
+    ui.update(context, canvas)
+    assert_equal(ui[window].offset, _CONTENT - 100)  # as far as it goes
+    assert_equal(ui[buttons[3]].rect.bottom(), -50.0)  # placed this frame
+    assert_true(ui.wants_mouse(context))  # held, though not over it
+    release(context, (300, start.y - 1000))
+
+
+def test_a_column_that_fits_has_no_bar_and_the_full_width() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 250)))
+    var list = ui.add(Column(), window)
+    var a = ui.add(Button("A"), list)
+    _laid_out(ui)
+    assert_equal(ui[a].rect.width, 200.0)
+    var tall = UI()
+    var short = tall.add(ScrollArea(Rectangle((0, 0), 200, 100)))
+    var column = tall.add(Column(), short)
+    var b = tall.add(Button("B"), column)
+    for _ in range(3):
+        _ = tall.add(Button("More"), column)
+    _laid_out(tall)
+    assert_equal(tall[b].rect.width, 200.0 - _BAR)  # room for the bar
+
+
+def test_ui_style_colours_the_thumb() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 100)))
+    _ = _list(ui, window)
+    ui.style(scroll_area_thumb=Style(stroke=Color.RED))
+    var context = Context()
+    point_at(context, (180, 140))
+    var canvas = Canvas(400, 300, antialiasing=Antialiasing.OFF)
+    ui.update(context, canvas)
+    canvas.draw(ui)
+    assert_equal(canvas.color_at((100 - _BAR / 2, 40)), Color.RED)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

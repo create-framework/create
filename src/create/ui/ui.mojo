@@ -134,6 +134,8 @@ struct _Description(Copyable, Movable):
     """How far down its column a scroll area shows."""
     var max_height: Optional[Float64]
     """The tallest a scroll area grows, when set."""
+    var overflows: Bool
+    """Whether a scroll area's column is taller than it, so it scrolls."""
     var focusable: Bool
     """Whether it can take focus: a widget that reacts, while enabled."""
     var takes_typing: Bool
@@ -160,6 +162,7 @@ struct _Description(Copyable, Movable):
         self.padding = None
         self.offset = 0
         self.max_height = None
+        self.overflows = False
         self.focusable = False
         self.takes_typing = False
         self.adjusts = False
@@ -172,11 +175,13 @@ struct _Description(Copyable, Movable):
 @fieldwise_init
 struct _Reply(Copyable, Movable):
     """What `_dispatch_mut` gives back: the look of what sits on the node,
-    and, when measuring, the size it prefers."""
+    when measuring, the size it prefers, and, when updating, whether it was
+    a scroll area that moved."""
 
     var theme: _Theme
     var width: Float64
     var height: Float64
+    var scrolled: Bool
 
 
 struct UI(Drawable, Movable):
@@ -573,6 +578,8 @@ struct UI(Drawable, Movable):
         text_field_placeholder_style: Optional[Style] = None,
         text_field_caret: Optional[Style] = None,
         text_field_selection: Optional[Style] = None,
+        scroll_area_track: Optional[Style] = None,
+        scroll_area_thumb: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -625,6 +632,10 @@ struct UI(Drawable, Movable):
             styles.text_field_caret = text_field_caret.value()
         if text_field_selection:
             styles.text_field_selection = text_field_selection.value()
+        if scroll_area_track:
+            styles.scroll_area_track = scroll_area_track.value()
+        if scroll_area_thumb:
+            styles.scroll_area_thumb = scroll_area_thumb.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -658,9 +669,18 @@ struct UI(Drawable, Movable):
             topmost = self._topmost(canvas.to_local(context.mouse.position))
         self._pointed_at = Bool(topmost)
         self._navigate(context, topmost)
+        var wheel = Optional[Int](None)
+        if context.mouse.wheel.y != 0:
+            wheel = self._wheel_target(topmost)
         var theme = self._theme()
+        var scrolled = False
         for root in self._roots.copy():
-            self._update_from(root, context, canvas, theme, topmost)
+            if self._update_from(root, context, canvas, theme, topmost, wheel):
+                scrolled = True
+        # a scroll area the wheel or its thumb moved: its column goes where
+        # it is drawn this frame
+        if scrolled:
+            self._lay_out(context, canvas)
         self._claim(context)
 
     def wants_mouse(self, context: Context) -> Bool:
@@ -775,9 +795,12 @@ struct UI(Drawable, Movable):
         mut canvas: Canvas,
         theme: _Theme,
         topmost: Optional[Int],
-    ) raises:
+        wheel: Optional[Int],
+    ) raises -> Bool:
         """Update the widget at `index` in `theme`, then what is inside it,
-        in the look of what it sits on. A hidden widget is updated as a
+        in the look of what it sits on; `wheel` is the scroll area the
+        mouse wheel scrolls, if any. Gives back whether a scroll area among
+        them moved. A hidden widget is updated as a
         disabled one, so it lets go and keeps no click or change from before
         it was hidden to report while it is."""
         var free = Bool(topmost) and topmost.value() == index
@@ -796,9 +819,26 @@ struct UI(Drawable, Movable):
             free=free and not hidden,
             focus=focus,
             disabled=hidden or self._disabled(index),
+            wheel=Bool(wheel) and wheel.value() == index,
         )
+        var scrolled = reply.scrolled
         for child in self._nodes[index].children.copy():
-            self._update_from(child, context, canvas, reply.theme, topmost)
+            if self._update_from(
+                child, context, canvas, reply.theme, topmost, wheel
+            ):
+                scrolled = True
+        return scrolled
+
+    def _wheel_target(self, topmost: Optional[Int]) -> Optional[Int]:
+        """The scroll area the mouse wheel scrolls: the innermost of those
+        under the pointer whose column is taller than it, if any."""
+        var at = topmost
+        while at:
+            var node = self._describe(at.value())
+            if node.kind == _SCROLL_AREA and node.overflows:
+                return at
+            at = self._nodes[at.value()].parent
+        return None
 
     def _topmost(self, pointer: Point) -> Optional[Int]:
         """The widget drawn last of those the pointer is over, of the ones
@@ -1288,17 +1328,20 @@ struct UI(Drawable, Movable):
         elif node.kind == _SCROLL_AREA:
             # the column, as tall as its widgets, moved up by the offset;
             # what is inside sees no more than the window
-            var offset = self._describe(index).offset
+            var described = self._describe(index)
+            var offset = described.offset
+            # the column leaves room for the bar while it is taller
+            var bar = theme.scroll_bar_width() if described.overflows else 0.0
             var window = _overlap(clip.value(), rect) if clip else rect
             for child in children:
                 var given: Optional[Rectangle] = None
                 if self._fills(child, index):
                     given = Rectangle(
                         Point(
-                            rect.position.x,
+                            rect.position.x - bar / 2,
                             rect.top() + offset - content / 2,
                         ),
-                        rect.width,
+                        rect.width - bar,
                         content,
                     )
                 self._place_from(
@@ -1400,9 +1443,12 @@ struct UI(Drawable, Movable):
             return described^
         if widget.isa[ScrollArea]():
             ref area = widget[ScrollArea]
-            var described = _Description(_SCROLL_AREA, area.rect, False)
+            # covers what is beneath it, so the wheel scrolls it anywhere
+            var described = _Description(_SCROLL_AREA, area.rect, True)
             described.offset = area.offset
             described.max_height = area.max_height
+            described.overflows = area._overflows()
+            described.held = area._pointer.held
             return described^
         # no size of its own: the column or row it is in sizes it
         var described = _Description(
@@ -1412,8 +1458,8 @@ struct UI(Drawable, Movable):
         return described^
 
     def _draw(self, index: Int, mut canvas: Canvas):
-        """Draw the node at `index`; a column, row or space draws
-        nothing."""
+        """Draw the node at `index`: a scroll area its bar; a column, row or
+        space nothing."""
         ref widget = self._nodes[index].widget
         if widget.isa[Button]():
             canvas.draw(widget[Button])
@@ -1427,6 +1473,8 @@ struct UI(Drawable, Movable):
             canvas.draw(widget[Panel])
         elif widget.isa[Label]():
             canvas.draw(widget[Label])
+        elif widget.isa[ScrollArea]():
+            widget[ScrollArea]._draw_bar(canvas)
         elif widget.isa[Picture]():
             if self._disabled(index):
                 canvas.draw(
@@ -1449,13 +1497,14 @@ struct UI(Drawable, Movable):
         disabled: Bool = False,
         rect: Rectangle = Rectangle(Point(0.0, 0.0), 0.0, 0.0),
         content: Float64 = 0,
+        wheel: Bool = False,
     ) raises -> _Reply:
         """Update (`_UPDATE`), measure (`_MEASURE`) or place in `rect`
         (`_PLACE`, onto a column `content` tall for a scroll area) the node at
         `index`, in `theme`; `free` when it is the topmost under the
-        pointer. Gives back the look of what sits on it
+        pointer, and `wheel` when it is the scroll area the wheel scrolls. Gives back the look of what sits on it
         and, when measuring, the size it prefers."""
-        var reply = _Reply(theme.copy(), 0.0, 0.0)
+        var reply = _Reply(theme.copy(), 0.0, 0.0, False)
         ref widget = self._nodes[index].widget
         if widget.isa[Button]():
             ref button = widget[Button]
@@ -1549,8 +1598,19 @@ struct UI(Drawable, Movable):
             if action == _PLACE:
                 widget[Row].rect = rect
         elif widget.isa[ScrollArea]():
-            if action == _PLACE:
-                widget[ScrollArea]._place(rect, content)
+            ref area = widget[ScrollArea]
+            if action == _UPDATE:
+                area._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    wheel=wheel,
+                    disabled=disabled,
+                )
+                reply.scrolled = area._scrolled
+            elif action == _PLACE:
+                area._place(rect, content, theme.scroll_bar_width())
         return reply^
 
 
