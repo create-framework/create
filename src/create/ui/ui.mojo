@@ -28,10 +28,11 @@ from ._navigation import (
     _pad_pressed,
     _pad_push,
 )
-from ._layout import _Placement, _across, _shares, _sized
+from ._layout import _Placement, _across, _overlap, _shares, _sized
 from .column import Column
 from .row import Row
 from .space import Space
+from .scroll_area import ScrollArea
 from .panel import Panel
 from .slider import Slider
 from .text_field import TextField
@@ -55,20 +56,21 @@ comptime _Widget = Variant[
     Column,
     Row,
     Space,
+    ScrollArea,
 ]
 """The kinds of node a tree holds. Storage only: what each does is its own,
 reached through `_describe`, `_draw` and `_dispatch_mut`."""
 
 
-comptime _Container = Variant[Panel, Column, Row]
+comptime _Container = Variant[Panel, Column, Row, ScrollArea]
 """The kinds of node another can be added inside."""
 
 comptime _NOT_A_NODE = (
     "ui.add takes a Button, Checkbox, Label, Panel, Slider, TextField,"
-    " Picture, Column, Row or Space"
+    " Picture, Column, Row, Space or ScrollArea"
 )
 comptime _NOT_A_CONTAINER = (
-    "ui.add adds a widget inside a Panel, Column or Row only"
+    "ui.add adds a widget inside a Panel, Column, Row or ScrollArea only"
 )
 
 
@@ -92,6 +94,10 @@ struct _Node(Copyable, Movable):
     next node added."""
     var placement: _Placement
     """How it fits in the column or row it is in: what `ui.add` was told."""
+    var clip: Optional[Rectangle]
+    """What of it can be seen and clicked: the windows of the `ScrollArea`s it
+    is in, overlapped, as the last layout left them. All of it when
+    `None`."""
 
 
 comptime _UPDATE = 0
@@ -103,6 +109,7 @@ comptime _PANEL = 1
 comptime _COLUMN = 2
 comptime _ROW = 3
 comptime _SPACE = 4
+comptime _SCROLL_AREA = 5
 
 
 @fieldwise_init
@@ -123,6 +130,10 @@ struct _Description(Copyable, Movable):
     """A space's size, when set."""
     var padding: Optional[Float64]
     """A panel's padding, when set."""
+    var offset: Float64
+    """How far down its column a scroll area shows."""
+    var max_height: Optional[Float64]
+    """The tallest a scroll area grows, when set."""
     var focusable: Bool
     """Whether it can take focus: a widget that reacts, while enabled."""
     var takes_typing: Bool
@@ -147,6 +158,8 @@ struct _Description(Copyable, Movable):
         self.align = None
         self.amount = None
         self.padding = None
+        self.offset = 0
+        self.max_height = None
         self.focusable = False
         self.takes_typing = False
         self.adjusts = False
@@ -193,8 +206,9 @@ struct UI(Drawable, Movable):
     A widget added with no `rect` of its own is sized by the tree every
     frame, to the size it prefers, unless what it is in places it: a
     `Column` stacks what is inside it, a `Row` sets it side by side, and a
-    `Panel` places a column or row inside it in its inside. A panel with no
-    size fits the column or row inside it. Where widgets overlap, only the
+    `Panel` places a column or row inside it in its inside, and a `ScrollArea`
+    shows part of a column taller than itself. A panel with no size fits
+    the column or row inside it. Where widgets overlap, only the
     topmost under the pointer reacts to it, and a `Panel` covers what is
     beneath it.
 
@@ -282,8 +296,8 @@ struct UI(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it. It is a `Button`, `Checkbox`, `Label`, `Panel`, `Slider`,
-        `TextField`, `Picture`, `Column`, `Row` or `Space`; anything else
-        doesn't compile."""
+        `TextField`, `Picture`, `Column`, `Row`, `Space` or `ScrollArea`;
+        anything else doesn't compile."""
         comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
         var handle = self._new_node[W](_Widget(widget^), None, _Placement())
         self._roots.append(handle._index)
@@ -303,8 +317,8 @@ struct UI(Drawable, Movable):
     ) -> WidgetHandle[W]:
         """Add `widget` inside `parent`: drawn after it and after what was
         added inside it before, and in the look of what it sits on. Only a
-        `Panel`, `Column` or `Row` can be a parent; anything else doesn't
-        compile.
+        `Panel`, `Column`, `Row` or `ScrollArea` can be a parent; anything else
+        doesn't compile.
 
         In a column or row, `width` and `height` set the size it starts
         from, in place of the one it prefers, so two buttons given the same
@@ -364,12 +378,22 @@ struct UI(Drawable, Movable):
                 generation,
                 False,
                 placement^,
+                None,
             )
         else:
             index = len(self._nodes)
             self._nodes.append(
                 _Node(
-                    widget^, parent, [], False, True, True, 0, False, placement^
+                    widget^,
+                    parent,
+                    [],
+                    False,
+                    True,
+                    True,
+                    0,
+                    False,
+                    placement^,
+                    None,
                 )
             )
         self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
@@ -783,7 +807,12 @@ struct UI(Drawable, Movable):
         var i = len(order) - 1
         while i >= 0:
             var node = self._describe(order[i])
-            if node.takes_pointer and node.rect.contains(pointer):
+            ref clip = self._nodes[order[i]].clip
+            if (
+                node.takes_pointer
+                and node.rect.contains(pointer)
+                and (not clip or clip.value().contains(pointer))
+            ):
                 return order[i]
             i -= 1
         return None
@@ -810,27 +839,53 @@ struct UI(Drawable, Movable):
         return order^
 
     def draw_to(self, mut canvas: Canvas):
-        for index in self._drawing_order():
-            self._draw(index, canvas)
-        # the focus ring last, so nothing covers it
+        for root in self._roots:
+            self._draw_from(root, canvas)
+        # the focus ring last, so nothing covers it, and no further than
+        # the scroll areas it is in show
         if (
             self._focused
             and self._focus_visible
             and not self._hidden(self._focused.value())
         ):
-            var node = self._describe(self._focused.value())
-            var gap = self._focus_ring.gap
-            with canvas._with_style(self._theme().ring()):
-                if node.ring:
-                    ref shape = node.ring.value()
-                    var ring = shape.copy()
-                    ring.width += 2 * gap
-                    ring.height += 2 * gap
-                    ring.corner_radius = shape.corner_radius + gap
-                    canvas.draw(ring)
-                elif node.ring_circle:
-                    ref circle = node.ring_circle.value()
-                    canvas.draw(Circle(circle.position, circle.radius + gap))
+            ref clip = self._nodes[self._focused.value()].clip
+            if clip:
+                with canvas.clip(clip.value()):
+                    self._draw_ring(canvas)
+            else:
+                self._draw_ring(canvas)
+
+    def _draw_from(self, index: Int, mut canvas: Canvas):
+        """Draw the node at `index`, then what is inside it, in drawing
+        order; what is inside a scroll area only in its window. A hidden node is
+        left out, with what is inside it."""
+        if not self._nodes[index].visible:
+            return
+        self._draw(index, canvas)
+        var node = self._describe(index)
+        if node.kind == _SCROLL_AREA:
+            with canvas.clip(node.rect):
+                for child in self._nodes[index].children:
+                    self._draw_from(child, canvas)
+        else:
+            for child in self._nodes[index].children:
+                self._draw_from(child, canvas)
+
+    def _draw_ring(self, mut canvas: Canvas):
+        """Draw the ring round the focused widget."""
+        var node = self._describe(self._focused.value())
+        var gap = self._focus_ring.gap
+        with canvas._with_style(self._theme().ring()):
+            if node.ring:
+                ref shape = node.ring.value()
+                var ring = shape.copy()
+                ring.width += 2 * gap
+                ring.height += 2 * gap
+                ring.corner_radius = shape.corner_radius + gap
+                canvas.draw(ring)
+            elif node.ring_circle:
+                ref circle = node.ring_circle.value()
+                canvas.draw(Circle(circle.position, circle.radius + gap))
 
     # --------------------------------------------------------------- focus
 
@@ -1051,7 +1106,7 @@ struct UI(Drawable, Movable):
             self._measure(order[i], context, canvas, theme, sizes)
             i -= 1
         for root in self._roots.copy():
-            self._place_from(root, None, context, canvas, theme, sizes)
+            self._place_from(root, None, None, context, canvas, theme, sizes)
 
     def _measure(
         mut self,
@@ -1084,6 +1139,18 @@ struct UI(Drawable, Movable):
         elif node.kind == _SPACE:
             width = node.amount.or_else(2 * theme.spacing)
             height = width
+        elif node.kind == _SCROLL_AREA:
+            if _sized(node.rect):
+                width = node.rect.width
+                height = node.rect.height
+            else:
+                # as big as the column it shows, up to its `max_height`
+                for child in children:
+                    if self._fills(child, index):
+                        width = sizes[child][0]
+                        height = sizes[child][1]
+                if node.max_height:
+                    height = min(height, node.max_height.value())
         elif node.kind == _PANEL:
             if _sized(node.rect):
                 width = node.rect.width
@@ -1091,7 +1158,7 @@ struct UI(Drawable, Movable):
             else:
                 # fitted round the column or row it places
                 for child in children:
-                    if self._fills_panel(child):
+                    if self._fills(child, index):
                         width = max(width, sizes[child][0])
                         height = max(height, sizes[child][1])
                 var padding = node.padding.or_else(2 * theme.spacing)
@@ -1114,6 +1181,7 @@ struct UI(Drawable, Movable):
         mut self,
         index: Int,
         slot: Optional[Rectangle],
+        clip: Optional[Rectangle],
         mut context: Context,
         mut canvas: Canvas,
         theme: _Theme,
@@ -1121,10 +1189,12 @@ struct UI(Drawable, Movable):
     ) raises:
         """Place the node at `index`: in `slot` when what it is in gives it
         one, at the size it prefers when it was added with none, and where
-        it is otherwise; then what is inside it. A hidden node is left
-        where it is."""
+        it is otherwise; then what is inside it. `clip` is what of it can be
+        seen, from the scroll areas it is in. A hidden node is left where it
+        is."""
         if not self._nodes[index].visible:
             return
+        self._nodes[index].clip = clip
         var node = self._describe(index)
         var rect = node.rect
         if slot:
@@ -1133,11 +1203,23 @@ struct UI(Drawable, Movable):
             rect = Rectangle(
                 node.rect.position, sizes[index][0], sizes[index][1]
             )
-        if slot or self._nodes[index].sized_by_ui:
-            _ = self._dispatch_mut(
-                index, _PLACE, context, canvas, theme, free=False, rect=rect
-            )
         var children = self._nodes[index].children.copy()
+        # the height of the column a scroll area shows, to keep its offset within
+        var content = 0.0
+        for child in children:
+            if node.kind == _SCROLL_AREA and self._fills(child, index):
+                content = sizes[child][1]
+        if slot or self._nodes[index].sized_by_ui or node.kind == _SCROLL_AREA:
+            _ = self._dispatch_mut(
+                index,
+                _PLACE,
+                context,
+                canvas,
+                theme,
+                free=False,
+                rect=rect,
+                content=content,
+            )
         if node.kind == _COLUMN or node.kind == _ROW:
             var placed = self._placed_children(index)
             var slots = List[Rectangle]()
@@ -1191,17 +1273,42 @@ struct UI(Drawable, Movable):
                         column,
                     )
                     next += 1
-                self._place_from(child, given, context, canvas, theme, sizes)
+                self._place_from(
+                    child, given, clip, context, canvas, theme, sizes
+                )
         elif node.kind == _PANEL:
             var inside = rect.inset(node.padding.or_else(2 * theme.spacing))
             for child in children:
                 var given: Optional[Rectangle] = None
-                if self._fills_panel(child):
+                if self._fills(child, index):
                     given = inside
-                self._place_from(child, given, context, canvas, theme, sizes)
+                self._place_from(
+                    child, given, clip, context, canvas, theme, sizes
+                )
+        elif node.kind == _SCROLL_AREA:
+            # the column, as tall as its widgets, moved up by the offset;
+            # what is inside sees no more than the window
+            var offset = self._describe(index).offset
+            var window = _overlap(clip.value(), rect) if clip else rect
+            for child in children:
+                var given: Optional[Rectangle] = None
+                if self._fills(child, index):
+                    given = Rectangle(
+                        Point(
+                            rect.position.x,
+                            rect.top() + offset - content / 2,
+                        ),
+                        rect.width,
+                        content,
+                    )
+                self._place_from(
+                    child, given, window, context, canvas, theme, sizes
+                )
         else:
             for child in children:
-                self._place_from(child, None, context, canvas, theme, sizes)
+                self._place_from(
+                    child, None, clip, context, canvas, theme, sizes
+                )
 
     def _placed_children(self, index: Int) -> List[Int]:
         """The children a column or row at `index` places: those shown and
@@ -1213,16 +1320,17 @@ struct UI(Drawable, Movable):
                 placed.append(child)
         return placed^
 
-    def _fills_panel(self, index: Int) -> Bool:
-        """Whether the node at `index`, inside a panel, fills the panel's
-        inside: a column or row added with no size of its own."""
+    def _fills(self, index: Int, parent: Int) -> Bool:
+        """Whether the node at `index` is the one its `parent` places: a
+        column or row added with no size of its own inside a panel, or such
+        a column inside a scroll area."""
         var kind = self._describe(index).kind
         ref node = self._nodes[index]
-        return (
-            (kind == _COLUMN or kind == _ROW)
-            and node.sized_by_ui
-            and node.visible
-        )
+        if not node.sized_by_ui or not node.visible:
+            return False
+        if self._describe(parent).kind == _SCROLL_AREA:
+            return kind == _COLUMN
+        return kind == _COLUMN or kind == _ROW
 
     # ------------------------------------------------------------ dispatch
     #
@@ -1290,6 +1398,12 @@ struct UI(Drawable, Movable):
             described.gap = row.gap
             described.align = row.align
             return described^
+        if widget.isa[ScrollArea]():
+            ref area = widget[ScrollArea]
+            var described = _Description(_SCROLL_AREA, area.rect, False)
+            described.offset = area.offset
+            described.max_height = area.max_height
+            return described^
         # no size of its own: the column or row it is in sizes it
         var described = _Description(
             _SPACE, Rectangle(Point(0.0, 0.0), 0.0, 0.0), False
@@ -1334,10 +1448,12 @@ struct UI(Drawable, Movable):
         focus: _Focus = _Focus.standalone(),
         disabled: Bool = False,
         rect: Rectangle = Rectangle(Point(0.0, 0.0), 0.0, 0.0),
+        content: Float64 = 0,
     ) raises -> _Reply:
         """Update (`_UPDATE`), measure (`_MEASURE`) or place in `rect`
-        (`_PLACE`) the node at `index`, in `theme`; `free` when it is the
-        topmost under the pointer. Gives back the look of what sits on it
+        (`_PLACE`, onto a column `content` tall for a scroll area) the node at
+        `index`, in `theme`; `free` when it is the topmost under the
+        pointer. Gives back the look of what sits on it
         and, when measuring, the size it prefers."""
         var reply = _Reply(theme.copy(), 0.0, 0.0)
         ref widget = self._nodes[index].widget
@@ -1432,6 +1548,9 @@ struct UI(Drawable, Movable):
         elif widget.isa[Row]():
             if action == _PLACE:
                 widget[Row].rect = rect
+        elif widget.isa[ScrollArea]():
+            if action == _PLACE:
+                widget[ScrollArea]._place(rect, content)
         return reply^
 
 

@@ -1,9 +1,10 @@
 """The user interface: widgets, such as `Button`, `Checkbox`, `Label`,
 `Panel`, `Slider` and `TextField`, which are values a program keeps,
 updates and draws with `canvas.draw`, and the traits they share (`Widget`,
-`Hoverable`, `Clickable`); `UI`, which keeps widgets together and lays them
-out with `Column`, `Row` and `Space`, reached through `WidgetHandle`s; and
-`ColorScheme`, the colours they are drawn in.
+`Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them
+out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`,
+reached through `WidgetHandle`s; and `ColorScheme`, the colours they are
+drawn in.
 """
 from .ui import UI
 from .widget_handle import WidgetHandle
@@ -17,6 +18,7 @@ from .label import Label
 from .column import Column
 from .row import Row
 from .space import Space
+from .scroll_area import ScrollArea
 from .panel import Panel
 from .slider import Slider
 from .widget import Widget

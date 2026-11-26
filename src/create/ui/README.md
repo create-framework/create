@@ -19,8 +19,8 @@ rules.
 | `ui.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
 | `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the arrows' and the gamepad's push, with `_PadRepeat` repeating a held direction, and the nearest-in-a-direction choice |
 | `widget_handle.mojo` | `WidgetHandle`, where a widget is in a `UI`: its index, its generation and which `UI` made it |
-| `_layout.mojo` | `_UNSIZED`, the size a widget leaves for the tree to choose, `_sized`, and `_Placement`, how a node fits in its column or row |
-| `column.mojo`, `row.mojo`, `space.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes |
+| `_layout.mojo` | `_UNSIZED`, the size a widget leaves for the tree to choose, `_sized`, `_Placement`, how a node fits in its column or row, and the layout's sums (`_shares`, `_across`, `_overlap`) |
+| `column.mojo`, `row.mojo`, `space.mojo`, `scroll_area.mojo` | `Column`, `Row`, `Space` and `ScrollArea`, the tree's layout nodes |
 | `widget.mojo` | `Widget`, the trait every widget value shares: `update`, then drawn with `canvas.draw` |
 | `hoverable.mojo`, `clickable.mojo` | `Hoverable` and `Clickable`, what can be asked of a widget after its `update` |
 | `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, dragged this frame, and this frame's press and click, kept between its `update`s |
@@ -78,14 +78,15 @@ and a parent a kind `_Container` holds.
 **`update` runs in a fixed order:**
 
 1. lay out every node (below);
-2. find the topmost node under the pointer, walking the drawing order backwards, unless another `UI`
-   holds the mouse;
+2. find the topmost node under the pointer, walking the drawing order backwards and skipping a node
+   whose `clip` leaves the pointer out, unless another `UI` holds the mouse;
 3. move focus for this frame's clicks, Tab, Escape and gamepad (below);
 4. update every node in drawing order, a parent before what is inside it, each with its theme: a
    panel passes its surface and content colours down to what is inside it;
 5. renew or release the device claims.
 
-`draw_to` draws every node in the same order, then the focus ring, so nothing covers it.
+`draw_to` draws every node in the same order, walking the tree from the roots so it can clip what is
+inside a scroll area to its window, then the focus ring, so nothing covers it.
 
 ## Layout
 
@@ -106,6 +107,13 @@ so a column or row places it from that. A node added with no size (`_UNSIZED`) i
 `sized_by_ui` and given its preferred size every frame, unless its parent places it. A column or row
 places only such children, and a panel only such a column or row: a node added with a size of its
 own keeps its place and takes no room.
+
+**A `ScrollArea` places one column, at its full height, moved up by its `offset`.** Placing the
+scroll area clamps the offset between 0 and the column's height less the window's. Every node keeps
+a `clip`, the windows of the scroll areas it is in overlapped (`_overlap`), which placing sets from
+the top level in. Hit-testing leaves out a node where its clip leaves out the pointer, and drawing
+clips what is inside a scroll area with `canvas.clip`, which nests, so one scroll area inside
+another shows only what both show.
 
 ## Focus and the devices
 

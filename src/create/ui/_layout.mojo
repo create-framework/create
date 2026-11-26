@@ -1,7 +1,8 @@
 """What every widget and layout node shares about its size: `_UNSIZED`,
 the size a widget leaves for its `UI` to choose, `_sized`, `_Placement`,
 how a node fits in the column or row it is in, `_shares`, how a column or
-row shares out its length, and `_across`, where a node sits across it."""
+row shares out its length, `_across`, where a node sits across it, and
+`_overlap`, what two rectangles share."""
 
 from create.geometry import Rectangle
 from create.math import Point
@@ -102,3 +103,18 @@ def _across(
     if column:
         return Rectangle(Point(x, y), size, slot.height)
     return Rectangle(Point(x, y), slot.width, size)
+
+
+def _overlap(a: Rectangle, b: Rectangle) -> Rectangle:
+    """What two upright rectangles share, as the clips of scroll areas one inside
+    another do: no size, where they meet or at `a`'s centre, when they don't
+    overlap."""
+    var left = max(a.left(), b.left())
+    var right = max(min(a.right(), b.right()), left)
+    var bottom = max(a.bottom(), b.bottom())
+    var top = max(min(a.top(), b.top()), bottom)
+    return Rectangle(
+        Point((left + right) / 2, (bottom + top) / 2),
+        right - left,
+        top - bottom,
+    )

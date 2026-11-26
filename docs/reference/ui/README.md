@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Slider` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together and lays them out with `Column`, `Row` and `Space`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Slider` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -18,6 +18,7 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Label`, `Panel`, `Sl
 | [`Column`](column.md) | Widgets one under the other, from the top down, each across the column's whole width and as tall as it prefers, or as the `height` it was added with: a button or a slider the `UI`'s `control_height`, a label one and a half times its text's size. A `gap` is left between each and the next. The room left over goes to the widgets added with a `grow`, shared in proportion to it, so a growing `Space` pushes what comes after it to the bottom. |
 | [`Row`](row.md) | Widgets side by side, from the left, each as tall as the row and as wide as it prefers, or as the `width` it was added with. |
 | [`Space`](space.md) | Room left empty in a column, or a row, such as to set one group of widgets apart from the next: twice the `UI`'s `spacing` unless given an `amount`. |
+| [`ScrollArea`](scrollarea.md) | A window onto a column of widgets, showing the part of it that fits. |
 | [`Panel`](panel.md) | A surface filling a rectangle, for widgets to sit on: a rounded card in its colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing. |
 | [`Slider`](slider.md) | A handle on a track, dragged to set `value` between `minimum` and `maximum`. |
 | [`TextField`](textfield.md) | A field to type a line of text into. |
