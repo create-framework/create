@@ -3,6 +3,7 @@
 from create.color import Color
 from create.app import Context
 from create.geometry import Rectangle
+from create.math import OptionalNumber
 from create.render import Canvas, Style
 from .color_scheme import ColorScheme
 from ._theme import _PanelLook, _Theme
@@ -27,19 +28,30 @@ struct Panel(Copyable, Movable, Widget):
     `content_color()` is the colour for text on it: its style's
     `text_color`, or the partner of its fill, so text on a dark panel can be
     drawn light.
+
+    In a `UI`, it places a column or row added inside it across its inside,
+    `padding` short of each edge.
     """
 
     var rect: Rectangle
     """Where it is, and how big."""
     var style: Style
     """Its own style, over the default card."""
+    var padding: Optional[Float64]
+    """How far inside its edges a `UI` places the column or row in it: twice
+    the `UI`'s `spacing` when `None`."""
     var _look: _PanelLook
 
     def __init__(
-        out self, rect: Rectangle = _UNSIZED, *, style: Style = Style()
+        out self,
+        rect: Rectangle = _UNSIZED,
+        *,
+        style: Style = Style(),
+        padding: OptionalNumber = None,
     ):
         self.rect = rect
         self.style = style
+        self.padding = padding._value
         self._look = _Theme.default().panel(style)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
