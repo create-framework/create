@@ -4,6 +4,7 @@ from create.color import Color
 from create.app import Context
 from create.geometry import Rectangle
 from create.render import Canvas, Style
+from .color_scheme import ColorScheme
 from ._theme import _PanelLook, _Theme
 from ._layout import _UNSIZED
 from .widget import Widget
@@ -11,7 +12,7 @@ from .widget import Widget
 
 struct Panel(Copyable, Movable, Widget):
     """A surface filling a rectangle, for widgets to sit on: a rounded card
-    in the light colours' `surface_container`, unless its `style` says
+    in its colours' `surface_container`, unless its `style` says
     otherwise. It reacts to nothing.
 
     ```mojo
@@ -42,8 +43,21 @@ struct Panel(Copyable, Movable, Widget):
         self._look = _Theme.default().panel(style)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        """Work out its look from its fields: call it before drawing it."""
+        """Work out its look from its fields: call it before drawing it.
+
+        It is drawn in the light colours; give it others with `colors`."""
         self._update(context, canvas, _Theme.default())
+
+    def update(
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        *,
+        colors: ColorScheme,
+    ) raises:
+        """`update`, drawn in `colors`, such as `ColorScheme.dark()` on a
+        dark screen."""
+        self._update(context, canvas, _Theme.default(colors))
 
     def _update(
         mut self, mut context: Context, mut canvas: Canvas, theme: _Theme

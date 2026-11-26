@@ -42,8 +42,15 @@ def main() raises:
 
 A `UI` given no colours draws in `ColorScheme.light()`, and `ui.colors()` reads back the ones it
 draws in. To change them, such as from a settings screen, set them again: the widgets take the new
-colours at the next `update`. A widget on its own, outside a `UI`, is drawn in the light colours;
-its own style changes any part of its look (see [Styling one widget](#styling-one-widget)).
+colours at the next `update`. A widget on its own, outside a `UI`, is drawn in the colours its
+`update` is given, the light ones unless told otherwise, and its own style changes any part of its
+look (see [Styling one widget](#styling-one-widget)):
+
+```mojo
+# In `update`, with a `play: Button` field, on a dark screen:
+self.play.update(context, canvas, colors=ColorScheme.dark())
+canvas.draw(self.play)
+```
 
 `ColorScheme.light()` and `ColorScheme.dark()` are the two built-in schemes. Both take colours to
 replace their own, and a colour given without its partner for text gets black or white, whichever

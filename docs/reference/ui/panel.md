@@ -4,7 +4,7 @@
 struct Panel
 ```
 
-A surface filling a rectangle, for widgets to sit on: a rounded card in the light colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing.
+A surface filling a rectangle, for widgets to sit on: a rounded card in its colours' `surface_container`, unless its `style` says otherwise. It reacts to nothing.
 
 ```mojo
 # In `create`, building the `card` field:
@@ -47,6 +47,20 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises
 ```
 
 Work out its look from its fields: call it before drawing it.
+
+It is drawn in the light colours; give it others with `colors`.
+
+```mojo
+def update(
+    mut self,
+    mut context: Context,
+    mut canvas: Canvas,
+    *,
+    colors: ColorScheme,
+) raises
+```
+
+`update`, drawn in `colors`, such as `ColorScheme.dark()` on a dark screen.
 
 ### `surface_color`
 

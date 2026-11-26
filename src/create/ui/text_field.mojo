@@ -10,6 +10,7 @@ from create.render.style import _ResolvedStyle
 from create.math import OptionalNumber
 from ._pointer import _Pointer
 from ._text_buffer import _TextBuffer
+from .color_scheme import ColorScheme
 from ._theme import _TextFieldLook, _Theme, _fills, _text_look
 from ._layout import _UNSIZED
 from .slider import _CONTROL_WIDTH
@@ -143,8 +144,21 @@ struct TextField(Clickable, Copyable, Movable, Widget):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Read what the mouse and keyboard did to it this frame, taking
         focus on a click and typing while it has it, and work out its look:
-        call it before drawing it."""
+        call it before drawing it.
+
+        It is drawn in the light colours; give it others with `colors`."""
         self._update(context, canvas, _Theme.default(), free=True)
+
+    def update(
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        *,
+        colors: ColorScheme,
+    ) raises:
+        """`update`, drawn in `colors`, such as `ColorScheme.dark()` on a
+        dark screen."""
+        self._update(context, canvas, _Theme.default(colors), free=True)
 
     def _update(
         mut self,
