@@ -128,9 +128,11 @@ def main() raises:
     run[Settings]("Settings")
 ```
 
-- **`ui.add(widget)`** adds a widget, and **`ui.add(widget, parent)`** adds it inside another, such
-  as a panel or a column. Each returns a `WidgetHandle`, kept to reach the widget again. A widget
-  added later, or inside another, is drawn on top.
+- **`ui.add(widget)`** adds a widget, and **`ui.add(widget, parent)`** adds it inside a panel, a
+  column or a row; adding one inside anything else doesn't compile. Each returns a `WidgetHandle`,
+  kept to reach the widget again. A handle belongs to the `UI` that made it: using it on another
+  stops the program with a message saying so. A widget added later, or inside another, is drawn on
+  top.
 - **`ui[handle]` is the widget itself**, inside the `UI`, to ask or change: `self.ui[self.done]
   .released()`, or `self.ui[self.done].text = "Close"`.
 - **`ui.get(handle)` is a copy of the widget, to read.** In a method that changes the `UI`, such as

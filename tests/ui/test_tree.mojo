@@ -174,5 +174,16 @@ def test_each_style_call_keeps_the_kinds_it_leaves_out() raises -> None:
     assert_equal(ui._styles[].label.font_size.value(), 30.0)
 
 
+def test_a_handle_belongs_to_the_ui_that_made_it() raises -> None:
+    var first = UI()
+    var second = UI()
+    var a = first.add(Button("A", Rectangle((0, 0), 100, 40)))
+    var b = second.add(Button("B", Rectangle((0, 0), 100, 40)))
+    assert_equal(a._index, b._index)  # the same place in each
+    assert_true(a != b)  # but each its own tree's
+    var moved = first^  # a moved UI keeps its handles
+    assert_equal(moved[a].text, "A")
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

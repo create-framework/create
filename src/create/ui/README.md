@@ -18,7 +18,7 @@ rules.
 | `focus_ring.mojo` | `FocusRing`, the ring around a focused widget |
 | `ui.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
 | `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the arrows' and the gamepad's push, with `_PadRepeat` repeating a held direction, and the nearest-in-a-direction choice |
-| `widget_handle.mojo` | `WidgetHandle`, where a widget is in a `UI`: its index and generation |
+| `widget_handle.mojo` | `WidgetHandle`, where a widget is in a `UI`: its index, its generation and which `UI` made it |
 | `_layout.mojo` | `_UNSIZED`, the size a widget leaves for the tree to choose, and `_sized` |
 | `column.mojo`, `row.mojo`, `space.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes |
 | `widget.mojo` | `Widget`, the trait every widget value shares: `update`, then drawn with `canvas.draw` |
@@ -70,7 +70,10 @@ swaps each widget for a `Space` so it lets go of what it held, and frees its pla
 the next node added. Each node counts its `generation`, how many nodes had its place before it, and
 a `WidgetHandle` carries the one it was made for, so `_index_of`, which every handle goes through,
 stops the program when a handle outlives its widget rather than reaching the node that took its
-place.
+place. A handle also carries its `UI`'s identity, the address of the heap cell `_identity`, which
+stays put when the `UI` is moved, so a handle used on another `UI` stops the program too. What
+`ui.add` takes is checked when the program is compiled: the widget must be a kind `_Widget` holds,
+and a parent a kind `_Container` holds.
 
 **`update` runs in a fixed order:**
 

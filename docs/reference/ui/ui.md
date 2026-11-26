@@ -60,7 +60,7 @@ A tree whose focus any gamepad moves, unless `player` names one, as each player'
 def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]
 ```
 
-Add `widget` at the top level, drawn above everything added before it.
+Add `widget` at the top level, drawn above everything added before it. It is a `Button`, `Checkbox`, `Label`, `Panel`, `Slider`, `TextField`, `Picture`, `Column`, `Row` or `Space`; anything else doesn't compile.
 
 ```mojo
 def add[W: Copyable, P: Copyable](
@@ -70,7 +70,7 @@ def add[W: Copyable, P: Copyable](
 ) -> WidgetHandle[W]
 ```
 
-Add `widget` inside `parent`: drawn after it and after what was added inside it before, and in the look of what it sits on.
+Add `widget` inside `parent`: drawn after it and after what was added inside it before, and in the look of what it sits on. Only a `Panel`, `Column` or `Row` can be a parent; anything else doesn't compile.
 
 ### `get`
 

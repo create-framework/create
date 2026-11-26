@@ -60,6 +60,18 @@ comptime _Widget = Variant[
 reached through `_describe`, `_draw` and `_dispatch_mut`."""
 
 
+comptime _Container = Variant[Panel, Column, Row]
+"""The kinds of node another can be added inside."""
+
+comptime _NOT_A_NODE = (
+    "ui.add takes a Button, Checkbox, Label, Panel, Slider, TextField,"
+    " Picture, Column, Row or Space"
+)
+comptime _NOT_A_CONTAINER = (
+    "ui.add adds a widget inside a Panel, Column or Row only"
+)
+
+
 @fieldwise_init
 struct _Node(Copyable, Movable):
     var widget: _Widget
@@ -191,6 +203,9 @@ struct UI(Drawable, Movable):
     var _free: List[Int]
     """The places in `_nodes` that removed nodes left, for the next nodes
     added."""
+    var _identity: ArcPointer[Int]
+    """A cell of its own on the heap, whose address tells its handles from
+    another `UI`'s: it stays put when the `UI` is moved."""
     var _colors: ColorScheme
     var _styles: ArcPointer[_Styles]
     """What `style` sets, on the heap: seventeen `Style`s inline made a `UI`
@@ -245,6 +260,7 @@ struct UI(Drawable, Movable):
         self._nodes = []
         self._roots = []
         self._free = []
+        self._identity = ArcPointer(0)
         self._colors = ColorScheme.light()
         self._styles = ArcPointer(_Styles())
         self._corner_radius = _CORNER_RADIUS
@@ -257,7 +273,10 @@ struct UI(Drawable, Movable):
 
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
-        before it."""
+        before it. It is a `Button`, `Checkbox`, `Label`, `Panel`, `Slider`,
+        `TextField`, `Picture`, `Column`, `Row` or `Space`; anything else
+        doesn't compile."""
+        comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
         var handle = self._new_node[W](_Widget(widget^), None)
         self._roots.append(handle._index)
         return handle
@@ -266,7 +285,11 @@ struct UI(Drawable, Movable):
         W: Copyable, P: Copyable
     ](mut self, var widget: W, parent: WidgetHandle[P]) -> WidgetHandle[W]:
         """Add `widget` inside `parent`: drawn after it and after what was
-        added inside it before, and in the look of what it sits on."""
+        added inside it before, and in the look of what it sits on. Only a
+        `Panel`, `Column` or `Row` can be a parent; anything else doesn't
+        compile."""
+        comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
+        comptime assert _Container.is_type_supported[P](), _NOT_A_CONTAINER
         var inside = self._index_of(parent)
         var handle = self._new_node[W](_Widget(widget^), inside)
         self._nodes[inside].children.append(handle._index)
@@ -291,12 +314,16 @@ struct UI(Drawable, Movable):
                 _Node(widget^, parent, [], False, True, True, 0, False)
             )
         self._nodes[index].sized_by_ui = not _sized(self._describe(index).rect)
-        return WidgetHandle[W](index, generation)
+        return WidgetHandle[W](index, generation, self._id())
+
+    def _id(self) -> Int:
+        """Its identity: the address of its `_identity` cell."""
+        return Int(Pointer(to=self._identity[]))
 
     def _index_of[W: Copyable](self, handle: WidgetHandle[W]) -> Int:
-        """Where the node `handle` names is, stopping the program when its
-        widget has been removed."""
-        if handle._index >= len(self._nodes):
+        """Where the node `handle` names is, stopping the program when the
+        handle is another `UI`'s or its widget has been removed."""
+        if handle._tree != self._id():
             abort("create: a WidgetHandle used on a UI it doesn't belong to")
         ref node = self._nodes[handle._index]
         if node.removed or node.generation != handle._generation:
