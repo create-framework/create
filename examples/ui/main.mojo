@@ -39,20 +39,41 @@ struct Menu(Program):
         var name = ui.add(
             TextField(placeholder="Your name", max_length=16), column
         )
-        var line = ui.add(Row(1, 3), column)  # a quarter for the label
-        _ = ui.add(Label("Volume", alignment=Align.LEFT), line)
-        var volume = ui.add(Slider(0.6, 0, 1, step=0.1), line)
+        var line = ui.add(Row(), column)
+        # a quarter for the label, three quarters for the slider
+        _ = ui.add(Label("Volume", alignment=Align.LEFT), line, width=0, grow=1)
+        var volume = ui.add(Slider(0.6, 0, 1, step=0.1), line, width=0, grow=3)
         var music = ui.add(Checkbox("Music", checked=True), column)
         var dark = ui.add(Checkbox("Dark theme", checked=True), column)
         _ = ui.add(Space(), column)
-        var row = ui.add(Row(), column)  # four equal slots
+        var row = ui.add(Row(), column)
         var buttons = List[WidgetHandle[Button]]()
-        buttons.append(ui.add(Button("Play"), row))
-        buttons.append(ui.add(Button("Load", variant=ButtonVariant.TONAL), row))
+        # four equal slots: each starts from nothing and grows alike
+        buttons.append(ui.add(Button("Play"), row, width=0, grow=1))
         buttons.append(
-            ui.add(Button("Credits", variant=ButtonVariant.OUTLINED), row)
+            ui.add(
+                Button("Load", variant=ButtonVariant.TONAL),
+                row,
+                width=0,
+                grow=1,
+            )
         )
-        buttons.append(ui.add(Button("Quit", variant=ButtonVariant.TEXT), row))
+        buttons.append(
+            ui.add(
+                Button("Credits", variant=ButtonVariant.OUTLINED),
+                row,
+                width=0,
+                grow=1,
+            )
+        )
+        buttons.append(
+            ui.add(
+                Button("Quit", variant=ButtonVariant.TEXT),
+                row,
+                width=0,
+                grow=1,
+            )
+        )
         var message = ui.add(Label(""), column)
         return Menu(ui^, name, volume, music, dark, buttons^, message)
 

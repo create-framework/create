@@ -94,14 +94,16 @@ is inside it outwards: walking the drawing order backwards reaches every child b
 widget's `_measure` gives the size it prefers in the theme (a control `control_height` tall, a label
 one and a half times its text size); a column sums its children's heights with its gaps, a row their
 widths, and a panel with no size fits round the column or row inside it. Then every node is placed,
-from the top level in: a column hands strips down its width, a row cuts its width with
-`Rectangle.columns`, and a panel hands its inside, inset by its `padding` (twice the `spacing`
-unless set), to a column or row inside it. A node's `_Placement` is what `ui.add` was told about how
-it fits in its column or row: a `width` or `height` given there replaces the measured one, so a
-column or row places it from that. A node added with no size (`_UNSIZED`) is marked `sized_by_ui`
-and given its preferred size every frame, unless its parent places it. A column or row places only
-such children, and a panel only such a column or row: a node added with a size of its own keeps its
-place and takes no room.
+from the top level in. A column and a row follow one rule along their length (`_shares`): each child
+starts from its measured size, and the room left over goes to the children with a `grow`, in
+proportion to it; a column then hands strips down its width from the top, and a row slots across its
+height from the left. A panel hands its inside, inset by its `padding` (twice the `spacing` unless
+set), to a column or row inside it. A node's `_Placement` is what `ui.add` was told about how it
+fits in its column or row: a `width` or `height` given there replaces the measured one, so a column
+or row places it from that. A node added with no size (`_UNSIZED`) is marked `sized_by_ui` and given
+its preferred size every frame, unless its parent places it. A column or row places only such
+children, and a panel only such a column or row: a node added with a size of its own keeps its place
+and takes no room.
 
 ## Focus and the devices
 

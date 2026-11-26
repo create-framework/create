@@ -64,11 +64,27 @@ def test_a_space_leaves_room_in_a_column() raises -> None:
     assert_equal(ui[after].rect.top(), 150.0 - _CONTROL - _GAP - 30 - _GAP)
 
 
-def test_a_row_shares_its_width_by_weight() raises -> None:
+def test_a_row_shares_what_is_left_over_by_grow() raises -> None:
+    # widths 80, 100 and 0 start the row, and its 300 left over is shared
+    # 1 : 3 between the last two
     var ui = UI()
-    var line = ui.add(Row(1, 3, rect=Rectangle((0, 0), 408, 40)))
-    var name = ui.add(Label("Volume"), line)
-    var volume = ui.add(Slider(0.5, 0, 1), line)
+    var line = ui.add(Row(rect=Rectangle((0, 0), 500, 40), gap=10))
+    var a = ui.add(Button("A"), line, width=80)
+    var b = ui.add(Button("B"), line, width=100, grow=1)
+    var c = ui.add(Button("C"), line, width=0, grow=3)
+    _laid_out(ui)
+    assert_equal(ui[a].rect.width, 80.0)
+    assert_equal(ui[b].rect.width, 175.0)
+    assert_equal(ui[c].rect.width, 225.0)
+    assert_equal(ui[a].rect.left(), -250.0)
+    assert_equal(ui[c].rect.right(), 250.0)
+
+
+def test_a_width_of_0_and_a_grow_give_exact_shares() raises -> None:
+    var ui = UI()
+    var line = ui.add(Row(rect=Rectangle((0, 0), 408, 40)))
+    var name = ui.add(Label("Volume"), line, width=0, grow=1)
+    var volume = ui.add(Slider(0.5, 0, 1), line, width=0, grow=3)
     _laid_out(ui)
     assert_equal(ui[name].rect.width, 100.0)  # (408 - 8) / 4
     assert_equal(ui[volume].rect.width, 300.0)
@@ -76,15 +92,36 @@ def test_a_row_shares_its_width_by_weight() raises -> None:
     assert_equal(ui[volume].rect.right(), 204.0)
 
 
-def test_a_row_with_no_weights_gives_equal_slots() raises -> None:
+def test_a_row_with_no_grow_packs_from_the_left() raises -> None:
     var ui = UI()
-    var line = ui.add(Row(rect=Rectangle((0, 0), 214, 40)))
-    var buttons = List[WidgetHandle[Button]]()
-    for name in ["A", "B", "C"]:
-        buttons.append(ui.add(Button(name), line))
+    var line = ui.add(Row(rect=Rectangle((0, 0), 400, 40)))
+    var a = ui.add(Button("A"), line, width=60)
+    var b = ui.add(Button("B"), line, width=70)
     _laid_out(ui)
-    for handle in buttons:
-        assert_equal(ui[handle].rect.width, 66.0)  # (214 - 2 * 8) / 3
+    assert_equal(ui[a].rect.left(), -200.0)
+    assert_equal(ui[a].rect.width, 60.0)
+    assert_equal(ui[b].rect.left(), -200.0 + 60 + _GAP)
+    assert_equal(ui[b].rect.width, 70.0)
+
+
+def test_a_growing_space_pushes_what_follows_to_the_bottom() raises -> None:
+    var ui = UI()
+    var list = ui.add(Column(Rectangle((0, 0), 200, 300)))
+    _ = ui.add(Button("A"), list)
+    _ = ui.add(Space(), list, grow=1)
+    var last = ui.add(Button("B"), list)
+    _laid_out(ui)
+    assert_equal(ui[last].rect.bottom(), -150.0)
+
+
+def test_nothing_grows_when_nothing_is_left_over() raises -> None:
+    var ui = UI()
+    var line = ui.add(Row(rect=Rectangle((0, 0), 100, 40)))
+    var a = ui.add(Button("A"), line, width=80)
+    var b = ui.add(Button("B"), line, width=80, grow=1)
+    _laid_out(ui)
+    assert_equal(ui[a].rect.width, 80.0)
+    assert_equal(ui[b].rect.width, 80.0)  # overflows, as it is
 
 
 def test_a_row_in_a_column_is_as_tall_as_its_tallest() raises -> None:

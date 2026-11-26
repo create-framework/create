@@ -25,6 +25,7 @@ comptime MARGIN = 24.0
 comptime GAP = 24.0
 comptime SUBJECT = 140.0
 """How big each subject is drawn, across."""
+comptime LABEL_WIDTH = 100.0  # the names before the sliders
 comptime TURN_SPEED = 0.6  # radians a second
 
 # The shadow the controls start at, and go back to on Reset.
@@ -44,8 +45,8 @@ def add_setting(
 ) -> WidgetHandle[Slider]:
     """A line of the panel: `name`, and a slider beside it setting one part
     of the shadow, in whole steps."""
-    var line = ui.add(Row(2, 3), column)
-    _ = ui.add(Label(name, alignment=Align.LEFT), line)
+    var line = ui.add(Row(), column)
+    _ = ui.add(Label(name, alignment=Align.LEFT), line, width=LABEL_WIDTH)
     return ui.add(Slider(value, minimum, maximum, step=1), line)
 
 

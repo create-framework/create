@@ -1,6 +1,7 @@
 """What every widget and layout node shares about its size: `_UNSIZED`,
-the size a widget leaves for its `UI` to choose, `_sized`, and
-`_Placement`, how a node fits in the column or row it is in."""
+the size a widget leaves for its `UI` to choose, `_sized`, `_Placement`,
+how a node fits in the column or row it is in, and `_shares`, how a column
+or row shares out its length."""
 
 from create.geometry import Rectangle
 from create.math import Point
@@ -39,3 +40,23 @@ struct _Placement(Copyable, Movable):
         self.width = None
         self.height = None
         self.align = None
+
+
+def _shares(
+    bases: List[Float64], grows: List[Float64], length: Float64, gap: Float64
+) -> List[Float64]:
+    """The lengths of the slots a column or row `length` long gives its
+    children, with `gap` between each and the next: each child's `bases`
+    length, and the room left over shared among them in proportion to their
+    `grows`. With no room left over, or no child that grows, each has its
+    base alone."""
+    var lengths = bases.copy()
+    var left = length - gap * Float64(max(len(bases) - 1, 0))
+    var total_grow = 0.0
+    for i in range(len(bases)):
+        left -= bases[i]
+        total_grow += grows[i]
+    if left > 0 and total_grow > 0:
+        for i in range(len(lengths)):
+            lengths[i] += left * grows[i] / total_grow
+    return lengths^
