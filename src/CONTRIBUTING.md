@@ -4,6 +4,17 @@ The conventions Create's code follows, for anyone changing the library itself. W
 belongs, and what each package may import, is in [ARCHITECTURE.md](../ARCHITECTURE.md); a package
 whose internals need explaining has a README beside its code.
 
+## One public type per file
+
+Every public type, struct or trait, has a file of its own, named after it in snake case:
+`FontWeight` is in `text/font_weight.mojo`, `Shape` in `geometry/shape.mojo`. So searching for a
+type's name finds its file, and the source matches the API reference, which has a page for each
+type. Free functions and constants that belong to a type live in its file.
+
+Internal types are exempt. One that serves a single public type lives in that type's file, such as
+`JSON`'s `_Parser` in `json.mojo`; one shared by several lives in an `_`-prefixed file, such as the
+render commands in `render/_command.mojo`.
+
 ## Verbs on values
 
 A value type's verb method returns a new value and leaves the receiver as it was: `rect =
