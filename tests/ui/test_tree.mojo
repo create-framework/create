@@ -136,7 +136,7 @@ def test_one_update_and_draw_run_every_kind_of_widget() raises -> None:
     var ui = UI()
     var card = ui.add(Panel(Rectangle((0, 0), 280, 190)))
     _ = ui.add(Label("Settings", Rectangle((0, 80), 260, 24)), card)
-    var name = ui.add(TextField(Rectangle((0, 45), 260, 32)), card)
+    var name = ui.add(TextField(rect=Rectangle((0, 45), 260, 32)), card)
     _ = ui.add(Slider(0.5, 0, 1, Rectangle((0, 10), 260, 32)), card)
     var music = ui.add(Checkbox("Music", Rectangle((0, -25), 260, 32)), card)
     _ = ui.add(Button("OK", Rectangle((0, -60), 100, 32)), card)

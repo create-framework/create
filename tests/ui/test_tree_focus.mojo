@@ -41,7 +41,7 @@ struct _Panel:
                 self.ui.add(Button("OK", Rectangle(Point(x, 60), 100.0, 40.0)))
             )
         self.slider = self.ui.add(Slider(0.5, 0, 1, Rectangle((0, 0), 200, 32)))
-        self.field = self.ui.add(TextField(Rectangle((0, -60), 200, 40)))
+        self.field = self.ui.add(TextField(rect=Rectangle((0, -60), 200, 40)))
         point_at(self.context, (0, 95))  # on nothing
         connect_pad(self.context)
 
