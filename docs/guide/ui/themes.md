@@ -169,6 +169,10 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A switch works the same way: `track` is a rounded rectangle, drawn while it is off; `on_track` is
+the same rectangle while it is on, taking what it leaves unset from `track`; `handle` is a point, as
+a slider's is; and `text_style` is the text beside it.
+
 A progress bar has two parts, each a line, as a slider's track has: `track`, the whole length, and
 `indicator`, from the start to its value, which takes what it leaves unset from `track`.
 
