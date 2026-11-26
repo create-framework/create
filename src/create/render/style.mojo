@@ -7,7 +7,8 @@ from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
 from create.render.gradient import Gradient
-from create.text.font import Font, FontWeight
+from create.text.font import Font
+from create.text.font_weight import FontWeight
 from create.math.vector import Vector
 from create.math import OptionalNumber
 from ._paint import Paint, TextStyle

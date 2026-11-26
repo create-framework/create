@@ -4,9 +4,9 @@ from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
 from create.app import source_path
 
+from create.text.font_weight import FontWeight
 from create.text.font import (
     Font,
-    FontWeight,
     _Face,
     _FontSource,
     _GlyphInfo,
