@@ -146,8 +146,11 @@ struct _Description(Copyable, Movable):
     var focusable: Bool
     """Whether it can take focus: a widget that reacts, while enabled."""
     var takes_typing: Bool
-    var adjusts: Bool
-    """Whether a gamepad's left and right change it, as they step a slider,
+    var adjusts_x: Bool
+    """Whether the left and right arrows and a gamepad's push change it, as
+    they step a slider, rather than move focus away."""
+    var adjusts_y: Bool
+    """Whether the up and down arrows and a gamepad's push change it,
     rather than move focus away."""
     var ring: Optional[Rectangle]
     """The shape its focus ring goes round, when it is a rectangle."""
@@ -173,7 +176,8 @@ struct _Description(Copyable, Movable):
         self.room = 0
         self.focusable = False
         self.takes_typing = False
-        self.adjusts = False
+        self.adjusts_x = False
+        self.adjusts_y = False
         self.ring = None
         self.ring_circle = None
         self.held = False
@@ -846,7 +850,11 @@ struct UI(Drawable, Movable):
         var free = Bool(topmost) and topmost.value() == index
         var hidden = self._hidden(index)
         var focus = _Focus(
-            in_tree=True, focused=False, keys=False, activated=False, step=0
+            in_tree=True,
+            focused=False,
+            keys=False,
+            activated=False,
+            push=Vector.ZERO,
         )
         if not hidden:
             focus = self._focus_for(index, context)
@@ -1101,10 +1109,9 @@ struct UI(Drawable, Movable):
         if _pad_pressed(context, self._player, GamepadButton.EAST):
             self.clear_focus()  # back out, as Escape does
         elif push != Vector.ZERO:
-            var steps = False
-            if self._focused and push.y == 0:
-                steps = self._describe(self._focused.value()).adjusts
-            if not steps:
+            if not self._focused or not self._adjusts(
+                self._focused.value(), push
+            ):
                 self._move_focus(push, from_gamepad=True)
                 # what focus lands on doesn't also take the push
                 self._pad_move = Vector.ZERO
@@ -1163,9 +1170,21 @@ struct UI(Drawable, Movable):
     def _takes_arrow(self, arrow: Vector) -> Bool:
         """Whether the focused widget takes `arrow` itself rather than
         letting it move focus: a text field takes every arrow, for its
-        caret, and a slider left and right, to step it."""
-        var focused = self._describe(self._focused.value())
-        return focused.takes_typing or (focused.adjusts and arrow.y == 0)
+        caret, and a widget the arrows along an axis it adjusts, as a
+        slider takes left and right to step it."""
+        var focused = self._focused.value()
+        return self._describe(focused).takes_typing or self._adjusts(
+            focused, arrow
+        )
+
+    def _adjusts(self, index: Int, direction: Vector) -> Bool:
+        """Whether the node at `index` takes a push or an arrow in
+        `direction` itself, along an axis it adjusts, rather than letting
+        it move focus."""
+        var node = self._describe(index)
+        if direction.y == 0:
+            return node.adjusts_x
+        return direction.x == 0 and node.adjusts_y
 
     def _move_focus(mut self, direction: Vector, *, from_gamepad: Bool):
         """Move focus to the nearest widget in `direction`, judged from where
@@ -1215,15 +1234,12 @@ struct UI(Drawable, Movable):
         ) or (
             shown and _pad_pressed(context, self._player, GamepadButton.SOUTH)
         )
-        var step = 0
-        if shown and self._pad_move.x != 0:
-            step = 1 if self._pad_move.x > 0 else -1
         return _Focus(
             in_tree=True,
             focused=focused,
             keys=keys,
             activated=activated,
-            step=step,
+            push=self._pad_move if shown else Vector.ZERO,
         )
 
     # -------------------------------------------------------------- layout
@@ -1514,7 +1530,7 @@ struct UI(Drawable, Movable):
             ref slider = widget[Slider]
             var described = _Description(_WIDGET, slider.rect, True)
             described.focusable = slider.enabled
-            described.adjusts = True
+            described.adjusts_x = True
             described.ring_circle = slider._ring()
             described.held = slider.down()
             return described^

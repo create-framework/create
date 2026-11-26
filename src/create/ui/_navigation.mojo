@@ -24,14 +24,20 @@ struct _Focus(Copyable, ImplicitlyCopyable, Movable):
     var activated: Bool
     """Enter or Space while keys act on it, or a gamepad's south button
     while it has focus shown: a press, as a click is."""
-    var step: Int
-    """-1 or 1 when a gamepad pushed left or right on it while it has focus
-    shown, for a slider to step; 0 otherwise."""
+    var push: Vector
+    """Which way a gamepad pushed on it this frame, while it has focus
+    shown: up, down, left or right, for a widget to step along the axis it
+    takes, as a slider does left and right; `Vector.ZERO` otherwise, and in
+    the frame a push moved focus onto it."""
 
     @staticmethod
     def standalone() -> Self:
         return Self(
-            in_tree=False, focused=False, keys=False, activated=False, step=0
+            in_tree=False,
+            focused=False,
+            keys=False,
+            activated=False,
+            push=Vector.ZERO,
         )
 
 
