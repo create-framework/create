@@ -2,4 +2,5 @@
 playback).
 """
 from .sound import Sound
-from .audio import Audio, Playback
+from .audio import Audio
+from .playback import Playback
