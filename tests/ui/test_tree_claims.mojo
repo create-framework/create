@@ -151,8 +151,8 @@ def test_a_disabled_part_reacts_to_nothing_until_enabled() raises -> None:
 def test_a_disabled_part_is_drawn_faded_and_lets_go_of_focus() raises -> None:
     var ui = UI()
     var row = ui.add(Row(rect=Rectangle((0, 0), 300, 40)))
-    var ok = ui.add(Button("OK"), row)
-    _ = ui.add(Label("Text"), row)
+    var ok = ui.add(Button("OK"), row, width=0, grow=1)  # half the row
+    _ = ui.add(Label("Text"), row, width=0, grow=1)
     var context = Context()
     point_at(context, (0, 140))
     ui.focus(ok)

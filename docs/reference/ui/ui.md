@@ -88,8 +88,12 @@ var ok = ui.add(Button("OK"), buttons, width=120)
 var cancel = ui.add(Button("Cancel"), buttons, width=120)
 ```
 
-`grow` and `align` are kept for the column or row to read. A
-negative `grow`, `width` or `height` stops the program.
+The room a column or row has left over, once each widget has the
+size it starts from, goes to the widgets added with a `grow`, in
+proportion to it. A `width` of 0 with a `grow` gives exact shares:
+`grow=1` and `grow=3` take a quarter and three quarters. `align` is
+kept for the column or row to read. A negative `grow`, `width` or
+`height` stops the program.
 
 ### `get`
 

@@ -7,9 +7,12 @@ from ._layout import _UNSIZED
 
 struct Column(Copyable, Movable):
     """Widgets one under the other, from the top down, each across the
-    column's whole width and as tall as it prefers: a button or a slider
-    the `UI`'s `control_height`, a label one and a half times its text's
-    size. A `gap` is left between each and the next.
+    column's whole width and as tall as it prefers, or as the `height` it
+    was added with: a button or a slider the `UI`'s `control_height`, a
+    label one and a half times its text's size. A `gap` is left between
+    each and the next. The room left over goes to the widgets added with a
+    `grow`, shared in proportion to it, so a growing `Space` pushes what
+    comes after it to the bottom.
 
     ```mojo
     # In `create`, building the `ui` field: a settings card.

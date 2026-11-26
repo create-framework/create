@@ -28,7 +28,7 @@ from ._navigation import (
     _pad_pressed,
     _pad_push,
 )
-from ._layout import _Placement, _sized
+from ._layout import _Placement, _shares, _sized
 from .column import Column
 from .row import Row
 from .space import Space
@@ -116,9 +116,6 @@ struct _Description(Copyable, Movable):
     """Whether it is hit where it is, rather than letting the pointer
     through."""
     var gap: Optional[Float64]
-    var weights: List[Float64]
-    var height: Optional[Float64]
-    """A row's height in a column, when set."""
     var amount: Optional[Float64]
     """A space's size, when set."""
     var padding: Optional[Float64]
@@ -144,8 +141,6 @@ struct _Description(Copyable, Movable):
         self.rect = rect
         self.takes_pointer = takes_pointer
         self.gap = None
-        self.weights = []
-        self.height = None
         self.amount = None
         self.padding = None
         self.focusable = False
@@ -318,8 +313,12 @@ struct UI(Drawable, Movable):
         var cancel = ui.add(Button("Cancel"), buttons, width=120)
         ```
 
-        `grow` and `align` are kept for the column or row to read. A
-        negative `grow`, `width` or `height` stops the program.
+        The room a column or row has left over, once each widget has the
+        size it starts from, goes to the widgets added with a `grow`, in
+        proportion to it. A `width` of 0 with a `grow` gives exact shares:
+        `grow=1` and `grow=3` take a quarter and three quarters. `align` is
+        kept for the column or row to read. A negative `grow`, `width` or
+        `height` stops the program.
         """
         comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
         comptime assert _Container.is_type_supported[P](), _NOT_A_CONTAINER
@@ -1075,8 +1074,6 @@ struct UI(Drawable, Movable):
                 else:
                     width += size[0] + between
                     height = max(height, size[1])
-            if node.kind == _ROW:
-                height = node.height.or_else(height)
         elif node.kind == _SPACE:
             width = node.amount.or_else(2 * theme.spacing)
             height = width
@@ -1138,23 +1135,37 @@ struct UI(Drawable, Movable):
             var placed = self._placed_children(index)
             var slots = List[Rectangle]()
             var gap = node.gap.or_else(theme.spacing)
-            if node.kind == _COLUMN:
-                var top = rect.top()
-                for child in placed:
-                    var height = sizes[child][1]
+            var column = node.kind == _COLUMN
+            # along the column or row: what each starts from, and its grow
+            var bases = List[Float64]()
+            var grows = List[Float64]()
+            for child in placed:
+                bases.append(sizes[child][1] if column else sizes[child][0])
+                grows.append(self._nodes[child].placement.grow)
+            var lengths = _shares(
+                bases, grows, rect.height if column else rect.width, gap
+            )
+            # from the top of a column, or the left of a row
+            var at = rect.top() if column else rect.left()
+            for length in lengths:
+                if column:
                     slots.append(
                         Rectangle(
-                            Point(rect.position.x, top - height / 2),
+                            Point(rect.position.x, at - length / 2),
                             rect.width,
-                            height,
+                            length,
                         )
                     )
-                    top -= height + gap
-            elif placed:
-                var weights = node.weights.copy()
-                while len(weights) < len(placed):
-                    weights.append(1.0)
-                slots = rect.columns(weights=weights, gap=gap)
+                    at -= length + gap
+                else:
+                    slots.append(
+                        Rectangle(
+                            Point(at + length / 2, rect.position.y),
+                            length,
+                            rect.height,
+                        )
+                    )
+                    at += length + gap
             var next = 0
             for child in children:
                 var given: Optional[Rectangle] = None
@@ -1258,8 +1269,6 @@ struct UI(Drawable, Movable):
             ref row = widget[Row]
             var described = _Description(_ROW, row.rect, False)
             described.gap = row.gap
-            described.weights = row.weights.copy()
-            described.height = row.height
             return described^
         # no size of its own: the column or row it is in sizes it
         var described = _Description(

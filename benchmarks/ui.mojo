@@ -35,7 +35,7 @@ def build(rows: Int) -> UI:
     var panel = ui.add(Panel())
     var column = ui.add(Column(), panel)
     for i in range(rows):
-        var row = ui.add(Row(1, 3, 2, 2), column)
+        var row = ui.add(Row(), column)
         _ = ui.add(Label(String("Setting ", i), alignment=Align.LEFT), row)
         _ = ui.add(Slider(0.5, 0, 1), row)
         _ = ui.add(Checkbox("On"), row)
