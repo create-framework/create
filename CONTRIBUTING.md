@@ -215,7 +215,8 @@ contributor docs, commit messages and pull requests.
 - **Examples build.** A complete program starts with `from create import *` and runs as it is. A
   fragment opens with a comment saying where it goes, ``# In `update`:``, and what it assumes, ``#
   In `create`, building the `random` field:``. A comment beside a line says what the line does, in
-  lowercase and without a full stop: `# red, mostly transparent`.
+  lowercase and without a full stop: `# red, mostly transparent`. A comment on a line of its own is
+  written in sentences, capitalised and ending in a full stop: `# Follow the player sideways.`
 - **Links** are relative and written for GitHub (see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)).
   Link a page by its title, and a section by its heading.
 - **A section's index page** lists each of its pages as `[Title](page.md): what it covers.`

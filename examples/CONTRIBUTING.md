@@ -43,6 +43,12 @@ all. `pixi run build-examples` type-checks every example, and a warning fails it
   reader copying the example would pick up a habit that serves no purpose in their own program.
 - **Load assets by relative path**, from the example's own folder: Create resolves a path against
   the source file that names it.
+- **Give the code room to breathe.** Split a function's body into groups of lines that do one step
+  together, such as a loop, an `if`/`else` or a few related declarations, with an empty line between
+  the groups. Open a group with a comment when it says something the code doesn't: what the step is
+  for, or why it is done this way. Leave the comment out when a good name already says it; `# Loop
+  over the levels.` above `for level in levels:` only repeats the code. Readers new to coding read
+  an example a step at a time, and the gaps show them where each step ends.
 - Comments and the docstring follow the [prose style](../CONTRIBUTING.md#prose-style).
 
 ## The project template
