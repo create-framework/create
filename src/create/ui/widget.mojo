@@ -1,5 +1,4 @@
-"""`Widget`, `Hoverable` and `Clickable`: what a widget is, and what can be
-asked of one after its `update`."""
+"""`Widget`: what a widget is."""
 
 from create.app import Context
 from create.render import Canvas, Drawable
@@ -26,32 +25,4 @@ trait Widget(Drawable):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Read what the input did to it this frame, and keep it."""
-        ...
-
-
-trait Hoverable:
-    """A widget the pointer can be over."""
-
-    def hovered(self) -> Bool:
-        """Whether the pointer is over it, as of its last `update`."""
-        ...
-
-
-trait Clickable(Hoverable):
-    """A widget the mouse presses, in the words the input devices use:
-    *pressed* and *released* are the edges, true only in the frame they
-    happen, and *down* is held. Each is as of its last `update`."""
-
-    def pressed(self) -> Bool:
-        """Whether the left button went down over it this frame."""
-        ...
-
-    def down(self) -> Bool:
-        """Whether it is held: pressed on it, and the button not let go
-        since, wherever the pointer has moved."""
-        ...
-
-    def released(self) -> Bool:
-        """Whether it was clicked this frame: let go over it, after being
-        pressed on it. A press that starts elsewhere doesn't count."""
         ...

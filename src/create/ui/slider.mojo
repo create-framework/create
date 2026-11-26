@@ -8,9 +8,10 @@ from create.render import Canvas, Style
 from create.math import OptionalNumber
 from ._pointer import _Pointer
 from ._theme import _SliderLook, _Theme
-from .layout import _UNSIZED
+from ._layout import _UNSIZED
 from ._navigation import _Focus
-from .widget import Clickable, Widget
+from .clickable import Clickable
+from .widget import Widget
 
 
 comptime _CONTROL_WIDTH = 200.0

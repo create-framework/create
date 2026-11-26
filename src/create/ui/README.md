@@ -13,17 +13,23 @@ rules.
 |---|---|
 | `_theme.mojo` | `_Theme`: the colours, the `ui.style` styles (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
-| `colors.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `StateLayers` and `FocusRing`; `_contrast` and `_readable_on` |
-| `tree.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `WidgetHandle`; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
+| `color_scheme.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `_contrast` and `_readable_on` |
+| `state_layers.mojo` | `StateLayers`, how strongly a widget shows its state |
+| `focus_ring.mojo` | `FocusRing`, the ring around a focused widget |
+| `ui.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
 | `_navigation.mojo` | `_Focus`, what the tree's focus means for a widget this frame (focused, keys act, activated, a gamepad's step); the arrows' and the gamepad's push, with `_PadRepeat` repeating a held direction, and the nearest-in-a-direction choice |
-| `layout.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes, and `_UNSIZED`, the size a widget leaves for the tree to choose |
-| `widget.mojo` | The traits a widget value shares: `Widget` (`update`, then drawn with `canvas.draw`), `Hoverable` and `Clickable` |
+| `widget_handle.mojo` | `WidgetHandle`, where a widget is in a `UI`: its index and generation |
+| `_layout.mojo` | `_UNSIZED`, the size a widget leaves for the tree to choose, and `_sized` |
+| `column.mojo`, `row.mojo`, `space.mojo` | `Column`, `Row` and `Space`, the tree's layout nodes |
+| `widget.mojo` | `Widget`, the trait every widget value shares: `update`, then drawn with `canvas.draw` |
+| `hoverable.mojo`, `clickable.mojo` | `Hoverable` and `Clickable`, what can be asked of a widget after its `update` |
 | `_pointer.mojo` | `_Pointer`, what the mouse did to a widget value: hovered, held, dragged this frame, and this frame's press and click, kept between its `update`s |
 | `checkbox.mojo` | `Checkbox`, a widget value that owns whether it is ticked; its box, tick and text placement |
 | `label.mojo` | `Label`, a widget value: text placed in a rectangle; `_anchor`, the point of a rectangle text is anchored to |
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
 | `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place, and the value a drag or a key gives |
-| `button.mojo` | `Button`, a widget value; `ButtonVariant`. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
+| `button.mojo` | `Button`, a widget value. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
+| `button_variant.mojo` | `ButtonVariant`, which of the colours a button is drawn in |
 | `text_field.mojo` | `TextField`, a widget value that owns a `_TextBuffer` and its own focus; `_measure` and `_offset_at`, how it measures text to place its caret |
 
 ## A widget on its own
@@ -44,11 +50,11 @@ argument, so enabling a part of the tree again restores each widget as it was.
 
 ## The tree
 
-`UI` (`tree.mojo`) keeps its widgets as `_Node`s: a `_Widget`, a `Variant` of every built-in kind
-and the layout nodes, with a parent and children. The `Variant` is storage only. Three methods are
-the only code that knows which kinds it holds, each matching a node's kind and handing it to that
-kind's own fields and methods: `_describe` (what layout, hit-testing and focus need to know about a
-node: its kind, rect, whether it takes the pointer or focus, its ring), `_draw`, and `_dispatch_mut`
+`UI` (`ui.mojo`) keeps its widgets as `_Node`s: a `_Widget`, a `Variant` of every built-in kind and
+the layout nodes, with a parent and children. The `Variant` is storage only. Three methods are the
+only code that knows which kinds it holds, each matching a node's kind and handing it to that kind's
+own fields and methods: `_describe` (what layout, hit-testing and focus need to know about a node:
+its kind, rect, whether it takes the pointer or focus, its ring), `_draw`, and `_dispatch_mut`
 (update, measure, place). A new kind needs a branch in each and nothing else. Reading and changing
 are separate methods because each needs the tree and the canvas differently. The public API never
 shows the `Variant`: `ui.add` returns a typed `WidgetHandle[W]`, and `ui[handle]` is a reference to

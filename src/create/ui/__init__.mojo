@@ -5,13 +5,21 @@ updates and draws with `canvas.draw`, and the traits they share (`Widget`,
 out with `Column`, `Row` and `Space`, reached through `WidgetHandle`s; and
 `ColorScheme`, the colours they are drawn in.
 """
-from .tree import UI, WidgetHandle
-from .colors import ColorScheme, StateLayers, FocusRing
-from .button import Button, ButtonVariant
+from .ui import UI
+from .widget_handle import WidgetHandle
+from .color_scheme import ColorScheme
+from .state_layers import StateLayers
+from .focus_ring import FocusRing
+from .button import Button
+from .button_variant import ButtonVariant
 from .checkbox import Checkbox
 from .label import Label
-from .layout import Column, Row, Space
+from .column import Column
+from .row import Row
+from .space import Space
 from .panel import Panel
 from .slider import Slider
-from .widget import Clickable, Hoverable, Widget
+from .widget import Widget
+from .hoverable import Hoverable
+from .clickable import Clickable
 from .text_field import TextField

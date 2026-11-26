@@ -6,10 +6,11 @@ from create.math import Point, Vector
 from create.render import Align, Canvas, Style, Text
 from ._pointer import _Pointer
 from ._theme import _CheckboxLook, _Theme
-from .layout import _UNSIZED
+from ._layout import _UNSIZED
 from .text_field import _measure
 from ._navigation import _Focus
-from .widget import Clickable, Widget
+from .clickable import Clickable
+from .widget import Widget
 
 
 comptime _BOX_SIZE = 18.0

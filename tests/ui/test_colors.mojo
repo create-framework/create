@@ -4,7 +4,7 @@ given to replace their own, schemes from a seed colour, and the colours a
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui.colors import _contrast
+from create.ui.color_scheme import _contrast
 from create.ui._theme import _body_text, _label_text
 from _input import point_at
 
