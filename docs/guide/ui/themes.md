@@ -168,11 +168,16 @@ number, is the gap between the field's sides and its text.
 `UI`. A widget's own style wins over it, field by field: a button styled `Style(fill=Color.RED)` in
 a `UI` whose buttons are `Style(corner_radius=4)` is red and square. Each part is named by the
 widget and its keyword for the part: `slider_handle=`, `checkbox_tick=`, `checkbox_text_style=`,
-`text_field_caret=` and so on. Each call replaces what the last one set.
+`text_field_caret=` and so on.
+
+**Each call changes only the kinds it names.** A keyword given replaces what an earlier call set for
+that kind, and a kind left out keeps its style, so the styles can be set a few at a time. Give a
+kind `Style()` to clear its style:
 
 ```mojo
 # In `create`, building the `ui` field: square buttons throughout.
 ui.style(button=Style(corner_radius=4))
+ui.style(slider_handle=Style(stroke=Color.ORANGE))  # the buttons stay square
 ```
 
 The focus ring isn't a part: it comes from the `UI`'s `focus_ring` (see [Focus
