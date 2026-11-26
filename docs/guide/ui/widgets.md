@@ -62,6 +62,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `Button(text, rect)` | A button showing `text` | `released()`, the click, and `pressed()`, `down()` and `hovered()` |
 | `Checkbox(text, rect, checked=)` | A box, ticked or not, with `text` beside it | `checked`, and `changed()` in the frame a click ticks or unticks it |
 | `Switch(text, rect, on=)` | A track with a handle, on or off, with `text` beside it | `on`, and `changed()` in the frame a click turns it over |
+| `ChoiceGroup(options, rect, selected=)` | A few `options` one under the other, one of them chosen | `selected`, `selected_text()`, and `changed()` in the frame another is chosen |
 | `Slider(value, minimum, maximum, rect)` | A track with a handle setting `value` | `value`, and `changed()` in the frame it moves |
 | `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
 | `ProgressBar(value, rect)` | A bar filled as far as `value` has got, from 0 to 1 | Nothing |
@@ -76,6 +77,11 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   field is the program's to set too. Use a switch for a setting that applies the moment it is
   turned, such as music or full screen, and a checkbox for a choice made before something else
   happens, such as the options of a new game.
+- **A choice group** shows a few options, each a circle with its text, and one of them is chosen:
+  its circle has a dot in it. Other toolkits call these radio buttons. A click on an option chooses
+  it, and in a `UI` the up and down arrows and a gamepad's push move the choice while it has focus.
+  `selected` is the chosen option's index, from 0 at the top, and the program's to set too. Choose a
+  dropdown for a longer list, and a column of checkboxes to choose several.
 - **A slider** jumps to where it is pressed and follows the pointer while held, even off its track,
   stopping at its ends. `step=` rounds the value to multiples of the step, counted from `minimum`,
   and must be more than 0. A value outside `minimum` to `maximum` is drawn at the nearer end and

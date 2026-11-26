@@ -169,6 +169,10 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A choice group's `circle` is each option's circle, an outline; `selected_circle` is the chosen
+one's, taking what it leaves unset from `circle`; `dot` is a point in it, as a slider's handle is;
+and `text_style` is the options' text.
+
 A switch works the same way: `track` is a rounded rectangle, drawn while it is off; `on_track` is
 the same rectangle while it is on, taking what it leaves unset from `track`; `handle` is a point, as
 a slider's is; and `text_style` is the text beside it.
