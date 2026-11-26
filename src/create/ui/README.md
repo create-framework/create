@@ -80,7 +80,8 @@ and a parent a kind `_Container` holds.
 1. lay out every node (below);
 2. find the topmost node under the pointer, walking the drawing order backwards and skipping a node
    whose `clip` leaves the pointer out, unless another `UI` holds the mouse;
-3. move focus for this frame's clicks, Tab, Escape and gamepad (below);
+3. move focus for this frame's clicks, Tab, Escape and gamepad (below), then bring what focus moved
+   onto, or `scroll_to` named, into view, laying out again if a scroll area moved;
 4. update every node in drawing order, a parent before what is inside it, each with its theme: a
    panel passes its surface and content colours down to what is inside it;
 5. lay out again, if a scroll area moved;
@@ -123,6 +124,13 @@ another shows only what both show.
 topmost node under the pointer outwards. A scroll area takes the pointer, so the wheel reaches it
 over the gaps between its widgets. When any scroll area moved (its update's `_Reply.scrolled`),
 `update` lays the tree out again before it returns, so the column is drawn where its bar says.
+
+**Bringing a node into view waits for `update`.** `_focus_on` with a visible focus, and `scroll_to`,
+keep the node in `_reveal`. `update` acts on it after moving focus and before any widget is updated:
+`_scroll_into_view` walks out from the node, and moves each scroll area round it by the least that
+puts the node's rect, as last placed, inside the area's window, moving the rect along for the areas
+further out. So a widget's update sees where it is drawn, though hover was found from where it was
+before.
 
 ## Focus and the devices
 
