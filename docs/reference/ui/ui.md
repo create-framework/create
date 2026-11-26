@@ -61,7 +61,7 @@ A tree whose focus any gamepad moves, unless `player` names one, as each player'
 def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]
 ```
 
-Add `widget` at the top level, drawn above everything added before it. It is a `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Label`, `Panel`, `Slider`, `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or `ScrollArea`; anything else doesn't compile.
+Add `widget` at the top level, drawn above everything added before it. It is a `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or `ScrollArea`; anything else doesn't compile.
 
 ```mojo
 def add[W: Copyable, P: Copyable](
@@ -251,6 +251,9 @@ def style(
     choice_group_selected_circle: Optional[Style] = None,
     choice_group_dot: Optional[Style] = None,
     choice_group_text_style: Optional[Style] = None,
+    tabs_tab: Optional[Style] = None,
+    tabs_selected_tab: Optional[Style] = None,
+    tabs_indicator: Optional[Style] = None,
 )
 ```
 

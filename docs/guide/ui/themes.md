@@ -169,6 +169,10 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+Tabs' `tab` is each tab, a rectangle with its text, bare unless its style gives it a fill or an
+outline; `selected_tab` is the selected one, taking what it leaves unset from `tab`; and `indicator`
+is the line beneath the selected tab.
+
 A choice group's `circle` is each option's circle, an outline; `selected_circle` is the chosen
 one's, taking what it leaves unset from `circle`; `dot` is a point in it, as a slider's handle is;
 and `text_style` is the options' text.

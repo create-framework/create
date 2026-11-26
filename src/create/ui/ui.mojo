@@ -38,6 +38,7 @@ from .progress_bar import ProgressBar
 from .slider import Slider
 from .switch import Switch
 from .choice_group import ChoiceGroup
+from .tabs import Tabs
 from .text_field import TextField
 from ._theme import (
     _CONTROL_HEIGHT,
@@ -53,6 +54,7 @@ comptime _Widget = Variant[
     Checkbox,
     Switch,
     ChoiceGroup,
+    Tabs,
     Label,
     Panel,
     Slider,
@@ -72,7 +74,7 @@ comptime _Container = Variant[Panel, Column, Row, ScrollArea]
 """The kinds of node another can be added inside."""
 
 comptime _NOT_A_NODE = (
-    "ui.add takes a Button, Checkbox, Switch, ChoiceGroup, Label, Panel,"
+    "ui.add takes a Button, Checkbox, Switch, ChoiceGroup, Tabs, Label, Panel,"
     " Slider, TextField,"
     " Picture, ProgressBar, Column, Row, Space or ScrollArea"
 )
@@ -320,7 +322,7 @@ struct UI(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it. It is a `Button`, `Checkbox`, `Switch`, `ChoiceGroup`,
-        `Label`, `Panel`, `Slider`,
+        `Tabs`, `Label`, `Panel`, `Slider`,
         `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or
         `ScrollArea`;
         anything else doesn't compile."""
@@ -611,6 +613,9 @@ struct UI(Drawable, Movable):
         choice_group_selected_circle: Optional[Style] = None,
         choice_group_dot: Optional[Style] = None,
         choice_group_text_style: Optional[Style] = None,
+        tabs_tab: Optional[Style] = None,
+        tabs_selected_tab: Optional[Style] = None,
+        tabs_indicator: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -689,6 +694,12 @@ struct UI(Drawable, Movable):
             styles.choice_group_dot = choice_group_dot.value()
         if choice_group_text_style:
             styles.choice_group_text_style = choice_group_text_style.value()
+        if tabs_tab:
+            styles.tabs_tab = tabs_tab.value()
+        if tabs_selected_tab:
+            styles.tabs_selected_tab = tabs_selected_tab.value()
+        if tabs_indicator:
+            styles.tabs_indicator = tabs_indicator.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -1551,6 +1562,14 @@ struct UI(Drawable, Movable):
             described.ring_circle = group._ring()
             described.held = group.down()
             return described^
+        if widget.isa[Tabs]():
+            ref tabs = widget[Tabs]
+            var described = _Description(_WIDGET, tabs.rect, True)
+            described.focusable = tabs.enabled
+            described.adjusts_x = True
+            described.ring = tabs._ring()
+            described.held = tabs.down()
+            return described^
         if widget.isa[Slider]():
             ref slider = widget[Slider]
             var described = _Description(_WIDGET, slider.rect, True)
@@ -1622,6 +1641,8 @@ struct UI(Drawable, Movable):
             canvas.draw(widget[Switch])
         elif widget.isa[ChoiceGroup]():
             canvas.draw(widget[ChoiceGroup])
+        elif widget.isa[Tabs]():
+            canvas.draw(widget[Tabs])
         elif widget.isa[Slider]():
             canvas.draw(widget[Slider])
         elif widget.isa[TextField]():
@@ -1726,6 +1747,21 @@ struct UI(Drawable, Movable):
                 reply.width, reply.height = group._measure(canvas, theme)
             else:
                 group.rect = rect
+        elif widget.isa[Tabs]():
+            ref tabs = widget[Tabs]
+            if action == _UPDATE:
+                tabs._update(
+                    context,
+                    canvas,
+                    theme,
+                    free=free,
+                    focus=focus,
+                    disabled=disabled,
+                )
+            elif action == _MEASURE:
+                reply.width, reply.height = tabs._measure(canvas, theme)
+            else:
+                tabs.rect = rect
         elif widget.isa[Slider]():
             ref slider = widget[Slider]
             if action == _UPDATE:
