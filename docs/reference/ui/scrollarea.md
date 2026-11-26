@@ -24,8 +24,10 @@ for name in ["Forest", "Caves", "Castle", "Sky", "Moon"]:
 self.ui[self.window].offset = 0
 ```
 
-With no `rect` of its own it is as wide as its column, and as tall as
-it too, up to `max_height`. In a column or row it can `grow` to fill
+It leaves room round its column for a focused widget's ring, so the
+ring isn't cut at its edges. With no `rect` of its own it is as wide as
+its column, and as tall as it too, that room included, up to
+`max_height`. In a column or row it can `grow` to fill
 the room left over, like any other widget.
 
 The bar has two parts, each a line drawn in a style of its own:

@@ -8,7 +8,9 @@ happened through the handles it kept.
 
 Click the widgets, or Tab through them and use Enter, Space and the arrows;
 a gamepad's d-pad and A button work too. Escape leaves the text field. Turn
-the mouse wheel over the levels, or drag their scroll bar, to see the rest.
+the mouse wheel over the levels, or drag their scroll bar, to see the rest;
+Tab through the levels, or move along them with a gamepad, and the list
+scrolls to keep the focused one in view.
 """
 
 from create import *

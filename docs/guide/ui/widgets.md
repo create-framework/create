@@ -239,7 +239,8 @@ for name in ["Forest", "Caves", "Castle", "Sky", "Moon"]:
 ```
 
 - **Its size:** with no `rect` of its own, a scroll area is as wide as its column and as tall as it
-  too, up to `max_height`. In a column or row it can also take a `height`, or `grow` into the room
+  too, up to `max_height`, with a little room all round the column so a focused widget's ring is
+  never cut at its edges. In a column or row it can also take a `height`, or `grow` into the room
   left over, like any other widget.
 - **The wheel and the scroll bar scroll it.** While the column is taller than the window, a scroll
   bar runs down the window's right edge, and the column leaves room for it. Turning the mouse wheel

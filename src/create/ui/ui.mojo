@@ -849,12 +849,13 @@ struct UI(Drawable, Movable):
         mut self, index: Int, mut context: Context, mut canvas: Canvas
     ) raises -> Bool:
         """Scroll each scroll area the node at `index` is in, innermost
-        first, by the least that brings it, as last placed, inside the
-        area's window. Gives back whether any moved."""
-        var shown = self._describe(index).rect
+        first, by the least that brings it, as last placed, and the focus
+        ring round it, inside the area's window. Gives back whether any
+        moved."""
+        var theme = self._theme()
+        var shown = self._describe(index).rect.inset(-theme.ring_reach())
         var moved = False
         var at = self._nodes[index].parent
-        var theme = self._theme()
         while at:
             var area = at.value()
             var node = self._describe(area)
@@ -1253,11 +1254,13 @@ struct UI(Drawable, Movable):
                 width = node.rect.width
                 height = node.rect.height
             else:
-                # as big as the column it shows, up to its `max_height`
+                # as big as the column it shows, with room round it for a
+                # focus ring, up to its `max_height`
+                var margin = 2 * theme.ring_reach()
                 for child in children:
                     if self._fills(child, index):
-                        width = sizes[child][0]
-                        height = sizes[child][1]
+                        width = sizes[child][0] + margin
+                        height = sizes[child][1] + margin
                 if node.max_height:
                     height = min(height, node.max_height.value())
         elif node.kind == _PANEL:
@@ -1313,11 +1316,12 @@ struct UI(Drawable, Movable):
                 node.rect.position, sizes[index][0], sizes[index][1]
             )
         var children = self._nodes[index].children.copy()
-        # the height of the column a scroll area shows, to keep its offset within
+        # how far a scroll area's column runs, the room for a focus ring
+        # above and below it included, to keep its offset within
         var content = 0.0
         for child in children:
             if node.kind == _SCROLL_AREA and self._fills(child, index):
-                content = sizes[child][1]
+                content = sizes[child][1] + 2 * theme.ring_reach()
         if slot or self._nodes[index].sized_by_ui or node.kind == _SCROLL_AREA:
             _ = self._dispatch_mut(
                 index,
@@ -1399,8 +1403,10 @@ struct UI(Drawable, Movable):
             # what is inside sees no more than the window
             var described = self._describe(index)
             var offset = described.offset
-            # the column leaves room for the bar while it is taller
+            # the column leaves room for the bar while it is taller, and for
+            # a focus ring all round
             var bar = theme.scroll_bar_width() if described.overflows else 0.0
+            var reach = theme.ring_reach()
             var window = _overlap(clip.value(), rect) if clip else rect
             for child in children:
                 var given: Optional[Rectangle] = None
@@ -1410,8 +1416,8 @@ struct UI(Drawable, Movable):
                             rect.position.x - bar / 2,
                             rect.top() + offset - content / 2,
                         ),
-                        rect.width - bar,
-                        content,
+                        rect.width - bar - 2 * reach,
+                        content - 2 * reach,
                     )
                 self._place_from(
                     child, given, window, context, canvas, theme, sizes
