@@ -169,6 +169,9 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A tooltip has one part, `ui.style(tooltip=...)`: its box, a rectangle, whose text parts set its
+text, such as `Style(fill=Color.BLACK, text_color=Color.WHITE)`.
+
 A dropdown's `field` is its field, a rectangle with the chosen option's text; `list` is the open
 list, a rectangle, raised with a shadow by default; and `item` is each item's text, the chosen one
 in `primary`.

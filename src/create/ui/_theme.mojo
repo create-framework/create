@@ -79,6 +79,7 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var dropdown_field: Style
     var dropdown_list: Style
     var dropdown_item: Style
+    var tooltip: Style
 
     def __init__(out self):
         self.button = Style()
@@ -119,6 +120,7 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.dropdown_field = Style()
         self.dropdown_list = Style()
         self.dropdown_item = Style()
+        self.tooltip = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -164,6 +166,7 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.dropdown_field.over(under.dropdown_field),
             self.dropdown_list.over(under.dropdown_list),
             self.dropdown_item.over(under.dropdown_item),
+            self.tooltip.over(under.tooltip),
         )
 
 
@@ -265,6 +268,14 @@ struct _DropdownLook(Copyable, Movable):
     var selected_text: _ResolvedStyle
     var layer: _ResolvedStyle
     var thumb: _ResolvedStyle
+
+
+@fieldwise_init
+struct _TooltipLook(Copyable, Movable):
+    """A tooltip's box and its text."""
+
+    var box: _ResolvedStyle
+    var text: _ResolvedStyle
 
 
 @fieldwise_init
@@ -859,6 +870,24 @@ struct _Theme(Copyable, Movable):
             layer,
             thumb,
         )
+
+    def tooltip(self) -> _TooltipLook:
+        """A tooltip's look, from `ui.style(tooltip=)` over the default: a
+        small box in the text colour, with its text in the surface colour,
+        so it stands out from whatever it covers."""
+        var colors = self.colors
+        var look = self.styles[].tooltip.over(
+            Style(
+                fill=colors.on_surface,
+                stroke_enabled=False,
+                corner_radius=self.corner_radius / 4,
+                text_color=colors.surface,
+                font_size=14,
+            )
+        )
+        var box = _ResolvedStyle()
+        box.apply(look)
+        return _TooltipLook(box, _text_look(box, Align.CENTER))
 
     def ring_reach(self) -> Float64:
         """How far the focus ring reaches outside a widget: its gap and its

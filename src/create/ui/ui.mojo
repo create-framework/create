@@ -11,8 +11,8 @@ from create.color import Color
 from create.app import Context
 from create.geometry import Circle, Rectangle
 from create.input import GamepadButton, Key
-from create.math import OptionalNumber, Point, Vector
-from create.render import Align, Canvas, Drawable, Picture, Style
+from create.math import OptionalNumber, Point, Vector, clamp
+from create.render import Align, Canvas, Drawable, Picture, Style, Text
 from .button import Button
 from .widget_handle import WidgetHandle
 from .checkbox import Checkbox
@@ -41,14 +41,26 @@ from .choice_group import ChoiceGroup
 from .tabs import Tabs
 from .number_field import NumberField
 from .dropdown import Dropdown
-from .text_field import TextField
+from .text_field import TextField, _measure
 from ._theme import (
     _CONTROL_HEIGHT,
     _CORNER_RADIUS,
     _SPACING,
     _Styles,
     _Theme,
+    _TooltipLook,
 )
+
+
+comptime _TOOLTIP_DELAY = 0.5
+"""How long, in seconds, the pointer rests on a widget before its tooltip
+shows."""
+
+comptime _TOOLTIP_PADDING = 8.0
+"""The room round a tooltip's text, inside its box."""
+
+comptime _TOOLTIP_GAP = 6.0
+"""The gap between a widget and its tooltip."""
 
 
 comptime _Widget = Variant[
@@ -111,6 +123,9 @@ struct _Node(Copyable, Movable):
     """What of it can be seen and clicked: the windows of the `ScrollArea`s it
     is in, overlapped, as the last layout left them. All of it when
     `None`."""
+    var tooltip: Optional[String]
+    """The text shown near it while the pointer rests on it, or while it
+    has focus from the keyboard or a gamepad: `ui.tooltip` sets it."""
 
 
 comptime _UPDATE = 0
@@ -200,6 +215,16 @@ struct _Description(Copyable, Movable):
         self.captures_keys = False
         self.popup = None
         self.focus_request = None
+
+
+@fieldwise_init
+struct _Tooltip(Copyable, Movable):
+    """A tooltip as this frame shows it: its text, where its box is, and
+    the look it is drawn in."""
+
+    var text: String
+    var rect: Rectangle
+    var look: _TooltipLook
 
 
 @fieldwise_init
@@ -298,6 +323,14 @@ struct UI(Drawable, Movable):
     `Context._new_claimant()`; 0 until its first `update`."""
     var _frame: Int
     """The frame it was last updated in."""
+    var _tip_node: Optional[Int]
+    """The node the pointer last rested on that has a tooltip."""
+    var _tip_since: Float64
+    """When the pointer came to rest on it, by the real clock."""
+    var _tip_dismissed: Bool
+    """Whether a press hid its tooltip until the pointer leaves it."""
+    var _tip: Optional[_Tooltip]
+    """The tooltip to draw this frame, if any."""
     var _pointed_at: Bool
     """Whether the pointer was over one of its widgets at its last
     `update`."""
@@ -325,6 +358,10 @@ struct UI(Drawable, Movable):
         self._roots = []
         self._free = []
         self._identity = ArcPointer(0)
+        self._tip_node = None
+        self._tip_since = 0
+        self._tip_dismissed = False
+        self._tip = None
         self._reveal = None
         self._colors = ColorScheme.light()
         self._styles = ArcPointer(_Styles())
@@ -424,6 +461,7 @@ struct UI(Drawable, Movable):
                 False,
                 placement^,
                 None,
+                None,
             )
         else:
             index = len(self._nodes)
@@ -438,6 +476,7 @@ struct UI(Drawable, Movable):
                     0,
                     False,
                     placement^,
+                    None,
                     None,
                 )
             )
@@ -639,6 +678,7 @@ struct UI(Drawable, Movable):
         dropdown_field: Optional[Style] = None,
         dropdown_list: Optional[Style] = None,
         dropdown_item: Optional[Style] = None,
+        tooltip: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -735,6 +775,8 @@ struct UI(Drawable, Movable):
             styles.dropdown_list = dropdown_list.value()
         if dropdown_item:
             styles.dropdown_item = dropdown_item.value()
+        if tooltip:
+            styles.tooltip = tooltip.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -788,6 +830,7 @@ struct UI(Drawable, Movable):
         # it is drawn this frame
         if scrolled:
             self._lay_out(context, canvas)
+        self._place_tooltip(context, canvas, topmost)
         self._claim(context)
 
     def wants_mouse(self, context: Context) -> Bool:
@@ -988,6 +1031,78 @@ struct UI(Drawable, Movable):
             at = self._nodes[area].parent
         return moved
 
+    def _tooltip_of(self, index: Optional[Int]) -> Optional[Int]:
+        """The node whose tooltip shows for `index`: it, or the nearest node
+        it is inside that has one."""
+        var at = index
+        while at:
+            if self._nodes[at.value()].tooltip:
+                return at
+            at = self._nodes[at.value()].parent
+        return None
+
+    def _place_tooltip(
+        mut self,
+        mut context: Context,
+        mut canvas: Canvas,
+        topmost: Optional[Int],
+    ) raises:
+        """Work out this frame's tooltip: the one the pointer has rested on
+        for `_TOOLTIP_DELAY`, unless a press hid it, or else the focused
+        widget's while its focus shows from the keyboard or a gamepad."""
+        self._tip = None
+        var now = context.time.real_elapsed
+        var pointed = self._tooltip_of(topmost)
+        var same = Bool(pointed) == Bool(self._tip_node) and (
+            not pointed or pointed.value() == self._tip_node.value()
+        )
+        if not same:
+            self._tip_node = pointed
+            self._tip_since = now
+            self._tip_dismissed = False
+        if context.mouse.pressed():
+            self._tip_dismissed = True
+        var shown = Optional[Int](None)
+        if (
+            pointed
+            and not self._tip_dismissed
+            and now - self._tip_since >= _TOOLTIP_DELAY
+        ):
+            shown = pointed
+        elif self._focused and self._focus_visible:
+            shown = self._tooltip_of(self._focused)
+        if not shown or self._hidden(shown.value()):
+            return
+        var index = shown.value()
+        var text = self._nodes[index].tooltip.value()
+        var look = self._theme().tooltip()
+        var width = _measure(canvas, text, look.text) + 2 * _TOOLTIP_PADDING
+        var height = look.text.font_size * 1.5 + _TOOLTIP_PADDING
+        var widget = self._describe(index).rect
+        # below the widget, or above it where that leaves more room
+        var foot = canvas.to_local(Point(0, canvas.bottom())).y
+        var head = canvas.to_local(Point(0, canvas.top())).y
+        var below = widget.bottom() - _TOOLTIP_GAP - foot
+        var above = head - widget.top() - _TOOLTIP_GAP
+        var y = widget.bottom() - _TOOLTIP_GAP - height / 2
+        if below < height and above > below:
+            y = widget.top() + _TOOLTIP_GAP + height / 2
+        # kept inside the canvas from side to side
+        var left = canvas.to_local(Point(canvas.left(), 0)).x
+        var right = canvas.to_local(Point(canvas.right(), 0)).x
+        var x = clamp(
+            widget.position.x,
+            left + width / 2,
+            max(right - width / 2, left + width / 2),
+        )
+        self._tip = _Tooltip(
+            text,
+            Rectangle(
+                Point(x, y), width, height, corner_radius=look.box.corner_radius
+            ),
+            look^,
+        )
+
     def _wheel_target(self, topmost: Optional[Int]) -> Optional[Int]:
         """The scroll area the mouse wheel scrolls: the innermost of those
         under the pointer whose column is taller than it, if any."""
@@ -1065,6 +1180,13 @@ struct UI(Drawable, Movable):
                     self._draw_ring(canvas)
             else:
                 self._draw_ring(canvas)
+        # the tooltip over everything, the ring included
+        if self._tip:
+            ref tip = self._tip.value()
+            with canvas._with_style(tip.look.box):
+                canvas.draw(tip.rect)
+            with canvas._with_style(tip.look.text):
+                canvas.draw(Text(tip.text, tip.rect.position))
 
     def _draw_from(self, index: Int, mut canvas: Canvas):
         """Draw the node at `index`, then what is inside it, in drawing
@@ -1099,6 +1221,28 @@ struct UI(Drawable, Movable):
                 canvas.draw(Circle(circle.position, circle.radius + gap))
 
     # --------------------------------------------------------------- focus
+
+    def tooltip[
+        W: Copyable
+    ](mut self, handle: WidgetHandle[W], text: Optional[String]):
+        """Show `text` near the widget `handle` names while the pointer
+        rests on it for half a second, or at once while it has focus from
+        the keyboard or a gamepad; `None` takes its tooltip away.
+
+        ```mojo
+        # In `create`, after adding the `difficulty` choice group:
+        ui.tooltip(difficulty, "How hard the enemies hit")
+        ```
+
+        A tooltip is drawn over everything, below the widget or above it
+        where that leaves more room, and a press of the mouse hides it
+        until the pointer leaves the widget. It never takes the pointer.
+        """
+        self._nodes[self._index_of(handle)].tooltip = text
+
+    def tooltip[W: Copyable](self, handle: WidgetHandle[W]) -> Optional[String]:
+        """The text of the widget's tooltip, if it has one."""
+        return self._nodes[self._index_of(handle)].tooltip
 
     def scroll_to[W: Copyable](mut self, handle: WidgetHandle[W]):
         """Scroll each scroll area the widget `handle` names is in by the

@@ -316,6 +316,26 @@ if self.ui[self.tabs].changed():
     self.ui.visible(self.audio, selected == 1)
 ```
 
+## Tooltips
+
+**`ui.tooltip(handle, text)` shows `text` near a widget** while the pointer rests on it for half a
+second, such as to say what a setting does. It also shows at once while the widget has focus from
+the keyboard or a gamepad, so it can be read without a mouse. `ui.tooltip(handle, None)` takes it
+away, and `ui.tooltip(handle)` reads it back.
+
+```mojo
+# In `create`, after adding the `difficulty` choice group:
+ui.tooltip(difficulty, "How hard the enemies hit")
+```
+
+- **It is drawn over everything**, below the widget or above it where that leaves more room, and
+  kept inside the screen from side to side. It never takes the pointer.
+- **A press hides it** until the pointer leaves the widget and rests on it again.
+- **A widget inside another with a tooltip** shows that one, such as every widget in a column given
+  a tooltip of its own.
+- **Its look** is set with `ui.style(tooltip=...)`: a small box, in the text colour with its text in
+  the surface colour unless styled, so it stands out from what it covers.
+
 ## Drawing your own things
 
 **Draw your own things before or after the `UI`.** What is drawn before `canvas.draw(ui)` is beneath
