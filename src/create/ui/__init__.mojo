@@ -1,5 +1,5 @@
 """The user interface: widgets, such as `Button`, `Checkbox`, `Label`,
-`Panel`, `Slider` and `TextField`, which are values a program keeps,
+`Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps,
 updates and draws with `canvas.draw`, and the traits they share (`Widget`,
 `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them
 out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`,
@@ -21,6 +21,7 @@ from .space import Space
 from .scroll_area import ScrollArea
 from .panel import Panel
 from .slider import Slider
+from .progress_bar import ProgressBar
 from .widget import Widget
 from .hoverable import Hoverable
 from .clickable import Clickable

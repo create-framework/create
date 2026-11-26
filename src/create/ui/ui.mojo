@@ -34,6 +34,7 @@ from .row import Row
 from .space import Space
 from .scroll_area import ScrollArea
 from .panel import Panel
+from .progress_bar import ProgressBar
 from .slider import Slider
 from .text_field import TextField
 from ._theme import (
@@ -53,6 +54,7 @@ comptime _Widget = Variant[
     Slider,
     TextField,
     Picture,
+    ProgressBar,
     Column,
     Row,
     Space,
@@ -67,7 +69,7 @@ comptime _Container = Variant[Panel, Column, Row, ScrollArea]
 
 comptime _NOT_A_NODE = (
     "ui.add takes a Button, Checkbox, Label, Panel, Slider, TextField,"
-    " Picture, Column, Row, Space or ScrollArea"
+    " Picture, ProgressBar, Column, Row, Space or ScrollArea"
 )
 comptime _NOT_A_CONTAINER = (
     "ui.add adds a widget inside a Panel, Column, Row or ScrollArea only"
@@ -309,7 +311,8 @@ struct UI(Drawable, Movable):
     def add[W: Copyable](mut self, var widget: W) -> WidgetHandle[W]:
         """Add `widget` at the top level, drawn above everything added
         before it. It is a `Button`, `Checkbox`, `Label`, `Panel`, `Slider`,
-        `TextField`, `Picture`, `Column`, `Row`, `Space` or `ScrollArea`;
+        `TextField`, `Picture`, `ProgressBar`, `Column`, `Row`, `Space` or
+        `ScrollArea`;
         anything else doesn't compile."""
         comptime assert _Widget.is_type_supported[W](), _NOT_A_NODE
         var handle = self._new_node[W](_Widget(widget^), None, _Placement())
@@ -588,6 +591,8 @@ struct UI(Drawable, Movable):
         text_field_selection: Optional[Style] = None,
         scroll_area_track: Optional[Style] = None,
         scroll_area_thumb: Optional[Style] = None,
+        progress_bar_track: Optional[Style] = None,
+        progress_bar_indicator: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
@@ -644,6 +649,10 @@ struct UI(Drawable, Movable):
             styles.scroll_area_track = scroll_area_track.value()
         if scroll_area_thumb:
             styles.scroll_area_thumb = scroll_area_thumb.value()
+        if progress_bar_track:
+            styles.progress_bar_track = progress_bar_track.value()
+        if progress_bar_indicator:
+            styles.progress_bar_indicator = progress_bar_indicator.value()
         self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
@@ -1499,6 +1508,9 @@ struct UI(Drawable, Movable):
             var described = _Description(_PANEL, panel.rect, True)
             described.padding = panel.padding
             return described^
+        if widget.isa[ProgressBar]():
+            # the pointer passes through it, as through text
+            return _Description(_WIDGET, widget[ProgressBar].rect, False)
         if widget.isa[Label]():
             # the pointer passes through text
             return _Description(_WIDGET, widget[Label].rect, False)
@@ -1549,6 +1561,8 @@ struct UI(Drawable, Movable):
             canvas.draw(widget[Panel])
         elif widget.isa[Label]():
             canvas.draw(widget[Label])
+        elif widget.isa[ProgressBar]():
+            canvas.draw(widget[ProgressBar])
         elif widget.isa[ScrollArea]():
             widget[ScrollArea]._draw_bar(canvas)
         elif widget.isa[Picture]():
@@ -1651,6 +1665,14 @@ struct UI(Drawable, Movable):
                 reply.width, reply.height = label._measure(canvas, theme)
             else:
                 label.rect = rect
+        elif widget.isa[ProgressBar]():
+            ref bar = widget[ProgressBar]
+            if action == _UPDATE:
+                bar._update(context, canvas, theme, disabled=disabled)
+            elif action == _MEASURE:
+                reply.width, reply.height = bar._measure(canvas, theme)
+            else:
+                bar.rect = rect
         elif widget.isa[Panel]():
             ref panel = widget[Panel]
             if action == _UPDATE:

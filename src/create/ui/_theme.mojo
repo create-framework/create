@@ -60,6 +60,8 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var text_field_selection: Style
     var scroll_area_track: Style
     var scroll_area_thumb: Style
+    var progress_bar_track: Style
+    var progress_bar_indicator: Style
 
     def __init__(out self):
         self.button = Style()
@@ -81,6 +83,8 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.text_field_selection = Style()
         self.scroll_area_track = Style()
         self.scroll_area_thumb = Style()
+        self.progress_bar_track = Style()
+        self.progress_bar_indicator = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -105,6 +109,8 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.text_field_selection.over(under.text_field_selection),
             self.scroll_area_track.over(under.scroll_area_track),
             self.scroll_area_thumb.over(under.scroll_area_thumb),
+            self.progress_bar_track.over(under.progress_bar_track),
+            self.progress_bar_indicator.over(under.progress_bar_indicator),
         )
 
 
@@ -145,6 +151,14 @@ struct _SliderLook(Copyable, Movable):
     var active: _ResolvedStyle
     var handle: _ResolvedStyle
     var outline: _ResolvedStyle
+
+
+@fieldwise_init
+struct _ProgressBarLook(Copyable, Movable):
+    """A progress bar's parts, resolved: two lines."""
+
+    var track: _ResolvedStyle
+    var indicator: _ResolvedStyle
 
 
 @fieldwise_init
@@ -404,6 +418,38 @@ struct _Theme(Copyable, Movable):
             handle.stroke_cap = StrokeCap.ROUND
         handle.stroke_dash = StrokeDash.SOLID
         return _SliderLook(track, active, handle, outline)
+
+    def progress_bar(
+        self, call_track: Style, call_indicator: Style, *, disabled: Bool
+    ) -> _ProgressBarLook:
+        """A progress bar's parts, styled by the call's styles for each: a
+        slider's track, and its active track as the indicator."""
+        var colors = self.colors
+        ref block = self.styles[]
+        var track_look = call_track.over(block.progress_bar_track).over(
+            Style(
+                stroke=colors.secondary_container,
+                stroke_thickness=8,
+                stroke_cap=StrokeCap.ROUND,
+            )
+        )
+        var track = _ResolvedStyle()
+        track.apply(track_look)
+        var indicator = _ResolvedStyle()
+        indicator.apply(
+            call_indicator.over(block.progress_bar_indicator).over(
+                Style(stroke=colors.primary).over(track_look)
+            )
+        )
+        if disabled:
+            var states = self.state_layers
+            indicator.stroke_color = _faded(
+                colors.on_surface, states.disabled_content
+            )
+            track.stroke_color = _faded(
+                colors.on_surface, states.disabled_container
+            )
+        return _ProgressBarLook(track, indicator)
 
     def ring_reach(self) -> Float64:
         """How far the focus ring reaches outside a widget: its gap and its

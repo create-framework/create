@@ -169,6 +169,9 @@ is the typed text, `placeholder_style` the placeholder (taking what it leaves un
 `text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
 number, is the gap between the field's sides and its text.
 
+A progress bar has two parts, each a line, as a slider's track has: `track`, the whole length, and
+`indicator`, from the start to its value, which takes what it leaves unset from `track`.
+
 A scroll area's bar has two parts, each a line: `track`, the length the thumb runs along, and
 `thumb`, whose length shows how much of the column the window shows. The stroke of each is its
 colour and thickness. The thumb steps like a button when hovered or dragged.
