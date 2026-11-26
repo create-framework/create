@@ -463,48 +463,76 @@ struct UI(Drawable, Movable):
     def style(
         mut self,
         *,
-        button: Style = Style(),
-        label: Style = Style(),
-        panel: Style = Style(),
-        slider_track: Style = Style(),
-        slider_active_track: Style = Style(),
-        slider_handle: Style = Style(),
-        slider_handle_outline: Style = Style(),
-        checkbox_box: Style = Style(),
-        checkbox_checked_box: Style = Style(),
-        checkbox_tick: Style = Style(),
-        checkbox_text_style: Style = Style(),
-        text_field_container: Style = Style(),
-        text_field_focused_container: Style = Style(),
-        text_field_text_style: Style = Style(),
-        text_field_placeholder_style: Style = Style(),
-        text_field_caret: Style = Style(),
-        text_field_selection: Style = Style(),
+        button: Optional[Style] = None,
+        label: Optional[Style] = None,
+        panel: Optional[Style] = None,
+        slider_track: Optional[Style] = None,
+        slider_active_track: Optional[Style] = None,
+        slider_handle: Optional[Style] = None,
+        slider_handle_outline: Optional[Style] = None,
+        checkbox_box: Optional[Style] = None,
+        checkbox_checked_box: Optional[Style] = None,
+        checkbox_tick: Optional[Style] = None,
+        checkbox_text_style: Optional[Style] = None,
+        text_field_container: Optional[Style] = None,
+        text_field_focused_container: Optional[Style] = None,
+        text_field_text_style: Optional[Style] = None,
+        text_field_placeholder_style: Optional[Style] = None,
+        text_field_caret: Optional[Style] = None,
+        text_field_selection: Optional[Style] = None,
     ):
         """Style every widget of a kind in it: each widget's own style sits
         over these, and these over the widget's defaults, field by field.
-        Replaces what an earlier call set."""
-        self._styles = ArcPointer[_Styles](
-            _Styles(
-                button,
-                label,
-                panel,
-                slider_track,
-                slider_active_track,
-                slider_handle,
-                slider_handle_outline,
-                checkbox_box,
-                checkbox_checked_box,
-                checkbox_tick,
-                checkbox_text_style,
-                text_field_container,
-                text_field_focused_container,
-                text_field_text_style,
-                text_field_placeholder_style,
-                text_field_caret,
-                text_field_selection,
+
+        Each keyword given replaces what an earlier call set for that kind,
+        and a kind left out keeps it, so the styles can be set a few at a
+        time. `Style()` clears a kind's style:
+
+        ```mojo
+        # In `create`, building the `ui` field:
+        ui.style(button=Style(corner_radius=4))
+        ui.style(slider_handle=Style(stroke=Color.ORANGE))  # buttons kept
+        ui.style(button=Style())  # the buttons' defaults again
+        ```
+        """
+        var styles = self._styles[]
+        if button:
+            styles.button = button.value()
+        if label:
+            styles.label = label.value()
+        if panel:
+            styles.panel = panel.value()
+        if slider_track:
+            styles.slider_track = slider_track.value()
+        if slider_active_track:
+            styles.slider_active_track = slider_active_track.value()
+        if slider_handle:
+            styles.slider_handle = slider_handle.value()
+        if slider_handle_outline:
+            styles.slider_handle_outline = slider_handle_outline.value()
+        if checkbox_box:
+            styles.checkbox_box = checkbox_box.value()
+        if checkbox_checked_box:
+            styles.checkbox_checked_box = checkbox_checked_box.value()
+        if checkbox_tick:
+            styles.checkbox_tick = checkbox_tick.value()
+        if checkbox_text_style:
+            styles.checkbox_label_style = checkbox_text_style.value()
+        if text_field_container:
+            styles.text_field_container = text_field_container.value()
+        if text_field_focused_container:
+            styles.text_field_focused = text_field_focused_container.value()
+        if text_field_text_style:
+            styles.text_field_text_style = text_field_text_style.value()
+        if text_field_placeholder_style:
+            styles.text_field_placeholder_style = (
+                text_field_placeholder_style.value()
             )
-        )
+        if text_field_caret:
+            styles.text_field_caret = text_field_caret.value()
+        if text_field_selection:
+            styles.text_field_selection = text_field_selection.value()
+        self._styles = ArcPointer(styles^)
 
     def _theme(self) -> _Theme:
         """The look at the top level, outside any panel."""

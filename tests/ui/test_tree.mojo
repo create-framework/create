@@ -114,7 +114,7 @@ def test_the_shared_style_and_colors_reach_every_widget() raises -> None:
     assert_equal(canvas.color_at((-95, 0)), Color.RED)
     assert_equal(canvas.color_at((25, 0)), Color.BLUE)  # its own style wins
     ui.colors(ColorScheme.dark())
-    ui.style()
+    ui.style(button=Style())  # cleared
     var dark = _canvas()
     ui.update(context, dark)
     dark.draw(ui)
@@ -161,6 +161,17 @@ def test_get_reads_several_widgets_in_one_expression() raises -> None:
     var copy = ui.get(x)
     copy.value = 9
     assert_equal(ui[x].value, 3.0)  # a copy: the UI's widget is unchanged
+
+
+def test_each_style_call_keeps_the_kinds_it_leaves_out() raises -> None:
+    var ui = UI()
+    ui.style(button=Style(fill=Color.RED))
+    ui.style(label=Style(font_size=30))
+    assert_equal(ui._styles[].button.fill.value(), Color.RED)
+    assert_equal(ui._styles[].label.font_size.value(), 30.0)
+    ui.style(button=Style())
+    assert_false(Bool(ui._styles[].button.fill))
+    assert_equal(ui._styles[].label.font_size.value(), 30.0)
 
 
 def main() raises:
