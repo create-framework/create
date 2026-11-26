@@ -17,7 +17,7 @@ circumference. A zero `radius` collapses the circle to a point; `contains`
 then holds only for that exact point, and `overlaps`/`intersects`
 remain exact rather than always-false. `radius` is assumed non-negative.
 
-Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 

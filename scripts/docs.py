@@ -358,6 +358,7 @@ def render_declaration(item: dict) -> str:
         t["name"]
         for t in item.get("parentTraits", [])
         if t["name"] not in ("AnyType", "UnknownDestructibility")
+        and not t["name"].startswith("_")
     ]
     if traits:
         out.append("Implements " + ", ".join(f"`{t}`" for t in traits) + ".\n")
@@ -429,6 +430,7 @@ def render_overloads(overloads: list) -> str:
     for overload in overloads:
         if is_internal(overload):
             continue
+        check_argument_types(overload)
         key = (overload["summary"], overload["description"])
         if groups and groups[-1][0] == key:
             groups[-1][1].append(overload)
@@ -462,6 +464,21 @@ def is_internal(overload: dict) -> bool:
     (ARCHITECTURE.md, "Imports and public surface")."""
     arguments = [a["name"] for a in overload["args"] if a["name"] != "self"]
     return bool(arguments) and all(a.startswith("_") for a in arguments)
+
+
+def check_argument_types(overload: dict) -> None:
+    """Every type a program passes is public, so the reference documents it.
+    An internal type may only be returned, as a `with` block's guard is."""
+    for argument in overload["args"]:
+        if argument["name"] == "self":
+            continue
+        internal = re.findall(r"(?<![\w.])_[A-Z]\w*", argument.get("type", ""))
+        if internal:
+            sys.exit(
+                f"{overload['signature']}: the argument `{argument['name']}` "
+                f"has the internal type `{internal[0]}`. Make the type "
+                "public, or the function internal."
+            )
 
 
 def signature(overload: dict, width: int = 88) -> str:

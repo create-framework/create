@@ -39,7 +39,7 @@ upright rectangle turned, so a gradient fill, the rounding and the
 stroke turn with it, while a shadow's offset stays screen-fixed unless
 `shadow_follows_transform` is set, as for any turned shape.
 
-Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 

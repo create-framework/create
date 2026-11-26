@@ -25,7 +25,7 @@ containment, overlap, or a divide-by-zero.
 shape. It is clamped so no corner's rounding overruns half of either
 edge beside it; one thin corner limits all three.
 
-Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`, `_Collider`.
+Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyable`, `Movable`, `Shape`, `Writable`.
 
 ## Fields
 
