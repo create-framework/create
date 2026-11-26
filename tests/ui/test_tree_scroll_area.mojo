@@ -3,7 +3,7 @@ its offset, and what it leaves undrawn and unclicked."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from _input import next_frame, point_at, press, release
+from _input import next_frame, point_at, press, press_key, release
 
 # The defaults: `spacing` 8, `control_height` 40.
 comptime _GAP = 8.0
@@ -193,6 +193,69 @@ def test_ui_style_colours_the_thumb() raises -> None:
     ui.update(context, canvas)
     canvas.draw(ui)
     assert_equal(canvas.color_at((100 - _BAR / 2, 40)), Color.RED)
+
+
+def _tab(mut ui: UI, mut context: Context, shift: Bool = False) raises:
+    """Press Tab, or Shift+Tab, for a frame."""
+    next_frame(context)
+    if shift:
+        context.keyboard._key_down(Key.LEFT_SHIFT)
+    press_key(context, Key.TAB)
+    var canvas = Canvas(400, 300)
+    ui.update(context, canvas)
+    next_frame(context)
+    context.keyboard._key_up(Key.TAB)
+    if shift:
+        context.keyboard._key_up(Key.LEFT_SHIFT)
+
+
+def test_tab_scrolls_the_focused_widget_into_view() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 100)))
+    var buttons = _list(ui, window)
+    var context = Context()
+    point_at(context, (180, 140))
+    for _ in range(3):  # A, B, then C, which starts below the window
+        _tab(ui, context)
+    assert_true(ui.has_focus(buttons[2]))
+    # by the least: C's foot on the window's
+    assert_equal(ui[buttons[2]].rect.bottom(), -50.0)
+    assert_equal(ui[window].offset, 3 * _CONTROL + 2 * _GAP - 100)
+    _tab(ui, context, shift=True)  # B: in view already
+    assert_equal(ui[window].offset, 3 * _CONTROL + 2 * _GAP - 100)
+    _tab(ui, context, shift=True)  # A: above the window, so back up
+    assert_equal(ui[window].offset, 0.0)
+
+
+def test_scroll_to_shows_a_widget_at_the_next_update() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 100)))
+    var buttons = _list(ui, window)
+    _laid_out(ui)
+    ui.scroll_to(buttons[3])
+    assert_equal(ui[window].offset, 0.0)  # not until the update
+    _laid_out(ui)
+    assert_equal(ui[window].offset, _CONTENT - 100)
+    assert_equal(ui[buttons[3]].rect.bottom(), -50.0)
+    ui.scroll_to(buttons[2])  # in view: nothing moves
+    _laid_out(ui)
+    assert_equal(ui[window].offset, _CONTENT - 100)
+
+
+def test_nested_scroll_areas_both_scroll_to_show_a_widget() raises -> None:
+    var ui = UI()
+    var outer = ui.add(ScrollArea(Rectangle((0, 0), 300, 120)))
+    var column = ui.add(Column(), outer)
+    _ = ui.add(Space(200), column)  # pushes the inner area out of view
+    var inner = ui.add(ScrollArea(max_height=100), column)
+    var buttons = _list(ui, inner)
+    _laid_out(ui)
+    ui.scroll_to(buttons[3])
+    _laid_out(ui)
+    assert_true(ui[inner].offset > 0)
+    assert_true(ui[outer].offset > 0)
+    var d = ui[buttons[3]].rect
+    assert_true(d.bottom() >= -60 and d.top() <= 60)  # in the outer window
 
 
 def main() raises:

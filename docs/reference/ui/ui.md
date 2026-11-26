@@ -316,6 +316,20 @@ Let the widget `handle` names, and everything inside it, react, or not: the widg
 def draw_to(self, mut canvas: Canvas)
 ```
 
+### `scroll_to`
+
+```mojo
+def scroll_to[W: Copyable](mut self, handle: WidgetHandle[W])
+```
+
+Scroll each scroll area the widget `handle` names is in by the least that shows all of it, as moving focus onto it with Tab would. It takes effect at the tree's next `update`.
+
+```mojo
+# In `update`: show the level just unlocked.
+if self.unlocked:
+    self.ui.scroll_to(self.levels[self.next_level])
+```
+
 ### `focus`
 
 ```mojo

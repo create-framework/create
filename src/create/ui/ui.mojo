@@ -103,6 +103,7 @@ struct _Node(Copyable, Movable):
 comptime _UPDATE = 0
 comptime _MEASURE = 1
 comptime _PLACE = 2
+comptime _SCROLL_TO = 3
 
 comptime _WIDGET = 0
 comptime _PANEL = 1
@@ -136,6 +137,8 @@ struct _Description(Copyable, Movable):
     """The tallest a scroll area grows, when set."""
     var overflows: Bool
     """Whether a scroll area's column is taller than it, so it scrolls."""
+    var room: Float64
+    """How far a scroll area can scroll."""
     var focusable: Bool
     """Whether it can take focus: a widget that reacts, while enabled."""
     var takes_typing: Bool
@@ -163,6 +166,7 @@ struct _Description(Copyable, Movable):
         self.offset = 0
         self.max_height = None
         self.overflows = False
+        self.room = 0
         self.focusable = False
         self.takes_typing = False
         self.adjusts = False
@@ -230,6 +234,9 @@ struct UI(Drawable, Movable):
     var _free: List[Int]
     """The places in `_nodes` that removed nodes left, for the next nodes
     added."""
+    var _reveal: Optional[Int]
+    """A node to scroll into view at the next `update`: one focus moved to
+    from the keyboard, a gamepad or code, or one `scroll_to` named."""
     var _identity: ArcPointer[Int]
     """A cell of its own on the heap, whose address tells its handles from
     another `UI`'s: it stays put when the `UI` is moved."""
@@ -288,6 +295,7 @@ struct UI(Drawable, Movable):
         self._roots = []
         self._free = []
         self._identity = ArcPointer(0)
+        self._reveal = None
         self._colors = ColorScheme.light()
         self._styles = ArcPointer(_Styles())
         self._corner_radius = _CORNER_RADIUS
@@ -669,6 +677,14 @@ struct UI(Drawable, Movable):
             topmost = self._topmost(canvas.to_local(context.mouse.position))
         self._pointed_at = Bool(topmost)
         self._navigate(context, topmost)
+        # what focus moved onto, or `scroll_to` named, brought into view
+        # before any widget acts on where it is
+        if self._reveal:
+            var reveal = self._reveal.value()
+            self._reveal = None
+            if not self._nodes[reveal].removed and not self._hidden(reveal):
+                if self._scroll_into_view(reveal, context, canvas):
+                    self._lay_out(context, canvas)
         var wheel = Optional[Int](None)
         if context.mouse.wheel.y != 0:
             wheel = self._wheel_target(topmost)
@@ -829,6 +845,43 @@ struct UI(Drawable, Movable):
                 scrolled = True
         return scrolled
 
+    def _scroll_into_view(
+        mut self, index: Int, mut context: Context, mut canvas: Canvas
+    ) raises -> Bool:
+        """Scroll each scroll area the node at `index` is in, innermost
+        first, by the least that brings it, as last placed, inside the
+        area's window. Gives back whether any moved."""
+        var shown = self._describe(index).rect
+        var moved = False
+        var at = self._nodes[index].parent
+        var theme = self._theme()
+        while at:
+            var area = at.value()
+            var node = self._describe(area)
+            if node.kind == _SCROLL_AREA:
+                ref window = node.rect
+                var offset = node.offset
+                if shown.top() > window.top():
+                    offset -= shown.top() - window.top()
+                elif shown.bottom() < window.bottom():
+                    offset += window.bottom() - shown.bottom()
+                offset = min(max(offset, 0.0), node.room)
+                if offset != node.offset:
+                    _ = self._dispatch_mut(
+                        area,
+                        _SCROLL_TO,
+                        context,
+                        canvas,
+                        theme,
+                        free=False,
+                        content=offset,
+                    )
+                    # the node moves up as far as the column does
+                    shown = shown.translate(Vector(0, offset - node.offset))
+                    moved = True
+            at = self._nodes[area].parent
+        return moved
+
     def _wheel_target(self, topmost: Optional[Int]) -> Optional[Int]:
         """The scroll area the mouse wheel scrolls: the innermost of those
         under the pointer whose column is taller than it, if any."""
@@ -929,6 +982,19 @@ struct UI(Drawable, Movable):
 
     # --------------------------------------------------------------- focus
 
+    def scroll_to[W: Copyable](mut self, handle: WidgetHandle[W]):
+        """Scroll each scroll area the widget `handle` names is in by the
+        least that shows all of it, as moving focus onto it with Tab would.
+        It takes effect at the tree's next `update`.
+
+        ```mojo
+        # In `update`: show the level just unlocked.
+        if self.unlocked:
+            self.ui.scroll_to(self.levels[self.next_level])
+        ```
+        """
+        self._reveal = self._index_of(handle)
+
     def focus[W: Copyable](mut self, handle: WidgetHandle[W]):
         """Give the widget `handle` names focus, with its ring showing, as
         Tab would: a dialog gives its first field focus as it opens. A
@@ -952,6 +1018,9 @@ struct UI(Drawable, Movable):
         self._focused = index
         self._focus_visible = visible
         self._focus_from_gamepad = from_gamepad
+        # focus that shows is brought into view; a click's is in view already
+        if visible:
+            self._reveal = index
 
     def _navigate(mut self, mut context: Context, topmost: Optional[Int]):
         """Move focus for this frame's input, before any widget acts: away
@@ -1448,6 +1517,7 @@ struct UI(Drawable, Movable):
             described.offset = area.offset
             described.max_height = area.max_height
             described.overflows = area._overflows()
+            described.room = area._room()
             described.held = area._pointer.held
             return described^
         # no size of its own: the column or row it is in sizes it
@@ -1500,10 +1570,11 @@ struct UI(Drawable, Movable):
         wheel: Bool = False,
     ) raises -> _Reply:
         """Update (`_UPDATE`), measure (`_MEASURE`) or place in `rect`
-        (`_PLACE`, onto a column `content` tall for a scroll area) the node at
-        `index`, in `theme`; `free` when it is the topmost under the
-        pointer, and `wheel` when it is the scroll area the wheel scrolls. Gives back the look of what sits on it
-        and, when measuring, the size it prefers."""
+        (`_PLACE`, onto a column `content` tall for a scroll area) the node
+        at `index`, or scroll it to `content` (`_SCROLL_TO`, a scroll area),
+        in `theme`; `free` when it is the topmost under the pointer, and
+        `wheel` when it is the scroll area the wheel scrolls. Gives back the
+        look of what sits on it and, when measuring, the size it prefers."""
         var reply = _Reply(theme.copy(), 0.0, 0.0, False)
         ref widget = self._nodes[index].widget
         if widget.isa[Button]():
@@ -1611,6 +1682,8 @@ struct UI(Drawable, Movable):
                 reply.scrolled = area._scrolled
             elif action == _PLACE:
                 area._place(rect, content, theme.scroll_bar_width())
+            elif action == _SCROLL_TO:
+                area.offset = content
         return reply^
 
 

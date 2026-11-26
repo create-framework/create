@@ -247,6 +247,10 @@ for name in ["Forest", "Caves", "Castle", "Sky", "Moon"]:
 - **`offset` is how far down the column the window shows**, from 0 at the top. Set it to scroll from
   code, such as `self.ui[self.window].offset = 0` to go back to the top. Each layout keeps it
   between 0 and as far as the column goes, so setting it too far shows the end of the column.
+- **`ui.scroll_to(handle)` brings a widget into view**, scrolling each scroll area it is in by the
+  least that shows all of it, such as to show the level just unlocked. Moving focus onto a widget
+  with Tab, the arrows or a gamepad does the same (see [Focus and navigation](focus.md#focus)). It
+  takes effect at the tree's next `update`.
 
 ## Drawing your own things
 
