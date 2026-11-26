@@ -76,6 +76,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var number_field_container: Style
     var number_field_text_style: Style
     var number_field_buttons: Style
+    var dropdown_field: Style
+    var dropdown_list: Style
+    var dropdown_item: Style
 
     def __init__(out self):
         self.button = Style()
@@ -113,6 +116,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.number_field_container = Style()
         self.number_field_text_style = Style()
         self.number_field_buttons = Style()
+        self.dropdown_field = Style()
+        self.dropdown_list = Style()
+        self.dropdown_item = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -155,6 +161,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.number_field_container.over(under.number_field_container),
             self.number_field_text_style.over(under.number_field_text_style),
             self.number_field_buttons.over(under.number_field_buttons),
+            self.dropdown_field.over(under.dropdown_field),
+            self.dropdown_list.over(under.dropdown_list),
+            self.dropdown_item.over(under.dropdown_item),
         )
 
 
@@ -240,6 +249,22 @@ struct _TabsLook(Copyable, Movable):
     var selected_text: _ResolvedStyle
     var indicator: _ResolvedStyle
     var layer: _ResolvedStyle
+
+
+@fieldwise_init
+struct _DropdownLook(Copyable, Movable):
+    """A dropdown's parts, resolved for its state: its field, the text and
+    chevron on it, its open list, the items' text, the layer over the item
+    under the pointer and the list's thumb."""
+
+    var field: _ResolvedStyle
+    var field_text: _ResolvedStyle
+    var chevron: _ResolvedStyle
+    var list: _ResolvedStyle
+    var item_text: _ResolvedStyle
+    var selected_text: _ResolvedStyle
+    var layer: _ResolvedStyle
+    var thumb: _ResolvedStyle
 
 
 @fieldwise_init
@@ -738,6 +763,101 @@ struct _Theme(Copyable, Movable):
             _text_look(selected, Align.CENTER),
             indicator,
             layer,
+        )
+
+    def dropdown(
+        self,
+        call_field: Style,
+        call_list: Style,
+        call_item: Style,
+        *,
+        hovered: Bool,
+        pressed: Bool,
+        disabled: Bool,
+    ) -> _DropdownLook:
+        """A dropdown's parts, styled by the call's styles for each: a field
+        like a text field's, and a raised list with a shadow, the chosen
+        item's text in `primary`."""
+        var colors = self.colors
+        ref block = self.styles[]
+        var field_look = call_field.over(block.dropdown_field).over(
+            Style(
+                fill=colors.surface_container_highest,
+                stroke=colors.outline,
+                stroke_thickness=1,
+                corner_radius=self.corner_radius / 4,
+                text_color=colors.on_surface,
+            ).over(_body_text())
+        )
+        var field = _ResolvedStyle()
+        field.apply(field_look)
+        var list = _ResolvedStyle()
+        list.apply(
+            call_list.over(block.dropdown_list).over(
+                Style(
+                    # a tone above the surface it opens from
+                    fill=colors.surface_container_high,
+                    stroke_enabled=False,
+                    corner_radius=self.corner_radius / 4,
+                    shadow=Color(0, 0, 0, 70),
+                    shadow_offset=Vector(0, -4),
+                    shadow_blur=16,
+                )
+            )
+        )
+        var item_look = call_item.over(block.dropdown_item).over(
+            Style(text_color=colors.on_surface).over(_body_text())
+        )
+        var item = _ResolvedStyle()
+        item.apply(item_look)
+        var chosen = _ResolvedStyle()
+        chosen.apply(Style(text_color=colors.primary).over(item_look))
+        var chevron = _ResolvedStyle(
+            stroke=colors.on_surface_variant,
+            stroke_thickness=2,
+            stroke_cap=StrokeCap.ROUND,
+        )
+        var thumb = _ResolvedStyle(
+            stroke=colors.outline,
+            stroke_thickness=4,
+            stroke_cap=StrokeCap.ROUND,
+        )
+        # the item under the pointer has a layer, as a hovered tab has
+        var opacity = _layer_opacity(
+            colors.surface_container_high,
+            colors.on_surface,
+            self.state_layers.hovered,
+        )
+        var layer = _ResolvedStyle(
+            fill=colors.on_surface.with_alpha(UInt8(opacity * 255 + 0.5)),
+            stroke_enabled=False,
+        )
+        if disabled:
+            var states = self.state_layers
+            var faded = _faded(colors.on_surface, states.disabled_content)
+            field.fill_color = _faded(
+                colors.on_surface, states.disabled_container
+            )
+            field.fill_gradient = None
+            field.stroke_color = faded
+            field.text_color = faded
+            chevron.stroke_color = faded
+        else:
+            # a hovered or pressed field steps its fill, as a button's does
+            var step = self._step(hovered, pressed)
+            if step > 0 and _fills(field) and not field.fill_gradient:
+                field.fill_color = _stepped(
+                    field.fill_color, field.text_color, step
+                )
+        return _DropdownLook(
+            field,
+            _text_look(field, Align.LEFT),
+            chevron,
+            list,
+            _text_look(item, Align.LEFT),
+            _text_look(chosen, Align.LEFT),
+            layer,
+            thumb,
         )
 
     def ring_reach(self) -> Float64:

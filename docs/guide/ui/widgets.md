@@ -64,6 +64,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `Switch(text, rect, on=)` | A track with a handle, on or off, with `text` beside it | `on`, and `changed()` in the frame a click turns it over |
 | `ChoiceGroup(options, rect, selected=)` | A few `options` one under the other, one of them chosen | `selected`, `selected_text()`, and `changed()` in the frame another is chosen |
 | `Tabs(options, rect, selected=)` | A row of tabs, one of them selected | `selected`, `selected_text()`, and `changed()` in the frame another is selected |
+| `Dropdown(options, rect, selected=)` | A field showing the chosen of its `options`, which opens a list of them all | `selected`, `selected_text()`, `is_open()`, and `changed()` in the frame another is chosen |
 | `Slider(value, minimum, maximum, rect)` | A track with a handle setting `value` | `value`, and `changed()` in the frame it moves |
 | `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
 | `NumberField(value, minimum, maximum, rect)` | A number to type, with − and + buttons beside it | `value`, and `changed()` in the frame typing, a button, an arrow or a gamepad changes it |
@@ -89,6 +90,13 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   left and right arrows and a gamepad's push move the selection while it has focus. Tabs only report
   which is selected: show each tab's page with `ui.visible`, as [Switching
   pages](#switching-pages-with-tabs) shows.
+- **A dropdown** chooses one of many options, such as a screen resolution, where a choice group
+  would take too much room. A click on its field opens a list of the options; a click on one chooses
+  it and closes the list, and a click anywhere else closes it without choosing. The list opens below
+  the field, or above it where that leaves more room, and shows at most `max_items=` at once, 6
+  unless given: the mouse wheel scrolls the rest into view. In a `UI`, the open list is drawn over
+  every other widget and outside any scroll area's window, and a click anywhere while it is open
+  only closes it. On its own, draw it after everything else, so its list is on top.
 - **A slider** jumps to where it is pressed and follows the pointer while held, even off its track,
   stopping at its ends. `step=` rounds the value to multiples of the step, counted from `minimum`,
   and must be more than 0. A value outside `minimum` to `maximum` is drawn at the nearer end and
