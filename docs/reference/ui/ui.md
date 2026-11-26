@@ -260,6 +260,7 @@ def style(
     dropdown_field: Optional[Style] = None,
     dropdown_list: Optional[Style] = None,
     dropdown_item: Optional[Style] = None,
+    tooltip: Optional[Style] = None,
 )
 ```
 
@@ -334,6 +335,29 @@ Let the widget `handle` names, and everything inside it, react, or not: the widg
 ```mojo
 def draw_to(self, mut canvas: Canvas)
 ```
+
+### `tooltip`
+
+```mojo
+def tooltip[W: Copyable](mut self, handle: WidgetHandle[W], text: Optional[String])
+```
+
+Show `text` near the widget `handle` names while the pointer rests on it for half a second, or at once while it has focus from the keyboard or a gamepad; `None` takes its tooltip away.
+
+```mojo
+# In `create`, after adding the `difficulty` choice group:
+ui.tooltip(difficulty, "How hard the enemies hit")
+```
+
+A tooltip is drawn over everything, below the widget or above it
+where that leaves more room, and a press of the mouse hides it
+until the pointer leaves the widget. It never takes the pointer.
+
+```mojo
+def tooltip[W: Copyable](self, handle: WidgetHandle[W]) -> Optional[String]
+```
+
+The text of the widget's tooltip, if it has one.
 
 ### `scroll_to`
 

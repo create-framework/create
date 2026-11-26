@@ -146,6 +146,13 @@ a popup is open, `_topmost` gives its owner for every pointer, so a click elsewh
 owner, which closes it; the owner reports itself `held`, so it holds the mouse against other `UI`s
 too.
 
+**Tooltips are the tree's.** `_Node.tooltip` holds a node's text, set with `ui.tooltip`. After the
+widgets are updated, `_place_tooltip` works out this frame's `_tip`: the tooltip of the topmost node
+under the pointer (or the nearest node round it that has one), once the pointer has rested on it for
+`_TOOLTIP_DELAY` by the real clock and no press has hidden it, or else the focused node's while its
+focus shows. It measures the text and places the box below the node or above it, kept inside the
+canvas. `draw_to` draws it last, over the focus ring. It never takes part in hit-testing.
+
 ## Focus and the devices
 
 The `UI` keeps one focused node and how focus got there: `_focus_visible` (from the keyboard, a
