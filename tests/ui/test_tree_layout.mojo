@@ -125,6 +125,18 @@ def test_a_sized_panel_places_its_column_in_its_inside() raises -> None:
     assert_equal(ui[ok].rect.top(), 100.0 - 2 * _GAP)
 
 
+def test_a_panel_s_padding_sets_how_far_in_its_column_is() raises -> None:
+    var ui = UI()
+    var card = ui.add(Panel(padding=8))
+    var list = ui.add(Column(), card)
+    var first = ui.add(Slider(0.5, 0, 1), list)
+    _laid_out(ui)
+    assert_equal(ui[card].rect.width, 200.0 + 2 * 8)
+    assert_equal(ui[card].rect.height, _CONTROL + 2 * 8)
+    assert_equal(ui[first].rect.top(), ui[card].rect.top() - 8)
+    assert_equal(ui[first].rect.left(), ui[card].rect.left() + 8)
+
+
 def test_a_placed_widget_is_clicked_where_it_is_placed() raises -> None:
     var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))

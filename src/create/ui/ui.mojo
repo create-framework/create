@@ -119,6 +119,8 @@ struct _Description(Copyable, Movable):
     """A row's height in a column, when set."""
     var amount: Optional[Float64]
     """A space's size, when set."""
+    var padding: Optional[Float64]
+    """A panel's padding, when set."""
     var focusable: Bool
     """Whether it can take focus: a widget that reacts, while enabled."""
     var takes_typing: Bool
@@ -143,6 +145,7 @@ struct _Description(Copyable, Movable):
         self.weights = []
         self.height = None
         self.amount = None
+        self.padding = None
         self.focusable = False
         self.takes_typing = False
         self.adjusts = False
@@ -1041,8 +1044,9 @@ struct UI(Drawable, Movable):
                     if self._fills_panel(child):
                         width = max(width, sizes[child][0])
                         height = max(height, sizes[child][1])
-                width += 4 * theme.spacing
-                height += 4 * theme.spacing
+                var padding = node.padding.or_else(2 * theme.spacing)
+                width += 2 * padding
+                height += 2 * padding
         else:
             var reply = self._dispatch_mut(
                 index, _MEASURE, context, canvas, theme, free=False
@@ -1109,7 +1113,7 @@ struct UI(Drawable, Movable):
                     next += 1
                 self._place_from(child, given, context, canvas, theme, sizes)
         elif node.kind == _PANEL:
-            var inside = rect.inset(2 * theme.spacing)
+            var inside = rect.inset(node.padding.or_else(2 * theme.spacing))
             for child in children:
                 var given: Optional[Rectangle] = None
                 if self._fills_panel(child):
@@ -1185,7 +1189,10 @@ struct UI(Drawable, Movable):
             return described^
         if widget.isa[Panel]():
             # covers what is beneath it
-            return _Description(_PANEL, widget[Panel].rect, True)
+            ref panel = widget[Panel]
+            var described = _Description(_PANEL, panel.rect, True)
+            described.padding = panel.padding
+            return described^
         if widget.isa[Label]():
             # the pointer passes through text
             return _Description(_WIDGET, widget[Label].rect, False)
