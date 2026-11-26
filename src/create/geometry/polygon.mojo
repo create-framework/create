@@ -4,7 +4,8 @@ from create.math import OptionalNumber
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .traits import Curve, Shape
+from .curve import Curve
+from .shape import Shape
 from ._shared import (
     _FILLET_STEP,
     _arc_middles,

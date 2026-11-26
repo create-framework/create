@@ -2,7 +2,8 @@ from std.math import sqrt
 from create.math import PI, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
-from .traits import Curve, Shape
+from .curve import Curve
+from .shape import Shape
 from ._collider import _Collider, _Core, _contains, _overlaps
 from ._shared import _RADIUS_EPSILON, _distance_squared
 from .capsule import Capsule

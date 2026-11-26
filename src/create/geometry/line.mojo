@@ -2,7 +2,7 @@ from std.math import min, max, sqrt
 from create.math import Point, Vector
 from .bezier import Bezier
 from .spline import Spline
-from .traits import Curve
+from .curve import Curve
 from ._collider import _Collider, _Core, _overlaps
 from ._shared import (
     _closest_on_segment,

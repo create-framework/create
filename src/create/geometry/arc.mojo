@@ -2,7 +2,7 @@ from std.math import acos, ceil, cos, min, max, sin, sqrt, tan
 from create.math import TAU, Point, Vector
 from .bezier import Bezier, _curve_segments
 from .spline import Spline
-from .traits import Curve
+from .curve import Curve
 from ._shared import (
     _MAX_ARC_BEZIER_ANGLE,
     _MAX_ARC_FLATTEN_SEGMENTS,
