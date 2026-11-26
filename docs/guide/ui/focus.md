@@ -38,7 +38,8 @@ canvas.draw(self.ui)
 
 A widget on its own, outside a `UI`, has no focus to move: a lone `TextField` takes focus from a
 click of its own, and `field.focus()` gives it from the program (see
-[Typing](../interaction/typing.md#text-fields)).
+[Typing](../interaction/typing.md#text-fields)). In a `UI`, `ui[field].focus()` does the same as
+`ui.focus(field)`, and `ui[field].focus(False)` takes focus away from the field.
 
 ## The keys and buttons
 

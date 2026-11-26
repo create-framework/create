@@ -143,6 +143,10 @@ def focus(mut self, focused: Bool = True)
 
 Give it focus, or take it away, as a click on it or elsewhere would. It switches `context.text_input` at its next `update`.
 
+In a `UI`, `ui[field].focus()` does what `ui.focus(field)` does, at
+the `UI`'s next `update`, and `ui[field].focus(False)` takes focus
+away from it.
+
 ### `changed`
 
 ```mojo

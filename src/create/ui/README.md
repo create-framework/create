@@ -111,7 +111,9 @@ field's caret, a slider's left and right); `_arrow_moved` keeps an arrow that mo
 stepping the slider it lands on. `_focus_for` tells each node what focus means for it as a `_Focus`:
 whether keys act on it (focus visible, not from a gamepad, and the keyboard not held by another
 `UI`), whether Enter, Space or the south button activated it, and which way a gamepad stepped a
-slider. A `TextField` on its own keeps its own focus; in a tree, it takes the tree's.
+slider. A `TextField` on its own keeps its own focus; in a tree, it takes the tree's. What its
+`focus` method asked for is kept as `_focus_request` until its next update, and `_navigate` first
+acts on it (`_take_focus_requests`), so `ui[field].focus()` works as `ui.focus(field)` does.
 
 **Several `UI`s take turns at the keyboard and mouse** through an opaque claim on each device
 (`input`'s `_Claim`). A `UI` gets a claimant number from `Context._new_claimant()` on its first
