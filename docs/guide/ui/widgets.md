@@ -63,6 +63,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `Checkbox(text, rect, checked=)` | A box, ticked or not, with `text` beside it | `checked`, and `changed()` in the frame a click ticks or unticks it |
 | `Switch(text, rect, on=)` | A track with a handle, on or off, with `text` beside it | `on`, and `changed()` in the frame a click turns it over |
 | `ChoiceGroup(options, rect, selected=)` | A few `options` one under the other, one of them chosen | `selected`, `selected_text()`, and `changed()` in the frame another is chosen |
+| `Tabs(options, rect, selected=)` | A row of tabs, one of them selected | `selected`, `selected_text()`, and `changed()` in the frame another is selected |
 | `Slider(value, minimum, maximum, rect)` | A track with a handle setting `value` | `value`, and `changed()` in the frame it moves |
 | `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
 | `ProgressBar(value, rect)` | A bar filled as far as `value` has got, from 0 to 1 | Nothing |
@@ -82,6 +83,11 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   it, and in a `UI` the up and down arrows and a gamepad's push move the choice while it has focus.
   `selected` is the chosen option's index, from 0 at the top, and the program's to set too. Choose a
   dropdown for a longer list, and a column of checkboxes to choose several.
+- **Tabs** switch between pages of a menu. The tabs share the width equally, and the selected one's
+  text is in the accent colour, with a line beneath it. A click selects a tab, and in a `UI` the
+  left and right arrows and a gamepad's push move the selection while it has focus. Tabs only report
+  which is selected: show each tab's page with `ui.visible`, as [Switching
+  pages](#switching-pages-with-tabs) shows.
 - **A slider** jumps to where it is pressed and follows the pointer while held, even off its track,
   stopping at its ends. `step=` rounds the value to multiples of the step, counted from `minimum`,
   and must be more than 0. A value outside `minimum` to `maximum` is drawn at the nearer end and
@@ -270,6 +276,29 @@ for name in ["Forest", "Caves", "Castle", "Sky", "Moon"]:
   least that shows all of it, such as to show the level just unlocked. Moving focus onto a widget
   with Tab, the arrows or a gamepad does the same (see [Focus and navigation](focus.md#focus)). It
   takes effect at the tree's next `update`.
+
+### Switching pages with tabs
+
+**Give each tab a page and show only the selected one.** Put a column for each page in the same
+place, under the tabs, and hide all but the first. When the tabs report a change, show the selected
+tab's page and hide the others. A hidden page takes no room, so each page is laid out where the
+first one was:
+
+```mojo
+# In `create`, building the `ui` field and keeping the handles:
+var tabs = ui.add(Tabs(["General", "Audio"]), column)
+var general = ui.add(Column(), column)
+_ = ui.add(TextField(placeholder="Your name"), general)
+var audio = ui.add(Column(), column)
+_ = ui.add(Slider(0.8, 0, 1), audio)
+ui.visible(audio, False)
+
+# In `update`, after the tree's `update`:
+if self.ui[self.tabs].changed():
+    var selected = self.ui[self.tabs].selected
+    self.ui.visible(self.general, selected == 0)
+    self.ui.visible(self.audio, selected == 1)
+```
 
 ## Drawing your own things
 

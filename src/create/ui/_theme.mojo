@@ -70,6 +70,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var choice_group_selected_circle: Style
     var choice_group_dot: Style
     var choice_group_text_style: Style
+    var tabs_tab: Style
+    var tabs_selected_tab: Style
+    var tabs_indicator: Style
 
     def __init__(out self):
         self.button = Style()
@@ -101,6 +104,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.choice_group_selected_circle = Style()
         self.choice_group_dot = Style()
         self.choice_group_text_style = Style()
+        self.tabs_tab = Style()
+        self.tabs_selected_tab = Style()
+        self.tabs_indicator = Style()
 
     def _over(self, under: Self) -> Self:
         return _Styles(
@@ -137,6 +143,9 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             ),
             self.choice_group_dot.over(under.choice_group_dot),
             self.choice_group_text_style.over(under.choice_group_text_style),
+            self.tabs_tab.over(under.tabs_tab),
+            self.tabs_selected_tab.over(under.tabs_selected_tab),
+            self.tabs_indicator.over(under.tabs_indicator),
         )
 
 
@@ -208,6 +217,20 @@ struct _ChoiceGroupLook(Copyable, Movable):
     var text: _ResolvedStyle
     """Its options' style, aligned left."""
     var halo: _ResolvedStyle
+
+
+@fieldwise_init
+struct _TabsLook(Copyable, Movable):
+    """Tabs' parts, resolved for their state: each tab's shape and its
+    text, the selected one's, the indicator beneath it, and the layer over
+    the tab under the pointer."""
+
+    var tab: _ResolvedStyle
+    var selected_tab: _ResolvedStyle
+    var text: _ResolvedStyle
+    var selected_text: _ResolvedStyle
+    var indicator: _ResolvedStyle
+    var layer: _ResolvedStyle
 
 
 @fieldwise_init
@@ -643,6 +666,69 @@ struct _Theme(Copyable, Movable):
         dot.stroke_dash = StrokeDash.SOLID
         return _ChoiceGroupLook(
             circle, selected, dot, _text_look(text, Align.LEFT), halo
+        )
+
+    def tabs(
+        self,
+        call_tab: Style,
+        call_selected_tab: Style,
+        call_indicator: Style,
+        *,
+        hovered: Bool,
+        pressed: Bool,
+        disabled: Bool,
+    ) -> _TabsLook:
+        """Tabs' parts, styled by the call's styles for each: bare tabs with
+        their text in `on_surface_variant`, the selected one's in `primary`
+        with a `primary` line beneath it, and a state layer over the tab
+        under the pointer."""
+        var colors = self.colors
+        ref block = self.styles[]
+        var tab_look = call_tab.over(block.tabs_tab).over(
+            Style(
+                fill_enabled=False,
+                stroke_enabled=False,
+                text_color=colors.on_surface_variant,
+            ).over(_label_text())
+        )
+        var tab = _ResolvedStyle()
+        tab.apply(tab_look)
+        var selected = _ResolvedStyle()
+        selected.apply(
+            call_selected_tab.over(block.tabs_selected_tab).over(
+                Style(text_color=colors.primary).over(tab_look)
+            )
+        )
+        var indicator = _ResolvedStyle()
+        indicator.apply(
+            call_indicator.over(block.tabs_indicator).over(
+                Style(stroke=colors.primary, stroke_thickness=3)
+            )
+        )
+        var layer = _ResolvedStyle(fill=Color(0, 0, 0, 0), stroke_enabled=False)
+        if disabled:
+            var faded = _faded(
+                colors.on_surface, self.state_layers.disabled_content
+            )
+            tab.text_color = faded
+            selected.text_color = faded
+            indicator.stroke_color = faded
+        else:
+            var step = self._step(hovered, pressed)
+            if step > 0:
+                var opacity = _layer_opacity(
+                    self.surface, colors.on_surface, step
+                )
+                layer.fill_color = colors.on_surface.with_alpha(
+                    UInt8(opacity * 255 + 0.5)
+                )
+        return _TabsLook(
+            tab,
+            selected,
+            _text_look(tab, Align.CENTER),
+            _text_look(selected, Align.CENTER),
+            indicator,
+            layer,
         )
 
     def ring_reach(self) -> Float64:

@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Label`, `Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar` and `TextField`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
 
 ## Types
 
@@ -16,6 +16,7 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGrou
 | [`Checkbox`](checkbox.md) | A box against the left edge of a rectangle, ticked while `checked`, with text beside it. A click anywhere in the rectangle ticks or unticks it. |
 | [`Switch`](switch.md) | A setting that is on or off and applies at once, such as music or full screen: a track against the left edge of a rectangle, its handle at the right end while `on`, with text beside it. A click anywhere in the rectangle turns it over. |
 | [`ChoiceGroup`](choicegroup.md) | A few options, one under the other, of which one is chosen: each a circle with its text, the chosen one's circle with a dot in it. Other toolkits call these radio buttons. |
+| [`Tabs`](tabs.md) | A row of tabs, one of them selected, for switching between pages of a menu: the selected one's text in the accent colour, with a line beneath it. |
 | [`Label`](label.md) | Text placed in a rectangle, by an alignment: in its centre unless told otherwise, against its left edge with `Align.LEFT`, and so on. It reacts to nothing. |
 | [`Column`](column.md) | Widgets one under the other, from the top down, each across the column's whole width and as tall as it prefers, or as the `height` it was added with: a button or a slider the `UI`'s `control_height`, a label one and a half times its text's size. A `gap` is left between each and the next. The room left over goes to the widgets added with a `grow`, shared in proportion to it, so a growing `Space` pushes what comes after it to the bottom. |
 | [`Row`](row.md) | Widgets side by side, from the left, each as tall as the row and as wide as it prefers, or as the `width` it was added with. |

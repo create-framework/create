@@ -27,6 +27,7 @@ rules.
 | `checkbox.mojo` | `Checkbox`, a widget value that owns whether it is ticked; its box, tick and text placement |
 | `switch.mojo` | `Switch`, a widget value that owns whether it is on; its track and handle, its text placed as a checkbox's is |
 | `choice_group.mojo` | `ChoiceGroup`, a widget value that owns which option is chosen; its options' rows, circles and the halo behind the one under the pointer |
+| `tabs.mojo` | `Tabs`, a widget value that owns which tab is selected; the tabs' equal shares of its width, the indicator and the layer over the tab under the pointer |
 | `label.mojo` | `Label`, a widget value: text placed in a rectangle; `_anchor`, the point of a rectangle text is anchored to |
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
 | `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place, and the value a drag or a key gives |
