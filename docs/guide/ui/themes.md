@@ -287,6 +287,13 @@ size of its own it fits round them (see [Laying out widgets](widgets.md#laying-o
 
 A widget shows its state by moving its colour's lightness towards its text colour: a little when
 hovered, more when pressed or dragged. The `UI`'s `state_layers` sets how far, as steps of
-lightness, which look like the same change on any colour, a pale fill as much as a dark one. A
-disabled widget instead fades, its text and fill to `state_layers.disabled_content` and
-`disabled_container` of their opacity.
+lightness, which look like the same change on any colour, a pale fill as much as a dark one. What
+steps depends on the widget's kind:
+
+- **A filled widget steps its fill:** a filled or tonal button, a switch's track, a slider's handle.
+- **An unfilled one** shows a faint layer of its text colour over its area instead, as deep as the
+  step would be: a text button, an outlined button, a tab, an item in a dropdown's list. A field
+  darkens its outline.
+- **A small toggle** shows a round halo behind its box or circle: a checkbox and a choice group's
+  option, ticked or not. A disabled widget instead fades, its text and fill to
+  `state_layers.disabled_content` and `disabled_container` of their opacity.

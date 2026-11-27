@@ -85,6 +85,21 @@ def test_a_ticked_box_is_filled_and_ticked() raises -> None:
     assert_equal(canvas.color_at(_TICK), colors.on_primary)
 
 
+def test_a_hovered_checkbox_has_a_halo_behind_its_box() raises -> None:
+    var colors = ColorScheme.light()
+    for checked in [False, True]:
+        var checkbox = Checkbox("Music", _ROW, checked=checked)
+        var context = Context()
+        point_at(context, _BOX)
+        var canvas = Canvas(300, 100, antialiasing=Antialiasing.OFF)
+        checkbox.update(context, canvas)
+        canvas.draw(checkbox)
+        # outside the box, inside the halo
+        assert_true(canvas.color_at(_BOX + Vector(0, 14)) != Color.TRANSPARENT)
+        if checked:
+            assert_equal(canvas.color_at(_BOX + Vector(-7, 7)), colors.primary)
+
+
 def test_each_part_takes_its_own_style() raises -> None:
     var ticked = _drawn(
         Checkbox(
