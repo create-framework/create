@@ -100,6 +100,8 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
     """How far down the items the open list shows."""
     var _list_rect: Rectangle
     """Where the open list is, as last worked out."""
+    var _activated: Bool
+    """Whether Enter, Space or the south button pressed it this frame."""
     var _changed: Bool
     var _look: _DropdownLook
 
@@ -130,6 +132,7 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
         self._highlight = -1
         self._scroll = 0
         self._list_rect = _UNSIZED
+        self._activated = False
         self._changed = False
         self._look = _Theme.default().dropdown(
             field,
@@ -166,6 +169,7 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
         disabled part of the `UI`, whatever its own `enabled`."""
         var enabled = self.enabled and not disabled
         var before = self.selected
+        self._activated = focus.activated and enabled
         ref mouse = context.mouse
         var pointer = canvas.to_local(mouse.position)
         if not enabled:
@@ -378,7 +382,10 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
         return self._pointer.held
 
     def released(self) -> Bool:
-        return self._pointer.released
+        """Whether it was clicked this frame: let go over its field or its
+        open list after being pressed on it, or, in a `UI`, pressed with
+        Enter, Space or a gamepad's south button while it has focus."""
+        return self._pointer.released or self._activated
 
     def draw_to(self, mut canvas: Canvas):
         self._draw_field(canvas)
