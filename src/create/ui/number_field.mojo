@@ -67,8 +67,11 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
     """How many places after the point the value is rounded to and shown
     with: whole numbers at 0."""
     var container: Style
+    """Its field, as a text field's `container` is."""
     var text_style: Style
+    """Its field's text, as a text field's `text_style` is."""
     var buttons: Style
+    """The style of both its buttons, as a button's `style` is."""
     var enabled: Bool
     """Whether it reacts to the mouse and keyboard. A disabled field is
     faded."""
@@ -247,6 +250,8 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over its field or one of its buttons, as
+        of its last `update`."""
         return (
             self._field.hovered()
             or self._minus.hovered()
@@ -254,6 +259,8 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
         )
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over its field or one of its
+        buttons this frame."""
         return (
             self._field.pressed()
             or self._minus.pressed()
@@ -261,9 +268,12 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
         )
 
     def down(self) -> Bool:
+        """Whether its field or one of its buttons is held: pressed on, and
+        the button not let go since."""
         return self._field.down() or self._minus.down() or self._plus.down()
 
     def released(self) -> Bool:
+        """Whether its field or one of its buttons was clicked this frame."""
         return (
             self._field.released()
             or self._minus.released()

@@ -37,10 +37,10 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `text: String`: The text beside the track.
 - `rect: Rectangle`: Where it is: the track against its left edge, and the area a click turns it over in.
 - `on: Bool`: Whether it is on. Set it to turn it from the program.
-- `track: Style`
-- `on_track: Style`
-- `handle: Style`
-- `text_style: Style`
+- `track: Style`: The track while off, a rectangle rounded as the controls are.
+- `on_track: Style`: The track while on, taking what it leaves unset from `track`.
+- `handle: Style`: The handle, a square in the track: its fill is its colour, and its `corner_radius` how round it is.
+- `text_style: Style`: The text beside the track.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled switch is faded.
 
 ## Constructors
@@ -88,17 +88,23 @@ Whether its last `update` turned it over.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
 
+Whether the left button went down over it this frame.
+
 ### `down`
 
 ```mojo
 def down(self) -> Bool
 ```
+
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
 
 ### `released`
 

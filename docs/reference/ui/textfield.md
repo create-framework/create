@@ -45,12 +45,12 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `rect: Rectangle`: Where it is, and how big.
 - `placeholder: String`: Shown in a fainter colour while the field is empty.
 - `padding: Float64`: The gap between the field's sides and its text.
-- `container: Style`
-- `focused_container: Style`
-- `text_style: Style`
-- `placeholder_style: Style`
-- `caret: Style`
-- `selection: Style`
+- `container: Style`: The field, a rectangle.
+- `focused_container: Style`: Layered over `container` while it has focus: by default its outline turns `primary` and twice as thick.
+- `text_style: Style`: The typed text.
+- `placeholder_style: Style`: The placeholder, taking what it leaves unset from `text_style`.
+- `caret: Style`: The caret, a line: its stroke is its colour and width.
+- `selection: Style`: The rectangle behind selected text.
 - `enabled: Bool`: Whether it reacts to the mouse and keyboard. A disabled field is faded, and loses focus.
 
 ## Constructors
@@ -102,7 +102,7 @@ What has been typed.
 def set_text(mut self, text: String)
 ```
 
-Replace what has been typed with `text`, the caret kept inside it. Not reported by `changed()`: the program made the change.
+Replace what has been typed with `text`, the caret kept inside it. Not reported by `changed()`: the program made the change. It is kept whole, even past `max_length`, which limits only typing and pasting.
 
 ### `max_length`
 
@@ -158,11 +158,15 @@ Whether Enter was pressed in it at its last `update`.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
+
+Whether the left button went down over it this frame.
 
 ### `down`
 
@@ -170,11 +174,15 @@ def pressed(self) -> Bool
 def down(self) -> Bool
 ```
 
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
+
 ### `released`
 
 ```mojo
 def released(self) -> Bool
 ```
+
+Whether it was clicked this frame: let go over it, after being pressed on it.
 
 ### `before_caret`
 
@@ -238,11 +246,15 @@ Delete the selection, or the character right of the caret.
 def move_left(mut self, *, select: Bool = False)
 ```
 
+Move the caret one character left, as Left does: to the start of the selection, with one and not `select`. With `select`, stretch the selection instead.
+
 ### `move_right`
 
 ```mojo
 def move_right(mut self, *, select: Bool = False)
 ```
+
+Move the caret one character right, as Right does: to the end of the selection, with one and not `select`. With `select`, stretch the selection instead.
 
 ### `move_word_left`
 
@@ -250,11 +262,15 @@ def move_right(mut self, *, select: Bool = False)
 def move_word_left(mut self, *, select: Bool = False)
 ```
 
+Move the caret to the start of the word on its left, as Ctrl+Left does (Option+Left on macOS), stretching the selection with `select`.
+
 ### `move_word_right`
 
 ```mojo
 def move_word_right(mut self, *, select: Bool = False)
 ```
+
+Move the caret to the end of the word on its right, as Ctrl+Right does (Option+Right on macOS), stretching the selection with `select`.
 
 ### `move_to_start`
 
@@ -262,17 +278,23 @@ def move_word_right(mut self, *, select: Bool = False)
 def move_to_start(mut self, *, select: Bool = False)
 ```
 
+Move the caret to the start of the text, as Home does, stretching the selection with `select`.
+
 ### `move_to_end`
 
 ```mojo
 def move_to_end(mut self, *, select: Bool = False)
 ```
 
+Move the caret to the end of the text, as End does, stretching the selection with `select`.
+
 ### `select_all`
 
 ```mojo
 def select_all(mut self)
 ```
+
+Select the whole text, as Ctrl+A does (Cmd+A on macOS).
 
 ### `cut`
 

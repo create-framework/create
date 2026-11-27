@@ -27,7 +27,7 @@ and `hovered()` whether the pointer is over it.
 
 It is filled in the colours' `primary` unless its `style` says
 otherwise, and its style changes only what it sets:
-`Style(corner_radius=4)` squares its corners. Four ready-made styles
+`Style(corner_radius=0)` squares its corners. Four ready-made styles
 give it a weight, from the main action to the quietest: `Button.FILLED`
 (the look it has unless styled), `Button.TONAL`, `Button.OUTLINED` and
 `Button.TEXT`. Each names its colours by `ColorRole`, so it follows the
@@ -48,7 +48,7 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 ## Fields
 
 - `text: String`: The text on it.
-- `rect: Rectangle`: Where it is, and how big. A rotated rectangle turns it.
+- `rect: Rectangle`: Where it is, and how big. To turn a button, update and draw it inside a `canvas.transform` block, which turns its text with it.
 - `style: Style`: Its own style, over its default look.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled button is faded.
 
@@ -85,17 +85,23 @@ It is drawn in the canvas's colours,
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
 
+Whether the left button went down over it this frame.
+
 ### `down`
 
 ```mojo
 def down(self) -> Bool
 ```
+
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
 
 ### `released`
 

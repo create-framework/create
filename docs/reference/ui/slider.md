@@ -46,9 +46,9 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `maximum: Float64`: The value at the right end.
 - `rect: Rectangle`: Where it is: the track runs across its middle, and a press anywhere in it moves the handle.
 - `step: Optional[Float64]`: What the value is rounded to a multiple of, from `minimum`; `None` for any value.
-- `track: Style`
-- `active_track: Style`
-- `handle: Style`
+- `track: Style`: The line across `rect`: its stroke is the track's colour and thickness.
+- `active_track: Style`: The line from the start to the handle, over `track`, taking what it leaves unset from it.
+- `handle: Style`: The handle, a rectangle: its fill is its colour, its stroke its outline and its `corner_radius` how round it is.
 - `handle_width: Optional[Float64]`: How wide the handle is; `None` for half the `control_height`.
 - `handle_height: Optional[Float64]`: How tall the handle is; `None` for half the `control_height`.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled slider is faded.
@@ -123,11 +123,15 @@ Whether its last `update` changed `value`.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
+
+Whether the left button went down over it this frame.
 
 ### `down`
 
@@ -142,6 +146,8 @@ Whether it is being dragged.
 ```mojo
 def released(self) -> Bool
 ```
+
+Whether it was clicked this frame: let go over it, after being pressed on it.
 
 ### `draw_to`
 

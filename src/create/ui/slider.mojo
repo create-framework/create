@@ -68,8 +68,14 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     """What the value is rounded to a multiple of, from `minimum`; `None`
     for any value."""
     var track: Style
+    """The line across `rect`: its stroke is the track's colour and
+    thickness."""
     var active_track: Style
+    """The line from the start to the handle, over `track`, taking what
+    it leaves unset from it."""
     var handle: Style
+    """The handle, a rectangle: its fill is its colour, its stroke its
+    outline and its `corner_radius` how round it is."""
     var handle_width: Optional[Float64]
     """How wide the handle is; `None` for half the `control_height`."""
     var handle_height: Optional[Float64]
@@ -252,9 +258,11 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
@@ -262,6 +270,8 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         return self._pointer.held
 
     def released(self) -> Bool:
+        """Whether it was clicked this frame: let go over it, after being
+        pressed on it."""
         return self._pointer.released
 
     def _ring(self) -> Rectangle:

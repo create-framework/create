@@ -56,9 +56,13 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
     var checked: Bool
     """Whether it is ticked. Set it to tick it from the program."""
     var box: Style
+    """The empty box, a rectangle: an outline unless its style fills it."""
     var checked_box: Style
+    """The ticked box, filled, taking what it leaves unset from `box`."""
     var tick: Style
+    """The tick's two lines: its stroke is their colour and width."""
     var text_style: Style
+    """The text beside the box."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled checkbox is faded."""
     var _pointer: _Pointer
@@ -174,12 +178,16 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:

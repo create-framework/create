@@ -44,7 +44,11 @@ struct ProgressBar(Copyable, Movable, Widget):
     var rect: Rectangle
     """Where it is: the bar runs across its middle."""
     var track: Style
+    """The line along its whole length: its stroke is its colour and
+    thickness."""
     var indicator: Style
+    """The line from the start to `value`, over `track`, taking what it
+    leaves unset from it."""
     var enabled: Bool
     """Whether it is shown as active. A disabled bar is faded."""
     var _look: _ProgressBarLook

@@ -64,9 +64,14 @@ struct Switch(Clickable, Copyable, Movable, Widget):
     var on: Bool
     """Whether it is on. Set it to turn it from the program."""
     var track: Style
+    """The track while off, a rectangle rounded as the controls are."""
     var on_track: Style
+    """The track while on, taking what it leaves unset from `track`."""
     var handle: Style
+    """The handle, a square in the track: its fill is its colour, and
+    its `corner_radius` how round it is."""
     var text_style: Style
+    """The text beside the track."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled switch is faded."""
     var _pointer: _Pointer
@@ -182,12 +187,16 @@ struct Switch(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:

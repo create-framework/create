@@ -30,10 +30,10 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `text: String`: The text beside the box.
 - `rect: Rectangle`: Where it is: the box against its left edge, and the area a click ticks it in.
 - `checked: Bool`: Whether it is ticked. Set it to tick it from the program.
-- `box: Style`
-- `checked_box: Style`
-- `tick: Style`
-- `text_style: Style`
+- `box: Style`: The empty box, a rectangle: an outline unless its style fills it.
+- `checked_box: Style`: The ticked box, filled, taking what it leaves unset from `box`.
+- `tick: Style`: The tick's two lines: its stroke is their colour and width.
+- `text_style: Style`: The text beside the box.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled checkbox is faded.
 
 ## Constructors
@@ -81,17 +81,23 @@ Whether its last `update` ticked or unticked it.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
 
+Whether the left button went down over it this frame.
+
 ### `down`
 
 ```mojo
 def down(self) -> Bool
 ```
+
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
 
 ### `released`
 

@@ -32,8 +32,8 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Widget`.
 - `minimum: Float64`: The value at the left end: empty.
 - `maximum: Float64`: The value at the right end: full.
 - `rect: Rectangle`: Where it is: the bar runs across its middle.
-- `track: Style`
-- `indicator: Style`
+- `track: Style`: The line along its whole length: its stroke is its colour and thickness.
+- `indicator: Style`: The line from the start to `value`, over `track`, taking what it leaves unset from it.
 - `enabled: Bool`: Whether it is shown as active. A disabled bar is faded.
 
 ## Constructors

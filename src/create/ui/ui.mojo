@@ -699,7 +699,7 @@ struct UI(Drawable, Movable):
 
         ```mojo
         # In `create`, building the `ui` field:
-        ui.style(button=Style(corner_radius=4))
+        ui.style(button=Style(corner_radius=0))  # square buttons
         ui.style(slider_handle=Style(stroke=Color.ORANGE))  # buttons kept
         ui.style(button=Style())  # the buttons' defaults again
         ```

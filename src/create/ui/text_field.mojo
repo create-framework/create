@@ -66,11 +66,18 @@ struct TextField(Clickable, Copyable, Movable, Widget):
     var padding: Float64
     """The gap between the field's sides and its text."""
     var container: Style
+    """The field, a rectangle."""
     var focused_container: Style
+    """Layered over `container` while it has focus: by default its
+    outline turns `primary` and twice as thick."""
     var text_style: Style
+    """The typed text."""
     var placeholder_style: Style
+    """The placeholder, taking what it leaves unset from `text_style`."""
     var caret: Style
+    """The caret, a line: its stroke is its colour and width."""
     var selection: Style
+    """The rectangle behind selected text."""
     var enabled: Bool
     """Whether it reacts to the mouse and keyboard. A disabled field is
     faded, and loses focus."""
@@ -278,7 +285,9 @@ struct TextField(Clickable, Copyable, Movable, Widget):
 
     def set_text(mut self, text: String):
         """Replace what has been typed with `text`, the caret kept inside
-        it. Not reported by `changed()`: the program made the change."""
+        it. Not reported by `changed()`: the program made the change. It is
+        kept whole, even past `max_length`, which limits only typing and
+        pasting."""
         self._buffer.text = text
         self._last_text = text
 
@@ -314,15 +323,21 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         return self._submitted
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:
+        """Whether it was clicked this frame: let go over it, after being
+        pressed on it."""
         return self._pointer.released
 
     def before_caret(self) -> String:
@@ -358,24 +373,39 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         self._buffer.delete_forward()
 
     def move_left(mut self, *, select: Bool = False):
+        """Move the caret one character left, as Left does: to the start of
+        the selection, with one and not `select`. With `select`, stretch the
+        selection instead."""
         self._buffer.move_left(select=select)
 
     def move_right(mut self, *, select: Bool = False):
+        """Move the caret one character right, as Right does: to the end of
+        the selection, with one and not `select`. With `select`, stretch the
+        selection instead."""
         self._buffer.move_right(select=select)
 
     def move_word_left(mut self, *, select: Bool = False):
+        """Move the caret to the start of the word on its left, as Ctrl+Left
+        does (Option+Left on macOS), stretching the selection with `select`."""
         self._buffer.move_word_left(select=select)
 
     def move_word_right(mut self, *, select: Bool = False):
+        """Move the caret to the end of the word on its right, as Ctrl+Right
+        does (Option+Right on macOS), stretching the selection with `select`."""
         self._buffer.move_word_right(select=select)
 
     def move_to_start(mut self, *, select: Bool = False):
+        """Move the caret to the start of the text, as Home does, stretching
+        the selection with `select`."""
         self._buffer.move_to_start(select=select)
 
     def move_to_end(mut self, *, select: Bool = False):
+        """Move the caret to the end of the text, as End does, stretching
+        the selection with `select`."""
         self._buffer.move_to_end(select=select)
 
     def select_all(mut self):
+        """Select the whole text, as Ctrl+A does (Cmd+A on macOS)."""
         self._buffer.select_all()
 
     def copy(self, mut context: Context):

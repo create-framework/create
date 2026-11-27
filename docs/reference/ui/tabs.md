@@ -38,10 +38,10 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `options: List[String]`: The tabs' text, the first at the left.
 - `rect: Rectangle`: Where it is: the tabs share its width.
 - `selected: Int`: Which tab is selected, counted from 0 at the left. Set it to select one from the program; outside the tabs, none is.
-- `tab: Style`
-- `selected_tab: Style`
-- `indicator: Style`
-- `divider: Style`
+- `tab: Style`: Each tab, a rectangle with its text: no fill or outline unless given one.
+- `selected_tab: Style`: The selected tab, taking what it leaves unset from `tab`.
+- `indicator: Style`: The line beneath the selected tab: its stroke is its colour and thickness.
+- `divider: Style`: The faint line beneath all the tabs, which the indicator sits on.
 - `enabled: Bool`: Whether it reacts to the mouse. Disabled tabs are faded.
 
 ## Constructors
@@ -97,11 +97,15 @@ Whether its last `update` selected another tab.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
+
+Whether the left button went down over it this frame.
 
 ### `down`
 
@@ -109,11 +113,15 @@ def pressed(self) -> Bool
 def down(self) -> Bool
 ```
 
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
+
 ### `released`
 
 ```mojo
 def released(self) -> Bool
 ```
+
+Whether it was clicked this frame: let go over it, after being pressed on it.
 
 ### `draw_to`
 

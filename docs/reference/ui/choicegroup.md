@@ -39,10 +39,10 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `options: List[String]`: The options' text, the first at the top.
 - `rect: Rectangle`: Where it is: the options share its height, their circles against its left edge.
 - `selected: Int`: Which option is chosen, counted from 0 at the top. Set it to choose one from the program; outside the options, none is.
-- `circle: Style`
-- `selected_circle: Style`
-- `dot: Style`
-- `text_style: Style`
+- `circle: Style`: Each option's circle: an outline unless its style fills it.
+- `selected_circle: Style`: The chosen option's circle, taking what it leaves unset from `circle`.
+- `dot: Style`: The dot in the chosen circle, a point: its stroke is its colour, and its `stroke_thickness` its diameter.
+- `text_style: Style`: The options' text.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled group is faded.
 
 ## Constructors
@@ -98,11 +98,15 @@ Whether its last `update` chose another option.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over it, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
+
+Whether the left button went down over it this frame.
 
 ### `down`
 
@@ -110,11 +114,15 @@ def pressed(self) -> Bool
 def down(self) -> Bool
 ```
 
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
+
 ### `released`
 
 ```mojo
 def released(self) -> Bool
 ```
+
+Whether it was clicked this frame: let go over it, after being pressed on it.
 
 ### `draw_to`
 
