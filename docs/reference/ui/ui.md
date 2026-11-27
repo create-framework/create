@@ -230,7 +230,6 @@ def style(
     slider_track: Optional[Style] = None,
     slider_active_track: Optional[Style] = None,
     slider_handle: Optional[Style] = None,
-    slider_handle_outline: Optional[Style] = None,
     checkbox_box: Optional[Style] = None,
     checkbox_checked_box: Optional[Style] = None,
     checkbox_tick: Optional[Style] = None,

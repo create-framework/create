@@ -656,7 +656,6 @@ struct UI(Drawable, Movable):
         slider_track: Optional[Style] = None,
         slider_active_track: Optional[Style] = None,
         slider_handle: Optional[Style] = None,
-        slider_handle_outline: Optional[Style] = None,
         checkbox_box: Optional[Style] = None,
         checkbox_checked_box: Optional[Style] = None,
         checkbox_tick: Optional[Style] = None,
@@ -717,8 +716,6 @@ struct UI(Drawable, Movable):
             styles.slider_active_track = slider_active_track.value()
         if slider_handle:
             styles.slider_handle = slider_handle.value()
-        if slider_handle_outline:
-            styles.slider_handle_outline = slider_handle_outline.value()
         if checkbox_box:
             styles.checkbox_box = checkbox_box.value()
         if checkbox_checked_box:
@@ -1804,7 +1801,7 @@ struct UI(Drawable, Movable):
             var described = _Description(_WIDGET, slider.rect, True)
             described.focusable = slider.enabled
             described.adjusts_x = True
-            described.ring_circle = slider._ring()
+            described.ring = slider._ring()
             described.held = slider.down()
             return described^
         if widget.isa[TextField]():

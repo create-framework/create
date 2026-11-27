@@ -183,8 +183,9 @@ hold a device. A `UI` that sees a device claimed by another ignores it.
 panel have one part; a slider, a checkbox and a text field have several, each a field of the widget
 (`handle`) and a keyword of `ui.style` (`slider_handle=`). What a part's style means follows from
 the shape it is drawn as: a slider's track is a `Line`, so its stroke is the track; its handle is a
-point, a zero-length round-capped `Line` as `canvas.point` draws it, so its stroke thickness is the
-handle's diameter.
+`Rectangle`, so its fill is the handle and its corner radius how round it is. A style has no size,
+so a size that isn't the shape's own (the handle's) is a number on the widget, as `TextField`'s
+`padding` is.
 
 **A widget's look is resolved from a `_Theme` and its state.** `_Theme` (`_theme.mojo`) holds the
 colours, the `ui.style` styles (`_Styles`), the settings and the surface the widget sits on, and one

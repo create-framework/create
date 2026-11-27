@@ -52,7 +52,6 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var slider_track: Style
     var slider_active_track: Style
     var slider_handle: Style
-    var slider_handle_outline: Style
     var checkbox_box: Style
     var checkbox_checked_box: Style
     var checkbox_tick: Style
@@ -93,7 +92,6 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.slider_track = Style()
         self.slider_active_track = Style()
         self.slider_handle = Style()
-        self.slider_handle_outline = Style()
         self.checkbox_box = Style()
         self.checkbox_checked_box = Style()
         self.checkbox_tick = Style()
@@ -135,7 +133,6 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.slider_track.over(under.slider_track),
             self.slider_active_track.over(under.slider_active_track),
             self.slider_handle.over(under.slider_handle),
-            self.slider_handle_outline.over(under.slider_handle_outline),
             self.checkbox_box.over(under.checkbox_box),
             self.checkbox_checked_box.over(under.checkbox_checked_box),
             self.checkbox_tick.over(under.checkbox_tick),
@@ -205,13 +202,12 @@ struct _PanelLook(Copyable, Movable):
 
 @fieldwise_init
 struct _SliderLook(Copyable, Movable):
-    """A slider's parts, resolved for its state. The handle is a point: a
-    zero-length line whose stroke thickness is its diameter."""
+    """A slider's parts, resolved for its state: two lines and the handle,
+    a rectangle."""
 
     var track: _ResolvedStyle
     var active: _ResolvedStyle
     var handle: _ResolvedStyle
-    var outline: _ResolvedStyle
 
 
 @fieldwise_init
@@ -481,13 +477,13 @@ struct _Theme(Copyable, Movable):
         call_track: Style,
         call_active_track: Style,
         call_handle: Style,
-        call_handle_outline: Style,
         *,
         hovered: Bool,
         dragging: Bool,
         disabled: Bool,
     ) -> _SliderLook:
-        """A slider's parts, styled by the call's styles for each."""
+        """A slider's parts, styled by the call's styles for each: two lines
+        and a filled rectangle, rounded as the controls are."""
         var colors = self.colors
         ref block = self.styles[]
         var track_look = call_track.over(block.slider_track).over(
@@ -509,14 +505,11 @@ struct _Theme(Copyable, Movable):
         var handle = _ResolvedStyle()
         handle.apply(
             call_handle.over(block.slider_handle).over(
-                Style(stroke=colors.primary, stroke_thickness=20)
-            ),
-            self.colors,
-        )
-        var outline = _ResolvedStyle()
-        outline.apply(
-            call_handle_outline.over(block.slider_handle_outline).over(
-                Style(fill_enabled=False, stroke_enabled=False)
+                Style(
+                    fill=colors.primary,
+                    stroke_enabled=False,
+                    corner_radius=self.corner_radius,
+                )
             ),
             self.colors,
         )
@@ -529,25 +522,22 @@ struct _Theme(Copyable, Movable):
                 colors.on_surface, states.disabled_container
             )
             # solid, so the track doesn't show through it
-            handle.stroke_color = self.surface.lerp(
+            handle.fill_color = self.surface.lerp(
                 colors.on_surface, states.disabled_content
             )
+            handle.fill_gradient = None
         # a hovered or dragged handle is tinted, as a button is
-        var tint = _readable_on(handle.stroke_color)
-        if dragging:
-            handle.stroke_color = _stepped(
-                handle.stroke_color, tint, self.state_layers.dragged
-            )
-        elif hovered:
-            handle.stroke_color = _stepped(
-                handle.stroke_color, tint, self.state_layers.hovered
-            )
-        # a point, as `canvas.point` draws one: round unless square, and
-        # never dashed
-        if handle.stroke_cap != StrokeCap.SQUARE:
-            handle.stroke_cap = StrokeCap.ROUND
-        handle.stroke_dash = StrokeDash.SOLID
-        return _SliderLook(track, active, handle, outline)
+        if _fills(handle) and not handle.fill_gradient:
+            var tint = _readable_on(handle.fill_color)
+            if dragging:
+                handle.fill_color = _stepped(
+                    handle.fill_color, tint, self.state_layers.dragged
+                )
+            elif hovered:
+                handle.fill_color = _stepped(
+                    handle.fill_color, tint, self.state_layers.hovered
+                )
+        return _SliderLook(track, active, handle)
 
     def progress_bar(
         self, call_track: Style, call_indicator: Style, *, disabled: Bool
