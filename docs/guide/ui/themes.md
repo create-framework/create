@@ -215,9 +215,12 @@ one's, taking what it leaves unset from `circle`; `dot` is a point in it, drawn 
 draws one, so its `stroke` is its colour and its `stroke_thickness` its diameter; and `text_style`
 is the options' text.
 
-A switch works the same way: `track` is a rounded rectangle, drawn while it is off; `on_track` is
-the same rectangle while it is on, taking what it leaves unset from `track`; `handle` is a point, as
-a choice group's dot is; and `text_style` is the text beside it.
+A switch works the same way: `track` is a rectangle, rounded as the controls are, drawn while it is
+off; `on_track` is the same rectangle while it is on, taking what it leaves unset from `track`;
+`handle` is a square in it, larger while on, so its `fill` is its colour and its `corner_radius` how
+round it is; and `text_style` is the text beside it. Unless styled, the handle is rounded as much
+less than the track as it sits inside it, so `track=Style(corner_radius=12)` makes a pill with a
+round handle.
 
 A progress bar has two parts, each a line, as a slider's track has: `track`, the whole length, and
 `indicator`, from the start to its value, which takes what it leaves unset from `track`.
