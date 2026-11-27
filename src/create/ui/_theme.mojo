@@ -1230,10 +1230,10 @@ comptime _BUTTON_FILLED = Style(
 style over it that gives only a thickness gets it."""
 
 comptime _BUTTON_TONAL = Style(
-    fill=ColorRole.SECONDARY_CONTAINER,
+    fill=ColorRole.PRIMARY_CONTAINER,
     stroke=ColorRole.OUTLINE,
     stroke_enabled=False,
-    text_color=ColorRole.ON_SECONDARY_CONTAINER,
+    text_color=ColorRole.ON_PRIMARY_CONTAINER,
 )
 """`Button.TONAL`."""
 
