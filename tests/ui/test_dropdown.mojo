@@ -103,6 +103,37 @@ def test_the_wheel_scrolls_a_long_list() raises -> None:
     assert_equal(ui[level].selected, 1)  # the second, scrolled to the top
 
 
+def test_the_wheel_over_its_list_leaves_a_scroll_area_round_it() raises -> None:
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 50), 220, 100)))
+    var column = ui.add(Column(), window)
+    var options = List[String]()
+    for i in range(20):
+        options.append(String("Level ", i + 1))
+    var level = ui.add(Dropdown(options^, max_items=4), column)
+    for name in ["A", "B", "C", "D"]:
+        _ = ui.add(Button(name), column)
+    var context = Context()
+    var canvas = Canvas(400, 300)
+    point_at(context, (180, 140))
+    ui.update(context, canvas)
+    _click(ui, context, ui.get(level).rect.position)
+    assert_true(ui[level].is_open())
+    var list = ui[level]._popup().value()
+    next_frame(context)
+    point_at(context, list.position)
+    context.mouse._scroll(Vector(0, -1))
+    ui.update(context, canvas)
+    assert_equal(ui[level]._scroll, 40.0)  # the list scrolls
+    assert_equal(ui[window].offset, 0.0)  # and the window round it doesn't
+    # Away from the list, the wheel still reaches only the open dropdown.
+    next_frame(context)
+    point_at(context, (0, 90))
+    context.mouse._scroll(Vector(0, -1))
+    ui.update(context, canvas)
+    assert_equal(ui[window].offset, 0.0)
+
+
 def test_its_list_opens_upwards_near_the_canvas_s_foot() raises -> None:
     var ui = UI()
     var size = ui.add(Dropdown(_options(), Rectangle((0, -110), 200, 40)))
