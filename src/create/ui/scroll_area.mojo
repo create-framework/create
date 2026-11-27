@@ -124,9 +124,13 @@ struct ScrollArea(Copyable, Movable):
             var track = self._track_ends()
             var length = ends[0] - ends[1]
             var travel = (track[0] - track[1]) - length
-            var top = pointer.y - self._grab + length / 2
-            var t = clamp((track[0] - top) / travel, 0.0, 1.0)
-            self.offset = t * self._room()
+            # A window so short that the thumb fills its track leaves the
+            # thumb nowhere to go: dragging it moves nothing, rather than
+            # jumping to an end, and the wheel still scrolls.
+            if travel > 0:
+                var top = pointer.y - self._grab + length / 2
+                var t = clamp((track[0] - top) / travel, 0.0, 1.0)
+                self.offset = t * self._room()
         if enabled and wheel and self._room() > 0:
             # a turn away from you scrolls up, by a control a notch
             var by = context.mouse.wheel.y * theme.control_height

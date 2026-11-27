@@ -172,6 +172,28 @@ def test_dragging_the_thumb_scrolls_and_holds_the_mouse() raises -> None:
     release(context, (300, start.y - 1000))
 
 
+def test_a_thumb_that_fills_its_track_doesnt_jump_when_dragged() raises -> None:
+    # The track runs the window's height less a bar's width, so a window two
+    # bars tall leaves a track one bar long: the shortest a thumb is.
+    var ui = UI()
+    var window = ui.add(ScrollArea(Rectangle((0, 0), 200.0, 2 * _BAR)))
+    _ = _list(ui, window)
+    var context = Context()
+    var canvas = Canvas(400, 300)
+    point_at(context, (180, 140))
+    ui.update(context, canvas)
+    var thumb = Point(100 - _BAR / 2, 0.0)
+    next_frame(context)
+    point_at(context, thumb)
+    press(context, thumb)
+    ui.update(context, canvas)
+    next_frame(context)
+    point_at(context, thumb - Vector(0, 3))
+    ui.update(context, canvas)
+    assert_equal(ui[window].offset, 0.0)
+    release(context, thumb - Vector(0, 3))
+
+
 def test_a_column_that_fits_has_no_bar_and_the_full_width() raises -> None:
     var ui = UI()
     var window = ui.add(ScrollArea(Rectangle((0, 0), 200, 250)))
