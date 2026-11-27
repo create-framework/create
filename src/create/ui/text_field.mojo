@@ -209,7 +209,8 @@ struct TextField(Clickable, Copyable, Movable, Widget):
         var look = _text_look(self._look.typed, Align.LEFT)
         var left = self.rect.position.x - self.rect.width / 2 + self.padding
         var inner = self.rect.width - 2 * self.padding
-        var now = context.time.elapsed
+        # the real clock, so the caret blinks in a paused game's menu too
+        var now = context.time.real_elapsed
 
         # a press places the caret under the pointer
         if self._pointer.pressed:

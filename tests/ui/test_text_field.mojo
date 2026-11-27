@@ -221,5 +221,23 @@ def test_focus_taken_away_by_the_program_switches_typing_off() raises -> None:
     assert_false(context.text_input())
 
 
+def test_the_caret_blinks_while_the_game_is_paused() raises -> None:
+    var field = TextField(rect=_FIRST)
+    var context = Context()
+    var canvas = Canvas(400, 200)
+    field.focus()
+    var shown = List[Bool]()
+    # The game's clock stands still; only the real one moves on.
+    for time in [0.0, 0.6, 1.1, 1.6]:
+        next_frame(context)
+        context.time.real_elapsed = time
+        field.update(context, canvas)
+        shown.append(field._caret_shown)
+    assert_true(shown[0])  # steady at first
+    assert_true(shown[1])
+    assert_false(shown[2])  # then blinking
+    assert_true(shown[3])
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
