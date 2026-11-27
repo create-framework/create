@@ -82,8 +82,11 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
     var max_items: Int
     """The most items the open list shows at once."""
     var field: Style
+    """The field, a rectangle with the chosen option's text."""
     var list: Style
+    """The open list, a rectangle."""
     var item: Style
+    """Each item's text, the chosen one in the accent colour."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled dropdown is faded and
     closed."""
@@ -373,12 +376,18 @@ struct Dropdown(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over its field, or its list while open,
+        as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over its field, or its list
+        while open, this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:

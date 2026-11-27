@@ -42,8 +42,8 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 - `rect: Rectangle`: Where the window is: given, or set by what it is in.
 - `offset: Float64`: How far down its column the window shows, from 0 at the top. Each layout keeps it between 0 and as far as the column goes.
 - `max_height: Optional[Float64]`: The tallest it grows to fit its column, with no `rect` of its own: as tall as the column when `None`.
-- `track: Style`
-- `thumb: Style`
+- `track: Style`: The line the thumb runs along: its stroke is its colour and thickness.
+- `thumb: Style`: The line whose length shows how much of the column the window shows: its stroke is its colour and thickness.
 
 ## Constructors
 

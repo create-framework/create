@@ -58,9 +58,15 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
     """Which tab is selected, counted from 0 at the left. Set it to select
     one from the program; outside the tabs, none is."""
     var tab: Style
+    """Each tab, a rectangle with its text: no fill or outline unless
+    given one."""
     var selected_tab: Style
+    """The selected tab, taking what it leaves unset from `tab`."""
     var indicator: Style
+    """The line beneath the selected tab: its stroke is its colour and
+    thickness."""
     var divider: Style
+    """The faint line beneath all the tabs, which the indicator sits on."""
     var enabled: Bool
     """Whether it reacts to the mouse. Disabled tabs are faded."""
     var _pointer: _Pointer
@@ -244,15 +250,21 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:
+        """Whether it was clicked this frame: let go over it, after being
+        pressed on it."""
         return self._pointer.released
 
     def draw_to(self, mut canvas: Canvas):

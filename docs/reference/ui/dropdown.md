@@ -51,9 +51,9 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `rect: Rectangle`: Where its field is.
 - `selected: Int`: Which option is chosen, counted from 0. Set it to choose one from the program; outside the options, the field is empty.
 - `max_items: Int`: The most items the open list shows at once.
-- `field: Style`
-- `list: Style`
-- `item: Style`
+- `field: Style`: The field, a rectangle with the chosen option's text.
+- `list: Style`: The open list, a rectangle.
+- `item: Style`: Each item's text, the chosen one in the accent colour.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled dropdown is faded and closed.
 
 ## Constructors
@@ -117,17 +117,23 @@ Whether its last `update` chose another option.
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over its field, or its list while open, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
 
+Whether the left button went down over its field, or its list while open, this frame.
+
 ### `down`
 
 ```mojo
 def down(self) -> Bool
 ```
+
+Whether it is held: pressed on it, and the button not let go since, wherever the pointer has moved.
 
 ### `released`
 

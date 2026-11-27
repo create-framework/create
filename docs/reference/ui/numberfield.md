@@ -38,9 +38,9 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `rect: Rectangle`: Where it is: the field, then the − and + buttons at its right end.
 - `step: Float64`: How far the buttons, the arrows and a gamepad step the value.
 - `decimals: Int`: How many places after the point the value is rounded to and shown with: whole numbers at 0.
-- `container: Style`
-- `text_style: Style`
-- `buttons: Style`
+- `container: Style`: Its field, as a text field's `container` is.
+- `text_style: Style`: Its field's text, as a text field's `text_style` is.
+- `buttons: Style`: The style of both its buttons, as a button's `style` is.
 - `enabled: Bool`: Whether it reacts to the mouse and keyboard. A disabled field is faded.
 
 ## Constructors
@@ -98,11 +98,15 @@ Whether its last `update` changed `value`, by typing, a button, an arrow or a ga
 def hovered(self) -> Bool
 ```
 
+Whether the pointer is over its field or one of its buttons, as of its last `update`.
+
 ### `pressed`
 
 ```mojo
 def pressed(self) -> Bool
 ```
+
+Whether the left button went down over its field or one of its buttons this frame.
 
 ### `down`
 
@@ -110,11 +114,15 @@ def pressed(self) -> Bool
 def down(self) -> Bool
 ```
 
+Whether its field or one of its buttons is held: pressed on, and the button not let go since.
+
 ### `released`
 
 ```mojo
 def released(self) -> Bool
 ```
+
+Whether its field or one of its buttons was clicked this frame.
 
 ### `draw_to`
 

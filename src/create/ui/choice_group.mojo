@@ -62,9 +62,15 @@ struct ChoiceGroup(Clickable, Copyable, Movable, Widget):
     """Which option is chosen, counted from 0 at the top. Set it to choose
     one from the program; outside the options, none is."""
     var circle: Style
+    """Each option's circle: an outline unless its style fills it."""
     var selected_circle: Style
+    """The chosen option's circle, taking what it leaves unset from
+    `circle`."""
     var dot: Style
+    """The dot in the chosen circle, a point: its stroke is its colour,
+    and its `stroke_thickness` its diameter."""
     var text_style: Style
+    """The options' text."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled group is faded."""
     var _pointer: _Pointer
@@ -243,15 +249,21 @@ struct ChoiceGroup(Clickable, Copyable, Movable, Widget):
         return self._changed
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:
+        """Whether it was clicked this frame: let go over it, after being
+        pressed on it."""
         return self._pointer.released
 
     def draw_to(self, mut canvas: Canvas):

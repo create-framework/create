@@ -50,7 +50,7 @@ struct Button(Clickable, Copyable, Movable, Widget):
 
     It is filled in the colours' `primary` unless its `style` says
     otherwise, and its style changes only what it sets:
-    `Style(corner_radius=4)` squares its corners. Four ready-made styles
+    `Style(corner_radius=0)` squares its corners. Four ready-made styles
     give it a weight, from the main action to the quietest: `Button.FILLED`
     (the look it has unless styled), `Button.TONAL`, `Button.OUTLINED` and
     `Button.TEXT`. Each names its colours by `ColorRole`, so it follows the
@@ -76,7 +76,8 @@ struct Button(Clickable, Copyable, Movable, Widget):
     var text: String
     """The text on it."""
     var rect: Rectangle
-    """Where it is, and how big. A rotated rectangle turns it."""
+    """Where it is, and how big. To turn a button, update and draw it
+    inside a `canvas.transform` block, which turns its text with it."""
     var style: Style
     """Its own style, over its default look."""
     var enabled: Bool
@@ -164,12 +165,16 @@ struct Button(Clickable, Copyable, Movable, Widget):
         return (width + 2 * _BUTTON_PADDING, theme.control_height)
 
     def hovered(self) -> Bool:
+        """Whether the pointer is over it, as of its last `update`."""
         return self._pointer.hovered
 
     def pressed(self) -> Bool:
+        """Whether the left button went down over it this frame."""
         return self._pointer.pressed
 
     def down(self) -> Bool:
+        """Whether it is held: pressed on it, and the button not let go
+        since, wherever the pointer has moved."""
         return self._pointer.held
 
     def released(self) -> Bool:

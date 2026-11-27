@@ -52,7 +52,11 @@ struct ScrollArea(Copyable, Movable):
     """The tallest it grows to fit its column, with no `rect` of its own:
     as tall as the column when `None`."""
     var track: Style
+    """The line the thumb runs along: its stroke is its colour and
+    thickness."""
     var thumb: Style
+    """The line whose length shows how much of the column the window
+    shows: its stroke is its colour and thickness."""
     var _pointer: _Pointer
     """What the mouse did to the thumb."""
     var _grab: Float64
