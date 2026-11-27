@@ -8,6 +8,7 @@ from std.os import listdir, makedirs, remove, rmdir
 from std.os.path import exists
 
 from create import *
+from create.render.render_backend import RenderBackend
 
 comptime _ROOT = "/tmp/create_test_file_naming/"
 
@@ -147,6 +148,55 @@ def test_a_run_numbers_its_frames_and_recordings() raises -> None:
     assert_true(exists(folder + "frame-0002.png"))
     assert_true(exists(folder + "clip-0001.gif"))
     assert_false(exists(folder + "frame-0003.png"))
+
+
+@fieldwise_init
+struct TwiceAFrame[gpu: Bool](Program):
+    """Saves its second frame twice over: two images at two sizes, two
+    numbered images and two screenshots."""
+
+    var _unused: Int
+
+    @staticmethod
+    def create(mut context: Context, mut canvas: Canvas) raises -> Self:
+        return Self(0)
+
+    def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        canvas.background(Color.BLUE)
+        var folder = _ROOT + ("twice_gpu/" if Self.gpu else "twice_cpu/")
+        canvas.save_image(folder + "small.png")
+        canvas.save_image(folder + "large.png", pixel_scale=2.0)
+        canvas.save_image(folder + "frame.png", naming=FileNaming.NUMBERED)
+        canvas.save_image(folder + "frame.png", naming=FileNaming.NUMBERED)
+        canvas.save_screenshot(folder + "first.png")
+        canvas.save_screenshot(folder + "second.png")
+
+
+def _check_twice(folder: String) raises:
+    assert_equal(Image.load(folder + "small.png").width(), 40)
+    assert_equal(Image.load(folder + "large.png").width(), 80)
+    assert_true(exists(folder + "frame-0001.png"), "no number goes unwritten")
+    assert_true(exists(folder + "frame-0002.png"))
+    assert_equal(Image.load(folder + "first.png").pixel(5, 5), Color.BLUE)
+    assert_equal(Image.load(folder + "second.png").pixel(5, 5), Color.BLUE)
+
+
+def test_every_save_in_a_frame_is_written() raises -> None:
+    var folder = _folder("twice_cpu")
+    _ = run_headless[TwiceAFrame[False]](40, 30, frames=1)
+    _check_twice(folder)
+
+
+def test_every_save_in_a_frame_is_written_on_the_gpu() raises -> None:
+    var folder = _folder("twice_gpu")
+    try:
+        _ = run_headless[TwiceAFrame[True]](
+            40, 30, frames=1, backend=RenderBackend.GPU
+        )
+    except e:
+        print("SKIP — no GL context:", e)
+        return
+    _check_twice(folder)
 
 
 def main() raises:

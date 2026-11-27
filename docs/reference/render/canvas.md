@@ -549,7 +549,8 @@ nothing was rendered. `pixel_scale` multiplies the output resolution, so
 Deferred, not immediate: the file is written when the frame is
 presented, so it holds the whole frame however early in `update` this
 was called. A failure to write raises there, from `present`, rather
-than here.
+than here. Every call writes a file, so one frame can be saved
+several times, at different sizes or to different paths.
 
 An offscreen canvas has no frame to present, so it writes at once,
 what it has drawn so far. Its pixels are already rasterised, so a

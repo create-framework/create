@@ -149,7 +149,8 @@ struct Backend(Movable):
         self.target = None
 
     def _flush_image(mut self, cmds: List[RenderCommand]) raises:
-        """Service a pending `save_image` by replaying `cmds` a second time.
+        """Service the pending `save_image`s by replaying `cmds` once more for
+        each, in the order they were called.
 
         Onto an owned buffer of the capture's own size, through the CPU
         rasteriser under both backends — the glyph cache and the image cache
@@ -161,19 +162,17 @@ struct Backend(Movable):
         transparent capture drops the frame's clear as well, so the background
         keeps the buffer's alpha 0.
         """
-        if not self.captures.pending_image:
-            return
-        var request = self.captures.pending_image.take()
-        var mem = MemorySurface(request.width, request.height)
-        self.replay(
-            mem.surface(),
-            cmds,
-            request.scale,
-            pre=request.rebase,
-            skip_letterbox=True,
-            skip_clear=request.transparent,
-        )
-        mem.save(request.path, opaque=not request.transparent)
+        for request in self.captures.take_images():
+            var mem = MemorySurface(request.width, request.height)
+            self.replay(
+                mem.surface(),
+                cmds,
+                request.scale,
+                pre=request.rebase,
+                skip_letterbox=True,
+                skip_clear=request.transparent,
+            )
+            mem.save(request.path, opaque=not request.transparent)
 
     def _needs_seed(self) -> Bool:
         """Whether the recording in progress wants the window's finished

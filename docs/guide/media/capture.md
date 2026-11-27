@@ -24,7 +24,8 @@ if context.keyboard.pressed(Key.S):
   bars included. It depends on the window's size and the machine, so it is the one for a bug report
   or sharing a running sketch.
 
-On an offscreen canvas both write at once (see [Drawing into an
+Every call saves a file, so a frame can be saved more than once, such as a preview and a print at a
+larger `pixel_scale`. On an offscreen canvas both write at once (see [Drawing into an
 image](images.md#drawing-into-an-image)).
 
 ## Naming the files

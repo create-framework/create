@@ -27,7 +27,7 @@ from std.memory import unsafe_memcpy
 
 
 @fieldwise_init
-struct _ImageRequest(Movable):
+struct _ImageRequest(Copyable, Movable):
     """A `canvas.save_image` that has not been serviced yet.
 
     Filed while recording and flushed at present, because present is the only
@@ -233,52 +233,65 @@ struct Captures(Movable):
     var clock: Float64
     """The run's elapsed time at the frame being recorded, handed in by the
     loops (render never imports core): what a recording is timed by."""
-    var pending_screenshot: Optional[String]
-    """A `save_screenshot` filed by this frame, serviced at present.
+    var pending_screenshots: List[String]
+    """The `save_screenshot`s filed by this frame, serviced at present, in
+    the order they were called.
 
-    Just a path: a screenshot has no geometry to decide, which is the whole
+    Just paths: a screenshot has no geometry to decide, which is the whole
     difference from `_ImageRequest` — it is whatever the framebuffer holds
-    once the frame has been rendered.
+    once the frame has been rendered, so every one is the same pixels.
     """
-    var pending_image: Optional[_ImageRequest]
-    """A `save_image` filed by this frame, serviced at present.
-
-    One per frame: a second call overwrites the first, which is the only
-    sensible reading of two saves of the same frame to two paths being asked
-    for by accident.
-    """
+    var pending_images: List[_ImageRequest]
+    """The `save_image`s filed by this frame, serviced at present, in the
+    order they were called. Each is kept, since two saves of one frame are a
+    real use, such as a preview and a print at another `pixel_scale`, and a
+    numbered save has already taken its number."""
 
     def __init__(out self):
         self.recording = None
         self.clock = 0.0
-        self.pending_screenshot = Optional[String]()
-        self.pending_image = Optional[_ImageRequest]()
+        self.pending_screenshots = List[String]()
+        self.pending_images = List[_ImageRequest]()
 
     def request_image(mut self, var request: _ImageRequest):
         """File a design-size capture of the frame being recorded."""
-        self.pending_image = Optional(request^)
+        self.pending_images.append(request^)
 
     def request_screenshot(mut self, path: String):
         """File a framebuffer-resolution capture of the frame being recorded."""
-        self.pending_screenshot = Optional(path)
+        self.pending_screenshots.append(path)
+
+    def take_screenshots(mut self) -> List[String]:
+        """The screenshots filed this frame, leaving none pending."""
+        var paths = self.pending_screenshots.copy()
+        self.pending_screenshots.clear()
+        return paths^
+
+    def take_images(mut self) -> List[_ImageRequest]:
+        """The image captures filed this frame, leaving none pending."""
+        var requests = self.pending_images.copy()
+        self.pending_images.clear()
+        return requests^
 
     def flush_screenshot[o: Origin[mut=True]](mut self, s: Surface[o]) raises:
-        """Service a pending `save_screenshot` by copying the finished buffer.
+        """Service the pending `save_screenshot`s by copying the finished
+        buffer, once for them all.
 
         After the replay, so the bars are in it — a screenshot is what the user
         saw, and at this point `s` already is that. Near-free: a copy of the
         frame, with no second rasterisation.
         """
-        if not self.pending_screenshot:
+        var paths = self.take_screenshots()
+        if not paths:
             return
-        var path = self.pending_screenshot.take()
         var mem = MemorySurface(s.width, s.height)
         unsafe_memcpy(
             dest=mem.data.unsafe_ptr(),
             src=s.px,
             count=s.width * s.height * 4,
         )
-        mem.save(path)
+        for path in paths:
+            mem.save(path)
 
     def flush_screenshot_gpu(
         mut self, mut gl: GLRenderer, width: Int, height: Int
@@ -290,12 +303,13 @@ struct Captures(Movable):
         after `render` and before the run loop's buffer swap, which is the only
         window in which the finished frame is still the one being read.
         """
-        if not self.pending_screenshot:
+        var paths = self.take_screenshots()
+        if not paths:
             return
-        var path = self.pending_screenshot.take()
         var frame = gl.read_frame(width, height)
         _force_opaque(frame)
-        write_png(frame, width, height, path)
+        for path in paths:
+            write_png(frame, width, height, path)
 
     def start_recording(mut self, var recording: _Recording) raises:
         """Make `recording` the one in progress, finishing any before it."""
