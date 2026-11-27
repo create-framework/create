@@ -146,7 +146,7 @@ def test_a_ready_made_style_follows_the_colours() raises -> None:
     canvas.colors(ColorScheme.dark())
     button.update(context, canvas)
     canvas.draw(button)
-    assert_equal(canvas.color_at(_EDGE), ColorScheme.dark().secondary_container)
+    assert_equal(canvas.color_at(_EDGE), ColorScheme.dark().primary_container)
 
 
 def test_a_style_over_a_ready_made_one_keeps_the_rest() raises -> None:

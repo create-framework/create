@@ -64,8 +64,8 @@ struct Button(Clickable, Copyable, Movable, Widget):
     """Filled in `primary`, with its text in `on_primary`: for the main
     action. A button looks like this unless styled."""
     comptime TONAL = _BUTTON_TONAL
-    """Filled in `secondary_container`, a quieter fill: for a secondary
-    action."""
+    """Filled in `primary_container`, a paler tint of `primary`: for a
+    secondary action."""
     comptime OUTLINED = _BUTTON_OUTLINED
     """Outlined, unfilled, with its text in `primary`: for a less important
     action."""
