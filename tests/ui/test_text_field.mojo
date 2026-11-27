@@ -181,6 +181,19 @@ def test_focus_doubles_the_outline_in_primary() raises -> None:
     assert_true(resting.color_at((0, 58.5)) != colors.outline)
 
 
+def test_it_is_an_outline_that_darkens_when_hovered() raises -> None:
+    var colors = ColorScheme.light()
+    var context = Context()
+    point_at(context, (100, 40))  # over it, clear of the text
+    var canvas = Canvas(400, 200, antialiasing=Antialiasing.OFF)
+    canvas.background(Color.RED)
+    var field = TextField(rect=_FIRST)
+    field.update(context, canvas)
+    canvas.draw(field)
+    assert_equal(canvas.color_at((100, 40)), Color.RED)  # unfilled
+    assert_equal(canvas.color_at(_TOP_EDGE), colors.on_surface)
+
+
 def test_the_focused_look_is_layered_over_the_container() raises -> None:
     var canvas = _field(
         True,

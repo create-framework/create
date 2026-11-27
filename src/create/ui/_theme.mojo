@@ -825,7 +825,7 @@ struct _Theme(Copyable, Movable):
         ref block = self.styles[]
         var field_look = call_field.over(block.dropdown_field).over(
             Style(
-                fill=colors.surface_container_highest,
+                fill_enabled=False,
                 stroke=colors.outline,
                 stroke_thickness=1,
                 corner_radius=self.corner_radius,
@@ -889,12 +889,15 @@ struct _Theme(Copyable, Movable):
             field.text_color = faded
             chevron.stroke_color = faded
         else:
-            # a hovered or pressed field steps its fill, as a button's does
+            # a hovered or pressed field steps its fill, as a button's does;
+            # an unfilled one darkens its outline to the text colour
             var step = self._step(hovered, pressed)
             if step > 0 and _fills(field) and not field.fill_gradient:
                 field.fill_color = _stepped(
                     field.fill_color, field.text_color, step
                 )
+            elif step > 0 and field.stroke_enabled:
+                field.stroke_color = field.text_color
         return _DropdownLook(
             field,
             _text_look(field, Align.LEFT),
@@ -1107,7 +1110,7 @@ struct _Theme(Copyable, Movable):
             block.text_field_container
         ).over(
             Style(
-                fill=colors.surface_container_highest,
+                fill_enabled=False,
                 stroke=colors.outline,
                 stroke_thickness=1,
                 corner_radius=self.corner_radius,
@@ -1145,15 +1148,17 @@ struct _Theme(Copyable, Movable):
             field.stroke_color = _faded(
                 colors.on_surface, states.disabled_container
             )
-        elif (
-            hovered
-            and not focused
-            and _fills(field)
-            and not field.fill_gradient
-        ):
-            field.fill_color = _stepped(
-                field.fill_color, colors.on_surface, self.state_layers.hovered
-            )
+        elif hovered and not focused:
+            # a filled field steps its fill; an unfilled one darkens its
+            # outline to the text colour
+            if _fills(field) and not field.fill_gradient:
+                field.fill_color = _stepped(
+                    field.fill_color,
+                    colors.on_surface,
+                    self.state_layers.hovered,
+                )
+            elif field.stroke_enabled:
+                field.stroke_color = colors.on_surface
         var selection = _ResolvedStyle()
         selection.apply(
             call_selection.over(block.text_field_selection).over(
