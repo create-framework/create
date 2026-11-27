@@ -1301,8 +1301,10 @@ def _layer_opacity(base: Color, layer: Color, step: Float64) -> Float64:
 
 
 def _faded(color: Color, opacity: Float64) -> Color:
-    """`color` at `opacity` of its own alpha."""
-    return color.with_alpha(UInt8(Float64(color.a) * opacity + 0.5))
+    """`color` at `opacity` of its own alpha, `opacity` kept between 0 and 1,
+    so a `StateLayers` set past either end can't wrap the alpha round."""
+    var kept = clamp(opacity, 0.0, 1.0)
+    return color.with_alpha(UInt8(Float64(color.a) * kept + 0.5))
 
 
 def _content_on(colors: ColorScheme, color: Color) -> Color:
