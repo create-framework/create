@@ -63,19 +63,10 @@ Implements `Deinitable`, `Movable`.
 @staticmethod
 def __init__(
     out self,
-    width: Float64,
-    height: Float64,
+    width: Number,
+    height: Number,
     *,
-    pixel_scale: Float64 = 1,
-    antialiasing: Antialiasing = Antialiasing.MEDIUM,
-) raises
-@staticmethod
-def __init__(
-    out self,
-    width: Int,
-    height: Int,
-    *,
-    pixel_scale: Float64 = 1,
+    pixel_scale: Number = SIMD(1),
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
 ) raises
 ```
@@ -199,7 +190,7 @@ with canvas.transform():
 ### `rotate`
 
 ```mojo
-def rotate(mut self, angle: Float64)
+def rotate(mut self, angle: Number)
 ```
 
 Turn everything drawn after this, until the end of the frame, counter-clockwise by `angle` radians about the current origin, as Processing's `rotate` does. See `translate`.
@@ -207,13 +198,13 @@ Turn everything drawn after this, until the end of the frame, counter-clockwise 
 ### `scale`
 
 ```mojo
-def scale(mut self, s: Float64)
+def scale(mut self, s: Number)
 ```
 
 Make everything drawn after this, until the end of the frame, `s` times as big about the current origin, as Processing's `scale` does. See `translate`.
 
 ```mojo
-def scale(mut self, sx: Float64, sy: Float64)
+def scale(mut self, sx: Number, sy: Number)
 ```
 
 Stretch everything drawn after this, until the end of the frame, by `sx` across and `sy` up and down about the current origin. A negative value mirrors. See `translate`.
@@ -463,8 +454,7 @@ Break every stroke into dashes: `StrokeDash.DASHED` or `DOTTED`, scaled to the s
 ### `corner_radius`
 
 ```mojo
-def corner_radius(mut self, radius: Float64)
-def corner_radius(mut self, radius: Int)
+def corner_radius(mut self, radius: Number)
 ```
 
 Round the shapes built from numbers by `rectangle`, `triangle`, `polygon` and `sector`, in world units, unless a call names its own `corner_radius`. A shape value carries its own radius, so `draw(shape)` and `clip(shape)` ignore this one: what is drawn from a shape is what its `contains` tests. Clamped per shape as the shape describes.
@@ -522,7 +512,7 @@ is opaque, and blends over what is there otherwise.
 def save_image(
     mut self,
     path: Optional[String] = None,
-    pixel_scale: Float64 = 1,
+    pixel_scale: Number = SIMD(1),
     transparent: Bool = False,
     *,
     naming: Optional[FileNaming] = None,
@@ -594,7 +584,7 @@ one onto the canvas's own pixels, at its own `scale`.
 ### `snapshot`
 
 ```mojo
-def snapshot(mut self, pixel_scale: Float64 = 1) raises -> Image
+def snapshot(mut self, pixel_scale: Number = SIMD(1)) raises -> Image
 ```
 
 What this frame has drawn so far, as an `Image` of the whole screen: `width * pixel_scale` by `height * pixel_scale` pixels.
@@ -606,7 +596,7 @@ effect is a snapshot kept as a field and drawn under the next frame.
 Everything `color_at` says about what is read applies.
 
 ```mojo
-def snapshot(mut self, region: Rectangle, pixel_scale: Float64 = 1) raises -> Image
+def snapshot(mut self, region: Rectangle, pixel_scale: Number = SIMD(1)) raises -> Image
 ```
 
 What this frame has drawn so far inside `region`, as an `Image` of `region.w * pixel_scale` by `region.h * pixel_scale` pixels.
@@ -661,8 +651,8 @@ def start_recording(
     naming: Optional[FileNaming] = None,
     seconds: OptionalNumber = None,
     frames: Optional[Int] = None,
-    fps: Float64 = 30,
-    pixel_scale: Float64 = 1,
+    fps: Number = SIMD(30),
+    pixel_scale: Number = SIMD(1),
     dither: Bool = False,
     transparent: Bool = False,
 ) raises
@@ -760,17 +750,8 @@ Whether a recording started by `start_recording` is in progress.
 def rectangle(
     mut self,
     position: Point,
-    width: Float64,
-    height: Float64,
-    *,
-    corner_radius: OptionalNumber = None,
-    rotation: OptionalNumber = SIMD(0),
-)
-def rectangle(
-    mut self,
-    position: Point,
-    width: Int,
-    height: Int,
+    width: Number,
+    height: Number,
     *,
     corner_radius: OptionalNumber = None,
     rotation: OptionalNumber = SIMD(0),
@@ -782,8 +763,7 @@ Draw the `width` by `height` rectangle centred on `position`, its corners rounde
 ### `circle`
 
 ```mojo
-def circle(mut self, position: Point, radius: Float64)
-def circle(mut self, position: Point, radius: Int)
+def circle(mut self, position: Point, radius: Number)
 ```
 
 Draw the circle centred on `position` with radius `radius`: a `Circle`. Its stroke is inset, inside the radius, unless the style's `stroke_alignment` says otherwise.
@@ -791,8 +771,7 @@ Draw the circle centred on `position` with radius `radius`: a `Circle`. Its stro
 ### `ellipse`
 
 ```mojo
-def ellipse(mut self, position: Point, width: Float64, height: Float64)
-def ellipse(mut self, position: Point, width: Int, height: Int)
+def ellipse(mut self, position: Point, width: Number, height: Number)
 ```
 
 Draw the axis-aligned ellipse centred on `position`, `width` wide and `height` high: an `Ellipse`, filling the rectangle `rectangle(position, width, height)` would draw. Turn one with `transform`.
@@ -809,8 +788,7 @@ times a circle's. A blurred drop shadow or an inset one costs what a
 ### `capsule`
 
 ```mojo
-def capsule(mut self, start: Point, end: Point, radius: Float64)
-def capsule(mut self, start: Point, end: Point, radius: Int)
+def capsule(mut self, start: Point, end: Point, radius: Number)
 ```
 
 Draw the capsule round the segment from `start` to `end`: every point within `radius` of it, a `Capsule`, its ends half discs.
@@ -830,18 +808,9 @@ inset one costs what a `bezier`'s blurred shadow does. A zero
 def sector(
     mut self,
     position: Point,
-    radius: Float64,
-    start_angle: Float64,
-    sweep_angle: Float64,
-    *,
-    corner_radius: OptionalNumber = None,
-)
-def sector(
-    mut self,
-    position: Point,
-    radius: Int,
-    start_angle: Float64,
-    sweep_angle: Float64,
+    radius: Number,
+    start_angle: Number,
+    sweep_angle: Number,
     *,
     corner_radius: OptionalNumber = None,
 )
@@ -929,7 +898,7 @@ like an image's), and on the GPU costs one extra draw call.
 def spline(
     mut self,
     var points: List[Point],
-    alpha: Float64 = 0.5,
+    alpha: Number = SIMD(0.5),
     closed: Bool = False,
 )
 ```
@@ -954,16 +923,9 @@ points draw nothing.
 def arc(
     mut self,
     position: Point,
-    radius: Float64,
-    start_angle: Float64,
-    sweep_angle: Float64,
-)
-def arc(
-    mut self,
-    position: Point,
-    radius: Int,
-    start_angle: Float64,
-    sweep_angle: Float64,
+    radius: Number,
+    start_angle: Number,
+    sweep_angle: Number,
 )
 ```
 
@@ -1044,8 +1006,7 @@ def image(mut self, image: Image, position: Point)
 Draw `image` centred on `position` at its own size: one unit for each of its pixels. It follows the transform, and is tinted and faded by the style's `tint` and `opacity`.
 
 ```mojo
-def image(mut self, image: Image, position: Point, width: Float64, height: Float64)
-def image(mut self, image: Image, position: Point, width: Int, height: Int)
+def image(mut self, image: Image, position: Point, width: Number, height: Number)
 ```
 
 Draw `image` centred on `position`, stretched to `width` by `height`. It follows the transform, and is tinted and faded by the style's `tint` and `opacity`.
@@ -1057,14 +1018,7 @@ def image(mut self, animator: Animator, position: Point)
 Draw the animator's current frame centred on `position`, at its own size.
 
 ```mojo
-def image(
-    mut self,
-    animator: Animator,
-    position: Point,
-    width: Float64,
-    height: Float64,
-)
-def image(mut self, animator: Animator, position: Point, width: Int, height: Int)
+def image(mut self, animator: Animator, position: Point, width: Number, height: Number)
 ```
 
 Draw the animator's current frame centred on `position`, stretched to `width` by `height`.
@@ -1080,8 +1034,7 @@ Paint glyphs in `color`. Separate from `fill`, so a shape colour and a label col
 ### `font_size`
 
 ```mojo
-def font_size(mut self, size: Float64)
-def font_size(mut self, size: Int)
+def font_size(mut self, size: Number)
 ```
 
 Text height in world units, scaled by autoscale like a coordinate. Glyphs are rasterised at whole pixel sizes, so a fractional size rounds once scaled.
@@ -1126,7 +1079,7 @@ Resolved at record time, like every other style setting.
 ### `opacity`
 
 ```mojo
-def opacity(mut self, value: Float64)
+def opacity(mut self, value: Number)
 ```
 
 Fade whatever is rendered next: fill, gradient, stroke, text, image and shadow alike, never `background`. `1.0` (the default) leaves it untouched; `0.0` renders nothing visible. Each shape composites once, so a translucent one is evenly translucent, stroke and fill included. Resolved at record time, like every other style setting: it cannot reach back and fade what was already rendered.
@@ -1342,7 +1295,7 @@ characters. With the default `Align.CENTER`, that left edge is
 Raises only if the default font has to be loaded and cannot be.
 
 ```mojo
-def text_width(self, text: String, *, width: Float64) raises -> Float64
+def text_width(self, text: String, *, width: Number) raises -> Float64
 ```
 
 How wide `text(text, ..., width)` would render: the width of its widest line once wrapped at `width`, at most `width` unless a single glyph is wider.
@@ -1360,7 +1313,7 @@ How tall `text(text, ...)` would render under the current font and size, in the 
 Raises only if the default font has to be loaded and cannot be.
 
 ```mojo
-def text_height(self, text: String, *, width: Float64) raises -> Float64
+def text_height(self, text: String, *, width: Number) raises -> Float64
 ```
 
 How tall `text(text, ..., width)` would render: its height once wrapped at `width`, every line it wraps onto counted.
@@ -1380,7 +1333,7 @@ is aligned on its own, and the alignment's top and bottom are those
 of the whole block (see `text_height`).
 
 ```mojo
-def text(mut self, text: String, position: Point, width: Float64)
+def text(mut self, text: String, position: Point, width: Number)
 ```
 
 Draw `text` at `position` as `text(text, position)` does, wrapped onto as many lines as keep each at most `width` units wide.

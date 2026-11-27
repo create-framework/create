@@ -37,7 +37,7 @@ struct Panel(Copyable, Movable, Widget):
     """Where it is, and how big."""
     var style: Style
     """Its own style, over the default card."""
-    var padding: Optional[Float64]
+    var padding: OptionalNumber
     """How far inside its edges a `UI` places the column or row in it: twice
     the `UI`'s `spacing` when `None`."""
     var _look: _PanelLook

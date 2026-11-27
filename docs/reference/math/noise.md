@@ -41,8 +41,8 @@ def __init__(
     out self,
     *,
     octaves: Int = Int(4),
-    falloff: Float64 = 0.5,
-    feature_size: Float64 = 1,
+    falloff: Number = SIMD(0.5),
+    feature_size: Number = SIMD(1),
 )
 @staticmethod
 def __init__(
@@ -50,8 +50,8 @@ def __init__(
     seed: UInt64,
     *,
     octaves: Int = Int(4),
-    falloff: Float64 = 0.5,
-    feature_size: Float64 = 1,
+    falloff: Number = SIMD(0.5),
+    feature_size: Number = SIMD(1),
 )
 ```
 
@@ -60,7 +60,7 @@ def __init__(
 ### `at`
 
 ```mojo
-def at(self, x: Float64) -> Float64
+def at(self, x: Number) -> Float64
 ```
 
 The field along a line: a value that wanders smoothly as `x` (a time, say) moves.
@@ -72,7 +72,7 @@ def at(self, position: Point) -> Float64
 The field over the plane: terrain, texture, a flow-field angle.
 
 ```mojo
-def at(self, position: Point, time: Float64) -> Float64
+def at(self, position: Point, time: Number) -> Float64
 ```
 
 The plane field, animated: it evolves smoothly as `time` moves. `time` is not divided by `feature_size`; scale it at the call.

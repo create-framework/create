@@ -45,7 +45,7 @@ How long it is, from `start` to `end`.
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point
+def at(self, t: Number) -> Point
 ```
 
 The point at parameter `t`: `start` at 0, `end` at 1, and proportional to distance in between. Not clamped: outside 0..1 it carries on along the line, as `lerp` extrapolates.
@@ -53,7 +53,7 @@ The point at parameter `t`: `start` at 0, `end` at 1, and proportional to distan
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector
+def tangent(self, t: Number) -> Vector
 ```
 
 The derivative at `t`: `end - start`, the same everywhere: the direction of travel, with the line's length as its magnitude. Zero for a zero-length line.
@@ -61,7 +61,7 @@ The derivative at `t`: `end - start`, the same everywhere: the direction of trav
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point
+def at_distance(self, distance: Number) -> Point
 ```
 
 The point `distance` along the line from `start`, clamped to the line's ends. Exact, and as cheap as `at`.
@@ -69,7 +69,7 @@ The point `distance` along the line from `start`, clamped to the line's ends. Ex
 ### `split`
 
 ```mojo
-def split(self, t: Float64) -> Tuple[Self, Self]
+def split(self, t: Number) -> Tuple[Self, Self]
 ```
 
 The line cut at `t` into two, together tracing exactly the original: the first runs `start` to `at(t)`, the second `at(t)` to `end`.
@@ -85,7 +85,7 @@ The tightest axis-aligned rectangle around the line: the box its two ends span, 
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point]
+def flatten(self, tolerance: Number) -> List[Point]
 ```
 
 `start` and `end`: a line is already straight, whatever the tolerance.

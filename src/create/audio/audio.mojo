@@ -1,6 +1,7 @@
 from std.math import clamp
 from std.memory import OwnedPointer
 
+from create.math import Number
 from ._sdl_audio import (
     SDLAudio,
     SDL_AUDIO_S16,
@@ -143,12 +144,12 @@ struct Audio(Movable):
         """The volume every playback plays at, `1.0` unless set."""
         return self._volume
 
-    def volume(mut self, volume: Float64) raises:
+    def volume(mut self, volume: Number) raises:
         """Set the volume every playback plays at, `0.0` silent and `1.0` as
         recorded; above `1.0` amplifies, and below `0.0` is silent too.
         Applies at once, to the playbacks already playing as well as later ones;
         each playback's own `volume(playback, ...)` scales it."""
-        self._volume = max(volume, 0.0)
+        self._volume = max(Float64(volume), 0.0)
         for i in range(len(self._slots)):
             if self._slots[i].stream != 0:
                 self._apply_gain(i)
@@ -199,21 +200,21 @@ struct Audio(Movable):
                 self._free_slot(i)
 
     def play(
-        mut self, sound: Sound, volume: Float64 = 1.0, speed: Float64 = 1.0
+        mut self, sound: Sound, volume: Number = 1.0, speed: Number = 1.0
     ) raises -> Playback:
         """Play `sound` once, as a new `Playback` at its own `volume` and
         `speed`; it is stale once the sound ends."""
-        return self._start(sound, volume, speed, loop=False)
+        return self._start(sound, Float64(volume), Float64(speed), loop=False)
 
     def loop(
-        mut self, sound: Sound, volume: Float64 = 1.0, speed: Float64 = 1.0
+        mut self, sound: Sound, volume: Number = 1.0, speed: Number = 1.0
     ) raises -> Playback:
         """Play `sound` over and over until stopped, as a new `Playback` at its
         own `volume` and `speed`, as `Animator.loop` and `Tween.loop` repeat.
         The playback is fed as the device asks, from a copy of `sound` that
         shares its samples.
         """
-        return self._start(sound, volume, speed, loop=True)
+        return self._start(sound, Float64(volume), Float64(speed), loop=True)
 
     def _start(
         mut self, sound: Sound, volume: Float64, speed: Float64, loop: Bool
@@ -234,7 +235,7 @@ struct Audio(Movable):
             SDL_AUDIO_S16, Int32(sound._channels), Int32(sound._sample_rate)
         )
         self._slots[index].stream = stream
-        self._slots[index].gain = max(volume, 0.0)
+        self._slots[index].gain = max(Float64(volume), 0.0)
         self._slots[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
         self._slots[index].paused = False
         self._slots[index].looping = loop
@@ -322,7 +323,7 @@ struct Audio(Movable):
             return 0.0
         return self._slots[Self._decode(playback._id)[0]].gain
 
-    def volume(mut self, playback: Playback, volume: Float64) raises:
+    def volume(mut self, playback: Playback, volume: Number) raises:
         """Set `playback`'s own volume, which `volume()` scales: a playback at
         `0.5` under a volume of `0.5` plays at a quarter. Below `0.0` is
         silent, as for `volume()`. No-op if stale."""
@@ -330,7 +331,7 @@ struct Audio(Movable):
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._slots[index].gain = max(volume, 0.0)
+        self._slots[index].gain = max(Float64(volume), 0.0)
         self._apply_gain(index)
 
     def speed(self, playback: Playback) -> Float64:
@@ -340,7 +341,7 @@ struct Audio(Movable):
             return 0.0
         return self._slots[Self._decode(playback._id)[0]].speed
 
-    def speed(mut self, playback: Playback, speed: Float64) raises:
+    def speed(mut self, playback: Playback, speed: Number) raises:
         """Set `playback`'s speed: `2.0` plays it twice as fast and an
         octave higher, `0.5` half as fast and an octave lower, as a record
         sped up or slowed down. Clamped to `0.01` to `100.0`. No-op if stale.
@@ -349,7 +350,7 @@ struct Audio(Movable):
         if not self._valid(id):
             return
         var index = Self._decode(id)[0]
-        self._slots[index].speed = clamp(speed, _MIN_SPEED, _MAX_SPEED)
+        self._slots[index].speed = clamp(Float64(speed), _MIN_SPEED, _MAX_SPEED)
         self._sdl.set_frequency_ratio(
             self._slots[index].stream, Float32(self._slots[index].speed)
         )

@@ -1,5 +1,5 @@
 from std.math import min, max, sqrt
-from create.math import TAU, Point, Vector
+from create.math import TAU, Number, Point, Vector
 from create.math import OptionalNumber
 from ._fillet import rounded_sector_vertices, sector_corner_radii
 from .bezier import _curve_segments
@@ -69,34 +69,17 @@ struct Sector(
     def __init__(
         out self,
         position: Point,
-        radius: Float64,
-        start_angle: Float64,
-        sweep_angle: Float64,
+        radius: Number,
+        start_angle: Number,
+        sweep_angle: Number,
         *,
         corner_radius: OptionalNumber = 0.0,
     ):
         self.position = position
-        self.radius = radius
-        self.start_angle = start_angle
-        self.sweep_angle = sweep_angle
+        self.radius = Float64(radius)
+        self.start_angle = Float64(start_angle)
+        self.sweep_angle = Float64(sweep_angle)
         self.corner_radius = corner_radius.or_else(0.0)
-
-    def __init__(
-        out self,
-        position: Point,
-        radius: Int,
-        start_angle: Float64,
-        sweep_angle: Float64,
-        *,
-        corner_radius: OptionalNumber = 0.0,
-    ):
-        self = Sector(
-            position,
-            Float64(radius),
-            start_angle,
-            sweep_angle,
-            corner_radius=corner_radius,
-        )
 
     def __eq__(self, other: Sector) -> Bool:
         return (

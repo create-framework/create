@@ -60,7 +60,7 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 def __init__(
     out self,
     text: String = "",
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     placeholder: String = "",
     max_length: Optional[Int] = None,

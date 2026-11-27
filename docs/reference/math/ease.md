@@ -1,7 +1,7 @@
 # ease
 
 ```mojo
-def ease(curve: Easing, t: Float64) -> Float64
+def ease(curve: Easing, t: Number) -> Float64
 ```
 
 Reshape the fraction `t` by `curve`.

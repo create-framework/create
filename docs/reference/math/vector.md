@@ -32,12 +32,12 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ## Constants
 
-- `ZERO = Vector(SIMD(0), SIMD(0))`
-- `ONE = Vector(SIMD(1), SIMD(1))`
-- `UP = Vector(SIMD(0), SIMD(1))`
-- `DOWN = Vector(SIMD(0), SIMD(-1))`
-- `LEFT = Vector(SIMD(-1), SIMD(0))`
-- `RIGHT = Vector(SIMD(1), SIMD(0))`
+- `ZERO = Vector(Number(SIMD(0)), Number(SIMD(0)))`
+- `ONE = Vector(Number(SIMD(1)), Number(SIMD(1)))`
+- `UP = Vector(Number(SIMD(0)), Number(SIMD(1)))`
+- `DOWN = Vector(Number(SIMD(0)), Number(SIMD(-1)))`
+- `LEFT = Vector(Number(SIMD(-1)), Number(SIMD(0)))`
+- `RIGHT = Vector(Number(SIMD(1)), Number(SIMD(0)))`
 
 ## Fields
 
@@ -48,9 +48,7 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ```mojo
 @staticmethod
-def __init__(out self, x: Float64, y: Float64)
-@staticmethod
-def __init__(out self, x: Int, y: Int)
+def __init__(out self, x: Number, y: Number)
 @staticmethod
 def __init__(out self, t: Tuple[Float64, Float64])
 ```
@@ -66,7 +64,7 @@ The displacement from the origin to `p`.
 
 ```mojo
 @staticmethod
-def from_angle(angle: Float64, length: Float64 = 1) -> Self
+def from_angle(angle: Number, length: Number = SIMD(1)) -> Self
 ```
 
 The vector of `length` pointing at `angle` radians, counter-clockwise from +x: `from_angle(0)` is `RIGHT`.
@@ -124,7 +122,7 @@ The square of `distance`, without its square root.
 ### `lerp`
 
 ```mojo
-def lerp(self, other: Self, t: Float64) -> Self
+def lerp(self, other: Self, t: Number) -> Self
 ```
 
 A new vector `t` of the way from this one to `other`; this one is unchanged. Not clamped: `t` outside 0..1 carries on past either end.
@@ -140,7 +138,7 @@ The heading in radians, counter-clockwise from +x, in `[-PI, PI]`. `0` for the z
 ### `rotate`
 
 ```mojo
-def rotate(self, angle: Float64) -> Self
+def rotate(self, angle: Number) -> Self
 ```
 
 This vector turned by `angle` radians, counter-clockwise; its length is unchanged.
@@ -148,7 +146,7 @@ This vector turned by `angle` radians, counter-clockwise; its length is unchange
 ### `with_length`
 
 ```mojo
-def with_length(self, length: Float64) -> Self
+def with_length(self, length: Number) -> Self
 ```
 
 This direction at `length`. The zero vector has no direction and gives NaN, as with `normalize`.
@@ -156,7 +154,7 @@ This direction at `length`. The zero vector has no direction and gives NaN, as w
 ### `limit`
 
 ```mojo
-def limit(self, max_length: Float64) -> Self
+def limit(self, max_length: Number) -> Self
 ```
 
 This vector, shortened to `max_length` if it is longer: a speed cap. Shorter vectors, the zero vector among them, are unchanged.
@@ -204,19 +202,19 @@ def __sub__(self, other: Self) -> Self
 ### `__mul__`
 
 ```mojo
-def __mul__(self, s: Float64) -> Self
+def __mul__(self, s: Number) -> Self
 ```
 
 ### `__truediv__`
 
 ```mojo
-def __truediv__(self, s: Float64) -> Self
+def __truediv__(self, s: Number) -> Self
 ```
 
 ### `__rmul__`
 
 ```mojo
-def __rmul__(self, s: Float64) -> Self
+def __rmul__(self, s: Number) -> Self
 ```
 
 `s * v`, the same as `v * s`, so a formula reads as written.
@@ -236,11 +234,11 @@ def __isub__(mut self, other: Self)
 ### `__imul__`
 
 ```mojo
-def __imul__(mut self, s: Float64)
+def __imul__(mut self, s: Number)
 ```
 
 ### `__itruediv__`
 
 ```mojo
-def __itruediv__(mut self, s: Float64)
+def __itruediv__(mut self, s: Number)
 ```

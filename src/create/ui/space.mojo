@@ -8,7 +8,7 @@ struct Space(Copyable, Movable):
     widgets apart from the next: twice the `UI`'s `spacing` unless given an
     `amount`."""
 
-    var amount: Optional[Float64]
+    var amount: OptionalNumber
 
     def __init__(out self, amount: OptionalNumber = None):
         self.amount = amount._value

@@ -23,6 +23,7 @@ tool: it maps a *range* onto an eased 0..1, where `ease` reshapes a fraction
 that is already normalised.
 """
 
+from .number import Number
 from std.math import sin, cos, pow, clamp
 from .constants import PI, TAU
 
@@ -157,7 +158,7 @@ def _out_bounce(t: Float64) -> Float64:
     return _BOUNCE_N * u * u + 0.984375
 
 
-def ease(curve: Easing, t: Float64) -> Float64:
+def ease(curve: Easing, t: Number) -> Float64:
     """Reshape the fraction `t` by `curve`.
 
     `t` is clamped to 0..1 first, unlike `lerp`, easing does not extrapolate.
@@ -168,7 +169,7 @@ def ease(curve: Easing, t: Float64) -> Float64:
     their run, overshooting the target before settling. Anything consuming the
     result as a colour channel or an index has to clamp it.
     """
-    var x = clamp(t, 0.0, 1.0)
+    var x = clamp(Float64(t), 0.0, 1.0)
 
     if curve == Easing.LINEAR:
         return x

@@ -10,7 +10,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 
 ## Fields
 
-- `amount: Optional[Float64]`
+- `amount: OptionalNumber`
 
 ## Constructors
 

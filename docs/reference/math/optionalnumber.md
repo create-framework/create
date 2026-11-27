@@ -42,6 +42,8 @@ def __init__(out self, value: Int)
 @staticmethod
 def __init__(out self, value: IntLiteral)
 @staticmethod
+def __init__(out self, value: Number)
+@staticmethod
 def __init__(out self, value: Optional[Float64])
 @staticmethod
 def __init__(out self, none: None)
@@ -60,7 +62,7 @@ The number. Only call it when one was given.
 ### `or_else`
 
 ```mojo
-def or_else(self, default: Float64) -> Float64
+def or_else(self, default: Number) -> Float64
 ```
 
 The number, or `default` when none was given.

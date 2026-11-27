@@ -1,3 +1,4 @@
+from .number import Number
 from std.math import atan2, cos, sin, sqrt
 from .constants import PI
 
@@ -36,12 +37,9 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     var x: Float64
     var y: Float64
 
-    def __init__(out self, x: Float64, y: Float64):
-        self.x = x
-        self.y = y
-
-    def __init__(out self, x: Int, y: Int):
-        self = Vector(Float64(x), Float64(y))
+    def __init__(out self, x: Number, y: Number):
+        self.x = Float64(x)
+        self.y = Float64(y)
 
     def __init__(out self, t: Tuple[Float64, Float64]):
         self = Vector(t[0], t[1])
@@ -56,15 +54,17 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     def __sub__(self, other: Vector) -> Vector:
         return Vector(self.x - other.x, self.y - other.y)
 
-    def __mul__(self, s: Float64) -> Vector:
-        return Vector(self.x * s, self.y * s)
+    def __mul__(self, s: Number) -> Vector:
+        var factor = Float64(s)
+        return Vector(self.x * factor, self.y * factor)
 
-    def __rmul__(self, s: Float64) -> Vector:
+    def __rmul__(self, s: Number) -> Vector:
         """`s * v`, the same as `v * s`, so a formula reads as written."""
         return self * s
 
-    def __truediv__(self, s: Float64) -> Vector:
-        return Vector(self.x / s, self.y / s)
+    def __truediv__(self, s: Number) -> Vector:
+        var divisor = Float64(s)
+        return Vector(self.x / divisor, self.y / divisor)
 
     def __neg__(self) -> Vector:
         return Vector(-self.x, -self.y)
@@ -77,13 +77,13 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self.x -= other.x
         self.y -= other.y
 
-    def __imul__(mut self, s: Float64):
-        self.x *= s
-        self.y *= s
+    def __imul__(mut self, s: Number):
+        self.x *= Float64(s)
+        self.y *= Float64(s)
 
-    def __itruediv__(mut self, s: Float64):
-        self.x /= s
-        self.y /= s
+    def __itruediv__(mut self, s: Number):
+        self.x /= Float64(s)
+        self.y /= Float64(s)
 
     def __eq__(self, other: Vector) -> Bool:
         return self.x == other.x and self.y == other.y
@@ -125,44 +125,49 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         """The square of `distance`, without its square root."""
         return (self - other).magnitude_squared()
 
-    def lerp(self, other: Vector, t: Float64) -> Vector:
+    def lerp(self, other: Vector, t: Number) -> Vector:
         """A new vector `t` of the way from this one to `other`; this one is
         unchanged. Not clamped: `t` outside 0..1 carries on past either end.
         """
+        var u = Float64(t)
         return Vector(
-            self.x + (other.x - self.x) * t, self.y + (other.y - self.y) * t
+            self.x + (other.x - self.x) * u, self.y + (other.y - self.y) * u
         )
 
     @staticmethod
-    def from_angle(angle: Float64, length: Float64 = 1.0) -> Vector:
+    def from_angle(angle: Number, length: Number = 1.0) -> Vector:
         """The vector of `length` pointing at `angle` radians,
         counter-clockwise from +x: `from_angle(0)` is `RIGHT`."""
-        return Vector(cos(angle) * length, sin(angle) * length)
+        var turn = Float64(angle)
+        var size = Float64(length)
+        return Vector(cos(turn) * size, sin(turn) * size)
 
     def angle(self) -> Float64:
         """The heading in radians, counter-clockwise from +x, in
         `[-PI, PI]`. `0` for the zero vector."""
         return atan2(self.y, self.x)
 
-    def rotate(self, angle: Float64) -> Vector:
+    def rotate(self, angle: Number) -> Vector:
         """This vector turned by `angle` radians, counter-clockwise; its
         length is unchanged."""
-        var c = cos(angle)
-        var s = sin(angle)
+        var turn = Float64(angle)
+        var c = cos(turn)
+        var s = sin(turn)
         return Vector(self.x * c - self.y * s, self.x * s + self.y * c)
 
-    def with_length(self, length: Float64) -> Vector:
+    def with_length(self, length: Number) -> Vector:
         """This direction at `length`. The zero vector has no direction and
         gives NaN, as with `normalize`."""
-        return self * (length / self.magnitude())
+        return self * (Float64(length) / self.magnitude())
 
-    def limit(self, max_length: Float64) -> Vector:
+    def limit(self, max_length: Number) -> Vector:
         """This vector, shortened to `max_length` if it is longer: a speed
         cap. Shorter vectors, the zero vector among them, are unchanged."""
+        var cap = Float64(max_length)
         var length_squared = self.magnitude_squared()
-        if length_squared <= max_length * max_length:
+        if length_squared <= cap * cap:
             return self
-        return self * (max_length / sqrt(length_squared))
+        return self * (cap / sqrt(length_squared))
 
     def xy(self) -> Tuple[Float64, Float64]:
         """Its two numbers as a pair, to unpack: `var (x, y) = v.xy()`."""

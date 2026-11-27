@@ -35,12 +35,12 @@ above, the stops are spread evenly; to place them yourself, give each a position
 ```mojo
 # In `create`, building the `sunset` field:
 var sunset = Gradient.linear(
-    [(0.0, Color.BLUE), (0.7, Color.PURPLE), (1.0, Color.ORANGE)]
+    [(0, Color.BLUE), (0.7, Color.PURPLE), (1, Color.ORANGE)]
 )
 ```
 
-Here the blue blends into purple over the first 70% of the way, and the purple into orange over the
-rest.
+Each pair is a `GradientStop`, though you never need to name the type. Here the blue blends into
+purple over the first 70% of the way, and the purple into orange over the rest.
 
 ## How a gradient fits a shape
 

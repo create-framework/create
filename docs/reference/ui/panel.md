@@ -28,7 +28,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Widget`.
 
 - `rect: Rectangle`: Where it is, and how big.
 - `style: Style`: Its own style, over the default card.
-- `padding: Optional[Float64]`: How far inside its edges a `UI` places the column or row in it: twice the `UI`'s `spacing` when `None`.
+- `padding: OptionalNumber`: How far inside its edges a `UI` places the column or row in it: twice the `UI`'s `spacing` when `None`.
 
 ## Constructors
 
@@ -36,7 +36,7 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Widget`.
 @staticmethod
 def __init__(
     out self,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     style: Style = Style(fill=OptionalColor(None), fill_gradient=Optional(None), fill_enabled=Optional(None), stroke=OptionalColor(None), stroke_thickness=OptionalNumber(None), stroke_enabled=Optional(None), stroke_alignment=Optional(None), stroke_cap=Optional(None), stroke_dash=Optional(None), corner_radius=OptionalNumber(None), text_color=OptionalColor(None), font=Optional(None), font_size=OptionalNumber(None), font_weight=Optional(None), font_italic=Optional(None), text_alignment=Optional(None), tint=OptionalColor(None), opacity=OptionalNumber(None), blend_mode=Optional(None), shadow=OptionalColor(None), shadow_offset=Optional(None), shadow_blur=OptionalNumber(None), shadow_spread=OptionalNumber(None), shadow_inset=Optional(None), shadow_follows_transform=Optional(None), shadow_enabled=Optional(None)),
     padding: OptionalNumber = None,

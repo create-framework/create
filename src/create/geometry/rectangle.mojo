@@ -1,5 +1,5 @@
 from std.math import cos, min, max, sin
-from create.math import PI, Point, Vector
+from create.math import PI, Number, Point, Vector
 from create.math import OptionalNumber
 from ._fillet import rect_corner_radius
 from .bezier import _curve_segments
@@ -82,34 +82,17 @@ struct Rectangle(
     def __init__(
         out self,
         position: Point,
-        width: Float64,
-        height: Float64,
+        width: Number,
+        height: Number,
         *,
         corner_radius: OptionalNumber = 0.0,
         rotation: OptionalNumber = 0.0,
     ):
         self.position = position
-        self.width = width
-        self.height = height
+        self.width = Float64(width)
+        self.height = Float64(height)
         self.corner_radius = corner_radius.or_else(0.0)
         self.rotation = rotation.or_else(0.0)
-
-    def __init__(
-        out self,
-        position: Point,
-        width: Int,
-        height: Int,
-        *,
-        corner_radius: OptionalNumber = 0.0,
-        rotation: OptionalNumber = 0.0,
-    ):
-        self = Rectangle(
-            position,
-            Float64(width),
-            Float64(height),
-            corner_radius=corner_radius,
-            rotation=rotation,
-        )
 
     def __eq__(self, other: Rectangle) -> Bool:
         return (
@@ -344,7 +327,7 @@ struct Rectangle(
         moved.position = moved.position + delta
         return moved^
 
-    def inset(self, amount: Float64) -> Rectangle:
+    def inset(self, amount: Number) -> Rectangle:
         """The rectangle with each side moved in by `amount`, about the same
         centre: 10 narrower and 10 lower for an `amount` of 5. A negative
         `amount` moves the sides out instead. The width and height stop at 0,
@@ -356,11 +339,11 @@ struct Rectangle(
         ```
         """
         var inset = self.copy()
-        inset.width = max(self.width - 2.0 * amount, 0.0)
-        inset.height = max(self.height - 2.0 * amount, 0.0)
+        inset.width = max(self.width - 2.0 * Float64(amount), 0.0)
+        inset.height = max(self.height - 2.0 * Float64(amount), 0.0)
         return inset^
 
-    def rows(self, count: Int, *, gap: Float64 = 0.0) -> List[Rectangle]:
+    def rows(self, count: Int, *, gap: Number = 0.0) -> List[Rectangle]:
         """The rectangle cut into `count` rows of equal height, the top one
         first, with `gap` between each row and the next.
 
@@ -373,23 +356,23 @@ struct Rectangle(
         return self.rows(weights=_equal_weights(count), gap=gap)
 
     def rows(
-        self, *, weights: List[Float64], gap: Float64 = 0.0
+        self, *, weights: List[Float64], gap: Number = 0.0
     ) -> List[Rectangle]:
         """The rectangle cut into one row for each weight, the top one first,
         with `gap` between each row and the next. The rows share the height
         left after the gaps in proportion to their weights, so `weights=[1, 3]`
         gives the top row a quarter of it and the bottom one three quarters.
         """
-        var heights = _shares(self.height, weights, gap)
+        var heights = _shares(self.height, weights, Float64(gap))
         var pieces = List[Rectangle](capacity=len(heights))
         var top = self.height / 2.0
         for height in heights:
             var centre = Vector(0.0, top - height / 2.0)
             pieces.append(self._piece(centre, self.width, height))
-            top -= height + gap
+            top -= height + Float64(gap)
         return pieces^
 
-    def columns(self, count: Int, *, gap: Float64 = 0.0) -> List[Rectangle]:
+    def columns(self, count: Int, *, gap: Number = 0.0) -> List[Rectangle]:
         """The rectangle cut into `count` columns of equal width, the left
         one first, with `gap` between each column and the next.
 
@@ -402,7 +385,7 @@ struct Rectangle(
         return self.columns(weights=_equal_weights(count), gap=gap)
 
     def columns(
-        self, *, weights: List[Float64], gap: Float64 = 0.0
+        self, *, weights: List[Float64], gap: Number = 0.0
     ) -> List[Rectangle]:
         """The rectangle cut into one column for each weight, the left one
         first, with `gap` between each column and the next. The columns share
@@ -410,13 +393,13 @@ struct Rectangle(
         `weights=[1, 3]` gives the left column a quarter of it and the right one
         three quarters.
         """
-        var widths = _shares(self.width, weights, gap)
+        var widths = _shares(self.width, weights, Float64(gap))
         var pieces = List[Rectangle](capacity=len(widths))
         var left = -self.width / 2.0
         for width in widths:
             var centre = Vector(left + width / 2.0, 0.0)
             pieces.append(self._piece(centre, width, self.height))
-            left += width + gap
+            left += width + Float64(gap)
         return pieces^
 
     def _piece(

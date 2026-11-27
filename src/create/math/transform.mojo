@@ -1,3 +1,4 @@
+from .number import Number
 from std.math import sin, cos
 
 from .matrix import Matrix
@@ -40,8 +41,8 @@ struct Transform(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         out self,
         *,
         translation: Vector = Vector.ZERO,
-        rotation: Float64 = 0.0,
-        scale: Float64 = 1.0,
+        rotation: Number = 0.0,
+        scale: Number = 1.0,
     ):
         """Scaled by `scale`, then turned counter-clockwise by `rotation`
         radians about the origin, then moved by `translation`. A negative
@@ -57,20 +58,22 @@ struct Transform(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         out self,
         *,
         translation: Vector = Vector.ZERO,
-        rotation: Float64 = 0.0,
-        scale_x: Float64,
-        scale_y: Float64,
+        rotation: Number = 0.0,
+        scale_x: Number,
+        scale_y: Number,
     ):
         """Stretched by `scale_x` across and `scale_y` up and down, then
         turned counter-clockwise by `rotation` radians about the origin, then
         moved by `translation`. A negative scale mirrors along its axis."""
-        var c = cos(rotation)
-        var s = sin(rotation)
-        self._xx = c * scale_x
-        self._xy = 0.0 - s * scale_y  # not -s * scale_y, which prints -0.0
+        var c = cos(Float64(rotation))
+        var s = sin(Float64(rotation))
+        self._xx = c * Float64(scale_x)
+        self._xy = 0.0 - s * Float64(
+            scale_y
+        )  # not -s * scale_y, which prints -0.0
         self._x0 = translation.x
-        self._yx = s * scale_x
-        self._yy = c * scale_y
+        self._yx = s * Float64(scale_x)
+        self._yy = c * Float64(scale_y)
         self._y0 = translation.y
 
     def __init__(

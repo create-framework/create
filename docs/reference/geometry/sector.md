@@ -44,19 +44,9 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyabl
 def __init__(
     out self,
     position: Point,
-    radius: Float64,
-    start_angle: Float64,
-    sweep_angle: Float64,
-    *,
-    corner_radius: OptionalNumber = SIMD(0),
-)
-@staticmethod
-def __init__(
-    out self,
-    position: Point,
-    radius: Int,
-    start_angle: Float64,
-    sweep_angle: Float64,
+    radius: Number,
+    start_angle: Number,
+    sweep_angle: Number,
     *,
     corner_radius: OptionalNumber = SIMD(0),
 )

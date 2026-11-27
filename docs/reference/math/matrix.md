@@ -33,7 +33,7 @@ All zeros.
 
 ```mojo
 @staticmethod
-def __init__(out self, *values: Float64)
+def __init__(out self, *values: Number)
 ```
 
 The entries, row by row: `Matrix[2, 2](1.0, 2.0, 3.0, 4.0)` has `1.0, 2.0` on top. Takes exactly `rows * cols` values.
@@ -71,7 +71,7 @@ def __getitem__(self, r: Int, c: Int) -> Float64
 ### `__setitem__`
 
 ```mojo
-def __setitem__(mut self, r: Int, c: Int, val: Float64)
+def __setitem__(mut self, r: Int, c: Int, val: Number)
 ```
 
 ### `__eq__`

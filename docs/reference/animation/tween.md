@@ -60,9 +60,9 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 @staticmethod
 def __init__(
     out self,
-    start: Float64,
-    end: Float64,
-    duration: Float64,
+    start: Number,
+    end: Number,
+    duration: Number,
     curve: Easing = Easing.LINEAR,
     clock: Clock = Clock.SCALED,
 )
@@ -74,7 +74,7 @@ A tween from `start` to `end` over `duration` seconds, timed by `clock`.
 @staticmethod
 def __init__(
     out self,
-    duration: Float64,
+    duration: Number,
     curve: Easing = Easing.LINEAR,
     clock: Clock = Clock.SCALED,
 )

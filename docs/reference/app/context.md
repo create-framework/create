@@ -274,7 +274,7 @@ def time_scale(self) -> Float64
 How fast the run's scaled time runs against real time. `1.0` unless set.
 
 ```mojo
-def time_scale(mut self, scale: Float64) raises
+def time_scale(mut self, scale: Number) raises
 ```
 
 Run the program's time at `scale` times real time: `0.5` is slow motion, `2.0` double speed.
@@ -337,9 +337,9 @@ no check first.
 ```mojo
 def rumble(
     mut self,
-    seconds: Float64,
-    low_frequency: Float64 = 1,
-    high_frequency: Float64 = 1,
+    seconds: Number,
+    low_frequency: Number = SIMD(1),
+    high_frequency: Number = SIMD(1),
     player: Int = Int(0),
 )
 ```

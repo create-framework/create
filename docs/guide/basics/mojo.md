@@ -23,17 +23,24 @@ There are two kinds of number you will meet everywhere:
 - **`Float64`** is a number with a decimal point, such as a position, a size, an angle or a time.
   Create measures almost everything in `Float64`.
 
-Mojo never turns one kind of number into the other by itself once it is held in a variable: an `Int`
-variable used where a `Float64` is needed has to be converted, with `Float64(count)`. A number
-written straight into the code, such as `40` or `0.5`, is different: it becomes whichever kind is
-needed, so `canvas.circle((0, 0), 40)` works as it is.
+**Create takes either kind.** Every number you hand to Create, such as a radius, a thickness or
+`lerp`'s `t`, can be an `Int` or a `Float64`, whether written straight into the code (`40`, `0.5`)
+or held in a variable. So `canvas.circle((0, 0), 40)` and `canvas.circle((0, 0), i * 5)` both work
+as they are. What Create gives back, such as `canvas.width()`, is a `Float64`.
+
+Your own sums are different: Mojo never turns one kind of number into the other by itself once it is
+held in a variable, so an `Int` variable in a sum with a `Float64` has to be converted, with
+`Float64(count)`. A number written straight into the code becomes whichever kind the sum needs.
 
 ```mojo
 # In `update`: a ring of `count` dots, `count` being an Int.
 for i in range(count):
     var angle = TAU * Float64(i) / Float64(count)  # Int to Float64 for the sum
-    canvas.circle(Point(0, 0) + Vector.from_angle(angle, 150), 8)
+    canvas.circle(Point(0, 0) + Vector.from_angle(angle, 150), i + 4)  # an Int radius
 ```
+
+A function of your own can take either kind too, by asking for a `Number`, and read it as a
+`Float64` with `Float64(n)`.
 
 Text is a `String`, written in double quotes. `+` joins strings, and `String(value)` turns a value
 into text, which is how a number reaches the screen: `canvas.text("Score: " + String(score), (0,

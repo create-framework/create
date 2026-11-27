@@ -3,7 +3,7 @@ to the other."""
 
 from .bezier import Bezier
 from .geometry import Geometry
-from create.math import Point
+from create.math import Number, Point
 from create.math import Vector
 
 
@@ -15,11 +15,11 @@ trait Curve(Geometry):
     `t` runs from 0 at the start to 1 at the end; only on a `Line` and an
     `Arc` is it proportional to distance, which `at_distance` always is."""
 
-    def at(self, t: Float64) -> Point:
+    def at(self, t: Number) -> Point:
         """The point at parameter `t`."""
         ...
 
-    def tangent(self, t: Float64) -> Vector:
+    def tangent(self, t: Number) -> Vector:
         """The derivative at `t`: the direction of travel, with the speed
         per unit of `t` as its magnitude."""
         ...
@@ -28,12 +28,12 @@ trait Curve(Geometry):
         """The distance along the curve from start to end."""
         ...
 
-    def at_distance(self, distance: Float64) -> Point:
+    def at_distance(self, distance: Number) -> Point:
         """The point `distance` along the curve from its start, clamped to
         its ends."""
         ...
 
-    def flatten(self, tolerance: Float64) -> List[Point]:
+    def flatten(self, tolerance: Number) -> List[Point]:
         """Points along the curve, start to end, whose straight segments
         stray from it by at most `tolerance`."""
         ...

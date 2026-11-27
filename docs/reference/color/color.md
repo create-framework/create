@@ -79,19 +79,19 @@ character that is not a hex digit.
 
 ```mojo
 @staticmethod
-def hsv(h: Float64, s: Float64, v: Float64) -> Self
+def hsv(h: Number, s: Number, v: Number) -> Self
 ```
 
 Build a color from hue in degrees (wraps) and saturation/value in 0..1.
 
-Hue cycling is the point: `Color.hsv(Float64(context.frame_count()) % 360.0, 1.0, 1.0)`
+Hue cycling is the point: `Color.hsv(context.frame_count() % 360, 1, 1)`
 sweeps the spectrum without hand-mixing channels.
 
 ### `oklch`
 
 ```mojo
 @staticmethod
-def oklch(lightness: Float64, chroma: Float64, hue: Float64) -> Self
+def oklch(lightness: Number, chroma: Number, hue: Number) -> Self
 ```
 
 Build a colour from OKLCH: perceived lightness from 0 (black) to 1 (white), chroma (how colourful, 0 for a grey, up to about 0.37 for the most vivid colours a screen shows) and hue in degrees (wraps).
@@ -165,7 +165,7 @@ Inverse of `oklch`: perceived lightness from 0 to 1, chroma, and hue in degrees 
 ### `lerp`
 
 ```mojo
-def lerp(self, other: Self, t: Float64) -> Self
+def lerp(self, other: Self, t: Number) -> Self
 ```
 
 A new colour `t` of the way from this one to `other`, `t` clamped to 0..1; this one is unchanged. Mixes in sRGB, like a paint program's gradient, not perceptually uniform, but what the eye expects from two swatches.

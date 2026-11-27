@@ -27,20 +27,30 @@ types that change in place are those that hold state over time, and their method
 ## Locations, displacements and extents
 
 Use `Point` for new locations, `Vector` for displacements and scalars for extents;
-`canvas.rectangle(position: Point, width: Float64, height: Float64)` is the shape to copy. The
-reasons are in [Points and
+`canvas.rectangle(position: Point, width: Number, height: Number)` is the shape to copy. The reasons
+are in [Points and
 vectors](../docs/guide/math/points-and-vectors.md#locations-displacements-and-extents), and three
 rules keep them working:
 
 - Don't take a location as separate `x, y` scalars, not even as a convenience overload beside the
   `Point` one: a bare tuple already fills a `Point` parameter, and `(x, y)` keeps the pairs readable
   where a run of numbers doesn't.
-- Don't give any type but `Point` an `@implicit` tuple constructor. If two types could both be built
-  from a bare tuple, any function overloaded on those two types would be ambiguous when called with
-  a tuple. Locations are the values most worth writing as a tuple, so only `Point` gets the
-  shorthand.
+- Don't give any type but `Point` an `@implicit` constructor from a tuple of two numbers. If two
+  types could both be built from the same bare tuple, any function overloaded on those two types
+  would be ambiguous when called with one. Locations are the values most worth writing as a tuple,
+  so only `Point` gets the shorthand. A tuple that holds something else can't be confused with a
+  point: `GradientStop` is built from a `(position, colour)` pair.
 - Don't add `Point.__add__(Point)`. Adding two locations has no meaning, and refusing it is why
   `Point` is a separate type from `Vector`.
+
+## Numbers
+
+A public function takes a number as a `Number`, which accepts an `Int` as well as a `Float64`, so a
+program never has to convert an `Int` variable to pass it. Read it with `Float64(n)`, once into a
+local where the body uses it more than once. A number that may be left out is an `OptionalNumber`.
+Return values and fields stay `Float64`, so what comes out of the library is an ordinary number. Two
+kinds of parameter keep their own types: a count or an index is an `Int`, and a value whose kind of
+number matters, such as `JSON`'s and `TableRow.set`'s, keeps its `Int` and `Float64` overloads.
 
 ## Printing
 

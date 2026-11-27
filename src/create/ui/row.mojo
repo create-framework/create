@@ -35,7 +35,7 @@ struct Row(Copyable, Movable):
     var align: Optional[Align]
     """Where its widgets sit across it, each as tall as it prefers: at
     the top, centre or bottom. Each stretches across it when `None`."""
-    var gap: Optional[Float64]
+    var gap: OptionalNumber
     """What is left between each widget and the next: the `UI`'s `spacing`
     when `None`."""
 

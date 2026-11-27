@@ -8,7 +8,7 @@ from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
-from create.math import Point
+from create.math import Number, Point
 from .curve import Curve
 from .spline import Spline
 from create.math import Vector
@@ -101,7 +101,7 @@ def _axis_extremes(
             roots.append((-b - s) / (2.0 * a))
     for t in roots:
         if t > 0.0 and t < 1.0:
-            var mt = 1.0 - t
+            var mt = 1.0 - Float64(t)
             var v = (
                 mt * mt * mt * p0
                 + 3.0 * mt * mt * t * p1
@@ -175,14 +175,15 @@ struct Bezier(
             ")",
         )
 
-    def at(self, t: Float64) -> Point:
+    def at(self, t: Number) -> Point:
         """The point at parameter `t`. Not clamped: outside 0..1 the cubic
         continues past its endpoints, as `lerp` extrapolates."""
-        var mt = 1.0 - t
+        var u = Float64(t)
+        var mt = 1.0 - u
         var w0 = mt * mt * mt
-        var w1 = 3.0 * mt * mt * t
-        var w2 = 3.0 * mt * t * t
-        var w3 = t * t * t
+        var w1 = 3.0 * mt * mt * u
+        var w2 = 3.0 * mt * u * u
+        var w3 = u * u * u
         return Point(
             w0 * self.start.x
             + w1 * self.control1.x
@@ -194,16 +195,17 @@ struct Bezier(
             + w3 * self.end.y,
         )
 
-    def tangent(self, t: Float64) -> Vector:
+    def tangent(self, t: Number) -> Vector:
         """The derivative at `t`: the direction of travel, with a magnitude
         that is the curve's speed per unit of `t`. Not normalised: it is
         zero where the curve stops, such as at a cusp or where a control sits
         on its endpoint."""
-        var mt = 1.0 - t
+        var u = Float64(t)
+        var mt = 1.0 - u
         var a = self.control1 - self.start
         var b = self.control2 - self.control1
         var c = self.end - self.control2
-        return (a * (mt * mt) + b * (2.0 * mt * t) + c * (t * t)) * 3.0
+        return (a * (mt * mt) + b * (2.0 * mt * u) + c * (u * u)) * 3.0
 
     def _acceleration(self, t: Float64) -> Vector:
         """The second derivative at `t`."""
@@ -390,7 +392,7 @@ struct Bezier(
                 return True
         return False
 
-    def split(self, t: Float64) -> Tuple[Bezier, Bezier]:
+    def split(self, t: Number) -> Tuple[Bezier, Bezier]:
         """The curve cut at `t` into two, together tracing exactly the
         original: the first runs `start` to `at(t)`, the second `at(t)` to
         `end` (de Casteljau)."""
@@ -421,7 +423,7 @@ struct Bezier(
             ys[1] - ys[0],
         )
 
-    def flatten(self, tolerance: Float64) -> List[Point]:
+    def flatten(self, tolerance: Number) -> List[Point]:
         """Points along the curve, from `start` to `end` inclusive, such that
         the straight segments between them stray from the curve by at most
         `tolerance`.
@@ -434,8 +436,8 @@ struct Bezier(
         var d2 = (self.control1 - self.control2) + (self.end - self.control2)
         var m = max(d1.magnitude(), d2.magnitude())
         var n = 1
-        if tolerance > 0.0 and m > 0.0:
-            n = Int(ceil(sqrt(0.75 * m / tolerance)))
+        if Float64(tolerance) > 0.0 and m > 0.0:
+            n = Int(ceil(sqrt(0.75 * m / Float64(tolerance))))
             n = max(1, min(n, _MAX_FLATTEN_SEGMENTS))
         var points = List[Point](capacity=n + 1)
         points.append(self.start)
@@ -458,7 +460,7 @@ struct Bezier(
         """
         return self._length_to(1.0)
 
-    def at_distance(self, distance: Float64) -> Point:
+    def at_distance(self, distance: Number) -> Point:
         """The point `distance` along the curve from `start`, clamped to
         the curve's ends.
 
@@ -468,18 +470,18 @@ struct Bezier(
         entity, not in a tight loop.
         """
         var total = self.length()
-        if distance <= 0.0 or total == 0.0:
+        if Float64(distance) <= 0.0 or total == 0.0:
             return self.start
-        if distance >= total:
+        if Float64(distance) >= total:
             return self.end
         # Newton's method on `_length_to(t) - distance`, kept inside a
         # bracket that bisection falls back to where the speed is too low
         # for a Newton step to be trusted.
         var lo = 0.0
         var hi = 1.0
-        var t = distance / total
+        var t = Float64(distance) / total
         for _ in range(_MAX_DISTANCE_ITERATIONS):
-            var error = self._length_to(t) - distance
+            var error = self._length_to(t) - Float64(distance)
             if abs(error) <= total * 1e-12:
                 break
             if error > 0.0:

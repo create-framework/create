@@ -67,25 +67,25 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     var fill_gradient: Optional[Gradient]
     var fill_enabled: Optional[Bool]
     var stroke: OptionalColor
-    var stroke_thickness: Optional[Float64]
+    var stroke_thickness: OptionalNumber
     var stroke_enabled: Optional[Bool]
     var stroke_alignment: Optional[StrokeAlign]
     var stroke_cap: Optional[StrokeCap]
     var stroke_dash: Optional[StrokeDash]
-    var corner_radius: Optional[Float64]
+    var corner_radius: OptionalNumber
     var text_color: OptionalColor
     var font: Optional[Font]
-    var font_size: Optional[Float64]
+    var font_size: OptionalNumber
     var font_weight: Optional[FontWeight]
     var font_italic: Optional[Bool]
     var text_alignment: Optional[Align]
     var tint: OptionalColor
-    var opacity: Optional[Float64]
+    var opacity: OptionalNumber
     var blend_mode: Optional[BlendMode]
     var shadow: OptionalColor
     var shadow_offset: Optional[Vector]
-    var shadow_blur: Optional[Float64]
-    var shadow_spread: Optional[Float64]
+    var shadow_blur: OptionalNumber
+    var shadow_spread: OptionalNumber
     var shadow_inset: Optional[Bool]
     var shadow_follows_transform: Optional[Bool]
     var shadow_enabled: Optional[Bool]

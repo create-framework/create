@@ -1,3 +1,4 @@
+from .number import Number
 from std.math import abs, min, max
 
 from .transform import Transform
@@ -30,7 +31,7 @@ struct Matrix[rows: Int, cols: Int](
         """All zeros."""
         self.data = Array[Float64, Self.rows * Self.cols](fill=0.0)
 
-    def __init__(out self, *values: Float64):
+    def __init__(out self, *values: Number):
         """The entries, row by row: `Matrix[2, 2](1.0, 2.0, 3.0, 4.0)` has
         `1.0, 2.0` on top. Takes exactly `rows * cols` values."""
         debug_assert(
@@ -39,7 +40,7 @@ struct Matrix[rows: Int, cols: Int](
         )
         self.data = Array[Float64, Self.rows * Self.cols](fill=0.0)
         for i in range(min(len(values), Self.rows * Self.cols)):
-            self.data[i] = values[i]
+            self.data[i] = Float64(values[i])
 
     def __init__(out self, transform: Transform):
         """The full 3 by 3 matrix of `transform`, its bottom row `0 0 1`.
@@ -67,8 +68,8 @@ struct Matrix[rows: Int, cols: Int](
         return self.data[r * Self.cols + c]
 
     @always_inline
-    def __setitem__(mut self, r: Int, c: Int, val: Float64):
-        self.data[r * Self.cols + c] = val
+    def __setitem__(mut self, r: Int, c: Int, val: Number):
+        self.data[r * Self.cols + c] = Float64(val)
 
     def __matmul__[
         P: Int

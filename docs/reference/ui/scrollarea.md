@@ -41,7 +41,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 
 - `rect: Rectangle`: Where the window is: given, or set by what it is in.
 - `offset: Float64`: How far down its column the window shows, from 0 at the top. Each layout keeps it between 0 and as far as the column goes.
-- `max_height: Optional[Float64]`: The tallest it grows to fit its column, with no `rect` of its own: as tall as the column when `None`.
+- `max_height: OptionalNumber`: The tallest it grows to fit its column, with no `rect` of its own: as tall as the column when `None`.
 - `track: Style`: The line the thumb runs along: its stroke is its colour and thickness.
 - `thumb: Style`: The line whose length shows how much of the column the window shows: its stroke is its colour and thickness.
 
@@ -51,7 +51,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 @staticmethod
 def __init__(
     out self,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     max_height: OptionalNumber = None,
     track: Style = Style(fill=OptionalColor(None), fill_gradient=Optional(None), fill_enabled=Optional(None), stroke=OptionalColor(None), stroke_thickness=OptionalNumber(None), stroke_enabled=Optional(None), stroke_alignment=Optional(None), stroke_cap=Optional(None), stroke_dash=Optional(None), corner_radius=OptionalNumber(None), text_color=OptionalColor(None), font=Optional(None), font_size=OptionalNumber(None), font_weight=Optional(None), font_italic=Optional(None), text_alignment=Optional(None), tint=OptionalColor(None), opacity=OptionalNumber(None), blend_mode=Optional(None), shadow=OptionalColor(None), shadow_offset=Optional(None), shadow_blur=OptionalNumber(None), shadow_spread=OptionalNumber(None), shadow_inset=Optional(None), shadow_follows_transform=Optional(None), shadow_enabled=Optional(None)),

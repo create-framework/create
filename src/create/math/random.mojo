@@ -1,3 +1,4 @@
+from .number import Number
 from std.atomic import Atomic
 from std.ffi import _Global
 from std.time import perf_counter_ns
@@ -66,9 +67,10 @@ struct Random(Movable):
         """A number in `[0.0, 1.0)`: 1.0 itself is never returned."""
         return Float64(self._next()) / (Float64(UInt64.MAX) + 1.0)
 
-    def float(mut self, low: Float64, high: Float64) -> Float64:
+    def float(mut self, low: Number, high: Number) -> Float64:
         """A number in `[low, high)`."""
-        return low + self.float() * (high - low)
+        var start = Float64(low)
+        return start + self.float() * (Float64(high) - start)
 
     def int(mut self, low: Int, high: Int) -> Int:
         """A whole number in `[low, high)`: `high` is excluded, so

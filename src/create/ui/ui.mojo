@@ -11,7 +11,7 @@ from create.color import Color
 from create.app import Context
 from create.geometry import Circle, Rectangle
 from create.input import GamepadButton, Key
-from create.math import OptionalNumber, Point, Vector, clamp
+from create.math import Number, OptionalNumber, Point, Vector, clamp
 from create.render import Align, Canvas, Drawable, Picture, Style, Text
 from .button import Button
 from .widget_handle import WidgetHandle
@@ -151,17 +151,17 @@ struct _Description(Copyable, Movable):
     var takes_pointer: Bool
     """Whether it is hit where it is, rather than letting the pointer
     through."""
-    var gap: Optional[Float64]
+    var gap: OptionalNumber
     var align: Optional[Align]
     """Where a column or row sets its children across it: stretched when
     `None`."""
-    var amount: Optional[Float64]
+    var amount: OptionalNumber
     """A space's size, when set."""
-    var padding: Optional[Float64]
+    var padding: OptionalNumber
     """A panel's padding, when set."""
     var offset: Float64
     """How far down its column a scroll area shows."""
-    var max_height: Optional[Float64]
+    var max_height: OptionalNumber
     """The tallest a scroll area grows, when set."""
     var overflows: Bool
     """Whether a scroll area's column is taller than it, so it scrolls."""
@@ -613,24 +613,24 @@ struct UI(Drawable, Movable):
         4.5, so `corner_radius(0)` squares everything."""
         return self._corner_radius
 
-    def corner_radius(mut self, radius: Float64):
-        self._corner_radius = radius
+    def corner_radius(mut self, radius: Number):
+        self._corner_radius = Float64(radius)
 
     def spacing(self) -> Float64:
         """The gap a `Column` or `Row` leaves between its widgets unless
         given one, and half the inset of a panel's inside: 8 unless set."""
         return self._spacing
 
-    def spacing(mut self, spacing: Float64):
-        self._spacing = spacing
+    def spacing(mut self, spacing: Number):
+        self._spacing = Float64(spacing)
 
     def control_height(self) -> Float64:
         """How tall a button, checkbox, slider or text field is when the
         `UI` sizes it: 40 unless set."""
         return self._control_height
 
-    def control_height(mut self, height: Float64):
-        self._control_height = height
+    def control_height(mut self, height: Number):
+        self._control_height = Float64(height)
 
     def focus_ring(self) -> FocusRing:
         """How the ring round a widget focused from the keyboard, a gamepad

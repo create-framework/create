@@ -45,7 +45,7 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `Movable`
 def __init__(
     out self,
     var points: List[Point],
-    alpha: Float64 = 0.5,
+    alpha: Number = SIMD(0.5),
     closed: Bool = False,
 )
 ```
@@ -68,7 +68,7 @@ first; fewer than two distinct points give no curves.
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point
+def at(self, t: Number) -> Point
 ```
 
 The point at parameter `t`, clamped to 0..1: a spline has no natural continuation past its ends.
@@ -76,7 +76,7 @@ The point at parameter `t`, clamped to 0..1: a spline has no natural continuatio
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector
+def tangent(self, t: Number) -> Vector
 ```
 
 The derivative with respect to `t` at `t`, clamped to 0..1: the direction of travel, with a magnitude that is the speed `t` moves at. A joint belongs to the stretch that starts there. Zero when there is no curve.
@@ -92,7 +92,7 @@ The distance along the curve from the first point to the last, as each stretch's
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point
+def at_distance(self, distance: Number) -> Point
 ```
 
 The point `distance` along the curve from the first point, clamped to the curve's ends. Equal steps in `distance` are equal steps along the curve. Measures every stretch per call; sample once per frame per entity, not in a tight loop.
@@ -108,7 +108,7 @@ The tightest axis-aligned rectangle around the curve. A spline with no curve giv
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point]
+def flatten(self, tolerance: Number) -> List[Point]
 ```
 
 Points along the curve, from the first point to the last inclusive, straying from it by at most `tolerance` between them: each stretch's `Bezier.flatten`, joined without repeating the point where one stretch meets the next.

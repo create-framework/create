@@ -1,5 +1,5 @@
 from std.math import min, max, sqrt
-from create.math import Point, Vector
+from create.math import Number, Point, Vector
 from .bezier import Bezier
 from .spline import Spline
 from .curve import Curve
@@ -60,29 +60,29 @@ struct Line(
         """How long it is, from `start` to `end`."""
         return sqrt(_distance_squared(self.end, self.start))
 
-    def at(self, t: Float64) -> Point:
+    def at(self, t: Number) -> Point:
         """The point at parameter `t`: `start` at 0, `end` at 1, and
         proportional to distance in between. Not clamped: outside 0..1 it
         carries on along the line, as `lerp` extrapolates."""
         return self.start.lerp(self.end, t)
 
-    def tangent(self, t: Float64) -> Vector:
+    def tangent(self, t: Number) -> Vector:
         """The derivative at `t`: `end - start`, the same everywhere: the
         direction of travel, with the line's length as its magnitude. Zero
         for a zero-length line."""
         return self.end - self.start
 
-    def at_distance(self, distance: Float64) -> Point:
+    def at_distance(self, distance: Number) -> Point:
         """The point `distance` along the line from `start`, clamped to the
         line's ends. Exact, and as cheap as `at`."""
         var total = self.length()
-        if distance <= 0.0 or total == 0.0:
+        if Float64(distance) <= 0.0 or total == 0.0:
             return self.start
-        if distance >= total:
+        if Float64(distance) >= total:
             return self.end
-        return self.at(distance / total)
+        return self.at(Float64(distance) / total)
 
-    def split(self, t: Float64) -> Tuple[Line, Line]:
+    def split(self, t: Number) -> Tuple[Line, Line]:
         """The line cut at `t` into two, together tracing exactly the
         original: the first runs `start` to `at(t)`, the second `at(t)` to
         `end`."""
@@ -100,7 +100,7 @@ struct Line(
         )
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def flatten(self, tolerance: Float64) -> List[Point]:
+    def flatten(self, tolerance: Number) -> List[Point]:
         """`start` and `end`: a line is already straight, whatever the
         tolerance."""
         return [self.start, self.end]

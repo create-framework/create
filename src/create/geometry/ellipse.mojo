@@ -1,5 +1,5 @@
 from std.math import cos, sin, sqrt
-from create.math import PI, TAU, Point, Vector
+from create.math import PI, TAU, Number, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
 from .curve import Curve
@@ -128,13 +128,10 @@ struct Ellipse(
     var width: Float64
     var height: Float64
 
-    def __init__(out self, position: Point, width: Float64, height: Float64):
+    def __init__(out self, position: Point, width: Number, height: Number):
         self.position = position
-        self.width = width
-        self.height = height
-
-    def __init__(out self, position: Point, width: Int, height: Int):
-        self = Ellipse(position, Float64(width), Float64(height))
+        self.width = Float64(width)
+        self.height = Float64(height)
 
     def __eq__(self, other: Ellipse) -> Bool:
         return (

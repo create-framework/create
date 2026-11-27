@@ -1,5 +1,5 @@
 from std.math import atan2, min, sqrt
-from create.math import PI, Point, Vector
+from create.math import PI, Number, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
 from .curve import Curve
@@ -52,13 +52,10 @@ struct Capsule(
     var end: Point
     var radius: Float64
 
-    def __init__(out self, start: Point, end: Point, radius: Float64):
+    def __init__(out self, start: Point, end: Point, radius: Number):
         self.start = start
         self.end = end
-        self.radius = radius
-
-    def __init__(out self, start: Point, end: Point, radius: Int):
-        self = Capsule(start, end, Float64(radius))
+        self.radius = Float64(radius)
 
     def __eq__(self, other: Capsule) -> Bool:
         return (

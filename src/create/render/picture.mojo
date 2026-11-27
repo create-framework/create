@@ -1,5 +1,6 @@
 from create.geometry import Rectangle
 from create.image.image import Image
+from create.math.number import Number
 from create.math.point import Point
 from create.math.vector import Vector
 from .canvas import Canvas
@@ -52,20 +53,14 @@ struct Picture(Copyable, Drawable, Movable):
         out self,
         image: Image,
         position: Point,
-        width: Float64,
-        height: Float64,
+        width: Number,
+        height: Number,
     ):
         """The image stretched to `width` by `height`."""
         self.image = image
         self.position = position
-        self.width = width
-        self.height = height
-
-    def __init__(
-        out self, image: Image, position: Point, width: Int, height: Int
-    ):
-        """The image stretched to `width` by `height`."""
-        self = Self(image, position, Float64(width), Float64(height))
+        self.width = Float64(width)
+        self.height = Float64(height)
 
     def bounds(self) -> Rectangle:
         """The rectangle it covers: `width` by `height`, centred on
