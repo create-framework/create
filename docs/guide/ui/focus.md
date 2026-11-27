@@ -100,7 +100,8 @@ when the input is the UI's:
   held, such as a slider being dragged.
 - **`self.ui.wants_keyboard(context)`** is true while a text field has focus, while a widget has
   focus from the keyboard (so the keys act on it), and in the frame a key acted on the UI, such as
-  the Escape that leaves a field.
+  the Escape that leaves a field. Escape after a click on a button still takes the button's focus
+  away, but leaves `wants_keyboard` false, since that focus took no keys: the game can pause on it.
 
 Check them after `ui.update`, before reading input for the game itself. A `UI` not updated this
 frame or last, such as a menu that has closed, wants neither:
