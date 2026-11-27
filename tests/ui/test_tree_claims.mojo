@@ -72,6 +72,24 @@ def test_wants_keyboard_follows_what_focus_takes_keys() raises -> None:
     assert_false(ui.wants_keyboard(context))
 
 
+def test_escape_after_a_click_on_a_button_is_the_games() raises -> None:
+    var ui = UI()
+    var ok = ui.add(Button("OK", Rectangle((0, 60), 100, 40)))
+    var context = Context()
+    point_at(context, (0, 60))
+    press(context, (0, 60))
+    _update(ui, context)
+    assert_true(ui.has_focus(ok))
+    next_frame(context)
+    release(context, (0, 60))
+    _update(ui, context)
+    next_frame(context)
+    press_key(context, Key.ESCAPE)
+    _update(ui, context)
+    assert_false(ui.has_focus(ok))  # it still takes the focus away
+    assert_false(ui.wants_keyboard(context))  # but the game can pause on it
+
+
 def test_one_tab_focuses_one_field_across_trees() raises -> None:
     var first = UI()
     var second = UI()

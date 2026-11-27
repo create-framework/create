@@ -307,7 +307,7 @@ if context.mouse.pressed() and not self.ui.wants_mouse(context):
 def wants_keyboard(self, context: Context) -> Bool
 ```
 
-Whether the keyboard is the tree's this frame: a text field has focus, or a widget has focus from the keyboard or code, so keys act on it; and in the frame a key moved or took away focus, such as Escape leaving a text field. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player. A tree not updated this frame or last never wants it.
+Whether the keyboard is the tree's this frame: a text field has focus, or a widget has focus from the keyboard or code, so keys act on it; and in the frame a key moved focus, or took away focus that took keys, such as Escape leaving a text field. Escape clearing the focus a click gave a button is left to the game. A game checks it before reading keys itself, so typing a name with W in it doesn't move the player. A tree not updated this frame or last never wants it.
 
 ```mojo
 # In `update`, after the tree's `update`:
