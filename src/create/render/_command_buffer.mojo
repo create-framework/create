@@ -17,14 +17,14 @@ struct CommandBuffer(Movable):
     """The frame being recorded.
 
     The buffer lives here rather than travelling out of `Canvas` because a
-    `Tuple` of move-only values cannot be unpacked in this Mojo version — see
+    `Tuple` of move-only values cannot be unpacked in this Mojo version: see
     `present`, which is also where the buffer is reset. Keeping it means the
     allocation is reused frame to frame instead of being rebuilt per frame.
     """
     var clips: List[_Clip]
     """This frame's `canvas.clip` levels, in the order they were opened;
     a command's `clip` is an index into it, one past. Both replays build their
-    own form of each — rows on the CPU, the stencil on the GPU — and it is
+    own form of each (rows on the CPU, the stencil on the GPU), and it is
     reset with the command buffer."""
     var clip: Int
     """The clip a command recorded now is rendered under: the innermost
@@ -70,7 +70,7 @@ struct CommandBuffer(Movable):
         """Append a clear, replacing an adjacent one it would erase anyway.
 
         An opaque clear covers the whole framebuffer, so any clear recorded
-        immediately before it — with no render in between to survive — paints
+        immediately before it (with no render in between to survive) paints
         nothing. Dropping it here rather than at replay keeps both backends
         and both captures agreeing, and costs the common case nothing: a
         program that keeps `canvas.autoclear` on and also opens `update` with

@@ -8,7 +8,7 @@ A gamepad button, for `Gamepad.down`/`pressed`/`released`.
 
 Matches SDL's own button numbering. The face buttons are named by
 position, not label, because the labels disagree: `SOUTH` is Xbox A,
-PlayStation Cross and Nintendo B alike — the button a thumb rests on, so
+PlayStation Cross and Nintendo B alike: the button a thumb rests on, so
 the one to confirm with. `BACK`/`START` are the two small centre buttons
 (View/Menu, Share/Options, -/+), `GUIDE` the logo button between them.
 
@@ -72,7 +72,7 @@ def __init__(out self, value: Int)
 def from_name(name: String) -> Optional[Self]
 ```
 
-The button whose constant is `name`, case folded: `"south"`, `"start"`, `"right_trigger"`. `None` for an unknown name — for a binding read from a file, where a misspelled constant would have failed to compile.
+The button whose constant is `name`, case folded: `"south"`, `"start"`, `"right_trigger"`. `None` for an unknown name: for a binding read from a file, where a misspelled constant would have failed to compile.
 
 ## Special methods
 

@@ -17,7 +17,7 @@ with no call each frame. The clock is the run's scaled time,
 stops every animator with it; an animator built with `clock=Clock.REAL`
 runs on real time instead, as a pause menu's own animation must.
 
-Constructed stopped on frame 0 -- nothing advances until `play`, `loop`
+Constructed stopped on frame 0: nothing advances until `play`, `loop`
 or `use`. Two kinds of call drive it:
 
 - **Commands**, for something that just happened (a key, a hit): `play`
@@ -88,8 +88,8 @@ else:
 
 Naming the animation already held, once it has been started, does
 nothing at all: a loop keeps its place, a `pause` holds and a
-finished `play` stays on its last frame. Otherwise -- another
-animation, or this one stopped -- it starts `animation` looping from
+finished `play` stays on its last frame. Otherwise (another
+animation, or this one stopped) it starts `animation` looping from
 frame 0. A one-shot is a command, not a state: `play` it when the
 thing that triggers it happens.
 
@@ -105,7 +105,7 @@ Play once from frame 0, holding the last frame at the end.
 def play(mut self, var animation: Animation)
 ```
 
-Switch to `animation` and play it once from frame 0 -- restarting it if it is the one already held.
+Switch to `animation` and play it once from frame 0: restarting it if it is the one already held.
 
 ### `loop`
 
@@ -119,7 +119,7 @@ Play from frame 0, wrapping to the start forever.
 def loop(mut self, var animation: Animation)
 ```
 
-Switch to `animation` and loop it from frame 0 -- restarting it if it is the one already held. To keep a running loop's place, `use` it.
+Switch to `animation` and loop it from frame 0: restarting it if it is the one already held. To keep a running loop's place, `use` it.
 
 ### `pause`
 
@@ -151,7 +151,7 @@ Halt and rewind to frame 0.
 def is_playing(self) -> Bool
 ```
 
-True while the playhead is advancing -- false when stopped, paused or finished.
+True while the playhead is advancing: false when stopped, paused or finished.
 
 ### `is_finished`
 

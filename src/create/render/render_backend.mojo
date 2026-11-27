@@ -24,7 +24,7 @@ struct RenderBackend(
     # replays onto a Surface through _raster.mojo
     comptime GPU = RenderBackend(1)
     """OpenGL 3.3."""
-    # replays through GLRenderer — see _gl_backend.mojo
+    # replays through GLRenderer: see _gl_backend.mojo
 
     def __init__(out self, value: Int):
         self.value = value

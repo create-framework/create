@@ -2,7 +2,7 @@
 
 A curve is flattened and stroked in *device* space at replay, not at record
 time, so it stays smooth however far a camera zooms in. Both backends fill
-the same quads — the CPU through `fill_quad`, the GPU as vertices — which is what keeps them in parity.
+the same quads (the CPU through `fill_quad`, the GPU as vertices), which is what keeps them in parity.
 
 A stroke's open ends are finished by its `StrokeCap`: a square cap lengthens
 the end quads, a round cap is a convex half disc whose base is exactly the end
@@ -146,8 +146,8 @@ def stroke_pieces(
     corners each, in order around the quad's edge, quad after quad) and the
     caps on its ends.
 
-    Neighbouring quads meet on a mitred edge — both use the same two corners
-    — so the band has no gap at a joint and no overlap either, and a
+    Neighbouring quads meet on a mitred edge (both use the same two corners),
+    so the band has no gap at a joint and no overlap either, and a
     translucent stroke composites once everywhere. The two open ends are
     finished by `cap`: `BUTT` flush, `SQUARE` with the end quads pushed out
     by half the width, `ROUND` with a half disc each, which starts and ends

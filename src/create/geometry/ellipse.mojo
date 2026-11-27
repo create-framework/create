@@ -114,8 +114,8 @@ struct Ellipse(
     `width`/`height` are assumed non-negative.
 
     An ellipse is a circle stretched along its axes, so a test against a
-    shape that stretching keeps a shape of its kind -- a point, a `Line`,
-    a sharp `Rectangle`, `Triangle` or `Polygon` -- runs exactly on the
+    shape that stretching keeps a shape of its kind (a point, a `Line`,
+    a sharp `Rectangle`, `Triangle` or `Polygon`) runs exactly on the
     unit circle with the other shape mapped there. Against a `Circle` or
     another `Ellipse` it is exact too, through the closest point on the
     ellipse, accurate to rounding. Against a `Sector` and its arc, the

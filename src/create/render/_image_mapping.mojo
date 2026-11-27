@@ -1,7 +1,7 @@
 """Where an image command lands on the device, for both backends.
 
-An image under a transform that keeps it upright — no rotation, shear or
-mirroring, the plain mapping and any scale of it — is an axis-aligned device
+An image under a transform that keeps it upright (no rotation, shear or
+mirroring, the plain mapping and any scale of it) is an axis-aligned device
 rect, blitted directly (`blit_image`). Any other transform turns the rect into
 a parallelogram, which the CPU replay fills pixel by pixel through the inverse
 mapping (`blit_image_mapped`) and the GL backend draws as one quad through its

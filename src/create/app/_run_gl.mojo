@@ -1,4 +1,4 @@
-"""The GPU run loop — the same frame, presented from GL instead of a buffer.
+"""The GPU run loop: the same frame, presented from GL instead of a buffer.
 
 It differs from `run.mojo` in exactly three places, and each is forced:
 
@@ -6,12 +6,12 @@ It differs from `run.mojo` in exactly three places, and each is forced:
   against and no host pixel buffer at all;
 - the viewport is sized from `drawable_size()` rather than `width()`/
   `height()`, because those are SDL's *logical* size and differ from the
-  backing pixels under HiDPI or fractional scaling — sizing `glViewport` from
+  backing pixels under HiDPI or fractional scaling: sizing `glViewport` from
   the logical number stretches or clips the frame;
 - presenting is `present_gpu` plus `swap_buffers` rather than `present` onto a
   `Surface`.
 
-Everything else — the event arms, the clock, `step` — is shared code, so the
+Everything else (the event arms, the clock, `step`) is shared code, so the
 two loops cannot drift in what a frame is.
 """
 
@@ -107,7 +107,7 @@ def _run_loop(
             win.close()
         # Re-read after events: a resize this frame changed the drawable, and
         # the bars have to reach the edge of the *new* one. The viewport is
-        # re-derived from it too — the mapping taken before the events is one
+        # re-derived from it too: the mapping taken before the events is one
         # frame stale, and rendering against it puts the whole frame in a corner
         # of the resized drawable.
         _ = _update_dimensions(win, state, context)

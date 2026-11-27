@@ -169,7 +169,7 @@ def _read_ptr(addr: Int) raises -> Int:
 struct _GlyphInfo(Movable):
     """One rendered glyph: its coverage mask and where to put it.
 
-    The mask is alpha only — the colour comes from the style at blit time, so
+    The mask is alpha only: the colour comes from the style at blit time, so
     one cached glyph serves every colour it is ever rendered in. `TextRenderer`
     keeps them, keyed by codepoint, pixel size and weight; a `Font` renders
     one and forgets it.
@@ -271,7 +271,7 @@ struct _Face(Movable):
             _ = cpath^
         if error != 0:
             _ = ft.call["FT_Done_FreeType", Int32](self._lib)
-            raise Error("FT_New_Face failed — font not found: " + source.name)
+            raise Error("FT_New_Face failed, font not found: " + source.name)
         self._face = _read_ptr(Int(face_buf.unsafe_ptr()))
         self._size = 0
         self._weight = 0
@@ -383,7 +383,7 @@ struct _Face(Movable):
         _ = ft.call["FT_Done_MM_Var", Int32](self._lib, master)
 
     def has_glyph(self, codepoint: Int) raises -> Bool:
-        """Whether this face can render this codepoint — how `TextRenderer`
+        """Whether this face can render this codepoint: how `TextRenderer`
         decides to fall back to the symbols face."""
         var ft = load_library("libfreetype", 6)
         return (
@@ -510,7 +510,7 @@ struct Font(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     `Font.load(path)` opens it once; copies share the open face, so a font
     is cheap to keep in a field, a `Style` or several of each. The face is
-    closed when the last copy goes. Size and weight are not part of a font —
+    closed when the last copy goes. Size and weight are not part of a font:
     they come from the style each time text is drawn.
 
     Its italic is the `italic_path` file where one was given, otherwise the

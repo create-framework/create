@@ -50,7 +50,7 @@ struct Resources(Movable):
         the cached id thereafter. Nothing is copied: an image never changes,
         so its identity alone says the share is current, and the share keeps
         the pixels alive for a command replayed after the image itself is
-        gone. `source` must be stable for the life of the image — an
+        gone. `source` must be stable for the life of the image: an
         `Image`'s identity, not its pixel address, which could be reused
         after a free.
 

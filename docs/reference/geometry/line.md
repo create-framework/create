@@ -9,7 +9,7 @@ A line segment from `start` to `end`: `length`, `at`, `tangent`, `at_distance`, 
 A `Curve`, like `Arc`, `Bezier` and `Spline`: a straight one, as in
 mathematics, with `t` proportional to distance. It has no interior, so
 unlike the `Shape`s it has no `center()`, `area()` or `overlaps`, and
-is the *subject* of `l.intersects(x)` -- see the comment above
+is the *subject* of `l.intersects(x)`: see the comment above
 `intersects` for why that method exists only on curves.
 
 `intersects` and `_point_on_segment`-based checks treat the endpoints
@@ -56,7 +56,7 @@ The point at parameter `t`: `start` at 0, `end` at 1, and proportional to distan
 def tangent(self, t: Float64) -> Vector
 ```
 
-The derivative at `t`: `end - start`, the same everywhere — the direction of travel, with the line's length as its magnitude. Zero for a zero-length line.
+The derivative at `t`: `end - start`, the same everywhere: the direction of travel, with the line's length as its magnitude. Zero for a zero-length line.
 
 ### `at_distance`
 

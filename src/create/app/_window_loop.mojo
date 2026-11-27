@@ -26,7 +26,7 @@ from create.app.window_mode import WindowMode
 
 struct _AppliedWindow(Movable):
     """What the window was last told, so a dial is sent to it only when the
-    program changes it — not every frame."""
+    program changes it, not every frame."""
 
     var title: String
     var resizable: Bool

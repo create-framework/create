@@ -38,7 +38,7 @@ struct Triangle(
     `area`, `closest_point`, `contains`, `move_to`, `translate`.
 
     Unlike `Rectangle`/`Circle`, a `Triangle` is not centre-positioned in
-    its fields -- `center()` (the centroid) is derived, and `move_to`
+    its fields: `center()` (the centroid) is derived, and `move_to`
     translates all three vertices so the centroid lands on the given
     point. Vertex winding (clockwise or counter-clockwise) does not matter
     to any method here; `contains` and `area` both work from unsigned or
@@ -161,7 +161,7 @@ struct Triangle(
             return _distance_squared(self._inner().closest_point(p), p) <= r * r
         if self._signed_area2() == 0.0:
             # Degenerate hull: a segment (or a point). Contained iff on the
-            # longest edge -- the other two edges are contained within it.
+            # longest edge: the other two edges are contained within it.
             var len_ab = _distance_squared(self.b, self.a)
             var len_bc = _distance_squared(self.c, self.b)
             var len_ca = _distance_squared(self.a, self.c)

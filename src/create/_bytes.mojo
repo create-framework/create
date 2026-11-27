@@ -6,7 +6,7 @@ decoders in `image` and the freetype struct readers in `render` need to
 assemble bytes into an `Int`, and neither may depend on the other, so the one
 copy of that loop lives here.
 
-Deliberately absent from every `__init__.mojo` — this is internal, not part of
+Deliberately absent from every `__init__.mojo`: this is internal, not part of
 the public surface.
 """
 

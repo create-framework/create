@@ -293,7 +293,7 @@ struct _KeySet(Copyable, Movable):
     """A set of keys, held as a short list.
 
     SDL3 scancodes run to 511, AltGr's `MODE` among them, while only a
-    handful of keys are ever down at once — so a linear scan over a short
+    handful of keys are ever down at once, so a linear scan over a short
     list is cheaper than clearing a 512-bit mask every frame, and accepts
     every scancode SDL can send.
     """

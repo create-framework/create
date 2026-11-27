@@ -5,7 +5,7 @@ struct GamepadButton(
 
     Matches SDL's own button numbering. The face buttons are named by
     position, not label, because the labels disagree: `SOUTH` is Xbox A,
-    PlayStation Cross and Nintendo B alike — the button a thumb rests on, so
+    PlayStation Cross and Nintendo B alike: the button a thumb rests on, so
     the one to confirm with. `BACK`/`START` are the two small centre buttons
     (View/Menu, Share/Options, -/+), `GUIDE` the logo button between them.
 
@@ -75,7 +75,7 @@ struct GamepadButton(
     @staticmethod
     def from_name(name: String) -> Optional[GamepadButton]:
         """The button whose constant is `name`, case folded: `"south"`, `"start"`, `"right_trigger"`. `None`
-        for an unknown name — for a binding read from a file, where a
+        for an unknown name: for a binding read from a file, where a
         misspelled constant would have failed to compile.
         """
         var upper = name.upper()

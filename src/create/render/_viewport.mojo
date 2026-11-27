@@ -9,7 +9,7 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
     """The design-space mapping: how world coordinates land on the framebuffer.
 
     One home for the geometry `Canvas` reports and renders through, so the two
-    cannot drift. Owns no window and no pixels — it is pure arithmetic over a
+    cannot drift. Owns no window and no pixels: it is pure arithmetic over a
     framebuffer size, which is what makes it unit-testable on its own.
     """
 
@@ -39,7 +39,7 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
     def set_design(mut self, width: Float64, height: Float64):
         """Set the design size, the space the program is authored in.
 
-        Stores only — the caller recomputes the mapping with `set_size`, so a
+        Stores only: the caller recomputes the mapping with `set_size`, so a
         design change and a resize go through the same path.
         """
         self._design_w = width
@@ -49,7 +49,7 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
         """Recompute the design-space mapping for a framebuffer of this size.
 
         With autoscale on, the program keeps the size it was authored
-        in and the content is scaled to fit inside the window — so a
+        in and the content is scaled to fit inside the window, so a
         sketch built for 1280x720 looks the same on any screen. Both modes
         derive the same uniform factor and differ only in what happens to the
         window area the design does not cover: `FIT` centres the design and
@@ -97,14 +97,14 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
         return self.scale != 1.0 or self.offset_x != 0.0 or self.offset_y != 0.0
 
     def left(self) -> Float64:
-        """Screen x of the left edge — negative, since the origin is centred."""
+        """Screen x of the left edge: negative, since the origin is centred."""
         return -self.width / 2.0
 
     def right(self) -> Float64:
         return self.width / 2.0
 
     def bottom(self) -> Float64:
-        """Screen y of the bottom edge — negative, since y grows upward."""
+        """Screen y of the bottom edge: negative, since y grows upward."""
         return -self.height / 2.0
 
     def top(self) -> Float64:
@@ -114,7 +114,7 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
         """The screen-to-pixel mapping: origin centred, y up.
 
         Anchoring on the framebuffer centre covers all three autoscale modes
-        at once — `offset_x + scale * width / 2` equals `pixel_w / 2` for
+        at once: `offset_x + scale * width / 2` equals `pixel_w / 2` for
         `OFF`, `FIT` and `EXTEND` alike.
 
         Screen space, not world space: this knows nothing of `Camera`, which
@@ -132,7 +132,7 @@ struct Viewport(Copyable, ImplicitlyCopyable, Movable):
         The inverse of `base_matrix`, done in arithmetic: pointer positions
         reach the program in the same space
         `canvas.left`/`right`/`bottom`/`top` describe. Camera-independent, like
-        the rest of `Viewport` — a program using a `Camera` converts on top
+        the rest of `Viewport`: a program using a `Camera` converts on top
         with `Camera.to_world`.
         """
         return Point(

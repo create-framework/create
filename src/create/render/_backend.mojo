@@ -153,7 +153,7 @@ struct Backend(Movable):
         each, in the order they were called.
 
         Onto an owned buffer of the capture's own size, through the CPU
-        rasteriser under both backends — the glyph cache and the image cache
+        rasteriser under both backends: the glyph cache and the image cache
         live here rather than on `GLRenderer`, so a GPU frame needs no readback
         to be captured at a resolution the window never had.
 
@@ -279,7 +279,7 @@ struct Backend(Movable):
         Replayed on the CPU from the commands recorded up to now, as
         `save_image` is, so both backends read the same pixels and the GPU
         is never asked. `seeded` starts from the last presented frame rather
-        than transparent — for a frame drawn with the autoclear off, which
+        than transparent: for a frame drawn with the autoclear off, which
         is how the frame itself started. The first such read only switches
         keeping frames on, so it starts transparent.
         """
@@ -426,7 +426,7 @@ struct Backend(Movable):
 
         Same contract: the frame is consumed and the recording left empty with
         its capacity intact. There is no `Surface` because there is no host
-        pixel buffer — `width` and `height` are the drawable's, which is what
+        pixel buffer: `width` and `height` are the drawable's, which is what
         the letterbox bars and `glViewport` are sized from.
         """
         if self.keep_frames:

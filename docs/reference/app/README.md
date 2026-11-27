@@ -22,4 +22,4 @@ The run: the `Program` trait, `run` and `run_headless`, the run's state (`Contex
 |---|---|
 | [`source_path`](source_path.md) | `relative`, resolved against the directory of the calling source file; an absolute path is returned as it is. |
 | [`run`](run.md) | Open a window and run `P` in it until it quits. |
-| [`run_headless`](run_headless.md) | Run `P` without a window — `create`'s frame, then `frames` calls to `update` — and return the last frame as an `Image`, read back with `pixel(x, y)` in image coordinates (top-left origin, y down). |
+| [`run_headless`](run_headless.md) | Run `P` without a window (`create`'s frame, then `frames` calls to `update`), and return the last frame as an `Image`, read back with `pixel(x, y)` in image coordinates (top-left origin, y down). |

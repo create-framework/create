@@ -6,7 +6,7 @@ def ease(curve: Easing, t: Float64) -> Float64
 
 Reshape the fraction `t` by `curve`.
 
-`t` is clamped to 0..1 first — unlike `lerp`, easing does not extrapolate.
+`t` is clamped to 0..1 first, unlike `lerp`, easing does not extrapolate.
 The curves are not linear, so an out-of-range input does not continue the
 motion sensibly: `IN_EXPO` at `t = 2.0` would return 1024.
 

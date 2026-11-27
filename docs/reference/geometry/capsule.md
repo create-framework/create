@@ -4,7 +4,7 @@
 struct Capsule
 ```
 
-A capsule: every point within `radius` of the segment from `start` to `end` -- a rectangle along the segment, capped by a half disc at each end. `center`, `area`, `bounds`, `closest_point`, `contains`, `move_to`, `translate`.
+A capsule: every point within `radius` of the segment from `start` to `end`: a rectangle along the segment, capped by a half disc at each end. `center`, `area`, `bounds`, `closest_point`, `contains`, `move_to`, `translate`.
 
 Like a `Line`, it lies along any direction and is placed by its ends,
 so `center()` is the segment's midpoint and `move_to` moves that. A

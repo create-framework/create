@@ -23,7 +23,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 
 ## Fields
 
-- `delta: Float64`: Seconds of scaled time since the previous frame -- multiply motion by this. Zero while the run's time is paused.
+- `delta: Float64`: Seconds of scaled time since the previous frame: multiply motion by this. Zero while the run's time is paused.
 - `elapsed: Float64`: Seconds of scaled time accumulated since the first frame.
 - `real_delta: Float64`: Seconds of real time since the previous frame, whatever the time scale.
 - `real_elapsed: Float64`: Seconds of real time accumulated since the first frame.

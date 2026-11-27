@@ -10,7 +10,7 @@ struct PixelBuffer(Movable):
     pixel by pixel is built.
 
     Image coordinates, as `Image.pixel`: column `x` of row `y`, counted from
-    the top-left corner, y down — not the canvas's screen space. Off the
+    the top-left corner, y down, not the canvas's screen space. Off the
     buffer, reads are transparent and writes do nothing. A new buffer is
     transparent.
     """

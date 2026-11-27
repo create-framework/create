@@ -7,7 +7,7 @@ struct Canvas
 One frame: the geometry and the rendering API.
 
 This is the object a program is handed to render a frame with. `width`/`height`
-are the screen extent and `left`/`right`/`bottom`/`top` its edges — use
+are the screen extent and `left`/`right`/`bottom`/`top` its edges: use
 those rather than width arithmetic, since the origin is centred and two of
 them are negative. `scale` is the autoscale factor. Screen space is camera-independent: these don't know a
 `Camera` exists, since a program sets one on the canvas's transform, not on
@@ -35,7 +35,7 @@ origin parameter for the framebuffer it borrowed, which constrained the
 whole API: a second parameter would have broken every
 `Program.update` signature at once, and pointing an existing `Canvas` at a
 new framebuffer could not compile at all. Both
-limits are gone because a `Canvas` no longer touches pixels — it records,
+limits are gone because a `Canvas` no longer touches pixels: it records,
 and the backend replays onto a `Surface` the canvas never sees. Don't
 reintroduce a `Surface` field or a parameter to hold one.
 
@@ -46,13 +46,13 @@ the real surface it is handed.
 
 A render call touches no pixels: it appends a `RenderCommand` to the backend's
 recording, and the backend replays the whole frame afterwards. So a
-`Canvas` is a recorder, and the geometry it records is *local* — the shape
-as the program asked for it, paired with the current transform — never
+`Canvas` is a recorder, and the geometry it records is *local* (the shape
+as the program asked for it, paired with the current transform), never
 device pixels. A style is resolved at record time, so a later `fill()`
 cannot reach back and change what an earlier command paints.
 
 Every pixel write blends source-over, so a fill, stroke, image, glyph or
-`background` with `a < 255` composites with what is already there —
+`background` with `a < 255` composites with what is already there,
 unless `blend_mode` picks another way to combine them.
 
 Implements `Deinitable`, `Movable`.
@@ -80,7 +80,7 @@ def __init__(
 ) raises
 ```
 
-An offscreen canvas of `width` by `height` screen units, with `pixel_scale` pixels to the unit — `pixel_scale=canvas.pixel_scale()` matches the window's density.
+An offscreen canvas of `width` by `height` screen units, with `pixel_scale` pixels to the unit: `pixel_scale=canvas.pixel_scale()` matches the window's density.
 
 Screen space as on the frame canvas: origin centred, y up. Always
 rasterised on the CPU, whatever backend the program runs on; what
@@ -94,7 +94,7 @@ comes out of it is an `Image`, which any canvas can draw.
 def width(self) -> Float64
 ```
 
-The width in screen units, `right() - left()`: the design width under `Autoscale.FIT`, more under `EXTEND` as the window grows — by a fraction of a unit too, as the window's pixels divide out — the window's pixels under `OFF`. Rebuilt every frame.
+The width in screen units, `right() - left()`: the design width under `Autoscale.FIT`, more under `EXTEND` as the window grows (by a fraction of a unit too, as the window's pixels divide out), the window's pixels under `OFF`. Rebuilt every frame.
 
 ### `height`
 
@@ -338,7 +338,7 @@ def clip[S: Shape](
 ) -> _ClipGuard[origin_of(self)]
 ```
 
-Render only inside `shape` for a `with` block — or, with `invert`, only outside it. `shape` is any `Shape`: a `Rectangle`, `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own `corner_radius`; a polygon's inside is by the nonzero rule.
+Render only inside `shape` for a `with` block, or, with `invert`, only outside it. `shape` is any `Shape`: a `Rectangle`, `Circle`, `Triangle`, `Sector` or `Polygon`, rounded by its own `corner_radius`; a polygon's inside is by the nonzero rule.
 
 ```mojo
 with canvas.clip(Rectangle((0, 0), 200, 120)):
@@ -360,7 +360,7 @@ Closes on exit, including on an early return or a raise.
 def to_local(self, screen: Point) -> Point
 ```
 
-A screen-space point — `context.mouse.position`, say — in the current transform's frame: back through the camera (none inside `overlay`), then the transform. So `canvas.to_local(context.mouse.position)` picks in the frame a shape is drawn in, with or without a camera.
+A screen-space point (`context.mouse.position`, say) in the current transform's frame: back through the camera (none inside `overlay`), then the transform. So `canvas.to_local(context.mouse.position)` picks in the frame a shape is drawn in, with or without a camera.
 
 ### `camera`
 
@@ -368,7 +368,7 @@ A screen-space point — `context.mouse.position`, say — in the current transf
 def camera(mut self, camera: Camera)
 ```
 
-Set the active camera. Applies to every render call and every nested `transform()` from here on, until changed again or `canvas.overlay()` suspends it — and resets to identity next frame, like the rest of the transform state.
+Set the active camera. Applies to every render call and every nested `transform()` from here on, until changed again or `canvas.overlay()` suspends it, and resets to identity next frame, like the rest of the transform state.
 
 ```mojo
 canvas.camera(self.camera)
@@ -383,7 +383,7 @@ with canvas.overlay():
 def overlay(mut self) -> _OverlayGuard[origin_of(self)]
 ```
 
-Suspend the camera and any active transform for a `with` block, so what's rendered inside lands in screen space regardless of where the camera looks — for a HUD or other UI that must stay put.
+Suspend the camera and any active transform for a `with` block, so what's rendered inside lands in screen space regardless of where the camera looks: for a HUD or other UI that must stay put.
 
 Pops back to whatever camera and transform were active on exit,
 including on an early return or a raise.
@@ -396,7 +396,7 @@ def fill(mut self, color: Optional[Color] = None)
 
 Paint the inside of shapes, switching the fill on. A `color` replaces any gradient; left unset, the current fill is kept, colour or gradient, so `fill()` alone brings back the last fill. The fill is *off* by default, in white, so `fill()` on a fresh frame paints shapes white.
 
-Holds until changed or until the frame ends — every frame starts from
+Holds until changed or until the frame ends: every frame starts from
 the `Style` defaults, so nothing set here leaks into the next one.
 
 ```mojo
@@ -414,7 +414,7 @@ color is kept meanwhile, so `fill(color)` alone brings a solid back.
 def stroke(mut self, color: Optional[Color] = None, thickness: OptionalNumber = None)
 ```
 
-Stroke shapes, switching the stroke on if `stroke_enabled(False)` had turned it off. `color`/`thickness` left unset keep their current values. Worth knowing stroke is *on* by default, in black, 1 unit thick — a `rectangle` rendered without `stroke_enabled(False)` gets one nobody asked for.
+Stroke shapes, switching the stroke on if `stroke_enabled(False)` had turned it off. `color`/`thickness` left unset keep their current values. Worth knowing stroke is *on* by default, in black, 1 unit thick: a `rectangle` rendered without `stroke_enabled(False)` gets one nobody asked for.
 
 Thickness is in world units, scaled by autoscale like every other
 coordinate, and never rendered thinner than one pixel; a fractional
@@ -480,8 +480,8 @@ Discard everything drawn so far, back to how the canvas started.
 An offscreen canvas is transparent again. The frame canvas starts
 the frame over: opened with the clear to grey 200 while the
 autoclear is on, or from the last frame's pixels while it is off.
-Style, transform, camera and settings are untouched — this undoes
-drawing, not state — and inside a `clip` block the clip still
+Style, transform, camera and settings are untouched (this undoes
+drawing, not state), and inside a `clip` block the clip still
 applies to what is drawn next. To paint over what is there instead,
 use `background()`.
 
@@ -491,7 +491,7 @@ use `background()`.
 def background(mut self, color: Color)
 ```
 
-Paint the whole framebuffer — the usual first call in `update`.
+Paint the whole framebuffer: the usual first call in `update`.
 
 A translucent color blends instead of clearing, which is how motion
 trails are rendered: `canvas.background(Color(0x11, 0x11, 0x11, 24))`
@@ -506,7 +506,7 @@ stacking on it, so opening `update` with this costs one clear, not two.
 def background(mut self, gradient: Gradient)
 ```
 
-Paint the whole framebuffer with `gradient` — a sky, a vignette.
+Paint the whole framebuffer with `gradient`: a sky, a vignette.
 
 It spans the screen, `left()` to `right()` and `bottom()` to
 `top()`, whatever the camera is doing; under `EXTEND` that is the
@@ -534,7 +534,7 @@ Save this frame as a PNG at the design size, times `pixel_scale`.
 Window-independent by construction: the size of the file is the space
 the program renders in, never the size of the window, and the letterbox
 bars are absent because they belong to a window this image is not of.
-The same call under either backend produces the same image — the
+The same call under either backend produces the same image: the
 capture is rasterised on the CPU from the recorded commands, so the
 GPU path needs no readback. That is what makes this the export to use
 for artwork, posters and golden-image tests; use `save_screenshot` for
@@ -572,8 +572,8 @@ def color_at(mut self, position: Point) raises -> Color
 
 The colour at `position` in what this frame has drawn so far.
 
-`position` is in screen space, whatever the camera or transform —
-a read is of the screen, not the scene — so
+`position` is in screen space, whatever the camera or transform
+(a read is of the screen, not the scene), so
 `canvas.color_at(context.mouse.position)` picks under the mouse as it is.
 Outside the screen it is `Color.TRANSPARENT`.
 
@@ -584,7 +584,7 @@ replays the frame on the CPU once, and again only after something
 more is drawn, so many reads in a row cost one replay.
 
 With `canvas.autoclear(False)`, a read starts from the last frame's
-pixels, as the frame did — from the second frame that reads on; the
+pixels, as the frame did: from the second frame that reads on; the
 first sees only what it drew itself. That needs the CPU backend,
 which is also the only one that accumulates.
 
@@ -600,7 +600,7 @@ def snapshot(mut self, pixel_scale: Float64 = 1) raises -> Image
 What this frame has drawn so far, as an `Image` of the whole screen: `width * pixel_scale` by `height * pixel_scale` pixels.
 
 Drawn back with `canvas.image(shot, (0, 0), canvas.width(),
-canvas.height())` it lines up with the frame exactly — a feedback
+canvas.height())` it lines up with the frame exactly: a feedback
 effect is a snapshot kept as a field and drawn under the next frame.
 `pixel_scale=canvas.pixel_scale()` gives the window's own resolution instead.
 Everything `color_at` says about what is read applies.
@@ -634,7 +634,7 @@ Save this frame as a PNG at the framebuffer's own resolution.
 The complement of `save_image`: this answers what the user *saw*, so
 it is the size of the drawable, letterbox bars included, rendered by
 whichever rasteriser actually drew the frame. That makes it
-deliberately machine-dependent — window size, HiDPI scaling and any
+deliberately machine-dependent: window size, HiDPI scaling and any
 driver antialiasing are all in it, and two machines will not produce
 the same file. Right for a bug report or for sharing a running sketch;
 use `save_image` for anything that has to be reproducible.
@@ -643,7 +643,7 @@ Deferred and raising in the same way as `save_image`: the file is
 written when the frame is presented, and a failure raises from there.
 
 An offscreen canvas writes at once: its own pixels, at its own
-density, alpha kept — it has no window to have been seen in.
+density, alpha kept: it has no window to have been seen in.
 
 `naming` names the file as `save_image`'s does; with no path, it is
 saved as `screenshot-0001.png`, `screenshot-0002.png` and so on.
@@ -872,7 +872,7 @@ Draw the polygon through `vertices`, closed back to the first.
 Filled by the nonzero rule, so a self-crossing polygon fills every
 area its edges wind round, whichever way they run. The stroke is
 inset along the outside, as a sector's is, and centred on an edge
-running through the inside — a pentagram's inner pentagon — so every
+running through the inside (a pentagram's inner pentagon), so every
 edge is stroked as thick; a translucent polygon composites once. A
 blurred drop shadow or an inset one costs what a `bezier`'s blurred
 shadow does. Fewer than three vertices draw nothing.
@@ -1129,7 +1129,7 @@ Resolved at record time, like every other style setting.
 def opacity(mut self, value: Float64)
 ```
 
-Fade whatever is rendered next: fill, gradient, stroke, text, image and shadow alike, never `background`. `1.0` (the default) leaves it untouched; `0.0` renders nothing visible. Each shape composites once, so a translucent one is evenly translucent, stroke and fill included. Resolved at record time, like every other style setting — it cannot reach back and fade what was already rendered.
+Fade whatever is rendered next: fill, gradient, stroke, text, image and shadow alike, never `background`. `1.0` (the default) leaves it untouched; `0.0` renders nothing visible. Each shape composites once, so a translucent one is evenly translucent, stroke and fill included. Resolved at record time, like every other style setting: it cannot reach back and fade what was already rendered.
 
 ### `blend_mode`
 
@@ -1137,7 +1137,7 @@ Fade whatever is rendered next: fill, gradient, stroke, text, image and shadow a
 def blend_mode(mut self, mode: BlendMode)
 ```
 
-Combine whatever is rendered next with what is already there by `mode` — `BlendMode.ADD` for glows, `MULTIPLY` for shadows — instead of painting over it. `BlendMode.NORMAL` (the default) paints over.
+Combine whatever is rendered next with what is already there by `mode` (`BlendMode.ADD` for glows, `MULTIPLY` for shadows), instead of painting over it. `BlendMode.NORMAL` (the default) paints over.
 
 Applies to shapes, text and images, never to `background`.
 
@@ -1157,7 +1157,7 @@ def shadow(
 Cast a shadow behind what is rendered next, switching shadows on. Parts left unset keep their current values, so `shadow()` alone brings back the last shadow, and `shadow(blur=12)` changes only the blur; a fresh frame starts at a translucent black, an offset of `(4, -4)` (down and right, since y is up), a blur of 8 and no spread.
 
 Works like CSS `drop-shadow`: the shadow is the shape's whole
-silhouette, fill and stroke together, cast once — a translucent
+silhouette, fill and stroke together, cast once, so a translucent
 fill shows its own shadow through it. Lines cast their stroke, text
 its glyphs and images their alpha. `blur` is the CSS blur radius,
 twice the Gaussian's standard deviation; `spread` grows the
@@ -1215,7 +1215,7 @@ Anchor the next text at one of the nine points of its box.
 One argument covers both axes: `Align.CENTER` (the default) centres
 the text on the position, like every other shape, and
 `Align.TOP_LEFT` hangs it below and to the right of it. The one-word constants name an edge's
-midpoint — `Align.TOP` is top-centre. These are edges of the text box,
+midpoint: `Align.TOP` is top-centre. These are edges of the text box,
 not typographic baselines.
 
 ### `antialiasing`
@@ -1230,7 +1230,7 @@ How smooth shape edges are: `run`'s `antialiasing` unless set.
 def antialiasing(mut self, level: Antialiasing)
 ```
 
-Smooth shape edges at `level` — `OFF` for hard pixels.
+Smooth shape edges at `level`: `OFF` for hard pixels.
 
 A frame-wide setting: both backends rasterise the frame when it is
 presented, so the level covers every shape in this frame, including
@@ -1257,8 +1257,8 @@ on a program that never calls `background()`. Off lets ink
 accumulate across frames, on either backend.
 
 A frame-wide setting: it applies to this whole frame, wherever in it
-it is called — off takes this frame's opening clear back out, on puts
-it back — and lasts until changed, so set it once in `create`. An
+it is called (off takes this frame's opening clear back out, on puts
+it back), and lasts until changed, so set it once in `create`. An
 opaque `background()` already drawn this frame stays either way.
 
 No effect on an offscreen canvas, which has no frames to open and
@@ -1308,7 +1308,7 @@ Colour the bars outside the design area under `Autoscale.FIT`.
 
 A frame-wide setting: the bars are painted after the frame is drawn,
 so this frame's bars take it wherever in the frame it is called, and
-it lasts until changed — set it once in `create`. Not part of a
+it lasts until changed: set it once in `create`. Not part of a
 style. No effect on an offscreen canvas, which has no window to bar.
 
 ### `font`

@@ -27,8 +27,8 @@ from .stroke_align import StrokeAlign
 
 def stroke_offset(c: RenderCommand, m: Transform, scale: Float64) -> Float64:
     """How far `c`'s stroke moves out past its edge, in local units: 0 when
-    nothing is to align — `INSIDE`, no visible stroke, or a kind without an
-    inside. A fraction of the stroke as the rasterisers draw it under the
+    nothing is to align (`INSIDE`, no visible stroke, or a kind without an
+    inside). A fraction of the stroke as the rasterisers draw it under the
     device matrix `m`, whole pixels, so `OUTSIDE` puts its inner edge on
     the shape's exactly."""
     if not c.is_region():

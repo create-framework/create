@@ -24,8 +24,8 @@ struct _Rumble(ImplicitlyCopyable, Movable):
 struct Context(Copyable, Movable):
     """The run's state: everything that outlives a frame.
 
-    Two directions share it. The loop writes the readings — `time`,
-    `keyboard`, `mouse` and the gamepads — before each `update`, for the
+    Two directions share it. The loop writes the readings (`time`,
+    `keyboard`, `mouse` and the gamepads) before each `update`, for the
     program to read; the program sets the dials, for the
     loop to read. Every dial is a method, like the `Canvas` style setters:
     `context.autoscale(Autoscale.EXTEND)`, `context.max_frame_rate(30)`.
@@ -44,7 +44,7 @@ struct Context(Copyable, Movable):
 
     **Read at frame construction.** The loop re-derives the viewport from
     `autoscale` and the design size at the top of each frame. So a dial turned
-    part-way through `update` applies to the *next* frame — one frame cannot
+    part-way through `update` applies to the *next* frame: one frame cannot
     record under two mappings. Set them in `create` to have them hold from
     frame two, or pass them to `run` to have them hold from frame one.
     `max_frame_rate`, `quit` and `rumble` are the exception, and only because
@@ -54,7 +54,7 @@ struct Context(Copyable, Movable):
 
     var time: Time
     """The frame clock. The run loop ticks it before each `update`; read
-    `delta` and `elapsed` here, and don't write it — the loop derives the
+    `delta` and `elapsed` here, and don't write it: the loop derives the
     next delta from it."""
     var keyboard: Keyboard
     """The keyboard: keys and typed text. The run loop folds each frame's
@@ -124,7 +124,7 @@ struct Context(Copyable, Movable):
         """Author this program in a fixed world size, scaled to any window.
 
         Overrides the size passed to `run`, so a program can pin its own
-        coordinate space no matter how it is launched — including fullscreen,
+        coordinate space no matter how it is launched, including fullscreen,
         where the window size is the display's rather than the caller's.
 
         Takes effect on the next frame, like every dial here: the frame being
@@ -140,7 +140,7 @@ struct Context(Copyable, Movable):
         return self._autoscale
 
     def autoscale(mut self, mode: Autoscale):
-        """Choose how the design size maps onto the window — see
+        """Choose how the design size maps onto the window: see
         `Autoscale`."""
         self._autoscale = mode
 
@@ -149,7 +149,7 @@ struct Context(Copyable, Movable):
         return self._title
 
     def title(mut self, title: String):
-        """Retitle the window — a score, a level name, an unsaved mark.
+        """Retitle the window: a score, a level name, an unsaved mark.
 
         Shows with the frame it is set in: the loop applies it before
         presenting, and only when it changed, so setting it every frame
@@ -175,8 +175,8 @@ struct Context(Copyable, Movable):
         return self._cursor
 
     def cursor(mut self, cursor: Cursor):
-        """Change the mouse cursor over the window — `Cursor.CROSSHAIR` for
-        aiming, `HAND` over something clickable — or hide it with
+        """Change the mouse cursor over the window (`Cursor.CROSSHAIR` for
+        aiming, `HAND` over something clickable), or hide it with
         `Cursor.HIDDEN`, like Processing's `cursor()` and `noCursor()`.
 
         Shows with the frame it is set in, like `title`, and only when it
@@ -214,7 +214,7 @@ struct Context(Copyable, Movable):
         `text_field` switches it on while it has focus and off when it loses
         it. Taking text is also what opens an input method's
         composition window as the user types, and an on-screen keyboard on a
-        handheld or tablet — so a game played on letter keys switches it off,
+        handheld or tablet, so a game played on letter keys switches it off,
         and back on while a text field is in use. Keys are read the same
         either way; only `text` goes quiet.
 
@@ -380,7 +380,7 @@ struct Context(Copyable, Movable):
         _set_run_clock(self.time.elapsed, self.time.real_elapsed)
 
     def _count_frame(mut self):
-        """Count a frame without ticking the clock — on its own, the first
+        """Count a frame without ticking the clock: on its own, the first
         frame's, which `create` draws before the clock has started.
 
         Also drops last frame's rumbles: the windowed loops sent them already,
@@ -393,12 +393,12 @@ struct Context(Copyable, Movable):
         """Ask the run loop to stop after the current frame.
 
         Unwinds normally, so the window tears down cleanly and program
-        destructors run — unlike `std.sys.exit`, which aborts the process.
+        destructors run, unlike `std.sys.exit`, which aborts the process.
         """
         self._quit = True
 
     def gamepad(self, player: Int = 0) -> Gamepad:
-        """Player `player`'s gamepad, a copy of its state this frame —
+        """Player `player`'s gamepad, a copy of its state this frame:
         player one is 0, the default, so a one-player program needs no
         argument.
 

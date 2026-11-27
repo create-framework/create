@@ -33,8 +33,8 @@ from .triangle import Triangle
 #
 # Every test is boundary-inclusive: shapes that only touch (shared edge,
 # shared corner, tangent circles) count as overlapping. Degenerate inputs
-# -- a zero-size rectangle, a zero-radius circle, a collinear or fully
-# degenerate triangle -- remain exact rather than reporting a false
+# (a zero-size rectangle, a zero-radius circle, a collinear or fully
+# degenerate triangle) remain exact rather than reporting a false
 # overlap.
 def _polygon_overlaps_sector[N: Int](pts: Array[Point, N], s: Sector) -> Bool:
     """Whether the sector holds a vertex of the polygon, or an edge of the

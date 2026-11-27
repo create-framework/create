@@ -137,7 +137,7 @@ struct _TextBuffer(Copyable, Movable):
     # ------------------------------------------------------------ reading
 
     def before_caret(self) -> String:
-        """The text left of the caret — what to measure to place it."""
+        """The text left of the caret: what to measure to place it."""
         return String(self.text[byte = 0 : self._clamp(self._caret)])
 
     def after_caret(self) -> String:
@@ -150,7 +150,7 @@ struct _TextBuffer(Copyable, Movable):
         return String(self.text[byte=start:end])
 
     def before_selection(self) -> String:
-        """The text left of the selection — what to measure to place its
+        """The text left of the selection: what to measure to place its
         highlight. The same as `before_caret` when nothing is selected."""
         var start, _ = self._selection()
         return String(self.text[byte=0:start])

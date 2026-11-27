@@ -1,6 +1,6 @@
 """Raw SDL3 bindings via `std.ffi._DLHandle`.
 
-Internal only — nothing here is re-exported from the package `__init__`.
+Internal only: nothing here is re-exported from the package `__init__`.
 `_DLHandle` is a private stdlib API (no public `DLHandle` exists in this
 Mojo release); isolating all use of it in this one file means a future
 stdlib rename only touches this module.
@@ -9,11 +9,11 @@ stdlib rename only touches this module.
 rules out returning pointer types directly. SDL handles (`SDL_Window *`)
 and pointer results we don't need to dereference are therefore treated as
 opaque `Int` addresses. Where we do need to read through a pointer (error
-strings), `Pointer[T, MutUntrackedOrigin]` is used — `MutUntrackedOrigin`
+strings), `Pointer[T, MutUntrackedOrigin]` is used: `MutUntrackedOrigin`
 is the concrete origin the stdlib itself uses for FFI-returned pointers.
 
 Every handle kind (window, renderer, texture, GL context) is this same
-opaque `Int` — nothing here stops passing a texture handle where a
+opaque `Int`: nothing here stops passing a texture handle where a
 renderer handle is expected; the compiler can't catch a mixup. Distinct
 nominal wrapper types per handle kind would close that gap, at the cost of
 touching every `SDL` method signature plus both `Window` and `GLWindow`.
@@ -29,10 +29,10 @@ from create._library import load_library
 
 comptime _SDL_ABI_MAJOR_VERSION: Int32 = 3
 """Major version this file's `SDL_Event` byte offsets were verified
-against (concretely 3.4.14, conda-forge) -- checked at runtime in
+against (concretely 3.4.14, conda-forge): checked at runtime in
 `SDL.__init__` via `SDL_GetVersion`. SDL's own versioning policy
 guarantees ABI/API stability across the whole 3.x line, so this only
-guards against an unexpected major bump (e.g. a future SDL4 conda
+guards against an unexpected major bump (such as a future SDL4 conda
 package satisfying `pixi.toml`'s `sdl3` dependency name), not against
 the minor/patch range moving."""
 
@@ -80,11 +80,11 @@ comptime SDL_JOYSTICK_AXIS_MAX = 32767
 -32768, so a normalized value is clamped at -1."""
 
 comptime SDL_EVENT_SIZE = 128
-"""Size in bytes of SDL_Event — the union is padded to this size for ABI stability."""
+"""Size in bytes of SDL_Event: the union is padded to this size for ABI stability."""
 
 comptime SDL_PIXELFORMAT_RGBA32: UInt32 = 0x16762004
 """`SDL_PIXELFORMAT_ABGR8888` on little-endian (the only platform this
-package targets — see `pixi.toml`'s `platforms`); SDL defines
+package targets: see `pixi.toml`'s `platforms`); SDL defines
 `SDL_PIXELFORMAT_RGBA32` as a byte-order-dependent alias, so this is the
 concrete value, not the byte-order-generic macro."""
 
@@ -157,7 +157,7 @@ struct SDL:
                 + String(major)
                 + ", expected "
                 + String(_SDL_ABI_MAJOR_VERSION)
-                + " -- SDL_Event field offsets in _sdl.mojo were verified"
+                + ": SDL_Event field offsets in _sdl.mojo were verified"
                 + " against 3.4.14 and are not safe to use against a"
                 + " different major version"
             )
@@ -190,14 +190,14 @@ struct SDL:
         macOS's GL draws for a window that is never shown. That needs a
         logged-in desktop session, which a Mac reached only over SSH may
         lack. SDL reads the driver only when video starts, so the hint is reset
-        straight after — once every window has closed and video has shut
+        straight after: once every window has closed and video has shut
         down, the next window gets the usual driver. While video is already
         running it keeps the driver it started with, and `offscreen` changes
         nothing. An `SDL_VIDEODRIVER` environment variable outranks it.
 
         An offscreen window skips gamepads: it receives no input, and
         starting the subsystem scans and opens every input device, which can
-        take a second on a desktop — on every GPU `run_headless`.
+        take a second on a desktop: on every GPU `run_headless`.
         """
         var hint = String("SDL_VIDEO_DRIVER")
         var offscreen_driver = offscreen and not CompilationTarget.is_macos()
@@ -239,7 +239,7 @@ struct SDL:
     def open_gamepad(self, id: UInt32) raises -> Bool:
         """Opens the gamepad SDL announced as `id`: SDL sends no axis or
         button events for a pad until it is opened. False if it could not
-        be — a pad unplugged in between, whose removal event follows."""
+        be: a pad unplugged in between, whose removal event follows."""
         return self.lib.call["SDL_OpenGamepad", Int](id) != 0
 
     def close_gamepad(self, id: UInt32) raises:
@@ -342,7 +342,7 @@ struct SDL:
 
         Test-only entry point (used by `tests/test_event_translation.mojo`
         to exercise the real poll -> translate path instead of just the
-        offset readers) — not used by `Window` itself.
+        offset readers), not used by `Window` itself.
         """
         return self.lib.call["SDL_PushEvent", Bool](buf)
 
@@ -397,7 +397,7 @@ struct SDL:
         return Int(w[0]), Int(h[0])
 
     def get_window_size_in_pixels(self, window: Int) raises -> Tuple[Int, Int]:
-        """Drawable size in pixels -- differs from `get_window_size` under
+        """Drawable size in pixels: differs from `get_window_size` under
         display scaling (HiDPI, Wayland fractional scale), where the window's
         logical size and its backing pixel size are not the same number."""
         var w = List[Int32](length=1, fill=0)
@@ -482,7 +482,7 @@ struct SDL:
 
     def maximize_window(self, window: Int) -> Bool:
         """A request the window manager may ignore, and some video drivers
-        do not support at all — so it reports rather than raises."""
+        do not support at all, so it reports rather than raises."""
         return self.lib.call["SDL_MaximizeWindow", Bool](window)
 
     def restore_window(self, window: Int) -> Bool:
@@ -491,7 +491,7 @@ struct SDL:
 
     def create_system_cursor(self, id: Int) -> Int:
         """An `SDL_SYSTEM_CURSOR_*` as a cursor handle, or 0 where the video
-        driver has none (dummy, offscreen) — so it reports rather than
+        driver has none (dummy, offscreen), so it reports rather than
         raises, like `maximize_window`. Freed with `destroy_cursor`."""
         return self.lib.call["SDL_CreateSystemCursor", Int](Int32(id))
 
@@ -559,7 +559,7 @@ def _motor_strength(strength: Float64) -> UInt16:
 #
 # Each takes a pointer to an `SDL_EVENT_SIZE`-byte buffer previously filled
 # by `SDL.poll_event` and reads the field at its fixed byte offset. Which
-# reader is valid depends on `event_type(buf)` — same layout SDL itself
+# reader is valid depends on `event_type(buf)`: same layout SDL itself
 # uses for the `SDL_Event` union.
 
 

@@ -9,7 +9,7 @@ def source_path(relative: String) -> String
 Create's own loaders and savers already resolve a relative path this way
 (`Image.load("assets/image.png")`), so this is for paths handed to
 anything else: the standard library's `open()`, `listdir`, `makedirs`.
-Called from a helper, it resolves against the helper's file — the same
+Called from a helper, it resolves against the helper's file: the same
 rule as Python's `__file__`.
 
 The caller's path is baked in at compile time, which is why this has to be

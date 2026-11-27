@@ -66,7 +66,7 @@ def _segments_meet(a: Point, b: Point, c: Point, d: Point) -> Bool:
     var o4 = _orientation(c, d, b)
     if o1 != 0 and o2 != 0 and o1 != o2 and o3 != 0 and o4 != 0 and o3 != o4:
         return True
-    # Collinear arms -- inclusive: touching or overlapping counts.
+    # Collinear arms, inclusive: touching or overlapping counts.
     if o1 == 0 and _point_on_segment(c, a, b):
         return True
     if o2 == 0 and _point_on_segment(d, a, b):

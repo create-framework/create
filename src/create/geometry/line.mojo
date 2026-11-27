@@ -30,7 +30,7 @@ struct Line(
     A `Curve`, like `Arc`, `Bezier` and `Spline`: a straight one, as in
     mathematics, with `t` proportional to distance. It has no interior, so
     unlike the `Shape`s it has no `center()`, `area()` or `overlaps`, and
-    is the *subject* of `l.intersects(x)` -- see the comment above
+    is the *subject* of `l.intersects(x)`: see the comment above
     `intersects` for why that method exists only on curves.
 
     `intersects` and `_point_on_segment`-based checks treat the endpoints
@@ -67,7 +67,7 @@ struct Line(
         return self.start.lerp(self.end, t)
 
     def tangent(self, t: Float64) -> Vector:
-        """The derivative at `t`: `end - start`, the same everywhere — the
+        """The derivative at `t`: `end - start`, the same everywhere: the
         direction of travel, with the line's length as its magnitude. Zero
         for a zero-length line."""
         return self.end - self.start
@@ -123,12 +123,12 @@ struct Line(
         return _segments_meet(self.start, self.end, other.start, other.end)
 
     # `x.intersects(y)` is the curve-as-subject relation, for every
-    # `Curve` -- asymmetric, unlike `overlaps`, because a curve has no interior
+    # `Curve`: asymmetric, unlike `overlaps`, because a curve has no interior
     # and cannot be an operand of a symmetric region test. Two curves meet
     # where they cross or touch: exactly for two `Line`s, within
     # `_RADIUS_EPSILON` once an `Arc` is involved, since its points are
     # rounded. A region is tested by the cheapest exact method for that
-    # shape -- `Circle` via `closest_point`-then-`contains` (exact only
+    # shape: `Circle` via `closest_point`-then-`contains` (exact only
     # because a circle's containment is radial from its centre), `Rectangle`
     # and `Triangle` via endpoint containment (covers a curve wholly inside,
     # which no edge test would catch) plus their edges as `Line`s, and

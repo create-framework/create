@@ -7,7 +7,7 @@ struct Triangle
 A triangle defined by its three vertices `a`, `b`, `c`: `center`, `area`, `closest_point`, `contains`, `move_to`, `translate`.
 
 Unlike `Rectangle`/`Circle`, a `Triangle` is not centre-positioned in
-its fields -- `center()` (the centroid) is derived, and `move_to`
+its fields: `center()` (the centroid) is derived, and `move_to`
 translates all three vertices so the centroid lands on the given
 point. Vertex winding (clockwise or counter-clockwise) does not matter
 to any method here; `contains` and `area` both work from unsigned or

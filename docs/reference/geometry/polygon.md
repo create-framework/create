@@ -18,7 +18,7 @@ met by `Line.intersects` and `Arc.intersects`.
 
 Like a `Triangle`'s, the fields are the vertices and `center()` (the
 centroid) is derived; `move_to` moves the centroid. The centroid and
-`area` are those of a simple polygon -- one whose edges do not cross.
+`area` are those of a simple polygon: one whose edges do not cross.
 
 `corner_radius` rounds every corner, as `canvas.polygon` draws it, and
 every test here sees the rounded shape. Each corner is clamped on its

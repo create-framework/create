@@ -30,15 +30,15 @@ def run_headless[
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
     autoscale: Autoscale = Autoscale.FIT,
 ) raises -> Image:
-    """Run `P` without a window — `create`'s frame, then `frames` calls to
-    `update` — and return the last frame as an `Image`, read back with
+    """Run `P` without a window (`create`'s frame, then `frames` calls to
+    `update`), and return the last frame as an `Image`, read back with
     `pixel(x, y)` in image coordinates (top-left origin, y down).
 
     The same sequence as `run`, minus the window: `create` draws frame 1,
     then `update` draws one frame per call, with the letterbox painted after
     each. `frames=0` returns `create`'s frame alone. `width`
     and `height` are the design size; `window_size` is the pixel size of
-    the window it stands in for, the design size when `None` — pass a
+    the window it stands in for, the design size when `None`: pass a
     different shape to exercise autoscale, since a design that matches the
     window maps 1:1 and leaves no bars. The returned image is that size.
 
@@ -50,7 +50,7 @@ def run_headless[
 
     `backend=RenderBackend.GPU` runs the same frames through the GL backend
     into an offscreen framebuffer instead, reading the result back at the
-    end rather than replaying onto the buffer every frame — see
+    end rather than replaying onto the buffer every frame: see
     `_headless_gl.mojo`. It raises if no GL context can be created; it never
     falls back to the CPU backend.
 

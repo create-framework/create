@@ -8,8 +8,8 @@ struct _Stroke(Copyable, Movable):
     repeating (`text` empty), or text (`key` `NONE`). What a `text_field`
     replays, so "type, Left, type" in one frame lands where it was typed.
 
-    `label` is the layout's keycode for the key — what is printed on it,
-    lowercase for a letter — so a shortcut follows the label as the system's
+    `label` is the layout's keycode for the key (what is printed on it,
+    lowercase for a letter), so a shortcut follows the label as the system's
     do; 0 where nothing said. The modifiers are as they were held then."""
 
     var key: Key
@@ -29,7 +29,7 @@ struct Keyboard(Copyable, Movable, Writable):
     *released* are the edges, true only in the frame the key went down or
     came up. Unlike Processing, where `keyPressed` means held, *pressed* is
     only ever the edge. Keys add *typed*: pressed, or auto-repeated while
-    held — what an editing key like Backspace acts on.
+    held: what an editing key like Backspace acts on.
 
     `text` is what those keys wrote, as characters rather than keys: shift,
     the keyboard layout and any IME already applied. A text field appends

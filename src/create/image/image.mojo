@@ -68,8 +68,8 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
     """An RGBA image, row-major, 8 bits per channel: an asset, never
     changed once made.
 
-    Decoded once at load — `Image.load` picks a BMP, PNG or JPEG decoder by
-    file extension — and blitted many times afterwards. `Image(buffer^)`
+    Decoded once at load (`Image.load` picks a BMP, PNG or JPEG decoder by
+    file extension), and blitted many times afterwards. `Image(buffer^)`
     takes over the pixels of a `PixelBuffer`, the way to build one pixel by
     pixel; `Image.solid` and `Image.from_rgba` build one without a file, and
     `resize` returns a resampled copy. `pixel` reads one pixel. Since nothing
@@ -83,7 +83,7 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
 
     var _pixels: ArcPointer[List[UInt8]]
     """RGBA, row-major from the top. Private so that nothing outside this
-    package can change an image after it is made — which is what lets a copy
+    package can change an image after it is made, which is what lets a copy
     of the image, and a backend's cache of it, share these rather than copy
     them."""
     var _width: Int
@@ -163,7 +163,7 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
 
     def pixel(self, x: Int, y: Int) -> Color:
         """The pixel in column `x` of row `y`, counted from the top-left
-        corner — image coordinates, unlike the canvas's. Outside the image
+        corner: image coordinates, unlike the canvas's. Outside the image
         it is `Color.TRANSPARENT`."""
         if x < 0 or y < 0 or x >= self._width or y >= self._height:
             return Color.TRANSPARENT
@@ -181,7 +181,7 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
         own identity."""
         var dst = PixelBuffer(width, height)
         if self._width == 0 or self._height == 0:
-            # No source pixel to sample -- leave the zero-filled buffer as is
+            # No source pixel to sample, so leave the zero-filled buffer as is
             # rather than computing an offset into an empty source.
             return Image(dst^)
         var src_ptr = self._pixels[].unsafe_ptr()
@@ -205,7 +205,7 @@ struct Image(Copyable, ImplicitlyCopyable, Movable):
         Where the stem ends and any extension begins. Shared with the frame
         ordering in `animation`, which needs the same split to find the number
         a name ends in. Scans the whole path, not just the last segment, so
-        `assets/v1.2/image` reports the dot in the directory -- long-standing
+        `assets/v1.2/image` reports the dot in the directory: long-standing
         behaviour, pinned by test.
         """
         var bytes = path.as_bytes()

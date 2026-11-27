@@ -51,7 +51,7 @@ struct Paint(Copyable, ImplicitlyCopyable, Movable):
     def _fill_visible(self) -> Bool:
         """Whether the fill actually paints anything.
 
-        `fill_enabled` alone isn't enough — a fully transparent color, or a
+        `fill_enabled` alone isn't enough: a fully transparent color, or a
         gradient whose every stop is, paints nothing either, and every
         rasteriser gate should skip that work rather than render an
         invisible fill.
@@ -65,7 +65,7 @@ struct Paint(Copyable, ImplicitlyCopyable, Movable):
     def _stroke_visible(self) -> Bool:
         """Whether the stroke actually paints anything.
 
-        `stroke_enabled` alone isn't enough — a fully transparent color or a
+        `stroke_enabled` alone isn't enough: a fully transparent color or a
         zero thickness paints nothing either, and every rasteriser gate
         should skip that work rather than render an invisible stroke.
         """

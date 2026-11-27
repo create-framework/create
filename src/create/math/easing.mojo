@@ -1,4 +1,4 @@
-"""Easing curves for animation — the shape of a 0-to-1 fraction over time.
+"""Easing curves for animation: the shape of a 0-to-1 fraction over time.
 
 An easing curve reshapes a normalised fraction without changing its endpoints:
 `ease(curve, 0.0)` is always 0 and `ease(curve, 1.0)` is always 1, but
@@ -10,7 +10,7 @@ The curves come in three flavours, and the prefix says which end is eased:
 does both. `OUT_` is the usual choice for anything responding to input, since
 it moves immediately and decelerates into place.
 
-Usable without a `Tween` — it is a plain function, so anything already holding
+Usable without a `Tween`: it is a plain function, so anything already holding
 a fraction can bend it:
 
 ```mojo
@@ -37,7 +37,7 @@ struct Easing(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     var value: Int
 
     comptime LINEAR = Easing(0)
-    """No easing — the fraction passes through unchanged."""
+    """No easing: the fraction passes through unchanged."""
 
     comptime IN_QUAD = Easing(1)
     comptime OUT_QUAD = Easing(2)
@@ -125,7 +125,7 @@ struct Easing(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             writer.write("Easing(", self.value, ")")
 
 
-# Overshoot constant for the BACK curves, and its IN_OUT variant — the amount
+# Overshoot constant for the BACK curves, and its IN_OUT variant: the amount
 # the curve pulls past its endpoint before returning. Penner's originals.
 comptime _BACK_1 = 1.70158
 comptime _BACK_2 = _BACK_1 * 1.525
@@ -160,7 +160,7 @@ def _out_bounce(t: Float64) -> Float64:
 def ease(curve: Easing, t: Float64) -> Float64:
     """Reshape the fraction `t` by `curve`.
 
-    `t` is clamped to 0..1 first — unlike `lerp`, easing does not extrapolate.
+    `t` is clamped to 0..1 first, unlike `lerp`, easing does not extrapolate.
     The curves are not linear, so an out-of-range input does not continue the
     motion sensibly: `IN_EXPO` at `t = 2.0` would return 1024.
 
@@ -261,7 +261,7 @@ def ease(curve: Easing, t: Float64) -> Float64:
             return (1.0 - _out_bounce(1.0 - 2.0 * x)) / 2.0
         return (1.0 + _out_bounce(2.0 * x - 1.0)) / 2.0
 
-    # Unknown curve — an `Easing` built from a raw number outside the named
+    # Unknown curve: an `Easing` built from a raw number outside the named
     # set. Pass the fraction through rather than raising: a wrong curve should
     # look wrong, not stop the frame.
     return x

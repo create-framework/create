@@ -13,8 +13,8 @@ struct Mouse(Copyable, Movable, Writable):
     button went down or came up. Each takes `MouseButton.LEFT` unless told
     otherwise, so `context.mouse.pressed()` is a click.
 
-    `position` is in screen coordinates — origin at the centre, y up, so
-    negative left of and below it — and camera-independent, since the loop
+    `position` is in screen coordinates (origin at the centre, y up, so
+    negative left of and below it), and camera-independent, since the loop
     reads a frame's events before the `Canvas` (and any `Camera` it sets)
     exists. Convert with `camera.to_world`, or `canvas.to_local` for the
     frame a shape is drawn in. `position` and `press_position` are
@@ -33,9 +33,9 @@ struct Mouse(Copyable, Movable, Writable):
     until the next press."""
     var movement: Vector
     """How far the pointer moved this frame, in screen units, y up: zero on
-    a frame it stayed still. It keeps counting where `position` stops — at
+    a frame it stayed still. It keeps counting where `position` stops (at
     the screen's edge, and while `context.lock_mouse(True)` holds the
-    pointer — so it is what a first-person camera or an endless drag
+    pointer), so it is what a first-person camera or an endless drag
     turns by."""
     var wheel: Vector
     """This frame's scroll, zero on a frame without any."""

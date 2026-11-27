@@ -28,7 +28,7 @@ struct DateTime(Copyable, ImplicitlyCopyable, Movable, Writable):
     `DateTime.now()` takes one reading, so its fields always agree with each
     other: reading hour and minute from separate clock calls can straddle a
     rollover and report 13:59 at 12:59:59.999. Unlike `context.time`, this is
-    the computer's clock, not the run's — it doesn't start at zero, and a
+    the computer's clock, not the run's: it doesn't start at zero, and a
     headless run sees the real date.
     """
 

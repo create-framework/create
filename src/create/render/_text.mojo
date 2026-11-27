@@ -36,7 +36,7 @@ comptime _GLYPH_CACHE_LIMIT = 4096
 """Cached masks kept before the cache is dropped whole.
 
 Autoscale makes the pixel size a function of the window, so a window being
-dragged larger mints a fresh size — and a fresh set of masks — every frame.
+dragged larger mints a fresh size (and a fresh set of masks) every frame.
 Unbounded, that grows without limit; dropping the lot on the rare occasion it
 fills costs one repopulating frame and needs no recency bookkeeping.
 """
@@ -80,7 +80,7 @@ struct PlacedGlyph(Copyable, Movable):
     """
 
     var key: Int
-    """`_ensure_glyph`'s key — already cached by the time this is returned."""
+    """`_ensure_glyph`'s key: already cached by the time this is returned."""
     var x: Int
     """Device x of the mask's left edge."""
     var y: Int
@@ -166,7 +166,7 @@ struct TextRenderer(Movable):
     """`Font._id` to its slot."""
     var _glyphs: Dict[Int, _GlyphInfo]
     var atlas_generation: Int
-    """Bumped whenever a glyph key starts meaning a different bitmap — only
+    """Bumped whenever a glyph key starts meaning a different bitmap: only
     when the slots run out and are handed out afresh. A backend that caches
     glyphs of its own (the GL atlas does) watches this and drops them.
     Switching fonts does not bump it: each face has keys of its own."""
@@ -183,7 +183,7 @@ struct TextRenderer(Movable):
     def _ensure_font(mut self) raises:
         """Lazily load the packaged default/fallback fonts on first use.
 
-        Construction opens nothing — a program that renders no text pays no
+        Construction opens nothing: a program that renders no text pays no
         freetype or decoding cost. The fallback load is attempted at most
         once; a fallback that fails to open just means no fallback glyphs,
         not a render failure.
@@ -276,7 +276,7 @@ struct TextRenderer(Movable):
         Every FreeType call in the text path is behind this miss: rasterising a
         glyph costs an `FT_Load_Char` and an `FT_Render_Glyph` over the C ABI,
         and choosing the face costs an `FT_Get_Char_Index` on top. Laying a
-        string out reads each glyph twice — once to measure, once to render — so
+        string out reads each glyph twice (once to measure, once to render), so
         uncached, a static line of text paid all three per character per frame.
 
         The mask is alpha only and the pen advance is a number, so nothing here

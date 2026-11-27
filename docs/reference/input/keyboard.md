@@ -11,7 +11,7 @@ Every device answers the same three questions about its buttons:
 *released* are the edges, true only in the frame the key went down or
 came up. Unlike Processing, where `keyPressed` means held, *pressed* is
 only ever the edge. Keys add *typed*: pressed, or auto-repeated while
-held — what an editing key like Backspace acts on.
+held: what an editing key like Backspace acts on.
 
 `text` is what those keys wrote, as characters rather than keys: shift,
 the keyboard layout and any IME already applied. A text field appends

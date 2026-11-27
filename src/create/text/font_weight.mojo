@@ -5,12 +5,12 @@ struct FontWeight(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     """A stroke weight, for `canvas.font_weight`.
 
     Design-space values on the packaged variable faces, so they interpolate
-    rather than selecting a file — any number in 100..900 is valid, the
+    rather than selecting a file: any number in 100..900 is valid, the
     constants are CSS's names for each hundred. `FontWeight(450)` names one in
     between.
 
     A wrapped number rather than a bare `Int`, like `WindowMode`, so a stray
-    number — a font size, say — cannot be passed where a weight is expected.
+    number (a font size, say) cannot be passed where a weight is expected.
     """
 
     var value: Int

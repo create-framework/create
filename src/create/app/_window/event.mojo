@@ -1,4 +1,4 @@
-"""Public `Event` type — window/input events translated from raw SDL3 events."""
+"""Public `Event` type: window/input events translated from raw SDL3 events."""
 
 from std.utils import Variant
 
@@ -50,7 +50,7 @@ struct Resized(ImplicitlyCopyable, Movable):
 
 @fieldwise_init
 struct FocusLost(ImplicitlyCopyable, Movable):
-    """The window lost keyboard focus — another window was raised, or the
+    """The window lost keyboard focus: another window was raised, or the
     user switched away. Keys and buttons released while it is away send no
     event to it, so whatever is held has to be let go here."""
 
@@ -78,7 +78,7 @@ struct KeyUp(ImplicitlyCopyable, Movable):
 
 @fieldwise_init
 struct ClipboardChanged(ImplicitlyCopyable, Movable):
-    """The clipboard changed — copied to here or from another program —
+    """The clipboard changed (copied to here or from another program),
     and now holds `text` (empty for none, or for something not text)."""
 
     var text: String
@@ -200,7 +200,7 @@ comptime Event = Variant[
     GamepadButtonUp,
 ]
 """A window/input event. Check the concrete kind with `.isa[T]()`, then
-read fields with `[T]`, e.g. `if e.isa[KeyDown](): print(e[KeyDown].scancode)`.
+read fields with `[T]`, for example `if e.isa[KeyDown](): print(e[KeyDown].scancode)`.
 """
 
 
@@ -209,7 +209,7 @@ def translate_event(kind: UInt32, ptr: Pointer[UInt8, _]) -> Optional[Event]:
 
     Covers every event kind except `SDL_EVENT_QUIT` and
     `SDL_EVENT_WINDOW_RESIZED`, which callers handle themselves (they touch
-    caller state -- `_open`, pixel buffer/dimensions -- that this free
+    caller state (`_open`, pixel buffer/dimensions) that this free
     function has no access to), and gamepads being added or removed, which
     `translate_gamepad_device` handles because they need SDL. Returns `None` for any other unrecognized
     event kind, same as the inline loop's `continue` used to do.

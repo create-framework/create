@@ -1,7 +1,7 @@
 """Fill and stroke geometry for sectors, shared by both replays.
 
-A sector is tiled in *device* space at replay into convex quads — a fan
-triangle is a quad with its first corner repeated — and both backends fill
+A sector is tiled in *device* space at replay into convex quads (a fan
+triangle is a quad with its first corner repeated), and both backends fill
 those same quads, the CPU through `fill_quad` and the GPU as vertices,
 which is what keeps them in parity. Neighbouring quads share their corners
 exactly, so under `fill_quad`'s half-open rule a translucent sector
@@ -14,8 +14,8 @@ is one stretch of distances from the tip: the fill is the stretch of the
 sector eroded by the stroke, the stroke what lies either side of it.
 
 A shadow's spread offsets the whole sector first (its `grow`, zero for a
-render call). Growing it keeps it one stretch per ray — a sector grown by a
-disc is still star-shaped about its tip — but reaches into the missing
+render call). Growing it keeps it one stretch per ray (a sector grown by a
+disc is still star-shaped about its tip), but reaches into the missing
 wedge too, round the tip and the arc's ends, so the walk goes all the way
 round.
 """

@@ -20,12 +20,12 @@ Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, `Optio
 | Function | Description |
 |---|---|
 | [`lerp`](lerp.md) | Blend from `a` to `b`, `t` running 0 to 1. Not clamped: `t` outside that range extrapolates past either end. |
-| [`map`](map.md) | Re-scale `value` from one range onto another — a slider position to a world coordinate, say. Linear and unclamped. |
+| [`map`](map.md) | Re-scale `value` from one range onto another: a slider position to a world coordinate, say. Linear and unclamped. |
 | [`inverse_lerp`](inverse_lerp.md) | Where `value` sits in `[low, high]` as a 0-to-1 fraction. The inverse of `lerp`, and `map` with a 0..1 output range. |
-| [`smoothstep`](smoothstep.md) | Like `inverse_lerp`, but clamped to 0..1 and eased at both ends — the usual choice for a transition that should not start or stop abruptly. |
+| [`smoothstep`](smoothstep.md) | Like `inverse_lerp`, but clamped to 0..1 and eased at both ends: the usual choice for a transition that should not start or stop abruptly. |
 | [`sign`](sign.md) | -1.0, 0.0 or 1.0 by the sign of `x`. Zero is its own case, not positive. |
 | [`fractional_part`](fractional_part.md) | The part after the decimal point, always positive: `fractional_part(-0.25)` is 0.75, since it floors rather than truncating. |
-| [`wrap`](wrap.md) | `value` wrapped into `[0, period)`. Floored, so a negative `value` wraps forward instead of staying negative — what an angle or a scrolling offset wants. |
+| [`wrap`](wrap.md) | `value` wrapped into `[0, period)`. Floored, so a negative `value` wraps forward instead of staying negative: what an angle or a scrolling offset wants. |
 | [`degrees`](degrees.md) | `radians` in degrees. Rotations take radians, so this is for display. |
 | [`radians`](radians.md) | `degrees` in radians, for feeding `rotate` an angle written in degrees. |
 | [`ease`](ease.md) | Reshape the fraction `t` by `curve`. |

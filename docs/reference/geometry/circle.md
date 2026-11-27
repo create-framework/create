@@ -6,7 +6,7 @@ struct Circle
 
 A circle: `center`, `area`, `diameter`, `closest_point`, `contains`, `move_to`, `translate`.
 
-`position` is the centre -- there is no orientation, so unlike
+`position` is the centre: there is no orientation, so unlike
 `Rectangle`/`Triangle` there is nothing y-up affects beyond the centre's
 own coordinates.
 

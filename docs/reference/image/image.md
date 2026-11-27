@@ -6,8 +6,8 @@ struct Image
 
 An RGBA image, row-major, 8 bits per channel: an asset, never changed once made.
 
-Decoded once at load — `Image.load` picks a BMP, PNG or JPEG decoder by
-file extension — and blitted many times afterwards. `Image(buffer^)`
+Decoded once at load (`Image.load` picks a BMP, PNG or JPEG decoder by
+file extension), and blitted many times afterwards. `Image(buffer^)`
 takes over the pixels of a `PixelBuffer`, the way to build one pixel by
 pixel; `Image.solid` and `Image.from_rgba` build one without a file, and
 `resize` returns a resampled copy. `pixel` reads one pixel. Since nothing
@@ -87,7 +87,7 @@ The image's height in pixels.
 def pixel(self, x: Int, y: Int) -> Color
 ```
 
-The pixel in column `x` of row `y`, counted from the top-left corner — image coordinates, unlike the canvas's. Outside the image it is `Color.TRANSPARENT`.
+The pixel in column `x` of row `y`, counted from the top-left corner: image coordinates, unlike the canvas's. Outside the image it is `Color.TRANSPARENT`.
 
 ### `resize`
 
