@@ -115,6 +115,6 @@ struct Play(Movable):
             text_color=TEXT, font_size=24, text_alignment=Align.TOP_RIGHT
         ):
             canvas.text(
-                String(Int(ceil(max(self.time_left, 0.0)))) + " s",
+                String(Int(ceil(max(self.time_left, 0)))) + " s",
                 (canvas.right() - 20, canvas.top() - 20),
             )

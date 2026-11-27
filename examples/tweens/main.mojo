@@ -54,7 +54,7 @@ struct App(Program):
         # A row newly under the mouse starts its curve from the beginning.
         var hovered = -1
         for i in range(len(self.curves)):
-            if abs(context.mouse.position.y - row_y(i)) < ROW_SPACING / 2.0:
+            if abs(context.mouse.position.y - row_y(i)) < ROW_SPACING / 2:
                 hovered = i
 
         if hovered != self.hovered:

@@ -35,7 +35,7 @@ def platforms() -> List[Rectangle]:
     var ground_depth = 1000.0
     var level: List[Rectangle] = [
         Rectangle(
-            (0.0, GROUND_TOP - ground_depth / 2.0),
+            (0, GROUND_TOP - ground_depth / 2),
             WORLD_RIGHT - WORLD_LEFT,
             ground_depth,
         )
@@ -59,7 +59,7 @@ def platforms() -> List[Rectangle]:
     for platform in layout:
         level.append(
             Rectangle(
-                (platform[0], platform[1] - PLATFORM_THICKNESS / 2.0),
+                (platform[0], platform[1] - PLATFORM_THICKNESS / 2),
                 platform[2],
                 PLATFORM_THICKNESS,
                 corner_radius=6,
@@ -79,7 +79,7 @@ struct Game(Program):
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Game:
         return Game(
-            player=Player(Point(0.0, GROUND_TOP + Player.HEIGHT / 2.0)),
+            player=Player(Point(0, GROUND_TOP + Player.HEIGHT / 2)),
             platforms=platforms(),
             camera=Camera(),
         )
@@ -88,7 +88,7 @@ struct Game(Program):
         self.player.update(context, self.platforms)
 
         # The world's edges are the game's to enforce, not the player's.
-        var half_w = Player.WIDTH / 2.0
+        var half_w = Player.WIDTH / 2
         var position = self.player.position
         self.player.position = Point(
             clamp(position.x, WORLD_LEFT + half_w, WORLD_RIGHT - half_w),
@@ -115,8 +115,8 @@ struct Game(Program):
 
             # Walls past either edge, wide enough to fill the view there.
             canvas.fill(WALL)
-            canvas.rectangle((WORLD_LEFT - 500.0, 0.0), 1000.0, 4000.0)
-            canvas.rectangle((WORLD_RIGHT + 500.0, 0.0), 1000.0, 4000.0)
+            canvas.rectangle((WORLD_LEFT - 500, 0), 1000, 4000)
+            canvas.rectangle((WORLD_RIGHT + 500, 0), 1000, 4000)
 
             canvas.fill(PLAYER)
             canvas.draw(self.player)
@@ -127,7 +127,7 @@ struct Game(Program):
             ):
                 canvas.text(
                     "W: Jump \nA: Left\nD: Right",
-                    (canvas.left() + 20.0, canvas.top() - 20.0),
+                    (canvas.left() + 20, canvas.top() - 20),
                 )
 
 

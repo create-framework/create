@@ -97,7 +97,7 @@ struct Poster(Program):
                     random.float(canvas.left(), canvas.right()),
                     random.float(canvas.bottom(), canvas.top()),
                 ),
-                random.float(120.0, 260.0),
+                random.float(120, 260),
             )
 
         # Each row is a word sized to fill a random share of the width.
@@ -105,15 +105,13 @@ struct Poster(Program):
         var all_weights = weights()
         var rows = random.int(4, 8)
         var footer = 50.0
-        var row_height = (canvas.height() - 2.0 * MARGIN - footer) / Float64(
-            rows
-        )
-        var full_width = canvas.width() - 2.0 * MARGIN
+        var row_height = (canvas.height() - 2 * MARGIN - footer) / Float64(rows)
+        var full_width = canvas.width() - 2 * MARGIN
 
         for row in range(rows):
             var y = canvas.top() - MARGIN - (Float64(row) + 0.5) * row_height
             var word = all_words[random.int(0, len(all_words))]
-            var share = random.float(0.45, 1.0)
+            var share = random.float(0.45, 1)
             var align = random.int(0, 3)
 
             # Each row's own style, so nothing carries into the next.
@@ -139,7 +137,7 @@ struct Poster(Program):
                     canvas.text_alignment(Align.LEFT)
                     canvas.text(word, (canvas.left() + MARGIN, y))
                 elif align == 1:
-                    canvas.text(word, (0.0, y))
+                    canvas.text(word, (0, y))
                 else:
                     canvas.text_alignment(Align.RIGHT)
                     canvas.text(word, (canvas.right() - MARGIN, y))
@@ -153,7 +151,7 @@ struct Poster(Program):
         ):
             canvas.text(
                 String("Seed ", self.seed, "   Space: a new poster"),
-                (0.0, canvas.bottom() + 20.0),
+                (0, canvas.bottom() + 20),
             )
 
 

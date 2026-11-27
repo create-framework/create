@@ -68,7 +68,7 @@ struct App(Program):
         # A window dial set in `create` shows from the first frame.
         context.cursor(Cursor.CROSSHAIR)
 
-        return App(x=100.0, dir=1.0, cap=0, cursor=1)
+        return App(x=100, dir=1, cap=0, cursor=1)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # Each key changes one of the window's settings.
@@ -98,16 +98,16 @@ struct App(Program):
             self.cursor = (self.cursor + 1) % len(cursors())
             context.cursor(cursors()[self.cursor])
 
-        self.x += self.dir * 200.0 * context.time.delta
+        self.x += self.dir * 200 * context.time.delta
 
         # Set the sign rather than flip it: under EXTEND/OFF a shrinking
         # window can move canvas.right()/left() past the ball between frames,
         # and a flip on an already-true condition alternates forever instead
         # of turning the ball back inward.
-        if self.x > canvas.right() - 40.0:
-            self.dir = -1.0
-        elif self.x < canvas.left() + 40.0:
-            self.dir = 1.0
+        if self.x > canvas.right() - 40:
+            self.dir = -1
+        elif self.x < canvas.left() + 40:
+            self.dir = 1
 
         canvas.background(BACKGROUND)
 

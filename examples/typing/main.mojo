@@ -104,7 +104,7 @@ struct TypingTest(Program):
         # selection fall between the letters drawn below. Given focus every
         # frame, typing keeps going to it, even after a click elsewhere.
         var width = canvas.right() - left
-        self.field.rect = Rectangle(Point(left + width / 2, 0), width, 40.0)
+        self.field.rect = Rectangle(Point(left + width / 2, 0), width, 40)
         self.field.enabled = not finished
         self.field.focus(not finished)
         self.field.update(context, canvas)

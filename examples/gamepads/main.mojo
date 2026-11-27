@@ -60,7 +60,7 @@ struct Gamepads(Program):
 
             # The left stick moves the player's circle, faster the further the
             # right trigger is pulled in.
-            var speed = SPEED * (1.0 + pad.right_trigger)
+            var speed = SPEED * (1 + pad.right_trigger)
             self.positions[i] = (
                 self.positions[i] + pad.left_stick * speed * context.time.delta
             )

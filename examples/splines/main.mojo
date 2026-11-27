@@ -46,16 +46,16 @@ struct App(Program):
         # centre of the window and y grows upward.
         return App(
             points=[
-                (-480.0, -120.0),
-                (-300.0, 160.0),
-                (-80.0, -40.0),
-                (180.0, 200.0),
-                (440.0, -160.0),
+                (-480, -120),
+                (-300, 160),
+                (-80, -40),
+                (180, 200),
+                (440, -160),
             ],
             alpha=0.5,
             closed=False,
             dragging=-1,
-            travelled=0.0,
+            travelled=0,
         )
 
     def point_under(self, position: Point) -> Int:
@@ -93,11 +93,11 @@ struct App(Program):
         if context.keyboard.pressed(Key.C):
             self.closed = not self.closed
         if context.keyboard.pressed(Key.ONE):
-            self.alpha = 0.0
+            self.alpha = 0
         if context.keyboard.pressed(Key.TWO):
             self.alpha = 0.5
         if context.keyboard.pressed(Key.THREE):
-            self.alpha = 1.0
+            self.alpha = 1
 
         var spline = Spline(self.points.copy(), self.alpha, self.closed)
 
@@ -106,7 +106,7 @@ struct App(Program):
         var length = spline.length()
         self.travelled += SPEED * context.time.delta
         if self.travelled > length:
-            self.travelled = 0.0
+            self.travelled = 0
         var dot = spline.at_distance(self.travelled)
 
         canvas.background(BACKGROUND)
@@ -138,7 +138,7 @@ struct App(Program):
                 canvas.circle(point, 9)
 
         var kind: String
-        if self.alpha == 0.0:
+        if self.alpha == 0:
             kind = "uniform"
         elif self.alpha == 0.5:
             kind = "centripetal"

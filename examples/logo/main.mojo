@@ -34,10 +34,10 @@ def corner(row: Int, index: Int) -> Point:
     """Corner `index` along grid line `row`, counting rows down from the apex
     (0) to the base (4)."""
     var step = SIDE / 4.0
-    var height = SIDE * sqrt(3.0) / 2.0
+    var height = SIDE * sqrt(3.0) / 2
     return Point(
-        (Float64(index) - Float64(row) / 2.0) * step,
-        height / 2.0 - Float64(row) * height / 4.0,
+        (Float64(index) - Float64(row) / 2) * step,
+        height / 2 - Float64(row) * height / 4,
     )
 
 
@@ -160,8 +160,8 @@ struct Logo(Program):
             layer=layer^,
             picture=picture^,
             count=0,
-            elapsed=0.0,
-            shown=0.0,
+            elapsed=0,
+            shown=0,
         )
 
     @staticmethod
@@ -170,7 +170,7 @@ struct Logo(Program):
         at `START_RATE` and doubles every `DOUBLING` seconds, so the first
         points appear one by one and the rest fill in fast."""
         var growth = log(2.0) / DOUBLING
-        var points = START_RATE / growth * (exp(growth * seconds) - 1.0)
+        var points = START_RATE / growth * (exp(growth * seconds) - 1)
         return min(Int(points), MAX_POINTS)
 
     def random_corner(mut self) -> Point:
@@ -246,7 +246,7 @@ struct Logo(Program):
             # Eased curves like OUT_BACK run past 1 on the way, so the piece
             # grows a little too big and shrinks back; IN_OUT_BACK dips below
             # 0 first, which would turn it inside out, so hold it at nothing.
-            var size = max(piece.tween.value(), 0.0)
+            var size = max(piece.tween.value(), 0)
 
             with canvas.transform(
                 Transform(translation=Vector(piece.home), scale=size)

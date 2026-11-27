@@ -30,7 +30,7 @@ def brush() raises -> Image:
     """A white disc fading out to its rim, drawn offscreen at twice the
     design density so it stays smooth on a window scaled up to 2x. White,
     so a tint gives it any colour."""
-    var canvas = Canvas(BRUSH_SIZE, BRUSH_SIZE, pixel_scale=2.0)
+    var canvas = Canvas(BRUSH_SIZE, BRUSH_SIZE, pixel_scale=2)
     canvas.fill(Gradient.radial(Color.WHITE, Color.WHITE.with_alpha(0)))
     canvas.stroke_enabled(False)
     canvas.circle((0, 0), BRUSH_SIZE / 2)
@@ -66,7 +66,7 @@ struct Offscreen(Program):
         var t = context.time.elapsed
 
         # The paint swings back and forth between two colours.
-        var color = PAINT_FROM.lerp(PAINT_TO, 0.5 + 0.5 * sin(t * 2.0))
+        var color = PAINT_FROM.lerp(PAINT_TO, 0.5 + 0.5 * sin(t * 2))
 
         # C wipes the layer clean.
         if context.keyboard.pressed(Key.C):

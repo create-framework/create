@@ -35,7 +35,7 @@ def color_wheel() raises -> Image:
     cell at a time. A buffer starts transparent, so the corners outside the
     wheel stay see-through."""
     var buffer = PixelBuffer(WHEEL_CELLS, WHEEL_CELLS)
-    var radius = Float64(WHEEL_CELLS) / 2.0
+    var radius = Float64(WHEEL_CELLS) / 2
 
     for y in range(WHEEL_CELLS):
         for x in range(WHEEL_CELLS):
@@ -47,12 +47,10 @@ def color_wheel() raises -> Image:
             if distance >= radius:
                 continue
 
-            var color = Color.hsv(
-                degrees(offset.angle()), distance / radius, 1.0
-            )
+            var color = Color.hsv(degrees(offset.angle()), distance / radius, 1)
             # The outermost cell fades out, so the rim is smooth.
-            var edge = clamp(radius - distance, 0.0, 1.0)
-            buffer.set(x, y, color.with_alpha(UInt8(edge * 255.0)))
+            var edge = clamp(radius - distance, 0, 1)
+            buffer.set(x, y, color.with_alpha(UInt8(edge * 255)))
 
     # The buffer is handed over, not copied: it can't be used after this.
     return Image(buffer^)
@@ -94,7 +92,7 @@ struct Images(Program):
 
         var all_formats = formats()
         for i in range(len(self.pictures)):
-            var center = Point(Float64(i - 1) * 300.0, ROW_Y)
+            var center = Point(Float64(i - 1) * 300, ROW_Y)
             with canvas.style(tint=tint):
                 canvas.image(self.pictures[i], center, SIZE, SIZE)
             with canvas.style(text_color=HINT, font_size=18):
@@ -106,7 +104,7 @@ struct Images(Program):
         with canvas.style(text_color=TEXT, font_size=18):
             canvas.text(
                 "Hover colorwheel to tint the pictures",
-                (0.0, ROW_Y + SIZE / 2 + 50),
+                (0, ROW_Y + SIZE / 2 + 50),
             )
 
         canvas.image(self.wheel, WHEEL_POSITION, WHEEL_SIZE, WHEEL_SIZE)

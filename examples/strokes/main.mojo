@@ -65,7 +65,7 @@ struct App(Program):
         var label = TOP_LABEL
         var y = label - LABEL_GAP
         for i in range(3):
-            var x = (Float64(i) - 1.0) * COLUMN
+            var x = (Float64(i) - 1) * COLUMN
             var start = Point(x - 110, y + 45)
             var end = Point(x + 110, y + 45)
             var arc_center = Point(x, y + 75)
@@ -93,7 +93,7 @@ struct App(Program):
         y = label - LABEL_GAP
         var half = SHAPE / 2
         for i in range(3):
-            var x = (Float64(i) - 1.0) * COLUMN
+            var x = (Float64(i) - 1) * COLUMN
             var rectangle = Rectangle((x - SHAPE_SPACING, y), SHAPE, SHAPE)
             var triangle = Triangle(
                 (x - half, y - half),
@@ -140,7 +140,7 @@ struct App(Program):
         label -= ROW
         y = label - LABEL_GAP
         for i in range(3):
-            var x = (Float64(i) - 1.0) * COLUMN
+            var x = (Float64(i) - 1) * COLUMN
             with canvas.style(
                 fill=FILL,
                 stroke=STROKE,
