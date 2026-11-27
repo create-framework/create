@@ -838,8 +838,8 @@ struct _Theme(Copyable, Movable):
         list.apply(
             call_list.over(block.dropdown_list).over(
                 Style(
-                    # a tone above the surface it opens from
-                    fill=colors.surface_container_high,
+                    # raised above the surface it opens from
+                    fill=colors.surface_raised,
                     stroke_enabled=False,
                     corner_radius=self.container_radius(),
                     shadow=Color(0, 0, 0, 70),
@@ -870,7 +870,7 @@ struct _Theme(Copyable, Movable):
         )
         # the item under the pointer has a layer, as a hovered tab has
         var opacity = _layer_opacity(
-            colors.surface_container_high,
+            colors.surface_raised,
             colors.on_surface,
             self.state_layers.hovered,
         )
@@ -1319,6 +1319,7 @@ def _content_on(colors: ColorScheme, color: Color) -> Color:
         or color == colors.surface_container
         or color == colors.surface_container_high
         or color == colors.surface_container_highest
+        or color == colors.surface_raised
     ):
         return colors.on_surface
     return _readable_on(color)

@@ -66,7 +66,8 @@ A `ColorScheme`'s colours come in pairs of **roles**, each colour a widget is fi
 | `error`, `on_error` | Mistakes and warnings |
 | Each of those as `_container`, with `on_..._container` | A quieter fill of the same colour, such as a tonal button's |
 | `background`, `surface`, `on_surface`, `on_surface_variant` | What everything sits on, and text on it |
-| `surface_container_lowest` to `_highest`, `surface_dim`, `surface_bright` | Surfaces set apart from the one around them, such as a panel or a dropdown's open list |
+| `surface_container_lowest` to `_highest`, `surface_dim`, `surface_bright` | Surfaces set apart from the one around them, such as a panel or a switch's track |
+| `surface_raised` | A surface lifted above the one around it, such as a dropdown's open list or a panel with a shadow: lighter than the surface in either scheme |
 | `outline`, `outline_variant` | Borders and fainter dividers |
 
 The roles are Material Design's. Use them for your own drawing too, so it matches the widgets
@@ -253,11 +254,12 @@ light screen, belong in a `UI` of their own, given those colours.
 
 ## Panels
 
-**A `Panel` is a surface for other widgets to sit on.** It is the colours' `surface_container`, its
-corners rounded by the `UI`'s `corner_radius`, unless its `Style` says otherwise, and a shadow in
-its style lifts it off what is beneath. In a `UI`, widgets added inside it are drawn on it, and it
-covers what is under it from the pointer, so a click on its background doesn't reach a button behind
-it.
+**A `Panel` is a surface for other widgets to sit on.** It is the colours' `surface_container`, a
+little set apart from the surface, its corners rounded twice the `UI`'s `corner_radius`, unless its
+`Style` says otherwise. A shadow in its style lifts it off what is beneath; fill a lifted panel with
+`ColorRole.SURFACE_RAISED`, which is lighter than the surface, as something nearer the light is. In
+a `UI`, widgets added inside it are drawn on it, and it covers what is under it from the pointer, so
+a click on its background doesn't reach a button behind it.
 
 A panel also sets the colour of text on it: its style's `text_color` if given, otherwise the `on_`
 partner of its colour, or black or white for a colour that isn't one of the scheme's. In a `UI`, a
@@ -266,7 +268,12 @@ gives the colour as `panel.content_color()`, for text drawn on it.
 
 ```mojo
 # In `create`, building the `ui` field: a raised card with a column of widgets.
-var lifted = Style(shadow=Color(0, 0, 0, 60), shadow_offset=Vector(0, -3), shadow_blur=12)
+var lifted = Style(
+    fill=ColorRole.SURFACE_RAISED,
+    shadow=Color(0, 0, 0, 60),
+    shadow_offset=Vector(0, -3),
+    shadow_blur=12,
+)
 var card = ui.add(Panel(Rectangle((0, 0), 320, 120), style=lifted))
 var column = ui.add(Column(), card)
 _ = ui.add(Label("Volume"), column)

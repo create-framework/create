@@ -74,7 +74,7 @@ def test_its_list_draws_outside_a_scroll_area_s_window() raises -> None:
     _click(ui, context, (0, 50))
     assert_true(ui[size].is_open())
     var canvas = Canvas(400, 300, antialiasing=Antialiasing.OFF)
-    canvas.background(Color.WHITE)
+    canvas.background(Color.RED)
     point_at(context, (180, 140))
     next_frame(context)
     ui.update(context, canvas)
@@ -82,7 +82,7 @@ def test_its_list_draws_outside_a_scroll_area_s_window() raises -> None:
     # the list's last item lies far below the window, which ends 20 up
     var list = ui[size]._popup().value()
     assert_true(list.bottom() < 0)
-    assert_true(canvas.color_at((0, list.bottom() + 10)) != Color.WHITE)
+    assert_true(canvas.color_at((0, list.bottom() + 10)) != Color.RED)
 
 
 def test_the_wheel_scrolls_a_long_list() raises -> None:

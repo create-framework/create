@@ -24,9 +24,12 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
       widgets sit on; usually the two are the same colour. **`surface_dim`**
       and **`surface_bright`** are the darkest and lightest surfaces, and the
       **`surface_container_`** roles, from `lowest` to `highest`, are
-      surfaces set apart from the one around them, such as a panel, a
-      dropdown's open list or a switch's track. Text on any surface is `on_surface`,
-      or the quieter `on_surface_variant`.
+      surfaces set apart from the one around them, such as a panel or a
+      switch's track. **`surface_raised`** is a surface lifted above the
+      one around it, such as a dropdown's open list or a card with a
+      shadow: lighter than the surface in both schemes, as something nearer
+      the light is. Text on any surface is `on_surface`, or the quieter
+      `on_surface_variant`.
     - **`outline`** draws borders, and **`outline_variant`** fainter
       dividers.
     """
@@ -57,6 +60,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
     var surface_container: Color
     var surface_container_high: Color
     var surface_container_highest: Color
+    var surface_raised: Color
     var outline: Color
     var outline_variant: Color
     var background: Color
@@ -116,6 +120,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             surface_container=Color.hex(0xECEEF2),
             surface_container_high=Color.hex(0xE6E8ED),
             surface_container_highest=Color.hex(0xE1E3E8),
+            surface_raised=Color.hex(0xFFFFFF),
             outline=Color.hex(0x737883),
             outline_variant=Color.hex(0xC3C7D0),
             background=Color.hex(0xF8F9FC),
@@ -178,6 +183,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             surface_container=Color.hex(0x1D1F25),
             surface_container_high=Color.hex(0x282A2F),
             surface_container_highest=Color.hex(0x33353A),
+            surface_raised=Color.hex(0x282A2F),
             outline=Color.hex(0x8D919B),
             outline_variant=Color.hex(0x43474F),
             background=Color.hex(0x111318),
@@ -275,6 +281,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
                 surface_container=neutral.tone(12),
                 surface_container_high=neutral.tone(17),
                 surface_container_highest=neutral.tone(22),
+                surface_raised=neutral.tone(17),
                 outline=variant.tone(60),
                 outline_variant=variant.tone(30),
                 background=neutral.tone(6),
@@ -308,6 +315,7 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
                 surface_container=neutral.tone(94),
                 surface_container_high=neutral.tone(92),
                 surface_container_highest=neutral.tone(90),
+                surface_raised=neutral.tone(100),
                 outline=variant.tone(50),
                 outline_variant=variant.tone(80),
                 background=neutral.tone(98),
@@ -382,6 +390,8 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             return self.surface_container_high
         elif role == ColorRole.SURFACE_CONTAINER_HIGHEST:
             return self.surface_container_highest
+        elif role == ColorRole.SURFACE_RAISED:
+            return self.surface_raised
         elif role == ColorRole.OUTLINE:
             return self.outline
         elif role == ColorRole.OUTLINE_VARIANT:
@@ -471,6 +481,11 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
         self.surface_container = surface.lerp(text, 0.06)
         self.surface_container_high = surface.lerp(text, 0.09)
         self.surface_container_highest = surface.lerp(text, 0.12)
+        # lighter than the surface on a light scheme, as a raised card is;
+        # on a dark one, lighter too, a tone up as light from above makes it
+        self.surface_raised = (
+            self.surface_container_lowest if light else surface.lerp(text, 0.09)
+        )
         self.outline = text.lerp(surface, 0.5)
         self.outline_variant = text.lerp(surface, 0.8)
         self.background = surface
