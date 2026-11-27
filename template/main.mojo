@@ -12,9 +12,9 @@ struct MyApp(Program):
         return MyApp(Image.load("assets/logo.png"))
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.image(self.logo, (0, 40))
+        canvas.image(self.logo, (0, 50))
         canvas.font_size(48)
-        canvas.text("Create", (0, -110))
+        canvas.text("Create", (0, -100))
 
 
 def main() raises:
