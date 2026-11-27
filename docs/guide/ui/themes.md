@@ -66,7 +66,7 @@ A `ColorScheme`'s colours come in pairs of **roles**, each colour a widget is fi
 | `error`, `on_error` | Mistakes and warnings |
 | Each of those as `_container`, with `on_..._container` | A quieter fill of the same colour, such as a tonal button's |
 | `background`, `surface`, `on_surface`, `on_surface_variant` | What everything sits on, and text on it |
-| `surface_container_lowest` to `_highest`, `surface_dim`, `surface_bright` | Surfaces set apart from the one around them, such as a panel or a text field's fill |
+| `surface_container_lowest` to `_highest`, `surface_dim`, `surface_bright` | Surfaces set apart from the one around them, such as a panel or a dropdown's open list |
 | `outline`, `outline_variant` | Borders and fainter dividers |
 
 The roles are Material Design's. Use them for your own drawing too, so it matches the widgets
@@ -188,11 +188,11 @@ A checkbox works the same way: `box` is the empty box, a rectangle drawn as an o
 `checked_box` is the ticked one, filled, taking what it leaves unset from `box`, such as its
 corners; `tick` is the lines of the tick; and `text_style` is the text beside it.
 
-A text field's `container` is the field, a rectangle, and `focused_container` is layered over it
-while the field has focus: by default its outline turns `primary` and twice as thick. `text_style`
-is the typed text, `placeholder_style` the placeholder (taking what it leaves unset from
-`text_style`), `caret` a line and `selection` the rectangle behind selected text. `padding`, a
-number, is the gap between the field's sides and its text.
+A text field's `container` is the field, a rectangle, an outline unless styled with a fill, and
+`focused_container` is layered over it while the field has focus: by default its outline turns
+`primary` and twice as thick. `text_style` is the typed text, `placeholder_style` the placeholder
+(taking what it leaves unset from `text_style`), `caret` a line and `selection` the rectangle behind
+selected text. `padding`, a number, is the gap between the field's sides and its text.
 
 A tooltip has one part, `ui.style(tooltip=...)`: its box, a rectangle, whose text parts set its
 text, such as `Style(fill=Color.BLACK, text_color=Color.WHITE)`.

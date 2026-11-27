@@ -24,8 +24,8 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
       widgets sit on; usually the two are the same colour. **`surface_dim`**
       and **`surface_bright`** are the darkest and lightest surfaces, and the
       **`surface_container_`** roles, from `lowest` to `highest`, are
-      surfaces set apart from the one around them, such as a panel, a text
-      field's fill or a slider's track. Text on any surface is `on_surface`,
+      surfaces set apart from the one around them, such as a panel, a
+      dropdown's open list or a switch's track. Text on any surface is `on_surface`,
       or the quieter `on_surface_variant`.
     - **`outline`** draws borders, and **`outline_variant`** fainter
       dividers.
