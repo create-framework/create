@@ -7,7 +7,6 @@ from create.input import Key
 from create.math import OptionalNumber, Point
 from create.render import Canvas, Style
 from .button import Button
-from .button_variant import ButtonVariant
 from create.color.color_scheme import ColorScheme
 from ._theme import _Theme
 from ._layout import _UNSIZED
@@ -104,8 +103,8 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
         self.buttons = buttons
         self.enabled = enabled
         self._field = TextField(_shown(self.value, self.decimals))
-        self._minus = Button("−", variant=ButtonVariant.TONAL)
-        self._plus = Button("+", variant=ButtonVariant.TONAL)
+        self._minus = Button("−", style=Button.TONAL)
+        self._plus = Button("+", style=Button.TONAL)
         self._was_focused = False
         self._changed = False
 
@@ -143,7 +142,9 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
         self._field.text_style = self.text_style.over(
             kind.number_field_text_style
         )
-        self._minus.style = self.buttons.over(kind.number_field_buttons)
+        self._minus.style = self.buttons.over(kind.number_field_buttons).over(
+            Button.TONAL
+        )
         self._plus.style = self._minus.style
         self._field._update(
             context, canvas, theme, free=free, focus=focus, disabled=not enabled

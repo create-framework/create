@@ -33,8 +33,7 @@ rules.
 | `panel.mojo` | `Panel`, a widget value: a surface for widgets, with the colour for text on it |
 | `slider.mojo` | `Slider`, a widget value that owns its value; the track's ends, the handle's place, and the value a drag or a key gives |
 | `progress_bar.mojo` | `ProgressBar`, a widget value that shows a fraction and reacts to nothing |
-| `button.mojo` | `Button`, a widget value. A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
-| `button_variant.mojo` | `ButtonVariant`, which of the colours a button is drawn in |
+| `button.mojo` | `Button`, a widget value, with its ready-made styles (`Button.FILLED` and the others, defined in `_theme.mojo` as `_BUTTON_FILLED` and so on, since `_theme.mojo` can't import `button.mojo`). A button, a label and a panel take a `Style`, and the other widgets a `Style` for each of their parts |
 | `text_field.mojo` | `TextField`, a widget value that owns a `_TextBuffer` and its own focus; `_measure` and `_offset_at`, how it measures text to place its caret |
 
 ## A widget on its own

@@ -6,11 +6,17 @@ from create.render import Canvas, Style, Text
 from create.render.style import _ResolvedStyle
 from ._pointer import _Pointer
 from create.color.color_scheme import ColorScheme
-from ._theme import _ButtonLook, _Theme
+from ._theme import (
+    _ButtonLook,
+    _Theme,
+    _BUTTON_FILLED,
+    _BUTTON_TONAL,
+    _BUTTON_OUTLINED,
+    _BUTTON_TEXT,
+)
 from ._layout import _UNSIZED
 from .text_field import _measure
 from ._navigation import _Focus
-from .button_variant import ButtonVariant
 from .clickable import Clickable
 from .widget import Widget
 
@@ -42,21 +48,37 @@ struct Button(Clickable, Copyable, Movable, Widget):
     pressed on it. `pressed()` is the press, `down()` whether it is held,
     and `hovered()` whether the pointer is over it.
 
-    Its look comes from its `variant`, in the colours `update` is given
-    (the light ones unless told otherwise), with its own
-    `style` over that: `Style(corner_radius=4)` squares its corners. It
+    It is filled in the colours' `primary` unless its `style` says
+    otherwise, and its style changes only what it sets:
+    `Style(corner_radius=4)` squares its corners. Four ready-made styles
+    give it a weight, from the main action to the quietest: `Button.FILLED`
+    (the look it has unless styled), `Button.TONAL`, `Button.OUTLINED` and
+    `Button.TEXT`. Each names its colours by `ColorRole`, so it follows the
+    colours it is drawn in, and layers under a style of your own with
+    `over`: `Style(corner_radius=0).over(Button.OUTLINED)`. It
     steps lighter or darker while hovered and pressed, and fades while not
     `enabled`, when it reacts to nothing.
     """
+
+    comptime FILLED = _BUTTON_FILLED
+    """Filled in `primary`, with its text in `on_primary`: for the main
+    action. A button looks like this unless styled."""
+    comptime TONAL = _BUTTON_TONAL
+    """Filled in `secondary_container`, a quieter fill: for a secondary
+    action."""
+    comptime OUTLINED = _BUTTON_OUTLINED
+    """Outlined, unfilled, with its text in `primary`: for a less important
+    action."""
+    comptime TEXT = _BUTTON_TEXT
+    """Only its text, in `primary`: for the quietest actions, such as a
+    list of choices."""
 
     var text: String
     """The text on it."""
     var rect: Rectangle
     """Where it is, and how big. A rotated rectangle turns it."""
-    var variant: ButtonVariant
-    """Which of the colours it is drawn in."""
     var style: Style
-    """Its own style, over its variant's look."""
+    """Its own style, over its default look."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled button is faded."""
     var _pointer: _Pointer
@@ -68,20 +90,17 @@ struct Button(Clickable, Copyable, Movable, Widget):
         text: String,
         rect: Rectangle = _UNSIZED,
         *,
-        variant: ButtonVariant = ButtonVariant.FILLED,
         style: Style = Style(),
         enabled: Bool = True,
     ):
         self.text = text
         self.rect = rect
-        self.variant = variant
         self.style = style
         self.enabled = enabled
         self._pointer = _Pointer()
         self._activated = False
         self._look = _Theme.default().button(
             style,
-            variant,
             rect.height,
             hovered=False,
             pressed=False,
@@ -123,7 +142,6 @@ struct Button(Clickable, Copyable, Movable, Widget):
         self._activated = focus.activated and enabled
         self._look = theme.button(
             self.style,
-            self.variant,
             self.rect.height,
             hovered=self._pointer.hovered,
             pressed=self._pointer.looks_pressed(),
@@ -137,7 +155,6 @@ struct Button(Clickable, Copyable, Movable, Widget):
         `control_height` tall."""
         var look = theme.button(
             self.style,
-            self.variant,
             theme.control_height,
             hovered=False,
             pressed=False,

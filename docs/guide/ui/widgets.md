@@ -73,8 +73,11 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `Label(text, rect, alignment)` | Text placed in `rect` | Nothing |
 | `Panel(rect)` | A surface for other widgets to sit on | Nothing |
 
-- **A button** has a `variant` that picks how prominent it is: `ButtonVariant.FILLED` (the default)
-  for the main action, `TONAL` for a secondary one, `OUTLINED` and `TEXT` for quieter ones.
+- **A button** is filled in the colours' `primary` unless its `style` says otherwise. Four
+  ready-made styles say how prominent it is: `Button.FILLED` (the look it has unless styled) for the
+  main action, `Button.TONAL` for a secondary one, `Button.OUTLINED` and `Button.TEXT` for quieter
+  ones, such as `Button("Quit", style=Button.TEXT)`. They are plain `Style`s, so a style of your own
+  can build on one (see [Styling one widget](themes.md#styling-one-widget)).
 - **A checkbox** ticks or unticks when clicked anywhere in its rectangle, its text included. Its
   `checked` field is the program's to set too.
 - **A switch** turns over when clicked anywhere in its rectangle, as a checkbox does, and its `on`

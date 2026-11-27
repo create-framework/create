@@ -12,7 +12,6 @@ from .widget_handle import WidgetHandle
 from .state_layers import StateLayers
 from .focus_ring import FocusRing
 from .button import Button
-from .button_variant import ButtonVariant
 from .checkbox import Checkbox
 from .switch import Switch
 from .choice_group import ChoiceGroup

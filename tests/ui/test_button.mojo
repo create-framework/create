@@ -138,5 +138,31 @@ def test_it_is_drawn_in_the_canvas_colours() raises -> None:
         assert_equal(canvas.color_at(_EDGE), colors.primary)
 
 
+def test_a_ready_made_style_follows_the_colours() raises -> None:
+    var context = Context()
+    point_at(context, (0, 90))  # away, so it isn't hovered
+    var button = Button("OK", _RECT, style=Button.TONAL)
+    var canvas = _canvas()
+    canvas.colors(ColorScheme.dark())
+    button.update(context, canvas)
+    canvas.draw(button)
+    assert_equal(canvas.color_at(_EDGE), ColorScheme.dark().secondary_container)
+
+
+def test_a_style_over_a_ready_made_one_keeps_the_rest() raises -> None:
+    var context = Context()
+    point_at(context, (0, 90))
+    var button = Button(
+        "OK", _RECT, style=Style(fill=Color.RED).over(Button.OUTLINED)
+    )
+    var canvas = _canvas()
+    button.update(context, canvas)
+    canvas.draw(button)
+    assert_equal(canvas.color_at(_EDGE), Color.RED)
+    assert_equal(
+        button._look.text.text_color, ColorScheme.light().primary
+    )  # the outlined button's text
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

@@ -88,7 +88,7 @@ struct Shadows(Program):
         var follows = ui.add(Checkbox("Follows transform"), column)
 
         _ = ui.add(Space(), column)
-        var reset = ui.add(Button("Reset", variant=ButtonVariant.TONAL), column)
+        var reset = ui.add(Button("Reset", style=Button.TONAL), column)
 
         return Shadows(
             ui=ui^,

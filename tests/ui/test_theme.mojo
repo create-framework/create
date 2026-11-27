@@ -21,7 +21,6 @@ def test_a_button_look_follows_its_state() raises -> None:
     var theme = _Theme.default()
     var rest = theme.button(
         Style(),
-        ButtonVariant.FILLED,
         40,
         hovered=False,
         pressed=False,
@@ -29,7 +28,6 @@ def test_a_button_look_follows_its_state() raises -> None:
     )
     var hovered = theme.button(
         Style(),
-        ButtonVariant.FILLED,
         40,
         hovered=True,
         pressed=False,
@@ -44,8 +42,7 @@ def test_a_button_look_follows_its_state() raises -> None:
 
 def test_a_text_button_hovers_with_a_layer() raises -> None:
     var look = _Theme.default().button(
-        Style(),
-        ButtonVariant.TEXT,
+        Button.TEXT,
         40,
         hovered=True,
         pressed=False,

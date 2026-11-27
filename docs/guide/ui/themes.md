@@ -144,6 +144,18 @@ _ = ui.add(Label("Settings", Rectangle((0, 100), 240, 32), style=Style(font_size
 The style is a field of the widget, so it can change later: `self.ui[self.stop].style =
 Style(fill=Color.RED)`.
 
+**A button's ready-made styles are where a look of your own starts.** `Button.FILLED`, `TONAL`,
+`OUTLINED` and `TEXT` name their colours by `ColorRole`, so they follow the colours they are drawn
+in, and `over` builds on one. Keep a look you use more than once as a constant:
+
+```mojo
+# At the top of the file: a quiet, square button for a toolbar.
+comptime TOOL = Style(corner_radius=0, font_size=14).over(Button.TONAL)
+
+# In `create`, building the `ui` field:
+var undo = ui.add(Button("Undo", style=TOOL))
+```
+
 **A widget with several parts takes a `Style` for each,** and each part is a shape drawn in it, so
 what a part's style means follows from the shape. A slider's `track` is a line, so its `stroke` and
 `stroke_thickness` are the track's colour and thickness, and `active_track`, the line from the start

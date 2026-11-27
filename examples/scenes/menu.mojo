@@ -17,9 +17,7 @@ struct Menu(Movable):
         ui.colors(COLORS)
         var column = ui.add(Column(area))
         self.first = ui.add(Button(first), column)
-        self.second = ui.add(
-            Button(second, variant=ButtonVariant.TONAL), column
-        )
+        self.second = ui.add(Button(second, style=Button.TONAL), column)
         self.ui = ui^
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:

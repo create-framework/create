@@ -11,7 +11,6 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGrou
 | [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `ui.focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`Button`](button.md) | A button with a line of text on it, which the mouse clicks. |
-| [`ButtonVariant`](buttonvariant.md) | Which of the colours a button is drawn in. |
 | [`Checkbox`](checkbox.md) | A box against the left edge of a rectangle, ticked while `checked`, with text beside it. A click anywhere in the rectangle ticks or unticks it. |
 | [`Switch`](switch.md) | A setting that is on or off and applies at once, such as music or full screen: a track against the left edge of a rectangle, its handle at the right end while `on`, with text beside it. A click anywhere in the rectangle turns it over. |
 | [`ChoiceGroup`](choicegroup.md) | A few options, one under the other, of which one is chosen: each a circle with its text, the chosen one's circle with a dot in it. Other toolkits call these radio buttons. |
