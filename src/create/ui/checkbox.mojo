@@ -1,7 +1,7 @@
 """`Checkbox`: a box the mouse ticks and unticks, with text beside it."""
 
 from create.app import Context
-from create.geometry import Line, Rectangle
+from create.geometry import Circle, Line, Rectangle
 from create.math import Point, Vector
 from create.render import Align, Canvas, Style, Text
 from ._pointer import _Pointer
@@ -16,6 +16,10 @@ from .widget import Widget
 
 comptime _BOX_SIZE = 18.0
 """How wide and tall a checkbox's box is."""
+
+comptime _HALO_RADIUS = 20.0
+"""How far the halo behind a hovered checkbox's box reaches: as far as a
+choice group's option's."""
 
 comptime _TEXT_GAP = 12.0
 """The gap between a checkbox's box and its text."""
@@ -180,6 +184,9 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
 
     def draw_to(self, mut canvas: Canvas):
         var box = _checkbox_box(self.rect, self._look.box.corner_radius)
+        if self._look.halo.fill_color.a > 0:
+            with canvas._with_style(self._look.halo):
+                canvas.draw(Circle(box.position, _HALO_RADIUS))
         with canvas._with_style(self._look.box):
             canvas.draw(box)
         if self.checked:

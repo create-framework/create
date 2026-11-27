@@ -310,6 +310,9 @@ struct _CheckboxLook(Copyable, Movable):
     var tick: _ResolvedStyle
     var text: _ResolvedStyle
     """Its label's style, aligned left."""
+    var halo: _ResolvedStyle
+    """The circle behind its box while hovered or pressed, as a choice
+    group's option has; transparent otherwise."""
 
 
 @fieldwise_init
@@ -1059,24 +1062,16 @@ struct _Theme(Copyable, Movable):
             box.stroke_color = faded
             tick.stroke_color = self.surface
             text.text_color = faded
-        # a hovered or pressed box is tinted, as a button is: a filled one
-        # towards its tick, an empty one with the text colour inside it
+        # a hovered or pressed checkbox has a halo behind its box, as a
+        # choice group's option has, ticked or not
+        var halo = _ResolvedStyle(fill=Color(0, 0, 0, 0), stroke_enabled=False)
         var step = self._step(hovered, pressed)
-        if step > 0:
-            if _fills(box) and not box.fill_gradient:
-                box.fill_color = _stepped(
-                    box.fill_color, tick.stroke_color, step
-                )
-            elif not _fills(box):
-                var layer = _layer_opacity(
-                    self.surface, colors.on_surface, step
-                )
-                box.fill_color = colors.on_surface.with_alpha(
-                    UInt8(layer * 255 + 0.5)
-                )
-                box.fill_gradient = None
-                box.fill_enabled = True
-        return _CheckboxLook(box, tick, _text_look(text, Align.LEFT))
+        if step > 0 and not disabled:
+            var layer = _layer_opacity(self.surface, colors.on_surface, step)
+            halo.fill_color = colors.on_surface.with_alpha(
+                UInt8(layer * 255 + 0.5)
+            )
+        return _CheckboxLook(box, tick, _text_look(text, Align.LEFT), halo)
 
     def text_field(
         self,
