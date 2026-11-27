@@ -17,4 +17,4 @@ Widgets, which explains both.
 Text fields are explained with typed text, in [Typing](../interaction/typing.md#text-fields).
 
 [examples/ui](../../../examples/ui/main.mojo) puts it together: a settings menu with every kind of
-widget, on three tabs, with a scrolling list and tooltips.
+widget, a page of them for each of four tabs, each page built in a file of its own.
