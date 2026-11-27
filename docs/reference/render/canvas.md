@@ -69,15 +69,6 @@ def __init__(
     pixel_scale: Float64 = 1,
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
 ) raises
-```
-
-An offscreen canvas of `width` by `height` screen units, with `pixel_scale` pixels to the unit — `pixel_scale=canvas.pixel_scale()` matches the window's density.
-
-Screen space as on the frame canvas: origin centred, y up. Always
-rasterised on the CPU, whatever backend the program runs on; what
-comes out of it is an `Image`, which any canvas can draw.
-
-```mojo
 @staticmethod
 def __init__(
     out self,
@@ -88,6 +79,12 @@ def __init__(
     antialiasing: Antialiasing = Antialiasing.MEDIUM,
 ) raises
 ```
+
+An offscreen canvas of `width` by `height` screen units, with `pixel_scale` pixels to the unit — `pixel_scale=canvas.pixel_scale()` matches the window's density.
+
+Screen space as on the frame canvas: origin centred, y up. Always
+rasterised on the CPU, whatever backend the program runs on; what
+comes out of it is an `Image`, which any canvas can draw.
 
 ## Methods
 
@@ -153,7 +150,7 @@ Window pixels per screen unit: what font size, stroke thickness and image size a
 def left(self) -> Float64
 ```
 
-Screen x of the left edge — negative, since the origin is centred.
+Screen x of the left edge: negative, since the origin is centred.
 
 ### `right`
 
@@ -161,19 +158,23 @@ Screen x of the left edge — negative, since the origin is centred.
 def right(self) -> Float64
 ```
 
+Screen x of the right edge: positive, since the origin is centred.
+
 ### `bottom`
 
 ```mojo
 def bottom(self) -> Float64
 ```
 
-Screen y of the bottom edge — negative, since y grows upward.
+Screen y of the bottom edge: negative, since y grows upward.
 
 ### `top`
 
 ```mojo
 def top(self) -> Float64
 ```
+
+Screen y of the top edge: positive, since y grows upward.
 
 ### `translate`
 
@@ -463,13 +464,10 @@ Break every stroke into dashes: `StrokeDash.DASHED` or `DOTTED`, scaled to the s
 
 ```mojo
 def corner_radius(mut self, radius: Float64)
+def corner_radius(mut self, radius: Int)
 ```
 
 Round the shapes built from numbers by `rectangle`, `triangle`, `polygon` and `sector`, in world units, unless a call names its own `corner_radius`. A shape value carries its own radius, so `draw(shape)` and `clip(shape)` ignore this one: what is drawn from a shape is what its `contains` tests. Clamped per shape as the shape describes.
-
-```mojo
-def corner_radius(mut self, radius: Int)
-```
 
 ### `clear`
 
@@ -768,11 +766,6 @@ def rectangle(
     corner_radius: OptionalNumber = None,
     rotation: OptionalNumber = SIMD(0),
 )
-```
-
-Draw the `width` by `height` rectangle centred on `position`, its corners rounded by `corner_radius`, or by the style's when not given (clamped to half the shorter side), and turned about its centre by `rotation` radians counter-clockwise, as `Rectangle` describes it.
-
-```mojo
 def rectangle(
     mut self,
     position: Point,
@@ -784,6 +777,8 @@ def rectangle(
 )
 ```
 
+Draw the `width` by `height` rectangle centred on `position`, its corners rounded by `corner_radius`, or by the style's when not given (clamped to half the shorter side), and turned about its centre by `rotation` radians counter-clockwise, as `Rectangle` describes it.
+
 ### `circle`
 
 ```mojo
@@ -791,10 +786,13 @@ def circle(mut self, position: Point, radius: Float64)
 def circle(mut self, position: Point, radius: Int)
 ```
 
+Draw the circle centred on `position` with radius `radius`: a `Circle`. Its stroke is inset, inside the radius, unless the style's `stroke_alignment` says otherwise.
+
 ### `ellipse`
 
 ```mojo
 def ellipse(mut self, position: Point, width: Float64, height: Float64)
+def ellipse(mut self, position: Point, width: Int, height: Int)
 ```
 
 Draw the axis-aligned ellipse centred on `position`, `width` wide and `height` high: an `Ellipse`, filling the rectangle `rectangle(position, width, height)` would draw. Turn one with `transform`.
@@ -808,14 +806,11 @@ times a circle's. A blurred drop shadow or an inset one costs what a
 `bezier`'s blurred shadow does. With `width == height` it covers what
 `circle(position, width / 2)` does, to within its flattening.
 
-```mojo
-def ellipse(mut self, position: Point, width: Int, height: Int)
-```
-
 ### `capsule`
 
 ```mojo
 def capsule(mut self, start: Point, end: Point, radius: Float64)
+def capsule(mut self, start: Point, end: Point, radius: Int)
 ```
 
 Draw the capsule round the segment from `start` to `end`: every point within `radius` of it, a `Capsule`, its ends half discs.
@@ -829,10 +824,6 @@ stroked `polygon` of its outline does. A blurred drop shadow or an
 inset one costs what a `bezier`'s blurred shadow does. A zero
 `radius` draws nothing.
 
-```mojo
-def capsule(mut self, start: Point, end: Point, radius: Int)
-```
-
 ### `sector`
 
 ```mojo
@@ -840,6 +831,15 @@ def sector(
     mut self,
     position: Point,
     radius: Float64,
+    start_angle: Float64,
+    sweep_angle: Float64,
+    *,
+    corner_radius: OptionalNumber = None,
+)
+def sector(
+    mut self,
+    position: Point,
+    radius: Int,
     start_angle: Float64,
     sweep_angle: Float64,
     *,
@@ -860,18 +860,6 @@ A zero radius or sweep draws nothing.
 both ends of the arc, as `Sector` describes. A rounded sector is
 drawn as a polygon, so it costs what a stroked `polygon` of its
 flattened outline does.
-
-```mojo
-def sector(
-    mut self,
-    position: Point,
-    radius: Int,
-    start_angle: Float64,
-    sweep_angle: Float64,
-    *,
-    corner_radius: OptionalNumber = None,
-)
-```
 
 ### `polygon`
 
@@ -970,6 +958,13 @@ def arc(
     start_angle: Float64,
     sweep_angle: Float64,
 )
+def arc(
+    mut self,
+    position: Point,
+    radius: Int,
+    start_angle: Float64,
+    sweep_angle: Float64,
+)
 ```
 
 Stroke the arc of the circle around `position` with radius `radius`, from `start_angle` round by `sweep_angle`, in the stroke colour and thickness: an `Arc`.
@@ -983,16 +978,6 @@ off, ends as `stroke_cap` says short of a whole turn, and a translucent
 stroke composites once. A blurred shadow costs what a `bezier`'s does.
 A zero radius or sweep
 draws nothing.
-
-```mojo
-def arc(
-    mut self,
-    position: Point,
-    radius: Int,
-    start_angle: Float64,
-    sweep_angle: Float64,
-)
-```
 
 ### `triangle`
 
@@ -1056,22 +1041,20 @@ canvas.draw(self.disc, style=self.accent)
 def image(mut self, image: Image, position: Point)
 ```
 
-Render `image` at its own pixel size.
-
-The same command as the sized overload: at a pixel scale of 1 the two
-agree exactly, and the one-image-pixel-per-framebuffer-pixel shortcut
-they used to differ by now lives inside `blit_image`, where the replay
-can take it without the record site having to know.
+Draw `image` centred on `position` at its own size: one unit for each of its pixels. It follows the transform, and is tinted and faded by the style's `tint` and `opacity`.
 
 ```mojo
 def image(mut self, image: Image, position: Point, width: Float64, height: Float64)
+def image(mut self, image: Image, position: Point, width: Int, height: Int)
 ```
+
+Draw `image` centred on `position`, stretched to `width` by `height`. It follows the transform, and is tinted and faded by the style's `tint` and `opacity`.
 
 ```mojo
 def image(mut self, animator: Animator, position: Point)
 ```
 
-Render the animator's current frame, centred at `position`.
+Draw the animator's current frame centred on `position`, at its own size.
 
 ```mojo
 def image(
@@ -1081,9 +1064,10 @@ def image(
     width: Float64,
     height: Float64,
 )
-def image(mut self, image: Image, position: Point, width: Int, height: Int)
 def image(mut self, animator: Animator, position: Point, width: Int, height: Int)
 ```
+
+Draw the animator's current frame centred on `position`, stretched to `width` by `height`.
 
 ### `text_color`
 
@@ -1097,13 +1081,10 @@ Paint glyphs in `color`. Separate from `fill`, so a shape colour and a label col
 
 ```mojo
 def font_size(mut self, size: Float64)
+def font_size(mut self, size: Int)
 ```
 
 Text height in world units, scaled by autoscale like a coordinate. Glyphs are rasterised at whole pixel sizes, so a fractional size rounds once scaled.
-
-```mojo
-def font_size(mut self, size: Int)
-```
 
 ### `font_weight`
 
