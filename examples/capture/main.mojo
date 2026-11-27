@@ -57,6 +57,7 @@ struct Capture(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
+
         var transparent = context.keyboard.down(Key.SHIFT)
 
         # Filed the moment the key is read, and written at `present`: the
@@ -111,6 +112,7 @@ struct Capture(Program):
                 "S: screenshot   I: image   R: record   Shift: transparent",
                 (0, canvas.top() - 30),
             )
+
         with canvas.style(text_color=TEXT, font_size=20):
             if canvas.recording():
                 var label = String("Recording; R to stop, X to discard")

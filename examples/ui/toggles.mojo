@@ -15,12 +15,15 @@ struct TogglesPage(Movable):
     var difficulty: WidgetHandle[ChoiceGroup]
 
     def __init__(out self, mut ui: UI, page: WidgetHandle[Column]):
-        # a checkbox for a choice made before something else happens
+        # A checkbox, for a choice made before something else happens.
         self.hints = ui.add(Checkbox("Show hints", checked=True), page)
         _ = ui.add(Checkbox("Hard mode", enabled=False), page)
-        # a switch for a setting that applies the moment it is turned
+
+        # A switch, for a setting that applies the moment it is turned.
         self.dark = ui.add(Switch("Dark theme", on=True), page)
         self.music = ui.add(Switch("Music", on=True), page)
+
+        # A choice group, for one of a few options shown side by side.
         self.difficulty = ui.add(
             ChoiceGroup(["Easy", "Normal", "Hard"], selected=1),
             line(ui, page, "Difficulty"),

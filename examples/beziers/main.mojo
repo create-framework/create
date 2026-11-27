@@ -55,10 +55,14 @@ struct App(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # No camera, so the mouse is already in the space the handles are in.
         var mouse = context.mouse.position
+
+        # A press on a handle grabs it, and the mouse drags it until the button
+        # is let go.
         if context.mouse.pressed():
             for i in range(len(self.handles)):
                 if (mouse - self.handles[i]).magnitude() <= GRAB_RADIUS:
                     self.dragging = i
+
         if context.mouse.released():
             self.dragging = -1
         if self.dragging >= 0:
@@ -115,6 +119,7 @@ struct App(Program):
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Cubic Bézier", (0, canvas.top() - 38))
+
         canvas.font_size(18)
         canvas.text(
             "Drag the handles to reshape the curve", (0, canvas.top() - 78)

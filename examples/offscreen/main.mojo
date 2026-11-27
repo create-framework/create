@@ -34,6 +34,7 @@ def brush() raises -> Image:
     canvas.fill(Gradient.radial(Color.WHITE, Color.WHITE.with_alpha(0)))
     canvas.stroke_enabled(False)
     canvas.circle((0, 0), BRUSH_SIZE / 2)
+
     return canvas.snapshot(pixel_scale=canvas.pixel_scale())
 
 
@@ -53,6 +54,7 @@ struct Offscreen(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Offscreen:
         var layer = Canvas(canvas.width(), canvas.height())
         var strokes = layer.snapshot()
+
         return Offscreen(brush(), layer^, strokes^, Point(0, 0))
 
     def stamp(mut self, position: Point, color: Color):
@@ -62,11 +64,15 @@ struct Offscreen(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var mouse = context.mouse.position
         var t = context.time.elapsed
+
+        # The paint swings back and forth between two colours.
         var color = PAINT_FROM.lerp(PAINT_TO, 0.5 + 0.5 * sin(t * 2.0))
 
+        # C wipes the layer clean.
         if context.keyboard.pressed(Key.C):
             self.layer.clear()
             self.strokes = self.layer.snapshot()
+
         if context.mouse.pressed():
             self.stamp(mouse, color)
             self.last_stamp = mouse
@@ -79,12 +85,14 @@ struct Offscreen(Program):
                 var at = self.last_stamp + step
                 self.last_stamp = at
                 self.stamp(at, color)
+
         if context.mouse.down():
             # Read only while painting: a read copies the layer.
             self.strokes = self.layer.snapshot()
 
         # The frame under the layer, redrawn every frame.
         canvas.background(BACKGROUND)
+
         with canvas.style(
             fill_enabled=False, stroke=BACKDROP, stroke_thickness=2
         ):

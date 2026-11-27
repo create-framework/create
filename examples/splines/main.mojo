@@ -67,19 +67,29 @@ struct App(Program):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         # No camera, so the mouse is already in the space the points are in.
         var mouse = context.mouse.position
+
+        # A press on a point grabs it; a press anywhere else adds a point there
+        # and grabs that.
         if context.mouse.pressed():
             self.dragging = self.point_under(mouse)
             if self.dragging < 0:
                 self.points.append(mouse)
                 self.dragging = len(self.points) - 1
+
         if context.mouse.released():
             self.dragging = -1
+
         if self.dragging >= 0:
             self.points[self.dragging] = mouse
+
+        # Right-clicking a point removes it.
         if context.mouse.pressed(MouseButton.RIGHT):
             var i = self.point_under(mouse)
             if i >= 0:
                 _ = self.points.pop(i)
+
+        # C opens or closes the curve, and 1, 2 and 3 pick how it bends through
+        # the points.
         if context.keyboard.pressed(Key.C):
             self.closed = not self.closed
         if context.keyboard.pressed(Key.ONE):
@@ -122,6 +132,7 @@ struct App(Program):
             if len(self.points) > 0:
                 canvas.fill(DOT)
                 canvas.circle(dot, 13)
+
             canvas.fill(POINT)
             for point in self.points:
                 canvas.circle(point, 9)
@@ -133,6 +144,7 @@ struct App(Program):
             kind = "centripetal"
         else:
             kind = "chordal"
+
         canvas.text_color(TEXT)
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
@@ -147,6 +159,7 @@ struct App(Program):
             ),
             (0, canvas.top() - 38),
         )
+
         canvas.font_size(18)
         canvas.text(
             (

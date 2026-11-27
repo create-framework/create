@@ -33,6 +33,7 @@ def volume_bar(mut canvas: Canvas, label: String, level: Float64, y: Float64):
             canvas.fill(LEVEL)
             var w = BAR_WIDTH * level
             canvas.rectangle((left + w / 2.0, y), w, 14.0, corner_radius=7)
+
     with canvas.style(
         text_color=TEXT, font_size=18, text_alignment=Align.RIGHT
     ):
@@ -79,6 +80,7 @@ struct AudioDemo(Program):
             else:
                 self.audio.stop(self.ambience_playback)
                 self.ambience_playback = Playback.NONE
+
         if (
             context.keyboard.pressed(Key.P)
             and self.ambience_playback != Playback.NONE
@@ -94,6 +96,7 @@ struct AudioDemo(Program):
                 self.ambience_volume + change, 0.0, 1.0
             )
             self.audio.volume(self.ambience_playback, self.ambience_volume)
+
         if context.keyboard.down(Key.RIGHT):
             self.audio.volume(clamp(self.audio.volume() + step, 0.0, 1.0))
         if context.keyboard.down(Key.LEFT):
@@ -106,6 +109,7 @@ struct AudioDemo(Program):
         var flash = clamp(1.0 - since / 0.5, 0.0, 1.0)
         with canvas.style(fill=TRACK.lerp(CHIME, flash), stroke_enabled=False):
             canvas.circle((-250.0, 40.0), 40.0 + 12.0 * flash)
+
         with canvas.style(text_color=HINT, font_size=18):
             canvas.text("Space: chime", (-250.0, -30.0))
 
@@ -116,6 +120,7 @@ struct AudioDemo(Program):
             state = "paused"
         else:
             state = "stopped"
+
         with canvas.style(text_color=TEXT, font_size=26):
             canvas.text("Ambience " + state, (120.0, 60.0))
         with canvas.style(text_color=HINT, font_size=18):
@@ -123,6 +128,7 @@ struct AudioDemo(Program):
 
         volume_bar(canvas, "Ambience", self.ambience_volume, -90.0)
         volume_bar(canvas, "Overall", self.audio.volume(), -140.0)
+
         with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 "Up/Down: ambience volume   Left/Right: overall volume",

@@ -51,12 +51,14 @@ struct App(Program):
         return App(clock=Tween(1.6), curves=curves(), hovered=-1)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        # A row newly under the mouse starts its curve from the beginning.
         var hovered = -1
         for i in range(len(self.curves)):
             if abs(context.mouse.position.y - row_y(i)) < ROW_SPACING / 2.0:
                 hovered = i
+
         if hovered != self.hovered:
-            # ping_pong rather than loop: progress runs back down on the
+            # `ping_pong` rather than `loop`: progress runs back down on the
             # return leg, so the dot travels its curve backwards instead of
             # snapping to the start.
             self.hovered = hovered
@@ -68,6 +70,7 @@ struct App(Program):
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Easing and tweens", (0, canvas.top() - 38))
+
         canvas.font_size(18)
         canvas.text_color(HINT)
         canvas.text("Hover over a curve to play it", (0, canvas.top() - 82))
@@ -76,6 +79,7 @@ struct App(Program):
         for i in range(len(self.curves)):
             var y = row_y(i)
             var active = i == self.hovered
+
             canvas.stroke(ACTIVE_TRACK if active else TRACK, thickness=3)
             canvas.line((TRACK_START, y), (TRACK_END, y))
 

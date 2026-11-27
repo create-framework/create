@@ -69,14 +69,17 @@ struct App(Program):
             var start = Point(x - 110, y + 45)
             var end = Point(x + 110, y + 45)
             var arc_center = Point(x, y + 75)
+
             with canvas.style(
                 stroke=STROKE, stroke_thickness=28, stroke_cap=caps[i]
             ):
                 canvas.line(start, end)
                 canvas.arc(arc_center, 110, 1.25 * PI, 0.5 * PI)
+
             with canvas.style(stroke=GUIDE, stroke_thickness=1):
                 canvas.line(start, end)
                 canvas.arc(arc_center, 110, 1.25 * PI, 0.5 * PI)
+
             canvas.text("stroke_cap " + cap_name(caps[i]), (x, label))
 
         # Alignment: the stroke inside the edge, centred on it, or around
@@ -99,6 +102,7 @@ struct App(Program):
                 corner_radius=10,
             )
             var polygon = Polygon.star((x + SHAPE_SPACING, y), half + 5, 22, 5)
+
             with canvas.style(
                 fill=FILL,
                 stroke=STROKE,
@@ -108,12 +112,14 @@ struct App(Program):
                 canvas.draw(rectangle)
                 canvas.draw(triangle)
                 canvas.draw(polygon)
+
             with canvas.style(
                 stroke=GUIDE, stroke_thickness=1, fill_enabled=False
             ):
                 canvas.draw(rectangle)
                 canvas.draw(triangle)
                 canvas.draw(polygon)
+
             canvas.text(
                 "stroke_alignment " + alignment_name(alignments[i]),
                 (x, label),
@@ -144,6 +150,7 @@ struct App(Program):
             ):
                 canvas.rectangle((x - 55, y), 120, 80, corner_radius=14)
                 canvas.circle((x + 75, y), 40)
+
             canvas.text("stroke_dash " + dash_names[i], (x, label))
 
 

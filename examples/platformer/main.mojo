@@ -40,6 +40,7 @@ def platforms() -> List[Rectangle]:
             ground_depth,
         )
     ]
+
     # (middle x, top, width): each top within a jump of the one before.
     var layout: List[Tuple[Float64, Float64, Float64]] = [
         (-1900.0, -110.0, 220.0),
@@ -54,6 +55,7 @@ def platforms() -> List[Rectangle]:
         (1650.0, 40.0, 200.0),
         (2000.0, 180.0, 180.0),
     ]
+
     for platform in layout:
         level.append(
             Rectangle(
@@ -63,6 +65,7 @@ def platforms() -> List[Rectangle]:
                 corner_radius=6,
             )
         )
+
     return level^
 
 
@@ -105,6 +108,7 @@ struct Game(Program):
         with canvas.style(stroke_enabled=False):
             canvas.fill(GROUND)
             canvas.draw(self.platforms[0])
+
             canvas.fill(PLATFORM)
             for i in range(1, len(self.platforms)):
                 canvas.draw(self.platforms[i])

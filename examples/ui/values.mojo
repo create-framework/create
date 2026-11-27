@@ -22,12 +22,14 @@ struct ValuesPage(Movable):
             width=0,
             grow=3,
         )
+
         self.volume = ui.add(
             Slider(0.6, 0, 1, step=0.1),
             line(ui, page, "Volume"),
             width=0,
             grow=3,
         )
+
         self.voices = ui.add(
             NumberField(80, 0, 100, step=5),
             line(ui, page, "Voices"),
@@ -35,6 +37,7 @@ struct ValuesPage(Movable):
             grow=3,
         )
         ui.tooltip(self.voices, "How loud the characters speak, in percent")
+
         self.level = ui.add(
             ProgressBar(0.6),
             line(ui, page, "Shown"),
@@ -47,6 +50,7 @@ struct ValuesPage(Movable):
         """What the player did on this page this frame, to show them; the
         progress bar is set to the volume."""
         ui[self.level].value = ui[self.volume].value
+
         if ui[self.name].submitted():
             return "Hello, " + ui[self.name].text()
         if ui[self.voices].changed():

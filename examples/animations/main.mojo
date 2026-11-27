@@ -53,8 +53,9 @@ struct Game(Program):
             sheet, 32, 32, start=4, count=4, fps=12.0
         )
 
-        # spin_1.png .. spin_8.png, ordered by their trailing number rather
-        # than lexicographically, so spin_10 would follow spin_9.
+        # The folder holds spin_1.png to spin_8.png, ordered by their
+        # trailing number rather than alphabetically, so spin_10 would
+        # follow spin_9.
         var spin = Animation.from_folder("assets/spin", fps=16.0)
 
         var animator = Animator(idle)
@@ -63,6 +64,7 @@ struct Game(Program):
         # On real time, so it keeps pulsing while the run's time is paused.
         var pulse = Tween(0.8, Easing.IN_OUT_SINE, clock=Clock.REAL)
         pulse.ping_pong()
+
         return Game(idle^, run^, spin^, animator^, 0.0, False, pulse)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -98,10 +100,12 @@ struct Game(Program):
         # slows and pauses together. Both apply from the next frame.
         if context.keyboard.pressed(Key.P):
             context.time_paused(not context.time_paused())
+
         if context.keyboard.pressed(Key.UP):
             context.time_scale(
                 min(context.time_scale() + SCALE_STEP, MAX_SCALE)
             )
+
         if context.keyboard.pressed(Key.DOWN):
             context.time_scale(
                 max(context.time_scale() - SCALE_STEP, MIN_SCALE)
@@ -138,6 +142,7 @@ struct Game(Program):
             "A/D: run   Space: spin   Up/Down: time scale   P: pause",
             (0.0, 140.0),
         )
+
         canvas.text(
             "Time scale: " + String(context.time_scale()) + "x",
             (0.0, 110.0),

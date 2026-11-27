@@ -78,16 +78,23 @@ struct Player(Copyable, Drawable, Movable):
         self.jump_buffer = max(self.jump_buffer - dt, 0.0)
         if context.keyboard.pressed(Key.W):
             self.jump_buffer = Self.JUMP_BUFFER
+
+        # A waiting press jumps, if the player has a jump left.
         var rise = self.velocity.y
         if self.jump_buffer > 0 and self.jumps_left > 0:
             rise = Self.JUMP_SPEED
             self.jumps_left -= 1
             self.jump_buffer = 0.0
+
+        # Holding W on the way up pulls against gravity, so a longer press jumps
+        # higher.
         var gravity = Self.GRAVITY
         if context.keyboard.down(Key.W) and rise > 0:
             gravity += Self.JUMP_HOLD
         self.velocity = Vector(run, rise + gravity * dt)
 
+        # Remember where the feet were, to tell whether they crossed a
+        # platform's top on the way.
         var feet_before = self.feet()
         self.position = self.position + self.velocity * dt
 
@@ -95,6 +102,7 @@ struct Player(Copyable, Drawable, Movable):
         # below, landed on from above.
         if self.velocity.y <= 0 and self.land(feet_before, platforms):
             return
+
         # In the air. Once coyote time runs out, the jump from the ground is
         # gone, and only the double jump is left: after walking off a ledge,
         # W still jumps from the ground for a moment.

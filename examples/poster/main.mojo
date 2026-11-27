@@ -82,6 +82,8 @@ struct Poster(Program):
         if context.keyboard.pressed(Key.SPACE):
             self.seed += 1
 
+        # The same seed makes the same choices, so the poster holds still until
+        # Space changes it.
         var random = Random(UInt64(self.seed))
         var all_accents = accents()
         var accent = all_accents[random.int(0, len(all_accents))]
@@ -98,6 +100,7 @@ struct Poster(Program):
                 random.float(120.0, 260.0),
             )
 
+        # Each row is a word sized to fill a random share of the width.
         var all_words = words()
         var all_weights = weights()
         var rows = random.int(4, 8)
@@ -106,11 +109,13 @@ struct Poster(Program):
             rows
         )
         var full_width = canvas.width() - 2.0 * MARGIN
+
         for row in range(rows):
             var y = canvas.top() - MARGIN - (Float64(row) + 0.5) * row_height
             var word = all_words[random.int(0, len(all_words))]
             var share = random.float(0.45, 1.0)
             var align = random.int(0, 3)
+
             # Each row's own style, so nothing carries into the next.
             with canvas.style():
                 if random.bool():

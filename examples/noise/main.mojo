@@ -43,6 +43,7 @@ struct App(Program):
                     canvas.left() + (Float64(column) + 0.5) * cell_w,
                     canvas.bottom() + (Float64(row) + 0.5) * cell_h,
                 )
+
                 var height = self.terrain.at(center, time=t * 0.3)
                 # Layered octaves average towards 0.5, so stretch the middle
                 # of the range across the whole gradient.

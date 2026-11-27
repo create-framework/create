@@ -33,10 +33,9 @@ struct Transforms(Program):
         var planet_angle = elapsed * TAU / 10.0
         var moon_angle = elapsed * TAU / 3.5
 
-        # Solar system: the sun sits at the origin, so it needs no transform of
-        # its own; the nesting below is what the demo is about.
-        # Hit-test the sun in the frame it is rendered in. `to_local` maps a
-        # screen position, which is what `context.mouse.position` is, into it.
+        # The sun sits at the origin, so it needs no transform of its own.
+        # Hit-test it in the space it is drawn in: `to_local` maps a screen
+        # position, which is what `context.mouse.position` is, into that space.
         var sun = Circle((0.0, 0.0), 40.0)
         var sun_hovered = sun.contains(canvas.to_local(context.mouse.position))
 
@@ -44,12 +43,13 @@ struct Transforms(Program):
         canvas.fill(HOVERED_SUN if sun_hovered else SUN)
         canvas.draw(sun)
 
-        # Planet: turn, then move out along the turned x axis, so it orbits
-        # the sun
+        # The planet: turn, then move out along the turned x axis, so it
+        # orbits the sun.
         with canvas.transform():
             canvas.rotate(planet_angle)
             canvas.translate(Vector(160, 0))
-            # Thin orbit guide rendered in planet's frame before further nesting
+
+            # The moon's orbit, drawn in the planet's space.
             canvas.stroke(ORBIT, thickness=1)
             canvas.fill_enabled(False)
             canvas.circle((0.0, 0.0), 45.0)
@@ -58,14 +58,14 @@ struct Transforms(Program):
             canvas.fill(PLANET)
             canvas.circle((0.0, 0.0), 18.0)
 
-            # Moon: orbits the planet
+            # The moon orbits the planet.
             with canvas.transform():
                 canvas.rotate(moon_angle)
                 canvas.translate(Vector(45, 0))
                 canvas.fill(MOON)
                 canvas.circle((0.0, 0.0), 8.0)
 
-        # Spinning rect cluster: same transform pattern, different shape.
+        # Spinning rectangles: the same nesting, with another shape.
         # Below and left of centre, so both coordinates are negative.
         with canvas.transform(Transform(translation=Vector(-232, -165))):
             canvas.stroke_enabled(False)
@@ -74,16 +74,19 @@ struct Transforms(Program):
 
             for i in range(6):
                 var arm_angle = elapsed * 0.9 + Float64(i) * TAU / 6.0
-                # Arm rotates; rect counter-rotates so it stays axis-aligned in world space
+
+                # The arm turns, then the rectangle turns back, so it stays
+                # level on the screen.
                 with canvas.transform():
                     canvas.rotate(arm_angle)
                     canvas.translate(Vector(70, 0))
                     canvas.rotate(-arm_angle)
+
                     var t = (sin(elapsed * 2.0 + Float64(i)) + 1.0) / 2.0
                     canvas.fill(COOL.lerp(WARM, t))
                     canvas.rectangle((0.0, 0.0), 36.0, 18.0)
 
-        # Rotating triangle fan
+        # A turning fan of triangles.
         with canvas.transform(Transform(translation=Vector(232, -165))):
             for i in range(5):
                 var a = elapsed * 0.6 + Float64(i) * TAU / 5.0

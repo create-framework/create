@@ -24,6 +24,7 @@ struct App(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
         var progress = Tween(3.0, Easing.IN_OUT_CUBIC)
         progress.loop()
+
         return App(progress=progress)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -36,9 +37,12 @@ struct App(Program):
         var sweep = TAU * self.progress.value()
         var clockwise = Point(-200.0, -20.0)
         var counter = Point(200.0, -20.0)
+
         canvas.stroke(TRACK, thickness=RING_THICKNESS)
         canvas.arc(clockwise, RING_RADIUS, 0.0, TAU)
         canvas.arc(counter, RING_RADIUS, 0.0, TAU)
+
+        # The progress, drawn over the tracks.
         canvas.stroke(CLOCKWISE)
         canvas.arc(clockwise, RING_RADIUS, PI / 2.0, -sweep)
         canvas.stroke(COUNTER)
@@ -48,6 +52,7 @@ struct App(Program):
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Arcs", (0, canvas.top() - 38))
+
         canvas.font_size(18)
         canvas.text(
             "One tween, swept clockwise and counter-clockwise from the top",
