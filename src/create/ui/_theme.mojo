@@ -31,6 +31,18 @@ comptime _CHECKBOX_CORNER_LIMIT = 4.5
 """The most a checkbox's box is rounded: a quarter of its 18 units, so it
 stays a box at any `corner_radius`."""
 
+comptime _SWITCH_TRACK_WIDTH = 44.0
+"""How wide a switch's track is."""
+
+comptime _SWITCH_TRACK_HEIGHT = 24.0
+"""How tall a switch's track is."""
+
+comptime _SWITCH_HANDLE_ON = 18.0
+"""How big a switch's square handle is while on."""
+
+comptime _SWITCH_HANDLE_OFF = 14.0
+"""How big a switch's square handle is while off."""
+
 comptime _SPACING = 8.0
 """The `spacing` setting unless set."""
 
@@ -220,10 +232,13 @@ struct _ProgressBarLook(Copyable, Movable):
 
 @fieldwise_init
 struct _SwitchLook(Copyable, Movable):
-    """A switch's parts, resolved for its state. The handle is a point."""
+    """A switch's parts, resolved for its state: the track and the handle
+    are rectangles."""
 
     var track: _ResolvedStyle
     var handle: _ResolvedStyle
+    var handle_size: Float64
+    """How big the square handle is."""
     var text: _ResolvedStyle
     """Its text's style, aligned left."""
 
@@ -586,7 +601,9 @@ struct _Theme(Copyable, Movable):
     ) -> _SwitchLook:
         """A switch's parts, styled by the call's styles for each: while
         off, an outlined track with a small handle in the outline's colour;
-        while on, a filled track with a larger handle on it."""
+        while on, a filled track with a larger handle on it. The track is
+        rounded as the controls are, and the handle as much less as it sits
+        inside it, so the two curves run side by side."""
         var colors = self.colors
         ref block = self.styles[]
         var track_look = call_track.over(block.switch_track).over(
@@ -594,6 +611,7 @@ struct _Theme(Copyable, Movable):
                 fill=colors.surface_container_highest,
                 stroke=colors.outline,
                 stroke_thickness=2,
+                corner_radius=self.corner_radius,
             )
         )
         var track = _ResolvedStyle()
@@ -608,12 +626,16 @@ struct _Theme(Copyable, Movable):
             )
         else:
             track.apply(track_look, self.colors)
+        var size = _SWITCH_HANDLE_ON if on else _SWITCH_HANDLE_OFF
+        var gap = (_SWITCH_TRACK_HEIGHT - size) / 2
+        var track_radius = min(track.corner_radius, _SWITCH_TRACK_HEIGHT / 2)
         var handle = _ResolvedStyle()
         handle.apply(
             call_handle.over(block.switch_handle).over(
                 Style(
-                    stroke=colors.on_primary if on else colors.outline,
-                    stroke_thickness=18 if on else 14,
+                    fill=colors.on_primary if on else colors.outline,
+                    stroke_enabled=False,
+                    corner_radius=max(track_radius - gap, 0.0),
                 )
             ),
             self.colors,
@@ -633,22 +655,19 @@ struct _Theme(Copyable, Movable):
             )
             track.fill_gradient = None
             track.stroke_color = faded
-            handle.stroke_color = self.surface if on else faded
+            handle.fill_color = self.surface if on else faded
+            handle.fill_gradient = None
             text.text_color = faded
         else:
             # a hovered or pressed handle is tinted, as a slider's is
             var step = self._step(hovered, pressed)
-            if step > 0:
-                handle.stroke_color = _stepped(
-                    handle.stroke_color,
-                    _readable_on(handle.stroke_color),
+            if step > 0 and _fills(handle) and not handle.fill_gradient:
+                handle.fill_color = _stepped(
+                    handle.fill_color,
+                    _readable_on(handle.fill_color),
                     step,
                 )
-        # a point, as `canvas.point` draws one: round unless square
-        if handle.stroke_cap != StrokeCap.SQUARE:
-            handle.stroke_cap = StrokeCap.ROUND
-        handle.stroke_dash = StrokeDash.SOLID
-        return _SwitchLook(track, handle, _text_look(text, Align.LEFT))
+        return _SwitchLook(track, handle, size, _text_look(text, Align.LEFT))
 
     def choice_group(
         self,

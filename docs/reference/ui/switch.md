@@ -21,11 +21,14 @@ A switch and a checkbox do the same job. A switch reads as a setting
 that takes effect the moment it is turned, and a checkbox as a choice
 made before something else happens, such as a box ticked in a form.
 
-Each part is a shape drawn in a style of its own: `track` is a rounded
-rectangle, its outline and fill drawn while off; `on_track` is the same
-rectangle while on, taking what it leaves unset from `track`; `handle`
-is a point, so its stroke is its colour and its `stroke_thickness` its
-diameter; and `text_style` is the text's.
+Each part is a shape drawn in a style of its own: `track` is a
+rectangle, its outline and fill drawn while off, rounded as the
+controls are; `on_track` is the same rectangle while on, taking what it
+leaves unset from `track`; `handle` is a square in it, larger while on,
+so its fill is its colour and its `corner_radius` how round it is; and
+`text_style` is the text's. Unless styled, the handle is rounded as much
+less than the track as it sits inside it, so a track rounded into a
+pill, `corner_radius=12`, holds a round handle.
 
 Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Movable`, `Widget`.
 

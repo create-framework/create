@@ -82,6 +82,25 @@ def test_it_is_drawn_on_and_off() raises -> None:
     assert_equal(lit.color_at((-90, 0)), colors.primary)
 
 
+def test_its_handle_is_rounded_inside_its_track() raises -> None:
+    var colors = ColorScheme.light()
+    var context = Context()
+    point_at(context, (300, 300))
+    var corner = Point(-68 + 7.5, 7.5)  # inside the handle's square
+    var square = Switch("Music", _RECT, on=True)
+    var canvas = Canvas(400, 300, antialiasing=Antialiasing.OFF)
+    square.update(context, canvas)
+    canvas.draw(square)
+    assert_equal(canvas.color_at(corner), colors.on_primary)
+    # A pill of a track holds a round handle.
+    var pill = Switch("Music", _RECT, on=True, track=Style(corner_radius=12))
+    var round = Canvas(400, 300, antialiasing=Antialiasing.OFF)
+    pill.update(context, round)
+    round.draw(pill)
+    assert_equal(round.color_at(corner), colors.primary)
+    assert_equal(round.color_at((-68, 0)), colors.on_primary)
+
+
 def test_a_ui_measures_it_and_rings_its_track() raises -> None:
     var ui = UI()
     var music = ui.add(Switch("Music"))

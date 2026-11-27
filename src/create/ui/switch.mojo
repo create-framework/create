@@ -2,13 +2,18 @@
 text beside it."""
 
 from create.app import Context
-from create.geometry import Line, Rectangle
+from create.geometry import Rectangle
 from create.math import Point
 from create.render import Canvas, Style, Text
 from ._pointer import _Pointer
 from .checkbox import _TEXT_GAP
 from create.color.color_scheme import ColorScheme
-from ._theme import _SwitchLook, _Theme
+from ._theme import (
+    _SwitchLook,
+    _Theme,
+    _SWITCH_TRACK_WIDTH,
+    _SWITCH_TRACK_HEIGHT,
+)
 from ._layout import _UNSIZED
 from .text_field import _measure
 from ._navigation import _Focus
@@ -16,11 +21,8 @@ from .clickable import Clickable
 from .widget import Widget
 
 
-comptime _TRACK_WIDTH = 44.0
-"""How wide a switch's track is."""
-
-comptime _TRACK_HEIGHT = 24.0
-"""How tall a switch's track is."""
+comptime _TRACK_WIDTH = _SWITCH_TRACK_WIDTH
+comptime _TRACK_HEIGHT = _SWITCH_TRACK_HEIGHT
 
 
 struct Switch(Clickable, Copyable, Movable, Widget):
@@ -44,11 +46,14 @@ struct Switch(Clickable, Copyable, Movable, Widget):
     that takes effect the moment it is turned, and a checkbox as a choice
     made before something else happens, such as a box ticked in a form.
 
-    Each part is a shape drawn in a style of its own: `track` is a rounded
-    rectangle, its outline and fill drawn while off; `on_track` is the same
-    rectangle while on, taking what it leaves unset from `track`; `handle`
-    is a point, so its stroke is its colour and its `stroke_thickness` its
-    diameter; and `text_style` is the text's.
+    Each part is a shape drawn in a style of its own: `track` is a
+    rectangle, its outline and fill drawn while off, rounded as the
+    controls are; `on_track` is the same rectangle while on, taking what it
+    leaves unset from `track`; `handle` is a square in it, larger while on,
+    so its fill is its colour and its `corner_radius` how round it is; and
+    `text_style` is the text's. Unless styled, the handle is rounded as much
+    less than the track as it sits inside it, so a track rounded into a
+    pill, `corner_radius=12`, holds a round handle.
     """
 
     var text: String
@@ -167,7 +172,7 @@ struct Switch(Clickable, Copyable, Movable, Widget):
 
     def _ring(self) -> Rectangle:
         """The shape its focus ring goes round: its track."""
-        return _switch_track(self.rect)
+        return _switch_track(self.rect, self._look.track.corner_radius)
 
     def changed(self) -> Bool:
         """Whether its last `update` turned it over."""
@@ -186,17 +191,25 @@ struct Switch(Clickable, Copyable, Movable, Widget):
         return self._pointer.released
 
     def draw_to(self, mut canvas: Canvas):
-        var track = _switch_track(self.rect)
+        var track = _switch_track(self.rect, self._look.track.corner_radius)
         with canvas._with_style(self._look.track):
             canvas.draw(track)
-        # the handle sits in the end it is turned to
+        # the handle sits in the end it is turned to, as far from the
+        # track's end as from its top and bottom
         var inset = _TRACK_HEIGHT / 2
         var x = track.left() + inset
         if self.on:
             x = track.right() - inset
-        var centre = Point(x, track.position.y)
+        var size = self._look.handle_size
         with canvas._with_style(self._look.handle):
-            canvas.draw(Line(centre, centre))
+            canvas.draw(
+                Rectangle(
+                    Point(x, track.position.y),
+                    size,
+                    size,
+                    corner_radius=self._look.handle.corner_radius,
+                )
+            )
         with canvas._with_style(self._look.text):
             var left = self.rect.left()
             canvas.draw(
@@ -209,12 +222,12 @@ struct Switch(Clickable, Copyable, Movable, Widget):
             )
 
 
-def _switch_track(rect: Rectangle) -> Rectangle:
+def _switch_track(rect: Rectangle, corner_radius: Float64) -> Rectangle:
     """A switch's track: against the left edge of `rect`, centred on it
-    from top to bottom, with round ends."""
+    from top to bottom, rounded by `corner_radius`."""
     return Rectangle(
         Point(rect.left() + _TRACK_WIDTH / 2, rect.position.y),
         _TRACK_WIDTH,
         _TRACK_HEIGHT,
-        corner_radius=_TRACK_HEIGHT / 2,
+        corner_radius=corner_radius,
     )
