@@ -330,6 +330,23 @@ def table_cell(text: str) -> str:
     return text.replace("|", "\\|")
 
 
+# A keyword argument `mojo doc` writes out though it was left unset, such as
+# `, font=Optional(None)`, and an optional wrapper round a value that was set.
+UNSET_KEYWORD = re.compile(r"\b\w+=Optional(?:Color|Number)?\(None\)")
+OPTIONAL_WRAPPER = re.compile(r"\bOptional(?:Color|Number)?\(([^()]*)\)")
+
+
+def constant_value(value: str) -> str:
+    """A constant's value as a program would write it: `mojo doc` writes a
+    `Style` with every part it leaves unset as `Optional(None)`, and every part
+    it sets wrapped in its optional type, which buries the parts that matter."""
+    value = UNSET_KEYWORD.sub("", value)
+    # the separators the removed keywords leave behind
+    value = re.sub(r"(, )+", ", ", value)
+    value = value.replace("(, ", "(").replace(", )", ")")
+    return OPTIONAL_WRAPPER.sub(r"\1", value)
+
+
 def render_constant(item: dict) -> str:
     """A package's constant, under a heading of its own on the package's
     page."""
@@ -337,7 +354,7 @@ def render_constant(item: dict) -> str:
     return "\n".join(
         [
             f"### `{name}`\n",
-            code(f"comptime {name} = {item['value']}"),
+            code(f"comptime {name} = {constant_value(item['value'])}"),
             summary_and_description(item),
         ]
     )
@@ -366,7 +383,10 @@ def render_declaration(item: dict) -> str:
     constants = item.get("aliases", [])
     if constants:
         out.append("## Constants\n")
-        out.extend(member_line(f"{c['name']} = {c['value']}", c) for c in constants)
+        out.extend(
+            member_line(f"{c['name']} = {constant_value(c['value'])}", c)
+            for c in constants
+        )
         out.append("")
     fields = [f for f in item.get("fields", []) if not f["name"].startswith("_")]
     if fields:
