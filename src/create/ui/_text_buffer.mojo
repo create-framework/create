@@ -49,8 +49,9 @@ struct _TextBuffer(Copyable, Movable):
     """How far the text is scrolled left, so the caret stays inside a field
     narrower than its text."""
     var last_change: Float64
-    """When the text or caret last changed, in run seconds: the caret shows
-    steadily for a moment after, rather than blinking while typing."""
+    """When the text or caret last changed, in seconds of real time: the
+    caret shows steadily for a moment after, rather than blinking while
+    typing."""
 
     def __init__(
         out self, text: String = "", *, max_length: Optional[Int] = None
