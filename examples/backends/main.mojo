@@ -58,6 +58,8 @@ struct App(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
+
+        # A steps through the antialiasing levels.
         if context.keyboard.pressed(Key.A):
             # The level is the canvas's: it lasts until changed, and covers
             # this whole frame.
@@ -67,16 +69,19 @@ struct App(Program):
 
         canvas.background(BACKGROUND)
 
+        # Six cards in two rows of three, each with its caption below it.
         var cards = List[Rectangle]()
         for row in GRID.rows(2, gap=GAP):
             for card in row.columns(3, gap=GAP):
                 cards.append(card)
+
         var names = captions()
         with canvas.style(fill=CARD, stroke_enabled=False):
             for card in cards:
                 canvas.rectangle(
                     card.center(), card.width, card.height, corner_radius=16
                 )
+
         with canvas.style(text_color=CAPTION, font_size=16):
             for i in range(len(cards)):
                 canvas.text(
@@ -124,6 +129,7 @@ struct App(Program):
         )
         canvas.stroke_enabled(False)
         canvas.circle(centers[4], 46)
+
         with canvas.style(
             stroke=Color.CYAN, stroke_thickness=6, stroke_cap=StrokeCap.ROUND
         ):
@@ -141,6 +147,7 @@ struct App(Program):
                 + String(Int(context.frame_rate())),
                 (canvas.left() + 20, canvas.top() - 20),
             )
+
         with canvas.style(
             text_color=CAPTION, font_size=16, text_alignment=Align.TOP_RIGHT
         ):
@@ -155,6 +162,7 @@ def main() raises:
     for i in range(1, len(argv())):
         if argv()[i] == "fullscreen":
             mode = WindowMode.FULLSCREEN
+
     run[App](
         "Backends",
         mode,

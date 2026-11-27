@@ -24,6 +24,7 @@ struct Chart(Program):
 
         var style = JSON.load("assets/style.json")
         var colors = style["colors"]
+
         return Chart(
             scores^,
             style["title"].string(),
@@ -41,6 +42,8 @@ struct Chart(Program):
         canvas.font_size(32)
         canvas.text(self.title, (0, canvas.top() - 50))
 
+        # Each bar's label, measured first so the bars leave room for the
+        # widest.
         canvas.font_size(18)
         var labels = List[String]()
         var widest = 0.0
@@ -51,6 +54,8 @@ struct Chart(Program):
             widest = max(widest, canvas.text_width(label))
             labels.append(label^)
 
+        # The rows share the height below the title, and the best score's bar
+        # takes all the room the widest label leaves.
         var top_score = self.scores.row(0).float("score")
         var row_height = (canvas.top() - canvas.bottom() - 160) / Float64(
             self.scores.row_count()

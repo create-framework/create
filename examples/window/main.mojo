@@ -64,16 +64,20 @@ struct App(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
         # A canvas setting that outlives the frame: set once, kept.
         canvas.letterbox_color(BARS)
+
         # A window dial set in `create` shows from the first frame.
         context.cursor(Cursor.CROSSHAIR)
+
         return App(x=100.0, dir=1.0, cap=0, cursor=1)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        # Each key changes one of the window's settings.
         if context.keyboard.pressed(Key.F11):
             if context.window_mode() == WindowMode.FULLSCREEN:
                 context.window_mode(WindowMode.WINDOWED)
             else:
                 context.window_mode(WindowMode.FULLSCREEN)
+
         if context.keyboard.pressed(Key.SPACE):
             var mode = context.autoscale()
             if mode == Autoscale.FIT:
@@ -82,16 +86,20 @@ struct App(Program):
                 context.autoscale(Autoscale.OFF)
             else:
                 context.autoscale(Autoscale.FIT)
+
         if context.keyboard.pressed(Key.R):
             context.resizable(not context.resizable())
+
         if context.keyboard.pressed(Key.F):
             self.cap = (self.cap + 1) % len(frame_caps())
             context.max_frame_rate(frame_caps()[self.cap])
+
         if context.keyboard.pressed(Key.C):
             self.cursor = (self.cursor + 1) % len(cursors())
             context.cursor(cursors()[self.cursor])
 
         self.x += self.dir * 200.0 * context.time.delta
+
         # Set the sign rather than flip it: under EXTEND/OFF a shrinking
         # window can move canvas.right()/left() past the ball between frames,
         # and a flip on an already-true condition alternates forever instead
@@ -102,6 +110,7 @@ struct App(Program):
             self.dir = 1.0
 
         canvas.background(BACKGROUND)
+
         with canvas.style(stroke_enabled=False):
             canvas.fill(BALL)
             canvas.circle((self.x, 150), 40)
@@ -131,9 +140,11 @@ struct App(Program):
             ),
             String(context.cursor()),
         ]
+
         with canvas.style(text_color=TEXT, font_size=24):
             for i in range(len(lines)):
                 canvas.text(lines[i], (0, -70 - 40 * i))
+
         with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 (

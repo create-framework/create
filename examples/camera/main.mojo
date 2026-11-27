@@ -39,6 +39,9 @@ struct CameraDemo(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var pan = PAN_SPEED * context.time.delta / self.camera.zoom
+
+        # The arrow keys pan, by less when zoomed in, so the world slides past
+        # the screen at the same speed.
         if context.keyboard.down(Key.RIGHT):
             self.camera.position += Vector(pan, 0.0)
         if context.keyboard.down(Key.LEFT):
@@ -57,8 +60,10 @@ struct CameraDemo(Program):
                 context.mouse.position
             )
 
+        # A click drops a marker where it lands in the world.
         if context.mouse.pressed():
             self.markers.append(self.camera.to_world(context.mouse.position))
+
         if context.keyboard.pressed(Key.C):
             self.markers.clear()
 
@@ -92,6 +97,7 @@ struct CameraDemo(Program):
                     + " clears",
                     (0.0, canvas.top() - 16.0),
                 )
+
                 var world = self.camera.to_world(context.mouse.position)
                 canvas.text(
                     String(

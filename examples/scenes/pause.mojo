@@ -28,6 +28,7 @@ struct Pause(Movable):
         var next = Scene.PAUSE
         if context.keyboard.pressed(Key.ESCAPE):
             next = Scene.PLAY
+
         self.menu.update(context, canvas)
         if self.menu.first_clicked():
             next = Scene.PLAY

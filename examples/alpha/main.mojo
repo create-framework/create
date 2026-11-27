@@ -44,6 +44,7 @@ struct App(Program):
         # One value fades fill, stroke, text and image alike. Each shape
         # still composites once, so the stroke never shows through the fill.
         var opacity = 0.5 + 0.5 * sin(context.time.elapsed * 1.5)
+
         with canvas.style(opacity=opacity):
             with canvas.style(
                 fill=Color.MAGENTA,
@@ -51,7 +52,9 @@ struct App(Program):
                 stroke_thickness=6,
             ):
                 canvas.rectangle(CARD, 220.0, 170.0, corner_radius=18)
+
             canvas.image(self.logo, CARD + Vector(0, 20), 100, 100)
+
             with canvas.style(text_color=TEXT, font_size=22):
                 canvas.text(
                     String("Opacity ", round(opacity, 2)),

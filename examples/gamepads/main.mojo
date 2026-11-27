@@ -29,10 +29,12 @@ struct Gamepads(Program):
         for i in range(PLAYERS):
             positions.append(Point(Float64(i) * 120 - 180, 0))
             colors.append(i)
+
         return Gamepads(positions^, colors^, "", 0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(BACKGROUND)
+
         var palette = [
             Color.RED,
             Color.GREEN,
@@ -45,17 +47,24 @@ struct Gamepads(Program):
         for i in range(PLAYERS):
             var pad = context.gamepad(i)
             var player = "Player " + String(i + 1)
+
+            # Say when a gamepad joins or leaves, and buzz it as it joins.
             if pad.connected_this_frame:
                 self.say(context, player + " joined: " + pad.name)
                 context.rumble(0.3, low_frequency=1, high_frequency=0, player=i)
             if pad.disconnected_this_frame:
                 self.say(context, player + " left: " + pad.name)
+
             if not pad.connected:
                 continue
+
+            # The left stick moves the player's circle, faster the further the
+            # right trigger is pulled in.
             var speed = SPEED * (1.0 + pad.right_trigger)
             self.positions[i] = (
                 self.positions[i] + pad.left_stick * speed * context.time.delta
             )
+
             if pad.pressed(GamepadButton.SOUTH):
                 self.colors[i] = (self.colors[i] + 1) % len(palette)
                 context.rumble(0.1, low_frequency=0, high_frequency=1, player=i)
@@ -69,18 +78,22 @@ struct Gamepads(Program):
 
         canvas.text_color(TEXT)
         canvas.text_alignment(Align.LEFT)
+
         var connected = 0
         for i in range(PLAYERS):
             if context.gamepad(i).connected:
                 connected += 1
+
         canvas.text(
             String(connected) + " of " + String(PLAYERS) + " gamepads",
             (canvas.left() + 20, canvas.top() - 30),
         )
+
         if context.time.elapsed < self.message_until:
             canvas.text(
                 self.message, (canvas.left() + 20, canvas.bottom() + 20)
             )
+
         if connected == 0:
             canvas.text_alignment(Align.CENTER)
             canvas.text("Plug in a gamepad", (0, 0))

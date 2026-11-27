@@ -3,10 +3,11 @@
 from create import *
 from line import line
 
-# how much of the list of levels shows at once: three and a half buttons,
-# so the one cut in half says there are more
+# How much of the list of levels shows at once: three and a half buttons,
+# so the one cut in half says there are more.
 comptime LEVELS_HEIGHT = 3.5 * 40
-# how far inside its surface the list of levels sits
+
+# How far inside its surface the list of levels sits.
 comptime LEVELS_PADDING = 4
 
 
@@ -42,6 +43,9 @@ struct ListsPage(Movable):
             grow=3,
         )
         ui.tooltip(self.resolution, "The size of the game's window")
+
+        # The levels: a column of buttons, in a scroll area that shows a few,
+        # on a surface of its own so it stands out from the panel.
         var pick = line(ui, page, "Level")
         self.surface = ui.add(
             Panel(padding=LEVELS_PADDING), pick, width=0, grow=3
@@ -49,6 +53,7 @@ struct ListsPage(Movable):
         var inside = ui.add(Column(), self.surface)
         var window = ui.add(ScrollArea(max_height=LEVELS_HEIGHT), inside)
         var list = ui.add(Column(gap=0), window)
+
         self.levels = []
         for level in level_names():
             self.levels.append(
@@ -59,6 +64,7 @@ struct ListsPage(Movable):
         """What the player did on this page this frame, to show them; the
         list's surface takes `colors`."""
         ui[self.surface].style = Style(fill=colors.surface_container_highest)
+
         if ui[self.resolution].changed():
             return "Resolution: " + ui[self.resolution].selected_text()
         for level in self.levels:

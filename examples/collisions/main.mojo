@@ -22,6 +22,7 @@ def reach[S: Geometry](mut canvas: Canvas, shape: S, mouse: Point):
     there. Any shape or curve answers `closest_point`, so one function serves all.
     """
     var nearest = shape.closest_point(mouse)
+
     with canvas.style(stroke=GUIDE, stroke_thickness=2):
         canvas.line(mouse, nearest)
     with canvas.style(fill=GUIDE, stroke_enabled=False):
@@ -104,6 +105,7 @@ struct Collisions(Program):
             text_color=TEXT, font_size=30, text_alignment=Align.TOP
         ):
             canvas.text("Collisions", (0, canvas.top() - 38))
+
         with canvas.style(
             text_color=TEXT, font_size=18, text_alignment=Align.TOP
         ):

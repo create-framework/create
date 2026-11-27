@@ -32,6 +32,7 @@ struct App(Program):
                 (1.0, COLORS.surface_container_highest),
             ]
         )
+
         # A style can carry a gradient like any colour.
         var card = Style(
             fill_gradient=Gradient.linear(Color.CYAN, Color.MAGENTA),
@@ -40,13 +41,16 @@ struct App(Program):
             shadow_offset=Vector(0, -10),
             shadow_blur=16,
         )
+
         return App(sky, card, 0.0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(self.sky)
+
         self.angle += 0.5 * context.time.delta
 
         canvas.stroke(OUTLINE, thickness=2)
+
         # Left to right.
         canvas.fill(
             Gradient.linear(
@@ -56,6 +60,7 @@ struct App(Program):
             )
         )
         canvas.rectangle((-450, 120), 160, 110)
+
         # Lit from the top left: a radial off the box's centre.
         canvas.fill(
             Gradient.radial(
@@ -66,6 +71,7 @@ struct App(Program):
             )
         )
         canvas.circle((-220, 120), 65)
+
         # Corner to corner, with no trigonometry.
         canvas.fill(
             Gradient.linear(
@@ -75,6 +81,7 @@ struct App(Program):
             )
         )
         canvas.triangle((-60, 55), (60, 55), (0, 185))
+
         # A sector spans its whole circle, so the slice shows part of it.
         canvas.fill(
             Gradient.linear(
@@ -84,6 +91,8 @@ struct App(Program):
             )
         )
         canvas.sector((220, 120), 65.0, 0.5, 1.6 * PI)
+
+        # Two colours on their own run from top to bottom.
         canvas.fill(Gradient.linear(Color.MAGENTA, Color.RED))
         canvas.draw(Polygon.star((450, 120), 70.0, 30.0, 5))
 
@@ -97,6 +106,7 @@ struct App(Program):
         # A fade to transparent: a glow over whatever is behind it.
         with canvas.style(fill=Color.BLUE, stroke_enabled=False):
             canvas.circle((150, -140), 45)
+
         with canvas.style(
             fill_gradient=Gradient.radial(
                 Color.WHITE.with_alpha(220), Color.WHITE.with_alpha(0)

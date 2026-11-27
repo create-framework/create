@@ -76,16 +76,20 @@ struct Shadows(Program):
         var column = ui.add(Column(), panel)
         _ = ui.add(Label("Shadows", style=Style(font_size=28)), column)
         _ = ui.add(Space(), column)
+
         var blur = add_setting(ui, column, "Blur", BLUR, 0, 40)
         var spread = add_setting(ui, column, "Spread", SPREAD, 0, 20)
         var offset_x = add_setting(ui, column, "Offset x", OFFSET.x, -20, 20)
         var offset_y = add_setting(ui, column, "Offset y", OFFSET.y, -20, 20)
         var darkness = add_setting(ui, column, "Darkness", DARKNESS, 0, 255)
+
         _ = ui.add(Space(), column)
         var inset = ui.add(Checkbox("Inset"), column)
         var follows = ui.add(Checkbox("Follows transform"), column)
+
         _ = ui.add(Space(), column)
         var reset = ui.add(Button("Reset", variant=ButtonVariant.TONAL), column)
+
         return Shadows(
             ui=ui^,
             panel=panel,
@@ -113,14 +117,18 @@ struct Shadows(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
+
         canvas.background(BACKGROUND)
 
+        # The panel takes the left quarter of the screen, and the tiles the
+        # rest.
         var halves = (
             canvas.bounds().inset(MARGIN).columns(weights=[1, 3], gap=GAP)
         )
         self.ui[self.panel].rect = halves[0]
         self.ui.update(context, canvas)
         canvas.draw(self.ui)
+
         if self.ui[self.reset].released():
             self.put_back()
 
@@ -197,6 +205,7 @@ struct Shadows(Program):
             Point(Vector.from_angle(PI / 2 + 2 * TAU / 3, r)),
             corner_radius=10,
         )
+
         with canvas.style(fill=Color.RED, stroke_enabled=False):
             with canvas.transform(
                 Transform(translation=Vector(centers[5]), rotation=self.angle)

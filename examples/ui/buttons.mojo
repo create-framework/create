@@ -16,9 +16,10 @@ struct ButtonsPage(Movable):
             ),
             page,
         )
+
         self.buttons = []
         var row = ui.add(Row(), page)
-        # four equal slots: each starts from nothing and grows alike
+        # Four equal slots: each starts from nothing and grows alike.
         self.buttons.append(ui.add(Button("Play"), row, width=0, grow=1))
         self.buttons.append(
             ui.add(
@@ -45,6 +46,7 @@ struct ButtonsPage(Movable):
             )
         )
         ui.tooltip(self.buttons[3], "Close the menu")
+
         _ = ui.add(Space(), page)
         _ = ui.add(Label("Disabled", alignment=Align.LEFT), page)
         _ = ui.add(Button("Continue", enabled=False), page, align=Align.LEFT)

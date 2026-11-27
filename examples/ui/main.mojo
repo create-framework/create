@@ -25,9 +25,10 @@ from toggles import TogglesPage
 from values import ValuesPage
 from lists import ListsPage
 
-# the menu's panel, tall enough for its tallest page
+# The menu's panel, tall enough for its tallest page.
 comptime PANEL = Rectangle((0, 0), 500, 460)
-# a soft shadow, lifting the panel off the background
+
+# A soft shadow, lifting the panel off the background.
 comptime SHADOW = Style(
     shadow=Color(0, 0, 0, 60), shadow_offset=Vector(0, -3), shadow_blur=12
 )
@@ -50,21 +51,27 @@ struct Menu(Program):
         var panel = ui.add(Panel(PANEL, style=SHADOW))
         var column = ui.add(Column(), panel)
         _ = ui.add(Label("Widgets", style=Style(font_size=22)), column)
+
         var tabs = ui.add(
             Tabs(["Buttons", "Toggles", "Values", "Lists"]), column
         )
-        # a column per tab, in the same place: only the selected one shows
+
+        # A column for each tab, all in the same place: only the selected one
+        # shows.
         var pages = List[WidgetHandle[Column]]()
         for i in range(4):
             pages.append(ui.add(Column(), column))
             ui.visible(pages[i], i == 0)
+
         var buttons = ButtonsPage(ui, pages[0])
         var toggles = TogglesPage(ui, pages[1])
         var values = ValuesPage(ui, pages[2])
         var lists = ListsPage(ui, pages[3])
-        # what the pages report, at the foot of the panel whatever the page
+
+        # What the pages report, at the foot of the panel whatever the page.
         _ = ui.add(Space(), column, grow=1)
         var message = ui.add(Label(""), column)
+
         return Menu(
             ui^,
             tabs,
@@ -77,6 +84,7 @@ struct Menu(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        # The dark theme switch picks the menu's colours.
         var dark = self.toggles.dark_theme(self.ui)
         var colors = ColorScheme.dark() if dark else ColorScheme.light()
         self.ui.colors(colors)
@@ -88,12 +96,13 @@ struct Menu(Program):
         self.ui.update(context, canvas)
         canvas.draw(self.ui)
 
-        # show the selected tab's page
+        # Show the selected tab's page.
         if self.ui[self.tabs].changed():
             var selected = self.ui[self.tabs].selected
             for i in range(len(self.pages)):
                 self.ui.visible(self.pages[i], i == selected)
-        # each page reports what the player did to it, if anything
+
+        # Each page reports what the player did to it, if anything.
         var reports = [
             self.buttons.update(self.ui),
             self.toggles.update(self.ui),
@@ -103,6 +112,7 @@ struct Menu(Program):
         for report in reports:
             if report:
                 self.ui[self.message].text = report.value()
+
         if self.buttons.quit(self.ui):
             context.quit()
 

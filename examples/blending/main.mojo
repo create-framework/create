@@ -42,7 +42,7 @@ struct App(Program):
         if context.keyboard.pressed(Key.SPACE):
             self.mode = next_mode(self.mode)
 
-        # Gray bars, black on the left to white on the right. Measured from
+        # Grey bars, black on the left to white on the right. Measured from
         # the edges, since the origin is the middle of the screen.
         #
         # Each bar reaches all the way to the right edge and the next one
@@ -51,6 +51,7 @@ struct App(Program):
         # thin light seam whenever the window scale puts an edge mid-pixel.
         canvas.background(Color.BLACK)
         canvas.stroke_enabled(False)
+
         var bar_w = (canvas.right() - canvas.left()) / Float64(BARS)
         for i in range(BARS):
             var gray = UInt8(i * 255 // (BARS - 1))
@@ -67,6 +68,7 @@ struct App(Program):
         # mode: the guard puts everything after it back to NORMAL.
         var t = context.time.elapsed
         var center_x = 0.55 * canvas.right() * sin(t * 0.5)
+
         # The primaries a quarter of the way to white: with every channel at
         # 0 or 255, SCREEN and ADD give identical results.
         var colors = [
@@ -74,6 +76,7 @@ struct App(Program):
             Color.GREEN.lerp(Color.WHITE, 0.25),
             Color.BLUE.lerp(Color.WHITE, 0.25),
         ]
+
         with canvas.style(blend_mode=self.mode):
             for i in range(3):
                 var angle = t * 0.8 + Float64(i) * 2.0 * PI / 3.0
@@ -86,6 +89,7 @@ struct App(Program):
         # A plain panel behind the label, so it reads over any bar.
         canvas.fill(PANEL)
         canvas.rectangle((0.0, canvas.bottom() + 60.0), 360.0, 100.0)
+
         canvas.text_color(TEXT)
         canvas.font_size(28)
         canvas.text(String(self.mode), (0.0, canvas.bottom() + 75.0))

@@ -52,6 +52,7 @@ struct App(Program):
             next = self.pause.update(context, canvas)
         else:
             next = self.over.update(context, canvas)
+
         if next != self.scene:
             self.switch(next)
 
@@ -60,9 +61,11 @@ struct App(Program):
         each change is in one place."""
         if next == Scene.PLAY and self.scene != Scene.PAUSE:
             self.play.enter()  # a new round, unless resuming
+
         if next == Scene.OVER:
             self.over.enter(self.play.score, self.best)
             self.best = max(self.best, self.play.score)
+
         self.scene = next
 
 

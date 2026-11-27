@@ -73,7 +73,10 @@ struct TypingTest(Program):
             + " of "
             + String(len(self.phrases))
         )
+
         canvas.background(BACKGROUND)
+
+        # Once the phrase is typed, Enter moves on to the next one.
         var target = characters(self.phrases[self.phrase])
         var finished = self.field.text() == self.phrases[self.phrase]
         if finished and context.keyboard.pressed(Key.ENTER):
@@ -83,6 +86,7 @@ struct TypingTest(Program):
             self.selection_start = 0
             finished = False
             target = characters(self.phrases[self.phrase])
+
         if not finished:
             self.count_keystrokes(context, target)
 
@@ -106,6 +110,8 @@ struct TypingTest(Program):
         self.field.update(context, canvas)
         canvas.draw(self.field)
         self.selection_start = len(characters(self.field.before_selection()))
+
+        # The test ends the moment the field matches the phrase.
         if not finished and self.field.text() == self.phrases[self.phrase]:
             self.result = self.score(len(target), context.time.elapsed)
             finished = True
@@ -123,6 +129,7 @@ struct TypingTest(Program):
         canvas.font_size(20)
         canvas.text_alignment(Align.CENTER)
         canvas.text_color(HINT)
+
         if finished:
             canvas.text(self.result, (0, -80))
             canvas.text("Enter for the next phrase", (0, -120))
@@ -135,10 +142,12 @@ struct TypingTest(Program):
         var typed = characters(context.keyboard.text)
         if not typed:
             return
+
         if not self.field.text():
             self.started_at = context.time.elapsed
             self.keystrokes = 0
             self.mistakes = 0
+
         # Typing replaces a selection, so it lands where the selection starts.
         var position = self.selection_start
         for i in range(len(typed)):
@@ -153,9 +162,11 @@ struct TypingTest(Program):
         right when typed, so a corrected mistake still counts against it."""
         var minutes = max(now - self.started_at, 0.001) / 60
         var wpm = Int(Float64(characters) / 5 / minutes)
+
         var accuracy = (
             100 * (self.keystrokes - self.mistakes) // max(self.keystrokes, 1)
         )
+
         return String(wpm, " wpm, ", accuracy, "% accuracy")
 
 

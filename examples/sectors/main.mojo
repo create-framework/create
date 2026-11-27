@@ -79,11 +79,13 @@ struct App(Program):
         var pacman = Sector(PACMAN, 150, gape, TAU - 2.0 * gape)
         var mouth = Sector(pacman.position, pacman.radius, -gape, 2.0 * gape)
 
+        # A swallowed ball comes back home after RESPAWN seconds.
         if self.respawn_in > 0.0:
             self.respawn_in -= context.time.delta
             if self.respawn_in <= 0.0:
                 self.respawn_in = 0.0
                 self.ball = self.ball.move_to(BALL_HOME)
+
         var eaten = self.respawn_in > 0.0
 
         if not eaten:
@@ -122,9 +124,12 @@ struct App(Program):
             canvas.draw(slice)
             start = slice.end_angle()
 
+        # The pac-man lights up under the mouse, and its outline turns red while
+        # it touches the ball.
         var body = PACMAN_BODY
         if pacman.contains(mouse):
             body = HOVERED
+
         var hit = not eaten and pacman.overlaps(self.ball)
         with canvas.style(
             fill=body,
@@ -145,6 +150,7 @@ struct App(Program):
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Sectors", (0, canvas.top() - 38))
+
         canvas.font_size(18)
         canvas.text(
             "Hover the pie and the pac-man; feed it the ball",

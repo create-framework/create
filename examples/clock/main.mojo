@@ -95,6 +95,7 @@ struct Clock(Program):
         # negative sweep, since y is up) from the top.
         with canvas.style(stroke=TRACK, stroke_thickness=8):
             canvas.arc(CENTER, RADIUS + 16.0, 0.0, TAU)
+
         with canvas.style(
             stroke=SECONDS, stroke_thickness=8, stroke_cap=StrokeCap.ROUND
         ):
@@ -105,6 +106,7 @@ struct Clock(Program):
             var hour_mark = i % 5 == 0
             var direction = Vector.from_angle(clock_angle(Float64(i) / 60))
             var inner = RADIUS * (0.82 if hour_mark else 0.9)
+
             with canvas.style(
                 stroke=HAND if hour_mark else TRACK,
                 stroke_thickness=6 if hour_mark else 2,
@@ -116,18 +118,22 @@ struct Clock(Program):
                     )
                 )
 
+        # The hands, from hours to seconds, and a dot where they meet.
         with canvas.style(
             stroke=HAND, stroke_thickness=10, stroke_cap=StrokeCap.ROUND
         ):
             canvas.draw(hand(hours / 12.0, RADIUS * 0.5))
+
         with canvas.style(
             stroke=HAND, stroke_thickness=6, stroke_cap=StrokeCap.ROUND
         ):
             canvas.draw(hand(minutes / 60.0, RADIUS * 0.75))
+
         with canvas.style(
             stroke=SECONDS, stroke_thickness=2, stroke_cap=StrokeCap.ROUND
         ):
             canvas.draw(hand(seconds / 60.0, RADIUS * 0.85))
+
         with canvas.style(fill=SECONDS, stroke_enabled=False):
             canvas.circle(CENTER, 8)
 
@@ -145,6 +151,7 @@ struct Clock(Program):
             var cell = 0.0
             for digit in range(10):
                 cell = max(cell, canvas.text_width(String(digit)))
+
             var colon = canvas.text_width(":")
             var widths = List[Float64]()
             var total = 0.0
@@ -152,6 +159,8 @@ struct Clock(Program):
                 var width = colon if character == ":" else cell
                 widths.append(width)
                 total += width
+
+            # Each character centred in its cell, left to right.
             var x = TEXT_X - total / 2.0
             var i = 0
             for character in time.codepoint_slices():
@@ -170,6 +179,7 @@ struct Clock(Program):
         )
         with canvas.style(text_color=HAND, font_size=28, font_italic=True):
             canvas.text(date, (TEXT_X, -30.0))
+
         with canvas.style(
             text_color=HINT, font_size=18, font_weight=FontWeight.LIGHT
         ):

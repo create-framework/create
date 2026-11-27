@@ -94,6 +94,7 @@ struct App(Program):
             text_color=TITLE, font_size=30, text_alignment=Align.TOP
         ):
             canvas.text("canvas.draw(rocket)", (0, canvas.top() - 36))
+
         with canvas.style(text_color=CAPTION, font_size=18):
             var y = canvas.bottom() + 60
             canvas.text("a fill", (-SPACING, y))

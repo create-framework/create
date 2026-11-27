@@ -73,6 +73,8 @@ struct Logo(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Logo:
+        # Each triangle grows on an easing curve of its own, taken in turn, and
+        # the pointing-down ones take the logo's colours in turn.
         var curves: List[Easing] = [
             Easing.OUT_BACK,
             Easing.OUT_ELASTIC,
@@ -106,9 +108,11 @@ struct Logo(Program):
                     )
                     triangle_colors.append(colors[next_color])
                     next_color += 1
+
                 # The middle of row 2 is the logo's white gap.
                 if row == 2 and index == 1:
                     continue
+
                 triangles.append(
                     Triangle(
                         corner(row, index),
@@ -123,11 +127,13 @@ struct Logo(Program):
             var home = triangles[i].center()
             var curve = curves[i % len(curves)]
             var duration = DURATION
+
             # The last, bottom-right triangle would bounce; let it ease in,
             # and quicker, so the logo doesn't wait on it.
             if i == len(triangles) - 1:
                 curve = Easing.OUT_SINE
                 duration = DURATION * 0.6
+
             pieces.append(
                 Piece(
                     shape=triangles[i].translate(-Vector(home)),
@@ -137,11 +143,16 @@ struct Logo(Program):
                     delay=Float64(i) * STAGGER,
                 )
             )
+
+        # The points collect on an offscreen canvas, so each frame draws only
+        # the new ones.
         var layer = Canvas(canvas.width(), canvas.height())
         var picture = layer.snapshot()
+
         # Saving into a folder that isn't there fails, so make it first.
         makedirs(source_path("out"), exist_ok=True)
         canvas.start_recording("out/logo.gif")
+
         return Logo(
             pieces=pieces^,
             random=Random(),
@@ -171,6 +182,7 @@ struct Logo(Program):
         return corner(4, 4)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
+        # Play the chaos game up to the number of points due by now.
         var target = Self.points_by(context.time.elapsed)
         if self.count < target:
             # A point on the logo's edge would stick a pixel out past it,
@@ -183,9 +195,12 @@ struct Logo(Program):
                         self.layer.circle(self.point, 1)
             self.count = target
             self.picture = self.layer.snapshot()
+
+        # The triangles' clock starts once enough points are down.
         if self.count >= GROW_POINTS:
             self.elapsed += context.time.delta
 
+        # Start each triangle once its delay is up.
         var landed = True
         for ref piece in self.pieces:
             if (
@@ -196,6 +211,8 @@ struct Logo(Program):
             ):
                 piece.tween.play()
             landed = landed and piece.tween.is_finished()
+
+        # Hold the finished logo on screen a while, then stop recording.
         if landed:
             self.shown += context.time.delta
             if canvas.recording() and self.shown >= HOLD_SECONDS:
@@ -204,6 +221,7 @@ struct Logo(Program):
         canvas.background(PAPER)
         canvas.image(self.picture, (0, 0), canvas.width(), canvas.height())
         canvas.stroke_enabled(False)
+
         if landed:
             # Under the landed pieces, so no seam shows where two meet.
             canvas.fill(Color.BLACK)
@@ -221,6 +239,7 @@ struct Logo(Program):
                 middle + (gap.b - middle) * grow,
                 middle + (gap.c - middle) * grow,
             )
+
         for piece in self.pieces:
             if not piece.tween.is_playing() and not piece.tween.is_finished():
                 continue
@@ -228,6 +247,7 @@ struct Logo(Program):
             # grows a little too big and shrinks back; IN_OUT_BACK dips below
             # 0 first, which would turn it inside out, so hold it at nothing.
             var size = max(piece.tween.value(), 0.0)
+
             with canvas.transform(
                 Transform(translation=Vector(piece.home), scale=size)
             ):

@@ -37,16 +37,19 @@ struct Pixels(Program):
             Color.RED,
             direction=Vector.RIGHT,
         )
+
         var shade = Gradient.linear(
             Color.WHITE,
             Color.WHITE.with_alpha(0),
             Color.BLACK.with_alpha(0),
             Color.BLACK,
         )
+
         return Pixels(hues^, shade^)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(BACKGROUND)
+
         # What there is to pick from.
         with canvas.style(stroke_enabled=False):
             canvas.fill(self.hues)
@@ -58,6 +61,8 @@ struct Pixels(Program):
         # drawn so far, so the swatch and its text never show in it.
         var picked = canvas.color_at(context.mouse.position)
 
+        # The swatch shows the picked colour, with its channels written below
+        # it.
         with canvas.style(
             fill=picked, stroke=OUTLINE, stroke_thickness=2, corner_radius=16
         ):
@@ -76,6 +81,7 @@ struct Pixels(Program):
                 + String(picked.a),
                 (SWATCH.position.x, SWATCH.bottom() - 30),
             )
+
         with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 "Hover anywhere to pick a colour.", (0, canvas.bottom() + 30)

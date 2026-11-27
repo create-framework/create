@@ -82,6 +82,7 @@ struct App(Program):
         if context.mouse.pressed() and self.pentagram.contains(mouse):
             self.dragging = True
             self.grab = first - mouse
+
         if context.mouse.released():
             self.dragging = False
         if self.dragging:
@@ -95,6 +96,7 @@ struct App(Program):
         for sides in range(3, 9):
             var x = -500.0 + 200.0 * Float64(sides - 3)
             var shape = Polygon.regular((x, 170), 70, sides)
+
             if shape.contains(mouse):
                 canvas.fill(HOVERED)
             else:
@@ -114,6 +116,7 @@ struct App(Program):
                 tips,
                 start_angle=TAU / 4.0 + direction * turn,
             )
+
             if star.contains(mouse):
                 canvas.fill(HOVERED)
             else:
@@ -133,10 +136,12 @@ struct App(Program):
             (150, 20),
             (60, 20),
         )
+
         var hit = u.overlaps(self.pentagram)
         var fill = U_FILL
         if u.contains(mouse):
             fill = HOVERED_U
+
         with canvas.style(
             fill=fill,
             stroke=HIT if hit else U_OUTLINE,
@@ -160,6 +165,7 @@ struct App(Program):
         canvas.font_size(30)
         canvas.text_alignment(Align.TOP)
         canvas.text("Polygons", (0, canvas.top() - 38))
+
         canvas.font_size(18)
         canvas.text(
             "Hover the shapes; Up and Down change the stars' inner radius"

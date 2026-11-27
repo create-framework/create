@@ -50,7 +50,7 @@ struct Play(Movable):
         var delta = context.time.delta
         self.time_left -= delta
 
-        # the paddle follows the mouse along the bottom, kept on screen
+        # The paddle follows the mouse along the bottom, kept on screen.
         var half = PADDLE_WIDTH / 2
         var x = clamp(
             context.mouse.position.x,
@@ -59,6 +59,7 @@ struct Play(Movable):
         )
         self.paddle = self.paddle.move_to((x, canvas.bottom() + 50))
 
+        # Drop a new dot from the top every SPAWN_INTERVAL seconds.
         self.until_spawn -= delta
         if self.until_spawn <= 0:
             self.until_spawn += SPAWN_INTERVAL
@@ -72,7 +73,7 @@ struct Play(Movable):
                 )
             )
 
-        # keep the dots still falling: not caught, and not off the bottom
+        # Keep the dots still falling: not caught, and not off the bottom.
         var falling = List[Point]()
         for dot in self.dots:
             var moved = dot + Vector.DOWN * FALL_SPEED * delta
@@ -92,11 +93,14 @@ struct Play(Movable):
 
     def draw(self, mut canvas: Canvas):
         canvas.background(BACKGROUND)
+
         with canvas.style(fill=DOT, stroke_enabled=False):
             for dot in self.dots:
                 canvas.circle(dot, DOT_RADIUS)
+
         with canvas.style(fill=PADDLE, stroke_enabled=False, corner_radius=9):
             canvas.draw(self.paddle)
+
         with canvas.style(
             text_color=TEXT, font_size=24, text_alignment=Align.TOP_LEFT
         ):
@@ -104,6 +108,7 @@ struct Play(Movable):
                 "Score: " + String(self.score),
                 (canvas.left() + 20, canvas.top() - 20),
             )
+
         with canvas.style(
             text_color=TEXT, font_size=24, text_alignment=Align.TOP_RIGHT
         ):
