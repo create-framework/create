@@ -1117,7 +1117,12 @@ struct UI(Drawable, Movable):
 
     def _wheel_target(self, topmost: Optional[Int]) -> Optional[Int]:
         """The scroll area the mouse wheel scrolls: the innermost of those
-        under the pointer whose column is taller than it, if any."""
+        under the pointer whose column is taller than it, if any. None while
+        a widget has a popup open, such as a dropdown's list: the wheel is
+        the popup's, and scrolling what is beneath would move its owner
+        out from under it."""
+        if topmost and self._describe(topmost.value()).popup:
+            return None
         var at = topmost
         while at:
             var node = self._describe(at.value())
