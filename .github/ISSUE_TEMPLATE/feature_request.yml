@@ -1,6 +1,6 @@
 name: Feature request
 description: Something you want to make with Create that it doesn't support, or makes awkward.
-labels: [enhancement]
+labels: [feature]
 body:
   - type: markdown
     attributes:
