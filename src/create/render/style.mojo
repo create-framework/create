@@ -44,10 +44,10 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     ```
 
     `over` layers one style over another, part by part:
-    `Style(corner_radius=4).over(card)` is the card with square corners.
+    `Style(corner_radius=12).over(card)` is the card with rounded corners.
 
-    `corner_radius` rounds the shapes the canvas builds from numbers --
-    `canvas.rectangle(p, w, h)`, `triangle`, `polygon` and `sector` -- unless
+    `corner_radius` rounds the shapes the canvas builds from numbers
+    (`canvas.rectangle(p, w, h)`, `triangle`, `polygon` and `sector`) unless
     the call names its own `corner_radius`. A shape value carries its own
     radius, so `canvas.draw(shape)` and `canvas.clip(shape)` ignore the
     style's: what is drawn from a shape is what its `contains` tests.

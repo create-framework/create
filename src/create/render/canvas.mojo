@@ -259,6 +259,8 @@ struct _ClipGuard[origin: Origin[mut=True]](Movable):
         var _region: RenderCommand,
         _invert: Bool,
     ):
+        """Open a clip to `_region`, inverted by `_invert`, keeping the one
+        it replaces."""
         self._saved = _canvas._state._backend[].buffer.push_clip(
             _region^, _invert
         )
@@ -424,6 +426,14 @@ struct Canvas(Movable, _GeometryTarget):
         pixel_scale: Float64 = 1.0,
         antialiasing: Antialiasing = Antialiasing.MEDIUM,
     ) raises:
+        """An offscreen canvas of `width` by `height` screen units, with
+        `pixel_scale` pixels to the unit — `pixel_scale=canvas.pixel_scale()` matches the
+        window's density.
+
+        Screen space as on the frame canvas: origin centred, y up. Always
+        rasterised on the CPU, whatever backend the program runs on; what
+        comes out of it is an `Image`, which any canvas can draw.
+        """
         self = Canvas(
             Float64(width),
             Float64(height),
@@ -517,17 +527,20 @@ struct Canvas(Movable, _GeometryTarget):
         return self._scale
 
     def left(self) -> Float64:
-        """Screen x of the left edge — negative, since the origin is centred."""
+        """Screen x of the left edge: negative, since the origin is centred."""
         return self._view.left()
 
     def right(self) -> Float64:
+        """Screen x of the right edge: positive, since the origin is
+        centred."""
         return self._view.right()
 
     def bottom(self) -> Float64:
-        """Screen y of the bottom edge — negative, since y grows upward."""
+        """Screen y of the bottom edge: negative, since y grows upward."""
         return self._view.bottom()
 
     def top(self) -> Float64:
+        """Screen y of the top edge: positive, since y grows upward."""
         return self._view.top()
 
     def _render_letterbox(mut self):
@@ -962,6 +975,12 @@ struct Canvas(Movable, _GeometryTarget):
         self._style.corner_radius = radius
 
     def corner_radius(mut self, radius: Int):
+        """Round the shapes built from numbers by `rectangle`, `triangle`,
+        `polygon` and `sector`, in world units, unless a call names its own
+        `corner_radius`. A shape value carries its own radius, so
+        `draw(shape)` and `clip(shape)` ignore this one: what is drawn from
+        a shape is what its `contains` tests. Clamped per shape as the shape
+        describes."""
         self.corner_radius(Float64(radius))
 
     def clear(mut self):
@@ -1583,6 +1602,10 @@ struct Canvas(Movable, _GeometryTarget):
         corner_radius: OptionalNumber = None,
         rotation: OptionalNumber = 0.0,
     ):
+        """Draw the `width` by `height` rectangle centred on `position`, its
+        corners rounded by `corner_radius`, or by the style's when not given
+        (clamped to half the shorter side), and turned about its centre by
+        `rotation` radians counter-clockwise, as `Rectangle` describes it."""
         self.rectangle(
             position,
             Float64(width),
@@ -1592,9 +1615,15 @@ struct Canvas(Movable, _GeometryTarget):
         )
 
     def circle(mut self, position: Point, radius: Float64):
+        """Draw the circle centred on `position` with radius `radius`: a
+        `Circle`. Its stroke is inset, inside the radius, unless the style's
+        `stroke_alignment` says otherwise."""
         self.draw(Circle(position, radius))
 
     def circle(mut self, position: Point, radius: Int):
+        """Draw the circle centred on `position` with radius `radius`: a
+        `Circle`. Its stroke is inset, inside the radius, unless the style's
+        `stroke_alignment` says otherwise."""
         self.circle(position, Float64(radius))
 
     def ellipse(mut self, position: Point, width: Float64, height: Float64):
@@ -1615,6 +1644,20 @@ struct Canvas(Movable, _GeometryTarget):
         self.draw(Ellipse(position, width, height))
 
     def ellipse(mut self, position: Point, width: Int, height: Int):
+        """Draw the axis-aligned ellipse centred on `position`, `width` wide and
+        `height` high: an `Ellipse`, filling the rectangle
+        `rectangle(position, width, height)` would draw. Turn one with
+        `transform`.
+
+        The stroke is inset, as a circle's is, and as thick all round: the
+        fill stops where it starts, and a translucent ellipse composites
+        once. It is drawn as a polygon, flattened as finely as a circle of
+        its larger radius, so filled it costs what a circle does and
+        stroked what a stroked `polygon` of its outline does, about three
+        times a circle's. A blurred drop shadow or an inset one costs what a
+        `bezier`'s blurred shadow does. With `width == height` it covers what
+        `circle(position, width / 2)` does, to within its flattening.
+        """
         self.ellipse(position, Float64(width), Float64(height))
 
     def capsule(mut self, start: Point, end: Point, radius: Float64):
@@ -1633,6 +1676,18 @@ struct Canvas(Movable, _GeometryTarget):
         self.draw(Capsule(start, end, radius))
 
     def capsule(mut self, start: Point, end: Point, radius: Int):
+        """Draw the capsule round the segment from `start` to `end`: every
+        point within `radius` of it, a `Capsule`, its ends half discs.
+
+        The stroke is inset, as a circle's is: the fill stops where it
+        starts, and a translucent capsule composites once. Unlike a
+        round-capped `line`, it has a fill and a stroke of its own. It is
+        drawn as a polygon, each end flattened as finely as a circle of
+        `radius`, so filled it costs what a circle does and stroked what a
+        stroked `polygon` of its outline does. A blurred drop shadow or an
+        inset one costs what a `bezier`'s blurred shadow does. A zero
+        `radius` draws nothing.
+        """
         self.capsule(start, end, Float64(radius))
 
     def sector(
@@ -1679,6 +1734,22 @@ struct Canvas(Movable, _GeometryTarget):
         *,
         corner_radius: OptionalNumber = None,
     ):
+        """Draw the pie slice of the circle around `position` with `radius`,
+        from `start_angle` round by `sweep_angle`: a `Sector`, its tip at
+        `position`.
+
+        Angles are radians, counter-clockwise from the +x axis (y is up); a
+        negative sweep runs clockwise, and a full turn or more is the whole
+        disc. The stroke is inset, as a circle's is: the fill stops where it
+        starts, and a translucent sector composites once. A blurred drop
+        shadow or an inset one costs what a `bezier`'s blurred shadow does.
+        A zero radius or sweep draws nothing.
+
+        `corner_radius`, or the style's when not given, rounds the tip and
+        both ends of the arc, as `Sector` describes. A rounded sector is
+        drawn as a polygon, so it costs what a stroked `polygon` of its
+        flattened outline does.
+        """
         self.sector(
             position,
             Float64(radius),
@@ -1820,6 +1891,20 @@ struct Canvas(Movable, _GeometryTarget):
         start_angle: Float64,
         sweep_angle: Float64,
     ):
+        """Stroke the arc of the circle around `position` with radius `radius`,
+        from `start_angle` round by `sweep_angle`, in the stroke colour and
+        thickness: an `Arc`.
+
+        Angles are radians, counter-clockwise from the +x axis (y is up); a
+        negative sweep runs clockwise, and a full turn or more is the whole
+        circle, closed on a mitred joint.
+
+        Drawn as one stroke, like `bezier`: no fill, nothing with the stroke
+        off, ends as `stroke_cap` says short of a whole turn, and a translucent
+        stroke composites once. A blurred shadow costs what a `bezier`'s does.
+        A zero radius or sweep
+        draws nothing.
+        """
         self.arc(position, Float64(radius), start_angle, sweep_angle)
 
     def triangle(
@@ -1949,13 +2034,9 @@ struct Canvas(Movable, _GeometryTarget):
         )
 
     def image(mut self, image: Image, position: Point):
-        """Render `image` at its own pixel size.
-
-        The same command as the sized overload: at a pixel scale of 1 the two
-        agree exactly, and the one-image-pixel-per-framebuffer-pixel shortcut
-        they used to differ by now lives inside `blit_image`, where the replay
-        can take it without the record site having to know.
-        """
+        """Draw `image` centred on `position` at its own size: one unit for
+        each of its pixels. It follows the transform, and is tinted and
+        faded by the style's `tint` and `opacity`."""
         self.image(
             image, position, Float64(image.width()), Float64(image.height())
         )
@@ -1967,6 +2048,9 @@ struct Canvas(Movable, _GeometryTarget):
         width: Float64,
         height: Float64,
     ):
+        """Draw `image` centred on `position`, stretched to `width` by
+        `height`. It follows the transform, and is tinted and faded by the
+        style's `tint` and `opacity`."""
         # The image is interned *now*, not at replay: the command then carries
         # an id rather than a borrow of the program's pixels, which is what
         # keeps caller-owned memory out of a buffer that outlives the call.
@@ -1994,8 +2078,15 @@ struct Canvas(Movable, _GeometryTarget):
             )
         )
 
+    def image(mut self, image: Image, position: Point, width: Int, height: Int):
+        """Draw `image` centred on `position`, stretched to `width` by
+        `height`. It follows the transform, and is tinted and faded by the
+        style's `tint` and `opacity`."""
+        self.image(image, position, Float64(width), Float64(height))
+
     def image(mut self, animator: Animator, position: Point):
-        """Render the animator's current frame, centred at `position`."""
+        """Draw the animator's current frame centred on `position`, at its
+        own size."""
         self.image(animator.animation().frame(animator.frame_index()), position)
 
     def image(
@@ -2005,6 +2096,8 @@ struct Canvas(Movable, _GeometryTarget):
         width: Float64,
         height: Float64,
     ):
+        """Draw the animator's current frame centred on `position`,
+        stretched to `width` by `height`."""
         self.image(
             animator.animation().frame(animator.frame_index()),
             position,
@@ -2012,12 +2105,11 @@ struct Canvas(Movable, _GeometryTarget):
             height,
         )
 
-    def image(mut self, image: Image, position: Point, width: Int, height: Int):
-        self.image(image, position, Float64(width), Float64(height))
-
     def image(
         mut self, animator: Animator, position: Point, width: Int, height: Int
     ):
+        """Draw the animator's current frame centred on `position`,
+        stretched to `width` by `height`."""
         self.image(animator, position, Float64(width), Float64(height))
 
     def text_color(mut self, color: Color):
@@ -2033,6 +2125,9 @@ struct Canvas(Movable, _GeometryTarget):
         self._style.font_size = size
 
     def font_size(mut self, size: Int):
+        """Text height in world units, scaled by autoscale like a coordinate.
+        Glyphs are rasterised at whole pixel sizes, so a fractional size rounds
+        once scaled."""
         self.font_size(Float64(size))
 
     def font_weight(mut self, weight: FontWeight):

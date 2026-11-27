@@ -64,6 +64,7 @@ struct Picture(Copyable, Drawable, Movable):
     def __init__(
         out self, image: Image, position: Point, width: Int, height: Int
     ):
+        """The image stretched to `width` by `height`."""
         self = Self(image, position, Float64(width), Float64(height))
 
     def bounds(self) -> Rectangle:
