@@ -39,9 +39,9 @@ Shapes and curves, the traits they share, and the collision tests: each shape's 
 
 ## [`create.color`](color/README.md)
 
-Colours: `Color` and `BlendMode`.
+Colours: `Color` and `BlendMode`, and the colour schemes that name colours by what they are for: `ColorScheme`, `ColorRole` and `OptionalColor`.
 
-- **Types:** [`Color`](color/color.md), [`BlendMode`](color/blendmode.md)
+- **Types:** [`Color`](color/color.md), [`BlendMode`](color/blendmode.md), [`ColorScheme`](color/colorscheme.md), [`ColorRole`](color/colorrole.md), [`OptionalColor`](color/optionalcolor.md)
 
 ## [`create.render`](render/README.md)
 
@@ -82,7 +82,7 @@ Data files: `Table` and `TableRow` for CSV and TSV, and `JSON`.
 
 ## [`create.ui`](ui/README.md)
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar`, `TextField`, `NumberField` and `Dropdown`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar`, `TextField`, `NumberField` and `Dropdown`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and the settings a `UI` draws them with, `StateLayers` and `FocusRing`.
 
-- **Types:** [`UI`](ui/ui.md), [`WidgetHandle`](ui/widgethandle.md), [`ColorScheme`](ui/colorscheme.md), [`StateLayers`](ui/statelayers.md), [`FocusRing`](ui/focusring.md), [`Button`](ui/button.md), [`ButtonVariant`](ui/buttonvariant.md), [`Checkbox`](ui/checkbox.md), [`Switch`](ui/switch.md), [`ChoiceGroup`](ui/choicegroup.md), [`Tabs`](ui/tabs.md), [`Label`](ui/label.md), [`Column`](ui/column.md), [`Row`](ui/row.md), [`Space`](ui/space.md), [`ScrollArea`](ui/scrollarea.md), [`Panel`](ui/panel.md), [`Slider`](ui/slider.md), [`ProgressBar`](ui/progressbar.md), [`TextField`](ui/textfield.md), [`NumberField`](ui/numberfield.md), [`Dropdown`](ui/dropdown.md)
+- **Types:** [`UI`](ui/ui.md), [`WidgetHandle`](ui/widgethandle.md), [`StateLayers`](ui/statelayers.md), [`FocusRing`](ui/focusring.md), [`Button`](ui/button.md), [`ButtonVariant`](ui/buttonvariant.md), [`Checkbox`](ui/checkbox.md), [`Switch`](ui/switch.md), [`ChoiceGroup`](ui/choicegroup.md), [`Tabs`](ui/tabs.md), [`Label`](ui/label.md), [`Column`](ui/column.md), [`Row`](ui/row.md), [`Space`](ui/space.md), [`ScrollArea`](ui/scrollarea.md), [`Panel`](ui/panel.md), [`Slider`](ui/slider.md), [`ProgressBar`](ui/progressbar.md), [`TextField`](ui/textfield.md), [`NumberField`](ui/numberfield.md), [`Dropdown`](ui/dropdown.md)
 - **Traits:** [`Widget`](ui/widget.md), [`Hoverable`](ui/hoverable.md), [`Clickable`](ui/clickable.md)

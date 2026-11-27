@@ -70,7 +70,10 @@ struct Menu(Program):
 
         # What the pages report, at the foot of the panel whatever the page.
         _ = ui.add(Space(), column, grow=1)
-        var message = ui.add(Label(""), column)
+        var message = ui.add(
+            Label("", style=Style(text_color=ColorRole.ON_SURFACE_VARIANT)),
+            column,
+        )
 
         return Menu(
             ui^,
@@ -84,14 +87,11 @@ struct Menu(Program):
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        # The dark theme switch picks the menu's colours.
+        # The dark theme switch picks the colours of the canvas, which the
+        # menu and everything styled with a `ColorRole` follow.
         var dark = self.toggles.dark_theme(self.ui)
-        var colors = ColorScheme.dark() if dark else ColorScheme.light()
-        self.ui.colors(colors)
-        self.ui[self.message].style = Style(
-            text_color=colors.on_surface_variant
-        )
-        canvas.background(colors.background)
+        canvas.colors(ColorScheme.dark() if dark else ColorScheme.light())
+        canvas.background(canvas.colors().background)
 
         self.ui.update(context, canvas)
         canvas.draw(self.ui)
@@ -107,7 +107,7 @@ struct Menu(Program):
             self.buttons.update(self.ui),
             self.toggles.update(self.ui),
             self.values.update(self.ui),
-            self.lists.update(self.ui, colors),
+            self.lists.update(self.ui),
         ]
         for report in reports:
             if report:

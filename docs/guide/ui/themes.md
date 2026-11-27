@@ -7,13 +7,12 @@ every widget of a kind, or the surface they sit on.
 
 ## Colours
 
-**A `UI` draws its widgets in a `ColorScheme`, set with `ui.colors(scheme)`.** Keep the colours
-where your own drawing can reach them too, and draw in them, so everything matches:
+**Widgets are drawn in a `ColorScheme`: the canvas's, set with `canvas.colors(scheme)`.** It lasts
+until changed, so set it once in `create`, and draw your own things in it too, so everything
+matches:
 
 ```mojo
 from create import *
-
-comptime COLORS = ColorScheme.dark()
 
 
 @fieldwise_init
@@ -23,13 +22,13 @@ struct Menu(Program):
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Menu:
+        canvas.colors(ColorScheme.dark())
         var ui = UI()
-        ui.colors(COLORS)
         var play = ui.add(Button("Play", Rectangle((0, 0), 160, 40)))
         return Menu(ui^, play)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        canvas.background(COLORS.background)
+        canvas.background(canvas.colors().background)
         self.ui.update(context, canvas)
         canvas.draw(self.ui)
         if self.ui[self.play].released():
@@ -40,17 +39,13 @@ def main() raises:
     run[Menu]("Menu")
 ```
 
-A `UI` given no colours draws in `ColorScheme.light()`, and `ui.colors()` reads back the ones it
-draws in. To change them, such as from a settings screen, set them again: the widgets take the new
-colours at the next `update`. A widget on its own, outside a `UI`, is drawn in the colours its
-`update` is given, the light ones unless told otherwise, and its own style changes any part of its
-look (see [Styling one widget](#styling-one-widget)):
+A canvas given no colours has `ColorScheme.light()`. To change them, such as from a settings screen,
+set them again: the widgets take the new colours at their next `update`. A widget on its own,
+outside a `UI`, is drawn in the canvas's colours too.
 
-```mojo
-# In `update`, with a `play: Button` field, on a dark screen:
-self.play.update(context, canvas, colors=ColorScheme.dark())
-canvas.draw(self.play)
-```
+**A `UI` can have colours of its own,** set with `ui.colors(scheme)`, such as for one dark panel on
+a light screen; `ui.colors(None)` follows the canvas's again. `ui.colors()` reads back the colours
+it draws in.
 
 `ColorScheme.light()` and `ColorScheme.dark()` are the two built-in schemes. Both take colours to
 replace their own, and a colour given without its partner for text gets black or white, whichever
@@ -76,6 +71,17 @@ A `ColorScheme`'s colours come in pairs of **roles**, each colour a widget is fi
 
 The roles are Material Design's. Use them for your own drawing too, so it matches the widgets
 whichever scheme you pick.
+
+**A style can name a role instead of a colour,** with `ColorRole`: `Style(fill=ColorRole.PRIMARY)`
+is filled with whichever `primary` the scheme in use has. The role becomes a colour when the style
+is applied, so a style written once follows the scheme when it changes. On a widget, the role is
+taken from the colours the widget is drawn in; drawn on the canvas, from the canvas's (see
+[Style](../drawing/style.md#colours-by-role)):
+
+```mojo
+# In `create`, building the `ui` field: a label in the quieter text colour, light or dark.
+_ = ui.add(Label("Saved", style=Style(text_color=ColorRole.ON_SURFACE_VARIANT)))
+```
 
 ## Colours from one colour
 

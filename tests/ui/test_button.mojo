@@ -124,7 +124,7 @@ def test_a_turned_button_is_hit_through_its_rotation() raises -> None:
     assert_true(button.hovered())
 
 
-def test_it_is_drawn_in_the_colours_its_update_is_given() raises -> None:
+def test_it_is_drawn_in_the_canvas_colours() raises -> None:
     var context = Context()
     point_at(context, (0, 90))  # away, so it isn't hovered
     for dark in [False, True]:
@@ -132,9 +132,8 @@ def test_it_is_drawn_in_the_colours_its_update_is_given() raises -> None:
         var button = Button("OK", _RECT)
         var canvas = _canvas()
         if dark:
-            button.update(context, canvas, colors=colors)
-        else:
-            button.update(context, canvas)  # the light colours
+            canvas.colors(colors)
+        button.update(context, canvas)  # the light colours unless set
         canvas.draw(button)
         assert_equal(canvas.color_at(_EDGE), colors.primary)
 

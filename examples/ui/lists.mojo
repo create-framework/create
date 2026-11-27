@@ -48,7 +48,13 @@ struct ListsPage(Movable):
         # on a surface of its own so it stands out from the panel.
         var pick = line(ui, page, "Level")
         self.surface = ui.add(
-            Panel(padding=LEVELS_PADDING), pick, width=0, grow=3
+            Panel(
+                padding=LEVELS_PADDING,
+                style=Style(fill=ColorRole.SURFACE_CONTAINER_HIGHEST),
+            ),
+            pick,
+            width=0,
+            grow=3,
         )
         var inside = ui.add(Column(), self.surface)
         var window = ui.add(ScrollArea(max_height=LEVELS_HEIGHT), inside)
@@ -60,11 +66,8 @@ struct ListsPage(Movable):
                 ui.add(Button(level, variant=ButtonVariant.TEXT), list)
             )
 
-    def update(self, mut ui: UI, colors: ColorScheme) -> Optional[String]:
-        """What the player did on this page this frame, to show them; the
-        list's surface takes `colors`."""
-        ui[self.surface].style = Style(fill=colors.surface_container_highest)
-
+    def update(self, ui: UI) -> Optional[String]:
+        """What the player did on this page this frame, to show them."""
         if ui[self.resolution].changed():
             return "Resolution: " + ui[self.resolution].selected_text()
         for level in self.levels:

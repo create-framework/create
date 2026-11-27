@@ -8,7 +8,7 @@ from create.render.style import _ResolvedStyle
 
 def _r(s: Style) -> _ResolvedStyle:
     """`s` applied to a fresh frame's style."""
-    return s._resolved()
+    return s._resolved(ColorScheme.light())
 
 
 def test_a_fresh_frames_style() raises -> None:
@@ -50,7 +50,7 @@ def test_an_empty_style_sets_nothing() raises -> None:
 
 def test_a_style_holds_only_what_it_was_given() raises -> None:
     var s = Style(fill=Color.RED, corner_radius=4)
-    assert_equal(s.fill.value(), Color.RED)
+    assert_true(s.fill == Color.RED)
     assert_equal(s.corner_radius.value(), 4.0)
     assert_false(Bool(s.fill_enabled))  # switched on when applied, not here
     assert_false(Bool(s.stroke))
@@ -135,8 +135,8 @@ def test_an_explicit_enabled_beside_a_part_wins() raises -> None:
 def test_over_takes_each_part_from_the_top_style_first() raises -> None:
     var base = Style(fill=Color.WHITE, stroke=Color.BLUE, corner_radius=12)
     var s = Style(fill=Color.RED, font_size=20).over(base)
-    assert_equal(s.fill.value(), Color.RED)
-    assert_equal(s.stroke.value(), Color.BLUE)
+    assert_true(s.fill == Color.RED)
+    assert_true(s.stroke == Color.BLUE)
     assert_equal(s.corner_radius.value(), 12.0)
     assert_equal(s.font_size.value(), 20.0)
     assert_false(Bool(s.text_color))
@@ -191,6 +191,35 @@ def test_style_writes_only_what_it_sets() raises -> None:
     )
 
 
+def test_a_role_is_a_colour_of_the_scheme_it_is_applied_in() raises -> None:
+    var s = Style(fill=ColorRole.PRIMARY, text_color=ColorRole.ON_PRIMARY)
+    assert_true(s.fill.role().value() == ColorRole.PRIMARY)
+    var dark = s._resolved(ColorScheme.dark())
+    assert_equal(dark.fill_color, ColorScheme.dark().primary)
+    assert_equal(dark.text_color, ColorScheme.dark().on_primary)
+    assert_true(dark.fill_enabled)
+    assert_equal(_r(s).fill_color, ColorScheme.light().primary)
+
+
+def test_a_style_prints_a_role_by_its_name() raises -> None:
+    assert_equal(
+        String(Style(fill=ColorRole.SURFACE_CONTAINER)),
+        "Style(fill=ColorRole.SURFACE_CONTAINER)",
+    )
+
+
+def test_a_canvas_draws_a_role_in_its_colours() raises -> None:
+    var canvas = Canvas(40, 40, antialiasing=Antialiasing.OFF)
+    canvas.colors(ColorScheme.dark())
+    with canvas.style(Style(fill=ColorRole.PRIMARY, stroke_enabled=False)):
+        canvas.rectangle((-10, 0), 20, 40)
+    with canvas.style(fill=ColorRole.TERTIARY, stroke_enabled=False):
+        canvas.rectangle((10, 0), 20, 40)
+    assert_equal(canvas.color_at((-10, 0)), ColorScheme.dark().primary)
+    assert_equal(canvas.color_at((10, 0)), ColorScheme.dark().tertiary)
+    assert_equal(canvas.colors().primary, ColorScheme.dark().primary)
+
+
 def test_stroke_cap_does_not_switch_the_stroke_on() raises -> None:
     var s = _r(Style(stroke_enabled=False, stroke_cap=StrokeCap.SQUARE))
     assert_false(s.stroke_enabled)
@@ -224,13 +253,18 @@ def test_stroke_cap_prints_its_name() raises -> None:
 
 
 def test_shadow_is_visible_only_when_enabled_and_opaque_enough() raises -> None:
-    assert_false(Style()._resolved()._paint()._shadow_visible())
+    assert_false(
+        Style()._resolved(ColorScheme.light())._paint()._shadow_visible()
+    )
     assert_true(
-        Style(shadow_enabled=True)._resolved()._paint()._shadow_visible()
+        Style(shadow_enabled=True)
+        ._resolved(ColorScheme.light())
+        ._paint()
+        ._shadow_visible()
     )
     assert_false(
         Style(shadow=Color.TRANSPARENT, shadow_enabled=True)
-        ._resolved()
+        ._resolved(ColorScheme.light())
         ._paint()
         ._shadow_visible()
     )
@@ -255,14 +289,14 @@ def test_fill_gradient_beside_fill_keeps_both() raises -> None:
 def test_fill_visibility_follows_the_gradient() raises -> None:
     assert_true(
         Style(fill_gradient=Gradient.linear(Color.TRANSPARENT, Color.RED))
-        ._resolved()
+        ._resolved(ColorScheme.light())
         ._paint()
         ._fill_visible()
     )
     var clear = Gradient.linear(Color.TRANSPARENT, Color.TRANSPARENT)
     assert_false(
         Style(fill=Color.RED, fill_gradient=clear)
-        ._resolved()
+        ._resolved(ColorScheme.light())
         ._paint()
         ._fill_visible()
     )
@@ -289,14 +323,20 @@ def test_fractional_sizes_round_once_scaled() raises -> None:
     at 2 pixels a unit is exactly 3 pixels."""
     var s = Style(stroke_thickness=1.5, font_size=13.5)
     assert_equal(
-        stroke_thickness_px(s._resolved()._paint(), Transform(scale=2.0), 2.0),
+        stroke_thickness_px(
+            s._resolved(ColorScheme.light())._paint(), Transform(scale=2.0), 2.0
+        ),
         3,
     )
     assert_equal(
-        stroke_thickness_px(s._resolved()._paint(), Transform(scale=1.0), 1.0),
+        stroke_thickness_px(
+            s._resolved(ColorScheme.light())._paint(), Transform(scale=1.0), 1.0
+        ),
         2,
     )
-    assert_equal(_pixel_size(s._resolved()._text_style(), 2.0), 27)
+    assert_equal(
+        _pixel_size(s._resolved(ColorScheme.light())._text_style(), 2.0), 27
+    )
 
 
 def test_unset_number_keywords_take_none_or_any_number() raises -> None:

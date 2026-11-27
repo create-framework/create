@@ -44,7 +44,7 @@ page:
 | [mojo](docs/guide/basics/mojo.md) | the Mojo a program needs, explained for newcomers: numbers, `mut`, structs, `Optional`, `raises`/`try`, `^`, `ref` |
 | [coming from processing](docs/guide/basics/coming-from-processing.md) | how Create differs from Processing, or a Processing call's equivalent |
 | [the canvas](docs/guide/drawing/canvas.md) | `canvas.draw` and the shape calls, `Drawable`, the background and autoclear, `clear`, transforms and guards, antialiasing, clipping |
-| [style](docs/guide/drawing/style.md) | `Style` as a set of changes and `over`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, tint, opacity, blend modes |
+| [style](docs/guide/drawing/style.md) | `Style` as a set of changes and `over`, the defaults, fill and stroke switches, `canvas.style(...)`, corner radius as style, colours by role (`ColorRole`, `canvas.colors`), tint, opacity, blend modes |
 | [colours](docs/guide/drawing/colours.md) | `Color`: channels and alpha, named colours, hex, HSV, OKLCH, `lerp`, `luminance` |
 | [strokes](docs/guide/drawing/strokes.md) | stroke thickness, `StrokeAlign`, `StrokeCap`, `StrokeDash` |
 | [gradients](docs/guide/drawing/gradients.md) | `Gradient`, linear and radial, stops, how a gradient fits a shape |
@@ -58,7 +58,7 @@ page:
 | [gamepads](docs/guide/interaction/gamepads.md) | `Gamepad`, `GamepadButton`, sticks, triggers, rumble |
 | [widgets](docs/guide/ui/widgets.md) | the `ui` package: widgets as values (`Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Slider`, `ProgressBar`, `NumberField`, `Dropdown`, `Label`, `Panel`), tooltips with `ui.tooltip`, switching pages with `Tabs` and `ui.visible`, `update` then `canvas.draw`, `pressed`/`down`/`released`/`changed`, the `UI` tree with `add`, `WidgetHandle`, `ui[handle]` and `ui.get`, screen or world by `canvas.overlay()`, laying out with `Column`, `Row` and `Space`, `grow`, `width`, `height` and `align` on `ui.add`, cross-axis `align`, `Panel(padding=)`, scrolling with `ScrollArea` and `ui.scroll_to`, drawing your own things among widgets, disabled widgets and `ui.enabled`, hiding and removing widgets with `ui.visible` and `ui.remove` |
 | [focus and navigation](docs/guide/ui/focus.md) | focus in a `UI`, `ui.focus`/`clear_focus`/`has_focus`, Tab and keys on widgets, gamepad navigation, focus rings, `wants_keyboard`/`wants_mouse`, several `UI`s |
-| [themes and styling](docs/guide/ui/themes.md) | `ColorScheme` and its roles, `ui.colors`, `ColorScheme.from_seed`, the `UI`'s settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), styling a widget with `Style` (one keyword per part, each part a shape), `ui.style` for every widget of a kind, panels |
+| [themes and styling](docs/guide/ui/themes.md) | `ColorScheme` and its roles, `canvas.colors` and `ui.colors`, `ColorRole` in a widget's style, `ColorScheme.from_seed`, the `UI`'s settings (`corner_radius`, `spacing`, `control_height`, `state_layers`, `focus_ring`), styling a widget with `Style` (one keyword per part, each part a shape), `ui.style` for every widget of a kind, panels |
 | [time](docs/guide/motion/time.md) | `context.time` and moving by `delta`, frames and the frame rate, the time scale and pause, `Clock`, `DateTime` |
 | [tweens](docs/guide/motion/tweens.md) | `Tween` |
 | [animations](docs/guide/motion/animations.md) | `Animation` and `Animator` |

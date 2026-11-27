@@ -15,7 +15,7 @@ internals](#package-internals).
 | `app` | `src/create/app/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
 | `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `FileNaming` (how a capture's file is named), `Gradient` (with the ramp and dither both backends share), `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
-| `color` | `src/create/color/` | `Color`, `BlendMode` |
+| `color` | `src/create/color/` | `Color`, `BlendMode`, `ColorScheme` (the colours of a scheme, light, dark or from a seed), `ColorRole` (a colour named by what it is for) and `OptionalColor` (the type of a style's colour keywords, a colour or a role) |
 | `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `OptionalNumber` (the type of number keywords such as `blur=12`), `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, `lerp`, `map` and the other scalar helpers, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock that playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Geometry`/`Shape`/`Curve` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. Values and tests only: how a shape is drawn is `render`'s. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
@@ -24,7 +24,7 @@ internals](#package-internals).
 | `text` | `src/create/text/` | `Font` (FreeType faces, glyph rasterisation), `FontWeight`, the packaged Noto faces (compiled in: `_noto.mojo`, generated from `fonts/`) |
 | `audio` | `src/create/audio/` | `Sound` (WAV/OGG/FLAC/MP3), `Audio` (the device), `Playback` |
 | `data` | `src/create/data/` | `Table`/`TableRow` (CSV/TSV), `JSON`, `JSONKind` |
-| `ui` | `src/create/ui/` | The widgets, each a value a program updates and draws with `canvas.draw` (`Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Slider`, `ProgressBar`, `TextField`, `NumberField`, `Dropdown`, `Label`, `Panel`, with `ButtonVariant`), and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, the tree that keeps widgets together, lays them out (`Column`, `Row`, `Space`, with `grow`, `width`, `height` and `align` given to `ui.add`) and scrolls them (`ScrollArea`), draws popups such as a dropdown's list and tooltips (`ui.tooltip`) over everything, moves focus between them and shares the devices with other `UI`s, reached through `WidgetHandle`s; `ColorScheme` (the colours widgets are drawn in) with `StateLayers` and `FocusRing`; the theme a widget's look is resolved from, and the text editing behind `TextField` (`_TextBuffer`) |
+| `ui` | `src/create/ui/` | The widgets, each a value a program updates and draws with `canvas.draw` (`Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Slider`, `ProgressBar`, `TextField`, `NumberField`, `Dropdown`, `Label`, `Panel`, with `ButtonVariant`), and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, the tree that keeps widgets together, lays them out (`Column`, `Row`, `Space`, with `grow`, `width`, `height` and `align` given to `ui.add`) and scrolls them (`ScrollArea`), draws popups such as a dropdown's list and tooltips (`ui.tooltip`) over everything, moves focus between them and shares the devices with other `UI`s, reached through `WidgetHandle`s; `StateLayers` and `FocusRing`; the theme a widget's look is resolved from, and the text editing behind `TextField` (`_TextBuffer`) |
 | `_bytes` | `src/create/_bytes.mojo` | Internal leaf: little-endian integers, C strings, base64 |
 | `_path` | `src/create/_path.mojo` | Internal leaf: `_caller_relative`, how every public function taking a file path resolves it against the caller's source file |
 | `_library` | `src/create/_library.mojo` | Internal leaf: `load_library`, every FFI binding's way to open a shared library (by soname, `.so.N`/`.N.dylib`, the pixi environment first) |
@@ -200,8 +200,10 @@ The rules behind it, and what each one buys:
   - **`geometry`** holds values and their tests, so collision code (`overlaps`, `contains`) never
     sees `render`: `render` decides how each shape and curve is drawn.
   - **`color`** sits below `image` so that `Image.pixel` can return a `Color` without a
-    `render`↔`image` cycle. `Gradient` is `render`'s, not `color`'s: it has points, and a transform
-    that fits it to a shape, so it is drawing paint, like `StrokeDash`, rather than a colour value.
+    `render`↔`image` cycle. It holds `ColorScheme` and `ColorRole` too, so a `render` `Style` can
+    name a colour by role and the canvas can resolve it, with `ui` drawing in the same schemes.
+    `Gradient` is `render`'s, not `color`'s: it has points, and a transform that fits it to a shape,
+    so it is drawing paint, like `StrokeDash`, rather than a colour value.
   - **`time`** holds the layer's only shared state, the run clock `_run_clock`. It is process-wide,
     and `app` copies `Context.time` into it once a frame, so a playhead can read the time without
     the clock being passed to it as an argument.

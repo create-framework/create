@@ -1,6 +1,6 @@
 # create.ui
 
-The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar`, `TextField`, `NumberField` and `Dropdown`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and `ColorScheme`, the colours they are drawn in.
+The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGroup`, `Tabs`, `Label`, `Panel`, `Slider`, `ProgressBar`, `TextField`, `NumberField` and `Dropdown`, which are values a program keeps, updates and draws with `canvas.draw`, and the traits they share (`Widget`, `Hoverable`, `Clickable`); `UI`, which keeps widgets together, lays them out with `Column`, `Row` and `Space` and scrolls them with `ScrollArea`, reached through `WidgetHandle`s; and the settings a `UI` draws them with, `StateLayers` and `FocusRing`.
 
 ## Types
 
@@ -8,7 +8,6 @@ The user interface: widgets, such as `Button`, `Checkbox`, `Switch`, `ChoiceGrou
 |---|---|
 | [`UI`](ui.md) | Widgets kept together: added once, then updated and drawn each frame in one call each. |
 | [`WidgetHandle`](widgethandle.md) | Where a widget of type `W` is in a `UI`: what `ui.add` returns, and how the program reaches the widget again, as `ui[handle]`. |
-| [`ColorScheme`](colorscheme.md) | The colours widgets are drawn in, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. A program gives its scheme to a `UI` with `ui.colors(scheme)`, and draws its own things in it too, such as `canvas.background(scheme.background)`. |
 | [`StateLayers`](statelayers.md) | How strongly a widget shows its state. |
 | [`FocusRing`](focusring.md) | The ring drawn around a widget focused from the keyboard, a gamepad or `ui.focus`: its `thickness`, the `gap` between it and the widget, and its `color`, the scheme's `secondary` unless given. It follows the widget's shape, its corners rounded by the widget's own radius grown by the gap. |
 | [`Button`](button.md) | A button with a line of text on it, which the mouse clicks. |

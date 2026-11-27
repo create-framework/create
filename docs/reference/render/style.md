@@ -52,26 +52,26 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 
 ## Fields
 
-- `fill: Optional[Color]`
+- `fill: OptionalColor`
 - `fill_gradient: Optional[Gradient]`
 - `fill_enabled: Optional[Bool]`
-- `stroke: Optional[Color]`
+- `stroke: OptionalColor`
 - `stroke_thickness: Optional[Float64]`
 - `stroke_enabled: Optional[Bool]`
 - `stroke_alignment: Optional[StrokeAlign]`
 - `stroke_cap: Optional[StrokeCap]`
 - `stroke_dash: Optional[StrokeDash]`
 - `corner_radius: Optional[Float64]`
-- `text_color: Optional[Color]`
+- `text_color: OptionalColor`
 - `font: Optional[Font]`
 - `font_size: Optional[Float64]`
 - `font_weight: Optional[FontWeight]`
 - `font_italic: Optional[Bool]`
 - `text_alignment: Optional[Align]`
-- `tint: Optional[Color]`
+- `tint: OptionalColor`
 - `opacity: Optional[Float64]`
 - `blend_mode: Optional[BlendMode]`
-- `shadow: Optional[Color]`
+- `shadow: OptionalColor`
 - `shadow_offset: Optional[Vector]`
 - `shadow_blur: Optional[Float64]`
 - `shadow_spread: Optional[Float64]`
@@ -86,26 +86,26 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 def __init__(
     out self,
     *,
-    fill: Optional[Color] = None,
+    fill: OptionalColor = None,
     fill_gradient: Optional[Gradient] = None,
     fill_enabled: Optional[Bool] = None,
-    stroke: Optional[Color] = None,
+    stroke: OptionalColor = None,
     stroke_thickness: OptionalNumber = None,
     stroke_enabled: Optional[Bool] = None,
     stroke_alignment: Optional[StrokeAlign] = None,
     stroke_cap: Optional[StrokeCap] = None,
     stroke_dash: Optional[StrokeDash] = None,
     corner_radius: OptionalNumber = None,
-    text_color: Optional[Color] = None,
+    text_color: OptionalColor = None,
     font: Optional[Font] = None,
     font_size: OptionalNumber = None,
     font_weight: Optional[FontWeight] = None,
     font_italic: Optional[Bool] = None,
     text_alignment: Optional[Align] = None,
-    tint: Optional[Color] = None,
+    tint: OptionalColor = None,
     opacity: OptionalNumber = None,
     blend_mode: Optional[BlendMode] = None,
-    shadow: Optional[Color] = None,
+    shadow: OptionalColor = None,
     shadow_offset: Optional[Vector] = None,
     shadow_blur: OptionalNumber = None,
     shadow_spread: OptionalNumber = None,

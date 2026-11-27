@@ -5,7 +5,7 @@ from create.geometry import Line, Rectangle
 from create.math import Point, Vector
 from create.render import Align, Canvas, Style, Text
 from ._pointer import _Pointer
-from .color_scheme import ColorScheme
+from create.color.color_scheme import ColorScheme
 from ._theme import _CheckboxLook, _Theme
 from ._layout import _UNSIZED
 from .text_field import _measure
@@ -98,19 +98,11 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
         """Read what the mouse did to it this frame, ticking or unticking it
         on a click, and work out its look: call it before drawing it.
 
-        It is drawn in the light colours; give it others with `colors`."""
-        self._update(context, canvas, _Theme.default(), free=True)
-
-    def update(
-        mut self,
-        mut context: Context,
-        mut canvas: Canvas,
-        *,
-        colors: ColorScheme,
-    ) raises:
-        """`update`, drawn in `colors`, such as `ColorScheme.dark()` on a
-        dark screen."""
-        self._update(context, canvas, _Theme.default(colors), free=True)
+        It is drawn in the canvas's colours,
+        `canvas.colors()`."""
+        self._update(
+            context, canvas, _Theme.default(canvas.colors()), free=True
+        )
 
     def _update(
         mut self,

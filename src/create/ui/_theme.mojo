@@ -18,7 +18,7 @@ from create.text import FontWeight
 from create.render import Align, StrokeAlign, StrokeCap, StrokeDash, Style
 from create.render.style import _ResolvedStyle
 from .button_variant import ButtonVariant
-from .color_scheme import ColorScheme, _readable_on
+from create.color.color_scheme import ColorScheme, _readable_on
 from .focus_ring import FocusRing
 from .state_layers import StateLayers
 
@@ -374,7 +374,7 @@ struct _Theme(Copyable, Movable):
             _variant_look(variant, colors).over(_label_text())
         )
         var resolved = _ResolvedStyle()
-        resolved.apply(look)
+        resolved.apply(look, self.colors)
         if disabled:
             # Material's disabled look: everything in the text colour,
             # faded, whatever the variant
@@ -439,12 +439,14 @@ struct _Theme(Copyable, Movable):
             )
         )
         var resolved = _ResolvedStyle()
-        resolved.apply(look)
+        resolved.apply(look, self.colors)
         # a panel with no fill shows what is beneath it
         var surface = (
             resolved.fill_color if resolved.fill_enabled else self.surface
         )
-        var content = look.text_color.or_else(_content_on(self.colors, surface))
+        var content = look.text_color.or_else(
+            _content_on(self.colors, surface), self.colors
+        )
         return _PanelLook(resolved, surface, content)
 
     def label(
@@ -456,7 +458,7 @@ struct _Theme(Copyable, Movable):
             Style(text_color=self.content).over(_body_text())
         )
         var resolved = _ResolvedStyle()
-        resolved.apply(look)
+        resolved.apply(look, self.colors)
         resolved.text_alignment = alignment.or_else(
             look.text_alignment.or_else(Align.CENTER)
         )
@@ -488,24 +490,27 @@ struct _Theme(Copyable, Movable):
             )
         )
         var track = _ResolvedStyle()
-        track.apply(track_look)
+        track.apply(track_look, self.colors)
         var active = _ResolvedStyle()
         active.apply(
             call_active_track.over(block.slider_active_track).over(
                 Style(stroke=colors.primary).over(track_look)
-            )
+            ),
+            self.colors,
         )
         var handle = _ResolvedStyle()
         handle.apply(
             call_handle.over(block.slider_handle).over(
                 Style(stroke=colors.primary, stroke_thickness=20)
-            )
+            ),
+            self.colors,
         )
         var outline = _ResolvedStyle()
         outline.apply(
             call_handle_outline.over(block.slider_handle_outline).over(
                 Style(fill_enabled=False, stroke_enabled=False)
-            )
+            ),
+            self.colors,
         )
         if disabled:
             var states = self.state_layers
@@ -551,12 +556,13 @@ struct _Theme(Copyable, Movable):
             )
         )
         var track = _ResolvedStyle()
-        track.apply(track_look)
+        track.apply(track_look, self.colors)
         var indicator = _ResolvedStyle()
         indicator.apply(
             call_indicator.over(block.progress_bar_indicator).over(
                 Style(stroke=colors.primary).over(track_look)
-            )
+            ),
+            self.colors,
         )
         if disabled:
             var states = self.state_layers
@@ -599,10 +605,11 @@ struct _Theme(Copyable, Movable):
                     Style(fill=colors.primary, stroke_enabled=False).over(
                         track_look
                     )
-                )
+                ),
+                self.colors,
             )
         else:
-            track.apply(track_look)
+            track.apply(track_look, self.colors)
         var handle = _ResolvedStyle()
         handle.apply(
             call_handle.over(block.switch_handle).over(
@@ -610,13 +617,15 @@ struct _Theme(Copyable, Movable):
                     stroke=colors.on_primary if on else colors.outline,
                     stroke_thickness=18 if on else 14,
                 )
-            )
+            ),
+            self.colors,
         )
         var text = _ResolvedStyle()
         text.apply(
             call_text.over(block.switch_text_style).over(
                 Style(text_color=self.content).over(_body_text())
-            )
+            ),
+            self.colors,
         )
         if disabled:
             var states = self.state_layers
@@ -668,24 +677,27 @@ struct _Theme(Copyable, Movable):
             )
         )
         var circle = _ResolvedStyle()
-        circle.apply(circle_look)
+        circle.apply(circle_look, self.colors)
         var selected = _ResolvedStyle()
         selected.apply(
             call_selected_circle.over(block.choice_group_selected_circle).over(
                 Style(stroke=colors.primary).over(circle_look)
-            )
+            ),
+            self.colors,
         )
         var dot = _ResolvedStyle()
         dot.apply(
             call_dot.over(block.choice_group_dot).over(
                 Style(stroke=colors.primary, stroke_thickness=10)
-            )
+            ),
+            self.colors,
         )
         var text = _ResolvedStyle()
         text.apply(
             call_text.over(block.choice_group_text_style).over(
                 Style(text_color=self.content).over(_body_text())
-            )
+            ),
+            self.colors,
         )
         var halo = _ResolvedStyle(fill=Color(0, 0, 0, 0), stroke_enabled=False)
         if disabled:
@@ -737,18 +749,20 @@ struct _Theme(Copyable, Movable):
             ).over(_label_text())
         )
         var tab = _ResolvedStyle()
-        tab.apply(tab_look)
+        tab.apply(tab_look, self.colors)
         var selected = _ResolvedStyle()
         selected.apply(
             call_selected_tab.over(block.tabs_selected_tab).over(
                 Style(text_color=colors.primary).over(tab_look)
-            )
+            ),
+            self.colors,
         )
         var indicator = _ResolvedStyle()
         indicator.apply(
             call_indicator.over(block.tabs_indicator).over(
                 Style(stroke=colors.primary, stroke_thickness=3)
-            )
+            ),
+            self.colors,
         )
         var layer = _ResolvedStyle(fill=Color(0, 0, 0, 0), stroke_enabled=False)
         if disabled:
@@ -801,7 +815,7 @@ struct _Theme(Copyable, Movable):
             ).over(_body_text())
         )
         var field = _ResolvedStyle()
-        field.apply(field_look)
+        field.apply(field_look, self.colors)
         var list = _ResolvedStyle()
         list.apply(
             call_list.over(block.dropdown_list).over(
@@ -814,15 +828,18 @@ struct _Theme(Copyable, Movable):
                     shadow_offset=Vector(0, -4),
                     shadow_blur=16,
                 )
-            )
+            ),
+            self.colors,
         )
         var item_look = call_item.over(block.dropdown_item).over(
             Style(text_color=colors.on_surface).over(_body_text())
         )
         var item = _ResolvedStyle()
-        item.apply(item_look)
+        item.apply(item_look, self.colors)
         var chosen = _ResolvedStyle()
-        chosen.apply(Style(text_color=colors.primary).over(item_look))
+        chosen.apply(
+            Style(text_color=colors.primary).over(item_look), self.colors
+        )
         var chevron = _ResolvedStyle(
             stroke=colors.on_surface_variant,
             stroke_thickness=2,
@@ -886,7 +903,7 @@ struct _Theme(Copyable, Movable):
             )
         )
         var box = _ResolvedStyle()
-        box.apply(look)
+        box.apply(look, self.colors)
         return _TooltipLook(box, _text_look(box, Align.CENTER))
 
     def ring_reach(self) -> Float64:
@@ -924,7 +941,8 @@ struct _Theme(Copyable, Movable):
                     stroke_thickness=thickness,
                     stroke_cap=StrokeCap.ROUND,
                 )
-            )
+            ),
+            self.colors,
         )
         var thumb = _ResolvedStyle()
         thumb.apply(
@@ -934,7 +952,8 @@ struct _Theme(Copyable, Movable):
                     stroke_thickness=thickness,
                     stroke_cap=StrokeCap.ROUND,
                 )
-            )
+            ),
+            self.colors,
         )
         if disabled:
             var states = self.state_layers
@@ -986,10 +1005,11 @@ struct _Theme(Copyable, Movable):
                     Style(fill=colors.primary, stroke_enabled=False).over(
                         box_look
                     )
-                )
+                ),
+                self.colors,
             )
         else:
-            box.apply(box_look)
+            box.apply(box_look, self.colors)
         var tick = _ResolvedStyle()
         tick.apply(
             call_tick.over(block.checkbox_tick).over(
@@ -998,13 +1018,15 @@ struct _Theme(Copyable, Movable):
                     stroke_thickness=2,
                     stroke_cap=StrokeCap.ROUND,
                 )
-            )
+            ),
+            self.colors,
         )
         var text = _ResolvedStyle()
         text.apply(
             call_label.over(block.checkbox_label_style).over(
                 Style(text_color=self.content).over(_body_text())
-            )
+            ),
+            self.colors,
         )
         if disabled:
             var faded = _faded(
@@ -1055,12 +1077,13 @@ struct _Theme(Copyable, Movable):
             Style(text_color=colors.on_surface).over(_body_text())
         )
         var typed = _ResolvedStyle()
-        typed.apply(text_look)
+        typed.apply(text_look, self.colors)
         var hint = _ResolvedStyle()
         hint.apply(
             call_placeholder.over(block.text_field_placeholder_style).over(
                 Style(text_color=colors.on_surface_variant).over(text_look)
-            )
+            ),
+            self.colors,
         )
         var container_look = call_container.over(
             block.text_field_container
@@ -1073,7 +1096,7 @@ struct _Theme(Copyable, Movable):
             )
         )
         var field = _ResolvedStyle()
-        field.apply(container_look)
+        field.apply(container_look, self.colors)
         if focused and not disabled:
             # by default, the outline turns `primary` and twice as thick,
             # and a field with no outline stays without one
@@ -1087,7 +1110,8 @@ struct _Theme(Copyable, Movable):
             field.apply(
                 call_focused.over(block.text_field_focused)
                 .over(outlined)
-                .over(container_look)
+                .over(container_look),
+                self.colors,
             )
         if disabled:
             var states = self.state_layers
@@ -1116,13 +1140,15 @@ struct _Theme(Copyable, Movable):
         selection.apply(
             call_selection.over(block.text_field_selection).over(
                 Style(fill=colors.primary.with_alpha(70), stroke_enabled=False)
-            )
+            ),
+            self.colors,
         )
         var caret = _ResolvedStyle()
         caret.apply(
             call_caret.over(block.text_field_caret).over(
                 Style(stroke=colors.primary, stroke_thickness=2)
-            )
+            ),
+            self.colors,
         )
         return _TextFieldLook(field, typed, hint, selection, caret)
 

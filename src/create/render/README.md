@@ -100,9 +100,11 @@ than reading another kind's numbers.
 `Optional` field per part, and a part left unset changes nothing. The canvas's own style, the one
 its setters write and every command reads, is an internal `_ResolvedStyle` with every part decided
 (`style.mojo`). `canvas.style(s)` applies `s` to it through `_ResolvedStyle.apply`, which mirrors
-the setters' rules, and its guard restores the whole resolved style; the keyword form calls the
-setters directly, which measured faster than building a `Style` to apply. `ui` resolves its widgets'
-looks the same way and draws them with `canvas._with_style`. Below, "the style" is the resolved one.
+the setters' rules and turns a colour given as a `ColorRole` (an `OptionalColor`) into the colour
+`_PersistentCanvasState.colors` gives it, and its guard restores the whole resolved style; the
+keyword form calls the setters directly, which measured faster than building a `Style` to apply.
+`ui` resolves its widgets' looks the same way and draws them with `canvas._with_style`. Below, "the
+style" is the resolved one.
 
 **A command keeps what it paints with, not the `Style`.** `paint` is a `Paint` (`_paint.mojo`): the
 style's fill, stroke, shadow and blend mode, field for field, from `style._paint()`, with tint and
@@ -129,7 +131,7 @@ boundary:
 
 - `_PersistentCanvasState`: the `Backend` and the `Viewport`, which `_release` moves in and back
   out, and the frame-wide settings a program sets on the canvas: `autoclear`, `letterbox_color`,
-  and, through the backend, `antialiasing`.
+  `colors` and, through the backend, `antialiasing`.
 - `Context`, in `app`, owned by the loop and home to `time` and `input`. Its settings that map the
   design onto the window reach `Canvas` as plain values, through `_set_viewport`.
 
