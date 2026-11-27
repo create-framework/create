@@ -101,6 +101,19 @@ def test_its_handle_is_rounded_inside_its_track() raises -> None:
     assert_equal(round.color_at((-68, 0)), colors.on_primary)
 
 
+def test_a_hovered_switch_steps_its_track_and_keeps_its_handle() raises -> None:
+    var colors = ColorScheme.light()
+    var context = Context()
+    point_at(context, (-90, 0))  # over the track
+    var on = Switch("Music", _RECT, on=True)
+    var canvas = Canvas(400, 300, antialiasing=Antialiasing.OFF)
+    on.update(context, canvas)
+    canvas.draw(on)
+    assert_true(on.hovered())
+    assert_true(canvas.color_at((-90, 0)) != colors.primary)
+    assert_equal(canvas.color_at((-68, 0)), colors.on_primary)
+
+
 def test_a_ui_measures_it_and_rings_its_track() raises -> None:
     var ui = UI()
     var music = ui.add(Switch("Music"))
