@@ -7,7 +7,7 @@ from create.color import Color
 struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The ring drawn around a widget focused from the keyboard, a gamepad
     or `ui.focus`: its `thickness`, the `gap` between it and the widget,
-    and its `color`, the scheme's `secondary` unless given. It follows the
+    and its `color`, the scheme's `primary` unless given. It follows the
     widget's shape, its corners rounded by the widget's own radius grown by
     the gap."""
 
@@ -16,6 +16,6 @@ struct FocusRing(Copyable, ImplicitlyCopyable, Movable, Writable):
     var color: Optional[Color]
 
     def __init__(out self):
-        self.thickness = 3
+        self.thickness = 2
         self.gap = 2
         self.color = None

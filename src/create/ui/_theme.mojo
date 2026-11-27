@@ -1178,7 +1178,7 @@ struct _Theme(Copyable, Movable):
         """The focus ring's style: an outline outside the widget's shape."""
         return _ResolvedStyle(
             fill_enabled=False,
-            stroke=self.focus_ring.color.or_else(self.colors.secondary),
+            stroke=self.focus_ring.color.or_else(self.colors.primary),
             stroke_thickness=self.focus_ring.thickness,
             stroke_alignment=StrokeAlign.OUTSIDE,
         )

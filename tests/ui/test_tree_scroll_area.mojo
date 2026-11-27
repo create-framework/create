@@ -10,7 +10,7 @@ comptime _GAP = 8.0
 comptime _CONTROL = 40.0
 comptime _CONTENT = 4 * _CONTROL + 3 * _GAP
 """Four buttons and the gaps between them."""
-comptime _REACH = 5.0
+comptime _REACH = 4.0
 """How far the focus ring reaches outside a widget, its gap and thickness:
 the room a scroll area leaves round its column."""
 comptime _RUN = _CONTENT + 2 * _REACH
@@ -280,7 +280,7 @@ def test_a_focused_widget_s_ring_shows_whole_in_a_scroll_area() raises -> None:
     var canvas = Canvas(400, 300, antialiasing=Antialiasing.OFF)
     ui.update(context, canvas)
     canvas.draw(ui)
-    var ring = ui.colors().secondary
+    var ring = ui.colors().primary
     var d = ui[buttons[3]].rect
     # the middle of the ring, beneath D and at its left
     assert_equal(canvas.color_at((0, d.bottom() - 3.5)), ring)
