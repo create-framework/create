@@ -15,16 +15,16 @@ comptime HIT = Color.RED
 comptime SHADOW = Color(0, 0, 0, 170)
 comptime BALL = Color.BLUE
 
-comptime PIE = Point(-260.0, -20.0)
+comptime PIE = Point(-260, -20)
 comptime PIE_RADIUS = 190.0
 comptime POP = 16.0
 """How far the slice under the mouse slides out, in design units."""
 
-comptime PACMAN = Point(240.0, -20.0)
+comptime PACMAN = Point(240, -20)
 comptime CHEW = 4.0
 """How fast the pac-man's mouth works; it shuts every `PI / CHEW` seconds."""
 
-comptime BALL_HOME = Point(500.0, -280.0)
+comptime BALL_HOME = Point(500, -280)
 comptime RESPAWN = 3.0
 """Seconds an eaten ball stays gone before it is back at `BALL_HOME`."""
 
@@ -62,7 +62,7 @@ struct App(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
         return App(
             ball=Circle(BALL_HOME, 40),
-            respawn_in=0.0,
+            respawn_in=0,
             dragging=False,
             bites=0,
         )
@@ -76,17 +76,17 @@ struct App(Program):
         # sector of its own, the rest of the turn.
         var chew = context.time.elapsed * CHEW
         var gape = 0.4 + 0.35 * abs(sin(chew))
-        var pacman = Sector(PACMAN, 150, gape, TAU - 2.0 * gape)
-        var mouth = Sector(pacman.position, pacman.radius, -gape, 2.0 * gape)
+        var pacman = Sector(PACMAN, 150, gape, TAU - 2 * gape)
+        var mouth = Sector(pacman.position, pacman.radius, -gape, 2 * gape)
 
         # A swallowed ball comes back home after RESPAWN seconds.
-        if self.respawn_in > 0.0:
+        if self.respawn_in > 0:
             self.respawn_in -= context.time.delta
-            if self.respawn_in <= 0.0:
-                self.respawn_in = 0.0
+            if self.respawn_in <= 0:
+                self.respawn_in = 0
                 self.ball = self.ball.move_to(BALL_HOME)
 
-        var eaten = self.respawn_in > 0.0
+        var eaten = self.respawn_in > 0
 
         if not eaten:
             if context.mouse.pressed() and self.ball.contains(mouse):
@@ -141,7 +141,7 @@ struct App(Program):
         ):
             canvas.draw(pacman)
 
-        if self.respawn_in == 0.0:
+        if self.respawn_in == 0:
             canvas.stroke_enabled(False)
             canvas.fill(BALL)
             canvas.draw(self.ball)

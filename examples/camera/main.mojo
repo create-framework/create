@@ -43,18 +43,18 @@ struct CameraDemo(Program):
         # The arrow keys pan, by less when zoomed in, so the world slides past
         # the screen at the same speed.
         if context.keyboard.down(Key.RIGHT):
-            self.camera.position += Vector(pan, 0.0)
+            self.camera.position += Vector(pan, 0)
         if context.keyboard.down(Key.LEFT):
-            self.camera.position -= Vector(pan, 0.0)
+            self.camera.position -= Vector(pan, 0)
 
         # Zoom about the cursor: note the world point under it, zoom, then
         # move the camera so that point is back under the cursor.
-        if context.mouse.wheel.y != 0.0:
+        if context.mouse.wheel.y != 0:
             var before = self.camera.to_world(context.mouse.position)
             self.camera.zoom = clamp(
                 self.camera.zoom * pow(ZOOM_STEP, context.mouse.wheel.y),
                 0.3,
-                4.0,
+                4,
             )
             self.camera.position += before - self.camera.to_world(
                 context.mouse.position
@@ -74,17 +74,17 @@ struct CameraDemo(Program):
         # screen shows, and a marker at the world origin.
         canvas.stroke_enabled(False)
         for i in range(-20, 20):
-            var x = Float64(i) * 120.0
+            var x = Float64(i) * 120
             canvas.fill(post_color(i))
-            canvas.rectangle((x, 0.0), 40.0, 200.0)
+            canvas.rectangle((x, 0), 40, 200)
 
         canvas.fill(ORIGIN)
-        canvas.circle((0.0, 140.0), 14.0)
+        canvas.circle((0, 140), 14)
 
         # In world units, so a marker grows and shrinks with the zoom.
         with canvas.style(fill=MARKER, stroke=TEXT, stroke_thickness=2):
             for marker in self.markers:
-                canvas.circle(marker, 10.0)
+                canvas.circle(marker, 10)
 
         # HUD: fixed to the screen regardless of where the camera looks or
         # how far it has zoomed.
@@ -95,7 +95,7 @@ struct CameraDemo(Program):
                 canvas.text(
                     "Left/Right pan, the wheel zooms, a click drops a marker, C"
                     + " clears",
-                    (0.0, canvas.top() - 16.0),
+                    (0, canvas.top() - 16),
                 )
 
                 var world = self.camera.to_world(context.mouse.position)
@@ -109,7 +109,7 @@ struct CameraDemo(Program):
                         Int(world.y),
                         ")",
                     ),
-                    (0.0, canvas.top() - 44.0),
+                    (0, canvas.top() - 44),
                 )
 
 

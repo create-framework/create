@@ -54,7 +54,7 @@ struct App(Program):
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> App:
         var logo = Image.load("../../assets/logo/png/logo-cutout.png")
-        return App(RenderBackend.from_arguments(), logo^, 0.0)
+        return App(RenderBackend.from_arguments(), logo^, 0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
@@ -120,7 +120,7 @@ struct App(Program):
         var corner = centers[3] - Vector(60, 60)
         with canvas.style(stroke=Color.GREEN, stroke_thickness=1.5):
             for i in range(9):
-                var direction = Vector.from_angle(Float64(i) * PI / 16.0, 120)
+                var direction = Vector.from_angle(Float64(i) * PI / 16, 120)
                 canvas.line(corner, corner + direction)
 
         # A radial gradient, lit from the top left, inside a sweeping arc.

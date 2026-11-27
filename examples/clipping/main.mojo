@@ -38,10 +38,10 @@ struct Clipping(Program):
         canvas.draw(self.panel)
 
         with canvas.clip(self.panel):
-            var scroll = (t * 40.0) % (LINES * LINE_HEIGHT)
+            var scroll = (t * 40) % (LINES * LINE_HEIGHT)
             canvas.text_color(TEXT)
             for i in range(LINES * 2):
-                var y = 200.0 - Float64(i) * LINE_HEIGHT + scroll
+                var y = 200 - Float64(i) * LINE_HEIGHT + scroll
                 canvas.text(
                     "Row " + String(i % LINES + 1), (self.panel.position.x, y)
                 )

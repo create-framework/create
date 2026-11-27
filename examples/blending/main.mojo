@@ -58,7 +58,7 @@ struct App(Program):
             canvas.fill(Color(gray, gray, gray))
             var x0 = canvas.left() + Float64(i) * bar_w
             canvas.rectangle(
-                ((x0 + canvas.right()) / 2.0, 0.0),
+                ((x0 + canvas.right()) / 2, 0),
                 canvas.right() - x0,
                 canvas.height(),
             )
@@ -79,22 +79,22 @@ struct App(Program):
 
         with canvas.style(blend_mode=self.mode):
             for i in range(3):
-                var angle = t * 0.8 + Float64(i) * 2.0 * PI / 3.0
+                var angle = t * 0.8 + Float64(i) * 2 * PI / 3
                 canvas.fill(colors[i])
                 canvas.circle(
-                    (center_x + 70.0 * cos(angle), 40.0 + 70.0 * sin(angle)),
-                    110.0,
+                    (center_x + 70 * cos(angle), 40 + 70 * sin(angle)),
+                    110,
                 )
 
         # A plain panel behind the label, so it reads over any bar.
         canvas.fill(PANEL)
-        canvas.rectangle((0.0, canvas.bottom() + 60.0), 360.0, 100.0)
+        canvas.rectangle((0, canvas.bottom() + 60), 360, 100)
 
         canvas.text_color(TEXT)
         canvas.font_size(28)
-        canvas.text(String(self.mode), (0.0, canvas.bottom() + 75.0))
+        canvas.text(String(self.mode), (0, canvas.bottom() + 75))
         canvas.font_size(18)
-        canvas.text("(Space to cycle)", (0.0, canvas.bottom() + 45.0))
+        canvas.text("(Space to cycle)", (0, canvas.bottom() + 45))
 
 
 def main() raises:

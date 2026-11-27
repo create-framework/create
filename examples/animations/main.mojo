@@ -46,17 +46,13 @@ struct Game(Program):
 
         # Row-major: the first four cells are the idle cycle, the next four
         # the run cycle. One sheet, two animations, no sheet type.
-        var idle = Animation.from_sheet(
-            sheet, 32, 32, start=0, count=4, fps=6.0
-        )
-        var run = Animation.from_sheet(
-            sheet, 32, 32, start=4, count=4, fps=12.0
-        )
+        var idle = Animation.from_sheet(sheet, 32, 32, start=0, count=4, fps=6)
+        var run = Animation.from_sheet(sheet, 32, 32, start=4, count=4, fps=12)
 
         # The folder holds spin_1.png to spin_8.png, ordered by their
         # trailing number rather than alphabetically, so spin_10 would
         # follow spin_9.
-        var spin = Animation.from_folder("assets/spin", fps=16.0)
+        var spin = Animation.from_folder("assets/spin", fps=16)
 
         var animator = Animator(idle)
         animator.loop()
@@ -65,10 +61,10 @@ struct Game(Program):
         var pulse = Tween(0.8, Easing.IN_OUT_SINE, clock=Clock.REAL)
         pulse.ping_pong()
 
-        return Game(idle^, run^, spin^, animator^, 0.0, False, pulse)
+        return Game(idle^, run^, spin^, animator^, 0, False, pulse)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
-        var speed = 240.0 * context.time.delta
+        var speed = 240 * context.time.delta
 
         if context.keyboard.pressed(Key.SPACE) and not self.spinning:
             # A one-shot: it holds its last frame and reports is_finished().
@@ -90,7 +86,7 @@ struct Game(Program):
             # `use` of the one already showing is a no-op, so this neither
             # rewinds to frame 0 sixty times a second nor undoes a pause;
             # `loop(...)` here would restart it every frame.
-            if dx != 0.0:
+            if dx != 0:
                 self.animator.use(self.run)
             else:
                 self.animator.use(self.idle)
@@ -111,7 +107,7 @@ struct Game(Program):
                 max(context.time_scale() - SCALE_STEP, MIN_SCALE)
             )
 
-        var margin = Float64(SIZE) / 2.0
+        var margin = Float64(SIZE) / 2
         self.x = clamp(self.x, canvas.left() + margin, canvas.right() - margin)
 
         canvas.background(BACKGROUND)
@@ -123,7 +119,7 @@ struct Game(Program):
         var height = GROUND - canvas.bottom()
         canvas.fill(GROUND_COLOR)
         canvas.rectangle(
-            (0.0, canvas.bottom() + height / 2.0), canvas.right() * 2.0, height
+            (0, canvas.bottom() + height / 2), canvas.right() * 2, height
         )
 
         # Rendered four times the 32x32 source size: pixel art wants to be
@@ -140,18 +136,18 @@ struct Game(Program):
         canvas.font_size(20)
         canvas.text(
             "A/D: run   Space: spin   Up/Down: time scale   P: pause",
-            (0.0, 140.0),
+            (0, 140),
         )
 
         canvas.text(
             "Time scale: " + String(context.time_scale()) + "x",
-            (0.0, 110.0),
+            (0, 110),
         )
 
         if context.time_paused():
             canvas.text_color(HINT.lerp(COLORS.on_surface, self.pulse.value()))
             canvas.font_size(40)
-            canvas.text("Paused", (0.0, 40.0))
+            canvas.text("Paused", (0, 40))
 
 
 def main() raises:

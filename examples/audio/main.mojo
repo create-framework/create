@@ -28,18 +28,18 @@ def volume_bar(mut canvas: Canvas, label: String, level: Float64, y: Float64):
     var left = -BAR_WIDTH / 2.0
     with canvas.style(stroke_enabled=False):
         canvas.fill(TRACK)
-        canvas.rectangle((0.0, y), BAR_WIDTH, 14.0, corner_radius=7)
-        if level > 0.0:
+        canvas.rectangle((0, y), BAR_WIDTH, 14, corner_radius=7)
+        if level > 0:
             canvas.fill(LEVEL)
             var w = BAR_WIDTH * level
-            canvas.rectangle((left + w / 2.0, y), w, 14.0, corner_radius=7)
+            canvas.rectangle((left + w / 2, y), w, 14, corner_radius=7)
 
     with canvas.style(
         text_color=TEXT, font_size=18, text_alignment=Align.RIGHT
     ):
-        canvas.text(label, (left - 20.0, y))
+        canvas.text(label, (left - 20, y))
     with canvas.style(text_color=TEXT, font_size=18, text_alignment=Align.LEFT):
-        canvas.text(String(Int(level * 100.0 + 0.5), "%"), (-left + 20.0, y))
+        canvas.text(String(Int(level * 100 + 0.5), "%"), (-left + 20, y))
 
 
 @fieldwise_init
@@ -62,7 +62,7 @@ struct AudioDemo(Program):
             ambience=Sound.load("assets/ambience.wav"),
             ambience_playback=Playback.NONE,
             ambience_volume=0.8,
-            chimed_at=-10.0,
+            chimed_at=-10,
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -92,26 +92,24 @@ struct AudioDemo(Program):
 
         if context.keyboard.down(Key.UP) or context.keyboard.down(Key.DOWN):
             var change = step if context.keyboard.down(Key.UP) else -step
-            self.ambience_volume = clamp(
-                self.ambience_volume + change, 0.0, 1.0
-            )
+            self.ambience_volume = clamp(self.ambience_volume + change, 0, 1)
             self.audio.volume(self.ambience_playback, self.ambience_volume)
 
         if context.keyboard.down(Key.RIGHT):
-            self.audio.volume(clamp(self.audio.volume() + step, 0.0, 1.0))
+            self.audio.volume(clamp(self.audio.volume() + step, 0, 1))
         if context.keyboard.down(Key.LEFT):
-            self.audio.volume(clamp(self.audio.volume() - step, 0.0, 1.0))
+            self.audio.volume(clamp(self.audio.volume() - step, 0, 1))
 
         canvas.background(BACKGROUND)
 
         # The chime's flash, fading over half a second.
         var since = context.time.elapsed - self.chimed_at
-        var flash = clamp(1.0 - since / 0.5, 0.0, 1.0)
+        var flash = clamp(1 - since / 0.5, 0, 1)
         with canvas.style(fill=TRACK.lerp(CHIME, flash), stroke_enabled=False):
-            canvas.circle((-250.0, 40.0), 40.0 + 12.0 * flash)
+            canvas.circle((-250, 40), 40 + 12 * flash)
 
         with canvas.style(text_color=HINT, font_size=18):
-            canvas.text("Space: chime", (-250.0, -30.0))
+            canvas.text("Space: chime", (-250, -30))
 
         var state: String
         if self.audio.is_playing(self.ambience_playback):
@@ -122,23 +120,23 @@ struct AudioDemo(Program):
             state = "stopped"
 
         with canvas.style(text_color=TEXT, font_size=26):
-            canvas.text("Ambience " + state, (120.0, 60.0))
+            canvas.text("Ambience " + state, (120, 60))
         with canvas.style(text_color=HINT, font_size=18):
-            canvas.text("L: start/stop   P: pause/resume", (120.0, 20.0))
+            canvas.text("L: start/stop   P: pause/resume", (120, 20))
 
-        volume_bar(canvas, "Ambience", self.ambience_volume, -90.0)
-        volume_bar(canvas, "Overall", self.audio.volume(), -140.0)
+        volume_bar(canvas, "Ambience", self.ambience_volume, -90)
+        volume_bar(canvas, "Overall", self.audio.volume(), -140)
 
         with canvas.style(text_color=HINT, font_size=18):
             canvas.text(
                 "Up/Down: ambience volume   Left/Right: overall volume",
-                (0.0, -200.0),
+                (0, -200),
             )
 
         with canvas.style(
             text_color=TEXT, font_size=30, text_alignment=Align.TOP
         ):
-            canvas.text("Audio", (0, canvas.top() - 20.0))
+            canvas.text("Audio", (0, canvas.top() - 20))
 
 
 def main() raises:

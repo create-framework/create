@@ -60,7 +60,7 @@ struct App(Program):
 
         for i in range(3):
             # Each rocket rocks a little out of step with the last.
-            var phase = context.time.elapsed * 2.0 + Float64(i) * 1.3
+            var phase = context.time.elapsed * 2 + Float64(i) * 1.3
             var place = Transform(
                 translation=Vector(Float64(i - 1) * SPACING, BOB * sin(phase)),
                 rotation=TILT * sin(phase * 0.7),

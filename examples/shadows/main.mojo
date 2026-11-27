@@ -195,7 +195,7 @@ struct Shadows(Program):
         with canvas.style(
             stroke=Color.GREEN, stroke_thickness=16, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(Arc(centers[4], SUBJECT / 2, 0.3, 4.0))
+            canvas.draw(Arc(centers[4], SUBJECT / 2, 0.3, 4))
 
         # Built around the origin, then turned and moved into its tile.
         var r = SUBJECT / 2

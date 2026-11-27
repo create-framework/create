@@ -53,7 +53,7 @@ struct Capture(Program):
     def create(mut context: Context, mut canvas: Canvas) raises -> Capture:
         # Saving into a folder that isn't there fails, so make it first.
         makedirs(source_path("out"), exist_ok=True)
-        return Capture(0.0, "")
+        return Capture(0, "")
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         self.angle += TURN_SPEED * context.time.delta
@@ -68,7 +68,7 @@ struct Capture(Program):
             self.saved = "screenshot.png: the window, bars included"
         elif context.keyboard.pressed(Key.I):
             if transparent:
-                canvas.save_image("out/image@2x.png", 2.0, transparent=True)
+                canvas.save_image("out/image@2x.png", 2, transparent=True)
                 self.saved = "image@2x.png: 1600x1000, transparent"
             else:
                 canvas.save_image("out/image.png")
@@ -99,7 +99,7 @@ struct Capture(Program):
         var colors = circle_colors()
         with canvas.style(stroke_enabled=False):
             for i in range(len(colors)):
-                var turn = self.angle + Float64(i) * TAU / 3.0
+                var turn = self.angle + Float64(i) * TAU / 3
                 canvas.fill(colors[i])
                 canvas.circle(Point(0, 0) + Vector.from_angle(turn, 80), 60)
 
@@ -117,7 +117,7 @@ struct Capture(Program):
             if canvas.recording():
                 var label = String("Recording; R to stop, X to discard")
                 # Drawn like everything else, so it is in the recording too.
-                var dot = -canvas.text_width(label) / 2.0 - 16.0
+                var dot = -canvas.text_width(label) / 2 - 16
                 with canvas.style(fill=RECORDING, stroke_enabled=False):
                     canvas.circle((dot, canvas.bottom() + 50), 8)
                 canvas.text(label, (0, canvas.bottom() + 50))

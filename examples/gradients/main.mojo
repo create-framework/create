@@ -27,9 +27,9 @@ struct App(Program):
         # lives, so the GPU uploads it once.
         var sky = Gradient.linear(
             [
-                (0.0, COLORS.surface_container_lowest),
+                (0, COLORS.surface_container_lowest),
                 (0.55, COLORS.surface_container),
-                (1.0, COLORS.surface_container_highest),
+                (1, COLORS.surface_container_highest),
             ]
         )
 
@@ -42,7 +42,7 @@ struct App(Program):
             shadow_blur=16,
         )
 
-        return App(sky, card, 0.0)
+        return App(sky, card, 0)
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(self.sky)
@@ -90,11 +90,11 @@ struct App(Program):
                 direction=Vector.RIGHT,
             )
         )
-        canvas.sector((220, 120), 65.0, 0.5, 1.6 * PI)
+        canvas.sector((220, 120), 65, 0.5, 1.6 * PI)
 
         # Two colours on their own run from top to bottom.
         canvas.fill(Gradient.linear(Color.MAGENTA, Color.RED))
-        canvas.draw(Polygon.star((450, 120), 70.0, 30.0, 5))
+        canvas.draw(Polygon.star((450, 120), 70, 30, 5))
 
         # The card turns, and its gradient turns with it.
         with canvas.style(self.card):

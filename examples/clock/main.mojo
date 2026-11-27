@@ -18,7 +18,7 @@ comptime HAND = COLORS.on_surface
 comptime SECONDS = Color.RED
 comptime HINT = COLORS.on_surface_variant
 
-comptime CENTER = Point(-230.0, 0.0)
+comptime CENTER = Point(-230, 0)
 comptime RADIUS = 200.0
 comptime TEXT_X = 260.0
 
@@ -62,7 +62,7 @@ def weekday(year: Int, month: Int, day: Int) -> Int:
 def clock_angle(fraction: Float64) -> Float64:
     """How far round the face `fraction` of a turn is, as an angle: from
     the top, clockwise. Angles count counter-clockwise from +x, y up."""
-    return PI / 2.0 - TAU * fraction
+    return PI / 2 - TAU * fraction
 
 
 def hand(fraction: Float64, length: Float64) -> Line:
@@ -82,9 +82,9 @@ struct Clock(Program):
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         var now = DateTime.now()
-        var seconds = Float64(now.second) + Float64(now.millisecond) / 1000.0
-        var minutes = Float64(now.minute) + seconds / 60.0
-        var hours = Float64(now.hour % 12) + minutes / 60.0
+        var seconds = Float64(now.second) + Float64(now.millisecond) / 1000
+        var minutes = Float64(now.minute) + seconds / 60
+        var hours = Float64(now.hour % 12) + minutes / 60
 
         canvas.background(BACKGROUND)
 
@@ -94,12 +94,12 @@ struct Clock(Program):
         # The seconds ring: a full track, and an arc swept clockwise (a
         # negative sweep, since y is up) from the top.
         with canvas.style(stroke=TRACK, stroke_thickness=8):
-            canvas.arc(CENTER, RADIUS + 16.0, 0.0, TAU)
+            canvas.arc(CENTER, RADIUS + 16, 0, TAU)
 
         with canvas.style(
             stroke=SECONDS, stroke_thickness=8, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.arc(CENTER, RADIUS + 16.0, PI / 2.0, -TAU * seconds / 60.0)
+            canvas.arc(CENTER, RADIUS + 16, PI / 2, -TAU * seconds / 60)
 
         # Sixty ticks, every fifth longer and heavier: the hours.
         for i in range(60):
@@ -122,17 +122,17 @@ struct Clock(Program):
         with canvas.style(
             stroke=HAND, stroke_thickness=10, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(hand(hours / 12.0, RADIUS * 0.5))
+            canvas.draw(hand(hours / 12, RADIUS * 0.5))
 
         with canvas.style(
             stroke=HAND, stroke_thickness=6, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(hand(minutes / 60.0, RADIUS * 0.75))
+            canvas.draw(hand(minutes / 60, RADIUS * 0.75))
 
         with canvas.style(
             stroke=SECONDS, stroke_thickness=2, stroke_cap=StrokeCap.ROUND
         ):
-            canvas.draw(hand(seconds / 60.0, RADIUS * 0.85))
+            canvas.draw(hand(seconds / 60, RADIUS * 0.85))
 
         with canvas.style(fill=SECONDS, stroke_enabled=False):
             canvas.circle(CENTER, 8)
@@ -161,10 +161,10 @@ struct Clock(Program):
                 total += width
 
             # Each character centred in its cell, left to right.
-            var x = TEXT_X - total / 2.0
+            var x = TEXT_X - total / 2
             var i = 0
             for character in time.codepoint_slices():
-                canvas.text(String(character), (x + widths[i] / 2.0, 40.0))
+                canvas.text(String(character), (x + widths[i] / 2, 40))
                 x += widths[i]
                 i += 1
 
@@ -178,12 +178,12 @@ struct Clock(Program):
             now.year,
         )
         with canvas.style(text_color=HAND, font_size=28, font_italic=True):
-            canvas.text(date, (TEXT_X, -30.0))
+            canvas.text(date, (TEXT_X, -30))
 
         with canvas.style(
             text_color=HINT, font_size=18, font_weight=FontWeight.LIGHT
         ):
-            canvas.text("DateTime.now(), read once a frame", (TEXT_X, -80.0))
+            canvas.text("DateTime.now(), read once a frame", (TEXT_X, -80))
 
 
 def main() raises:

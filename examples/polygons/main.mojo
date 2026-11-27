@@ -22,7 +22,7 @@ comptime PENTAGRAM = Color.YELLOW
 comptime SPIN = 0.6
 """How fast the stars turn, in radians per second."""
 
-comptime PENTAGRAM_HOME = Point(520.0, -80.0)
+comptime PENTAGRAM_HOME = Point(520, -80)
 
 
 def side_color(sides: Int) -> Color:
@@ -72,7 +72,7 @@ struct App(Program):
         var mouse = context.mouse.position
 
         if context.keyboard.down(Key.UP):
-            self.inner_ratio = min(self.inner_ratio + context.time.delta, 1.0)
+            self.inner_ratio = min(self.inner_ratio + context.time.delta, 1)
         if context.keyboard.down(Key.DOWN):
             self.inner_ratio = max(self.inner_ratio - context.time.delta, 0.1)
 
@@ -94,7 +94,7 @@ struct App(Program):
         # Regular polygons, three sides to eight; the one under the mouse
         # lights up.
         for sides in range(3, 9):
-            var x = -500.0 + 200.0 * Float64(sides - 3)
+            var x = -500 + 200 * Float64(sides - 3)
             var shape = Polygon.regular((x, 170), 70, sides)
 
             if shape.contains(mouse):
@@ -110,7 +110,7 @@ struct App(Program):
             var tips = 5 + i
             var direction = 1.0 if i % 2 == 0 else -1.0
             var star = Polygon.star(
-                (-480.0 + 170.0 * Float64(i), -150.0),
+                (-480 + 170 * Float64(i), -150),
                 75,
                 75 * self.inner_ratio,
                 tips,
@@ -170,7 +170,7 @@ struct App(Program):
         canvas.text(
             "Hover the shapes; Up and Down change the stars' inner radius"
             + " ("
-            + String(Int(self.inner_ratio * 100.0 + 0.5))
+            + String(Int(self.inner_ratio * 100 + 0.5))
             + "%); drag the pentagram onto the U",
             (0, canvas.top() - 78),
         )

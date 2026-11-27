@@ -56,7 +56,7 @@ struct Collisions(Program):
             ellipse=Ellipse((-420, -170), 200, 130),
             capsule=Capsule((-205, -205), (-75, -135), 35),
             line=Line((80, -240), (240, -100)),
-            arc=Arc((440, -170), 75, 0.6, 5.0),
+            arc=Arc((440, -170), 75, 0.6, 5),
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:

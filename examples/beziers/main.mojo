@@ -43,13 +43,13 @@ struct App(Program):
         # centre of the window and y grows upward.
         return App(
             handles=[
-                (-420.0, -180.0),
-                (-260.0, 260.0),
-                (260.0, -260.0),
-                (420.0, 180.0),
+                (-420, -180),
+                (-260, 260),
+                (260, -260),
+                (420, 180),
             ],
             dragging=-1,
-            travelled=0.0,
+            travelled=0,
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -77,7 +77,7 @@ struct App(Program):
         var length = curve.length()
         self.travelled += SPEED * context.time.delta
         if self.travelled > length:
-            self.travelled = 0.0
+            self.travelled = 0
         var dot = curve.at_distance(self.travelled)
 
         canvas.background(BACKGROUND)

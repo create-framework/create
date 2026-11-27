@@ -43,23 +43,23 @@ struct Player(Copyable, Drawable, Movable):
         self.velocity = Vector.ZERO
         self.jumps_left = Self.JUMPS
         self.coyote = Self.COYOTE_TIME
-        self.jump_buffer = 0.0
+        self.jump_buffer = 0
 
     def feet(self) -> Float64:
-        return self.position.y - Self.HEIGHT / 2.0
+        return self.position.y - Self.HEIGHT / 2
 
     def body(self) -> Rectangle:
         """The body, below the head, standing on the feet."""
-        var height = Self.HEIGHT - 2.0 * Self.HEAD_RADIUS - Self.NECK
+        var height = Self.HEIGHT - 2 * Self.HEAD_RADIUS - Self.NECK
         return Rectangle(
-            (self.position.x, self.feet() + height / 2.0),
+            (self.position.x, self.feet() + height / 2),
             Self.WIDTH,
             height,
             corner_radius=10,
         )
 
     def head(self) -> Circle:
-        var top = self.position.y + Self.HEIGHT / 2.0
+        var top = self.position.y + Self.HEIGHT / 2
         return Circle(
             (self.position.x, top - Self.HEAD_RADIUS), Self.HEAD_RADIUS
         )
@@ -75,7 +75,7 @@ struct Player(Copyable, Drawable, Movable):
 
         # A press of W waits up to JUMP_BUFFER for a jump to be left, so
         # pressing it just before landing jumps as the player lands.
-        self.jump_buffer = max(self.jump_buffer - dt, 0.0)
+        self.jump_buffer = max(self.jump_buffer - dt, 0)
         if context.keyboard.pressed(Key.W):
             self.jump_buffer = Self.JUMP_BUFFER
 
@@ -84,7 +84,7 @@ struct Player(Copyable, Drawable, Movable):
         if self.jump_buffer > 0 and self.jumps_left > 0:
             rise = Self.JUMP_SPEED
             self.jumps_left -= 1
-            self.jump_buffer = 0.0
+            self.jump_buffer = 0
 
         # Holding W on the way up pulls against gravity, so a longer press jumps
         # higher.
@@ -116,15 +116,15 @@ struct Player(Copyable, Drawable, Movable):
         """Stand on the platform whose top the feet crossed this frame, if
         any. Tested as a crossing, so a fast fall can't skip one."""
         for platform in platforms:
-            var top = platform.position.y + platform.height / 2.0
-            var reach = (platform.width + Self.WIDTH) / 2.0
+            var top = platform.position.y + platform.height / 2
+            var reach = (platform.width + Self.WIDTH) / 2
             if (
                 feet_before >= top
                 and self.feet() <= top
                 and abs(self.position.x - platform.position.x) < reach
             ):
-                self.position = Point(self.position.x, top + Self.HEIGHT / 2.0)
-                self.velocity = Vector(self.velocity.x, 0.0)
+                self.position = Point(self.position.x, top + Self.HEIGHT / 2)
+                self.velocity = Vector(self.velocity.x, 0)
                 self.jumps_left = Self.JUMPS
                 self.coyote = Self.COYOTE_TIME
                 return True
