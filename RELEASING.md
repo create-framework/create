@@ -38,7 +38,10 @@ file breaks that until the setting is updated.
 
 ## Steps
 
-1. **Bump the version.** Change `version` in `pixi.toml` in a pull request and merge it.
+1. **Bump the version.** Change `version` in `pixi.toml` in a pull request, run the [macOS
+   workflow](.github/workflows/macos.yml) on its branch (Actions → macOS → Run workflow), and merge
+   it once both pass. CI builds the package on Linux only, and the release builds it on macOS too,
+   so `macos-package` is what catches a package that builds on Linux alone.
 2. **Tag the merged commit**, taken from the remote's `main` rather than whatever is checked out
    locally, and create the GitHub release:
    ```bash
