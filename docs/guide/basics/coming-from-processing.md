@@ -70,7 +70,7 @@ These look like Processing but behave differently, and each one catches people o
 | `textSize`, `textFont`, `textAlign` | `canvas.font_size`, `canvas.font`, `canvas.text_alignment` (see [Text](../drawing/text.md)) |
 | `createFont`, `loadFont` | `Font.load(path)` |
 | `tint(c)` | `canvas.tint(c)`, which multiplies every colour of a call, not only images |
-| `saveFrame()` | `canvas.save_image(path)` or `canvas.save_screenshot(path)` (see [Saving images](../media/capture.md#saving-images)) |
+| `saveFrame()`, `saveFrame("frame-####.png")` | `canvas.save_image()`, `canvas.save_image("frame.png", naming=FileNaming.NUMBERED)`, or `save_screenshot` for the window's pixels (see [Saving images](../media/capture.md#saving-images) and [Naming the files](../media/capture.md#naming-the-files)) |
 | `get(x, y)` | `canvas.color_at(position)` (see [Reading the screen](../drawing/pixels.md#reading-the-screen)) |
 | `createGraphics(w, h)` | `Canvas(w, h)` (see [Drawing into an image](../media/images.md#drawing-into-an-image)) |
 

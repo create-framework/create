@@ -1,6 +1,6 @@
 # create.render
 
-Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`).
+Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`), and how a capture's file is named (`FileNaming`).
 
 ## Types
 
@@ -12,6 +12,7 @@ Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`,
 | [`StrokeAlign`](strokealign.md) | Where a region's stroke sits against the shape's edge. |
 | [`StrokeCap`](strokecap.md) | How the two open ends of a stroked line or curve are finished. |
 | [`StrokeDash`](strokedash.md) | How a stroke is broken into dashes along its length. |
+| [`FileNaming`](filenaming.md) | How a capture's file is named from the path it is given. |
 | [`Autoscale`](autoscale.md) | How the program's design size maps onto the window. |
 | [`Gradient`](gradient.md) | A smooth run of colours across a shape's fill, or across the background. |
 | [`Style`](style.md) | A set of style changes: how something is painted, independent of where it goes. Each part is optional, and a part left unset changes nothing. |

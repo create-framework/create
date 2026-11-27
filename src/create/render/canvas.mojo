@@ -7,6 +7,7 @@ from .align import Align
 from .stroke_align import StrokeAlign
 from .stroke_cap import StrokeCap
 from .stroke_dash import StrokeDash
+from .file_naming import FileNaming, _capture_path
 from create.color.blend_mode import BlendMode
 from .antialiasing import Antialiasing
 from .autoscale import Autoscale
@@ -1004,9 +1005,11 @@ struct Canvas(Movable, _GeometryTarget):
     @always_inline
     def save_image(
         mut self,
-        path: String,
+        path: Optional[String] = None,
         pixel_scale: Float64 = 1.0,
         transparent: Bool = False,
+        *,
+        naming: Optional[FileNaming] = None,
     ) raises:
         """Save this frame as a PNG at the design size, times `pixel_scale`.
 
@@ -1033,10 +1036,22 @@ struct Canvas(Movable, _GeometryTarget):
         `pixel_scale` other than its own resamples them, and `transparent` keeps
         their alpha rather than dropping a `background` it has painted.
 
+        `naming` says how the file is named from `path` (see `FileNaming`).
+        Given a path, the file is saved there, replacing one already there;
+        with no path, it is saved as `image-0001.png`, `image-0002.png` and
+        so on, numbered on from the highest already in the folder, so it
+        never replaces an earlier one.
+
         A relative `path` is resolved against the directory of the calling
         source file, not the working directory, as `Image.load`'s is.
         """
-        self._save_image(_caller_relative(path), pixel_scale, transparent)
+        self._save_image(
+            _capture_path(
+                _caller_relative(path.or_else("image.png")), Bool(path), naming
+            ),
+            pixel_scale,
+            transparent,
+        )
 
     def _save_image(
         mut self, path: String, pixel_scale: Float64, transparent: Bool
@@ -1261,7 +1276,12 @@ struct Canvas(Movable, _GeometryTarget):
         return mem^
 
     @always_inline
-    def save_screenshot(mut self, path: String) raises:
+    def save_screenshot(
+        mut self,
+        path: Optional[String] = None,
+        *,
+        naming: Optional[FileNaming] = None,
+    ) raises:
         """Save this frame as a PNG at the framebuffer's own resolution.
 
         The complement of `save_image`: this answers what the user *saw*, so
@@ -1278,10 +1298,19 @@ struct Canvas(Movable, _GeometryTarget):
         An offscreen canvas writes at once: its own pixels, at its own
         density, alpha kept — it has no window to have been seen in.
 
+        `naming` names the file as `save_image`'s does; with no path, it is
+        saved as `screenshot-0001.png`, `screenshot-0002.png` and so on.
+
         A relative `path` is resolved against the directory of the calling
         source file, as `save_image`'s is.
         """
-        self._save_screenshot(_caller_relative(path))
+        self._save_screenshot(
+            _capture_path(
+                _caller_relative(path.or_else("screenshot.png")),
+                Bool(path),
+                naming,
+            )
+        )
 
     def _save_screenshot(mut self, path: String) raises:
         """`save_screenshot`, to a path already resolved."""
@@ -1305,8 +1334,9 @@ struct Canvas(Movable, _GeometryTarget):
     @always_inline
     def start_recording(
         mut self,
-        path: String,
+        path: Optional[String] = None,
         *,
+        naming: Optional[FileNaming] = None,
         seconds: OptionalNumber = None,
         frames: Optional[Int] = None,
         fps: Float64 = 30.0,
@@ -1326,9 +1356,9 @@ struct Canvas(Movable, _GeometryTarget):
         `cancel_recording` ends it without one. A new `start_recording`
         finishes the recording in progress first.
 
-        Until it finishes, the frames stream to `path` with `.partial`
-        added, which then replaces `path` in one step: a file already at
-        `path` is untouched until then, and stays if the recording is
+        Until it finishes, the frames stream to the file with `.partial`
+        added, which then replaces the file in one step: a file already
+        there is untouched until then, and stays if the recording is
         cancelled.
 
         The run's clock is sampled `fps` times a second, so the GIF plays at
@@ -1370,11 +1400,18 @@ struct Canvas(Movable, _GeometryTarget):
         file that can't be opened, or an offscreen canvas, which has no
         frames to record.
 
+        `naming` names the file as `save_image`'s does; with no path, it is
+        saved as `recording-0001.gif`, `recording-0002.gif` and so on.
+
         A relative `path` is resolved against the directory of the calling
         source file, as `save_image`'s is.
         """
         self._start_recording(
-            _caller_relative(path),
+            _capture_path(
+                _caller_relative(path.or_else("recording.gif")),
+                Bool(path),
+                naming,
+            ),
             seconds,
             frames,
             fps,

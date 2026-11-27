@@ -25,6 +25,7 @@ from create.color.color import Color
 from create.render._backend import Backend
 from create.render._backend_handle import free_backend, new_backend
 from create.render.canvas import Canvas, _RecordingRequest, intern_image
+from create.render.file_naming import _numbered_path_here
 
 
 @export
@@ -98,6 +99,16 @@ def create_canvas_save_image(
         at[Canvas](canvas)._save_image_here(
             at[String](path), pixel_scale, transparent
         )
+        return True
+    except e:
+        at[String](error) = String(e)
+        return False
+
+
+@export
+def create_numbered_path(path: Int, result: Int, error: Int) abi("C") -> Bool:
+    try:
+        at[String](result) = _numbered_path_here(at[String](path))
         return True
     except e:
         at[String](error) = String(e)

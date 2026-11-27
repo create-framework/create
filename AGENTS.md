@@ -67,7 +67,7 @@ page:
 | [collisions](docs/guide/geometry/collisions.md) | `overlaps`/`contains`/`intersects`, their accuracy, `closest_point` |
 | [images](docs/guide/media/images.md) | `Image`, `canvas.image`, offscreen canvases |
 | [audio](docs/guide/media/audio.md) | `Sound`, `Audio` and `Playback`: loading, synthesizing and playing sounds |
-| [capture](docs/guide/media/capture.md) | `save_image`, `save_screenshot`, recording GIFs |
+| [capture](docs/guide/media/capture.md) | `save_image`, `save_screenshot`, recording GIFs, naming the files with `FileNaming` |
 | [tables](docs/guide/data/tables.md) | `Table` and `TableRow` (CSV/TSV): reading, saving, finding, counting and removing rows and columns |
 | [json](docs/guide/data/json.md) | `JSON`, `JSONKind`: reading, editing, building a document, missing fields |
 | [angles](docs/guide/math/angles.md) | radians, `PI`/`TAU`, `sin`/`cos`/`atan2`, `degrees`/`radians` |
