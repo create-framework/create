@@ -23,7 +23,7 @@ struct ButtonsPage(Movable):
         self.buttons.append(ui.add(Button("Play"), row, width=0, grow=1))
         self.buttons.append(
             ui.add(
-                Button("Load", variant=ButtonVariant.TONAL),
+                Button("Load", style=Button.TONAL),
                 row,
                 width=0,
                 grow=1,
@@ -31,7 +31,7 @@ struct ButtonsPage(Movable):
         )
         self.buttons.append(
             ui.add(
-                Button("Credits", variant=ButtonVariant.OUTLINED),
+                Button("Credits", style=Button.OUTLINED),
                 row,
                 width=0,
                 grow=1,
@@ -39,7 +39,7 @@ struct ButtonsPage(Movable):
         )
         self.buttons.append(
             ui.add(
-                Button("Quit", variant=ButtonVariant.TEXT),
+                Button("Quit", style=Button.TEXT),
                 row,
                 width=0,
                 grow=1,

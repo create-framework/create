@@ -62,9 +62,7 @@ struct ListsPage(Movable):
 
         self.levels = []
         for level in level_names():
-            self.levels.append(
-                ui.add(Button(level, variant=ButtonVariant.TEXT), list)
-            )
+            self.levels.append(ui.add(Button(level, style=Button.TEXT), list))
 
     def update(self, ui: UI) -> Optional[String]:
         """What the player did on this page this frame, to show them."""

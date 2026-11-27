@@ -17,8 +17,8 @@ from create.math import Vector, clamp
 from create.text import FontWeight
 from create.render import Align, StrokeAlign, StrokeCap, StrokeDash, Style
 from create.render.style import _ResolvedStyle
-from .button_variant import ButtonVariant
 from create.color.color_scheme import ColorScheme, _readable_on
+from create.color.color_role import ColorRole
 from .focus_ring import FocusRing
 from .state_layers import StateLayers
 
@@ -361,7 +361,6 @@ struct _Theme(Copyable, Movable):
     def button(
         self,
         call: Style,
-        variant: ButtonVariant,
         height: Float64,
         *,
         hovered: Bool,
@@ -371,13 +370,13 @@ struct _Theme(Copyable, Movable):
         """A button `height` tall, styled `call`, in its state."""
         var colors = self.colors
         var look = call.over(self.styles[].button).over(
-            _variant_look(variant, colors).over(_label_text())
+            _BUTTON_FILLED.over(_label_text())
         )
         var resolved = _ResolvedStyle()
         resolved.apply(look, self.colors)
         if disabled:
             # Material's disabled look: everything in the text colour,
-            # faded, whatever the variant
+            # faded, whatever its style
             var states = self.state_layers
             resolved.text_color = _faded(
                 colors.on_surface, states.disabled_content
@@ -1197,37 +1196,38 @@ def _fills(style: _ResolvedStyle) -> Bool:
     )
 
 
-def _variant_look(variant: ButtonVariant, colors: ColorScheme) -> Style:
-    """How a button of `variant` looks in `colors`, before its own style:
-    the fill behind it, its outline and its text's colour. Each carries the
-    outline's colour, so a style that gives only a thickness gets it."""
-    if variant == ButtonVariant.TONAL:
-        return Style(
-            fill=colors.secondary_container,
-            stroke=colors.outline,
-            stroke_enabled=False,
-            text_color=colors.on_secondary_container,
-        )
-    if variant == ButtonVariant.OUTLINED:
-        return Style(
-            fill_enabled=False,
-            stroke=colors.outline,
-            stroke_thickness=1,
-            text_color=colors.primary,
-        )
-    if variant == ButtonVariant.TEXT:
-        return Style(
-            fill_enabled=False,
-            stroke=colors.outline,
-            stroke_enabled=False,
-            text_color=colors.primary,
-        )
-    return Style(
-        fill=colors.primary,
-        stroke=colors.outline,
-        stroke_enabled=False,
-        text_color=colors.on_primary,
-    )
+comptime _BUTTON_FILLED = Style(
+    fill=ColorRole.PRIMARY,
+    stroke=ColorRole.OUTLINE,
+    stroke_enabled=False,
+    text_color=ColorRole.ON_PRIMARY,
+)
+"""`Button.FILLED`. Each button style carries the outline's colour, so a
+style over it that gives only a thickness gets it."""
+
+comptime _BUTTON_TONAL = Style(
+    fill=ColorRole.SECONDARY_CONTAINER,
+    stroke=ColorRole.OUTLINE,
+    stroke_enabled=False,
+    text_color=ColorRole.ON_SECONDARY_CONTAINER,
+)
+"""`Button.TONAL`."""
+
+comptime _BUTTON_OUTLINED = Style(
+    fill_enabled=False,
+    stroke=ColorRole.OUTLINE,
+    stroke_thickness=1,
+    text_color=ColorRole.PRIMARY,
+)
+"""`Button.OUTLINED`."""
+
+comptime _BUTTON_TEXT = Style(
+    fill_enabled=False,
+    stroke=ColorRole.OUTLINE,
+    stroke_enabled=False,
+    text_color=ColorRole.PRIMARY,
+)
+"""`Button.TEXT`."""
 
 
 def _stepped(base: Color, toward: Color, step: Float64) -> Color:
