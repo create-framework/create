@@ -1,6 +1,6 @@
-"""`_SDLWindow` — what `Window` and `GLWindow` share: the native window, its
+"""`_SDLWindow`: what `Window` and `GLWindow` share: the native window, its
 event pump, the clock and the gamepads. Each owns one and adds only its
-surface — a pixel buffer, or a GL context."""
+surface: a pixel buffer, or a GL context."""
 
 from ._sdl import (
     SDL,
@@ -119,7 +119,7 @@ trait NativeWindow:
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:
-        """Switch how the window presents itself — at most one flag set,
+        """Switch how the window presents itself: at most one flag set,
         none for an ordinary decorated window. The size follows
         asynchronously on some compositors, so read it each frame rather
         than caching what this leaves behind."""
@@ -249,8 +249,8 @@ struct _SDLWindow:
     def set_mode(
         mut self, fullscreen: Bool, borderless: Bool, maximized: Bool
     ) raises:
-        """Leave whatever mode the window is in — windowed, bordered and
-        restored — then enter the one asked for, so any mode can follow any
+        """Leave whatever mode the window is in (windowed, bordered and
+        restored), then enter the one asked for, so any mode can follow any
         other.
 
         Restoring and maximizing are requests a window manager may ignore,

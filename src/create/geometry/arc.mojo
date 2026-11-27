@@ -30,8 +30,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
     `closest_point`, `intersects`, `move_to`, `translate`.
 
     Angles are radians, counted counter-clockwise from the +x axis: y is up,
-    so this is the direction `rotate` turns. The sweep is signed -- positive
-    runs counter-clockwise, negative clockwise -- so every arc has one
+    so this is the direction `rotate` turns. The sweep is signed (positive
+    runs counter-clockwise, negative clockwise), so every arc has one
     spelling and reversing one is negating its sweep. A sweep of a full turn
     (`TAU`) or more is the whole circle. The fields keep what was given; the
     methods read the sweep clamped to a turn.
@@ -186,8 +186,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     def beziers(self) -> List[Bezier]:
         """The arc as cubic Béziers, each ending where the next starts, in
-        pieces of at most 45°. An approximation -- no cubic is exactly a
-        circle -- but within about 4e-6 of the radius. A full circle ends
+        pieces of at most 45°. An approximation (no cubic is exactly a
+        circle), but within about 4e-6 of the radius. A full circle ends
         exactly where it starts. A collapsed arc gives no curves.
         """
         var curves = List[Bezier]()

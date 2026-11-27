@@ -1,8 +1,8 @@
 """An offscreen render target: a texture-backed framebuffer object at an
 exact pixel size no window manager can veto.
 
-Exists for headless GL work — `tests/render/test_gl_parity.mojo`'s frame
-comparison and, later, `run_headless(..., backend=RenderBackend.GPU)` — where
+Exists for headless GL work (`tests/render/test_gl_parity.mojo`'s frame
+comparison and, later, `run_headless(..., backend=RenderBackend.GPU)`), where
 the frame has to land in a buffer of a known size rather than whatever
 drawable the window happens to hand back.
 """
@@ -33,8 +33,8 @@ from ._gl_backend import _delete_object
 struct _GLTarget(Movable):
     """A texture plus the framebuffer object that renders into it.
 
-    Owns the `GL` it was built with, so teardown — unbind, then delete the
-    framebuffer and the texture — can run from `__deinit__` with no
+    Owns the `GL` it was built with, so teardown (unbind, then delete the
+    framebuffer and the texture) can run from `__deinit__` with no
     parameters to pass one in. The context that `gl` was resolved against
     must still be current when `_GLTarget` is destroyed (FFI rule 3 in
     `_gl.mojo`), same as everywhere else a `GL` is torn down.

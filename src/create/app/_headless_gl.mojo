@@ -1,8 +1,8 @@
 """The headless GPU loop: `run_headless`'s frame, presented into an offscreen
 `_GLTarget` instead of a `MemorySurface`, then read back into one.
 
-Exists for the same reason `run_headless` does — no window, no display, a
-plain owned buffer at the end — but through the GL backend, so a test can
+Exists for the same reason `run_headless` does (no window, no display, a
+plain owned buffer at the end), but through the GL backend, so a test can
 assert on GPU-only behaviour (batching, texture-unit coexistence, vertex
 buffer growth) that the CPU-vs-GPU parity test is structurally blind to.
 
@@ -28,7 +28,7 @@ from ._driver import _Driver
 
 
 def _open_headless_window() raises -> GLWindow:
-    """Tiny and never rendered into — the frame lands in the `_GLTarget` FBO,
+    """Tiny and never rendered into: the frame lands in the `_GLTarget` FBO,
     and this exists only because a GL context needs a window to belong to.
     So it is not multisampled either, and offscreen: never shown, no display
     needed.
@@ -47,10 +47,10 @@ def _run_headless_gl(
     antialiasing: Antialiasing = Antialiasing.OFF,
     autoscale: Autoscale = Autoscale.FIT,
 ) raises -> MemorySurface:
-    """Run the program `driver` calls through the GPU backend — `create`'s frame, then `frames`
-    calls to `update` — and return the last frame as a `MemorySurface`.
+    """Run the program `driver` calls through the GPU backend (`create`'s frame, then `frames`
+    calls to `update`), and return the last frame as a `MemorySurface`.
 
-    Same contract as `run_headless`, down to which frame `step` sees — the
+    Same contract as `run_headless`, down to which frame `step` sees: the
     only difference is where the pixels come from: a `_GLTarget` framebuffer
     object, read back once after the last frame rather than replayed onto an
     owned buffer every frame. Raises if no GL context can be created; never

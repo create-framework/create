@@ -3,8 +3,8 @@ is presented: `save_image`, `save_screenshot` and `start_recording`.
 
 Present is the only place holding both the finished frame and its unconsumed
 commands, so a capture is a request until then. `Captures` keeps the
-requests and the recording's state — its GIF writer and its timing, the
-run's clock cut into `1 / fps` slots — and `Backend` does the part that
+requests and the recording's state (its GIF writer and its timing, the
+run's clock cut into `1 / fps` slots), and `Backend` does the part that
 needs a replay: it replays the commands for a `save_image` or a recording's
 frame on the CPU, then hands the pixels back here.
 """
@@ -40,10 +40,10 @@ struct _ImageRequest(Copyable, Movable):
     var width: Int
     var height: Int
     var scale: Float64
-    """The capture's pixel scale — the fallback for commands whose transform
+    """The capture's pixel scale: the fallback for commands whose transform
     is not uniform, exactly as the live frame's autoscale factor is."""
     var rebase: Transform
-    """`capture_base @ window_base_inv` — see `replay`'s `pre`."""
+    """`capture_base @ window_base_inv`: see `replay`'s `pre`."""
     var transparent: Bool
 
 
@@ -238,7 +238,7 @@ struct Captures(Movable):
     the order they were called.
 
     Just paths: a screenshot has no geometry to decide, which is the whole
-    difference from `_ImageRequest` — it is whatever the framebuffer holds
+    difference from `_ImageRequest`: it is whatever the framebuffer holds
     once the frame has been rendered, so every one is the same pixels.
     """
     var pending_images: List[_ImageRequest]
@@ -277,7 +277,7 @@ struct Captures(Movable):
         """Service the pending `save_screenshot`s by copying the finished
         buffer, once for them all.
 
-        After the replay, so the bars are in it — a screenshot is what the user
+        After the replay, so the bars are in it: a screenshot is what the user
         saw, and at this point `s` already is that. Near-free: a copy of the
         frame, with no second rasterisation.
         """
@@ -299,7 +299,7 @@ struct Captures(Movable):
         """The GPU counterpart: read the real framebuffer back off the driver.
 
         There is no host buffer to copy from here, so this is the one capture
-        that costs a pipeline stall — see `GLRenderer.read_frame`. It runs
+        that costs a pipeline stall: see `GLRenderer.read_frame`. It runs
         after `render` and before the run loop's buffer swap, which is the only
         window in which the finished frame is still the one being read.
         """

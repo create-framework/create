@@ -6,7 +6,7 @@ struct Animation
 
 An ordered sequence of frames and the rate they play at.
 
-An `Animation` is the asset, not the playhead -- it holds the frames
+An `Animation` is the asset, not the playhead: it holds the frames
 and how fast they are meant to run, and never mutates. `Animator`
 walks it. The rate lives here because it is a property of the artwork: a
 run cycle and an idle cycle are rendered for different speeds.
@@ -61,7 +61,7 @@ var run = Animation.from_sheet(sheet, 32, 32, start=4, count=6)
 
 `count = 0` means every remaining cell. Raises when the sheet is not a
 whole number of cells wide or tall, or when the window runs past the
-last cell -- a silently truncated animation is harder to notice than a
+last cell: a silently truncated animation is harder to notice than a
 failed load.
 
 ### `from_folder`
@@ -81,7 +81,7 @@ A relative `path` is resolved against the directory of the calling
 source file, as `Image.load`'s is.
 
 Names are ordered by the number they end in, not by string comparison,
-so `frame_2` comes before `frame_10` -- the ordering an author means
+so `frame_2` comes before `frame_10`: the ordering an author means
 and the one zero-padding is usually a workaround for. Files that are
 not BMP, PNG or JPEG are skipped; a directory with no images at all
 raises rather than yielding an empty animation.

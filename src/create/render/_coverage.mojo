@@ -2,7 +2,7 @@
 
 The replay draws an antialiased shape onto a *recording* surface `grid`
 times finer along each axis, so the shape's own code decides which samples
-it covers — the same pixel-centre rules, now at sample centres — and no
+it covers (the same pixel-centre rules, now at sample centres), and no
 rasteriser knows antialiasing exists. `composite_coverage` then counts, for
 each pixel, how many of its `grid * grid` samples each paint covered, and
 composites the pixel once.
@@ -106,18 +106,18 @@ def composite_coverage[
     """Composite the shape recorded in `runs` onto `s`, antialiased.
 
     `runs` holds `(row, lo, hi, key)` quadruples from a recording surface
-    `grid` times the size of `s` along each axis — `grid` a power of two —
+    `grid` times the size of `s` along each axis (`grid` a power of two)
     a key naming each run's paint (`fill` for `GRADIENT_KEY`); the keys are
     overwritten. A pixel's coverage by a paint is the samples of its
     `grid * grid` that the paint's runs cover.
 
     Each run adds to its pixel row where its coverage changes: up by its
     partial samples at its first pixel, to `grid` from the next, and back
-    down at its last — into a difference array per paint, noting each
+    down at its last, into a difference array per paint, noting each
     column it touches. Sorted, the touched columns split the row into
     stretches of constant coverage, so a stretch costs one `fill_span`
-    whatever its length — the interior in one run, a long shallow edge in a
-    few — and only a gradient's partial stretches go pixel by pixel. Reading
+    whatever its length (the interior in one run, a long shallow edge in a
+    few), and only a gradient's partial stretches go pixel by pixel. Reading
     a column back clears it, ready for the next row.
 
     The loops index through pointers, as the raster loops do: bounds-checked

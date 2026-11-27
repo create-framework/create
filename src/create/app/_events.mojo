@@ -1,7 +1,7 @@
 """The one translation from SDL events to the devices on `Context`.
 
 Both run loops pump events and both have to fold them into the same place,
-so the arms live here rather than once per loop — a key handled in
+so the arms live here rather than once per loop: a key handled in
 one and not the other would be a silent divergence between the CPU and GPU
 paths.
 
@@ -50,12 +50,12 @@ def apply_events(
     True means quit.
 
     Takes the viewport and the context rather than a `Canvas` because this
-    runs *before* the canvas is built — pointer positions have to be mapped with
+    runs *before* the canvas is built: pointer positions have to be mapped with
     this frame's mapping, which the loop has just re-derived.
 
     `px_per_point` converts a pointer position from SDL's logical window
     coordinates into the framebuffer pixels the viewport was built from. It is
-    1 whenever the two agree — every pixel-buffer `Window` — and the drawable
+    1 whenever the two agree (every pixel-buffer `Window`), and the drawable
     over logical ratio on a scaled display, where the GL loop sizes its
     viewport from `drawable_size()`.
     """
@@ -74,7 +74,7 @@ def apply_events(
             context.keyboard._type_text(event[TextInput].text)
         elif event.isa[MouseMoved]():
             var e = event[MouseMoved]
-            # Pointer positions reach the program in screen space — the same
+            # Pointer positions reach the program in screen space, the same
             # camera-independent space `canvas.left`/`right`/`bottom`/`top` use.
             var position = _to_screen(view, e.x, e.y, px_per_point)
             # The motion mapped as the position is (scaled, y flipped), by

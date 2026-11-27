@@ -50,7 +50,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
 
     Like a `Triangle`'s, the fields are the vertices and `center()` (the
     centroid) is derived; `move_to` moves the centroid. The centroid and
-    `area` are those of a simple polygon -- one whose edges do not cross.
+    `area` are those of a simple polygon: one whose edges do not cross.
 
     `corner_radius` rounds every corner, as `canvas.polygon` draws it, and
     every test here sees the rounded shape. Each corner is clamped on its
@@ -273,8 +273,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
     # A polygon may be concave, so a shape with its outline inside can
     # still bridge a notch; and it may wind round a hole, which a shape
     # can enclose with its whole outline inside. So it holds a shape when
-    # it holds the shape's outline -- cut where it crosses the lines of the
-    # edges, the middle of every piece inside, as for `Sector` -- and no
+    # it holds the shape's outline (cut where it crosses the lines of the
+    # edges, the middle of every piece inside, as for `Sector`), and no
     # edge piece strictly inside the shape has the outside along it. A
     # rounded polygon does all this as its outline.
     def contains(self, l: Line) -> Bool:
@@ -542,7 +542,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
     def _rim(self, lines: List[Line], arcs: List[Arc]) -> List[Point]:
         """The middles of the edge pieces with the outside on one side,
         each edge cut where another edge, one of `lines` or a circle of
-        `arcs` crosses it -- so each piece lies wholly inside or wholly
+        `arcs` crosses it, so each piece lies wholly inside or wholly
         outside a shape with that boundary, and on one side of it or the
         other runs the outside all along.
 

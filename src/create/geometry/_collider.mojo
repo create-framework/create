@@ -121,9 +121,9 @@ def _segment_distance_squared(p: Point, a: Point, b: Point) -> Float64:
 
 
 def _cores_overlap[N: Int, M: Int](a: _Core[N], b: _Core[M]) -> Bool:
-    """Whether the polygons come within the sum of the radii: they meet --
-    an edge of one crosses an edge of the other, or one holds a corner of
-    the other -- or, apart, a corner of one is that near an edge of the
+    """Whether the polygons come within the sum of the radii: they meet
+    (an edge of one crosses an edge of the other, or one holds a corner of
+    the other), or, apart, a corner of one is that near an edge of the
     other, where two disjoint convex polygons are nearest."""
     var reach = a.radius + b.radius
     comptime if N == 1 and M == 1:

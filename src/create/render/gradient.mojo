@@ -29,8 +29,8 @@ def _byte(v: Float64) -> UInt8:
 
 comptime _RAMP_SIZE = 256
 """Entries in a gradient's colour ramp, at `t = i / (_RAMP_SIZE - 1)`. Both
-replays read between neighbouring entries linearly — the CPU by hand, the GPU
-by texture filtering — so this is the ramp the GL backend uploads, entry for
+replays read between neighbouring entries linearly (the CPU by hand, the GPU
+by texture filtering), so this is the ramp the GL backend uploads, entry for
 texel."""
 
 comptime _BAYER = SIMD[DType.float64, 16](
@@ -358,7 +358,7 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return _DeviceMapping(u, v, True)
 
     def _stops_key(self) -> Int:
-        """A hash of the stops — all a ramp depends on — for caching one per
+        """A hash of the stops (all a ramp depends on) for caching one per
         distinct ramp. Equal stops give equal keys; a collision is told apart
         by `_same_stops`."""
         var h = len(self._stops[])

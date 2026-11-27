@@ -2,7 +2,7 @@
 
 Its own module rather than a member of `_backend.mojo` because both replay
 paths need it and the GL one cannot import the CPU one: `_backend` reaches
-`_gl_backend`, so an edge back would close a cycle — the same reason
+`_gl_backend`, so an edge back would close a cycle, the same reason
 `_transform.mojo` exists.
 """
 
@@ -45,7 +45,7 @@ struct _InternedImage(Copyable, Movable):
 
 
 comptime IMAGE_KEEP_FRAMES = 120
-"""How many frames an interned image survives without being rendered —
+"""How many frames an interned image survives without being rendered:
 about two seconds at 60 fps. Long enough that an image shown now and then is
 not copied and uploaded again each time; short enough that a fresh image per
 frame costs a bounded amount of memory."""

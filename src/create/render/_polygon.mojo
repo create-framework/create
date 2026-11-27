@@ -1,8 +1,8 @@
 """Fill and stroke geometry for polygons, shared by both replays.
 
 A polygon is tiled at replay into convex quads, like a sector, and both
-backends fill those same quads — the CPU through `fill_quad`, the GPU as
-vertices — which keeps them in parity. Neighbouring quads share their
+backends fill those same quads (the CPU through `fill_quad`, the GPU as
+vertices), which keeps them in parity. Neighbouring quads share their
 corners exactly, so under `fill_quad`'s half-open rule a translucent
 polygon composites once everywhere, fill and stroke together, however it
 folds over itself.
@@ -16,7 +16,7 @@ is nonzero.
 The edges are cut where others cross them into the *rim*, pieces with the
 outside along one side, and the *seams*, pieces running through the inside
 (a pentagram's inner pentagon). The stroke is an inset band along the rim
--- what lies inside and within `stroke_thickness` of it -- and a band
+-- what lies inside and within `stroke_thickness` of it, and a band
 centred on each seam, as thick in all, so every edge is stroked as thick.
 Points within `d` of some pieces make a *band*: a rectangle of half-width
 `d` along every piece and a disc at every end, each wound once, so a point
@@ -33,7 +33,7 @@ only where the corner is reflex from it. So a rim corner needs no disc
 where it is convex from that side, and only that wedge of one, a *pie*,
 where it is reflex; and a piece needs only the half of its rectangle on
 that side. A pie spans the corner's turn, so a polygon of many shallow
-corners -- a rounded one -- adds a few edges per corner rather than a
+corners (a rounded one) adds a few edges per corner rather than a
 whole disc. A half rectangle's base lies on the rim's own line, so the
 walk across a slab passes over the stretches of no width between them.
 
@@ -246,8 +246,8 @@ def polygon_quads(c: RenderCommand, m: Transform, scale: Float64) -> Pieces:
 
         # Walk in from the left, where every count is zero. The stretch
         # after edge `i` runs to edge `i + 1`; runs of one class merge. A
-        # stretch with no width -- a band's edge along the rim's, two pieces
-        # meeting at a corner -- paints nothing, so it changes no run.
+        # stretch with no width (a band's edge along the rim's, two pieces
+        # meeting at a corner) paints nothing, so it changes no run.
         var counts = Array[Int, 4](fill=0)
         var run_class = _NOTHING
         var run_start = 0
@@ -464,8 +464,8 @@ def _add_rim_band(
     sf: Float64,
     layer: Int,
 ):
-    """The band within `d` of the rim, exact on one side of it -- outside
-    the polygon if `outside`, else inside -- and nowhere else that matters:
+    """The band within `d` of the rim, exact on one side of it (outside
+    the polygon if `outside`, else inside), and nowhere else that matters:
     along each piece the half of its rectangle on that side, and at each
     corner nothing, a pie, or (where unknown) a whole disc."""
     var ends = List[Point]()

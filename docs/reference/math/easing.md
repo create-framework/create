@@ -13,7 +13,7 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ## Constants
 
-- `LINEAR = Easing(Int(0))`: No easing — the fraction passes through unchanged.
+- `LINEAR = Easing(Int(0))`: No easing: the fraction passes through unchanged.
 - `IN_QUAD = Easing(Int(1))`
 - `OUT_QUAD = Easing(Int(2))`
 - `IN_OUT_QUAD = Easing(Int(3))`

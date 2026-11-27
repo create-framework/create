@@ -8,14 +8,14 @@ What `run` and `run_headless` drive: `create`, which draws the first frame, then
 
 One per-frame method, not two. A separate `render` would have to be handed
 a canvas it may not write to and no input at all, which is what forced a
-program to smuggle a decision from one into the other through a field —
+program to smuggle a decision from one into the other through a field:
 reading a key in `update` to file a screenshot in `render`, or caching a
 frame rate reading to render it. Deciding and rendering are the same frame's
 work, so they are the same method's.
 
 There are no event callbacks. Input arrives on the context, as
 `context.keyboard`, `context.mouse` and `context.gamepad(player)`, and
-nowhere else — so there is one place a frame's
+nowhere else, so there is one place a frame's
 decisions are made and no ordering question between a callback and the
 frame body.
 
@@ -33,7 +33,7 @@ def create(mut context: Context, mut canvas: Canvas) raises -> Self
 Build the program and draw frame 1, as Processing's `setup` does.
 
 Where resources the program drives on its own schedule are
-constructed — images, fonts, sounds, an `Audio` device — and where
+constructed (images, fonts, sounds, an `Audio` device), and where
 canvas settings that outlive the frame, such as `canvas.autoclear`,
 are set once.
 
@@ -60,9 +60,9 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises
 Advance the program by one frame, and render it.
 
 Two parameters, two lifetimes. `context` is the run's state: it
-outlives the frame, carries what the loop measured for this one —
-`context.time` and the devices — and takes the dials for the *next*
-one — the autoscale mode, the clear, `quit()`. `canvas` is where this
+outlives the frame, carries what the loop measured for this one
+(`context.time` and the devices), and takes the dials for the *next*
+one: the autoscale mode, the clear, `quit()`. `canvas` is where this
 frame is drawn: it is built fresh, rendered on, and dropped before
 presentation, so it must not be stored anywhere. The first `update`
 draws frame 2; `create` drew frame 1.

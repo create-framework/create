@@ -43,7 +43,7 @@ is where a program with an opinion of its own states it. The size here is
 the shorthand for the common case where the window and the design agree.
 
 `backend=RenderBackend.GPU` runs the same program through the GL backend
-instead — a different window, a different loop, and the same frame. It is
+instead: a different window, a different loop, and the same frame. It is
 a branch, taken once, rather than a value the loop holds, because Mojo
 has no dynamic trait dispatch: each loop calls its own replay directly.
 

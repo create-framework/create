@@ -16,7 +16,7 @@ struct Time(Copyable, ImplicitlyCopyable, Movable, Writable):
     """
 
     var delta: Float64
-    """Seconds of scaled time since the previous frame -- multiply motion by
+    """Seconds of scaled time since the previous frame: multiply motion by
     this. Zero while the run's time is paused."""
 
     var elapsed: Float64

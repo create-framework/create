@@ -10,8 +10,8 @@ Buttons follow the vocabulary every device shares: *down* is held right now,
 *pressed*/*released* are the edges, true only in the frame the button
 went down or came up. Name buttons through `GamepadButton`.
 
-Sticks are `Vector`s in screen orientation — y up, like every other
-direction in the library — inside the unit circle, so
+Sticks are `Vector`s in screen orientation (y up, like every other
+direction in the library), inside the unit circle, so
 `position += pad.left_stick * speed * context.time.delta` moves at
 `speed` at full tilt and never faster on a diagonal. Each has a radial
 dead zone of `STICK_DEAD_ZONE`, rescaled so the stick still eases up
@@ -25,7 +25,7 @@ near halfway doesn't flicker between the two.
 A slot that holds no gamepad reads all zero and `connected` False, so a
 program can read player two's pad before one is plugged in.
 `connected_this_frame` and `disconnected_this_frame` are the edges of
-`connected`, true only in the frame the pad arrived or left — the frame
+`connected`, true only in the frame the pad arrived or left: the frame
 to show "Player 2 joined" or to pause. In the frame a pad leaves, its
 slot still has its `name`, so the message can say which.
 

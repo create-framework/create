@@ -30,7 +30,7 @@ def _wait_for_dimensions(
     mut win: Window, mut state: _PersistentCanvasState, context: Context
 ) raises:
     # For fullscreen, SDL fires a bogus (1, 1) Resized before reporting real
-    # dimensions — pump events until the window reports a usable size.
+    # dimensions, so pump events until the window reports a usable size.
     _update_dimensions(win, state, context)
     while state._view.width <= 1 or state._view.height <= 1:
         _ = win.events()
@@ -62,8 +62,8 @@ def _run_loop(
     mut context: Context,
     var applied: _AppliedWindow,
 ) raises:
-    # Seeded here rather than in run() so the program's create() — which may
-    # load fonts or decode audio — does not land in the first frame's delta.
+    # Seeded here rather than in run() so the program's create() (which may
+    # load fonts or decode audio) does not land in the first frame's delta.
     context.time._start(win.ticks())
     while win.is_open() and not context._quit:
         # Dimensions are refreshed before events so pointer positions are
@@ -73,7 +73,7 @@ def _run_loop(
         # Re-derive after events: a resize this frame reallocated the pixel
         # buffer, so the mapping taken above is one frame stale while the
         # framebuffer is already the new size. Rendering that frame against the
-        # old mapping puts it in a corner of the new buffer — one crooked
+        # old mapping puts it in a corner of the new buffer: one crooked
         # frame, and a permanent ghost in a program that never clears.
         _update_dimensions(win, state, context)
         var frame_start = win.ticks()
@@ -81,7 +81,7 @@ def _run_loop(
         # The Surface is taken here, after events, because Window._resize
         # reallocates the pixel buffer: one taken before them could point at
         # freed memory. Its extent comes from the window rather than the
-        # viewport for the same reason — the viewport was measured before the
+        # viewport for the same reason: the viewport was measured before the
         # resize, and a stale width would run the raster loops off the new
         # buffer.
         state = step(driver, context, state^)
@@ -136,7 +136,7 @@ def run[
     the shorthand for the common case where the window and the design agree.
 
     `backend=RenderBackend.GPU` runs the same program through the GL backend
-    instead — a different window, a different loop, and the same frame. It is
+    instead: a different window, a different loop, and the same frame. It is
     a branch, taken once, rather than a value the loop holds, because Mojo
     has no dynamic trait dispatch: each loop calls its own replay directly.
 

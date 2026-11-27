@@ -3,7 +3,7 @@
 The encoder half of what `Image._load_png` already does for decoding:
 libpng's *simplified* API, reached through `_DLHandle`, with the 104-byte
 `png_image` control struct laid out by hand. Nothing here knows what the
-pixels mean — it takes a buffer, its extent and a path, which is what keeps it
+pixels mean: it takes a buffer, its extent and a path, which is what keeps it
 usable both by the design-size capture and by a raw framebuffer
 screenshot whose bytes were never a `MemorySurface`.
 
@@ -19,7 +19,7 @@ from create._library import load_library
 comptime _PNG_IMAGE_VERSION = 1
 
 comptime _PNG_FORMAT_RGBA = 3
-"""`PNG_FORMAT_FLAG_COLOR | PNG_FORMAT_FLAG_ALPHA` — the same value
+"""`PNG_FORMAT_FLAG_COLOR | PNG_FORMAT_FLAG_ALPHA`: the same value
 `Image._load_png` asks for on the way in."""
 
 comptime _PNG_IMAGE_SIZE = 104
@@ -35,7 +35,7 @@ comptime _MESSAGE_OFFSET = 36
 
 
 def _put_u32(mut buf: List[UInt8], off: Int, value: Int):
-    """Write one `png_uint_32` field of the control struct, little-endian —
+    """Write one `png_uint_32` field of the control struct, little-endian:
     the counterpart of `le_uint`, which is how the read path gets them back.
     """
     for i in range(4):
@@ -58,7 +58,7 @@ def write_png(
 ) raises:
     """Write `width` x `height` RGBA bytes to `path` as a PNG.
 
-    `pixels` is row-major with the top row first and four bytes per pixel —
+    `pixels` is row-major with the top row first and four bytes per pixel:
     the layout every `Surface` in this library uses, and the one libpng's
     packed `row_stride=0` assumes.
 

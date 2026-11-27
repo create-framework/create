@@ -8,7 +8,7 @@ Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`,
 |---|---|
 | [`RenderBackend`](renderbackend.md) | Which renderer draws a run's frames: `run`'s and `run_headless`'s `backend`. |
 | [`Antialiasing`](antialiasing.md) | How smoothly the edges of shapes are drawn. |
-| [`Align`](align.md) | Which point of a box a position names — one value for both axes. |
+| [`Align`](align.md) | Which point of a box a position names: one value for both axes. |
 | [`StrokeAlign`](strokealign.md) | Where a region's stroke sits against the shape's edge. |
 | [`StrokeCap`](strokecap.md) | How the two open ends of a stroked line or curve are finished. |
 | [`StrokeDash`](strokedash.md) | How a stroke is broken into dashes along its length. |

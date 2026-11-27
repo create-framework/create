@@ -1,7 +1,7 @@
 """The platform layer: native windows, the event loop and the two
 rendering surfaces, over SDL3.
 
-Internal, like `_bytes` — the root preamble does not import it, since no
+Internal, like `_bytes`: the root preamble does not import it, since no
 program opens a window itself; `run` does. `app` is its only consumer, and
 `render` never imports it (see `_gl.mojo`), so the rendering stack stays
 usable with no window at all.

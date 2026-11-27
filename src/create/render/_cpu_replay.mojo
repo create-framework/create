@@ -168,7 +168,7 @@ def _circle_row_span(
     pcx: Float64, dy: Float64, rad2: Float64, lo_bound: Int, hi_bound: Int
 ) -> Tuple[Int, Int]:
     """Integer columns in `[lo_bound, hi_bound)` where `(col - pcx)**2 + dy**2
-    <= rad2` — the same per-column test `_circle`'s uniform branch used to
+    <= rad2`: the same per-column test `_circle`'s uniform branch used to
     make one column at a time. `sqrt` only seeds the bounds; each side is
     then walked outward while the exact same expression still passes and
     inward while it fails, which is what keeps this bit-exact with the
@@ -223,29 +223,29 @@ def _affine_row_span(
     col_hi: Int,
 ) -> Tuple[Int, Int]:
     """Integer columns in `[col_lo, col_hi)` where `lo <= v0 + (col -
-    col0)*step <= hi` — one axis of the rotated rect's containment test,
+    col0)*step <= hi`: one axis of the rotated rect's containment test,
     solved directly instead of walked pixel by pixel. `step` is one of the
     inverse matrix's two affine coefficients (`minv[0,0]` or `minv[1,0]`),
     constant for the whole shape (not just one row), so the caller passes
     its reciprocal `inv_step` precomputed once rather than paying a
-    division on every row — `step` itself is still needed for the exact
+    division on every row: `step` itself is still needed for the exact
     `== 0.0` test, since multiplying by an `inv_step` of `inf` would not
-    reproduce it. `v0` is the local coordinate at column `col0` — a fixed
+    reproduce it. `v0` is the local coordinate at column `col0`: a fixed
     reference column, independent of the `[col_lo, col_hi)` clip range,
     since a caller solving an inner span clips to the outer span's columns
     while `v0` still comes from the row's start. Returns an empty range
     (`lo > hi`) rather than raising when no column qualifies. Not required
-    to be bit-exact with a per-pixel walk — see the non-uniform branches
+    to be bit-exact with a per-pixel walk: see the non-uniform branches
     this feeds, whose exactness policy already accepts a rounded-endpoint
     edge.
 
     `step` is treated as zero below a small threshold, not just at exactly
-    `0.0`: a composed matrix that is mathematically axis-aligned (e.g. a
+    `0.0`: a composed matrix that is mathematically axis-aligned (such as a
     rotate/counter-rotate pair meant to cancel) still leaves a residual on
     the order of 1e-16 in `minv[0,0]`/`minv[1,0]` after floating-point matrix
     multiplication, which `uniform()` rejects. Dividing by that residual
     turns it into an inv_step of ~1e15, which amplifies the last bit of
-    rounding noise in `step` into a huge, unstable `t0`/`t1` — different
+    rounding noise in `step` into a huge, unstable `t0`/`t1`: different
     enough frame to frame under a continuously varying transform to make the
     solved span flicker between "whole row" and "nothing". A real rotation
     or shear is many orders of magnitude above this threshold, so treating
@@ -276,7 +276,7 @@ def _ellipse_row_span(
     col_hi: Int,
 ) -> Tuple[Int, Int]:
     """Integer columns in `[col_lo, col_hi)` where `a*t^2 + b*t + c <= 0`,
-    `t = col - col0` — the rotated/sheared circle's per-row containment
+    `t = col - col0`: the rotated/sheared circle's per-row containment
     test, solved directly instead of walked pixel by pixel. Substituting the
     row's affine local-space coordinates (taken at reference column `col0`)
     into `dx^2 + dy^2 <= radius^2` turns it into this quadratic in `t`; `a`
@@ -291,13 +291,13 @@ def _ellipse_row_span(
     when the row misses the shape entirely.
 
     `a` is treated as zero below a small threshold, mirroring
-    `_affine_row_span`'s `step` guard — a composed matrix that is
+    `_affine_row_span`'s `step` guard: a composed matrix that is
     mathematically axis-aligned can still leave `step_x`/`step_y` as ~1e-16
     residuals rather than exact zero, and squaring them into `a` does not
     make them any less capable of sending `inv_2a` (computed by the caller
     as `1/(2a)`) to a huge, sign-unstable value. When `a` degenerates this
     way, `b` (built from the same tiny steps) degenerates with it, so
-    solving the linear fallback would hit the identical blow-up — instead,
+    solving the linear fallback would hit the identical blow-up, instead,
     since `c` is the implicit function's value already evaluated at the row's
     reference column `col0`, a negligible `a` means the row barely varies
     across its clip range at all, so `c`'s sign alone decides the whole run.
@@ -340,7 +340,7 @@ def _circle_arc_row[
     restricted to `[x0, x1)`), factored out of `_circle`'s own uniform
     branch so both call sites share one solve. `full_fill` and `pr_inner2`
     carry the caller's `pr_inner <= 0.0` degenerate case exactly as `_circle`
-    already handled it — the whole span paints in *fill* colour, not
+    already handled it: the whole span paints in *fill* colour, not
     stroke, when the stroke is too thick for the radius to leave a ring.
     A pure refactor for `_circle`'s own call site: same branches, same
     order, same colours.
@@ -382,7 +382,7 @@ def _fillet_disc_row_span(
     col_hi: Int,
 ) -> Tuple[Int, Int]:
     """`_ellipse_row_span` specialised to one fillet corner's circle, centred
-    at `(cx, cy)` in local space rather than at the shape's own centre —
+    at `(cx, cy)` in local space rather than at the shape's own centre:
     `a`/`inv_2a` stay the caller's precomputed, transform-only constants."""
     var dx0 = A0 - cx
     var dy0 = B0 - cy
@@ -446,7 +446,7 @@ def _rounded_rect_row_span(
     [ly0,ly1]` with corner radius `r`, under a non-uniform transform.
 
     A rounded rect is convex, so a row's covered columns are always one
-    interval — this finds it as the union of up to three column-contiguous
+    interval: this finds it as the union of up to three column-contiguous
     sub-solves, ordered by local `y` (monotone in `col` for a fixed row):
     the bottom and top corner bands each solve a straight strip plus two
     fillet discs, the middle band solves the sharp rect's own x-range
@@ -579,8 +579,8 @@ struct CpuReplay(Movable):
     """The CPU replay: recorded commands rasterised onto a `Surface`.
 
     Holds only its own working memory and the CPU's image shadow cache; what
-    a replay reads beside the commands — the images and glyph cache, the
-    frame's clips, the antialiasing level — is handed to `replay` by the
+    a replay reads beside the commands (the images and glyph cache, the
+    frame's clips, the antialiasing level) is handed to `replay` by the
     `Backend`, as `GLRenderer.render` is handed the same. Every capture and
     pixel read replays here too, whichever backend presents the frame.
     """
@@ -621,7 +621,7 @@ struct CpuReplay(Movable):
     ) raises:
         """Render `cmds` onto `s`, in order.
 
-        `scale` is the frame's autoscale factor — the fallback pixel scale for
+        `scale` is the frame's autoscale factor: the fallback pixel scale for
         commands whose transform is not uniform. It is constant for a frame, so
         it travels here rather than on every command.
 
@@ -1072,7 +1072,7 @@ struct CpuReplay(Movable):
         else:
             # Rotated/sheared: the inverse mapping is still affine (no
             # perspective row), so a device column maps to local space by
-            # `local0 + col * (minv[0,0], minv[1,0])` — linear in `col`. The
+            # `local0 + col * (minv[0,0], minv[1,0])`, linear in `col`. The
             # rect's containment test is two independent range checks (`lx`
             # inside `[lx0,lx1]`, `ly` inside `[ly0,ly1]`), and each is linear
             # in `col`, so `_affine_row_span` solves the qualifying column
@@ -1081,7 +1081,7 @@ struct CpuReplay(Movable):
             # into an inner fill span (same solve, shrunk by the stroke
             # width) and up to two stroke spans flanking it, mirroring the
             # uniform circle branch below. Not bit-exact with the old
-            # per-pixel test — an edge pixel may land one column off — which
+            # per-pixel test (an edge pixel may land one column off), which
             # this phase's exactness policy accepts and `test_gl_parity.mojo`
             # gates.
             var minv = m.inverse()
@@ -1297,7 +1297,7 @@ struct CpuReplay(Movable):
 
         if uniform(m):
             # A uniform scale keeps a circle a circle, so it stays a distance
-            # test — just in pixels rather than world units.
+            # test, just in pixels rather than world units.
             var p = m._apply_xy(cx, cy)
             # Pixel centres sit at +0.5, so moving the centre back by half a
             # pixel lets the row spans test integer columns and rows.
@@ -1312,7 +1312,7 @@ struct CpuReplay(Movable):
             var x1 = min(Int(pcx + pr) + 1, W)
             var y1 = min(Int(pcy + pr) + 1, H)
             # Whether a row's *entire* outer span is fill, with no stroke ever
-            # rendered — matches the per-pixel `if`'s "or pr_inner <= 0.0" arm,
+            # rendered: matches the per-pixel `if`'s "or pr_inner <= 0.0" arm,
             # which shortcuts to true regardless of `d2` and so never leaves
             # the `elif` reachable.
             var full_fill = c.paint._fill_visible() and (
@@ -1466,7 +1466,7 @@ struct CpuReplay(Movable):
         blur: Int,
     ) raises:
         """The silhouette command `c` blurred by `blur` device pixels, from
-        a cached mask laid over the same destination rect `_image` uses —
+        a cached mask laid over the same destination rect `_image` uses,
         or, under a transform that turns the image, a mask built for it."""
         ref image = c.payload[ImagePayload]
         if image.image not in res.images:

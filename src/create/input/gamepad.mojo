@@ -17,8 +17,8 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     *pressed*/*released* are the edges, true only in the frame the button
     went down or came up. Name buttons through `GamepadButton`.
 
-    Sticks are `Vector`s in screen orientation — y up, like every other
-    direction in the library — inside the unit circle, so
+    Sticks are `Vector`s in screen orientation (y up, like every other
+    direction in the library), inside the unit circle, so
     `position += pad.left_stick * speed * context.time.delta` moves at
     `speed` at full tilt and never faster on a diagonal. Each has a radial
     dead zone of `STICK_DEAD_ZONE`, rescaled so the stick still eases up
@@ -32,7 +32,7 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     A slot that holds no gamepad reads all zero and `connected` False, so a
     program can read player two's pad before one is plugged in.
     `connected_this_frame` and `disconnected_this_frame` are the edges of
-    `connected`, true only in the frame the pad arrived or left — the frame
+    `connected`, true only in the frame the pad arrived or left: the frame
     to show "Player 2 joined" or to pause. In the frame a pad leaves, its
     slot still has its `name`, so the message can say which.
     """
@@ -52,7 +52,7 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
     var connected: Bool
     var connected_this_frame: Bool
     var disconnected_this_frame: Bool
-    # The product name, e.g. "Xbox Series X Controller" — for showing, not
+    # The product name, such as "Xbox Series X Controller": for showing, not
     # for telling layouts apart. Empty when SDL knows none.
     var name: String
     var left_stick: Vector
@@ -178,7 +178,7 @@ struct Gamepad(Copyable, ImplicitlyCopyable, Movable, Writable):
 
 def _dead_zone(raw: Vector) -> Vector:
     """`raw` with the inner `STICK_DEAD_ZONE` cut out and the rest stretched
-    back over 0..1, capped at the unit circle — a square-gated stick reaches
+    back over 0..1, capped at the unit circle: a square-gated stick reaches
     past it on the diagonals."""
     var length = raw.magnitude()
     if length <= Gamepad.STICK_DEAD_ZONE:

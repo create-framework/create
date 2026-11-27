@@ -2,12 +2,12 @@ struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     """A mouse button, for `Mouse.down`/`pressed`/`released`.
 
     Matches SDL's own button numbering, not named after it: `BACK`/`FORWARD`
-    are the side thumb buttons (SDL's X1/X2) — named for what a mouse driver
+    are the side thumb buttons (SDL's X1/X2), named for what a mouse driver
     or browser calls them, not SDL's internal label, since nobody looks at
     their mouse and thinks "that's my X1 button."
 
     A wrapped button number rather than a bare `Int`, like `Key`, so a stray
-    number cannot be passed where a button is expected — the numbering is not
+    number cannot be passed where a button is expected: the numbering is not
     what anyone guesses (`RIGHT` is 3, not 2). `MouseButton(n)` names a
     button past `FORWARD` on a mouse that has one.
 
@@ -44,7 +44,7 @@ struct MouseButton(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     @staticmethod
     def from_name(name: String) -> Optional[MouseButton]:
         """The button whose constant is `name`, case folded: `"left"`, `"right"`, `"back"`. `None`
-        for an unknown name — for a binding read from a file, where a
+        for an unknown name: for a binding read from a file, where a
         misspelled constant would have failed to compile.
         """
         var upper = name.upper()

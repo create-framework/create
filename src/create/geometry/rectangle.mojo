@@ -41,14 +41,14 @@ struct Rectangle(
     they are not grouped: read them as `width`/`height` and pair them however
     the caller needs.
 
-    `position` is the centre, not a corner -- consistent with every shape in
+    `position` is the centre, not a corner: consistent with every shape in
     this module and with `canvas.rectangle`. `width`/`height` are the full
     width and height, so `left()`/`right()`/`bottom()`/`top()` are
     `+-width/2`/`+-height/2` from the centre. Coordinates follow world space: y
     grows upward, so `top()` is `position.y + height/2` and `bottom()` is
     `position.y - height/2`.
 
-    `contains` and `closest_point` treat the boundary as inside -- a point
+    `contains` and `closest_point` treat the boundary as inside: a point
     exactly on an edge is contained, and `closest_point` returns it
     unchanged. A zero `width`/`height` collapses the rectangle to a segment or a
     point; `contains`/`overlaps` remain exact for it rather than reporting

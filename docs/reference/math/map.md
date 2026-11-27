@@ -10,4 +10,4 @@ def map(
 ) -> Float64
 ```
 
-Re-scale `value` from one range onto another — a slider position to a world coordinate, say. Linear and unclamped.
+Re-scale `value` from one range onto another: a slider position to a world coordinate, say. Linear and unclamped.

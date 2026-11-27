@@ -120,7 +120,7 @@ struct TextPayload(Copyable, Movable):
 
 @fieldwise_init
 struct LetterboxPayload(Copyable, Movable):
-    """The bars outside the *device* content rect `[x0, x1) x [y0, y1)` —
+    """The bars outside the *device* content rect `[x0, x1) x [y0, y1)`:
     the one payload already in pixels, because it is the frame's clip rather
     than something a program drew."""
 
@@ -134,7 +134,7 @@ struct LetterboxPayload(Copyable, Movable):
 struct CurvesPayload(Copyable, Movable):
     """A stroke along a chain of n cubic Béziers, as 3n + 1 control
     `points`: `start, control1, control2` of each, then the last one's
-    `end`; each starts where the one before it ends. Stroke only — a curve
+    `end`; each starts where the one before it ends. Stroke only: a curve
     has no interior."""
 
     var points: List[Point]
@@ -180,7 +180,7 @@ comptime RenderPayload = Variant[
     PolygonPayload,
 ]
 """What a command draws. Check the kind with `.isa[T]()` and read or change
-its fields through `[T]`, e.g. `c.payload[RectPayload].w`."""
+its fields through `[T]`, for example `c.payload[RectPayload].w`."""
 
 
 struct RenderCommand(Copyable, Movable):
@@ -192,7 +192,7 @@ struct RenderCommand(Copyable, Movable):
     a GPU does not have, whereas this is just data.
 
     **Geometry is local, never device.** `payload` is the shape as the
-    program asked for it, paired with the `transform` that maps it — *not* a
+    program asked for it, paired with the `transform` that maps it: *not* a
     pre-mapped device rect. A rotated rectangle is not an axis-aligned device
     rectangle, so pre-mapping would be lossy; the CPU replay needs the matrix
     anyway to inverse-map per pixel, and the GL backend wants exactly this
@@ -213,8 +213,8 @@ struct RenderCommand(Copyable, Movable):
     time with its tint and opacity folded in. A later `canvas.fill()` cannot
     reach back and change what an already-recorded command paints."""
     var clip: Int
-    """The id of the innermost `canvas.clip` this was rendered under — an
-    index into `CommandBuffer.clips`, one past — or 0 for none. Stamped by
+    """The id of the innermost `canvas.clip` this was rendered under (an
+    index into `CommandBuffer.clips`, one past), or 0 for none. Stamped by
     `CommandBuffer.record`, so no builder below has to know about clips."""
     var stroke_grow: Float64
     """How far `aligned_stroke` grew the shape to move its stroke out, in
@@ -269,7 +269,7 @@ struct RenderCommand(Copyable, Movable):
 
     def is_shape(self) -> Bool:
         """Whether this draws a shape or a curve: a region, a line or a
-        chain of Béziers — what the antialiased shape replay takes."""
+        chain of Béziers, what the antialiased shape replay takes."""
         return (
             self.is_region()
             or self.payload.isa[LinePayload]()
@@ -373,7 +373,7 @@ def _fill_box(c: RenderCommand) -> Tuple[Point, Vector]:
 
 
 def clear_command(color: Color) -> RenderCommand:
-    """Paint the whole framebuffer. Carries no transform — it covers the
+    """Paint the whole framebuffer. Carries no transform: it covers the
     framebuffer, not the design area, so no mapping applies."""
     var s = _ResolvedStyle()
     s.fill_color = color
@@ -385,7 +385,7 @@ def clear_command(
     gradient: Gradient, screen: Transform, w: Float64, h: Float64
 ) -> RenderCommand:
     """Paint the whole framebuffer with `gradient`, spread over the `w` x `h`
-    screen-space area centred on the origin — the design area — which
+    screen-space area centred on the origin (the design area), which
     `screen` maps to pixels. Beyond that area, as in the letterbox, its end
     colours carry on. The geometry is the rectangle's, which is the box
     `_fill_box` reads."""
@@ -550,7 +550,7 @@ def image_command(
 ) -> RenderCommand:
     """An image centred at `(cx, cy)`, rendered `w` by `h` local units.
 
-    `image` is a backend id, not a pointer — see the field docstring. `image_w`
+    `image` is a backend id, not a pointer: see the field docstring. `image_w`
     and `image_h` are the source pixel dimensions, which the replay needs to
     resample and the record site already knows.
     """

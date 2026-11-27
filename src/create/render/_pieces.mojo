@@ -1,7 +1,7 @@
 """A shape as convex device-space pieces, the form both replays draw.
 
-Every kind but the two analytic primitives — rectangles and circles, which
-each replay rasterises from their equations — is lowered to `Pieces` by
+Every kind but the two analytic primitives (rectangles and circles, which
+each replay rasterises from their equations) is lowered to `Pieces` by
 `shape_pieces` (`_lower.mojo`) before it is drawn: lines, curves, sectors,
 polygons and triangles. The CPU fills each piece with `fill_quad` or
 `fill_convex`, whose half-open rule composites an edge two pieces share

@@ -4,7 +4,7 @@
 struct Sector
 ```
 
-A sector -- a slice of pie: the region between two radii of the circle around `position` with radius `radius`, from `start_angle` round by `sweep_angle`. `end_angle`, `center`, `area`, `arc`, `bounds`, `closest_point`, `contains`, `move_to`, `translate`.
+A sector, a slice of pie: the region between two radii of the circle around `position` with radius `radius`, from `start_angle` round by `sweep_angle`. `end_angle`, `center`, `area`, `arc`, `bounds`, `closest_point`, `contains`, `move_to`, `translate`.
 
 The angles are an `Arc`'s: radians, counter-clockwise from the +x axis,
 and a signed sweep, so a negative one runs clockwise and a full turn or

@@ -71,7 +71,7 @@ def triangle_corner_radius(
     One radius for the whole triangle, not one per corner: the requested
     radius is a single value, and a uniform fillet is what that reads as.
     The cost is that one thin vertex suppresses rounding on the whole
-    triangle — the right failure direction, since no rounding is safer than
+    triangle: the right failure direction, since no rounding is safer than
     a self-intersecting one. A degenerate (near-collinear) triangle drives
     this to 0 on its own, no separate check needed.
     """
@@ -95,14 +95,14 @@ def corner_fillet(
     """The fillet circle tangent to both edges at one vertex.
 
     Returns `(center_x, center_y, tangent_in_x, tangent_in_y, tangent_out_x,
-    tangent_out_y, angle_in, angle_out)` — the tangent points sit `r /
+    tangent_out_y, angle_in, angle_out)`: the tangent points sit `r /
     tan(theta/2)` back from the vertex along each edge, the centre sits `r /
     sin(theta/2)` along the interior bisector (the normalised sum of the two
     unit edge vectors leaving the vertex, which points inward for any convex
     corner regardless of winding), and the two angles are `atan2` about that
     centre for whatever arc-rendering code sweeps between them. Used
     unconditionally by both rect corners (theta fixed at PI/2) and triangle
-    corners (theta from real geometry) — no shape-specific special-casing.
+    corners (theta from real geometry): no shape-specific special-casing.
     """
     var l1 = _dist(vx, vy, prev_x, prev_y)
     var l2 = _dist(vx, vy, next_x, next_y)

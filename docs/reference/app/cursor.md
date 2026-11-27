@@ -51,7 +51,7 @@ def __init__(out self, value: Int)
 def from_name(name: String) -> Optional[Self]
 ```
 
-The cursor whose constant is `name`, case folded: `"hand"`, `"crosshair"`, `"hidden"`. `None` for an unknown name — for a binding read from a file, where a misspelled constant would have failed to compile.
+The cursor whose constant is `name`, case folded: `"hand"`, `"crosshair"`, `"hidden"`. `None` for an unknown name: for a binding read from a file, where a misspelled constant would have failed to compile.
 
 ## Special methods
 

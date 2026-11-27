@@ -13,7 +13,7 @@ colour `s` and the colour already there, `d`, both as fractions of 255:
 
 | Mode | Result | Looks like |
 |---|---|---|
-| `NORMAL` | `s` | Paint over paint — the default |
+| `NORMAL` | `s` | Paint over paint: the default |
 | `ADD` | `d + s` | Light: glows, sparks, fire. Only brightens |
 | `SUBTRACT` | `d - s` | Removing light. Only darkens |
 | `MULTIPLY` | `d * s` | Stacked tinted film: shadows. Only darkens |

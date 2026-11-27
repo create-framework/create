@@ -26,7 +26,7 @@ struct Capsule(
     _Collider,
 ):
     """A capsule: every point within `radius` of the segment from `start` to
-    `end` -- a rectangle along the segment, capped by a half disc at each
+    `end`: a rectangle along the segment, capped by a half disc at each
     end. `center`, `area`, `bounds`, `closest_point`, `contains`,
     `move_to`, `translate`.
 
@@ -301,7 +301,7 @@ struct Capsule(
         )
 
 
-# How far a segment -- a capsule's spine, or a `Line` meeting a capsule --
+# How far a segment (a capsule's spine, or a `Line` meeting a capsule)
 # comes to each kind of shape: zero where they meet, so a capsule overlaps a
 # shape exactly when its spine comes within its radius. Two convex pieces
 # that don't meet are nearest at an end of one, or where the gap between

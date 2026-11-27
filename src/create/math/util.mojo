@@ -20,7 +20,7 @@ def map(
     out_low: Float64,
     out_high: Float64,
 ) -> Float64:
-    """Re-scale `value` from one range onto another — a slider position to a
+    """Re-scale `value` from one range onto another: a slider position to a
     world coordinate, say. Linear and unclamped."""
     return out_low + (value - in_low) / (in_high - in_low) * (
         out_high - out_low
@@ -34,7 +34,7 @@ def inverse_lerp(value: Float64, low: Float64, high: Float64) -> Float64:
 
 
 def smoothstep(edge0: Float64, edge1: Float64, x: Float64) -> Float64:
-    """Like `inverse_lerp`, but clamped to 0..1 and eased at both ends — the usual
+    """Like `inverse_lerp`, but clamped to 0..1 and eased at both ends: the usual
     choice for a transition that should not start or stop abruptly."""
     var t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
     return t * t * (3.0 - 2.0 * t)
@@ -58,7 +58,7 @@ def fractional_part(x: Float64) -> Float64:
 
 def wrap(value: Float64, period: Float64) -> Float64:
     """`value` wrapped into `[0, period)`. Floored, so a negative `value`
-    wraps forward instead of staying negative — what an angle or a scrolling
+    wraps forward instead of staying negative: what an angle or a scrolling
     offset wants."""
     return value - floor(value / period) * period
 

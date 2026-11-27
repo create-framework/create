@@ -20,7 +20,7 @@ struct Animator(Copyable, Movable, Writable):
     stops every animator with it; an animator built with `clock=Clock.REAL`
     runs on real time instead, as a pause menu's own animation must.
 
-    Constructed stopped on frame 0 -- nothing advances until `play`, `loop`
+    Constructed stopped on frame 0: nothing advances until `play`, `loop`
     or `use`. Two kinds of call drive it:
 
     - **Commands**, for something that just happened (a key, a hit): `play`
@@ -47,7 +47,7 @@ struct Animator(Copyable, Movable, Writable):
     var _clock: Clock
     var _started: Bool
     """Whether `play`, `loop`, `use` or `resume` has set the playhead going
-    since construction, the last `stop` or the last switch -- what tells a
+    since construction, the last `stop` or the last switch: what tells a
     paused or finished animation, which `use` leaves be, from a stopped one,
     which it starts."""
     var _paused: Bool
@@ -105,8 +105,8 @@ struct Animator(Copyable, Movable, Writable):
 
         Naming the animation already held, once it has been started, does
         nothing at all: a loop keeps its place, a `pause` holds and a
-        finished `play` stays on its last frame. Otherwise -- another
-        animation, or this one stopped -- it starts `animation` looping from
+        finished `play` stays on its last frame. Otherwise (another
+        animation, or this one stopped) it starts `animation` looping from
         frame 0. A one-shot is a command, not a state: `play` it when the
         thing that triggers it happens.
         """
@@ -122,7 +122,7 @@ struct Animator(Copyable, Movable, Writable):
         self._looping = False
 
     def play(mut self, var animation: Animation):
-        """Switch to `animation` and play it once from frame 0 -- restarting
+        """Switch to `animation` and play it once from frame 0: restarting
         it if it is the one already held."""
         self._animation = animation^
         self.play()
@@ -133,7 +133,7 @@ struct Animator(Copyable, Movable, Writable):
         self._looping = True
 
     def loop(mut self, var animation: Animation):
-        """Switch to `animation` and loop it from frame 0 -- restarting it if
+        """Switch to `animation` and loop it from frame 0: restarting it if
         it is the one already held. To keep a running loop's place, `use`
         it."""
         self._animation = animation^
@@ -161,7 +161,7 @@ struct Animator(Copyable, Movable, Writable):
         self._paused = False
 
     def is_playing(self) -> Bool:
-        """True while the playhead is advancing -- false when stopped, paused
+        """True while the playhead is advancing: false when stopped, paused
         or finished."""
         return self._started and not self._paused and not self.is_finished()
 

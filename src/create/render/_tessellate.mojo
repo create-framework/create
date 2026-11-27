@@ -13,8 +13,8 @@ the batching exists to remove. Applying it on the CPU with the same
 cannot drift geometrically: a vertex here and a scanned pixel there come from
 one function.
 
-**Fill stops where the stroke starts.** The CPU replay decides per pixel — a
-pixel is fill *or* stroke, never blended twice — so a translucent shape does
+**Fill stops where the stroke starts.** The CPU replay decides per pixel (a
+pixel is fill *or* stroke, never blended twice), so a translucent shape does
 not darken under its own stroke. Overlaying a full-size fill quad with a
 stroke ring would blend twice and diverge on every alpha edge, so a stroked
 shape's fill is emitted inset to the stroke's inner edge instead.
@@ -56,7 +56,7 @@ from ._transform import pixel_scale, stroke_thickness_px
 from create.color.color import Color
 
 comptime _VERTEX_FLOATS = 13
-"""`x, y, u, v, r, g, b, a, mode, s0, s1, s2, s3` — one interleaved vertex.
+"""`x, y, u, v, r, g, b, a, mode, s0, s1, s2, s3`: one interleaved vertex.
 
 `s0..s3` are per-mode shape parameters, zero for every mode that ignores
 them. They exist for blurred shadows, whose coverage the fragment shader
@@ -65,7 +65,7 @@ distances, a position relative to a centre), so the rasteriser's
 interpolation evaluates them exactly."""
 
 comptime MODE_SOLID: Float32 = 0.0
-"""Colour only — the fragment shader takes this branch without sampling, so a
+"""Colour only: the fragment shader takes this branch without sampling, so a
 solid's UVs are never read and solids batch with anything."""
 comptime MODE_MASK: Float32 = 1.0
 """Glyph: the sampled red channel scales the vertex colour's alpha."""
@@ -255,7 +255,7 @@ def _corner_ring_fan(
     n: Int,
     color: Color,
 ):
-    """A quarter annulus between `r_inner` and `r_outer`, same centre —
+    """A quarter annulus between `r_inner` and `r_outer`, same centre:
     degenerates to a solid `_corner_fan` when the inset radius has
     collapsed, matching `emit_circle`'s own solid-disc fallback."""
     if r_inner <= 0.0:
@@ -285,7 +285,7 @@ def _rounded_rect_fill(
 ):
     """The local-space cross decomposition: a full-height centre band, a
     shorter band on each side, and a quarter-circle fan of `n` segments at
-    each corner — the same split `_cpu_replay.mojo::_rect`'s uniform branch
+    each corner, the same split `_cpu_replay.mojo::_rect`'s uniform branch
     uses, cheap here because every vertex is mapped individually anyway.
 
     `n` is the caller's, not derived from `r`: inside a stroke ring the
@@ -340,7 +340,7 @@ def _shade_fill(
 
     The fill emitters leave every vertex in device pixels, where the
     gradient's device mapping is affine, so each vertex takes the mapping's
-    value at its own position and interpolation does the rest exactly —
+    value at its own position and interpolation does the rest exactly:
     the same pass `emit_inset_shadow` makes for its silhouette.
     """
     if ramp_row < 0 or not c.paint.fill_gradient:
@@ -641,7 +641,7 @@ def _emit_quads(mut vb: VertexBuffer, corners: List[Point], color: Color):
 def emit_letterbox(
     mut vb: VertexBuffer, c: RenderCommand, width: Int, height: Int
 ):
-    """The bars outside the device content rect — the one untransformed kind.
+    """The bars outside the device content rect: the one untransformed kind.
 
     Its payload is already in framebuffer pixels (see `letterbox_command`), so the
     command's matrix is the identity and applying it would be meaningless
@@ -670,7 +670,7 @@ def emit_image(
     mut vb: VertexBuffer, c: RenderCommand, scale: Float64, pad: Int = 0
 ):
     """One textured quad. Upright, it is the CPU replay's device rect
-    (`upright_rect`), grown by `pad` pixels on every side — the margin a
+    (`upright_rect`), grown by `pad` pixels on every side: the margin a
     blurred silhouette's mask carries (`BlurredMask.pad`), so its texels land
     one-to-one on device pixels. Under a transform that turns the image, it
     is the image's four mapped corners; `pad` is then 0, since such a
@@ -747,7 +747,7 @@ def emit_glyph(
 ):
     """One glyph quad in device pixels, sampling `[u0, u1] x [v0, v1]`.
 
-    The rect is already placed — `TextRenderer.layout` decided where, which is
+    The rect is already placed: `TextRenderer.layout` decided where, which is
     why nothing about alignment or pen advance appears here. `MODE_MASK` makes
     the sampled coverage scale the colour's alpha, matching `blit_glyph`.
     """
@@ -797,7 +797,7 @@ def _emit_region(
     color: Color,
 ):
     """`region` filled, mapped by `m`, with the fill emitters' own
-    decompositions — so its edge follows the command's fill exactly.
+    decompositions, so its edge follows the command's fill exactly.
     `stroke_inset` is how far in of the shape's own edge `region` lies: a
     rounded rectangle's corners take their segment count from the shape's
     radius, as `emit_rect`'s fill does."""
@@ -819,8 +819,8 @@ def emit_inset_shadow(mut vb: VertexBuffer, c: RenderCommand, scale: Float64):
     tessellated, every vertex carrying the silhouette's shape parameters.
 
     The interior is the geometry, so the shadow is clipped to it for free.
-    The silhouette — the interior shrunk by the spread, placed by the shadow
-    transform — lives in a frame that differs from the interior's only by
+    The silhouette (the interior shrunk by the spread, placed by the shadow
+    transform) lives in a frame that differs from the interior's only by
     an affine map, so its parameters are affine across every triangle and
     interpolate exactly, as `emit_blurred_shadow`'s do. Each vertex's are
     computed from its device position, which is where the emitters leave
@@ -863,8 +863,8 @@ def emit_blurred_shadow(
     coverage rounds to nothing.
 
     The fragment shader evaluates `BlurredSilhouette.coverage` from the
-    vertex's shape parameters. Every one it interpolates — a position in the
-    silhouette's own frame, a distance inside an edge — is affine in the
+    vertex's shape parameters. Every one it interpolates (a position in the
+    silhouette's own frame, a distance inside an edge) is affine in the
     local position, so the rasteriser's interpolation gives each fragment
     exactly the value at its centre; the rest are constant across the quad.
     """

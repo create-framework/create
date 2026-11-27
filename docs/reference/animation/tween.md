@@ -25,8 +25,8 @@ def update(mut self, mut context: Context, mut canvas: Canvas) raises:
     canvas.fill(Color(255, 255, 255, Int(255 * self.fade.value())))
 ```
 
-Unlike an animation, a tween carries no shared artwork -- its whole
-definition is four numbers -- so there is no asset to hold by `ArcPointer`
+Unlike an animation, a tween carries no shared artwork (its whole
+definition is four numbers), so there is no asset to hold by `ArcPointer`
 and every entity simply owns its own.
 
 **Tweening something that is not a number.** `Tween(duration)` runs 0 to 1,
@@ -39,7 +39,7 @@ self.slide = Tween(0.3, Easing.OUT_CUBIC)      # in create
 self.position = self.from_position.lerp(self.to_position, self.slide.value())
 ```
 
-Constructed stopped at `start` -- nothing moves until `play`, `loop` or
+Constructed stopped at `start`: nothing moves until `play`, `loop` or
 `ping_pong`. The verbs mean what they mean on `Animator`: `play`
 always restarts from the beginning, `pause` freezes where it is and
 `resume` continues from there.
@@ -80,7 +80,7 @@ def __init__(
 )
 ```
 
-A tween from 0 to 1 -- the fraction `Vector.lerp` and `Color.lerp` take, and the form to reach for when animating anything that is not a plain number.
+A tween from 0 to 1: the fraction `Vector.lerp` and `Color.lerp` take, and the form to reach for when animating anything that is not a plain number.
 
 ## Methods
 
@@ -100,7 +100,7 @@ def progress(self) -> Float64
 
 How far through the duration, 0 to 1, *before* easing.
 
-The raw time fraction, so it is what a progress bar wants to render --
+The raw time fraction, so it is what a progress bar wants to render,
 and what `value` is derived from. While ping-ponging it runs back down
 to 0.
 
@@ -121,7 +121,7 @@ def loop(mut self)
 Run from the start, snapping back and repeating forever.
 
 The snap is visible whenever `start` and `end` differ, which is what
-`ping_pong` exists to avoid -- reach for this only when the value wraps
+`ping_pong` exists to avoid: reach for this only when the value wraps
 naturally, like a rotation through a full turn.
 
 ### `ping_pong`
@@ -130,7 +130,7 @@ naturally, like a rotation through a full turn.
 def ping_pong(mut self)
 ```
 
-Run to `end`, back to `start`, forever -- the usual way to loop a tween, since it never snaps.
+Run to `end`, back to `start`, forever: the usual way to loop a tween, since it never snaps.
 
 `progress` runs back down on the return leg, so the easing curve is
 travelled backwards too and a `Easing.OUT_CUBIC` pulse decelerates into
@@ -166,7 +166,7 @@ Halt and rewind, putting `value` back to `start`.
 def is_playing(self) -> Bool
 ```
 
-True while the playhead is advancing -- false when stopped, paused or finished.
+True while the playhead is advancing: false when stopped, paused or finished.
 
 ### `is_finished`
 

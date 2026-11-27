@@ -130,7 +130,7 @@ struct Bezier(
     `area`, `contains` or `overlaps` for it.
 
     `t` runs from 0 at `start` to 1 at `end`, but it is not proportional to
-    distance along the curve — equal steps in `t` bunch up where the
+    distance along the curve: equal steps in `t` bunch up where the
     controls do.
     """
 
@@ -196,8 +196,8 @@ struct Bezier(
 
     def tangent(self, t: Float64) -> Vector:
         """The derivative at `t`: the direction of travel, with a magnitude
-        that is the curve's speed per unit of `t`. Not normalised — it is
-        zero where the curve stops, e.g. at a cusp or where a control sits
+        that is the curve's speed per unit of `t`. Not normalised: it is
+        zero where the curve stops, such as at a cusp or where a control sits
         on its endpoint."""
         var mt = 1.0 - t
         var a = self.control1 - self.start
@@ -406,7 +406,7 @@ struct Bezier(
         )
 
     def bounds(self) -> Rectangle:
-        """The tightest axis-aligned rectangle around the curve — around
+        """The tightest axis-aligned rectangle around the curve: around
         the curve itself, not its control points, which usually reach
         further."""
         var xs = _axis_extremes(
@@ -453,7 +453,7 @@ struct Bezier(
         """The distance along the curve from `start` to `end`.
 
         Gauss–Legendre quadrature (8 points on each of 16 equal steps in
-        `t`) of the curve's speed — accurate to far below a pixel for any
+        `t`) of the curve's speed: accurate to far below a pixel for any
         curve that fits on a screen, but an approximation, not exact.
         """
         return self._length_to(1.0)

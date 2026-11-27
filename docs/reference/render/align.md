@@ -4,7 +4,7 @@
 struct Align
 ```
 
-Which point of a box a position names — one value for both axes.
+Which point of a box a position names: one value for both axes.
 
 The nine constants are the nine points of the box, so a single argument
 says everything `canvas.text_alignment` needs:
@@ -24,7 +24,7 @@ says everything `canvas.text_alignment` needs:
 The one-word constants name an edge's midpoint: `TOP` is top-centre,
 `LEFT` is middle-left, `CENTER` is the middle of the box.
 
-Edges of the box, not typographic baselines — there is no separate
+Edges of the box, not typographic baselines: there is no separate
 `text_baseline`. `TOP` and `BOTTOM` mean the visual top and bottom even
 though y grows upward, because glyphs are not flipped by the coordinate
 system; only their anchor point is mapped.

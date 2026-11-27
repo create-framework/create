@@ -10,8 +10,8 @@ from ._png import write_png
 def _force_opaque(mut pixels: List[UInt8]):
     """Set every alpha byte in an RGBA buffer to 255, in place.
 
-    The one owner of that rule. A framebuffer's alpha byte is frequently 0 —
-    it is the unused channel of an opaque window — so a capture written out
+    The one owner of that rule. A framebuffer's alpha byte is frequently 0
+    (it is the unused channel of an opaque window), so a capture written out
     verbatim opens fully transparent, which is the obvious trap. Both capture
     paths force it: `MemorySurface.save` on a copy, the GL readback on the
     buffer it already owns.
@@ -26,12 +26,12 @@ struct Surface[origin: Origin[mut=True]](Copyable, ImplicitlyCopyable, Movable):
 
     Deliberately a plain value rather than a trait. Every raster loop needs
     exactly these three things, and nothing here knows where the memory came
-    from — an SDL window, an owned `MemorySurface`, or anything else that can
+    from: an SDL window, an owned `MemorySurface`, or anything else that can
     hand out a row-major RGBA buffer.
 
     It also carries the `BlendMode` the raster loops composite with, so the
     replay sets it once per command and no loop between there and `blend` or
-    `fill_span` has to thread it through — and the command's clip, for the
+    `fill_span` has to thread it through, and the command's clip, for the
     same reason.
     """
 
@@ -85,7 +85,7 @@ struct Surface[origin: Origin[mut=True]](Copyable, ImplicitlyCopyable, Movable):
         return out
 
     def offset(self, x: Int, y: Int) -> Int:
-        """Byte offset of pixel `(x, y)` — row-major, four bytes per pixel."""
+        """Byte offset of pixel `(x, y)`: row-major, four bytes per pixel."""
         return (y * self.width + x) * 4
 
 
@@ -128,7 +128,7 @@ struct MemorySurface(Movable):
 
         `opaque` runs `_force_opaque` over a copy first, which is the right
         default for anything that came off a framebuffer. Pass `opaque=False`
-        only when the alpha channel is meant — a capture that deliberately
+        only when the alpha channel is meant: a capture that deliberately
         left its background clear.
         """
         if not opaque:

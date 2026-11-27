@@ -88,7 +88,7 @@ def blend[
     `Color.over` owns the mixing. Any other mode goes through `_blend_lanes`.
 
     `clipped=False` skips the clip test, for a per-pixel loop that has
-    checked once that `s` has no clip — the test alone cost an image blit
+    checked once that `s` has no clip: the test alone cost an image blit
     ~15%.
     """
     if c.a == 0:
@@ -173,7 +173,7 @@ def _word_aligned[o: Origin[mut=True]](s: Surface[o]) -> Bool:
 
     Every pixel sits at a multiple of four bytes from the base, so the base
     settles it for the entire buffer. Both framebuffers in the repo satisfy
-    this — a `List[UInt8]` and an SDL window buffer are each malloc-aligned —
+    this (a `List[UInt8]` and an SDL window buffer are each malloc-aligned),
     but neither guarantees it by contract, and a 32-bit store through a
     misaligned pointer is undefined, not merely slow.
     """
@@ -189,14 +189,14 @@ def fill_span[
     The caller has already clipped to the surface and worked out the covered
     run; this does no bounds checking of its own. An opaque fill is one word
     per pixel, not four bytes, and the alpha test is hoisted out of the loop
-    rather than left to `blend` — together worth ~4x on a run of any length.
+    rather than left to `blend`: together worth ~4x on a run of any length.
     Both branches then process four pixels (16 bytes) at a time through
     `SIMD`, for another ~4x: the opaque path is a vector splat of the packed
     word, and the alpha path widens both source and destination to `uint32`
     lanes, computes `(src*a + dst*ia) // 255` across all sixteen bytes at
     once, and narrows back. The source vector's alpha lane carries `255`
     rather than `c.a`, which is what makes one blend formula correct for
-    both the colour lanes and the alpha lane — see
+    both the colour lanes and the alpha lane: see
     `test_fill_span_alpha_matches_over_exhaustively`. That formula holds
     only over opaque pixels, so a group of four that isn't wholly opaque,
     and a tail of fewer than four pixels, go through `Color.over` one pixel
@@ -576,7 +576,7 @@ def fill_quad[
     Each row's covered run is the quad's span at the row's centre line,
     filled once through `fill_span`. Ties follow a half-open rule (a centre
     on the left or top edge is in, on the right or bottom edge out), so two
-    quads sharing an edge never both paint a pixel on it — which is what
+    quads sharing an edge never both paint a pixel on it, which is what
     lets a strip of them composite once under alpha. Each edge is
     interpolated from its lower end whichever way the quad walks it, so two
     quads sharing it compute bit-identical crossings.
@@ -637,8 +637,8 @@ def fill_convex[
 ](s: Surface[o], corners: List[Point], c: FillPaint):
     """Fill the convex device polygon `corners`, in order around its edge,
     by pixel centre: `fill_quad` for any number of corners, with the same
-    rules — each row's span at its centre line, half-open in x and y, each
-    edge interpolated from its lower end — so a polygon and a quad sharing
+    rules (each row's span at its centre line, half-open in x and y, each
+    edge interpolated from its lower end), so a polygon and a quad sharing
     an edge compute the same crossings and composite it once.
     """
     var n = len(corners)
@@ -690,8 +690,8 @@ def fill_triangle[
     between them intersects the long edge (top to bottom vertex) and
     whichever short edge is active for that row (top-to-mid, then
     mid-to-bottom), giving one `fill_span` per row instead of a per-pixel
-    three-edge sign test. The split at the mid vertex is exact — each row
-    is produced by exactly one of the two sub-loops — so a horizontal top
+    three-edge sign test. The split at the mid vertex is exact (each row
+    is produced by exactly one of the two sub-loops), so a horizontal top
     or bottom edge (mid vertex level with an end) degenerates cleanly by
     skipping the sub-loop whose edge has zero height, rather than dividing
     by zero. This is not bit-exact with the old per-pixel test: an edge
@@ -944,9 +944,9 @@ def _blit_image[
     front, the way `fill_pixels` already clips, instead of testing `dx`/`dy`
     against the bounds on every pixel. The resampled path (`dw != sw` or
     `dh != sh`) also drops the per-column `col * sw // dw` division: `src_col`
-    and `err` are a fixed-point walk of that same division — `err` holds
+    and `err` are a fixed-point walk of that same division (`err` holds
     `(col * sw) mod dw` and advances by `sw` each column, folding a `dw` back
-    out (and bumping `src_col`) whenever it would overflow — so `src_col`
+    out (and bumping `src_col`) whenever it would overflow), so `src_col`
     equals `col * sw // dw` at every step without dividing there. One
     division seeds `src_col`/`err` at `col_lo`, since the clipped loop may not
     start at column 0.
@@ -1185,7 +1185,7 @@ def blit_alpha_mapped[
     c: Color,
 ):
     """Composite the `width` x `height` 8-bit coverage mask at `src` through
-    `mapping` in `c` — a glyph turned with its text; see
+    `mapping` in `c`: a glyph turned with its text; see
     `_blit_alpha_mapped`."""
     if s._clip:
         _blit_alpha_mapped[clipped=True](s, src, width, height, mapping, c)
@@ -1216,7 +1216,7 @@ def _blit_alpha_mapped[
     """`_blit_alpha` for a mask that is not upright on the device: each
     pixel in `mapping`'s bounds reads the mask bilinearly at the texel
     coordinate of its centre, zero outside the mask, as the GL atlas's
-    linear filter does — so a turned glyph stays as smooth as an upright
+    linear filter does, so a turned glyph stays as smooth as an upright
     one, and its edge needs no antialiasing of its own.
 
     Texel `i`'s centre is at `i + 0.5`, hence the half texel taken off
@@ -1304,15 +1304,15 @@ def _blit_alpha[
     c: Color,
 ):
     """Composite the `width` x `height` 8-bit coverage mask at `src` at
-    `(x0, y0)` in `c` — a glyph, or a blurred silhouette.
+    `(x0, y0)` in `c`: a glyph, or a blurred silhouette.
 
     Coverage scales the colour's alpha, so antialiasing and a translucent
     colour compose rather than one overriding the other.
 
     Rows and columns are clipped once against the surface up front, as
     `blit_image` does, instead of testing each pixel against the bounds.
-    Coverage is still tested per pixel — a mask is genuinely scattered, not a
-    run — so it keeps `blend` rather than moving to `fill_span`.
+    Coverage is still tested per pixel (a mask is genuinely scattered, not a
+    run), so it keeps `blend` rather than moving to `fill_span`.
     """
     var W = s.width
     var H = s.height

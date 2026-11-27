@@ -8,7 +8,7 @@ A typeface loaded from a file: an asset, like an `Image`.
 
 `Font.load(path)` opens it once; copies share the open face, so a font
 is cheap to keep in a field, a `Style` or several of each. The face is
-closed when the last copy goes. Size and weight are not part of a font —
+closed when the last copy goes. Size and weight are not part of a font:
 they come from the style each time text is drawn.
 
 Its italic is the `italic_path` file where one was given, otherwise the

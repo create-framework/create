@@ -1,7 +1,7 @@
 """What a transform means to a rasteriser, independent of which one.
 
-Three questions every backend asks of a `RenderCommand`'s matrix — is it
-axis-aligned, how many pixels is a world unit, how thick is a stroke — and one
+Three questions every backend asks of a `RenderCommand`'s matrix (is it
+axis-aligned, how many pixels is a world unit, how thick is a stroke), and one
 answer each, so the CPU replay and the GL tessellator cannot disagree about
 them. They lived in `_backend.mojo` until the GL backend needed them too;
 importing them from there would have closed a cycle, since `_backend` reaches
@@ -20,7 +20,7 @@ from ._paint import Paint
 
 
 def uniform(m: Transform) -> Bool:
-    """True when `m` is an axis-aligned uniform scale plus a translation — a
+    """True when `m` is an axis-aligned uniform scale plus a translation: a
     rect stays a rect, a circle stays a circle.
 
     The base mapping alone qualifies (it scales by `s` and `-s`), so plain

@@ -2,7 +2,7 @@
 
 A shape's blurred shadow is evaluated analytically (`_shadow.mojo`); a glyph's
 or an image's silhouette is an arbitrary mask, so it is blurred as pixels
-instead — once, and cached by whoever owns the mask.
+instead: once, and cached by whoever owns the mask.
 
 Three box blurs in a row approximate a Gaussian closely, and each costs the
 same per pixel whatever its width, through a running sum. The box widths come
@@ -18,7 +18,7 @@ comptime _PASSES = 3
 
 
 comptime SHADOW_MASK_LIMIT = 256
-"""Blurred image masks a cache keeps before it is dropped whole — the same
+"""Blurred image masks a cache keeps before it is dropped whole: the same
 policy, for the same reason, as `_text._GLYPH_CACHE_LIMIT`. Both backends'
 caches (CPU masks, GL textures) use it."""
 
@@ -37,8 +37,8 @@ def shadow_mask_key(image: Int, width: Int, height: Int, blur: Int) -> Int:
 struct BlurredMask(Movable):
     """An alpha mask blurred, grown by `pad` pixels on every side.
 
-    The blur reaches exactly `pad` pixels past the source — a box kernel has
-    compact support — so nothing is cut off and nothing wasted.
+    The blur reaches exactly `pad` pixels past the source (a box kernel has
+    compact support), so nothing is cut off and nothing wasted.
     """
 
     var pixels: List[UInt8]

@@ -6,8 +6,8 @@ struct Context
 
 The run's state: everything that outlives a frame.
 
-Two directions share it. The loop writes the readings — `time`,
-`keyboard`, `mouse` and the gamepads — before each `update`, for the
+Two directions share it. The loop writes the readings (`time`,
+`keyboard`, `mouse` and the gamepads) before each `update`, for the
 program to read; the program sets the dials, for the
 loop to read. Every dial is a method, like the `Canvas` style setters:
 `context.autoscale(Autoscale.EXTEND)`, `context.max_frame_rate(30)`.
@@ -26,7 +26,7 @@ and to every `Program.update` after it.
 
 **Read at frame construction.** The loop re-derives the viewport from
 `autoscale` and the design size at the top of each frame. So a dial turned
-part-way through `update` applies to the *next* frame — one frame cannot
+part-way through `update` applies to the *next* frame: one frame cannot
 record under two mappings. Set them in `create` to have them hold from
 frame two, or pass them to `run` to have them hold from frame one.
 `max_frame_rate`, `quit` and `rumble` are the exception, and only because
@@ -37,7 +37,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 
 ## Fields
 
-- `time: Time`: The frame clock. The run loop ticks it before each `update`; read `delta` and `elapsed` here, and don't write it — the loop derives the next delta from it.
+- `time: Time`: The frame clock. The run loop ticks it before each `update`; read `delta` and `elapsed` here, and don't write it: the loop derives the next delta from it.
 - `keyboard: Keyboard`: The keyboard: keys and typed text. The run loop folds each frame's events into it before `update`, so it is settled for the whole frame. Read it, don't write it: the loop carries it into the next frame.
 - `mouse: Mouse`: The mouse: position, buttons and wheel, in screen space. Settled before `update` and carried between frames, like `keyboard`.
 
@@ -65,7 +65,7 @@ def design_size(mut self, width: Int, height: Int)
 Author this program in a fixed world size, scaled to any window.
 
 Overrides the size passed to `run`, so a program can pin its own
-coordinate space no matter how it is launched — including fullscreen,
+coordinate space no matter how it is launched, including fullscreen,
 where the window size is the display's rather than the caller's.
 
 Takes effect on the next frame, like every dial here: the frame being
@@ -85,7 +85,7 @@ How the design size maps onto the window. `FIT` unless set.
 def autoscale(mut self, mode: Autoscale)
 ```
 
-Choose how the design size maps onto the window — see `Autoscale`.
+Choose how the design size maps onto the window: see `Autoscale`.
 
 ### `title`
 
@@ -99,7 +99,7 @@ The window's title: `run`'s `title` unless set.
 def title(mut self, title: String)
 ```
 
-Retitle the window — a score, a level name, an unsaved mark.
+Retitle the window: a score, a level name, an unsaved mark.
 
 Shows with the frame it is set in: the loop applies it before
 presenting, and only when it changed, so setting it every frame
@@ -134,7 +134,7 @@ The mouse cursor over the window: `ARROW` unless set.
 def cursor(mut self, cursor: Cursor)
 ```
 
-Change the mouse cursor over the window — `Cursor.CROSSHAIR` for aiming, `HAND` over something clickable — or hide it with `Cursor.HIDDEN`, like Processing's `cursor()` and `noCursor()`.
+Change the mouse cursor over the window (`Cursor.CROSSHAIR` for aiming, `HAND` over something clickable), or hide it with `Cursor.HIDDEN`, like Processing's `cursor()` and `noCursor()`.
 
 Shows with the frame it is set in, like `title`, and only when it
 changed, so setting it every frame from a hover test costs nothing.
@@ -177,7 +177,7 @@ On by default, so `context.keyboard.text` works with no setup. A
 `text_field` switches it on while it has focus and off when it loses
 it. Taking text is also what opens an input method's
 composition window as the user types, and an on-screen keyboard on a
-handheld or tablet — so a game played on letter keys switches it off,
+handheld or tablet, so a game played on letter keys switches it off,
 and back on while a text field is in use. Keys are read the same
 either way; only `text` goes quiet.
 
@@ -317,7 +317,7 @@ def quit(mut self)
 Ask the run loop to stop after the current frame.
 
 Unwinds normally, so the window tears down cleanly and program
-destructors run — unlike `std.sys.exit`, which aborts the process.
+destructors run, unlike `std.sys.exit`, which aborts the process.
 
 ### `gamepad`
 
@@ -325,7 +325,7 @@ destructors run — unlike `std.sys.exit`, which aborts the process.
 def gamepad(self, player: Int = Int(0)) -> Gamepad
 ```
 
-Player `player`'s gamepad, a copy of its state this frame — player one is 0, the default, so a one-player program needs no argument.
+Player `player`'s gamepad, a copy of its state this frame: player one is 0, the default, so a one-player program needs no argument.
 
 Each pad takes the lowest free slot as it connects and keeps it until
 it disconnects. A slot no pad holds reads as a disconnected

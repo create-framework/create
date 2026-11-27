@@ -1,8 +1,8 @@
 """A `RenderCommand`'s shadow, as another `RenderCommand`.
 
 Both replays paint an outer shadow by rendering the command this builds
-before the command itself, so what a shadow *is* — where it lands, which
-silhouette it takes, how spread grows it — is decided once, here, and the CPU
+before the command itself, so what a shadow *is* (where it lands, which
+silhouette it takes, how spread grows it) is decided once, here, and the CPU
 and GL paths cannot drift on it.
 
 **One layer.** A shadow is a single silhouette in `shadow_color`, never a
@@ -61,7 +61,7 @@ from .stroke_cap import StrokeCap
 def casts_outer_shadow(c: RenderCommand) -> Bool:
     """Whether `c` paints an outer shadow before itself.
 
-    Only render calls cast one — never a clear or the letterbox — and only
+    Only render calls cast one (never a clear or the letterbox), and only
     when they paint something a silhouette could be taken from.
     """
     if not c.paint._shadow_visible() or c.paint.shadow_inset:
@@ -115,7 +115,7 @@ def shadow_transform(c: RenderCommand, scale: Float64) -> Transform:
 
     Screen-fixed by default: the offset becomes a device translation composed
     *after* the transform, so a rotating shape keeps its shadow falling the
-    same way — only its length follows the pixel scale (autoscale, camera
+    same way: only its length follows the pixel scale (autoscale, camera
     zoom). Device rows run downwards, hence `-oy`. With
     `shadow_follows_transform` the offset is local, composed *before* the
     transform, and turns with the shape.
@@ -303,7 +303,7 @@ def image_shadow_mask[
 def gaussian_cdf(x: Float64) -> Float64:
     """The standard normal CDF: the share of a unit Gaussian left of `x`.
 
-    Abramowitz and Stegun 7.1.26 for `erf`, good to 1.5e-7 — GLSL has no
+    Abramowitz and Stegun 7.1.26 for `erf`, good to 1.5e-7: GLSL has no
     `erf`, so the shader uses the same polynomial and both replays agree.
     """
     # Past four sigma the result rounds to 0 or 1 in any 8-bit channel, and
@@ -349,7 +349,7 @@ def edge_coverage(
     distances to up to four edges (a triangle leaves `d3` at its default).
 
     The product of the blurred half-planes: exact along an edge far from
-    the others, slightly heavy where the shape narrows below a few sigma —
+    the others, slightly heavy where the shape narrows below a few sigma:
     there is no closed form for a blurred triangle. A rectangle has one, so
     it goes through `box_coverage` instead.
     """
@@ -371,7 +371,7 @@ def rounded_rect_coverage(
     """A blurred rounded rectangle's alpha at `(px, py)` relative to its
     centre; every length already divided by sigma.
 
-    One Gaussian step across the signed distance to the outline — exact
+    One Gaussian step across the signed distance to the outline: exact
     along the straight edges, a close approximation around a corner. A
     circle is the case `half_w == half_h == radius`.
     """
@@ -504,8 +504,8 @@ def blurs_analytically(c: RenderCommand) -> Bool:
 def local_stroke_thickness(
     c: RenderCommand, m: Transform, scale: Float64
 ) -> Float64:
-    """`c`'s stroke as the rasterisers draw it — rounded to whole pixels,
-    never under one — back in local units."""
+    """`c`'s stroke as the rasterisers draw it (rounded to whole pixels,
+    never under one), back in local units."""
     return Float64(stroke_thickness_px(c.paint, m, scale)) / pixel_scale(
         m, scale
     )
@@ -744,13 +744,13 @@ def _inradius(g: Array[Float64, _GEOM_SLOTS]) -> Float64:
 
 struct InsetRegion(Copyable, Movable):
     """A filled rectangle or circle with corners rounded by `radius`: what
-    an inset shadow is clipped to — the shape inside its stroke — and,
+    an inset shadow is clipped to (the shape inside its stroke), and,
     shifted and shrunk by the spread, the silhouette the shadow is cut from.
 
     Shrinking by `d` is the reverse of `shadow_command`'s growing: every
     edge moves in by `d` and the corner radius drops by `d`, bottoming out
     at a sharp corner. That is also exactly where a stroke's inner edge
-    runs — every region's stroke is an inset ring —
+    runs (every region's stroke is an inset ring),
     so the interior is the shape shrunk by the stroke's inward extent. The
     radius is a `Float64` rather than the style's `Int`, because those
     shrinks move it by fractions of a unit. Every other kind's silhouette is

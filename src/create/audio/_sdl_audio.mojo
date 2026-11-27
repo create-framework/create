@@ -1,6 +1,6 @@
 """Raw SDL3 audio bindings via `std.ffi._DLHandle`.
 
-Internal only — nothing here is re-exported from the package `__init__`.
+Internal only: nothing here is re-exported from the package `__init__`.
 Mirrors the FFI idiom of `create/app/_window/_sdl.mojo`: opaque `Int` handles
 for everything SDL returns a pointer for, `get_error()` on every failure, and
 its own `load_library("libSDL3", 0)` rather than importing the window's, since
@@ -9,7 +9,7 @@ of the same shared object returns the same handle, and SDL ref-counts
 `SDL_InitSubSystem`/`SDL_QuitSubSystem` per subsystem, so `SDL_INIT_AUDIO`
 here coexists safely with the window's `SDL_INIT_VIDEO`.
 
-`SDL_AudioSpec` is `{ SDL_AudioFormat format; int channels; int freq; }` —
+`SDL_AudioSpec` is `{ SDL_AudioFormat format; int channels; int freq; }`:
 three packed 4-byte fields, no padding (verified against
 `SDL3/SDL_audio.h`). Everywhere a `SDL_AudioSpec*` is needed, a
 `List[Int32](length=3)` stands in for it.

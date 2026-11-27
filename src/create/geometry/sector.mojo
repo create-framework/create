@@ -32,7 +32,7 @@ from .triangle import Triangle
 struct Sector(
     Copyable, Equatable, ImplicitlyCopyable, Movable, Shape, Writable
 ):
-    """A sector -- a slice of pie: the region between two radii of the
+    """A sector, a slice of pie: the region between two radii of the
     circle around `position` with radius `radius`, from `start_angle` round by
     `sweep_angle`. `end_angle`, `center`, `area`, `arc`, `bounds`,
     `closest_point`, `contains`, `move_to`, `translate`.
@@ -232,8 +232,8 @@ struct Sector(
 
     # A segment or arc with both ends inside can still leave the sector:
     # across the missing wedge of one wider than a half turn, or bulging
-    # out through a radius or the arc. Where it crosses the boundary -- the
-    # line of either radius, or the circle -- cuts it into pieces that are
+    # out through a radius or the arc. Where it crosses the boundary (the
+    # line of either radius, or the circle) cuts it into pieces that are
     # each wholly inside or wholly outside, so the sector holds it exactly
     # when it holds the middle of every piece. A piece that only touches
     # the boundary is inside, within the slack of `contains(Point)`.

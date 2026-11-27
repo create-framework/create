@@ -2,7 +2,7 @@
 
 `render` must not import `window` (see ARCHITECTURE.md), so this module
 cannot take a `GLWindow` and cannot use its `get_proc_address`. It opens SDL
-itself and calls `SDL_GL_GetProcAddress` — `dlopen` refcounts, so a second
+itself and calls `SDL_GL_GetProcAddress`: `dlopen` refcounts, so a second
 handle alongside `_window`'s is harmless, and SDL's loader is used rather
 than plain `dlsym` because extension entry points are not guaranteed to be in
 the process's symbol table.
@@ -23,7 +23,7 @@ looks like a compiler fault rather than the ordinary mistake it is:
 2. **Read a C out-parameter back from heap memory, not a local
    `Array`.** The write lands either way, but `MutUntrackedOrigin` gives
    the optimizer no aliasing information, so a read from a local array can be
-   served stale from a register. Use a `List` buffer — as `read_int` does.
+   served stale from a register. Use a `List` buffer, as `read_int` does.
 3. **Keep the GL context owner alive past the last GL call.** Destroying a
    `GLWindow` tears down the context and every later GL call segfaults. Not
    this module's problem in a real loop, where the window is alive by
@@ -110,24 +110,24 @@ comptime GL_UNPACK_ALIGNMENT: UInt32 = 0x0CF5
 # ------------------------------------------------------------ pointer types
 
 comptime _Bytes = Pointer[UInt8, MutUntrackedOrigin]
-"""An untyped C buffer — GL's `void *`, and its `GLchar *` too."""
+"""An untyped C buffer: GL's `void *`, and its `GLchar *` too."""
 
 comptime _Ints = Pointer[Int32, MutUntrackedOrigin]
-"""`GLint *` / `GLsizei *` — out-parameters, read back per rule 2."""
+"""`GLint *` / `GLsizei *`: out-parameters, read back per rule 2."""
 
 comptime _UInts = Pointer[UInt32, MutUntrackedOrigin]
-"""`GLuint *` — the object-name out-parameters of the `glGen*` calls."""
+"""`GLuint *`: the object-name out-parameters of the `glGen*` calls."""
 
 comptime _Strings = Pointer[_Bytes, MutUntrackedOrigin]
-"""`const GLchar * const *` — `glShaderSource`'s array of source strings."""
+"""`const GLchar * const *`: `glShaderSource`'s array of source strings."""
 
 comptime _Address = Int
 """A C pointer argument GL is allowed to pass nothing for.
 
 Mojo's `Pointer` is non-nullable by construction, so a parameter that GL
-documents as nullable — `glBufferData`'s data, `glShaderSource`'s lengths —
-or as a byte offset into the bound buffer rather than an address at all —
-`glVertexAttribPointer`'s pointer — travels as a pointer-width integer. Same
+documents as nullable (`glBufferData`'s data, `glShaderSource`'s lengths),
+or as a byte offset into the bound buffer rather than an address at all
+(`glVertexAttribPointer`'s pointer) travels as a pointer-width integer. Same
 ABI, and `0` means what C means by `NULL`."""
 
 
@@ -239,15 +239,15 @@ def _proc_address(lib: _DLHandle, name: String) raises -> Int:
 
     A null here means no context is current, or a loader that reports absence
     honestly. It does **not** mean much on the other side: glX hands back a
-    non-null stub for a name it has never heard of — verified on NVIDIA, where
-    `"glNoSuchEntryPoint"` resolves — so this check cannot be what proves the
+    non-null stub for a name it has never heard of (verified on NVIDIA, where
+    `"glNoSuchEntryPoint"` resolves), so this check cannot be what proves the
     entry points exist. `GL.__init__`'s version gate is what does that.
     """
     var addr = lib.call["SDL_GL_GetProcAddress", Int](name.unsafe_ptr())
     _ = name
     if addr == 0:
         raise Error(
-            "GL function not available: " + name + " — is a GL context current?"
+            "GL function not available: " + name + ". Is a GL context current?"
         )
     return addr
 
@@ -264,7 +264,7 @@ struct GL(Movable):
     """Every GL entry point this backend uses, bound at construction.
 
     Binding eagerly, then checking the context version, means an inadequate
-    driver fails once — here, with a version number in the message — rather
+    driver fails once (here, with a version number in the message), rather
     than as a segfault at the first call, thousands of frames into a program.
     Every symbol in this table is core GL 3.3, so the version *is* the check:
     resolving each name proves nothing on its own, because glX stubs unknown
@@ -343,7 +343,7 @@ struct GL(Movable):
     var delete_renderbuffers: _DeleteObjects
     """An offscreen target's stencil, which a window has of its own."""
     var read_pixels: _ReadPixels
-    """Framebuffer objects and readback. No frame uses either — they exist
+    """Framebuffer objects and readback. No frame uses either: they exist
     for `tests/render/test_gl_parity.mojo`, which needs to render at an exact
     pixel size the window manager cannot veto, and to see what the GPU drew.
     """

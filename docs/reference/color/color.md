@@ -112,7 +112,7 @@ def luminance(self) -> Float64
 
 WCAG relative luminance, 0.0 (black) to 1.0 (white).
 
-Answers "is this background light or dark" — the usual caller picks
+Answers "is this background light or dark": the usual caller picks
 black or white text against it, with 0.18 as the crossover.
 
 ### `to_hsv`
@@ -168,7 +168,7 @@ Inverse of `oklch`: perceived lightness from 0 to 1, chroma, and hue in degrees 
 def lerp(self, other: Self, t: Float64) -> Self
 ```
 
-A new colour `t` of the way from this one to `other`, `t` clamped to 0..1; this one is unchanged. Mixes in sRGB, like a paint program's gradient — not perceptually uniform, but what the eye expects from two swatches.
+A new colour `t` of the way from this one to `other`, `t` clamped to 0..1; this one is unchanged. Mixes in sRGB, like a paint program's gradient, not perceptually uniform, but what the eye expects from two swatches.
 
 ## Special methods
 

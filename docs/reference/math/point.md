@@ -6,8 +6,8 @@ struct Point
 
 A location in world space: `distance`, `lerp`, the affine operators, and an explicit constructor from a `Vector` for crossing between the two.
 
-Every position in the library is one of these —
-`canvas.circle(position, r)`, `Rectangle.center()`, `context.mouse.position` — and no
+Every position in the library is one of these
+(`canvas.circle(position, r)`, `Rectangle.center()`, `context.mouse.position`), and no
 signature takes a location as a loose x/y pair instead. The tuple constructors are `@implicit`, so
 `canvas.circle((0, 0), 20)` works without naming the type and a program
 only spells `Point` when it is storing one. It is the only type here
@@ -17,14 +17,14 @@ The surface is strictly affine, which is the whole point of the type
 existing beside `Vector`: subtracting two positions gives the
 displacement between them (`Vector`), and adding a displacement to a
 position gives another position. `magnitude`, `normalize`, `dot`, scalar `*`,
-unary `-` and `Point + Point` are absent on purpose — none of them
+unary `-` and `Point + Point` are absent on purpose: none of them
 means anything for a location, and `position.normalize()` compiling was the
 mistake this split exists to catch. A program that genuinely wants a
 position's components as a direction says so: `Vector(p)`.
 
 A displacement is always named: `p + Vector(1, 2)` moves a position.
 Mind `p - (1, 2)`: the tuple can only become a `Point`, so it is the
-displacement from `(1, 2)` to `p` -- a `Vector`, not a moved position.
+displacement from `(1, 2)` to `p`, a `Vector`, not a moved position.
 Moving backwards is `p - Vector(1, 2)`.
 
 There are no `zero()`/`one()` factories either. `(0, 0)` through the

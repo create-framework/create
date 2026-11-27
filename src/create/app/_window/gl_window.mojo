@@ -1,6 +1,6 @@
-"""Public `GLWindow` type — a Mojo-facing window with a current OpenGL
+"""Public `GLWindow` type: a Mojo-facing window with a current OpenGL
 context, for consumers doing their own GL rendering. Companion to `Window`
-(which provides a CPU pixel-buffer surface instead) -- pick whichever
+(which provides a CPU pixel-buffer surface instead): pick whichever
 rendering backend fits; a single process can't usefully mix the two on the
 same native window.
 """
@@ -42,15 +42,15 @@ struct GLWindow(NativeWindow):
         """`core` requests a core profile (no legacy fixed-function GL); off
         by default it is not restricted, since some drivers reject a profile
         mask they'd otherwise accept unset. `msaa` is the sample count for
-        multisampling (0 disables it) -- requested here, but a driver that
+        multisampling (0 disables it): requested here, but a driver that
         refuses it fails context creation below rather than silently
         degrading; retrying at 0 after a failure is the caller's call, not
         this constructor's. `fullscreen` covers the display and, as with
-        `Window`, makes SDL ignore the requested size -- `width()`/`height()`
+        `Window`, makes SDL ignore the requested size: `width()`/`height()`
         report what it actually got. `maximized` opens filling the desktop
         work area, and is subject to the same size substitution.
         `offscreen` never shows the window and needs no display, for a
-        context that only renders into framebuffer objects -- unless another
+        context that only renders into framebuffer objects, unless another
         window already holds SDL's video subsystem, whose driver it then
         shares (see `SDL.init_subsystems`)."""
         var attributes: List[Tuple[Int32, Int32]] = [
@@ -113,7 +113,7 @@ struct GLWindow(NativeWindow):
         """Backing pixel size of the drawable, for `glViewport`.
 
         Not the same number as `width()`/`height()` under display scaling
-        (HiDPI, Wayland fractional scale) -- those track the SDL logical
+        (HiDPI, Wayland fractional scale): those track the SDL logical
         window size, which is what resize events report. Query this after
         events are pumped and use it for `glViewport`; using the logical
         size there clips or stretches the rendered frame on a scaled
@@ -131,9 +131,9 @@ struct GLWindow(NativeWindow):
     def get_proc_address(self, name: String) raises -> Int:
         """Address of the GL function `name`, or 0 if unavailable.
 
-        This repo does not know or validate GL function signatures --
+        This repo does not know or validate GL function signatures:
         bitcast the address to your own C-ABI function-pointer type to call
-        it, e.g.:
+        it, for example:
 
         ```mojo
         comptime GLClearFn = def(UInt32) thin abi("C") -> None
@@ -146,7 +146,7 @@ struct GLWindow(NativeWindow):
         return self._native.sdl.gl_get_proc_address(name)
 
     def swap_buffers(mut self) raises:
-        """Presents the back buffer -- call once per frame after drawing."""
+        """Presents the back buffer: call once per frame after drawing."""
         self._native.sdl.gl_swap_window(self._native.handle)
 
     def set_fullscreen(mut self, enabled: Bool) raises:
@@ -205,6 +205,6 @@ struct GLWindow(NativeWindow):
         self._native.rumble_gamepad(id, low_frequency, high_frequency, seconds)
 
     def events(mut self) raises -> List[Event]:
-        """A resize updates `width()`/`height()` only -- there is no pixel
+        """A resize updates `width()`/`height()` only: there is no pixel
         buffer or texture to reallocate for a GL-backed window."""
         return self._native.events()

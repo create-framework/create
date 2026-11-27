@@ -1,4 +1,4 @@
-"""Public `Window` type — the Mojo-facing wrapper over an SDL3 window."""
+"""Public `Window` type: the Mojo-facing wrapper over an SDL3 window."""
 
 from ._sdl_window import NativeWindow, _SDLWindow
 from .event import Event

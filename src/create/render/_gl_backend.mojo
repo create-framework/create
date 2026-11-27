@@ -1,4 +1,4 @@
-"""The GPU half of `Backend` — a frame's commands as batched `glDrawArrays`.
+"""The GPU half of `Backend`: a frame's commands as batched `glDrawArrays`.
 
 The split with `_tessellate.mojo` is deliberate and load-bearing: *where* a
 triangle goes is arithmetic and is decided there, testable with no context and
@@ -7,13 +7,13 @@ here decides geometry.
 
 **One batch spans as many commands as it can.** The vertex buffer accumulates
 across commands and is flushed only when something makes a shared draw call
-impossible — an opaque `ClearPayload` (which resets the framebuffer, so earlier
+impossible: an opaque `ClearPayload` (which resets the framebuffer, so earlier
 vertices must already have landed), a *second* image texture (a blurred
 image shadow's mask counts: it is a texture of its own), a change of
 `BlendMode` (blend state is per draw call), and the end of the frame. Solids, glyphs and one image share a batch because they sample
 different things: the atlas is permanently on texture unit 0 and images go on
 unit 1, so an image between two glyphs costs no rebind and text rendered over an
-image — the obvious way to write a HUD — costs no break either. That is the
+image (the obvious way to write a HUD) costs no break either. That is the
 whole point of baking the
 transform per vertex rather than passing it as a uniform: a per-command
 uniform would force a draw call per command and there would be no batching to
@@ -24,11 +24,11 @@ innermost `canvas.clip` it was rendered under; when that changes, the batch
 flushes and `_apply_clip` redraws the stencil from the clip's chain of
 regions, each through the same fill emitters a render call of that shape
 uses. A clip change therefore costs a flush plus one draw call per level
-of its chain — a few per frame for a typical program, never per command.
+of its chain: a few per frame for a typical program, never per command.
 
 **Clearing follows the CPU replay rather than the obvious GL call.**
-`_raster.fill_all` *composites* — a `background` with `a < 255` blends over
-what was already rendered — so only an opaque clear becomes `glClear`. A
+`_raster.fill_all` *composites* (a `background` with `a < 255` blends over
+what was already rendered), so only an opaque clear becomes `glClear`. A
 translucent one is a full-drawable quad in the batch, which blends, and an
 `a == 0` one renders nothing at all.
 """
@@ -193,7 +193,7 @@ comptime _ATLAS_PAD = 1
 
 `GL_LINEAR` samples a neighbourhood, so without a gutter a glyph's edge would
 pick up the one packed beside it. The leading pad, above the first shelf as
-well as left of every glyph, keeps texel (0, 0) — the white texel — out of
+well as left of every glyph, keeps texel (0, 0) (the white texel) out of
 the allocator's reach, and gives every glyph a blank texel all round, which
 a turned glyph's quad reaches half into (`emit_mapped_glyph`)."""
 
@@ -415,7 +415,7 @@ struct _FrameTarget(Copyable, Movable):
     back buffer holds nothing defined after a swap. It starts transparent,
     as a resized window's pixels do on the CPU.
 
-    Owned by `GLRenderer`, which deletes it through its own `GL` — this holds
+    Owned by `GLRenderer`, which deletes it through its own `GL`: this holds
     names only, so it needs no `GL` of its own.
     """
 
@@ -499,7 +499,7 @@ def _compile(gl: GL, kind: UInt32, src: String) raises -> UInt32:
     """One compiled shader, or an error carrying the driver's log.
 
     The source is passed NUL-terminated with a null length array, and
-    `_ = src` keeps it alive across the call — rule 1.
+    `_ = src` keeps it alive across the call: rule 1.
     """
     var shader = gl.create_shader(kind)
     var ptrs = List[_Bytes](
@@ -583,7 +583,7 @@ struct GLRenderer(Movable):
     """Everything the GPU path owns: the entry points, one VAO/VBO, the shader
     program, the glyph atlas, and the vertex buffer they are fed from.
 
-    Constructing one requires a current GL context — `GL()` does — so it is
+    Constructing one requires a current GL context (`GL()` does), so it is
     built by the GL run loop after the window, never eagerly.
     """
 
@@ -611,7 +611,7 @@ struct GLRenderer(Movable):
     var shelf_h: Int
     """The shelf allocator's cursor: glyphs fill a row left to right, then a
     new row starts below the tallest glyph of the last one. Nothing is ever
-    freed — the atlas is reset whole or not at all."""
+    freed: the atlas is reset whole or not at all."""
     var atlas_generation: Int
     """The `TextRenderer.atlas_generation` these rects were packed against."""
     var textures: Dict[Int, UInt32]
@@ -626,19 +626,19 @@ struct GLRenderer(Movable):
     distinct mask it switches to, where a hard one samples the image's own
     texture and costs none."""
     var frame_textures: List[UInt32]
-    """Textures used for one frame only — blurred curve shadows, whose masks
-    have no stable key to cache by — deleted once the frame's last batch has
+    """Textures used for one frame only (blurred curve shadows, whose masks
+    have no stable key to cache by) deleted once the frame's last batch has
     drawn."""
     var ramps: UInt32
     """Gradient ramps, `_RAMP_SIZE` texels a row, permanently on unit 2."""
     var ramp_rows: Dict[Int, List[Int]]
-    """`Gradient._stops_key` to the rows holding ramps of that key — usually
+    """`Gradient._stops_key` to the rows holding ramps of that key: usually
     one; more only on a hash collision, told apart by `ramp_gradients`."""
     var ramp_gradients: List[Gradient]
     """The gradient whose ramp each row holds, in row order. Kept across
     frames, so a gradient built once in `create` uploads once."""
     var bound: UInt32
-    """What is on texture unit 1 — the image unit — right now. Kept across
+    """What is on texture unit 1 (the image unit) right now. Kept across
     frames, since nothing else in the library binds there. A batch is one
     `glDrawArrays`, so replacing it has to flush first; the atlas on unit 0 is
     never replaced and so never forces one."""
@@ -889,7 +889,7 @@ struct GLRenderer(Movable):
         """Replay `cmds` onto the current drawable, `width` x `height` pixels,
         multisampled as `antialiasing` says.
 
-        `width`/`height` are the *drawable's*, not the viewport's — under
+        `width`/`height` are the *drawable's*, not the viewport's: under
         display scaling the two differ, and the letterbox bars have to reach
         the real edge of the frame.
 
@@ -898,7 +898,7 @@ struct GLRenderer(Movable):
         pixels for the next frame, which a window's back buffer doesn't
         after a swap, so the autoclear can be off. Multisampling is the
         target's too, resolved by that copy, so the level can change from
-        one frame to the next without recreating the window — and a
+        one frame to the next without recreating the window, and a
         headless run's framebuffer object gets it too. The count is capped
         at the driver's maximum; below 2 the target is single-sampled.
 
@@ -955,7 +955,7 @@ struct GLRenderer(Movable):
     ) raises:
         """`render`'s replay, onto whatever framebuffer is bound."""
         if width != self.viewport_w or height != self.viewport_h:
-            # A resize, so once in a while — everything else the render needs is
+            # A resize, so once in a while: everything else the render needs is
             # already set from construction.
             self.gl.viewport(0, 0, Int32(width), Int32(height))
             self.gl.uniform_2f(self.u_viewport, Float32(width), Float32(height))
@@ -1110,7 +1110,7 @@ struct GLRenderer(Movable):
             self._text(c, text, scale)
         elif c.payload.isa[LetterboxPayload]():
             # Bars are solid, but they must land over whatever texture is
-            # bound, so no rebind here — `MODE_SOLID` never samples.
+            # bound, so no rebind here: `MODE_SOLID` never samples.
             emit_letterbox(self.vertices, c, width, height)
 
     def read_frame(mut self, width: Int, height: Int) raises -> List[UInt8]:
@@ -1121,7 +1121,7 @@ struct GLRenderer(Movable):
 
         A readback stalls the pipeline: the driver has to finish everything
         queued before it can answer. That is the whole reason this is not on
-        the per-frame path — once, on a keypress, it costs one frame's
+        the per-frame path: once, on a keypress, it costs one frame's
         latency, which is a different regime from reading every frame back.
         """
         var flipped = List[UInt8](length=width * height * 4, fill=0)
@@ -1160,7 +1160,7 @@ struct GLRenderer(Movable):
         """A `TextPayload`, laid out by the same function the CPU replay uses.
 
         A blurred shadow's glyphs are just other keys to `layout`, packed into
-        the same atlas beside the sharp ones — so they cost no draw call.
+        the same atlas beside the sharp ones, so they cost no draw call.
         """
         ref text_style = c.payload[TextPayload].style[]
         if text_style.text_color.a == 0:
@@ -1346,7 +1346,7 @@ struct GLRenderer(Movable):
         """The GL texture for a backend image id, uploaded on first use."""
         if id in self.textures:
             return self.textures[id]
-        # Uploading rebinds unit 1 itself, ahead of `_bind`'s own check — so
+        # Uploading rebinds unit 1 itself, ahead of `_bind`'s own check, so
         # whatever the batch so far is sampling from unit 1 must be flushed
         # here, or it silently gets rendered under this new texture instead.
         self._flush()
@@ -1355,7 +1355,7 @@ struct GLRenderer(Movable):
             img.width, img.height, Int(img.pixels[].unsafe_ptr()), GL_LINEAR
         )
         # The bind above went behind `_bind`'s back; tell it what is current.
-        # Nothing was batched against the old binding — `_image` calls this
+        # Nothing was batched against the old binding: `_image` calls this
         # through `_bind`, which flushed first.
         self.bound = name
         self.textures[id] = name
@@ -1380,7 +1380,7 @@ struct GLRenderer(Movable):
     ) raises:
         """The silhouette command `c` blurred by `blur` device pixels: the
         CPU replay's mask, uploaded once and drawn over `_image`'s rect
-        grown by the blur's reach — or, under a transform that turns the
+        grown by the blur's reach, or, under a transform that turns the
         image, built for it this frame, as a Bézier's is."""
         ref image = c.payload[ImagePayload]
         if image.image not in images:
@@ -1407,7 +1407,7 @@ struct GLRenderer(Movable):
             self._bind(self.shadow_textures[key])
         else:
             # Uploading rebinds the image unit, so whatever the batch so far
-            # samples there has to land first — as in `_texture`.
+            # samples there has to land first, as in `_texture`.
             self._flush()
             if len(self.shadow_textures) >= SHADOW_MASK_LIMIT:
                 for ref entry in self.shadow_textures.items():
@@ -1574,7 +1574,7 @@ struct GLRenderer(Movable):
         scale: Float64,
     ) raises:
         """Make the stencil hold clip `id` and test every later draw
-        against it, flushing first — the test applies to a whole draw call.
+        against it, flushing first: the test applies to a whole draw call.
 
         The stencil counts levels: the chain is drawn outermost first, level
         `d` incrementing exactly the pixels at `d - 1` its region covers, so
@@ -1615,11 +1615,11 @@ struct GLRenderer(Movable):
 
     def _blend_mode(mut self, mode: BlendMode) raises:
         """Set the GL blend state for `mode`, flushing first if that changes
-        it — blend state applies to a whole draw call.
+        it: blend state applies to a whole draw call.
 
         `NORMAL` is the straight-alpha `glBlendFunc` set at construction.
-        The other modes cannot be written against straight alpha — `MULTIPLY`
-        needs `s * a * d`, `SCREEN` needs `s * a * (1 - d)` — so the shader
+        The other modes cannot be written against straight alpha (`MULTIPLY`
+        needs `s * a * d`, `SCREEN` needs `s * a * (1 - d)`), so the shader
         premultiplies for them, and each becomes one fixed-function equation
         matching `_raster._blend_lanes`:
 

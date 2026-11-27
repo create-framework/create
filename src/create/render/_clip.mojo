@@ -58,7 +58,7 @@ struct _ClipRows(Movable):
 
     What the CPU raster loops test against: a row's runs are found by index,
     a `fill_span` is cut into one call per run it overlaps, and a partly
-    kept run scales the alpha it paints — the clip's antialiased edge.
+    kept run scales the alpha it paints: the clip's antialiased edge.
     """
 
     var starts: List[Int]
@@ -211,7 +211,7 @@ struct _ClipRows(Movable):
 
     def intersect(self, other: _ClipRows) -> _ClipRows:
         """The runs inside both, row by row, kept by the product of both
-        covers — a nested clip."""
+        covers: a nested clip."""
         var height = len(self.starts) - 1
         var out = _ClipRows(height)
         out.starts.clear()
