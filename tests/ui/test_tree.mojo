@@ -87,7 +87,7 @@ def test_text_on_a_dark_panel_takes_its_content_color() raises -> None:
     var card = ui.add(
         Panel(Rectangle((0, 0), 200, 100), style=Style(fill=Color.BLACK))
     )
-    _ = ui.add(Label("Hi", Rectangle((0, 0), 100, 40)), card)
+    _ = ui.add(Label("Hi", Rectangle((0, 0), 100, 40), Align.CENTER), card)
     var context = Context()
     point_at(context, (140, 90))
     var canvas = _canvas()

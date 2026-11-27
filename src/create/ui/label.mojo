@@ -13,13 +13,13 @@ from .widget import Widget
 
 
 struct Label(Copyable, Movable, Widget):
-    """Text placed in a rectangle, by an alignment: in its centre unless
-    told otherwise, against its left edge with `Align.LEFT`, and so on. It
-    reacts to nothing.
+    """Text placed in a rectangle, by an alignment: against its left edge
+    unless told otherwise, as text in a form reads, in its centre with
+    `Align.CENTER`, and so on. It reacts to nothing.
 
     ```mojo
     # In `create`, building the `title` field:
-    var title = Label("Settings", Rectangle((0, 200), 300, 40), Align.LEFT)
+    var title = Label("Settings", Rectangle((0, 200), 300, 40), Align.CENTER)
 
     # In `update`:
     self.title.update(context, canvas)
@@ -37,7 +37,8 @@ struct Label(Copyable, Movable, Widget):
     """Where the text is placed."""
     var alignment: Optional[Align]
     """Which point of `rect` the text is anchored to: the style's
-    `text_alignment` when `None`, and the centre when that is unset too."""
+    `text_alignment` when `None`, and its left edge when that is unset
+    too."""
     var style: Style
     """Its own style, over the default text style."""
     var _look: _ResolvedStyle

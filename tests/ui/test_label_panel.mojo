@@ -41,7 +41,10 @@ def test_text_on_a_dark_panel_takes_its_content_color() raises -> None:
     assert_equal(panel.surface_color(), Color.BLACK)
     assert_equal(panel.content_color(), Color.WHITE)
     var label = Label(
-        "Hi", _LINE, style=Style(text_color=panel.content_color())
+        "Hi",
+        _LINE,
+        Align.CENTER,
+        style=Style(text_color=panel.content_color()),
     )
     label.update(context, canvas)
     canvas.draw(panel)
@@ -51,6 +54,17 @@ def test_text_on_a_dark_panel_takes_its_content_color() raises -> None:
         var c = canvas.color_at((Float64(x), 10.0))
         lightest = max(lightest, Int(c.r))
     assert_true(lightest > 200)
+
+
+def test_a_label_sits_against_its_left_edge_unless_aligned() raises -> None:
+    var context = Context()
+    var left = Label("Hi", Rectangle((0, 0), 200, 40))
+    var centred = Label("Hi", Rectangle((0, 0), 200, 40), Align.CENTER)
+    var canvas = Canvas(300, 100, antialiasing=Antialiasing.OFF)
+    left.update(context, canvas)
+    centred.update(context, canvas)
+    assert_equal(left._look.text_alignment, Align.LEFT)
+    assert_equal(centred._look.text_alignment, Align.CENTER)
 
 
 def main() raises:

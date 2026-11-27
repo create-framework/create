@@ -11,9 +11,7 @@ struct ButtonsPage(Movable):
 
     def __init__(out self, mut ui: UI, page: WidgetHandle[Column]):
         _ = ui.add(
-            Label(
-                "Four kinds, for actions of four weights", alignment=Align.LEFT
-            ),
+            Label("Four kinds, for actions of four weights"),
             page,
         )
 
@@ -48,7 +46,7 @@ struct ButtonsPage(Movable):
         ui.tooltip(self.buttons[3], "Close the menu")
 
         _ = ui.add(Space(), page)
-        _ = ui.add(Label("Disabled", alignment=Align.LEFT), page)
+        _ = ui.add(Label("Disabled"), page)
         _ = ui.add(Button("Continue", enabled=False), page, align=Align.LEFT)
 
     def update(self, ui: UI) -> Optional[String]:

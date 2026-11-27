@@ -46,7 +46,7 @@ def add_setting(
     """A line of the panel: `name`, and a slider beside it setting one part
     of the shadow, in whole steps."""
     var line = ui.add(Row(), column)
-    _ = ui.add(Label(name, alignment=Align.LEFT), line, width=LABEL_WIDTH)
+    _ = ui.add(Label(name), line, width=LABEL_WIDTH)
     return ui.add(Slider(value, minimum, maximum, step=1), line)
 
 
