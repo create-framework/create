@@ -11,9 +11,13 @@ trait Shape(Geometry):
     not one."""
 
     def center(self) -> Point:
+        """Its centre: where `move_to` puts `position` for a shape without
+        a `position` of its own."""
         ...
 
     def area(self) -> Float64:
+        """How much room it covers, in square units, its rounded corners
+        taken into account."""
         ...
 
     def contains(self, p: Point) -> Bool:

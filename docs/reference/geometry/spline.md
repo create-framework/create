@@ -125,6 +125,11 @@ The point on the curve nearest `p`: the nearest of each stretch's `Bezier.closes
 
 ```mojo
 def intersects(self, p: Point) -> Bool
+```
+
+Whether `p` lies on it.
+
+```mojo
 def intersects(self, l: Line) -> Bool
 def intersects(self, a: Arc) -> Bool
 def intersects(self, b: Bezier) -> Bool
@@ -138,11 +143,15 @@ def intersects(self, p: Polygon) -> Bool
 def intersects(self, other: Self) -> Bool
 ```
 
+Whether it crosses or touches the other curve or shape: shares a point with it, a shape's inside included.
+
 ### `translate`
 
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 

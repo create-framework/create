@@ -16,11 +16,15 @@ Implements `Copyable`, `Deinitable`, `Geometry`, `Movable`.
 def center(self) -> Point
 ```
 
+Its centre: where `move_to` puts `position` for a shape without a `position` of its own.
+
 ### `area`
 
 ```mojo
 def area(self) -> Float64
 ```
+
+How much room it covers, in square units, its rounded corners taken into account.
 
 ### `contains`
 

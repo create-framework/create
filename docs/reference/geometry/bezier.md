@@ -71,6 +71,11 @@ a formula.
 
 ```mojo
 def intersects(self, p: Point) -> Bool
+```
+
+Whether `p` lies on it.
+
+```mojo
 def intersects(self, l: Line) -> Bool
 def intersects(self, a: Arc) -> Bool
 def intersects(self, other: Self) -> Bool
@@ -83,6 +88,8 @@ def intersects(self, t: Triangle) -> Bool
 def intersects(self, s: Sector) -> Bool
 def intersects(self, p: Polygon) -> Bool
 ```
+
+Whether it crosses or touches the other curve or shape: shares a point with it, a shape's inside included.
 
 ### `split`
 
@@ -150,6 +157,8 @@ entity, not in a tight loop.
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 

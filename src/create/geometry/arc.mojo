@@ -254,10 +254,13 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     # The `intersects` family is documented above `Line.intersects`.
     def intersects(self, p: Point) -> Bool:
+        """Whether `p` lies on it."""
         var off = abs((p - self.position).magnitude() - self.radius)
         return off <= _RADIUS_EPSILON * self.radius and self._spans(p)
 
     def intersects(self, l: Line) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         var d = l.end - l.start
         var len_sq = d.magnitude_squared()
         if len_sq == 0.0:
@@ -281,6 +284,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         )
 
     def intersects(self, other: Arc) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if self.radius == 0.0:
             return other.intersects(self.position)
         if other.radius == 0.0:
@@ -320,12 +325,18 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         )
 
     def intersects(self, c: Circle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return c.contains(self.closest_point(c.position))
 
     def intersects(self, c: Capsule) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return _spine_distance(c._spine(), self) <= c.radius
 
     def intersects(self, e: Ellipse) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         # An arc mapped onto the ellipse's unit circle is no arc, so it is
         # followed as a curve is, by its segments.
         if not self.bounds().overlaps(e.bounds()):
@@ -335,18 +346,22 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
                 return True
         return False
 
-    def intersects(self, radius: Rectangle) -> Bool:
-        if radius._radius() > 0.0:
-            return self.intersects(radius._outline())
-        if radius.contains(self.at(0.0)) or radius.contains(self.at(1.0)):
+    def intersects(self, r: Rectangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
+        if r._radius() > 0.0:
+            return self.intersects(r._outline())
+        if r.contains(self.at(0.0)) or r.contains(self.at(1.0)):
             return True
-        var pts = radius._points()
+        var pts = r._points()
         for i in range(4):
             if self.intersects(Line(pts[i], pts[(i + 1) % 4])):
                 return True
         return False
 
     def intersects(self, t: Triangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if t._radius() > 0.0:
             return self.intersects(t._outline())
         if t.contains(self.at(0.0)) or t.contains(self.at(1.0)):
@@ -358,6 +373,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return False
 
     def intersects(self, s: Sector) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if s._is_rounded():
             return self.intersects(s._outline())
         if s.contains(self.at(0.0)) or s.contains(self.at(1.0)):
@@ -365,6 +382,8 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return s._boundary_meets(self)
 
     def intersects(self, p: Polygon) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if p._is_rounded():
             return self.intersects(p._outline())
         if p.contains(self.at(0.0)) or p.contains(self.at(1.0)):
@@ -372,17 +391,24 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         return p._boundary_meets(self)
 
     def intersects(self, b: Bezier) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return b.intersects(self)
 
     def intersects(self, s: Spline) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return s.intersects(self)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `position` is at `position`; this one is
+        unchanged."""
         var moved = self.copy()
         moved.position = position
         return moved^
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^

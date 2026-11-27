@@ -52,11 +52,15 @@ def __init__(out self, position: Point, width: Int, height: Int)
 def center(self) -> Point
 ```
 
+Its centre: `position`.
+
 ### `area`
 
 ```mojo
 def area(self) -> Float64
 ```
+
+How much room it covers: π times half its width times half its height.
 
 ### `bounds`
 
@@ -72,12 +76,21 @@ The tightest axis-aligned rectangle around the ellipse.
 def closest_point(self, p: Point) -> Point
 ```
 
+Its point nearest `p`: `p` itself when inside, otherwise the nearest point on its edge.
+
 ### `contains`
 
 ```mojo
 def contains(self, p: Point) -> Bool
-def contains(self, radius: Rectangle) -> Bool
 ```
+
+Whether `p` is inside, its boundary included.
+
+```mojo
+def contains(self, r: Rectangle) -> Bool
+```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ```mojo
 def contains(self, c: Circle) -> Bool
@@ -89,6 +102,8 @@ Whether `c` is inside: its centre is, and no nearer the curve than its radius.
 def contains(self, t: Triangle) -> Bool
 def contains(self, l: Line) -> Bool
 ```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ```mojo
 def contains[C: Curve](self, curve: C) -> Bool
@@ -106,6 +121,8 @@ Whether `s` is inside: its tip and its arc are, since every point of a sector li
 def contains(self, p: Polygon) -> Bool
 ```
 
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
+
 ```mojo
 def contains(self, other: Self) -> Bool
 ```
@@ -115,6 +132,8 @@ Whether `other` is inside: with `other` mapped onto the unit circle, this one, m
 ```mojo
 def contains(self, c: Capsule) -> Bool
 ```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ### `overlaps`
 
@@ -136,11 +155,15 @@ Whether this and `other` share any point, their boundaries included: shapes that
 def move_to(self, position: Point) -> Self
 ```
 
+It moved so its `position` is at `position`; this one is unchanged.
+
 ### `translate`
 
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 

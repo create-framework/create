@@ -223,72 +223,95 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
     # A spline meets a shape where one of its stretches does: see
     # `Bezier.intersects` for how closely each follows the curve.
     def intersects(self, p: Point) -> Bool:
+        """Whether `p` lies on it."""
         for c in self.beziers():
             if c.intersects(p):
                 return True
         return False
 
     def intersects(self, l: Line) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for c in self.beziers():
             if c.intersects(l):
                 return True
         return False
 
     def intersects(self, a: Arc) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for c in self.beziers():
             if c.intersects(a):
                 return True
         return False
 
     def intersects(self, b: Bezier) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for c in self.beziers():
             if c.intersects(b):
                 return True
         return False
 
     def intersects(self, c: Circle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(c):
                 return True
         return False
 
     def intersects(self, c: Capsule) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(c):
                 return True
         return False
 
     def intersects(self, e: Ellipse) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(e):
                 return True
         return False
 
     def intersects(self, r: Rectangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(r):
                 return True
         return False
 
     def intersects(self, t: Triangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(t):
                 return True
         return False
 
     def intersects(self, s: Sector) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(s):
                 return True
         return False
 
     def intersects(self, p: Polygon) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         for curve in self.beziers():
             if curve.intersects(p):
                 return True
         return False
 
     def intersects(self, other: Spline) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         var theirs = other.beziers()
         for c in self.beziers():
             for o in theirs:
@@ -297,6 +320,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         return False
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         for i in range(len(moved.points)):
             moved.points[i] = moved.points[i] + delta

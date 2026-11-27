@@ -94,6 +94,7 @@ struct Triangle(
         writer.write(")")
 
     def center(self) -> Point:
+        """Its centroid: the average of its three corners."""
         return Point(
             (self.a.x + self.b.x + self.c.x) / 3.0,
             (self.a.y + self.b.y + self.c.y) / 3.0,
@@ -103,6 +104,7 @@ struct Triangle(
         return _cross(self.b - self.a, self.c - self.a)
 
     def area(self) -> Float64:
+        """How much room it covers, its rounded corners taken into account."""
         var r = self._radius()
         if r > 0.0:
             # The inner triangle, a band along each of its edges, and a
@@ -133,6 +135,8 @@ struct Triangle(
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
     def closest_point(self, p: Point) -> Point:
+        """Its point nearest `p`: `p` itself when inside, otherwise the
+        nearest point on its edge."""
         var r = self._radius()
         if r > 0.0:
             return _rounded_closest(self._inner().closest_point(p), p, r)
@@ -151,6 +155,7 @@ struct Triangle(
         return p3
 
     def contains(self, p: Point) -> Bool:
+        """Whether `p` is inside, its boundary included."""
         var r = self._radius()
         if r > 0.0:
             return _distance_squared(self._inner().closest_point(p), p) <= r * r
@@ -176,18 +181,28 @@ struct Triangle(
     # a `Line`, is a convex core grown by a radius, and is held exactly when
     # a disc of its radius round every corner of its core is (`_contains`).
     def contains(self, other: Triangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, other)
 
     def contains(self, r: Rectangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, r)
 
     def contains(self, c: Circle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, c)
 
     def contains(self, l: Line) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, l)
 
     def contains(self, c: Capsule) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, c)
 
     def contains[C: Curve](self, curve: C) -> Bool:
@@ -203,6 +218,8 @@ struct Triangle(
     # A rounded triangle holds the rest as its outline polygon, and a
     # rounded shape is tested as its own.
     def contains(self, s: Sector) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._radius() > 0.0:
             return self._outline().contains(s)
         if s._is_rounded():
@@ -226,6 +243,8 @@ struct Triangle(
         return True
 
     def contains(self, p: Polygon) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._radius() > 0.0:
             return self._outline().contains(p)
         if p._is_rounded():
@@ -236,6 +255,8 @@ struct Triangle(
         return True
 
     def contains(self, e: Ellipse) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         # With `e` mapped onto the unit circle, the triangle mapped alike is
         # still one.
         if self._radius() > 0.0:
@@ -287,9 +308,12 @@ struct Triangle(
         return _regions_overlap(other, self)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `center()` is at `position`; this one is
+        unchanged."""
         return self.translate(position - self.center())
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.a = moved.a + delta
         moved.b = moved.b + delta

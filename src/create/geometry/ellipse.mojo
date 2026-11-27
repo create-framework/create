@@ -158,9 +158,12 @@ struct Ellipse(
         )
 
     def center(self) -> Point:
+        """Its centre: `position`."""
         return self.position
 
     def area(self) -> Float64:
+        """How much room it covers: π times half its width times half its
+        height."""
         return PI * self.width * self.height / 4.0
 
     def bounds(self) -> Rectangle:
@@ -168,6 +171,8 @@ struct Ellipse(
         return Rectangle(self.position, self.width, self.height)
 
     def closest_point(self, p: Point) -> Point:
+        """Its point nearest `p`: `p` itself when inside, otherwise the
+        nearest point on its edge."""
         if self._is_flat():
             return self.bounds().closest_point(p)
         if self.contains(p):
@@ -175,6 +180,7 @@ struct Ellipse(
         return self._closest_on_boundary(p)
 
     def contains(self, p: Point) -> Bool:
+        """Whether `p` is inside, its boundary included."""
         if self._is_flat():
             return self.bounds().contains(p)
         var q = self._to_unit(p)
@@ -183,12 +189,14 @@ struct Ellipse(
     # An ellipse is convex, so it holds a straight-edged shape exactly when
     # it holds its corners. Collapsed, it is its bounds, and a rounded shape
     # is tested as its outline polygon.
-    def contains(self, radius: Rectangle) -> Bool:
+    def contains(self, r: Rectangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_flat():
-            return self.bounds().contains(radius)
-        if radius._radius() > 0.0:
-            return self.contains(radius._outline())
-        for p in radius._points():
+            return self.bounds().contains(r)
+        if r._radius() > 0.0:
+            return self.contains(r._outline())
+        for p in r._points():
             if not self.contains(p):
                 return False
         return True
@@ -204,6 +212,8 @@ struct Ellipse(
         return _distance_squared(edge, c.position) >= c.radius * c.radius
 
     def contains(self, t: Triangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_flat():
             return self.bounds().contains(t)
         if t._radius() > 0.0:
@@ -214,6 +224,8 @@ struct Ellipse(
         return True
 
     def contains(self, l: Line) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_flat():
             return self.bounds().contains(l)
         return self.contains(l.start) and self.contains(l.end)
@@ -238,6 +250,8 @@ struct Ellipse(
         return self.contains(s.position) and self.contains(s.arc())
 
     def contains(self, p: Polygon) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_flat():
             return self.bounds().contains(p)
         if p._is_rounded():
@@ -258,6 +272,8 @@ struct Ellipse(
         return other._to_unit(self).contains(_UNIT_CIRCLE)
 
     def contains(self, c: Capsule) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         # Convex, so it holds the capsule when it holds the discs at both
         # ends, whose hull the capsule is.
         for end in c._ends():
@@ -308,11 +324,14 @@ struct Ellipse(
         return _regions_overlap(self, other)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `position` is at `position`; this one is
+        unchanged."""
         var moved = self.copy()
         moved.position = position
         return moved^
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^
