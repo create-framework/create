@@ -1,10 +1,10 @@
 """`Slider`: a handle dragged along a track to set a value."""
 
 from create.app import Context
-from create.geometry import Circle, Line, Rectangle
+from create.geometry import Line, Rectangle
 from create.input import Key, Keyboard
 from create.math import Point, ceil, clamp, floor
-from create.render import Canvas, Style
+from create.render import Canvas, Style, StrokeCap
 from create.math import OptionalNumber
 from ._pointer import _Pointer
 from create.color.color_scheme import ColorScheme
@@ -41,13 +41,18 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     left as it is until dragged. `maximum` may be less than `minimum`, which
     runs the slider the other way.
 
-    Each part is a shape drawn in a style of its own: `track` is a line, so
-    its stroke is the track's colour and thickness; `active_track` is the
-    line from the start to the handle, over `track`, taking what it leaves
-    unset from it; `handle` is a point, so its stroke is the handle's colour
-    and its `stroke_thickness` its diameter (`StrokeCap.SQUARE` makes it
-    square); and `handle_outline` is a circle round the handle, drawn when
-    it sets a stroke or a fill.
+    Each part is a shape drawn in a style of its own: `track` is a line
+    across `rect`, so its stroke is the track's colour and thickness;
+    `active_track` is the line from the start to the handle, over `track`,
+    taking what it leaves unset from it; and `handle` is a rectangle, so its
+    fill is its colour, its stroke its outline and its `corner_radius` how
+    round it is: half its size makes it round, and 0 square.
+
+    The handle is `handle_size` wide and tall, or `handle_width` by
+    `handle_height` when given both, such as a thin upright handle; half
+    the `UI`'s `control_height` square unless given. Its centre runs from
+    half its width inside the left end of `rect` to as far inside the right
+    end, so the whole handle stays inside `rect`.
     """
 
     var value: Float64
@@ -65,12 +70,17 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     var track: Style
     var active_track: Style
     var handle: Style
-    var handle_outline: Style
+    var handle_width: Optional[Float64]
+    """How wide the handle is; `None` for half the `control_height`."""
+    var handle_height: Optional[Float64]
+    """How tall the handle is; `None` for half the `control_height`."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled slider is faded."""
     var _pointer: _Pointer
     var _changed: Bool
     var _look: _SliderLook
+    var _handle_size: Tuple[Float64, Float64]
+    """The handle's width and height as last updated."""
 
     def __init__(
         out self,
@@ -83,9 +93,11 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         track: Style = Style(),
         active_track: Style = Style(),
         handle: Style = Style(),
-        handle_outline: Style = Style(),
+        handle_size: OptionalNumber = None,
         enabled: Bool = True,
     ):
+        """A slider whose handle is `handle_size` square, or half the
+        `control_height` when not given."""
         self.value = value
         self.minimum = minimum
         self.maximum = maximum
@@ -94,18 +106,62 @@ struct Slider(Clickable, Copyable, Movable, Widget):
         self.track = track
         self.active_track = active_track
         self.handle = handle
-        self.handle_outline = handle_outline
+        self.handle_width = handle_size._value
+        self.handle_height = handle_size._value
         self.enabled = enabled
         self._pointer = _Pointer()
         self._changed = False
-        self._look = _Theme.default().slider(
+        var theme = _Theme.default()
+        self._look = theme.slider(
             track,
             active_track,
             handle,
-            handle_outline,
             hovered=False,
             dragging=False,
             disabled=not enabled,
+        )
+        self._handle_size = (0.0, 0.0)
+        self._handle_size = self._handle_in(theme)
+
+    def __init__(
+        out self,
+        value: Float64,
+        minimum: Float64,
+        maximum: Float64,
+        rect: Rectangle = _UNSIZED,
+        *,
+        handle_width: Float64,
+        handle_height: Float64,
+        step: OptionalNumber = None,
+        track: Style = Style(),
+        active_track: Style = Style(),
+        handle: Style = Style(),
+        enabled: Bool = True,
+    ):
+        """A slider whose handle is `handle_width` wide and `handle_height`
+        tall, such as a thin upright one."""
+        self = Slider(
+            value,
+            minimum,
+            maximum,
+            rect,
+            step=step,
+            track=track,
+            active_track=active_track,
+            handle=handle,
+            enabled=enabled,
+        )
+        self.handle_width = handle_width
+        self.handle_height = handle_height
+        self._handle_size = (handle_width, handle_height)
+
+    def _handle_in(self, theme: _Theme) -> Tuple[Float64, Float64]:
+        """The handle's width and height in `theme`: its own, or half the
+        `control_height`."""
+        var side = theme.control_height / 2
+        return (
+            self.handle_width.or_else(side),
+            self.handle_height.or_else(side),
         )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
@@ -146,14 +202,14 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             self.track,
             self.active_track,
             self.handle,
-            self.handle_outline,
             hovered=self._pointer.hovered,
             dragging=self._pointer.dragged,
             disabled=not enabled,
         )
+        self._handle_size = self._handle_in(theme)
         self._changed = False
         if self._pointer.dragged:
-            var ends = _slider_ends(self.rect, self._knob_radius())
+            var ends = _slider_ends(self.rect, self._handle_size[0] / 2)
             var moved = _dragged_value(
                 pointer.x,
                 ends[0],
@@ -208,39 +264,44 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     def released(self) -> Bool:
         return self._pointer.released
 
-    def _ring(self) -> Circle:
+    def _ring(self) -> Rectangle:
         """The shape its focus ring goes round: its handle."""
-        var radius = self._knob_radius()
-        var ends = _slider_ends(self.rect, radius)
+        return self._handle_rect()
+
+    def _handle_rect(self) -> Rectangle:
+        """Where the handle is drawn: a rectangle centred on the track at
+        the value."""
+        var width = self._handle_size[0]
+        var ends = _slider_ends(self.rect, width / 2)
         var x = _handle_x(
             self.value, self.minimum, self.maximum, ends[0], ends[1]
         )
-        return Circle(Point(x, self.rect.position.y), radius)
-
-    def _knob_radius(self) -> Float64:
-        return self._look.handle.stroke_thickness / 2
+        return Rectangle(
+            Point(x, self.rect.position.y),
+            width,
+            self._handle_size[1],
+            corner_radius=self._look.handle.corner_radius,
+        )
 
     def draw_to(self, mut canvas: Canvas):
-        var radius = self._knob_radius()
-        var ends = _slider_ends(self.rect, radius)
-        var left = ends[0]
-        var right = ends[1]
         var y = self.rect.position.y
-        var handle_x = _handle_x(
-            self.value, self.minimum, self.maximum, left, right
-        )
-        with canvas._with_style(self._look.track):
+        var handle = self._handle_rect()
+        # The track spans `rect`, its caps included: a line's round or
+        # square cap reaches half its thickness past its end.
+        var left = self.rect.left()
+        var right = self.rect.right()
+        ref track = self._look.track
+        if track.stroke_cap != StrokeCap.BUTT:
+            left += track.stroke_thickness / 2
+            right -= track.stroke_thickness / 2
+        with canvas._with_style(track):
             canvas.draw(Line(Point(left, y), Point(right, y)))
+        var handle_x = handle.position.x
         if handle_x > left:
             with canvas._with_style(self._look.active):
                 canvas.draw(Line(Point(left, y), Point(handle_x, y)))
-        var centre = Point(handle_x, y)
         with canvas._with_style(self._look.handle):
-            canvas.draw(Line(centre, centre))
-        ref outline = self._look.outline
-        if outline.fill_enabled or outline.stroke_enabled:
-            with canvas._with_style(outline):
-                canvas.draw(Circle(centre, radius))
+            canvas.draw(handle)
 
 
 def _check_step(step: Optional[Float64], what: String) raises:
@@ -251,14 +312,12 @@ def _check_step(step: Optional[Float64], what: String) raises:
         )
 
 
-def _slider_ends(
-    rect: Rectangle, knob_radius: Float64
-) -> Tuple[Float64, Float64]:
+def _slider_ends(rect: Rectangle, inset: Float64) -> Tuple[Float64, Float64]:
     """Where a slider's handle centre runs from and to, left and right:
-    across `rect`, inset by the handle's radius so it stays inside."""
+    across `rect`, inset by half the handle's width so it stays inside."""
     return (
-        rect.position.x - rect.width / 2 + knob_radius,
-        rect.position.x + rect.width / 2 - knob_radius,
+        rect.position.x - rect.width / 2 + inset,
+        rect.position.x + rect.width / 2 - inset,
     )
 
 

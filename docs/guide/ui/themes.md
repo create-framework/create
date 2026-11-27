@@ -159,21 +159,28 @@ var undo = ui.add(Button("Undo", style=TOOL))
 **A widget with several parts takes a `Style` for each,** and each part is a shape drawn in it, so
 what a part's style means follows from the shape. A slider's `track` is a line, so its `stroke` and
 `stroke_thickness` are the track's colour and thickness, and `active_track`, the line from the start
-to the handle, takes what it leaves unset from `track`. Its `handle` is a point, drawn as
-`canvas.point` draws one: its `stroke` is the handle's colour and its `stroke_thickness` its
-diameter, and `stroke_cap=StrokeCap.SQUARE` makes it square. `handle_outline` is a circle round the
-handle, drawn only when it sets a stroke or a fill:
+to the handle, takes what it leaves unset from `track`. Its `handle` is a rectangle: its `fill` is
+the handle's colour, its `stroke` an outline round it and its `corner_radius` how round it is. A
+radius of half its size makes it round, and 0 square. A style has no size, so the slider takes the
+handle's: `handle_size=` for a square, or `handle_width=` and `handle_height=` together for any
+rectangle, such as a thin upright handle. Half the `control_height` square unless given:
 
 ```mojo
-# In `create`, building the `volume` field:
+# In `create`, building the `volume` field: a round white handle with a grey rim.
 var volume = Slider(
     0.5,
     0,
     1,
     Rectangle((0, -60), 240, 32),
     track=Style(stroke_thickness=2),
-    handle=Style(stroke=Color.WHITE, stroke_thickness=24, shadow=Color(0, 0, 0, 60), shadow_blur=8),
-    handle_outline=Style(stroke=Color.GRAY),
+    handle=Style(
+        fill=Color.WHITE,
+        stroke=Color.GRAY,
+        corner_radius=12,
+        shadow=Color(0, 0, 0, 60),
+        shadow_blur=8,
+    ),
+    handle_size=24,
 )
 ```
 
@@ -204,12 +211,13 @@ outline; `selected_tab` is the selected one, taking what it leaves unset from `t
 is the line beneath the selected tab.
 
 A choice group's `circle` is each option's circle, an outline; `selected_circle` is the chosen
-one's, taking what it leaves unset from `circle`; `dot` is a point in it, as a slider's handle is;
-and `text_style` is the options' text.
+one's, taking what it leaves unset from `circle`; `dot` is a point in it, drawn as `canvas.point`
+draws one, so its `stroke` is its colour and its `stroke_thickness` its diameter; and `text_style`
+is the options' text.
 
 A switch works the same way: `track` is a rounded rectangle, drawn while it is off; `on_track` is
 the same rectangle while it is on, taking what it leaves unset from `track`; `handle` is a point, as
-a slider's is; and `text_style` is the text beside it.
+a choice group's dot is; and `text_style` is the text beside it.
 
 A progress bar has two parts, each a line, as a slider's track has: `track`, the whole length, and
 `indicator`, from the start to its value, which takes what it leaves unset from `track`.

@@ -132,7 +132,7 @@ def _drawn(
     value: Float64,
     track: Style = Style(),
     handle: Style = Style(),
-    handle_outline: Style = Style(),
+    handle_size: OptionalNumber = None,
 ) raises -> Canvas:
     """One frame of a slider at `value`, the pointer away from it."""
     var slider = Slider(
@@ -142,8 +142,12 @@ def _drawn(
         _TRACK,
         track=track,
         handle=handle,
-        handle_outline=handle_outline,
+        handle_size=handle_size,
     )
+    return _frame(slider^)
+
+
+def _frame(var slider: Slider) raises -> Canvas:
     var context = Context()
     point_at(context, (140, 90))
     var canvas = _canvas()
@@ -152,42 +156,66 @@ def _drawn(
     return canvas^
 
 
-def test_the_handles_diameter_is_its_stroke_thickness() raises -> None:
+def test_the_handle_is_a_square_of_its_size() raises -> None:
     # 40 across, so its centre is inset 20 from the track's end, at -90
     var canvas = _drawn(
         0,
         track=Style(stroke=Color.BLUE),
-        handle=Style(stroke=Color.RED, stroke_thickness=40),
+        handle=Style(fill=Color.RED, corner_radius=0),
+        handle_size=40,
     )
     assert_equal(canvas.color_at((-90 + 18, 0)), Color.RED)
     assert_equal(canvas.color_at((-90 + 23, 0)), Color.BLUE)
-    assert_equal(canvas.color_at((-90, 19)), Color.RED)
+    assert_equal(canvas.color_at((-90 + 19, 19)), Color.RED)  # a corner
 
 
-def test_a_square_cap_makes_a_square_handle() raises -> None:
-    var round = _drawn(0, handle=Style(stroke=Color.RED))
-    var square = _drawn(
-        0, handle=Style(stroke=Color.RED, stroke_cap=StrokeCap.SQUARE)
-    )
+def test_a_large_corner_radius_makes_a_round_handle() raises -> None:
+    var square = _drawn(0, handle=Style(fill=Color.RED, corner_radius=0))
+    var round = _drawn(0, handle=Style(fill=Color.RED, corner_radius=10))
     var corner = Point(-100 + 9, 9)  # inside the square, outside the circle
-    assert_true(round.color_at(corner) != Color.RED)
     assert_equal(square.color_at(corner), Color.RED)
+    assert_true(round.color_at(corner) != Color.RED)
 
 
-def test_a_handle_outline_draws_a_ring_on_top() raises -> None:
+def test_a_handle_can_be_given_a_width_and_a_height() raises -> None:
+    var canvas = _frame(
+        Slider(
+            0,
+            0,
+            1,
+            _TRACK,
+            handle_width=8,
+            handle_height=30,
+            handle=Style(fill=Color.RED, corner_radius=0),
+        )
+    )
+    # 8 wide, so its centre is 4 from the track's end, at -106
+    assert_equal(canvas.color_at((-106, 14)), Color.RED)
+    assert_true(canvas.color_at((-106 + 6, 0)) != Color.RED)
+
+
+def test_a_handle_stroke_outlines_it() raises -> None:
     var canvas = _drawn(
         0,
-        handle=Style(stroke=Color.RED),
-        handle_outline=Style(stroke=Color.GREEN, stroke_thickness=3),
+        handle=Style(
+            fill=Color.RED,
+            stroke=Color.GREEN,
+            stroke_thickness=3,
+            corner_radius=0,
+        ),
     )
     assert_equal(canvas.color_at((-100, 0)), Color.RED)
     assert_equal(canvas.color_at((-100 + 8.5, 0)), Color.GREEN)
-    var plain = _drawn(0, handle=Style(stroke=Color.RED))
-    assert_equal(plain.color_at((-100 + 8.5, 0)), Color.RED)
+
+
+def test_the_track_spans_the_whole_rect() raises -> None:
+    var canvas = _drawn(0, track=Style(stroke=Color.BLUE, stroke_thickness=4))
+    assert_equal(canvas.color_at((109.5, 0)), Color.BLUE)  # its round cap
+    assert_true(canvas.color_at((110.5, 0)) != Color.BLUE)
 
 
 def test_a_dragged_handle_is_tinted() raises -> None:
-    var slider = Slider(0.5, 0, 1, _TRACK, handle=Style(stroke=Color.RED))
+    var slider = Slider(0.5, 0, 1, _TRACK, handle=Style(fill=Color.RED))
     var context = Context()
     point_at(context, (0, 0))
     press(context, (0, 0))
