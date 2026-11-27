@@ -3,7 +3,7 @@ with no `UI`."""
 from std.testing import TestSuite, assert_equal, assert_false, assert_true
 
 from create import *
-from create.ui._theme import _Theme
+from create.ui._theme import _Theme, _faded
 
 
 def test_the_default_theme_is_a_fresh_uis() raises -> None:
@@ -66,6 +66,22 @@ def test_a_disabled_checkbox_fades() raises -> None:
     )
     assert_true(look.box.fill_color.a < theme.colors.on_surface.a)
     assert_equal(look.tick.stroke_color, theme.surface)
+
+
+def test_a_fade_past_either_end_stays_in_range() raises -> None:
+    # A disabled widget fades its text by `disabled_content`: set above 1,
+    # the text is as solid as it can be, not wrapped round to faint.
+    var layers = StateLayers()
+    layers.disabled_content = 1.5
+    var ui = UI()
+    ui.state_layers(layers)
+    var button = ui.add(Button("B", Rectangle((0, 0), 100, 40), enabled=False))
+    var context = Context()
+    var canvas = Canvas(400, 300)
+    ui.update(context, canvas)
+    assert_equal(ui[button]._look.text.text_color.a, 255)
+    assert_equal(_faded(Color(10, 20, 30, 200), -0.5).a, 0)
+    assert_equal(_faded(Color(10, 20, 30, 200), 0.5).a, 100)
 
 
 def test_panels_and_popups_are_rounder_than_controls() raises -> None:
