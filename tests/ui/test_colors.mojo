@@ -28,6 +28,8 @@ def _pairs(c: ColorScheme) -> List[Tuple[Color, Color]]:
         (c.surface_container_high, c.on_surface),
         (c.surface_container_highest, c.on_surface),
         (c.surface_container_highest, c.on_surface_variant),
+        (c.surface_raised, c.on_surface),
+        (c.surface_raised, c.on_surface_variant),
         (c.background, c.on_background),
     ]
 

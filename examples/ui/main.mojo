@@ -28,9 +28,12 @@ from lists import ListsPage
 # The menu's panel, tall enough for its tallest page.
 comptime PANEL = Rectangle((0, 0), 500, 460)
 
-# A soft shadow, lifting the panel off the background.
-comptime SHADOW = Style(
-    shadow=Color(0, 0, 0, 60), shadow_offset=Vector(0, -3), shadow_blur=12
+# A raised surface with a soft shadow, lifting the panel off the background.
+comptime RAISED = Style(
+    fill=ColorRole.SURFACE_RAISED,
+    shadow=Color(0, 0, 0, 60),
+    shadow_offset=Vector(0, -3),
+    shadow_blur=12,
 )
 
 
@@ -48,7 +51,7 @@ struct Menu(Program):
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Menu:
         var ui = UI()
-        var panel = ui.add(Panel(PANEL, style=SHADOW))
+        var panel = ui.add(Panel(PANEL, style=RAISED))
         var column = ui.add(Column(), panel)
         _ = ui.add(Label("Widgets", style=Style(font_size=22)), column)
 

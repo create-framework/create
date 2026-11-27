@@ -15,9 +15,12 @@ The colours widgets are drawn in, as pairs of roles: each colour a widget is fil
   widgets sit on; usually the two are the same colour. **`surface_dim`**
   and **`surface_bright`** are the darkest and lightest surfaces, and the
   **`surface_container_`** roles, from `lowest` to `highest`, are
-  surfaces set apart from the one around them, such as a panel, a
-  dropdown's open list or a switch's track. Text on any surface is `on_surface`,
-  or the quieter `on_surface_variant`.
+  surfaces set apart from the one around them, such as a panel or a
+  switch's track. **`surface_raised`** is a surface lifted above the
+  one around it, such as a dropdown's open list or a card with a
+  shadow: lighter than the surface in both schemes, as something nearer
+  the light is. Text on any surface is `on_surface`, or the quieter
+  `on_surface_variant`.
 - **`outline`** draws borders, and **`outline_variant`** fainter
   dividers.
 
@@ -51,6 +54,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 - `surface_container: Color`
 - `surface_container_high: Color`
 - `surface_container_highest: Color`
+- `surface_raised: Color`
 - `outline: Color`
 - `outline_variant: Color`
 - `background: Color`

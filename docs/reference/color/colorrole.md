@@ -57,6 +57,7 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 - `OUTLINE_VARIANT = ColorRole(Int(27))`
 - `BACKGROUND = ColorRole(Int(28))`
 - `ON_BACKGROUND = ColorRole(Int(29))`
+- `SURFACE_RAISED = ColorRole(Int(30))`
 
 ## Fields
 

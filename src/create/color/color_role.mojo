@@ -55,6 +55,7 @@ struct ColorRole(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     comptime OUTLINE_VARIANT = ColorRole(27)
     comptime BACKGROUND = ColorRole(28)
     comptime ON_BACKGROUND = ColorRole(29)
+    comptime SURFACE_RAISED = ColorRole(30)
 
     def __init__(out self, value: Int):
         self.value = value
@@ -126,5 +127,7 @@ struct ColorRole(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             writer.write("ColorRole.BACKGROUND")
         elif self.value == 29:
             writer.write("ColorRole.ON_BACKGROUND")
+        elif self.value == 30:
+            writer.write("ColorRole.SURFACE_RAISED")
         else:
             writer.write("ColorRole(", self.value, ")")

@@ -19,6 +19,23 @@ def test_a_scheme_gives_each_role_its_colour() raises -> None:
     assert_equal(scheme[ColorRole.ON_BACKGROUND], scheme.on_background)
 
 
+def test_a_raised_surface_is_lighter_than_the_surface() raises -> None:
+    var schemes = [
+        ColorScheme.light(),
+        ColorScheme.dark(),
+        ColorScheme.from_seed(Color.hex(0xE07A2E)),
+        ColorScheme.from_seed(Color.hex(0xE07A2E), dark=True),
+        ColorScheme.light(surface=Color.hex(0xF0E8D8)),
+        ColorScheme.dark(surface=Color.hex(0x202830)),
+    ]
+    for scheme in schemes:
+        assert_true(
+            scheme.surface_raised.luminance() > scheme.surface.luminance()
+        )
+        assert_equal(scheme[ColorRole.SURFACE_RAISED], scheme.surface_raised)
+    assert_equal(String(ColorRole.SURFACE_RAISED), "ColorRole.SURFACE_RAISED")
+
+
 def test_a_role_prints_its_name() raises -> None:
     assert_equal(String(ColorRole.PRIMARY), "ColorRole.PRIMARY")
     assert_equal(String(ColorRole.ON_BACKGROUND), "ColorRole.ON_BACKGROUND")
