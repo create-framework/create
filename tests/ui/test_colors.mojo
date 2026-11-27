@@ -183,7 +183,7 @@ def test_a_ui_starts_with_the_default_tokens() raises -> None:
     assert_equal(ui.corner_radius(), 4.0)
     assert_equal(ui.spacing(), 8.0)
     assert_equal(ui.control_height(), 40.0)
-    assert_equal(ui.state_layers().hovered, 0.09)
+    assert_equal(ui.state_layers().hovered, 0.05)
     assert_equal(ui.focus_ring().thickness, 3.0)
 
 

@@ -659,13 +659,13 @@ struct _Theme(Copyable, Movable):
             handle.fill_gradient = None
             text.text_color = faded
         else:
-            # a hovered or pressed handle is tinted, as a slider's is
+            # a hovered or pressed switch steps its track, as a button steps
+            # its fill, and keeps its handle: a white handle stepped grey
+            # looks dirty
             var step = self._step(hovered, pressed)
-            if step > 0 and _fills(handle) and not handle.fill_gradient:
-                handle.fill_color = _stepped(
-                    handle.fill_color,
-                    _readable_on(handle.fill_color),
-                    step,
+            if step > 0 and _fills(track) and not track.fill_gradient:
+                track.fill_color = _stepped(
+                    track.fill_color, _readable_on(track.fill_color), step
                 )
         return _SwitchLook(track, handle, size, _text_look(text, Align.LEFT))
 
