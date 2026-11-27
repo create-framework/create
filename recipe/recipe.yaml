@@ -25,6 +25,10 @@ build:
         # The compiled library the package calls into, found in lib/ through
         # CONDA_PREFIX or the run path (src/create/_native.mojo).
         sh scripts/build_native.sh "${PREFIX}/lib"
+        # Not part of the package: the script's stamp, and the debug bundle
+        # `mojo build` writes beside the library on macOS, whose copy of the
+        # binary rattler-build can't relink.
+        rm -rf "${PREFIX}"/lib/libcreate.*.stamp "${PREFIX}"/lib/libcreate.*.dSYM
         # The project template create-cli's `create new` copies.
         mkdir -p "${PREFIX}/share/create"
         cp -R template "${PREFIX}/share/create/template"
