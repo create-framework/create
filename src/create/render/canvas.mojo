@@ -467,8 +467,9 @@ struct Canvas(Movable, _GeometryTarget):
         ```mojo
         # In `update`, with a `caption: Text` field: a plate behind it.
         var plate = canvas.bounds(self.caption).inset(-8)
-        canvas.draw(plate, Style(fill=Color.BLACK))
-        canvas.draw(self.caption, Style(text_color=Color.WHITE))
+        with canvas.style(fill=Color.BLACK, text_color=Color.WHITE):
+            canvas.draw(plate)
+            canvas.draw(self.caption)
         ```
 
         It is in the space the text is drawn in, as a shape's `bounds` is,
@@ -490,9 +491,9 @@ struct Canvas(Movable, _GeometryTarget):
             center.y += height / 2
         return Rectangle(center, width, height)
 
-    def bounds(mut self, text: Text, style: Style) raises -> Rectangle:
+    def bounds(mut self, text: Text, *, style: Style) raises -> Rectangle:
         """The rectangle `text` covers when drawn in `style`, applied over the
-        current style as `canvas.draw(text, style)` applies it."""
+        current style as `canvas.draw(text, style=style)` applies it."""
         var saved = self._style
         self._style.apply(style)
         try:
@@ -1802,30 +1803,34 @@ struct Canvas(Movable, _GeometryTarget):
         parts, each in the current style and transform."""
         drawable.draw_to(self)
 
-    def draw[G: Geometry](mut self, shape: G, style: Style):
+    def draw[G: Geometry](mut self, shape: G, *, style: Style):
         """Draw `shape` in `style`, applied over the current style for this
         call alone: the parts `style` sets are used, and the rest keep their
         current values. The style is as it was afterwards.
 
         ```mojo
-        canvas.draw(Circle((0, 0), 20), Style(fill=Color.ORANGE))
+        # In `update`, with a `highlight: Style` field:
+        canvas.draw(Circle((0, 0), 20), style=self.highlight)
         ```
+
+        It reads best with a style you have named. A style written out in
+        the call reads better as a `with canvas.style(...)` block around it.
         """
         var saved = self._style
         self._style.apply(style)
         draw_geometry(shape, self)
         self._style = saved
 
-    def draw[D: Drawable](mut self, drawable: D, style: Style):
+    def draw[D: Drawable](mut self, drawable: D, *, style: Style):
         """Draw a `Drawable` of the program's own in `style`, applied over the
         current style for this call alone. Its parts are drawn in it, and a
         part drawn with a style of its own applies that over it in turn.
 
         ```mojo
-        # In a `Drawable`'s `draw_to`: the plate in the style around it, the
-        # disc in that style but orange.
+        # In a `Drawable`'s `draw_to`, with an `accent: Style` field: the
+        # plate in the style around it, the disc in `accent` over that.
         canvas.draw(self.plate)
-        canvas.draw(self.disc, Style(fill=Color.ORANGE))
+        canvas.draw(self.disc, style=self.accent)
         ```
         """
         var saved = self._style

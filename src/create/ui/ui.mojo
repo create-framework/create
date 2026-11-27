@@ -1904,7 +1904,7 @@ struct UI(Drawable, Movable):
             if self._disabled(index):
                 canvas.draw(
                     widget[Picture],
-                    Style(opacity=self._state_layers.disabled_content),
+                    style=Style(opacity=self._state_layers.disabled_content),
                 )
             else:
                 canvas.draw(widget[Picture])

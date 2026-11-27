@@ -43,6 +43,10 @@ all. `pixi run build-examples` type-checks every example, and a warning fails it
   reader copying the example would pick up a habit that serves no purpose in their own program.
 - **Load assets by relative path**, from the example's own folder: Create resolves a path against
   the source file that names it.
+- **Pass a named style to `canvas.draw`, and write any other in a block.** A `Style` kept in a
+  constant or field goes in the call, `canvas.draw(self.rocket, style=self.outline)`. A style
+  written out for the occasion goes in a `with canvas.style(...):` block around the calls it is for,
+  even a single one.
 - **Give the code room to breathe.** Split a function's body into groups of lines that do one step
   together, such as a loop, an `if`/`else` or a few related declarations, with an empty line between
   the groups. Open a group with a comment when it says something the code doesn't: what the step is

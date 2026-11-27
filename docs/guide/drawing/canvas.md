@@ -85,19 +85,21 @@ the style and transform current at the `canvas.draw` call, as a single shape wou
 still a shape of its own: an outline goes round every part, even where two overlap, and so does a
 shadow. See [examples/drawables](../../../examples/drawables/main.mojo).
 
-**`canvas.draw(shape, style)` draws in a style for that call alone.** The parts `style` sets are
-applied over the current style, the rest are kept, and the style is as it was afterwards. So one
-part can take a colour of its own, such as a window on the rocket, while the rest take the style
+**`canvas.draw(shape, style=...)` draws in a style for that call alone.** The parts the style sets
+are applied over the current style, the rest are kept, and the style is as it was afterwards. So one
+part can take a look of its own, such as a window on the rocket, while the rest take the style
 around the `canvas.draw` call:
 
 ```mojo
-# In `Rocket.draw_to`, with a `window: Circle` field:
+# In `Rocket.draw_to`, with `window: Circle` and `glass: Style` fields:
 canvas.draw(self.body)
-canvas.draw(self.window, Style(fill=Color.CYAN))
+canvas.draw(self.window, style=self.glass)
 ```
 
-A `Drawable` takes a style the same way, `canvas.draw(rocket, Style(fill=Color.RED))`, and a part
-drawn in a style of its own applies that over it in turn.
+A `Drawable` takes a style the same way, `canvas.draw(rocket, style=enemy)`, and a part drawn in a
+style of its own applies that over it in turn. Pass a style you have named this way; one written out
+in the call reads better as a `with canvas.style(...)` block around it (see
+[Style](style.md#four-ways-to-style)).
 
 `canvas.draw` takes any shape or curve, which the canvas knows how to draw, or a program's own type
 that is `Drawable`. A shape knows nothing about drawing: it is a value and its tests, and the canvas

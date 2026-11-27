@@ -61,7 +61,8 @@ asset; a picture is one place it is drawn, so many pictures of one image share i
 
 ```mojo
 # In `update`, with a `portrait: Picture` field: the picture in a frame.
-canvas.draw(self.portrait.bounds().inset(-4), Style(fill=Color.WHITE))
+with canvas.style(fill=Color.WHITE):
+    canvas.draw(self.portrait.bounds().inset(-4))
 canvas.draw(self.portrait)
 ```
 

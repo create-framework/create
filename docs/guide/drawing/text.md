@@ -26,17 +26,21 @@ own](canvas.md#your-own-types), drawn beside its shapes in a style of its own:
 ```mojo
 # In a `Drawable`'s `draw_to`, with `plate: Rectangle` and `text: Text` fields:
 canvas.draw(self.plate)
-canvas.draw(self.text, Style(text_color=Color.WHITE))
+with canvas.style(text_color=Color.WHITE):
+    canvas.draw(self.text)
 ```
 
 How big a `Text` is depends on the font it is drawn in, so the canvas measures it:
 `canvas.bounds(text)` is the rectangle it covers in the current style, placed by its alignment, and
-`canvas.bounds(text, style)` the one it covers in `style`. A plate behind a caption is one line:
+`canvas.bounds(text, style=heading)` the one it covers in the style `heading`. A plate behind a
+caption takes one line to measure:
 
 ```mojo
 # In `update`, with a `caption: Text` field:
-canvas.draw(canvas.bounds(self.caption).inset(-8), Style(fill=Color.BLACK))
-canvas.draw(self.caption, Style(text_color=Color.WHITE))
+var plate = canvas.bounds(self.caption).inset(-8)
+with canvas.style(fill=Color.BLACK, text_color=Color.WHITE):
+    canvas.draw(plate)
+    canvas.draw(self.caption)
 ```
 
 ## Fonts

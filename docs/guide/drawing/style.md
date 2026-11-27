@@ -34,15 +34,16 @@ hide it; to hide text, give it a transparent `text_color`.
 back on with the colour it had before (white, if it was never set). `stroke` and `shadow` work the
 same way.
 
-## Three ways to style
+## Four ways to style
 
-There are three ways to change the style, and they can be mixed and nested:
+There are four ways to change the style, and they can be mixed and nested:
 
 | Form | Effect |
 |---|---|
 | `canvas.fill(Color.RED)` (any setter) | Lasts for the rest of the frame |
 | `with canvas.style(fill=Color.RED):` | Changes only the named parts, until the block ends |
 | `with canvas.style(heading):` | Changes the parts a `Style` value sets, until the block ends |
+| `canvas.draw(shape, style=heading)` | Changes the parts a `Style` value sets, for that one call |
 
 ```mojo
 from create import *
@@ -51,20 +52,25 @@ from create import *
 @fieldwise_init
 struct Styles(Program):
     var label: Style
+    var ring: Style
 
     @staticmethod
     def create(mut context: Context, mut canvas: Canvas) raises -> Styles:
-        return Styles(Style(text_color=Color.BLUE, font_size=32))
+        return Styles(
+            Style(text_color=Color.BLUE, font_size=32),
+            Style(fill=Color.BLUE, stroke_thickness=6),
+        )
 
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         canvas.background(Color.WHITE)
         canvas.fill(Color.ORANGE)  # for the rest of the frame
-        canvas.circle((-150, 0), 50)
+        canvas.circle((-225, 0), 50)
         with canvas.style(stroke=Color.RED, stroke_thickness=6):
-            canvas.circle((0, 0), 50)  # orange, thick red stroke
-        canvas.circle((150, 0), 50)  # orange, thin black stroke again
+            canvas.circle((-75, 0), 50)  # orange, thick red stroke
+        canvas.circle((75, 0), 50)  # orange, thin black stroke again
+        canvas.draw(Circle((225, 0), 50), style=self.ring)  # blue, thick stroke
         with canvas.style(self.label):
-            canvas.text("Three ways", (0, -120))
+            canvas.text("Four ways", (0, -120))
 
 
 def main() raises:
@@ -77,6 +83,11 @@ nothing about the fill or the stroke, so a shape drawn inside its block keeps th
 it. So the two `with` forms do the same thing, and `with canvas.style(self.label):` is `with
 canvas.style(text_color=..., font_size=...):` written once and kept. A style you reuse is a field
 built in `create`, like `label` above.
+
+**Give `canvas.draw` a style you have named**, `canvas.draw(button, style=ghost)`: it is applied
+over the current style as a block's is, for that one call (see [Your own
+types](canvas.md#your-own-types)). A style written out in the call reads better as a `with` block
+around it, even for a single call.
 
 As with the setters, naming any part of the fill, stroke or shadow switches that part on when the
 style is applied, unless its `*_enabled` keyword says otherwise, so `Style(fill=Color.RED)` fills.

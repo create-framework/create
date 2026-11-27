@@ -158,7 +158,9 @@ def test_draw_in_a_style_applies_it_for_that_call_alone() raises -> None:
     var canvas = Canvas(100, 100, antialiasing=Antialiasing.OFF)
     canvas.stroke_enabled(False)
     canvas.fill(Color.GREEN)
-    canvas.draw(Rectangle((-25.0, 0.0), 40.0, 40.0), Style(fill=Color.RED))
+    canvas.draw(
+        Rectangle((-25.0, 0.0), 40.0, 40.0), style=Style(fill=Color.RED)
+    )
     canvas.draw(Rectangle((25.0, 0.0), 40.0, 40.0))
     assert_equal(canvas.color_at((-25.0, 0.0)), Color.RED)
     assert_equal(canvas.color_at((25.0, 0.0)), Color.GREEN)
@@ -171,7 +173,7 @@ def test_draw_in_a_style_keeps_the_parts_it_leaves_unset() raises -> None:
     # names only the stroke: the fill stays green
     canvas.draw(
         Rectangle((0.0, 0.0), 60.0, 60.0),
-        Style(stroke=Color.BLUE, stroke_thickness=6),
+        style=Style(stroke=Color.BLUE, stroke_thickness=6),
     )
     assert_equal(canvas.color_at((0.0, 0.0)), Color.GREEN)
     assert_equal(canvas.color_at((29.0, 0.0)), Color.BLUE)
@@ -187,7 +189,7 @@ struct _Target(Drawable):
 
     def draw_to(self, mut canvas: Canvas):
         canvas.draw(self.ring)
-        canvas.draw(self.centre, Style(fill=Color.BLUE))
+        canvas.draw(self.centre, style=Style(fill=Color.BLUE))
 
 
 def test_styles_nest_through_a_drawable() raises -> None:
@@ -195,7 +197,7 @@ def test_styles_nest_through_a_drawable() raises -> None:
     canvas.stroke_enabled(False)
     canvas.fill(Color.GREEN)
     var target = _Target(Circle((0.0, 0.0), 40.0), Circle((0.0, 0.0), 10.0))
-    canvas.draw(target, Style(fill=Color.RED))
+    canvas.draw(target, style=Style(fill=Color.RED))
     canvas.draw(Circle((40.0, 40.0), 5.0))
     assert_equal(canvas.color_at((0.0, 0.0)), Color.BLUE)
     assert_equal(canvas.color_at((25.0, 0.0)), Color.RED)
@@ -224,7 +226,7 @@ def test_text_draws_what_canvas_text_draws() raises -> None:
 def test_text_takes_a_style_of_its_own() raises -> None:
     var drawn = _text_canvas()
     var named = _text_canvas()
-    drawn.draw(Text("Red", (0.0, 0.0)), Style(text_color=Color.RED))
+    drawn.draw(Text("Red", (0.0, 0.0)), style=Style(text_color=Color.RED))
     with named.style(text_color=Color.RED):
         named.text("Red", (0.0, 0.0))
     _assert_same(drawn, named, "styled text")
@@ -309,7 +311,7 @@ def test_bounds_wrap_and_take_a_style() raises -> None:
     var wrapped = canvas.bounds(text)
     assert_equal(wrapped.width, canvas.text_width(text.value, width=60))
     assert_equal(wrapped.height, canvas.text_height(text.value, width=60))
-    var bigger = canvas.bounds(text, Style(font_size=28))
+    var bigger = canvas.bounds(text, style=Style(font_size=28))
     assert_true(bigger.height > wrapped.height)
     assert_equal(canvas.bounds(text), wrapped)  # the style is as it was
 
@@ -333,7 +335,7 @@ def test_picture_takes_a_style_of_its_own() raises -> None:
     var drawn = _canvas()
     var named = _canvas()
     var tinted = Style(tint=Color.RED, opacity=0.5)
-    drawn.draw(Picture(image, (0.0, 0.0), 50.0, 50.0), tinted)
+    drawn.draw(Picture(image, (0.0, 0.0), 50.0, 50.0), style=tinted)
     with named.style(tinted):
         named.image(image, (0.0, 0.0), 50.0, 50.0)
     _assert_same(drawn, named, "tinted picture")
