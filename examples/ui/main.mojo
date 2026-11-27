@@ -1,5 +1,5 @@
 """A menu made with a `UI` that shows every kind of widget, on four tabs:
-Buttons, the four kinds of button; Toggles, checkboxes, switches and a
+Buttons, the four kinds of button; Toggles, checkboxes, a switch and a
 choice group; Values, a text field, a slider, a number field and a progress
 bar; and Lists, a dropdown and a list in a scroll area. Labels and panels
 sit around them, and a few have tooltips.
@@ -26,7 +26,7 @@ from values import ValuesPage
 from lists import ListsPage
 
 # The menu's panel, tall enough for its tallest page.
-comptime PANEL = Rectangle((0, 0), 500, 500)
+comptime PANEL = Rectangle((0, 0), 500, 540)
 
 # A raised surface with a soft shadow, lifting the panel off the background.
 comptime RAISED = Style(
