@@ -86,8 +86,8 @@ option. It is drawn after every widget, so nothing covers it. A text field shows
 instead, by a thicker outline in the `primary` colour and its caret.
 
 The ring's thickness, gap and colour come from the `UI`'s `focus_ring`, a `FocusRing`; its colour is
-the colours' `secondary` unless it sets one. `self.ui.focus_ring(ring)` changes it (see [Sizes and
-states](themes.md#sizes-and-states)).
+the colours' `primary` unless it sets one; it is 2 thick, 2 away from the widget.
+`self.ui.focus_ring(ring)` changes it (see [Sizes and states](themes.md#sizes-and-states)).
 
 ## Keeping the game's input apart
 

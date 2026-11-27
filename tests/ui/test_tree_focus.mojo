@@ -185,7 +185,7 @@ def test_code_gives_focus_with_its_ring() raises -> None:
     panel.ui.focus(panel.buttons[2])
     var canvas = panel.frame()
     assert_equal(panel.focused(), 2)
-    var ring = ColorScheme.light().secondary
+    var ring = ColorScheme.light().primary
     var right = panel.ui[panel.buttons[2]].rect.right()
     assert_equal(canvas.color_at((right + 3.5, 60)), ring)
 
