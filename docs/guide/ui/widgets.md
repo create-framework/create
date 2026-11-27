@@ -116,8 +116,8 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
   its `value` as that moves on; `minimum=` and `maximum=` change its range from 0 to 1. A value
   outside the range fills it no further than its ends, and `fraction()` gives how full it is.
 - **A text field** is explained in [Typing](../interaction/typing.md#text-fields).
-- **A label** places its text by its `alignment`, or its style's `text_alignment` without one: in
-  the middle of `rect` unless given, against its left edge with `Align.LEFT`, and so on.
+- **A label** places its text by its `alignment`, or its style's `text_alignment` without one:
+  against the left edge of `rect` unless given, in its middle with `Align.CENTER`, and so on.
 - **A label, a progress bar and a panel react to nothing.** A panel's `content_color()` is the
   colour for text on it (see [Panels](themes.md#panels)).
 
@@ -125,8 +125,8 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 0.5`, isn't a change.
 
 Each widget's look can be changed with a `Style`: a button, a label or a panel takes one as `style`,
-and a slider, a checkbox or a text field takes one for each of its parts, such as `handle`. [Themes
-and styling](themes.md) explains both.
+and every other widget takes one for each of its parts, such as a slider's `handle`. [Themes and
+styling](themes.md) explains both.
 
 ## Keeping widgets together in a UI
 
@@ -335,8 +335,8 @@ ui.tooltip(difficulty, "How hard the enemies hit")
 - **It is drawn over everything**, below the widget or above it where that leaves more room, and
   kept inside the screen from side to side. It never takes the pointer.
 - **A press hides it** until the pointer leaves the widget and rests on it again.
-- **A widget inside another with a tooltip** shows that one, such as every widget in a column given
-  a tooltip of its own.
+- **A widget with no tooltip of its own** shows the one of the column, row or panel it is in, so a
+  tooltip given to a column shows over every widget in it.
 - **Its look** is set with `ui.style(tooltip=...)`: a small box, in the text colour with its text in
   the surface colour unless styled, so it stands out from what it covers.
 

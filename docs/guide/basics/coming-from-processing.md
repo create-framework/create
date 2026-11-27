@@ -79,7 +79,7 @@ These look like Processing but behave differently, and each one catches people o
 | Processing | Create |
 |---|---|
 | `mouseX`, `mouseY` | `context.mouse.position`, measured from the centre, with y increasing upwards |
-| `pmouseX`, `pmouseY` | `context.mouse.movement`, how far it moved this frame |
+| `pmouseX`, `pmouseY` | `context.mouse.position - context.mouse.movement`, where it was last frame |
 | `mousePressed` (variable) | `context.mouse.down()` |
 | `mousePressed()` (callback) | `if context.mouse.pressed():` in `update` |
 | `keyPressed()`, `keyCode` | `if context.keyboard.pressed(Key.UP):` in `update` |

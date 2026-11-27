@@ -2,7 +2,7 @@
 
 The style is everything about how a shape looks rather than where it is: its fill, its stroke, its
 shadow, the font of its text and how it blends with what is already on the screen. This page
-explains how the style works as a whole: what it starts as, the three ways to change it, and the
+explains how the style works as a whole: what it starts as, the four ways to change it, and the
 settings that affect everything a render call draws at once. (A **render call** is any call that
 draws, such as `canvas.circle` or `canvas.text`.) The parts of the style each have a page of their
 own:
@@ -104,8 +104,8 @@ var selected = Style(stroke=Color.BLUE, stroke_thickness=3).over(card)
 Printing a style shows only the parts it sets: `print(Style(fill=Color.RED))` prints
 `Style(fill=Color(255, 0, 0, 255))`.
 
-A keyword that takes a number (`blur`, `spread`, `thickness`, `font_size`, `opacity`) accepts a
-whole number or a decimal alike, such as `12` or `1.5`.
+A keyword that takes a number (`stroke_thickness`, `shadow_blur`, `shadow_spread`, `font_size`,
+`opacity` and the like) accepts a whole number or a decimal alike, such as `12` or `1.5`.
 
 **Corner radius** is part of the style only for shapes the canvas builds from numbers:
 `canvas.corner_radius(radius)` rounds every `canvas.rectangle`, `triangle`, `polygon` and `sector`

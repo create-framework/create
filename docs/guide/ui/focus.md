@@ -10,8 +10,9 @@ on, how it moves, how it is shown, and how a game keeps its own keys and clicks 
 field, and a ring is drawn round it so the player can see where they are. Focus moves in several
 ways, each worked out in `ui.update` before any widget acts:
 
-- **A click** on a button, checkbox, slider or text field gives it focus. A click where there is no
-  widget, or on a panel's background, takes focus away.
+- **A click** on any widget the player can use gives it focus: every kind but a label, a progress
+  bar, a panel and a picture. A click where there is no widget, or on one of those, takes focus
+  away.
 - **Tab and Shift+Tab** move it to the next or previous widget, in the order they are drawn,
   skipping disabled and hidden ones and wrapping round at the ends.
 - **The arrow keys, and a gamepad's d-pad or left stick,** move it to the nearest widget in that

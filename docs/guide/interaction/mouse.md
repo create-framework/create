@@ -16,7 +16,8 @@ buttons some mice have.
 if context.mouse.pressed():  # the left button went down this frame
     self.selected = self.hovered
 if context.mouse.down(MouseButton.RIGHT):  # the right button is held
-    self.camera.position = self.camera.position - context.mouse.movement
+    # Drag the world: `movement` is in screen units, so undo the zoom.
+    self.camera.position = self.camera.position - context.mouse.movement / self.camera.zoom
 ```
 
 `context.mouse.button` is the most recently pressed button, or `MouseButton.NONE` before any.
