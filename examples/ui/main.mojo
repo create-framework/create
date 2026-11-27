@@ -26,7 +26,7 @@ from values import ValuesPage
 from lists import ListsPage
 
 # The menu's panel, tall enough for its tallest page.
-comptime PANEL = Rectangle((0, 0), 500, 460)
+comptime PANEL = Rectangle((0, 0), 500, 500)
 
 # A raised surface with a soft shadow, lifting the panel off the background.
 comptime RAISED = Style(
