@@ -93,6 +93,7 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
     var tabs_tab: Style
     var tabs_selected_tab: Style
     var tabs_indicator: Style
+    var tabs_divider: Style
     var number_field_container: Style
     var number_field_text_style: Style
     var number_field_buttons: Style
@@ -133,6 +134,7 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
         self.tabs_tab = Style()
         self.tabs_selected_tab = Style()
         self.tabs_indicator = Style()
+        self.tabs_divider = Style()
         self.number_field_container = Style()
         self.number_field_text_style = Style()
         self.number_field_buttons = Style()
@@ -178,6 +180,7 @@ struct _Styles(Copyable, ImplicitlyCopyable, Movable):
             self.tabs_tab.over(under.tabs_tab),
             self.tabs_selected_tab.over(under.tabs_selected_tab),
             self.tabs_indicator.over(under.tabs_indicator),
+            self.tabs_divider.over(under.tabs_divider),
             self.number_field_container.over(under.number_field_container),
             self.number_field_text_style.over(under.number_field_text_style),
             self.number_field_buttons.over(under.number_field_buttons),
@@ -271,6 +274,7 @@ struct _TabsLook(Copyable, Movable):
     var text: _ResolvedStyle
     var selected_text: _ResolvedStyle
     var indicator: _ResolvedStyle
+    var divider: _ResolvedStyle
     var layer: _ResolvedStyle
 
 
@@ -754,6 +758,7 @@ struct _Theme(Copyable, Movable):
         call_tab: Style,
         call_selected_tab: Style,
         call_indicator: Style,
+        call_divider: Style,
         *,
         hovered: Bool,
         pressed: Bool,
@@ -761,8 +766,8 @@ struct _Theme(Copyable, Movable):
     ) -> _TabsLook:
         """Tabs' parts, styled by the call's styles for each: bare tabs with
         their text in `on_surface_variant`, the selected one's in `primary`
-        with a `primary` line beneath it, and a state layer over the tab
-        under the pointer."""
+        with a `primary` line beneath it, a faint divider beneath them all,
+        and a state layer over the tab under the pointer."""
         var colors = self.colors
         ref block = self.styles[]
         var tab_look = call_tab.over(block.tabs_tab).over(
@@ -789,6 +794,13 @@ struct _Theme(Copyable, Movable):
             ),
             self.colors,
         )
+        var divider = _ResolvedStyle()
+        divider.apply(
+            call_divider.over(block.tabs_divider).over(
+                Style(stroke=colors.outline_variant, stroke_thickness=1)
+            ),
+            self.colors,
+        )
         var layer = _ResolvedStyle(fill=Color(0, 0, 0, 0), stroke_enabled=False)
         if disabled:
             var faded = _faded(
@@ -797,6 +809,9 @@ struct _Theme(Copyable, Movable):
             tab.text_color = faded
             selected.text_color = faded
             indicator.stroke_color = faded
+            divider.stroke_color = _faded(
+                divider.stroke_color, self.state_layers.disabled_content
+            )
         else:
             var step = self._step(hovered, pressed)
             if step > 0:
@@ -812,6 +827,7 @@ struct _Theme(Copyable, Movable):
             _text_look(tab, Align.CENTER),
             _text_look(selected, Align.CENTER),
             indicator,
+            divider,
             layer,
         )
 

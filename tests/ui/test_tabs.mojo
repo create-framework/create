@@ -76,7 +76,21 @@ def test_the_selected_tab_has_the_indicator() raises -> None:
     tabs.update(context, canvas)
     canvas.draw(tabs)
     assert_equal(canvas.color_at((-100, -19)), colors.primary)
-    assert_equal(canvas.color_at((0, -19)), Color.WHITE)
+    assert_equal(canvas.color_at((0, -18)), Color.WHITE)
+    # the divider runs beneath every tab, under the indicator
+    assert_equal(canvas.color_at((0, -19.5)), colors.outline_variant)
+    assert_equal(canvas.color_at((-100, -19.5)), colors.primary)
+
+
+def test_the_divider_takes_its_own_style() raises -> None:
+    var tabs = Tabs(["A", "B", "C"], _RECT, divider=Style(stroke_enabled=False))
+    var context = Context()
+    point_at(context, (300, 300))
+    var canvas = Canvas(400, 300, antialiasing=Antialiasing.OFF)
+    canvas.background(Color.WHITE)
+    tabs.update(context, canvas)
+    canvas.draw(tabs)
+    assert_equal(canvas.color_at((0, -19.5)), Color.WHITE)
 
 
 def test_tabs_switch_pages_shown_with_ui_visible() raises -> None:

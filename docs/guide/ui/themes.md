@@ -208,8 +208,9 @@ A number field is a text field with two buttons, and is styled as they are: `con
 and button styles apply beneath those.
 
 Tabs' `tab` is each tab, a rectangle with its text, bare unless its style gives it a fill or an
-outline; `selected_tab` is the selected one, taking what it leaves unset from `tab`; and `indicator`
-is the line beneath the selected tab.
+outline; `selected_tab` is the selected one, taking what it leaves unset from `tab`; `indicator` is
+the line beneath the selected tab; and `divider` is a faint line beneath them all, which the
+indicator sits on: `Style(stroke_enabled=False)` leaves it out.
 
 A choice group's `circle` is each option's circle, an outline; `selected_circle` is the chosen
 one's, taking what it leaves unset from `circle`; `dot` is a point in it, drawn as `canvas.point`
