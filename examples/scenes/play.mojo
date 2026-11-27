@@ -35,7 +35,9 @@ struct Play(Movable):
         self.time_left = ROUND_LENGTH
         self.until_spawn = 0
         self.dots = []
-        self.paddle = Rectangle((0, 0), PADDLE_WIDTH, PADDLE_HEIGHT)
+        self.paddle = Rectangle(
+            (0, 0), PADDLE_WIDTH, PADDLE_HEIGHT, corner_radius=9
+        )
         self.random = Random()
 
     def enter(mut self):
@@ -98,7 +100,7 @@ struct Play(Movable):
             for dot in self.dots:
                 canvas.circle(dot, DOT_RADIUS)
 
-        with canvas.style(fill=PADDLE, stroke_enabled=False, corner_radius=9):
+        with canvas.style(fill=PADDLE, stroke_enabled=False):
             canvas.draw(self.paddle)
 
         with canvas.style(
