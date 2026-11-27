@@ -5,6 +5,11 @@
 # it to the prefix.dev channel create-framework/create (see RELEASING.md).
 context:
   version: ${{ env.get("CREATE_VERSION") }}
+  # `local_` for a package built to check it, so it never has a published
+  # package's name: pixi's cache keys packages by name, and would install a
+  # local build in place of the release of the same version.
+  label: ${{ env.get("CREATE_BUILD_LABEL", default="") }}
+  build_number: 0
 
 package:
   name: create
@@ -14,7 +19,9 @@ source:
   path: ..
 
 build:
-  number: 0
+  number: ${{ build_number }}
+  # rattler-build's own form, `h<hash>_<number>`, after the label.
+  string: ${{ label ~ "h" ~ hash ~ "_" ~ build_number }}
   script:
     interpreter: bash
     content:
