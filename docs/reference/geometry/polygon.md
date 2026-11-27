@@ -61,11 +61,6 @@ def regular(
     *,
     corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
-```
-
-A regular polygon of `sides` vertices on the circle around `position` with radius `radius`, the first at `start_angle` (radians counter-clockwise from +x; straight up by default), the rest following counter-clockwise.
-
-```mojo
 @staticmethod
 def regular(
     position: Point,
@@ -76,6 +71,8 @@ def regular(
     corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
 ```
+
+A regular polygon of `sides` vertices on the circle around `position` with radius `radius`, the first at `start_angle` (radians counter-clockwise from +x; straight up by default), the rest following counter-clockwise.
 
 ### `star`
 
@@ -90,11 +87,6 @@ def star(
     *,
     corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
-```
-
-A star of `tips` points about `position`: its tips on `radius`, the first at `start_angle` (straight up by default), and between each two tips a vertex on `inner_radius`, halfway round. The outline does not cross itself, so it is a simple polygon.
-
-```mojo
 @staticmethod
 def star(
     position: Point,
@@ -106,6 +98,8 @@ def star(
     corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
 ```
+
+A star of `tips` points about `position`: its tips on `radius`, the first at `start_angle` (straight up by default), and between each two tips a vertex on `inner_radius`, halfway round. The outline does not cross itself, so it is a simple polygon.
 
 ## Methods
 
@@ -122,6 +116,8 @@ The centroid of the enclosed area; with no area, the mean of the vertices (the o
 ```mojo
 def area(self) -> Float64
 ```
+
+How much room it encloses, its rounded corners taken into account.
 
 ### `bounds`
 
@@ -143,8 +139,15 @@ def closest_point(self, p: Point) -> Point
 
 ```mojo
 def contains(self, p: Point) -> Bool
+```
+
+Whether `p` is inside, its boundary included.
+
+```mojo
 def contains(self, l: Line) -> Bool
 ```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ```mojo
 def contains[C: Curve](self, curve: C) -> Bool
@@ -153,7 +156,7 @@ def contains[C: Curve](self, curve: C) -> Bool
 Whether the whole of `curve` (an `Arc`, `Bezier` or `Spline`) is inside: every segment of it flattened to within 1e-4 of its size, as `intersects` follows it, so a curve grazing the edge from inside is decided only that closely.
 
 ```mojo
-def contains(self, radius: Rectangle) -> Bool
+def contains(self, r: Rectangle) -> Bool
 def contains(self, t: Triangle) -> Bool
 def contains(self, c: Circle) -> Bool
 def contains(self, s: Sector) -> Bool
@@ -161,6 +164,8 @@ def contains(self, other: Self) -> Bool
 def contains(self, e: Ellipse) -> Bool
 def contains(self, c: Capsule) -> Bool
 ```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ### `overlaps`
 
@@ -182,11 +187,15 @@ Whether this and `other` share any point, their boundaries included: shapes that
 def move_to(self, position: Point) -> Self
 ```
 
+It moved so its `center()` is at `position`; this one is unchanged.
+
 ### `translate`
 
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 

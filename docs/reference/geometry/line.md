@@ -40,6 +40,8 @@ def __init__(out self, start: Point, end: Point)
 def length(self) -> Float64
 ```
 
+How long it is, from `start` to `end`.
+
 ### `at`
 
 ```mojo
@@ -100,7 +102,17 @@ The line as one cubic Bézier, its controls at the thirds, so it traces the line
 
 ```mojo
 def intersects(self, other: Self) -> Bool
+```
+
+Whether it crosses or touches the other curve or shape: shares a point with it, a shape's inside included.
+
+```mojo
 def intersects(self, p: Point) -> Bool
+```
+
+Whether `p` lies on it.
+
+```mojo
 def intersects(self, a: Arc) -> Bool
 def intersects(self, b: Bezier) -> Bool
 def intersects(self, s: Spline) -> Bool
@@ -113,11 +125,15 @@ def intersects(self, r: Rectangle) -> Bool
 def intersects(self, t: Triangle) -> Bool
 ```
 
+Whether it crosses or touches the other curve or shape: shares a point with it, a shape's inside included.
+
 ### `closest_point`
 
 ```mojo
 def closest_point(self, p: Point) -> Point
 ```
+
+The point on the line nearest `p`.
 
 ### `midpoint`
 
@@ -125,17 +141,23 @@ def closest_point(self, p: Point) -> Point
 def midpoint(self) -> Point
 ```
 
+The point halfway between `start` and `end`.
+
 ### `move_to`
 
 ```mojo
 def move_to(self, position: Point) -> Self
 ```
 
+It moved so its `midpoint()` is at `position`; this one is unchanged.
+
 ### `translate`
 
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 

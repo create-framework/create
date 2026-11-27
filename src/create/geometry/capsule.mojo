@@ -82,9 +82,12 @@ struct Capsule(
         )
 
     def center(self) -> Point:
+        """The middle of its spine, halfway between its two ends."""
         return self._spine().midpoint()
 
     def area(self) -> Float64:
+        """How much room it covers: the rectangle along its spine and the
+        half circle at each end."""
         return (
             2.0 * self.radius * self._spine().length()
             + PI * self.radius * self.radius
@@ -100,6 +103,8 @@ struct Capsule(
         )
 
     def closest_point(self, p: Point) -> Point:
+        """Its point nearest `p`: `p` itself when inside, otherwise the
+        nearest point on its edge."""
         var q = self._spine().closest_point(p)
         var d = p - q
         var distance_squared = d.dot(d)
@@ -108,6 +113,7 @@ struct Capsule(
         return q + d * (self.radius / sqrt(distance_squared))
 
     def contains(self, p: Point) -> Bool:
+        """Whether `p` is inside, its boundary included."""
         return _distance_squared(self._spine().closest_point(p), p) <= (
             self.radius * self.radius
         )
@@ -116,18 +122,28 @@ struct Capsule(
     # a `Line`, is a convex core grown by a radius, and is held exactly when
     # a disc of its radius round every corner of its core is (`_contains`).
     def contains(self, l: Line) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, l)
 
-    def contains(self, radius: Rectangle) -> Bool:
-        return _contains(self, radius)
+    def contains(self, r: Rectangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
+        return _contains(self, r)
 
     def contains(self, c: Circle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, c)
 
     def contains(self, t: Triangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, t)
 
     def contains(self, other: Capsule) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         return _contains(self, other)
 
     def contains[C: Curve](self, curve: C) -> Bool:
@@ -148,6 +164,8 @@ struct Capsule(
         return self.contains(s.position) and self.contains(s.arc())
 
     def contains(self, p: Polygon) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if p._is_rounded():
             return self.contains(p._outline())
         for v in p.vertices:
@@ -205,9 +223,12 @@ struct Capsule(
         return _regions_overlap(self, other)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `center()` is at `position`; this one is
+        unchanged."""
         return self.translate(position - self.center())
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.start = moved.start + delta
         moved.end = moved.end + delta

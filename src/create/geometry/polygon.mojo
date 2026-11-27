@@ -110,6 +110,10 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         *,
         corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
+        """A regular polygon of `sides` vertices on the circle around
+        `position` with radius `radius`, the first at `start_angle` (radians
+        counter-clockwise from +x; straight up by default), the rest
+        following counter-clockwise."""
         return Polygon.regular(
             position,
             Float64(radius),
@@ -151,6 +155,10 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         *,
         corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
+        """A star of `tips` points about `position`: its tips on `radius`, the
+        first at `start_angle` (straight up by default), and between each two
+        tips a vertex on `inner_radius`, halfway round. The outline does not
+        cross itself, so it is a simple polygon."""
         return Polygon.star(
             position,
             Float64(radius),
@@ -218,6 +226,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return sum
 
     def area(self) -> Float64:
+        """How much room it encloses, its rounded corners taken into account."""
         if self._is_rounded():
             return self._outline().area()
         return abs(self._signed_area2()) / 2.0
@@ -252,6 +261,7 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return best
 
     def contains(self, p: Point) -> Bool:
+        """Whether `p` is inside, its boundary included."""
         if self._is_rounded():
             return self._outline().contains(p)
         for i in range(len(self.vertices)):
@@ -268,6 +278,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
     # edge piece strictly inside the shape has the outside along it. A
     # rounded polygon does all this as its outline.
     def contains(self, l: Line) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(l)
         if not (self.contains(l.start) and self.contains(l.end)):
@@ -293,21 +305,25 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
                 return False
         return True
 
-    def contains(self, radius: Rectangle) -> Bool:
+    def contains(self, r: Rectangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
-            return self._outline().contains(radius)
-        if radius._radius() > 0.0:
-            return self.contains(radius._outline())
-        var outline = _closed_outline(radius._points())
+            return self._outline().contains(r)
+        if r._radius() > 0.0:
+            return self.contains(r._outline())
+        var outline = _closed_outline(r._points())
         for edge in outline:
             if not self.contains(edge):
                 return False
         for p in self._rim(outline, []):
-            if radius._holds_strictly(p):
+            if r._holds_strictly(p):
                 return False
         return True
 
     def contains(self, t: Triangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(t)
         if t._radius() > 0.0:
@@ -322,6 +338,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return True
 
     def contains(self, c: Circle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(c)
         var outline = Arc(c.position, c.radius, 0.0, TAU)
@@ -333,6 +351,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return True
 
     def contains(self, s: Sector) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(s)
         if s._is_rounded():
@@ -350,6 +370,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return True
 
     def contains(self, other: Polygon) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(other)
         if other._is_rounded():
@@ -364,6 +386,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return True
 
     def contains(self, e: Ellipse) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         # With `e` mapped onto the unit circle, the polygon mapped alike is
         # still one.
         if self._is_rounded():
@@ -373,6 +397,8 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return e._to_unit(self).contains(_UNIT_CIRCLE)
 
     def contains(self, c: Capsule) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(c)
         if c.radius <= 0.0:
@@ -433,9 +459,12 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         return _regions_overlap(self, other)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `center()` is at `position`; this one is
+        unchanged."""
         return self.translate(position - self.center())
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         for i in range(len(moved.vertices)):
             moved.vertices[i] = moved.vertices[i] + delta

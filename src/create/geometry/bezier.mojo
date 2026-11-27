@@ -275,10 +275,13 @@ struct Bezier(
     # meet the curve at their ends; a near miss or a graze is decided to
     # within that tolerance.
     def intersects(self, p: Point) -> Bool:
+        """Whether `p` lies on it."""
         var q = self.closest_point(p)
         return q.distance(p) <= _ON_CURVE_PRECISION * self._size()
 
     def intersects(self, l: Line) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(l.bounds()):
             return False
         for s in self._segments():
@@ -287,6 +290,8 @@ struct Bezier(
         return False
 
     def intersects(self, a: Arc) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(a.bounds()):
             return False
         for s in self._segments():
@@ -295,6 +300,8 @@ struct Bezier(
         return False
 
     def intersects(self, other: Bezier) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(other._reach()):
             return False
         var theirs = other._segments()
@@ -307,11 +314,15 @@ struct Bezier(
         return False
 
     def intersects(self, s: Spline) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return s.intersects(self)
 
     # A region is met where the curve enters it or runs inside it: each
     # segment's `Line.intersects`, which sees the region's rounding.
     def intersects(self, c: Circle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(c.bounds()):
             return False
         for segment in self._segments():
@@ -320,6 +331,8 @@ struct Bezier(
         return False
 
     def intersects(self, c: Capsule) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(c.bounds()):
             return False
         for segment in self._segments():
@@ -328,6 +341,8 @@ struct Bezier(
         return False
 
     def intersects(self, e: Ellipse) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(e.bounds()):
             return False
         for segment in self._segments():
@@ -336,6 +351,8 @@ struct Bezier(
         return False
 
     def intersects(self, r: Rectangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(r.bounds()):
             return False
         for segment in self._segments():
@@ -344,6 +361,8 @@ struct Bezier(
         return False
 
     def intersects(self, t: Triangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(t.bounds()):
             return False
         for segment in self._segments():
@@ -352,6 +371,8 @@ struct Bezier(
         return False
 
     def intersects(self, s: Sector) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(s.bounds()):
             return False
         for segment in self._segments():
@@ -360,6 +381,8 @@ struct Bezier(
         return False
 
     def intersects(self, p: Polygon) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if not self._reach().overlaps(p.bounds()):
             return False
         for segment in self._segments():
@@ -490,6 +513,7 @@ struct Bezier(
         return total * half
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.start = moved.start + delta
         moved.control1 = moved.control1 + delta

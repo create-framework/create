@@ -56,11 +56,15 @@ def __init__(
 def center(self) -> Point
 ```
 
+Its centroid: the average of its three corners.
+
 ### `area`
 
 ```mojo
 def area(self) -> Float64
 ```
+
+How much room it covers, its rounded corners taken into account.
 
 ### `bounds`
 
@@ -76,16 +80,25 @@ The tightest axis-aligned rectangle around the triangle. Rounded, it is the inne
 def closest_point(self, p: Point) -> Point
 ```
 
+Its point nearest `p`: `p` itself when inside, otherwise the nearest point on its edge.
+
 ### `contains`
 
 ```mojo
 def contains(self, p: Point) -> Bool
+```
+
+Whether `p` is inside, its boundary included.
+
+```mojo
 def contains(self, other: Self) -> Bool
 def contains(self, r: Rectangle) -> Bool
 def contains(self, c: Circle) -> Bool
 def contains(self, l: Line) -> Bool
 def contains(self, c: Capsule) -> Bool
 ```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ```mojo
 def contains[C: Curve](self, curve: C) -> Bool
@@ -98,6 +111,8 @@ def contains(self, s: Sector) -> Bool
 def contains(self, p: Polygon) -> Bool
 def contains(self, e: Ellipse) -> Bool
 ```
+
+Whether the whole of the other shape, or the line, lies inside, its boundary included. Rounded corners count, on both.
 
 ### `overlaps`
 
@@ -119,11 +134,15 @@ Whether this and `other` share any point, their boundaries included: shapes that
 def move_to(self, position: Point) -> Self
 ```
 
+It moved so its `center()` is at `position`; this one is unchanged.
+
 ### `translate`
 
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 

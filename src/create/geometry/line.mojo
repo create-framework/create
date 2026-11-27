@@ -57,6 +57,7 @@ struct Line(
         writer.write("Line(start=", self.start, ", end=", self.end, ")")
 
     def length(self) -> Float64:
+        """How long it is, from `start` to `end`."""
         return sqrt(_distance_squared(self.end, self.start))
 
     def at(self, t: Float64) -> Point:
@@ -117,6 +118,8 @@ struct Line(
         ]
 
     def intersects(self, other: Line) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return _segments_meet(self.start, self.end, other.start, other.end)
 
     # `x.intersects(y)` is the curve-as-subject relation, for every
@@ -135,18 +138,27 @@ struct Line(
     # `Bezier.intersects`); a `Line` or `Arc` hands a test against one back
     # to it.
     def intersects(self, p: Point) -> Bool:
+        """Whether `p` lies on it."""
         return _point_on_segment(p, self.start, self.end)
 
     def intersects(self, a: Arc) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return a.intersects(self)
 
     def intersects(self, b: Bezier) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return b.intersects(self)
 
     def intersects(self, s: Spline) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return s.intersects(self)
 
     def intersects(self, s: Sector) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if s._is_rounded():
             return self.intersects(s._outline())
         if s.contains(self.start) or s.contains(self.end):
@@ -154,6 +166,8 @@ struct Line(
         return s._boundary_meets(self)
 
     def intersects(self, p: Polygon) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         if p._is_rounded():
             return self.intersects(p._outline())
         if p.contains(self.start) or p.contains(self.end):
@@ -161,33 +175,48 @@ struct Line(
         return p._boundary_meets(self)
 
     def intersects(self, c: Circle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return _overlaps(self, c)
 
     def intersects(self, c: Capsule) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return _overlaps(self, c)
 
     def intersects(self, e: Ellipse) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         # Mapped onto the unit circle with `e`, the line is still one.
         if e._is_flat():
             return self.intersects(e.bounds())
         return e._to_unit(self).intersects(_UNIT_CIRCLE)
 
     def intersects(self, r: Rectangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return _overlaps(self, r)
 
     def intersects(self, t: Triangle) -> Bool:
+        """Whether it crosses or touches the other curve or shape: shares a
+        point with it, a shape's inside included."""
         return _overlaps(self, t)
 
     def closest_point(self, p: Point) -> Point:
+        """The point on the line nearest `p`."""
         return _closest_on_segment(p, self.start, self.end)
 
     def midpoint(self) -> Point:
+        """The point halfway between `start` and `end`."""
         return self.start.lerp(self.end, 0.5)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `midpoint()` is at `position`; this one is
+        unchanged."""
         return self.translate(position - self.midpoint())
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.start = moved.start + delta
         moved.end = moved.end + delta

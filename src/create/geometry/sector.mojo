@@ -130,9 +130,11 @@ struct Sector(
         return self.start_angle + self.sweep_angle
 
     def center(self) -> Point:
+        """Its circle's centre, the tip it sweeps round: `position`."""
         return self.position
 
     def area(self) -> Float64:
+        """How much room it covers, its rounded corners taken into account."""
         if self._is_rounded():
             return self._outline().area()
         return 0.5 * self.radius * self.radius * abs(self.arc()._sweep())
@@ -158,6 +160,8 @@ struct Sector(
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
     def closest_point(self, p: Point) -> Point:
+        """Its point nearest `p`: `p` itself when inside, otherwise the
+        nearest point on its edge."""
         if self._is_rounded():
             return self._outline().closest_point(p)
         if self.contains(p):
@@ -174,6 +178,7 @@ struct Sector(
         return best
 
     def contains(self, p: Point) -> Bool:
+        """Whether `p` is inside, its boundary included."""
         # The arc is found through `cos` and `sin`, as is its sweep, so both
         # boundaries get an arc's slack: the sector holds its own edge.
         if self._is_rounded():
@@ -188,14 +193,18 @@ struct Sector(
     # a `Circle` as a whole-turn `Arc`, another `Sector` as its two radii
     # and its arc. A rounded sector, or a rounded shape it is given, is
     # tested as its outline polygon.
-    def contains(self, radius: Rectangle) -> Bool:
+    def contains(self, r: Rectangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
-            return self._outline().contains(radius)
-        if radius._radius() > 0.0:
-            return self.contains(radius._outline())
-        return self._contains_polygon(radius._points())
+            return self._outline().contains(r)
+        if r._radius() > 0.0:
+            return self.contains(r._outline())
+        return self._contains_polygon(r._points())
 
     def contains(self, t: Triangle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(t)
         if t._radius() > 0.0:
@@ -203,11 +212,15 @@ struct Sector(
         return self._contains_polygon(t._points())
 
     def contains(self, c: Circle) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(c)
         return self._contains_arc(Arc(c.position, c.radius, 0.0, TAU))
 
     def contains(self, other: Sector) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(other)
         if other._is_rounded():
@@ -225,6 +238,8 @@ struct Sector(
     # when it holds the middle of every piece. A piece that only touches
     # the boundary is inside, within the slack of `contains(Point)`.
     def contains(self, l: Line) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(l)
         if not (self.contains(l.start) and self.contains(l.end)):
@@ -276,6 +291,8 @@ struct Sector(
         return True
 
     def contains(self, p: Polygon) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         if self._is_rounded():
             return self._outline().contains(p)
         if p._is_rounded():
@@ -332,6 +349,8 @@ struct Sector(
         return a.intersects(self.arc())
 
     def contains(self, e: Ellipse) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         # A sector's arc stays no arc mapped onto the ellipse's unit circle,
         # so the ellipse stands in as its outline polygon.
         if self._is_rounded():
@@ -341,6 +360,8 @@ struct Sector(
         return self.contains(e._outline())
 
     def contains(self, c: Capsule) -> Bool:
+        """Whether the whole of the other shape, or the line, lies inside, its
+        boundary included. Rounded corners count, on both."""
         # No holes, so it holds the capsule when it holds its outline: two
         # straight edges and two half circles.
         if self._is_rounded():
@@ -398,11 +419,14 @@ struct Sector(
         return _regions_overlap(other, self)
 
     def move_to(self, position: Point) -> Self:
+        """It moved so its `position` is at `position`; this one is
+        unchanged."""
         var moved = self.copy()
         moved.position = position
         return moved^
 
     def translate(self, delta: Vector) -> Self:
+        """It moved by `delta`; this one is unchanged."""
         var moved = self.copy()
         moved.position = moved.position + delta
         return moved^

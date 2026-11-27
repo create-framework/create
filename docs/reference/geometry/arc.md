@@ -138,12 +138,17 @@ The point on the arc nearest `p`: straight out from the centre when `p` lies wit
 
 ```mojo
 def intersects(self, p: Point) -> Bool
+```
+
+Whether `p` lies on it.
+
+```mojo
 def intersects(self, l: Line) -> Bool
 def intersects(self, other: Self) -> Bool
 def intersects(self, c: Circle) -> Bool
 def intersects(self, c: Capsule) -> Bool
 def intersects(self, e: Ellipse) -> Bool
-def intersects(self, radius: Rectangle) -> Bool
+def intersects(self, r: Rectangle) -> Bool
 def intersects(self, t: Triangle) -> Bool
 def intersects(self, s: Sector) -> Bool
 def intersects(self, p: Polygon) -> Bool
@@ -151,17 +156,23 @@ def intersects(self, b: Bezier) -> Bool
 def intersects(self, s: Spline) -> Bool
 ```
 
+Whether it crosses or touches the other curve or shape: shares a point with it, a shape's inside included.
+
 ### `move_to`
 
 ```mojo
 def move_to(self, position: Point) -> Self
 ```
 
+It moved so its `position` is at `position`; this one is unchanged.
+
 ### `translate`
 
 ```mojo
 def translate(self, delta: Vector) -> Self
 ```
+
+It moved by `delta`; this one is unchanged.
 
 ## Special methods
 
