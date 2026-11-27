@@ -348,7 +348,8 @@ says where it is:
 self.ui.update(context, canvas)
 canvas.draw(self.ui)
 var at = self.ui.get(self.star).rect.position
-canvas.draw(Circle(at, 10), Style(fill=self.ui.colors().on_primary))
+with canvas.style(fill=self.ui.colors().on_primary):
+    canvas.draw(Circle(at, 10))
 ```
 
 **A widget of your own is a `Drawable` with an `update`**, built from the shapes, `Text` and

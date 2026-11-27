@@ -20,7 +20,8 @@ struct Badge(Drawable):
 
     def draw_to(self, mut canvas: Canvas):
         canvas.draw(self.plate)
-        canvas.draw(self.text, Style(text_color=Color.WHITE))
+        with canvas.style(text_color=Color.WHITE):
+            canvas.draw(self.text)
 ```
 
 Given a `width`, the text wraps onto as many lines as keep each at most
