@@ -21,9 +21,9 @@ def test_it_fills_as_far_as_its_value() raises -> None:
     var colors = ColorScheme.light()
     var half = _drawn(ProgressBar(0.5, _BAR))
     assert_equal(half.color_at((-50, 0)), colors.primary)
-    assert_equal(half.color_at((50, 0)), colors.secondary_container)
+    assert_equal(half.color_at((50, 0)), colors.outline_variant)
     var empty = _drawn(ProgressBar(0, _BAR))
-    assert_equal(empty.color_at((-90, 0)), colors.secondary_container)
+    assert_equal(empty.color_at((-90, 0)), colors.outline_variant)
 
 
 def test_a_value_past_its_ends_fills_it_no_further() raises -> None:
@@ -31,7 +31,7 @@ def test_a_value_past_its_ends_fills_it_no_further() raises -> None:
     var over = _drawn(ProgressBar(2, _BAR))
     assert_equal(over.color_at((90, 0)), colors.primary)
     var under = _drawn(ProgressBar(-1, _BAR))
-    assert_equal(under.color_at((-90, 0)), colors.secondary_container)
+    assert_equal(under.color_at((-90, 0)), colors.outline_variant)
     assert_equal(ProgressBar(2, _BAR).fraction(), 1.0)
     assert_equal(ProgressBar(-1, _BAR).fraction(), 0.0)
 
@@ -42,7 +42,7 @@ def test_a_maximum_below_the_minimum_runs_it_the_other_way() raises -> None:
     var colors = ColorScheme.light()
     var canvas = _drawn(bar^)
     assert_equal(canvas.color_at((40, 0)), colors.primary)
-    assert_equal(canvas.color_at((80, 0)), colors.secondary_container)
+    assert_equal(canvas.color_at((80, 0)), colors.outline_variant)
 
 
 def test_a_ui_sizes_it_and_styles_it() raises -> None:

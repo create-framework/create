@@ -43,6 +43,10 @@ comptime _SWITCH_HANDLE_ON = 18.0
 comptime _SWITCH_HANDLE_OFF = 14.0
 """How big a switch's square handle is while off."""
 
+comptime _TRACK_THICKNESS = 6.0
+"""How thick a slider's and a progress bar's tracks are, so the two match
+side by side."""
+
 comptime _SPACING = 8.0
 """The `spacing` setting unless set."""
 
@@ -506,8 +510,8 @@ struct _Theme(Copyable, Movable):
         ref block = self.styles[]
         var track_look = call_track.over(block.slider_track).over(
             Style(
-                stroke=colors.secondary_container,
-                stroke_thickness=4,
+                stroke=colors.outline_variant,
+                stroke_thickness=_TRACK_THICKNESS,
                 stroke_cap=StrokeCap.ROUND,
             )
         )
@@ -566,8 +570,8 @@ struct _Theme(Copyable, Movable):
         ref block = self.styles[]
         var track_look = call_track.over(block.progress_bar_track).over(
             Style(
-                stroke=colors.secondary_container,
-                stroke_thickness=8,
+                stroke=colors.outline_variant,
+                stroke_thickness=_TRACK_THICKNESS,
                 stroke_cap=StrokeCap.ROUND,
             )
         )
