@@ -23,8 +23,13 @@ from .focus_ring import FocusRing
 from .state_layers import StateLayers
 
 
-comptime _CORNER_RADIUS = 16.0
-"""The `corner_radius` setting unless set, at which a button is a pill."""
+comptime _CORNER_RADIUS = 4.0
+"""The `corner_radius` setting unless set: how round the controls are.
+Panels and popups are rounded twice as much."""
+
+comptime _CHECKBOX_CORNER_LIMIT = 4.5
+"""The most a checkbox's box is rounded: a quarter of its 18 units, so it
+stays a box at any `corner_radius`."""
 
 comptime _SPACING = 8.0
 """The `spacing` setting unless set."""
@@ -349,6 +354,12 @@ struct _Theme(Copyable, Movable):
             content=colors.on_surface,
         )
 
+    def container_radius(self) -> Float64:
+        """How round a panel or a popup is unless styled: twice the
+        controls' `corner_radius`, so a rounded control inside one sits
+        well in its corner."""
+        return 2 * self.corner_radius
+
     def _step(self, hovered: Bool, pressed: Bool) -> Float64:
         """How far a hovered or pressed widget's lightness steps: 0 when
         neither."""
@@ -390,9 +401,7 @@ struct _Theme(Copyable, Movable):
                 resolved.stroke_color = _faded(
                     colors.on_surface, states.disabled_container
                 )
-        # a pill at the default corner radius, squaring as it shrinks
-        var roundness = clamp(self.corner_radius / _CORNER_RADIUS, 0.0, 1.0)
-        var radius = look.corner_radius.or_else(roundness * height / 2)
+        var radius = look.corner_radius.or_else(self.corner_radius)
         # a hovered or pressed button steps its fill's lightness towards its
         # text
         var step = self._step(hovered, pressed)
@@ -434,7 +443,7 @@ struct _Theme(Copyable, Movable):
             Style(
                 fill=self.colors.surface_container,
                 stroke_enabled=False,
-                corner_radius=self.corner_radius,
+                corner_radius=self.container_radius(),
             )
         )
         var resolved = _ResolvedStyle()
@@ -744,6 +753,7 @@ struct _Theme(Copyable, Movable):
             Style(
                 fill_enabled=False,
                 stroke_enabled=False,
+                corner_radius=self.corner_radius,
                 text_color=colors.on_surface_variant,
             ).over(_label_text())
         )
@@ -809,7 +819,7 @@ struct _Theme(Copyable, Movable):
                 fill=colors.surface_container_highest,
                 stroke=colors.outline,
                 stroke_thickness=1,
-                corner_radius=self.corner_radius / 4,
+                corner_radius=self.corner_radius,
                 text_color=colors.on_surface,
             ).over(_body_text())
         )
@@ -822,7 +832,7 @@ struct _Theme(Copyable, Movable):
                     # a tone above the surface it opens from
                     fill=colors.surface_container_high,
                     stroke_enabled=False,
-                    corner_radius=self.corner_radius / 4,
+                    corner_radius=self.container_radius(),
                     shadow=Color(0, 0, 0, 70),
                     shadow_offset=Vector(0, -4),
                     shadow_blur=16,
@@ -896,7 +906,7 @@ struct _Theme(Copyable, Movable):
             Style(
                 fill=colors.on_surface,
                 stroke_enabled=False,
-                corner_radius=self.corner_radius / 4,
+                corner_radius=self.corner_radius,
                 text_color=colors.surface,
                 font_size=14,
             )
@@ -994,7 +1004,7 @@ struct _Theme(Copyable, Movable):
                 fill_enabled=False,
                 stroke=colors.on_surface_variant,
                 stroke_thickness=2,
-                corner_radius=self.corner_radius / 8,
+                corner_radius=min(self.corner_radius, _CHECKBOX_CORNER_LIMIT),
             )
         )
         var box = _ResolvedStyle()
@@ -1091,7 +1101,7 @@ struct _Theme(Copyable, Movable):
                 fill=colors.surface_container_highest,
                 stroke=colors.outline,
                 stroke_thickness=1,
-                corner_radius=self.corner_radius / 4,
+                corner_radius=self.corner_radius,
             )
         )
         var field = _ResolvedStyle()

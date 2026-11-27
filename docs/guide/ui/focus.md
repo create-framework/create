@@ -81,8 +81,8 @@ focus. A text field is the exception, since it takes typing however it got focus
 **A focused widget shows a ring round it when focus came from the keyboard, a gamepad or
 `ui.focus`.** After a click, the pointer already shows where the player is, so no ring is drawn. The
 ring follows the widget's shape, its corners rounded by the widget's own radius grown by the gap
-between them: a pill round a round-ended button, a circle round a slider's handle. It is drawn after
-every widget, so nothing covers it. A text field shows focus its own way instead, by a thicker
+between them: a rounded rectangle round a button, a circle round a slider's handle. It is drawn
+after every widget, so nothing covers it. A text field shows focus its own way instead, by a thicker
 outline in the `primary` colour and its caret.
 
 The ring's thickness, gap and colour come from the `UI`'s `focus_ring`, a `FocusRing`; its colour is

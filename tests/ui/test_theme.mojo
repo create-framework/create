@@ -36,7 +36,7 @@ def test_a_button_look_follows_its_state() raises -> None:
     assert_equal(rest.body.value().fill_color, theme.colors.primary)
     assert_true(hovered.body.value().fill_color != theme.colors.primary)
     assert_false(rest.layer)
-    assert_equal(rest.corner_radius, 20.0)  # a pill
+    assert_equal(rest.corner_radius, 4.0)  # the controls' radius
     assert_equal(rest.text.text_color, theme.colors.on_primary)
 
 
@@ -66,6 +66,29 @@ def test_a_disabled_checkbox_fades() raises -> None:
     )
     assert_true(look.box.fill_color.a < theme.colors.on_surface.a)
     assert_equal(look.tick.stroke_color, theme.surface)
+
+
+def test_panels_and_popups_are_rounder_than_controls() raises -> None:
+    var theme = _Theme.default()
+    theme.corner_radius = 6
+    assert_equal(theme.panel(Style()).style.corner_radius, 12.0)
+    var dropdown = theme.dropdown(
+        Style(), Style(), Style(), hovered=False, pressed=False, disabled=False
+    )
+    assert_equal(dropdown.field.corner_radius, 6.0)
+    assert_equal(dropdown.list.corner_radius, 12.0)
+    theme.corner_radius = 20
+    var box = theme.checkbox(
+        Style(),
+        Style(),
+        Style(),
+        Style(),
+        checked=False,
+        hovered=False,
+        pressed=False,
+        disabled=False,
+    )
+    assert_equal(box.box.corner_radius, 4.5)  # still a box
 
 
 def main() raises:

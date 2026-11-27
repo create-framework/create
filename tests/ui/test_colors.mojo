@@ -178,7 +178,7 @@ def test_a_seeded_scheme_takes_colours_to_replace_its_own() raises -> None:
 
 def test_a_ui_starts_with_the_default_tokens() raises -> None:
     var ui = UI()
-    assert_equal(ui.corner_radius(), 16.0)
+    assert_equal(ui.corner_radius(), 4.0)
     assert_equal(ui.spacing(), 8.0)
     assert_equal(ui.control_height(), 40.0)
     assert_equal(ui.state_layers().hovered, 0.09)
