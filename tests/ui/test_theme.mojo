@@ -91,5 +91,16 @@ def test_panels_and_popups_are_rounder_than_controls() raises -> None:
     assert_equal(box.box.corner_radius, 4.5)  # still a box
 
 
+def test_a_slider_and_a_progress_bar_have_the_same_track() raises -> None:
+    var theme = _Theme.default()
+    var slider = theme.slider(
+        Style(), Style(), Style(), hovered=False, dragging=False, disabled=False
+    )
+    var bar = theme.progress_bar(Style(), Style(), disabled=False)
+    assert_equal(slider.track.stroke_thickness, bar.track.stroke_thickness)
+    assert_equal(slider.track.stroke_color, bar.track.stroke_color)
+    assert_equal(bar.track.stroke_color, theme.colors.outline_variant)
+
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
