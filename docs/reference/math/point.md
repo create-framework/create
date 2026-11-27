@@ -77,11 +77,15 @@ The origin moved by `v`: the position `v` points to.
 def distance(self, other: Self) -> Float64
 ```
 
+How far apart this point and `other` are: the length of the vector between them.
+
 ### `distance_squared`
 
 ```mojo
 def distance_squared(self, other: Self) -> Float64
 ```
+
+The square of `distance`, without its square root: a little faster, and enough to compare distances, since one distance is smaller than another exactly when its square is.
 
 ### `lerp`
 
@@ -96,6 +100,8 @@ A new point `t` of the way from this one to `other`; this one is unchanged. Not 
 ```mojo
 def xy(self) -> Tuple[Float64, Float64]
 ```
+
+Its two numbers as a pair, to unpack: `var (x, y) = p.xy()`.
 
 ## Special methods
 
