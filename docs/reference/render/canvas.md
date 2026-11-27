@@ -523,9 +523,11 @@ is opaque, and blends over what is there otherwise.
 ```mojo
 def save_image(
     mut self,
-    path: String,
+    path: Optional[String] = None,
     pixel_scale: Float64 = 1,
     transparent: Bool = False,
+    *,
+    naming: Optional[FileNaming] = None,
 ) raises
 ```
 
@@ -553,6 +555,12 @@ An offscreen canvas has no frame to present, so it writes at once,
 what it has drawn so far. Its pixels are already rasterised, so a
 `pixel_scale` other than its own resamples them, and `transparent` keeps
 their alpha rather than dropping a `background` it has painted.
+
+`naming` says how the file is named from `path` (see `FileNaming`).
+Given a path, the file is saved there, replacing one already there;
+with no path, it is saved as `image-0001.png`, `image-0002.png` and
+so on, numbered on from the highest already in the folder, so it
+never replaces an earlier one.
 
 A relative `path` is resolved against the directory of the calling
 source file, not the working directory, as `Image.load`'s is.
@@ -614,7 +622,12 @@ are; any other value resamples them, nearest pixel.
 ### `save_screenshot`
 
 ```mojo
-def save_screenshot(mut self, path: String) raises
+def save_screenshot(
+    mut self,
+    path: Optional[String] = None,
+    *,
+    naming: Optional[FileNaming] = None,
+) raises
 ```
 
 Save this frame as a PNG at the framebuffer's own resolution.
@@ -633,6 +646,9 @@ written when the frame is presented, and a failure raises from there.
 An offscreen canvas writes at once: its own pixels, at its own
 density, alpha kept — it has no window to have been seen in.
 
+`naming` names the file as `save_image`'s does; with no path, it is
+saved as `screenshot-0001.png`, `screenshot-0002.png` and so on.
+
 A relative `path` is resolved against the directory of the calling
 source file, as `save_image`'s is.
 
@@ -641,8 +657,9 @@ source file, as `save_image`'s is.
 ```mojo
 def start_recording(
     mut self,
-    path: String,
+    path: Optional[String] = None,
     *,
+    naming: Optional[FileNaming] = None,
     seconds: OptionalNumber = None,
     frames: Optional[Int] = None,
     fps: Float64 = 30,
@@ -664,9 +681,9 @@ until `seconds` of the run's time or `frames` frames, until
 `cancel_recording` ends it without one. A new `start_recording`
 finishes the recording in progress first.
 
-Until it finishes, the frames stream to `path` with `.partial`
-added, which then replaces `path` in one step: a file already at
-`path` is untouched until then, and stays if the recording is
+Until it finishes, the frames stream to the file with `.partial`
+added, which then replaces the file in one step: a file already
+there is untouched until then, and stays if the recording is
 cancelled.
 
 The run's clock is sampled `fps` times a second, so the GIF plays at
@@ -707,6 +724,9 @@ Raises at once for a path not ending in `.gif`, `seconds` and
 `frames` both given, a value that isn't positive, `fps` above 50, a
 file that can't be opened, or an offscreen canvas, which has no
 frames to record.
+
+`naming` names the file as `save_image`'s does; with no path, it is
+saved as `recording-0001.gif`, `recording-0002.gif` and so on.
 
 A relative `path` is resolved against the directory of the calling
 source file, as `save_image`'s is.

@@ -11,9 +11,9 @@ Two calls save the frame as a PNG. Each writes its file when the frame is shown,
 whole frame wherever in `update` it is called:
 
 ```mojo
-# In `update`: S saves the frame at twice the design size.
+# In `update`: S saves the frame at twice the design size, as image-0001.png, image-0002.png, …
 if context.keyboard.pressed(Key.S):
-    canvas.save_image("poster.png", pixel_scale=2.0)
+    canvas.save_image(pixel_scale=2.0)
 ```
 
 - **`canvas.save_image(path, pixel_scale=1.0, transparent=False)`** saves what the program drew: the
@@ -27,11 +27,58 @@ if context.keyboard.pressed(Key.S):
 On an offscreen canvas both write at once (see [Drawing into an
 image](images.md#drawing-into-an-image)).
 
+## Naming the files
+
+**Without a path, every capture gets a file of its own.** `save_image()` saves `image-0001.png`,
+then `image-0002.png` and so on, `save_screenshot()` saves `screenshot-0001.png` and onwards, and
+`start_recording()` saves `recording-0001.gif` and onwards. The files go beside the source file that
+makes the call, as every path does (see [File paths](../basics/programs.md#file-paths)). The first
+capture of a run looks for the highest number already in the folder and carries on from there, so a
+new run never replaces what an earlier one saved.
+
+**With a path, the file is saved there**, replacing a file already there, so
+`save_image("poster.png")` always leaves one `poster.png`, the latest. The folder must exist
+already.
+
+`naming=` chooses for yourself, with a `FileNaming`:
+
+| `naming` | File |
+|---|---|
+| `FileNaming.EXACT` | The path as given. The default when a path is given |
+| `FileNaming.NUMBERED` | The path with a number added before the extension. The default when no path is given |
+
+So a path of your own can be numbered too:
+
+```mojo
+# In `update`: P saves posters/poster-0001.png, posters/poster-0002.png, …
+if context.keyboard.pressed(Key.P):
+    canvas.save_image("posters/poster.png", naming=FileNaming.NUMBERED)
+```
+
+A number has four digits, and more once it passes 9999.
+
+**Saving every frame** makes a sequence of images to turn into a video. The numbers count up one a
+frame, which is what a video tool such as [ffmpeg](https://ffmpeg.org/) reads:
+
+```mojo
+# At the end of `update`: frames/frame-0001.png, frames/frame-0002.png, …
+canvas.save_image("frames/frame.png", naming=FileNaming.NUMBERED)
+```
+
+```bash
+ffmpeg -framerate 60 -i frames/frame-%04d.png -pix_fmt yuv420p video.mp4
+```
+
+Saving a PNG every frame is slow, so the program runs slower than usual while it saves. Motion that
+moves by `context.time.delta` then moves further each frame, and the video plays faster than the
+program looked.
+
 ## Recording
 
 `canvas.start_recording(path, seconds=, frames=, fps=30, pixel_scale=1.0, dither=False,
 transparent=False)` records an animated GIF, starting with the frame it is called in. GIF is the
-only format, so the path must end in `.gif`:
+only format, so the path must end in `.gif`. Without a path, it records `recording-0001.gif`,
+`recording-0002.gif` and so on (see [Naming the files](#naming-the-files)):
 
 ```mojo
 # In `update`: R records the next five seconds.
@@ -62,9 +109,9 @@ See [examples/capture](../../../examples/capture/main.mojo).
 
   `canvas.cancel_recording()` ends it without saving. `canvas.recording()` is whether a recording is
   running, and starting a new one finishes the one in progress first.
-- **It is written to a separate file first**, `path` with `.partial` added, which replaces `path`
-  only when the recording finishes. So a file already at `path` survives a cancelled recording, and
-  a crash leaves a `.partial` file rather than a broken GIF.
+- **It is written to a separate file first**, the file's name with `.partial` added, which replaces
+  the file only when the recording finishes. So a file already there survives a cancelled recording,
+  and a crash leaves a `.partial` file rather than a broken GIF.
 - **It keeps to the run's clock:** it captures a frame `fps` times a second of the run's time (at
   most 50). On a display faster than that, some frames are skipped, and a frame that took long to
   draw is shown for longer in the GIF, so the GIF plays at the speed the program ran.
