@@ -101,11 +101,12 @@ style of its own applies that over it in turn. Pass a style you have named this 
 in the call reads better as a `with canvas.style(...)` block around it (see
 [Style](style.md#four-ways-to-style)).
 
-`canvas.draw` takes any shape or curve, which the canvas knows how to draw, or a program's own type
-that is `Drawable`. A shape knows nothing about drawing: it is a value and its tests, and the canvas
-decides how each kind is drawn. So a `Geometry` type of a program's own can't be passed to
-`canvas.draw`; draw the library's shapes it is made of instead. To keep drawables of different types
-in one list, use `Variant` (see [Multiple scenes](../basics/programs.md#multiple-scenes)).
+`canvas.draw` takes any shape or curve, which the canvas knows how to draw, or any type that is
+`Drawable`: a program's own, and Create's `Text`, `Picture`, widgets and `UI`. A shape knows nothing
+about drawing: it is a value and its tests, and the canvas decides how each kind is drawn. So a
+`Geometry` type of a program's own can't be passed to `canvas.draw`; draw the library's shapes it is
+made of instead. To keep drawables of different types in one list, use `Variant` (see [Multiple
+scenes](../basics/programs.md#multiple-scenes)).
 
 ## The background
 

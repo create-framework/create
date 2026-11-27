@@ -23,7 +23,7 @@ Processing](basics/coming-from-processing.md) first: it lists what works differe
 
 - [The canvas](drawing/canvas.md): shapes and your own drawable types, the background, transforms,
   antialiasing and clipping.
-- [Style](drawing/style.md): how the style works, its defaults, the three ways to change it, and
+- [Style](drawing/style.md): how the style works, its defaults, the four ways to change it, and
   tint, opacity and blend modes.
 - [Colours](drawing/colours.md): red, green, blue and alpha, named colours, hex codes, hue,
   saturation and value, lightness that looks even (OKLCH), and mixing colours.

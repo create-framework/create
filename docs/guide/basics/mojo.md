@@ -120,9 +120,10 @@ what is inside, check that there is something:
 
 ```mojo
 # In `create`, with a key's name, `setting`, read from a settings file:
+var jump_key = Key.SPACE
 var key = Key.from_name(setting)
 if key:  # true when the box holds a key
-    self.jump_key = key.value()  # take the key out of the box
+    jump_key = key.value()  # take the key out of the box
 else:
     print("Not a key:", setting)
 ```

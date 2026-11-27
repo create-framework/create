@@ -128,7 +128,7 @@ ui.spacing(12)  # roomier columns and rows
 
 **A button, a label and a panel take a `Style`,** the same one the canvas draws with (see
 [Style](../drawing/style.md)). Each part it leaves unset comes from the widget's defaults, so a
-style only says what differs: `Style(corner_radius=4)` gives a button square corners and keeps its
+style only says what differs: `Style(corner_radius=0)` gives a button square corners and keeps its
 colours. For a button, `fill` is the colour behind the text, `stroke` its outline and `text_color`
 and the `font_*` parts its text; for a label, the text; for a panel, its surface, with `text_color`
 the colour of text on it. Anything a `Style` can do, a widget's style can do too, such as a gradient
@@ -136,7 +136,7 @@ fill or a dashed outline:
 
 ```mojo
 # In `create`, building the `ui` field:
-var stop = ui.add(Button("Stop", Rectangle((0, 0), 120, 40), style=Style(corner_radius=4)))
+var stop = ui.add(Button("Stop", Rectangle((0, 0), 120, 40), style=Style(corner_radius=0)))
 var sunset = Gradient.linear(Color.ORANGE, Color.RED)
 var go = ui.add(Button("Go", Rectangle((0, 50), 120, 40), style=Style(fill_gradient=sunset)))
 _ = ui.add(Label("Settings", Rectangle((0, 100), 240, 32), style=Style(font_size=22)))
@@ -235,7 +235,7 @@ colour and thickness. The thumb steps like a button when hovered or dragged.
 
 **`ui.style(button=..., slider_handle=..., ...)`** sets style fields for every widget of a kind in a
 `UI`. A widget's own style wins over it, field by field: a button styled `Style(fill=Color.RED)` in
-a `UI` whose buttons are `Style(corner_radius=4)` is red and square. Each part is named by the
+a `UI` whose buttons are `Style(corner_radius=0)` is red and square. Each part is named by the
 widget and its keyword for the part: `slider_handle=`, `checkbox_tick=`, `checkbox_text_style=`,
 `text_field_caret=`, `scroll_area_thumb=` and so on.
 
@@ -245,7 +245,7 @@ kind `Style()` to clear its style:
 
 ```mojo
 # In `create`, building the `ui` field: square buttons throughout.
-ui.style(button=Style(corner_radius=4))
+ui.style(button=Style(corner_radius=0))
 ui.style(slider_handle=Style(stroke=Color.ORANGE))  # the buttons stay square
 ```
 
