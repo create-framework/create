@@ -1,3 +1,5 @@
+from create.math.number import Number
+
 comptime _MAX_LENGTHS = 8
 """The most lengths a pattern holds: four on/off pairs."""
 
@@ -70,18 +72,18 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     comptime DASHED = StrokeDash(_kind=_DASHED)
     comptime DOTTED = StrokeDash(_kind=_DOTTED)
 
-    def __init__(out self, on: Float64, off: Float64, *, offset: Float64 = 0):
+    def __init__(out self, on: Number, off: Number, *, offset: Number = 0):
         """Dashes `on` world units long, `off` apart, starting `offset` into
         the pattern. A negative length counts as none."""
         self._lengths = SIMD[DType.float64, _MAX_LENGTHS](0)
-        self._lengths[0] = max(on, 0.0)
-        self._lengths[1] = max(off, 0.0)
+        self._lengths[0] = max(Float64(on), 0.0)
+        self._lengths[1] = max(Float64(off), 0.0)
         self._count = 2
         self._kind = _EXPLICIT
-        self._offset = offset
+        self._offset = Float64(offset)
         self._fit = False
 
-    def __init__(out self, *lengths: Float64, offset: Float64 = 0) raises:
+    def __init__(out self, *lengths: Number, offset: Number = 0) raises:
         """The pattern `on, off, on, off, ...`, in world units, repeated
         along the stroke and starting `offset` into it. A negative length
         counts as none.
@@ -105,10 +107,10 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             )
         self._lengths = SIMD[DType.float64, _MAX_LENGTHS](0)
         for i in range(len(lengths)):
-            self._lengths[i] = max(lengths[i], 0.0)
+            self._lengths[i] = max(Float64(lengths[i]), 0.0)
         self._count = len(lengths)
         self._kind = _EXPLICIT
-        self._offset = offset
+        self._offset = Float64(offset)
         self._fit = False
 
     def __init__(out self, *, _kind: Int, _offset: Float64 = 0):
@@ -119,11 +121,11 @@ struct StrokeDash(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         self._offset = _offset
         self._fit = False
 
-    def with_offset(self, offset: Float64) -> StrokeDash:
+    def with_offset(self, offset: Number) -> StrokeDash:
         """This pattern starting `offset` world units into itself, for
         marching dashes: `dash.with_offset(context.time.elapsed * 20)`."""
         var out = self
-        out._offset = offset
+        out._offset = Float64(offset)
         return out
 
     def offset(self) -> Float64:

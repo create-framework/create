@@ -2,6 +2,7 @@ from std.math import abs, floor, max, min, sqrt
 from std.memory import ArcPointer
 
 from create.color.color import Color, _tinted
+from .gradient_stop import GradientStop
 from create.math.transform import Transform
 from create.math.point import Point
 from create.math.vector import Vector
@@ -186,6 +187,13 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return stops^
 
     @staticmethod
+    def _placed(stops: List[GradientStop]) -> List[Tuple[Float64, Color]]:
+        var placed = List[Tuple[Float64, Color]](capacity=len(stops))
+        for stop in stops:
+            placed.append((stop.position, stop.color))
+        return placed^
+
+    @staticmethod
     def linear(
         first: Color, *rest: Color, direction: Vector = Vector.DOWN
     ) -> Gradient:
@@ -199,16 +207,16 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     @staticmethod
     def linear(
-        stops: List[Tuple[Float64, Color]],
+        stops: List[GradientStop],
         *,
         direction: Vector = Vector.DOWN,
     ) -> Gradient:
         """Colours at the given positions along `direction`:
-        `Gradient.linear([(0.0, Color.BLUE), (0.7, Color.PURPLE), (1.0, Color.ORANGE)])`.
+        `Gradient.linear([(0, Color.BLUE), (0.7, Color.PURPLE), (1, Color.ORANGE)])`.
         """
         return Gradient(
             _kind=_LINEAR,
-            _stops=stops.copy(),
+            _stops=Gradient._placed(stops),
             _direction=direction,
             _center=Point(0.0, 0.0),
         )
@@ -227,7 +235,7 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
 
     @staticmethod
     def radial(
-        stops: List[Tuple[Float64, Color]],
+        stops: List[GradientStop],
         *,
         center: Point = Point(0.0, 0.0),
     ) -> Gradient:
@@ -235,7 +243,7 @@ struct Gradient(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         edges."""
         return Gradient(
             _kind=_RADIAL,
-            _stops=stops.copy(),
+            _stops=Gradient._placed(stops),
             _direction=Vector.DOWN,
             _center=center,
         )

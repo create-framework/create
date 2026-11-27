@@ -35,9 +35,7 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyabl
 
 ```mojo
 @staticmethod
-def __init__(out self, start: Point, end: Point, radius: Float64)
-@staticmethod
-def __init__(out self, start: Point, end: Point, radius: Int)
+def __init__(out self, start: Point, end: Point, radius: Number)
 ```
 
 ## Methods

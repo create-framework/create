@@ -2,11 +2,11 @@
 
 ```mojo
 def map(
-    value: Float64,
-    in_low: Float64,
-    in_high: Float64,
-    out_low: Float64,
-    out_high: Float64,
+    value: Number,
+    in_low: Number,
+    in_high: Number,
+    out_low: Number,
+    out_high: Number,
 ) -> Float64
 ```
 

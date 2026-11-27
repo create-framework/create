@@ -167,7 +167,7 @@ def corner_radius(self) -> Float64
 How round its controls' corners are: 4 unless set. A panel and a popup are rounded twice as much, and a checkbox's box at most 4.5, so `corner_radius(0)` squares everything.
 
 ```mojo
-def corner_radius(mut self, radius: Float64)
+def corner_radius(mut self, radius: Number)
 ```
 
 ### `spacing`
@@ -179,7 +179,7 @@ def spacing(self) -> Float64
 The gap a `Column` or `Row` leaves between its widgets unless given one, and half the inset of a panel's inside: 8 unless set.
 
 ```mojo
-def spacing(mut self, spacing: Float64)
+def spacing(mut self, spacing: Number)
 ```
 
 ### `control_height`
@@ -191,7 +191,7 @@ def control_height(self) -> Float64
 How tall a button, checkbox, slider or text field is when the `UI` sizes it: 40 unless set.
 
 ```mojo
-def control_height(mut self, height: Float64)
+def control_height(mut self, height: Number)
 ```
 
 ### `focus_ring`

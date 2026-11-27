@@ -1,5 +1,5 @@
 from std.math import acos, ceil, cos, min, max, sin, sqrt, tan
-from create.math import TAU, Point, Vector
+from create.math import TAU, Number, Point, Vector
 from .bezier import Bezier, _curve_segments
 from .spline import Spline
 from .curve import Curve
@@ -51,23 +51,14 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
     def __init__(
         out self,
         position: Point,
-        radius: Float64,
-        start_angle: Float64,
-        sweep_angle: Float64,
+        radius: Number,
+        start_angle: Number,
+        sweep_angle: Number,
     ):
         self.position = position
-        self.radius = radius
-        self.start_angle = start_angle
-        self.sweep_angle = sweep_angle
-
-    def __init__(
-        out self,
-        position: Point,
-        radius: Int,
-        start_angle: Float64,
-        sweep_angle: Float64,
-    ):
-        self = Arc(position, Float64(radius), start_angle, sweep_angle)
+        self.radius = Float64(radius)
+        self.start_angle = Float64(start_angle)
+        self.sweep_angle = Float64(sweep_angle)
 
     def __eq__(self, other: Arc) -> Bool:
         return (
@@ -104,45 +95,48 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
     def _point_at_angle(self, angle: Float64) -> Point:
         return self.position + _unit(angle) * self.radius
 
-    def at(self, t: Float64) -> Point:
+    def at(self, t: Number) -> Point:
         """The point at parameter `t`: 0 at the start, 1 at the end, and
         proportional to distance along the arc in between. Not clamped:
         outside 0..1 it carries on round the circle."""
-        return self._point_at_angle(self.start_angle + self._sweep() * t)
+        return self._point_at_angle(
+            self.start_angle + self._sweep() * Float64(t)
+        )
 
-    def tangent(self, t: Float64) -> Vector:
+    def tangent(self, t: Number) -> Vector:
         """The derivative at `t`: the direction of travel, with a magnitude
         that is the arc's length (the speed per unit of `t`, the same
         everywhere). Zero for a collapsed arc."""
         var sweep = self._sweep()
-        var angle = self.start_angle + sweep * t
+        var angle = self.start_angle + sweep * Float64(t)
         return Vector(-sin(angle), cos(angle)) * (self.radius * sweep)
 
     def length(self) -> Float64:
         """The distance along the arc from start to end. Exact."""
         return self.radius * abs(self._sweep())
 
-    def at_distance(self, distance: Float64) -> Point:
+    def at_distance(self, distance: Number) -> Point:
         """The point `distance` along the arc from its start, clamped to the
         arc's ends. An arc has constant speed, so this is `at` with `t`
         scaled: exact, and as cheap as `at`."""
         var total = self.length()
-        if distance <= 0.0 or total == 0.0:
+        if Float64(distance) <= 0.0 or total == 0.0:
             return self.at(0.0)
-        if distance >= total:
+        if Float64(distance) >= total:
             return self.at(1.0)
-        return self.at(distance / total)
+        return self.at(Float64(distance) / total)
 
-    def split(self, t: Float64) -> Tuple[Arc, Arc]:
+    def split(self, t: Number) -> Tuple[Arc, Arc]:
         """The arc cut at `t` into two on the same circle, together tracing
         exactly the original: the first runs from the start to `at(t)`, the
         second from `at(t)` to the end. A sweep past a full turn is clamped
         to one first, as everywhere else."""
         var sweep = self._sweep()
-        var cut = self.start_angle + sweep * t
+        var u = Float64(t)
+        var cut = self.start_angle + sweep * u
         return (
-            Arc(self.position, self.radius, self.start_angle, sweep * t),
-            Arc(self.position, self.radius, cut, sweep * (1.0 - t)),
+            Arc(self.position, self.radius, self.start_angle, sweep * u),
+            Arc(self.position, self.radius, cut, sweep * (1.0 - u)),
         )
 
     def bounds(self) -> Rectangle:
@@ -163,7 +157,7 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
             lo.y = self.position.y - self.radius
         return Rectangle(lo.lerp(hi, 0.5), hi.x - lo.x, hi.y - lo.y)
 
-    def flatten(self, tolerance: Float64) -> List[Point]:
+    def flatten(self, tolerance: Number) -> List[Point]:
         """Points along the arc, from start to end inclusive, such that the
         straight segments between them stray from the arc by at most
         `tolerance`.
@@ -172,11 +166,12 @@ struct Arc(Copyable, Curve, Equatable, ImplicitlyCopyable, Movable, Writable):
         capped at 1024 segments. A collapsed arc still gives two points.
         """
         var sweep = abs(self._sweep())
+        var stray = Float64(tolerance)
         var n = 1
-        if tolerance > 0.0 and tolerance < self.radius and sweep > 0.0:
+        if stray > 0.0 and stray < self.radius and sweep > 0.0:
             # A chord spanning angle `a` strays r * (1 - cos(a / 2)) from
             # the circle at its middle.
-            var widest = 2.0 * acos(1.0 - tolerance / self.radius)
+            var widest = 2.0 * acos(1.0 - stray / self.radius)
             n = Int(ceil(sweep / widest))
             n = max(1, min(n, _MAX_ARC_FLATTEN_SEGMENTS))
         var points = List[Point](capacity=n + 1)

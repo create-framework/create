@@ -66,14 +66,14 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ```mojo
 @staticmethod
-def __init__(out self, on: Float64, off: Float64, *, offset: Float64 = Float64("0"))
+def __init__(out self, on: Number, off: Number, *, offset: Number = 0)
 ```
 
 Dashes `on` world units long, `off` apart, starting `offset` into the pattern. A negative length counts as none.
 
 ```mojo
 @staticmethod
-def __init__(out self, *lengths: Float64, *, offset: Float64 = Float64("0")) raises
+def __init__(out self, *lengths: Number, *, offset: Number = 0) raises
 ```
 
 The pattern `on, off, on, off, ...`, in world units, repeated along the stroke and starting `offset` into it. A negative length counts as none.
@@ -85,7 +85,7 @@ Raises unless `lengths` is whole on/off pairs, at most four of them.
 ### `with_offset`
 
 ```mojo
-def with_offset(self, offset: Float64) -> Self
+def with_offset(self, offset: Number) -> Self
 ```
 
 This pattern starting `offset` world units into itself, for marching dashes: `dash.with_offset(context.time.elapsed * 20)`.

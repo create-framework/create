@@ -40,7 +40,7 @@ def __init__(out self, start: Point, control1: Point, control2: Point, end: Poin
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point
+def at(self, t: Number) -> Point
 ```
 
 The point at parameter `t`. Not clamped: outside 0..1 the cubic continues past its endpoints, as `lerp` extrapolates.
@@ -48,7 +48,7 @@ The point at parameter `t`. Not clamped: outside 0..1 the cubic continues past i
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector
+def tangent(self, t: Number) -> Vector
 ```
 
 The derivative at `t`: the direction of travel, with a magnitude that is the curve's speed per unit of `t`. Not normalised: it is zero where the curve stops, such as at a cusp or where a control sits on its endpoint.
@@ -94,7 +94,7 @@ Whether it crosses or touches the other curve or shape: shares a point with it, 
 ### `split`
 
 ```mojo
-def split(self, t: Float64) -> Tuple[Self, Self]
+def split(self, t: Number) -> Tuple[Self, Self]
 ```
 
 The curve cut at `t` into two, together tracing exactly the original: the first runs `start` to `at(t)`, the second `at(t)` to `end` (de Casteljau).
@@ -110,7 +110,7 @@ The tightest axis-aligned rectangle around the curve: around the curve itself, n
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point]
+def flatten(self, tolerance: Number) -> List[Point]
 ```
 
 Points along the curve, from `start` to `end` inclusive, such that the straight segments between them stray from the curve by at most `tolerance`.
@@ -142,7 +142,7 @@ curve that fits on a screen, but an approximation, not exact.
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point
+def at_distance(self, distance: Number) -> Point
 ```
 
 The point `distance` along the curve from `start`, clamped to the curve's ends.

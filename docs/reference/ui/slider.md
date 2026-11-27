@@ -45,12 +45,12 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 - `minimum: Float64`: The value at the left end.
 - `maximum: Float64`: The value at the right end.
 - `rect: Rectangle`: Where it is: the track runs across its middle, and a press anywhere in it moves the handle.
-- `step: Optional[Float64]`: What the value is rounded to a multiple of, from `minimum`; `None` for any value.
+- `step: OptionalNumber`: What the value is rounded to a multiple of, from `minimum`; `None` for any value.
 - `track: Style`: The line across `rect`: its stroke is the track's colour and thickness.
 - `active_track: Style`: The line from the start to the handle, over `track`, taking what it leaves unset from it.
 - `handle: Style`: The handle, a rectangle: its fill is its colour, its stroke its outline and its `corner_radius` how round it is.
-- `handle_width: Optional[Float64]`: How wide the handle is; `None` for half the `control_height`.
-- `handle_height: Optional[Float64]`: How tall the handle is; `None` for half the `control_height`.
+- `handle_width: OptionalNumber`: How wide the handle is; `None` for half the `control_height`.
+- `handle_height: OptionalNumber`: How tall the handle is; `None` for half the `control_height`.
 - `enabled: Bool`: Whether it reacts to the mouse. A disabled slider is faded.
 
 ## Constructors
@@ -59,10 +59,10 @@ Implements `Clickable`, `Copyable`, `Deinitable`, `Drawable`, `Hoverable`, `Mova
 @staticmethod
 def __init__(
     out self,
-    value: Float64,
-    minimum: Float64,
-    maximum: Float64,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    value: Number,
+    minimum: Number,
+    maximum: Number,
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     step: OptionalNumber = None,
     track: Style = Style(fill=OptionalColor(None), fill_gradient=Optional(None), fill_enabled=Optional(None), stroke=OptionalColor(None), stroke_thickness=OptionalNumber(None), stroke_enabled=Optional(None), stroke_alignment=Optional(None), stroke_cap=Optional(None), stroke_dash=Optional(None), corner_radius=OptionalNumber(None), text_color=OptionalColor(None), font=Optional(None), font_size=OptionalNumber(None), font_weight=Optional(None), font_italic=Optional(None), text_alignment=Optional(None), tint=OptionalColor(None), opacity=OptionalNumber(None), blend_mode=Optional(None), shadow=OptionalColor(None), shadow_offset=Optional(None), shadow_blur=OptionalNumber(None), shadow_spread=OptionalNumber(None), shadow_inset=Optional(None), shadow_follows_transform=Optional(None), shadow_enabled=Optional(None)),
@@ -79,13 +79,13 @@ A slider whose handle is `handle_size` square, or half the `control_height` when
 @staticmethod
 def __init__(
     out self,
-    value: Float64,
-    minimum: Float64,
-    maximum: Float64,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    value: Number,
+    minimum: Number,
+    maximum: Number,
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
-    handle_width: Float64,
-    handle_height: Float64,
+    handle_width: Number,
+    handle_height: Number,
     step: OptionalNumber = None,
     track: Style = Style(fill=OptionalColor(None), fill_gradient=Optional(None), fill_enabled=Optional(None), stroke=OptionalColor(None), stroke_thickness=OptionalNumber(None), stroke_enabled=Optional(None), stroke_alignment=Optional(None), stroke_cap=Optional(None), stroke_dash=Optional(None), corner_radius=OptionalNumber(None), text_color=OptionalColor(None), font=Optional(None), font_size=OptionalNumber(None), font_weight=Optional(None), font_italic=Optional(None), text_alignment=Optional(None), tint=OptionalColor(None), opacity=OptionalNumber(None), blend_mode=Optional(None), shadow=OptionalColor(None), shadow_offset=Optional(None), shadow_blur=OptionalNumber(None), shadow_spread=OptionalNumber(None), shadow_inset=Optional(None), shadow_follows_transform=Optional(None), shadow_enabled=Optional(None)),
     active_track: Style = Style(fill=OptionalColor(None), fill_gradient=Optional(None), fill_enabled=Optional(None), stroke=OptionalColor(None), stroke_thickness=OptionalNumber(None), stroke_enabled=Optional(None), stroke_alignment=Optional(None), stroke_cap=Optional(None), stroke_dash=Optional(None), corner_radius=OptionalNumber(None), text_color=OptionalColor(None), font=Optional(None), font_size=OptionalNumber(None), font_weight=Optional(None), font_italic=Optional(None), text_alignment=Optional(None), tint=OptionalColor(None), opacity=OptionalNumber(None), blend_mode=Optional(None), shadow=OptionalColor(None), shadow_offset=Optional(None), shadow_blur=OptionalNumber(None), shadow_spread=OptionalNumber(None), shadow_inset=Optional(None), shadow_follows_transform=Optional(None), shadow_enabled=Optional(None)),

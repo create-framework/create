@@ -1,3 +1,4 @@
+from .number import Number
 from std.math import floor, clamp
 from std.time import perf_counter_ns
 
@@ -46,8 +47,8 @@ struct Noise(Copyable, Movable, Writable):
         out self,
         *,
         octaves: Int = 4,
-        falloff: Float64 = 0.5,
-        feature_size: Float64 = 1.0,
+        falloff: Number = 0.5,
+        feature_size: Number = 1.0,
     ):
         # The clock value is kept as the seed, so the field can be rebuilt.
         self = Self(
@@ -62,18 +63,21 @@ struct Noise(Copyable, Movable, Writable):
         seed: UInt64,
         *,
         octaves: Int = 4,
-        falloff: Float64 = 0.5,
-        feature_size: Float64 = 1.0,
+        falloff: Number = 0.5,
+        feature_size: Number = 1.0,
     ):
         debug_assert(octaves >= 1, "Noise: octaves must be at least 1")
-        debug_assert(falloff > 0, "Noise: falloff must be greater than 0")
         debug_assert(
-            feature_size > 0, "Noise: feature_size must be greater than 0"
+            Float64(falloff) > 0, "Noise: falloff must be greater than 0"
+        )
+        debug_assert(
+            Float64(feature_size) > 0,
+            "Noise: feature_size must be greater than 0",
         )
         self._seed = seed
         self._octaves = octaves
-        self._falloff = falloff
-        self._feature_size = feature_size
+        self._falloff = Float64(falloff)
+        self._feature_size = Float64(feature_size)
         self._permutation = List[UInt8](capacity=256)
         for i in range(256):
             self._permutation.append(UInt8(i))
@@ -85,10 +89,10 @@ struct Noise(Copyable, Movable, Writable):
             self._permutation[i] = self._permutation[j]
             self._permutation[j] = swap
 
-    def at(self, x: Float64) -> Float64:
+    def at(self, x: Number) -> Float64:
         """The field along a line: a value that wanders smoothly as `x` (a
         time, say) moves."""
-        return self._layered[1](x / self._feature_size, 0.0, 0.0)
+        return self._layered[1](Float64(x) / self._feature_size, 0.0, 0.0)
 
     def at(self, position: Point) -> Float64:
         """The field over the plane: terrain, texture, a flow-field angle."""
@@ -98,13 +102,13 @@ struct Noise(Copyable, Movable, Writable):
             0.0,
         )
 
-    def at(self, position: Point, time: Float64) -> Float64:
+    def at(self, position: Point, time: Number) -> Float64:
         """The plane field, animated: it evolves smoothly as `time` moves.
         `time` is not divided by `feature_size`; scale it at the call."""
         return self._layered[3](
             position.x / self._feature_size,
             position.y / self._feature_size,
-            time,
+            Float64(time),
         )
 
     def write_to[W: Writer](self, mut writer: W):

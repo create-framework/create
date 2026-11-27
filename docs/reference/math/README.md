@@ -1,6 +1,6 @@
 # create.math
 
-Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, `OptionalNumber`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
+Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, `Number` and `OptionalNumber`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
 
 ## Types
 
@@ -8,6 +8,7 @@ Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, `Optio
 |---|---|
 | [`Easing`](easing.md) | Which curve `ease` applies. A `Tween` stores one as a field. |
 | [`Point`](point.md) | A location in world space: `distance`, `lerp`, the affine operators, and an explicit constructor from a `Vector` for crossing between the two. |
+| [`Number`](number.md) | A number given to Create: any integer or `Float64`. |
 | [`OptionalNumber`](optionalnumber.md) | A number that may be left out: any integer or `Float64`, or `None`. |
 | [`Vector`](vector.md) | A 2D displacement or direction: arithmetic operators, `magnitude`, `normalize`, `dot`, `distance`, `lerp`, the angle helpers `from_angle`, `angle` and `rotate`, the length helpers `with_length` and `limit`, and an explicit constructor from a `Point`. |
 | [`Transform`](transform.md) | A change of position applied to points: moving, turning, scaling, mirroring and shearing, or any combination of them. |

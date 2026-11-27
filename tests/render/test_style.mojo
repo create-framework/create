@@ -57,6 +57,17 @@ def test_a_style_holds_only_what_it_was_given() raises -> None:
     assert_false(Bool(s.font_size))
 
 
+def test_number_fields_take_integers() raises -> None:
+    var thickness = 3
+    var s = Style()
+    s.stroke_thickness = thickness
+    s.corner_radius = 4
+    s.opacity = 1
+    assert_equal(s.stroke_thickness.value(), 3.0)
+    assert_equal(s.corner_radius.value(), 4.0)
+    assert_equal(s.opacity.value(), 1.0)
+
+
 def test_each_keyword_lands_in_its_field() raises -> None:
     var s = _r(
         Style(

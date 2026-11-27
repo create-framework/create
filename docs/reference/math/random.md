@@ -36,7 +36,7 @@ def float(mut self) -> Float64
 A number in `[0.0, 1.0)`: 1.0 itself is never returned.
 
 ```mojo
-def float(mut self, low: Float64, high: Float64) -> Float64
+def float(mut self, low: Number, high: Number) -> Float64
 ```
 
 A number in `[low, high)`.

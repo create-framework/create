@@ -2,7 +2,7 @@
 
 from create.app import Context
 from create.geometry import Line, Rectangle
-from create.math import OptionalNumber, Point, clamp
+from create.math import Number, OptionalNumber, Point, clamp
 from create.render import Canvas, Style
 from create.color.color_scheme import ColorScheme
 from ._theme import _ProgressBarLook, _Theme
@@ -55,7 +55,7 @@ struct ProgressBar(Copyable, Movable, Widget):
 
     def __init__(
         out self,
-        value: Float64,
+        value: Number,
         rect: Rectangle = _UNSIZED,
         *,
         minimum: OptionalNumber = None,
@@ -64,7 +64,7 @@ struct ProgressBar(Copyable, Movable, Widget):
         indicator: Style = Style(),
         enabled: Bool = True,
     ):
-        self.value = value
+        self.value = Float64(value)
         self.minimum = minimum.or_else(0)
         self.maximum = maximum.or_else(1)
         self.rect = rect

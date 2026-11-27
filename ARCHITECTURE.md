@@ -14,9 +14,9 @@ internals](#package-internals).
 | root | `src/create/__init__.mojo` | The preamble: star-imports all thirteen subpackages below |
 | `app` | `src/create/app/` | `Program`, the run state (`Context`), the run loops (windowed, GPU, headless), `step`, folding events into the devices, `WindowMode`, `Cursor`, `source_path` |
 | `input` | `src/create/input/` | The devices `Context` holds: `Keyboard` (keys, typed text), `Mouse`, `Gamepad`; `Key`, `MouseButton`, `GamepadButton` |
-| `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `FileNaming` (how a capture's file is named), `Gradient` (with the ramp and dither both backends share), `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
+| `render` | `src/create/render/` | `Canvas` and its `with`-block guards, `Drawable` (a program's own type drawn by `canvas.draw`), how every shape and curve is drawn, `Style` (a set of style changes, layered with `over`), `Camera`, `Antialiasing`, `Autoscale`, `Align` (text anchoring), `StrokeCap`, `StrokeDash`, `StrokeAlign`, `FileNaming` (how a capture's file is named), `Gradient` (with the ramp and dither both backends share) and its `GradientStop`, `RenderBackend` (`run`'s CPU/GPU choice; `from_arguments` reads it from a `gpu` argument), text layout, the command buffer, both backends (CPU rasteriser, GL 3.3) |
 | `color` | `src/create/color/` | `Color`, `BlendMode`, `ColorScheme` (the colours of a scheme, light, dark or from a seed), `ColorRole` (a colour named by what it is for) and `OptionalColor` (the type of a style's colour keywords, a colour or a role) |
-| `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `OptionalNumber` (the type of number keywords such as `blur=12`), `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, `lerp`, `map` and the other scalar helpers, re-exported `std.math` functions |
+| `math` | `src/create/math/` | `Point`, `Vector`, `Transform`, `Matrix` and its functions, `Number` (the type of number parameters, an `Int` or a `Float64`), `OptionalNumber` (the type of number keywords such as `blur=12`), `Random`, `Noise`, `Easing`/`ease`, `PI`/`TAU`, `lerp`, `map` and the other scalar helpers, re-exported `std.math` functions |
 | `time` | `src/create/time/` | `Time` (the frame clock `Context` ticks), `Clock` and the run clock that playheads read (`_run_clock`), `DateTime` (the wall clock) |
 | `geometry` | `src/create/geometry/` | The shapes (`Rectangle`, `Circle`, `Ellipse`, `Capsule`, `Triangle`, `Sector`, `Polygon`, `Line`, `Arc`), `Bezier`, `Spline`, the `Geometry`/`Shape`/`Curve` traits, `overlaps`/`contains`/`intersects`, corner rounding's maths. Values and tests only: how a shape is drawn is `render`'s. One file per shape; `_collider.mojo` decides every test between a `Circle`, `Capsule`, `Rectangle`, `Triangle` or `Line` as a convex core grown by a radius |
 | `image` | `src/create/image/` | `Image` (BMP/PNG/JPEG), `PixelBuffer` |
@@ -80,8 +80,8 @@ further in and from the leaves; within a layer, `app` imports `input` and `anima
 | UI | `ui` | `app`, `render`, `input`, `geometry`, `color`, `text`, `math` |
 | Application | `app`, `input` | `app`: `input`, `render`, `image`, `math`, `time`, `_path`, `_native`; `input`: `math` |
 | Rendering | `render` | `geometry`, `color`, `image`, `animation`, `text`, `math`, `_bytes`, `_library`, `_path`, `_native` |
-| Media and data | `image`, `text`, `audio`, `animation`, `data` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `text` and `audio`: `_bytes`, `_library`, `_path`; `data`: `_path` |
-| Core | `math`, `color`, `time`, `geometry` | `math`, `color` and `time`: nothing; `geometry`: `math` |
+| Media and data | `image`, `text`, `audio`, `animation`, `data` | `animation`: `image`, `math`, `time`, `_path`; `image`: `color`, `_bytes`, `_library`, `_path`; `audio`: `math`, `_bytes`, `_library`, `_path`; `text`: `_bytes`, `_library`, `_path`; `data`: `_path` |
+| Core | `math`, `color`, `time`, `geometry` | `math` and `time`: nothing; `color` and `geometry`: `math` |
 | Leaves | `_bytes`, `_library`, `_path`, `_native` | Nothing |
 
 Core is a layer's name, not a package: its four packages sit at the top level like the others. Each
@@ -139,8 +139,8 @@ flowchart TB
 ```
 
 Each package's imports, as a graph; every arrow points inwards. The leaves `_bytes`, `_library`,
-`_path` and `_native` are left out, and so are `audio` and `data`, which import only those leaves
-and which no package here imports:
+`_path` and `_native` are left out, and so is `data`, which imports only those leaves and which no
+package here imports:
 
 ```mermaid
 flowchart TD
@@ -168,6 +168,8 @@ flowchart TD
     animation --> math
     input --> math
     ui --> app
+    color --> math
+    audio --> math
 ```
 
 The rules behind it, and what each one buys:

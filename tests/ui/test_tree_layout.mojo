@@ -39,6 +39,25 @@ def test_a_widget_with_no_size_takes_the_size_it_prefers() raises -> None:
     assert_equal(ui[placed].rect, Rectangle((50, 50), 120, 30))  # kept
 
 
+def test_layout_number_fields_take_integers() raises -> None:
+    var gap = 8
+    var column = Column()
+    column.gap = gap
+    var row = Row()
+    row.gap = 4
+    var panel = Panel()
+    panel.padding = 6
+    var space = Space()
+    space.amount = 10
+    var area = ScrollArea()
+    area.max_height = 300
+    assert_equal(column.gap.value(), 8.0)
+    assert_equal(row.gap.value(), 4.0)
+    assert_equal(panel.padding.value(), 6.0)
+    assert_equal(space.amount.value(), 10.0)
+    assert_equal(area.max_height.value(), 300.0)
+
+
 def test_a_column_stacks_from_the_top_across_its_width() raises -> None:
     var ui = UI()
     var list = ui.add(Column(Rectangle((0, 0), 200, 300)))

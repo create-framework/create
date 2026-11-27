@@ -1,3 +1,4 @@
+from .number import Number
 from std.collections import Optional
 
 
@@ -46,6 +47,10 @@ struct OptionalNumber(
         self._value = Float64(value)
 
     @implicit
+    def __init__(out self, value: Number):
+        self._value = Float64(value)
+
+    @implicit
     def __init__(out self, value: Optional[Float64]):
         self._value = value
 
@@ -61,9 +66,9 @@ struct OptionalNumber(
         """The number. Only call it when one was given."""
         return self._value.value()
 
-    def or_else(self, default: Float64) -> Float64:
+    def or_else(self, default: Number) -> Float64:
         """The number, or `default` when none was given."""
-        return self._value.or_else(default)
+        return self._value.or_else(Float64(default))
 
     def write_to[W: Writer](self, mut writer: W):
         if self._value:

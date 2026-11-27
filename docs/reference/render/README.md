@@ -1,6 +1,6 @@
 # create.render
 
-Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`), and how a capture's file is named (`FileNaming`).
+Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient` and its `GradientStop`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`), and how a capture's file is named (`FileNaming`).
 
 ## Types
 
@@ -15,6 +15,7 @@ Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`,
 | [`FileNaming`](filenaming.md) | How a capture's file is named from the path it is given. |
 | [`Autoscale`](autoscale.md) | How the program's design size maps onto the window. |
 | [`Gradient`](gradient.md) | A smooth run of colours across a shape's fill, or across the background. |
+| [`GradientStop`](gradientstop.md) | A colour placed at a position along a `Gradient`, from 0 at its start to 1 at its end. |
 | [`Style`](style.md) | A set of style changes: how something is painted, independent of where it goes. Each part is optional, and a part left unset changes nothing. |
 | [`Camera`](camera.md) | What part of world space maps onto the screen. |
 | [`Canvas`](canvas.md) | One frame: the geometry and the rendering API. |

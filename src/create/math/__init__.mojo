@@ -1,5 +1,5 @@
 """Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`,
-`OptionalNumber`, the easing curves, scalar helpers, `PI` and `TAU`, and the
+`Number` and `OptionalNumber`, the easing curves, scalar helpers, `PI` and `TAU`, and the
 common `std.math` functions.
 """
 from .util import (
@@ -15,6 +15,7 @@ from .util import (
 )
 from .easing import Easing, ease
 from .point import Point
+from .number import Number
 from .optional_number import OptionalNumber
 from .vector import Vector
 from .transform import Transform

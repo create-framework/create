@@ -1,5 +1,5 @@
 from std.math import sqrt
-from create.math import PI, Point, Vector
+from create.math import PI, Number, Point, Vector
 from .bezier import _curve_segments
 from ._overlap import _regions_overlap
 from .curve import Curve
@@ -42,12 +42,9 @@ struct Circle(
     var position: Point
     var radius: Float64
 
-    def __init__(out self, position: Point, radius: Float64):
+    def __init__(out self, position: Point, radius: Number):
         self.position = position
-        self.radius = radius
-
-    def __init__(out self, position: Point, radius: Int):
-        self = Circle(position, Float64(radius))
+        self.radius = Float64(radius)
 
     def __eq__(self, other: Circle) -> Bool:
         return self.position == other.position and self.radius == other.radius

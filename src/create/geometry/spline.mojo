@@ -9,7 +9,7 @@ from .polygon import Polygon
 from .rectangle import Rectangle
 from .sector import Sector
 from .triangle import Triangle
-from create.math import Point
+from create.math import Number, Point
 from .curve import Curve
 from create.math import Vector
 
@@ -51,11 +51,11 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
     def __init__(
         out self,
         var points: List[Point],
-        alpha: Float64 = 0.5,
+        alpha: Number = 0.5,
         closed: Bool = False,
     ):
         self.points = points^
-        self.alpha = alpha
+        self.alpha = Float64(alpha)
         self.closed = closed
 
     def __eq__(self, other: Spline) -> Bool:
@@ -114,16 +114,16 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
             curves.append(self._segment(p0, p1, p2, p3))
         return curves^
 
-    def at(self, t: Float64) -> Point:
+    def at(self, t: Number) -> Point:
         """The point at parameter `t`, clamped to 0..1: a spline has no
         natural continuation past its ends."""
         var curves = self.beziers()
         if len(curves) == 0:
             return self._lone_point()
-        var located = _locate(len(curves), t)
+        var located = _locate(len(curves), Float64(t))
         return curves[located[0]].at(located[1])
 
-    def tangent(self, t: Float64) -> Vector:
+    def tangent(self, t: Number) -> Vector:
         """The derivative with respect to `t` at `t`, clamped to 0..1: the
         direction of travel, with a magnitude that is the speed `t` moves at.
         A joint belongs to the stretch that starts there. Zero when there is
@@ -131,7 +131,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         var curves = self.beziers()
         if len(curves) == 0:
             return Vector(0.0, 0.0)
-        var located = _locate(len(curves), t)
+        var located = _locate(len(curves), Float64(t))
         # Each stretch runs its own 0..1 in 1/n of the spline's `t`.
         return curves[located[0]].tangent(located[1]) * Float64(len(curves))
 
@@ -143,7 +143,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
             total += c.length()
         return total
 
-    def at_distance(self, distance: Float64) -> Point:
+    def at_distance(self, distance: Number) -> Point:
         """The point `distance` along the curve from the first point,
         clamped to the curve's ends. Equal steps in `distance` are equal
         steps along the curve. Measures every stretch per call; sample once
@@ -151,9 +151,9 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
         var curves = self.beziers()
         if len(curves) == 0:
             return self._lone_point()
-        if distance <= 0.0:
+        if Float64(distance) <= 0.0:
             return curves[0].start
-        var remaining = distance
+        var remaining = Float64(distance)
         for c in curves:
             var length = c.length()
             if remaining <= length:
@@ -190,7 +190,7 @@ struct Spline(Copyable, Curve, Equatable, Movable, Writable):
             hi.y - lo.y,
         )
 
-    def flatten(self, tolerance: Float64) -> List[Point]:
+    def flatten(self, tolerance: Number) -> List[Point]:
         """Points along the curve, from the first point to the last
         inclusive, straying from it by at most `tolerance` between them:
         each stretch's `Bezier.flatten`, joined without repeating the

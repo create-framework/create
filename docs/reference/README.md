@@ -18,9 +18,9 @@ The input devices `Context` holds: `Keyboard`, `Mouse` and `Gamepad`, and the `K
 
 ## [`create.math`](math/README.md)
 
-Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, `OptionalNumber`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
+Maths: `Point`, `Vector`, `Transform` and `Matrix`, `Random` and `Noise`, `Number` and `OptionalNumber`, the easing curves, scalar helpers, `PI` and `TAU`, and the common `std.math` functions.
 
-- **Types:** [`Easing`](math/easing.md), [`Point`](math/point.md), [`OptionalNumber`](math/optionalnumber.md), [`Vector`](math/vector.md), [`Transform`](math/transform.md), [`Matrix`](math/matrix.md), [`Random`](math/random.md), [`Noise`](math/noise.md)
+- **Types:** [`Easing`](math/easing.md), [`Point`](math/point.md), [`Number`](math/number.md), [`OptionalNumber`](math/optionalnumber.md), [`Vector`](math/vector.md), [`Transform`](math/transform.md), [`Matrix`](math/matrix.md), [`Random`](math/random.md), [`Noise`](math/noise.md)
 - **Functions:** [`lerp`](math/lerp.md), [`map`](math/map.md), [`inverse_lerp`](math/inverse_lerp.md), [`smoothstep`](math/smoothstep.md), [`sign`](math/sign.md), [`fractional_part`](math/fractional_part.md), [`wrap`](math/wrap.md), [`degrees`](math/degrees.md), [`radians`](math/radians.md), [`ease`](math/ease.md), [`identity`](math/identity.md), [`inverse`](math/inverse.md)
 - **Constants:** [`PI`](math/README.md#pi), [`TAU`](math/README.md#tau)
 
@@ -45,9 +45,9 @@ Colours: `Color` and `BlendMode`, and the colour schemes that name colours by wh
 
 ## [`create.render`](render/README.md)
 
-Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`), and how a capture's file is named (`FileNaming`).
+Drawing: `Canvas`, `Drawable`, `Text`, `Picture`, `Style`, `Gradient` and its `GradientStop`, `Camera`, and the settings that shape a frame (`Antialiasing`, `Autoscale`, `Align`, `StrokeCap`, `StrokeDash`, `StrokeAlign`, `RenderBackend`), and how a capture's file is named (`FileNaming`).
 
-- **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`FileNaming`](render/filenaming.md), [`Autoscale`](render/autoscale.md), [`Gradient`](render/gradient.md), [`Style`](render/style.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`Text`](render/text.md), [`Picture`](render/picture.md)
+- **Types:** [`RenderBackend`](render/renderbackend.md), [`Antialiasing`](render/antialiasing.md), [`Align`](render/align.md), [`StrokeAlign`](render/strokealign.md), [`StrokeCap`](render/strokecap.md), [`StrokeDash`](render/strokedash.md), [`FileNaming`](render/filenaming.md), [`Autoscale`](render/autoscale.md), [`Gradient`](render/gradient.md), [`GradientStop`](render/gradientstop.md), [`Style`](render/style.md), [`Camera`](render/camera.md), [`Canvas`](render/canvas.md), [`Text`](render/text.md), [`Picture`](render/picture.md)
 - **Traits:** [`Drawable`](render/drawable.md)
 
 ## [`create.image`](image/README.md)

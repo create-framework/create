@@ -55,18 +55,9 @@ def __init__(
 @staticmethod
 def regular(
     position: Point,
-    radius: Float64,
+    radius: Number,
     sides: Int,
-    start_angle: Float64 = 1.5707963267948966,
-    *,
-    corner_radius: OptionalNumber = SIMD(0),
-) -> Self
-@staticmethod
-def regular(
-    position: Point,
-    radius: Int,
-    sides: Int,
-    start_angle: Float64 = 1.5707963267948966,
+    start_angle: Number = SIMD(1.5707963267948966),
     *,
     corner_radius: OptionalNumber = SIMD(0),
 ) -> Self
@@ -80,20 +71,10 @@ A regular polygon of `sides` vertices on the circle around `position` with radiu
 @staticmethod
 def star(
     position: Point,
-    radius: Float64,
-    inner_radius: Float64,
+    radius: Number,
+    inner_radius: Number,
     tips: Int,
-    start_angle: Float64 = 1.5707963267948966,
-    *,
-    corner_radius: OptionalNumber = SIMD(0),
-) -> Self
-@staticmethod
-def star(
-    position: Point,
-    radius: Int,
-    inner_radius: Int,
-    tips: Int,
-    start_angle: Float64 = 1.5707963267948966,
+    start_angle: Number = SIMD(1.5707963267948966),
     *,
     corner_radius: OptionalNumber = SIMD(0),
 ) -> Self

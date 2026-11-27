@@ -27,7 +27,7 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`.
 
 ```mojo
 @staticmethod
-def __init__(out self, var frames: List[Image], fps: Float64 = 12) raises
+def __init__(out self, var frames: List[Image], fps: Number = SIMD(12)) raises
 ```
 
 Build an animation from frames already in memory.
@@ -45,7 +45,7 @@ def from_sheet(
     frame_height: Int,
     start: Int = Int(0),
     count: Int = Int(0),
-    fps: Float64 = 12,
+    fps: Number = SIMD(12),
 ) raises -> Self
 ```
 
@@ -68,7 +68,7 @@ failed load.
 
 ```mojo
 @staticmethod
-def from_folder(path: String, fps: Float64 = 12) raises -> Self
+def from_folder(path: String, fps: Number = SIMD(12)) raises -> Self
 ```
 
 Load every image in a directory as a frame, in natural number order.

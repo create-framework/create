@@ -52,7 +52,7 @@ from ._command import (
 from .style import Style, _ResolvedStyle
 from create.color.color_scheme import ColorScheme
 from create.color.optional_color import OptionalColor
-from create.math import OptionalNumber
+from create.math import Number, OptionalNumber
 from create._path import _caller_relative
 from ._command import RenderCommand
 from ._shape_command import RegionCapture, curves_command, shape_command
@@ -383,10 +383,10 @@ struct Canvas(Movable, _GeometryTarget):
 
     def __init__(
         out self,
-        width: Float64,
-        height: Float64,
+        width: Number,
+        height: Number,
         *,
-        pixel_scale: Float64 = 1.0,
+        pixel_scale: Number = 1.0,
         antialiasing: Antialiasing = Antialiasing.MEDIUM,
     ) raises:
         """An offscreen canvas of `width` by `height` screen units, with
@@ -397,49 +397,28 @@ struct Canvas(Movable, _GeometryTarget):
         rasterised on the CPU, whatever backend the program runs on; what
         comes out of it is an `Image`, which any canvas can draw.
         """
-        if width <= 0.0 or height <= 0.0:
+        if Float64(width) <= 0.0 or Float64(height) <= 0.0:
             raise Error(
                 "an offscreen canvas needs a size of at least one unit, got "
                 + String(width)
                 + " x "
                 + String(height)
             )
-        if pixel_scale <= 0.0:
+        if Float64(pixel_scale) <= 0.0:
             raise Error(
                 "an offscreen canvas needs a positive pixel_scale, got "
                 + String(pixel_scale)
             )
-        var pixel_w = Int(width * pixel_scale + 0.5)
-        var pixel_h = Int(height * pixel_scale + 0.5)
+        var pixel_w = Int(Float64(width) * Float64(pixel_scale) + 0.5)
+        var pixel_h = Int(Float64(height) * Float64(pixel_scale) + 0.5)
         var state = _PersistentCanvasState()
         state.autoclear = False
         state._backend[].antialiasing = antialiasing
-        state._set_viewport(Autoscale.FIT, width, height, pixel_w, pixel_h)
+        state._set_viewport(
+            Autoscale.FIT, Float64(width), Float64(height), pixel_w, pixel_h
+        )
         state._backend[].target = MemorySurface(pixel_w, pixel_h)
         self = Canvas(_state=state^)
-
-    def __init__(
-        out self,
-        width: Int,
-        height: Int,
-        *,
-        pixel_scale: Float64 = 1.0,
-        antialiasing: Antialiasing = Antialiasing.MEDIUM,
-    ) raises:
-        """An offscreen canvas of `width` by `height` screen units, with
-        `pixel_scale` pixels to the unit: `pixel_scale=canvas.pixel_scale()` matches the
-        window's density.
-
-        Screen space as on the frame canvas: origin centred, y up. Always
-        rasterised on the CPU, whatever backend the program runs on; what
-        comes out of it is an `Image`, which any canvas can draw.
-        """
-        self = Canvas(
-            Float64(width),
-            Float64(height),
-            pixel_scale=pixel_scale,
-            antialiasing=antialiasing,
-        )
 
     def _offscreen(self) -> Bool:
         """Whether this is a program's own canvas rather than a frame's."""
@@ -592,19 +571,19 @@ struct Canvas(Movable, _GeometryTarget):
         """
         self._apply_transform(Transform(translation=Vector(delta.x, delta.y)))
 
-    def rotate(mut self, angle: Float64):
+    def rotate(mut self, angle: Number):
         """Turn everything drawn after this, until the end of the frame,
         counter-clockwise by `angle` radians about the current origin, as
         Processing's `rotate` does. See `translate`."""
         self._apply_transform(Transform(rotation=angle))
 
-    def scale(mut self, s: Float64):
+    def scale(mut self, s: Number):
         """Make everything drawn after this, until the end of the frame, `s`
         times as big about the current origin, as Processing's `scale` does.
         See `translate`."""
         self._apply_transform(Transform(scale_x=s, scale_y=s))
 
-    def scale(mut self, sx: Float64, sy: Float64):
+    def scale(mut self, sx: Number, sy: Number):
         """Stretch everything drawn after this, until the end of the frame,
         by `sx` across and `sy` up and down about the current origin. A
         negative value mirrors. See `translate`."""
@@ -965,23 +944,14 @@ struct Canvas(Movable, _GeometryTarget):
         the stroke on."""
         self._style.stroke_dash = dash
 
-    def corner_radius(mut self, radius: Float64):
+    def corner_radius(mut self, radius: Number):
         """Round the shapes built from numbers by `rectangle`, `triangle`,
         `polygon` and `sector`, in world units, unless a call names its own
         `corner_radius`. A shape value carries its own radius, so
         `draw(shape)` and `clip(shape)` ignore this one: what is drawn from
         a shape is what its `contains` tests. Clamped per shape as the shape
         describes."""
-        self._style.corner_radius = radius
-
-    def corner_radius(mut self, radius: Int):
-        """Round the shapes built from numbers by `rectangle`, `triangle`,
-        `polygon` and `sector`, in world units, unless a call names its own
-        `corner_radius`. A shape value carries its own radius, so
-        `draw(shape)` and `clip(shape)` ignore this one: what is drawn from
-        a shape is what its `contains` tests. Clamped per shape as the shape
-        describes."""
-        self.corner_radius(Float64(radius))
+        self._style.corner_radius = Float64(radius)
 
     def clear(mut self):
         """Discard everything drawn so far, back to how the canvas started.
@@ -1038,7 +1008,7 @@ struct Canvas(Movable, _GeometryTarget):
     def save_image(
         mut self,
         path: Optional[String] = None,
-        pixel_scale: Float64 = 1.0,
+        pixel_scale: Number = 1.0,
         transparent: Bool = False,
         *,
         naming: Optional[FileNaming] = None,
@@ -1082,7 +1052,7 @@ struct Canvas(Movable, _GeometryTarget):
             _capture_path(
                 _caller_relative(path.or_else("image.png")), Bool(path), naming
             ),
-            pixel_scale,
+            Float64(pixel_scale),
             transparent,
         )
 
@@ -1194,7 +1164,7 @@ struct Canvas(Movable, _GeometryTarget):
         backend.read_frame(seeded=not self._state.autoclear)
         return backend.frame_read.value().pixel(x, y)
 
-    def snapshot(mut self, pixel_scale: Float64 = 1.0) raises -> Image:
+    def snapshot(mut self, pixel_scale: Number = 1.0) raises -> Image:
         """What this frame has drawn so far, as an `Image` of the whole
         screen: `width * pixel_scale` by `height * pixel_scale` pixels.
 
@@ -1207,7 +1177,7 @@ struct Canvas(Movable, _GeometryTarget):
         return self.snapshot(self.bounds(), pixel_scale)
 
     def snapshot(
-        mut self, region: Rectangle, pixel_scale: Float64 = 1.0
+        mut self, region: Rectangle, pixel_scale: Number = 1.0
     ) raises -> Image:
         """What this frame has drawn so far inside `region`, as an `Image`
         of `region.w * pixel_scale` by `region.h * pixel_scale` pixels.
@@ -1220,14 +1190,14 @@ struct Canvas(Movable, _GeometryTarget):
         are; any other value resamples them, nearest pixel.
         """
         comptime if IN_LIBRARY:
-            return self._snapshot_here(region, pixel_scale)
+            return self._snapshot_here(region, Float64(pixel_scale))
         else:
             var image = Slot(Optional[Image]())
             var error = Slot(String())
             var ok = entry[_Snapshot, "create_canvas_snapshot"]()(
                 address(self),
                 address(region),
-                pixel_scale,
+                Float64(pixel_scale),
                 image.address(),
                 error.address(),
             )
@@ -1372,8 +1342,8 @@ struct Canvas(Movable, _GeometryTarget):
         naming: Optional[FileNaming] = None,
         seconds: OptionalNumber = None,
         frames: Optional[Int] = None,
-        fps: Float64 = 30.0,
-        pixel_scale: Float64 = 1.0,
+        fps: Number = 30.0,
+        pixel_scale: Number = 1.0,
         dither: Bool = False,
         transparent: Bool = False,
     ) raises:
@@ -1447,8 +1417,8 @@ struct Canvas(Movable, _GeometryTarget):
             ),
             seconds,
             frames,
-            fps,
-            pixel_scale,
+            Float64(fps),
+            Float64(pixel_scale),
             dither,
             transparent,
         )
@@ -1573,8 +1543,8 @@ struct Canvas(Movable, _GeometryTarget):
     def rectangle(
         mut self,
         position: Point,
-        width: Float64,
-        height: Float64,
+        width: Number,
+        height: Number,
         *,
         corner_radius: OptionalNumber = None,
         rotation: OptionalNumber = 0.0,
@@ -1593,40 +1563,13 @@ struct Canvas(Movable, _GeometryTarget):
             )
         )
 
-    def rectangle(
-        mut self,
-        position: Point,
-        width: Int,
-        height: Int,
-        *,
-        corner_radius: OptionalNumber = None,
-        rotation: OptionalNumber = 0.0,
-    ):
-        """Draw the `width` by `height` rectangle centred on `position`, its
-        corners rounded by `corner_radius`, or by the style's when not given
-        (clamped to half the shorter side), and turned about its centre by
-        `rotation` radians counter-clockwise, as `Rectangle` describes it."""
-        self.rectangle(
-            position,
-            Float64(width),
-            Float64(height),
-            corner_radius=corner_radius,
-            rotation=rotation,
-        )
-
-    def circle(mut self, position: Point, radius: Float64):
+    def circle(mut self, position: Point, radius: Number):
         """Draw the circle centred on `position` with radius `radius`: a
         `Circle`. Its stroke is inset, inside the radius, unless the style's
         `stroke_alignment` says otherwise."""
         self.draw(Circle(position, radius))
 
-    def circle(mut self, position: Point, radius: Int):
-        """Draw the circle centred on `position` with radius `radius`: a
-        `Circle`. Its stroke is inset, inside the radius, unless the style's
-        `stroke_alignment` says otherwise."""
-        self.circle(position, Float64(radius))
-
-    def ellipse(mut self, position: Point, width: Float64, height: Float64):
+    def ellipse(mut self, position: Point, width: Number, height: Number):
         """Draw the axis-aligned ellipse centred on `position`, `width` wide and
         `height` high: an `Ellipse`, filling the rectangle
         `rectangle(position, width, height)` would draw. Turn one with
@@ -1643,24 +1586,7 @@ struct Canvas(Movable, _GeometryTarget):
         """
         self.draw(Ellipse(position, width, height))
 
-    def ellipse(mut self, position: Point, width: Int, height: Int):
-        """Draw the axis-aligned ellipse centred on `position`, `width` wide and
-        `height` high: an `Ellipse`, filling the rectangle
-        `rectangle(position, width, height)` would draw. Turn one with
-        `transform`.
-
-        The stroke is inset, as a circle's is, and as thick all round: the
-        fill stops where it starts, and a translucent ellipse composites
-        once. It is drawn as a polygon, flattened as finely as a circle of
-        its larger radius, so filled it costs what a circle does and
-        stroked what a stroked `polygon` of its outline does, about three
-        times a circle's. A blurred drop shadow or an inset one costs what a
-        `bezier`'s blurred shadow does. With `width == height` it covers what
-        `circle(position, width / 2)` does, to within its flattening.
-        """
-        self.ellipse(position, Float64(width), Float64(height))
-
-    def capsule(mut self, start: Point, end: Point, radius: Float64):
+    def capsule(mut self, start: Point, end: Point, radius: Number):
         """Draw the capsule round the segment from `start` to `end`: every
         point within `radius` of it, a `Capsule`, its ends half discs.
 
@@ -1675,27 +1601,12 @@ struct Canvas(Movable, _GeometryTarget):
         """
         self.draw(Capsule(start, end, radius))
 
-    def capsule(mut self, start: Point, end: Point, radius: Int):
-        """Draw the capsule round the segment from `start` to `end`: every
-        point within `radius` of it, a `Capsule`, its ends half discs.
-
-        The stroke is inset, as a circle's is: the fill stops where it
-        starts, and a translucent capsule composites once. Unlike a
-        round-capped `line`, it has a fill and a stroke of its own. It is
-        drawn as a polygon, each end flattened as finely as a circle of
-        `radius`, so filled it costs what a circle does and stroked what a
-        stroked `polygon` of its outline does. A blurred drop shadow or an
-        inset one costs what a `bezier`'s blurred shadow does. A zero
-        `radius` draws nothing.
-        """
-        self.capsule(start, end, Float64(radius))
-
     def sector(
         mut self,
         position: Point,
-        radius: Float64,
-        start_angle: Float64,
-        sweep_angle: Float64,
+        radius: Number,
+        start_angle: Number,
+        sweep_angle: Number,
         *,
         corner_radius: OptionalNumber = None,
     ):
@@ -1723,39 +1634,6 @@ struct Canvas(Movable, _GeometryTarget):
                 sweep_angle,
                 corner_radius=corner_radius.or_else(self._style.corner_radius),
             )
-        )
-
-    def sector(
-        mut self,
-        position: Point,
-        radius: Int,
-        start_angle: Float64,
-        sweep_angle: Float64,
-        *,
-        corner_radius: OptionalNumber = None,
-    ):
-        """Draw the pie slice of the circle around `position` with `radius`,
-        from `start_angle` round by `sweep_angle`: a `Sector`, its tip at
-        `position`.
-
-        Angles are radians, counter-clockwise from the +x axis (y is up); a
-        negative sweep runs clockwise, and a full turn or more is the whole
-        disc. The stroke is inset, as a circle's is: the fill stops where it
-        starts, and a translucent sector composites once. A blurred drop
-        shadow or an inset one costs what a `bezier`'s blurred shadow does.
-        A zero radius or sweep draws nothing.
-
-        `corner_radius`, or the style's when not given, rounds the tip and
-        both ends of the arc, as `Sector` describes. A rounded sector is
-        drawn as a polygon, so it costs what a stroked `polygon` of its
-        flattened outline does.
-        """
-        self.sector(
-            position,
-            Float64(radius),
-            start_angle,
-            sweep_angle,
-            corner_radius=corner_radius,
         )
 
     def polygon(
@@ -1841,7 +1719,7 @@ struct Canvas(Movable, _GeometryTarget):
     def spline(
         mut self,
         var points: List[Point],
-        alpha: Float64 = 0.5,
+        alpha: Number = 0.5,
         closed: Bool = False,
     ):
         """Stroke a smooth curve through every one of `points`, in order, in
@@ -1864,9 +1742,9 @@ struct Canvas(Movable, _GeometryTarget):
     def arc(
         mut self,
         position: Point,
-        radius: Float64,
-        start_angle: Float64,
-        sweep_angle: Float64,
+        radius: Number,
+        start_angle: Number,
+        sweep_angle: Number,
     ):
         """Stroke the arc of the circle around `position` with radius `radius`,
         from `start_angle` round by `sweep_angle`, in the stroke colour and
@@ -1883,29 +1761,6 @@ struct Canvas(Movable, _GeometryTarget):
         draws nothing.
         """
         self.draw(Arc(position, radius, start_angle, sweep_angle))
-
-    def arc(
-        mut self,
-        position: Point,
-        radius: Int,
-        start_angle: Float64,
-        sweep_angle: Float64,
-    ):
-        """Stroke the arc of the circle around `position` with radius `radius`,
-        from `start_angle` round by `sweep_angle`, in the stroke colour and
-        thickness: an `Arc`.
-
-        Angles are radians, counter-clockwise from the +x axis (y is up); a
-        negative sweep runs clockwise, and a full turn or more is the whole
-        circle, closed on a mitred joint.
-
-        Drawn as one stroke, like `bezier`: no fill, nothing with the stroke
-        off, ends as `stroke_cap` says short of a whole turn, and a translucent
-        stroke composites once. A blurred shadow costs what a `bezier`'s does.
-        A zero radius or sweep
-        draws nothing.
-        """
-        self.arc(position, Float64(radius), start_angle, sweep_angle)
 
     def triangle(
         mut self,
@@ -2045,8 +1900,8 @@ struct Canvas(Movable, _GeometryTarget):
         mut self,
         image: Image,
         position: Point,
-        width: Float64,
-        height: Float64,
+        width: Number,
+        height: Number,
     ):
         """Draw `image` centred on `position`, stretched to `width` by
         `height`. It follows the transform, and is tinted and faded by the
@@ -2070,19 +1925,13 @@ struct Canvas(Movable, _GeometryTarget):
                 self._style,
                 position.x,
                 position.y,
-                width,
-                height,
+                Float64(width),
+                Float64(height),
                 id,
                 image.width(),
                 image.height(),
             )
         )
-
-    def image(mut self, image: Image, position: Point, width: Int, height: Int):
-        """Draw `image` centred on `position`, stretched to `width` by
-        `height`. It follows the transform, and is tinted and faded by the
-        style's `tint` and `opacity`."""
-        self.image(image, position, Float64(width), Float64(height))
 
     def image(mut self, animator: Animator, position: Point):
         """Draw the animator's current frame centred on `position`, at its
@@ -2093,8 +1942,8 @@ struct Canvas(Movable, _GeometryTarget):
         mut self,
         animator: Animator,
         position: Point,
-        width: Float64,
-        height: Float64,
+        width: Number,
+        height: Number,
     ):
         """Draw the animator's current frame centred on `position`,
         stretched to `width` by `height`."""
@@ -2105,30 +1954,17 @@ struct Canvas(Movable, _GeometryTarget):
             height,
         )
 
-    def image(
-        mut self, animator: Animator, position: Point, width: Int, height: Int
-    ):
-        """Draw the animator's current frame centred on `position`,
-        stretched to `width` by `height`."""
-        self.image(animator, position, Float64(width), Float64(height))
-
     def text_color(mut self, color: Color):
         """Paint glyphs in `color`. Separate from `fill`, so a shape colour and
         a label colour do not have to be set in turn; a fully transparent one
         skips the text entirely."""
         self._style.text_color = color
 
-    def font_size(mut self, size: Float64):
+    def font_size(mut self, size: Number):
         """Text height in world units, scaled by autoscale like a coordinate.
         Glyphs are rasterised at whole pixel sizes, so a fractional size rounds
         once scaled."""
-        self._style.font_size = size
-
-    def font_size(mut self, size: Int):
-        """Text height in world units, scaled by autoscale like a coordinate.
-        Glyphs are rasterised at whole pixel sizes, so a fractional size rounds
-        once scaled."""
-        self.font_size(Float64(size))
+        self._style.font_size = Float64(size)
 
     def font_weight(mut self, weight: FontWeight):
         """Stroke weight of the face, a `FontWeight`. The packaged Noto
@@ -2158,14 +1994,14 @@ struct Canvas(Movable, _GeometryTarget):
         Resolved at record time, like every other style setting."""
         self._style.tint = color
 
-    def opacity(mut self, value: Float64):
+    def opacity(mut self, value: Number):
         """Fade whatever is rendered next: fill, gradient, stroke, text,
         image and shadow alike, never `background`. `1.0` (the default)
         leaves it untouched; `0.0` renders nothing visible. Each shape
         composites once, so a translucent one is evenly translucent, stroke
         and fill included. Resolved at record time, like every other style
         setting: it cannot reach back and fade what was already rendered."""
-        self._style.opacity = value
+        self._style.opacity = Float64(value)
 
     def blend_mode(mut self, mode: BlendMode):
         """Combine whatever is rendered next with what is already there by
@@ -2365,14 +2201,14 @@ struct Canvas(Movable, _GeometryTarget):
         """
         return self._measure_width(text, NO_WRAP)
 
-    def text_width(self, text: String, *, width: Float64) raises -> Float64:
+    def text_width(self, text: String, *, width: Number) raises -> Float64:
         """How wide `text(text, ..., width)` would render: the width of its
         widest line once wrapped at `width`, at most `width` unless a single
         glyph is wider.
 
         Raises only if the default font has to be loaded and cannot be.
         """
-        return self._measure_width(text, max(width, 0.0))
+        return self._measure_width(text, max(Float64(width), 0.0))
 
     def text_height(self, text: String) raises -> Float64:
         """How tall `text(text, ...)` would render under the current font and
@@ -2385,13 +2221,13 @@ struct Canvas(Movable, _GeometryTarget):
         """
         return self._measure_height(text, NO_WRAP)
 
-    def text_height(self, text: String, *, width: Float64) raises -> Float64:
+    def text_height(self, text: String, *, width: Number) raises -> Float64:
         """How tall `text(text, ..., width)` would render: its height once
         wrapped at `width`, every line it wraps onto counted.
 
         Raises only if the default font has to be loaded and cannot be.
         """
-        return self._measure_height(text, max(width, 0.0))
+        return self._measure_height(text, max(Float64(width), 0.0))
 
     def _text_scale(self) -> Float64:
         """The pixels per unit text is laid out at under the current
@@ -2470,7 +2306,7 @@ struct Canvas(Movable, _GeometryTarget):
         """
         self._text(text, position, NO_WRAP)
 
-    def text(mut self, text: String, position: Point, width: Float64):
+    def text(mut self, text: String, position: Point, width: Number):
         """Draw `text` at `position` as `text(text, position)` does, wrapped
         onto as many lines as keep each at most `width` units wide.
 
@@ -2481,7 +2317,7 @@ struct Canvas(Movable, _GeometryTarget):
         right text hanging from `position`. Measure the block with
         `text_width(text, width=...)` and `text_height(text, width=...)`.
         """
-        self._text(text, position, max(width, 0.0))
+        self._text(text, position, max(Float64(width), 0.0))
 
     def _text(mut self, text: String, position: Point, wrap: Float64):
         if self._style.text_color.a == 0:

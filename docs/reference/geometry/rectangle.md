@@ -56,18 +56,8 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `Geometry`, `ImplicitlyCopyabl
 def __init__(
     out self,
     position: Point,
-    width: Float64,
-    height: Float64,
-    *,
-    corner_radius: OptionalNumber = SIMD(0),
-    rotation: OptionalNumber = SIMD(0),
-)
-@staticmethod
-def __init__(
-    out self,
-    position: Point,
-    width: Int,
-    height: Int,
+    width: Number,
+    height: Number,
     *,
     corner_radius: OptionalNumber = SIMD(0),
     rotation: OptionalNumber = SIMD(0),
@@ -205,7 +195,7 @@ It moved by `delta`; this one is unchanged.
 ### `inset`
 
 ```mojo
-def inset(self, amount: Float64) -> Self
+def inset(self, amount: Number) -> Self
 ```
 
 The rectangle with each side moved in by `amount`, about the same centre: 10 narrower and 10 lower for an `amount` of 5. A negative `amount` moves the sides out instead. The width and height stop at 0, and the corner radius and rotation are kept.
@@ -218,7 +208,7 @@ canvas.draw(canvas.bounds().inset(8))
 ### `rows`
 
 ```mojo
-def rows(self, count: Int, *, gap: Float64 = 0) -> List[Self]
+def rows(self, count: Int, *, gap: Number = SIMD(0)) -> List[Self]
 ```
 
 The rectangle cut into `count` rows of equal height, the top one first, with `gap` between each row and the next.
@@ -230,7 +220,7 @@ for bar in Rectangle((0, 0), 300, 200).rows(3, gap=10):
 ```
 
 ```mojo
-def rows(self, *, weights: List[Float64], gap: Float64 = 0) -> List[Self]
+def rows(self, *, weights: List[Float64], gap: Number = SIMD(0)) -> List[Self]
 ```
 
 The rectangle cut into one row for each weight, the top one first, with `gap` between each row and the next. The rows share the height left after the gaps in proportion to their weights, so `weights=[1, 3]` gives the top row a quarter of it and the bottom one three quarters.
@@ -238,7 +228,7 @@ The rectangle cut into one row for each weight, the top one first, with `gap` be
 ### `columns`
 
 ```mojo
-def columns(self, count: Int, *, gap: Float64 = 0) -> List[Self]
+def columns(self, count: Int, *, gap: Number = SIMD(0)) -> List[Self]
 ```
 
 The rectangle cut into `count` columns of equal width, the left one first, with `gap` between each column and the next.
@@ -250,7 +240,7 @@ for cell in Rectangle((0, 0), 400, 60).columns(4, gap=8):
 ```
 
 ```mojo
-def columns(self, *, weights: List[Float64], gap: Float64 = 0) -> List[Self]
+def columns(self, *, weights: List[Float64], gap: Number = SIMD(0)) -> List[Self]
 ```
 
 The rectangle cut into one column for each weight, the left one first, with `gap` between each column and the next. The columns share the width left after the gaps in proportion to their weights, so `weights=[1, 3]` gives the left column a quarter of it and the right one three quarters.

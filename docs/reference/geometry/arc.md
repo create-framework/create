@@ -35,17 +35,9 @@ Implements `Copyable`, `Curve`, `Deinitable`, `Equatable`, `Geometry`, `Implicit
 def __init__(
     out self,
     position: Point,
-    radius: Float64,
-    start_angle: Float64,
-    sweep_angle: Float64,
-)
-@staticmethod
-def __init__(
-    out self,
-    position: Point,
-    radius: Int,
-    start_angle: Float64,
-    sweep_angle: Float64,
+    radius: Number,
+    start_angle: Number,
+    sweep_angle: Number,
 )
 ```
 
@@ -62,7 +54,7 @@ def end_angle(self) -> Float64
 ### `at`
 
 ```mojo
-def at(self, t: Float64) -> Point
+def at(self, t: Number) -> Point
 ```
 
 The point at parameter `t`: 0 at the start, 1 at the end, and proportional to distance along the arc in between. Not clamped: outside 0..1 it carries on round the circle.
@@ -70,7 +62,7 @@ The point at parameter `t`: 0 at the start, 1 at the end, and proportional to di
 ### `tangent`
 
 ```mojo
-def tangent(self, t: Float64) -> Vector
+def tangent(self, t: Number) -> Vector
 ```
 
 The derivative at `t`: the direction of travel, with a magnitude that is the arc's length (the speed per unit of `t`, the same everywhere). Zero for a collapsed arc.
@@ -86,7 +78,7 @@ The distance along the arc from start to end. Exact.
 ### `at_distance`
 
 ```mojo
-def at_distance(self, distance: Float64) -> Point
+def at_distance(self, distance: Number) -> Point
 ```
 
 The point `distance` along the arc from its start, clamped to the arc's ends. An arc has constant speed, so this is `at` with `t` scaled: exact, and as cheap as `at`.
@@ -94,7 +86,7 @@ The point `distance` along the arc from its start, clamped to the arc's ends. An
 ### `split`
 
 ```mojo
-def split(self, t: Float64) -> Tuple[Self, Self]
+def split(self, t: Number) -> Tuple[Self, Self]
 ```
 
 The arc cut at `t` into two on the same circle, together tracing exactly the original: the first runs from the start to `at(t)`, the second from `at(t)` to the end. A sweep past a full turn is clamped to one first, as everywhere else.
@@ -110,7 +102,7 @@ The tightest axis-aligned rectangle around the arc: its two ends, widened to eac
 ### `flatten`
 
 ```mojo
-def flatten(self, tolerance: Float64) -> List[Point]
+def flatten(self, tolerance: Number) -> List[Point]
 ```
 
 Points along the arc, from start to end inclusive, such that the straight segments between them stray from the arc by at most `tolerance`.

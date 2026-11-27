@@ -48,7 +48,7 @@ struct ScrollArea(Copyable, Movable):
     var offset: Float64
     """How far down its column the window shows, from 0 at the top. Each
     layout keeps it between 0 and as far as the column goes."""
-    var max_height: Optional[Float64]
+    var max_height: OptionalNumber
     """The tallest it grows to fit its column, with no `rect` of its own:
     as tall as the column when `None`."""
     var track: Style

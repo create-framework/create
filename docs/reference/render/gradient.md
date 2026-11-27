@@ -59,14 +59,10 @@ Evenly spaced colours along `direction`; one colour is a solid.
 
 ```mojo
 @staticmethod
-def linear(
-    stops: List[Tuple[Float64, Color]],
-    *,
-    direction: Vector = Vector.DOWN,
-) -> Self
+def linear(stops: List[GradientStop], *, direction: Vector = Vector.DOWN) -> Self
 ```
 
-Colours at the given positions along `direction`: `Gradient.linear([(0.0, Color.BLUE), (0.7, Color.PURPLE), (1.0, Color.ORANGE)])`.
+Colours at the given positions along `direction`: `Gradient.linear([(0, Color.BLUE), (0.7, Color.PURPLE), (1, Color.ORANGE)])`.
 
 ### `radial`
 
@@ -76,7 +72,7 @@ def radial(
     first: Color,
     *rest: Color,
     *,
-    center: Point = Point(SIMD(0), SIMD(0)),
+    center: Point = Point(Number(SIMD(0)), Number(SIMD(0))),
 ) -> Self
 ```
 
@@ -85,9 +81,9 @@ Evenly spaced colours out from `center` to the box's edges.
 ```mojo
 @staticmethod
 def radial(
-    stops: List[Tuple[Float64, Color]],
+    stops: List[GradientStop],
     *,
-    center: Point = Point(SIMD(0), SIMD(0)),
+    center: Point = Point(Number(SIMD(0)), Number(SIMD(0))),
 ) -> Self
 ```
 

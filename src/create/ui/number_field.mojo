@@ -4,7 +4,7 @@ within a range."""
 from create.app import Context
 from create.geometry import Rectangle
 from create.input import Key
-from create.math import OptionalNumber, Point
+from create.math import Number, OptionalNumber, Point
 from create.render import Canvas, Style
 from .button import Button
 from create.color.color_scheme import ColorScheme
@@ -83,9 +83,9 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
 
     def __init__(
         out self,
-        value: Float64,
-        minimum: Float64,
-        maximum: Float64,
+        value: Number,
+        minimum: Number,
+        maximum: Number,
         rect: Rectangle = _UNSIZED,
         *,
         step: OptionalNumber = None,
@@ -95,10 +95,12 @@ struct NumberField(Clickable, Copyable, Movable, Widget):
         buttons: Style = Style(),
         enabled: Bool = True,
     ):
-        self.minimum = min(minimum, maximum)
-        self.maximum = max(minimum, maximum)
+        self.minimum = min(Float64(minimum), Float64(maximum))
+        self.maximum = max(Float64(minimum), Float64(maximum))
         self.decimals = max(decimals, 0)
-        self.value = _kept(value, self.minimum, self.maximum, self.decimals)
+        self.value = _kept(
+            Float64(value), self.minimum, self.maximum, self.decimals
+        )
         self.rect = rect
         self.step = step.or_else(1)
         self.container = container

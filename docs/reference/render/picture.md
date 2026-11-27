@@ -47,9 +47,7 @@ The image at its own size: one unit per image pixel, as `canvas.image(image, pos
 
 ```mojo
 @staticmethod
-def __init__(out self, image: Image, position: Point, width: Float64, height: Float64)
-@staticmethod
-def __init__(out self, image: Image, position: Point, width: Int, height: Int)
+def __init__(out self, image: Image, position: Point, width: Number, height: Number)
 ```
 
 The image stretched to `width` by `height`.

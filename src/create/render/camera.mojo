@@ -1,3 +1,4 @@
+from create.math.number import Number
 from create.math.point import Point
 from create.math.transform import Transform
 from create.math.vector import Vector
@@ -17,10 +18,10 @@ struct Camera(Copyable, ImplicitlyCopyable, Movable, Writable):
     var zoom: Float64
 
     def __init__(
-        out self, position: Point = Point(0.0, 0.0), zoom: Float64 = 1.0
+        out self, position: Point = Point(0.0, 0.0), zoom: Number = 1.0
     ):
         self.position = position
-        self.zoom = zoom
+        self.zoom = Float64(zoom)
 
     def write_to[W: Writer](self, mut writer: W):
         writer.write(

@@ -31,7 +31,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 
 - `rect: Rectangle`: Where it is: given, or set by what it is in.
 - `align: Optional[Align]`: Where its widgets sit across it, each as tall as it prefers: at the top, centre or bottom. Each stretches across it when `None`.
-- `gap: Optional[Float64]`: What is left between each widget and the next: the `UI`'s `spacing` when `None`.
+- `gap: OptionalNumber`: What is left between each widget and the next: the `UI`'s `spacing` when `None`.
 
 ## Constructors
 
@@ -39,7 +39,7 @@ Implements `Copyable`, `Deinitable`, `Movable`.
 @staticmethod
 def __init__(
     out self,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     gap: OptionalNumber = None,
     align: Optional[Align] = None,

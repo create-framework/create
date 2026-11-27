@@ -47,6 +47,20 @@ def test_positions_are_clamped_and_kept_in_order() raises -> None:
     assert_equal(g._stops[][3][0], 1.0)
 
 
+def test_positions_take_integers() raises -> None:
+    var position = 1
+    var g = Gradient.linear(
+        [(0, Color.RED), (0.5, Color.GREEN), (position, Color.BLUE)]
+    )
+    assert_equal(g._stops[][0][0], 0.0)
+    assert_equal(g._stops[][1][0], 0.5)
+    assert_equal(g._stops[][2][0], 1.0)
+    assert_equal(
+        Gradient.linear([(0, Color.RED), (1, Color.BLUE)]),
+        Gradient.linear(Color.RED, Color.BLUE),
+    )
+
+
 def test_end_colours_carry_on() raises -> None:
     var g = Gradient.linear([(0.25, Color.RED), (0.75, Color.BLUE)])
     assert_equal(g._at(0.0), Color.RED)

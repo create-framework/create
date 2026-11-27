@@ -42,8 +42,8 @@ Implements `Copyable`, `Deinitable`, `Drawable`, `Movable`, `Widget`.
 @staticmethod
 def __init__(
     out self,
-    value: Float64,
-    rect: Rectangle = Rectangle(Point(SIMD(0), SIMD(0)), SIMD(0), SIMD(0), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
+    value: Number,
+    rect: Rectangle = Rectangle(Point(Number(SIMD(0)), Number(SIMD(0))), Number(SIMD(0)), Number(SIMD(0)), corner_radius=OptionalNumber(SIMD(0)), rotation=OptionalNumber(SIMD(0))),
     *,
     minimum: OptionalNumber = None,
     maximum: OptionalNumber = None,

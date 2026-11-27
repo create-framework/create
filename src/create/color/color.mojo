@@ -1,4 +1,5 @@
 from std.math import abs, atan2, cos, max, min, pi, sin, sqrt
+from create.math import Number
 
 
 def _channel(v: Float64) -> UInt8:
@@ -275,17 +276,18 @@ struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         )
 
     @staticmethod
-    def hsv(h: Float64, s: Float64, v: Float64) -> Color:
+    def hsv(h: Number, s: Number, v: Number) -> Color:
         """Build a color from hue in degrees (wraps) and saturation/value in 0..1.
 
-        Hue cycling is the point: `Color.hsv(Float64(context.frame_count()) % 360.0, 1.0, 1.0)`
+        Hue cycling is the point: `Color.hsv(context.frame_count() % 360, 1, 1)`
         sweeps the spectrum without hand-mixing channels.
         """
-        var hh = h - 360.0 * Float64(Int(h / 360.0))
+        var hh = Float64(h)
+        hh -= 360.0 * Float64(Int(hh / 360.0))
         if hh < 0.0:
             hh += 360.0
-        var ss = min(max(s, 0.0), 1.0)
-        var vv = min(max(v, 0.0), 1.0)
+        var ss = min(max(Float64(s), 0.0), 1.0)
+        var vv = min(max(Float64(v), 0.0), 1.0)
         var c = vv * ss
         var seg = hh / 60.0
         var f = seg - 2.0 * Float64(Int(seg / 2.0))
@@ -315,7 +317,7 @@ struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return Color(_channel(r + m), _channel(g + m), _channel(b + m))
 
     @staticmethod
-    def oklch(lightness: Float64, chroma: Float64, hue: Float64) -> Color:
+    def oklch(lightness: Number, chroma: Number, hue: Number) -> Color:
         """Build a colour from OKLCH: perceived lightness from 0 (black) to 1
         (white), chroma (how colourful, 0 for a grey, up to about 0.37 for
         the most vivid colours a screen shows) and hue in degrees (wraps).
@@ -326,9 +328,9 @@ struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         the screen to show is brought inside by lowering its chroma, keeping
         its lightness and hue.
         """
-        var l = min(max(lightness, 0.0), 1.0)
-        var c = max(chroma, 0.0)
-        var h = hue * pi / 180.0
+        var l = min(max(Float64(lightness), 0.0), 1.0)
+        var c = max(Float64(chroma), 0.0)
+        var h = Float64(hue) * pi / 180.0
         var rgb = _oklab_to_linear(l, c * cos(h), c * sin(h))
         if not _in_gamut(rgb):
             # Lower the chroma until the colour fits, by halving the gap.
@@ -380,12 +382,12 @@ struct Color(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
             chroma = 0.0
         return (lightness, chroma, hue)
 
-    def lerp(self, other: Color, t: Float64) -> Color:
+    def lerp(self, other: Color, t: Number) -> Color:
         """A new colour `t` of the way from this one to `other`, `t` clamped
         to 0..1; this one is unchanged. Mixes in sRGB, like a paint program's
         gradient, not perceptually uniform, but what the eye expects from two
         swatches."""
-        var tt = min(max(t, 0.0), 1.0)
+        var tt = min(max(Float64(t), 0.0), 1.0)
         return Color(
             _mix(self.r, other.r, tt),
             _mix(self.g, other.g, tt),

@@ -39,7 +39,7 @@ struct Column(Copyable, Movable):
     var align: Optional[Align]
     """Where its widgets sit across it, each as wide as it prefers: at
     the left, centre or right. Each stretches across it when `None`."""
-    var gap: Optional[Float64]
+    var gap: OptionalNumber
     """What is left between each widget and the next: the `UI`'s `spacing`
     when `None`."""
 

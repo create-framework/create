@@ -80,6 +80,15 @@ def test_a_release_off_the_track_moves_the_handle_there() raises -> None:
     assert_almost_equal(slider.value, 0.25)
 
 
+def test_number_fields_take_integers() raises -> None:
+    var step = 2
+    var slider = Slider(5, 0, 10)
+    slider.step = step
+    slider.handle_width = 12
+    assert_equal(slider.step.value(), 2.0)
+    assert_equal(slider.handle_width.value(), 12.0)
+
+
 def test_a_step_rounds_the_value() raises -> None:
     var slider = Slider(0, 0, 1, _TRACK, step=0.25)
     var context = Context()

@@ -35,8 +35,8 @@ def __init__(
     out self,
     *,
     translation: Vector = Vector.ZERO,
-    rotation: Float64 = 0,
-    scale: Float64 = 1,
+    rotation: Number = SIMD(0),
+    scale: Number = SIMD(1),
 )
 ```
 
@@ -48,9 +48,9 @@ def __init__(
     out self,
     *,
     translation: Vector = Vector.ZERO,
-    rotation: Float64 = 0,
-    scale_x: Float64,
-    scale_y: Float64,
+    rotation: Number = SIMD(0),
+    scale_x: Number,
+    scale_y: Number,
 )
 ```
 

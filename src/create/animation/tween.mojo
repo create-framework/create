@@ -1,6 +1,7 @@
 from std.math import clamp
 
 from create.math.easing import Easing, ease
+from create.math.number import Number
 from create.math.util import lerp, wrap
 from create.time.clock import Clock
 
@@ -75,20 +76,20 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     def __init__(
         out self,
-        start: Float64,
-        end: Float64,
-        duration: Float64,
+        start: Number,
+        end: Number,
+        duration: Number,
         curve: Easing = Easing.LINEAR,
         clock: Clock = Clock.SCALED,
     ):
         """A tween from `start` to `end` over `duration` seconds, timed by
         `clock`."""
         debug_assert(
-            duration > 0.0, "Tween: duration must be greater than zero"
+            Float64(duration) > 0.0, "Tween: duration must be greater than zero"
         )
-        self.start = start
-        self.end = end
-        self.duration = duration
+        self.start = Float64(start)
+        self.end = Float64(end)
+        self.duration = Float64(duration)
         self.curve = curve
         self.clock = clock
         self._started = False
@@ -100,7 +101,7 @@ struct Tween(Copyable, ImplicitlyCopyable, Movable, Writable):
 
     def __init__(
         out self,
-        duration: Float64,
+        duration: Number,
         curve: Easing = Easing.LINEAR,
         clock: Clock = Clock.SCALED,
     ):

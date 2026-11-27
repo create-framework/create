@@ -1,3 +1,4 @@
+from .number import Number
 from .vector import Vector
 
 
@@ -41,12 +42,9 @@ struct Point(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
     var x: Float64
     var y: Float64
 
-    def __init__(out self, x: Float64, y: Float64):
-        self.x = x
-        self.y = y
-
-    def __init__(out self, x: Int, y: Int):
-        self = Point(Float64(x), Float64(y))
+    def __init__(out self, x: Number, y: Number):
+        self.x = Float64(x)
+        self.y = Float64(y)
 
     @implicit
     def __init__(out self, t: Tuple[Float64, Float64]):
@@ -106,12 +104,13 @@ struct Point(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         smaller than another exactly when its square is."""
         return (self - other).magnitude_squared()
 
-    def lerp(self, other: Point, t: Float64) -> Point:
+    def lerp(self, other: Point, t: Number) -> Point:
         """A new point `t` of the way from this one to `other`; this one is
         unchanged. Not clamped: `t` outside 0..1 carries on past either end.
         """
+        var u = Float64(t)
         return Point(
-            self.x + (other.x - self.x) * t, self.y + (other.y - self.y) * t
+            self.x + (other.x - self.x) * u, self.y + (other.y - self.y) * u
         )
 
     def xy(self) -> Tuple[Float64, Float64]:

@@ -30,7 +30,7 @@ def volume(self) -> Float64
 The volume every playback plays at, `1.0` unless set.
 
 ```mojo
-def volume(mut self, volume: Float64) raises
+def volume(mut self, volume: Number) raises
 ```
 
 Set the volume every playback plays at, `0.0` silent and `1.0` as recorded; above `1.0` amplifies, and below `0.0` is silent too. Applies at once, to the playbacks already playing as well as later ones; each playback's own `volume(playback, ...)` scales it.
@@ -42,7 +42,7 @@ def volume(self, playback: Playback) -> Float64
 `playback`'s own volume, `1.0` unless set; `0.0` once it is stale.
 
 ```mojo
-def volume(mut self, playback: Playback, volume: Float64) raises
+def volume(mut self, playback: Playback, volume: Number) raises
 ```
 
 Set `playback`'s own volume, which `volume()` scales: a playback at `0.5` under a volume of `0.5` plays at a quarter. Below `0.0` is silent, as for `volume()`. No-op if stale.
@@ -53,8 +53,8 @@ Set `playback`'s own volume, which `volume()` scales: a playback at `0.5` under 
 def play(
     mut self,
     sound: Sound,
-    volume: Float64 = 1,
-    speed: Float64 = 1,
+    volume: Number = SIMD(1),
+    speed: Number = SIMD(1),
 ) raises -> Playback
 ```
 
@@ -66,8 +66,8 @@ Play `sound` once, as a new `Playback` at its own `volume` and `speed`; it is st
 def loop(
     mut self,
     sound: Sound,
-    volume: Float64 = 1,
-    speed: Float64 = 1,
+    volume: Number = SIMD(1),
+    speed: Number = SIMD(1),
 ) raises -> Playback
 ```
 
@@ -122,7 +122,7 @@ def speed(self, playback: Playback) -> Float64
 `playback`'s speed, `1.0` unless set; `0.0` once it is stale.
 
 ```mojo
-def speed(mut self, playback: Playback, speed: Float64) raises
+def speed(mut self, playback: Playback, speed: Number) raises
 ```
 
 Set `playback`'s speed: `2.0` plays it twice as fast and an octave higher, `0.5` half as fast and an octave lower, as a record sped up or slowed down. Clamped to `0.01` to `100.0`. No-op if stale.

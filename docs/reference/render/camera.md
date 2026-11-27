@@ -23,7 +23,11 @@ Implements `Copyable`, `Deinitable`, `ImplicitlyCopyable`, `Movable`, `Writable`
 
 ```mojo
 @staticmethod
-def __init__(out self, position: Point = Point(SIMD(0), SIMD(0)), zoom: Float64 = 1)
+def __init__(
+    out self,
+    position: Point = Point(Number(SIMD(0)), Number(SIMD(0))),
+    zoom: Number = SIMD(1),
+)
 ```
 
 ## Methods

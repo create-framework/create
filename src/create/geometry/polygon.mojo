@@ -1,5 +1,5 @@
 from std.math import min, max
-from create.math import PI, TAU, Point, Vector
+from create.math import PI, TAU, Number, Point, Vector
 from create.math import OptionalNumber
 from ._fillet import rounded_vertices
 from .bezier import _curve_segments
@@ -85,9 +85,9 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
     @staticmethod
     def regular(
         position: Point,
-        radius: Float64,
+        radius: Number,
         sides: Int,
-        start_angle: Float64 = TAU / 4.0,
+        start_angle: Number = TAU / 4.0,
         *,
         corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
@@ -97,38 +97,17 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         following counter-clockwise."""
         var vertices = List[Point](capacity=max(sides, 0))
         for i in range(sides):
-            var angle = start_angle + TAU * Float64(i) / Float64(sides)
+            var angle = Float64(start_angle) + TAU * Float64(i) / Float64(sides)
             vertices.append(position + _unit(angle) * radius)
         return Polygon(vertices^, corner_radius=corner_radius)
 
     @staticmethod
-    def regular(
-        position: Point,
-        radius: Int,
-        sides: Int,
-        start_angle: Float64 = TAU / 4.0,
-        *,
-        corner_radius: OptionalNumber = 0.0,
-    ) -> Polygon:
-        """A regular polygon of `sides` vertices on the circle around
-        `position` with radius `radius`, the first at `start_angle` (radians
-        counter-clockwise from +x; straight up by default), the rest
-        following counter-clockwise."""
-        return Polygon.regular(
-            position,
-            Float64(radius),
-            sides,
-            start_angle,
-            corner_radius=corner_radius,
-        )
-
-    @staticmethod
     def star(
         position: Point,
-        radius: Float64,
-        inner_radius: Float64,
+        radius: Number,
+        inner_radius: Number,
         tips: Int,
-        start_angle: Float64 = TAU / 4.0,
+        start_angle: Number = TAU / 4.0,
         *,
         corner_radius: OptionalNumber = 0.0,
     ) -> Polygon:
@@ -138,35 +117,12 @@ struct Polygon(Copyable, Equatable, Movable, Shape, Writable):
         cross itself, so it is a simple polygon."""
         var vertices = List[Point](capacity=max(2 * tips, 0))
         for i in range(2 * tips):
-            var angle = start_angle + PI * Float64(i) / Float64(tips)
+            var angle = Float64(start_angle) + PI * Float64(i) / Float64(tips)
             vertices.append(
                 position
                 + _unit(angle) * (radius if i % 2 == 0 else inner_radius)
             )
         return Polygon(vertices^, corner_radius=corner_radius)
-
-    @staticmethod
-    def star(
-        position: Point,
-        radius: Int,
-        inner_radius: Int,
-        tips: Int,
-        start_angle: Float64 = TAU / 4.0,
-        *,
-        corner_radius: OptionalNumber = 0.0,
-    ) -> Polygon:
-        """A star of `tips` points about `position`: its tips on `radius`, the
-        first at `start_angle` (straight up by default), and between each two
-        tips a vertex on `inner_radius`, halfway round. The outline does not
-        cross itself, so it is a simple polygon."""
-        return Polygon.star(
-            position,
-            Float64(radius),
-            Float64(inner_radius),
-            tips,
-            start_angle,
-            corner_radius=corner_radius,
-        )
 
     def __eq__(self, other: Polygon) -> Bool:
         return (

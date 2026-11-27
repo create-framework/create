@@ -3,7 +3,7 @@
 from create.app import Context
 from create.geometry import Line, Rectangle
 from create.input import Key, Keyboard
-from create.math import Point, ceil, clamp, floor
+from create.math import Number, Point, ceil, clamp, floor
 from create.render import Canvas, Style, StrokeCap
 from create.math import OptionalNumber
 from ._pointer import _Pointer
@@ -64,7 +64,7 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     var rect: Rectangle
     """Where it is: the track runs across its middle, and a press anywhere
     in it moves the handle."""
-    var step: Optional[Float64]
+    var step: OptionalNumber
     """What the value is rounded to a multiple of, from `minimum`; `None`
     for any value."""
     var track: Style
@@ -76,9 +76,9 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     var handle: Style
     """The handle, a rectangle: its fill is its colour, its stroke its
     outline and its `corner_radius` how round it is."""
-    var handle_width: Optional[Float64]
+    var handle_width: OptionalNumber
     """How wide the handle is; `None` for half the `control_height`."""
-    var handle_height: Optional[Float64]
+    var handle_height: OptionalNumber
     """How tall the handle is; `None` for half the `control_height`."""
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled slider is faded."""
@@ -90,9 +90,9 @@ struct Slider(Clickable, Copyable, Movable, Widget):
 
     def __init__(
         out self,
-        value: Float64,
-        minimum: Float64,
-        maximum: Float64,
+        value: Number,
+        minimum: Number,
+        maximum: Number,
         rect: Rectangle = _UNSIZED,
         *,
         step: OptionalNumber = None,
@@ -104,9 +104,9 @@ struct Slider(Clickable, Copyable, Movable, Widget):
     ):
         """A slider whose handle is `handle_size` square, or half the
         `control_height` when not given."""
-        self.value = value
-        self.minimum = minimum
-        self.maximum = maximum
+        self.value = Float64(value)
+        self.minimum = Float64(minimum)
+        self.maximum = Float64(maximum)
         self.rect = rect
         self.step = step._value
         self.track = track
@@ -131,13 +131,13 @@ struct Slider(Clickable, Copyable, Movable, Widget):
 
     def __init__(
         out self,
-        value: Float64,
-        minimum: Float64,
-        maximum: Float64,
+        value: Number,
+        minimum: Number,
+        maximum: Number,
         rect: Rectangle = _UNSIZED,
         *,
-        handle_width: Float64,
-        handle_height: Float64,
+        handle_width: Number,
+        handle_height: Number,
         step: OptionalNumber = None,
         track: Style = Style(),
         active_track: Style = Style(),
@@ -157,9 +157,9 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             handle=handle,
             enabled=enabled,
         )
-        self.handle_width = handle_width
-        self.handle_height = handle_height
-        self._handle_size = (handle_width, handle_height)
+        self.handle_width = Float64(handle_width)
+        self.handle_height = Float64(handle_height)
+        self._handle_size = (Float64(handle_width), Float64(handle_height))
 
     def _handle_in(self, theme: _Theme) -> Tuple[Float64, Float64]:
         """The handle's width and height in `theme`: its own, or half the
@@ -314,7 +314,7 @@ struct Slider(Clickable, Copyable, Movable, Widget):
             canvas.draw(handle)
 
 
-def _check_step(step: Optional[Float64], what: String) raises:
+def _check_step(step: OptionalNumber, what: String) raises:
     """Raise unless `step`, when given, is more than 0."""
     if step and not step.value() > 0:  # NaN included
         raise Error(
@@ -352,7 +352,7 @@ def _dragged_value(
     right: Float64,
     minimum: Float64,
     maximum: Float64,
-    step: Optional[Float64],
+    step: OptionalNumber,
 ) -> Optional[Float64]:
     """The value a handle dragged to `pointer_x` sets, rounded to `step`;
     `None` when the track is too short or the range empty to set one."""
@@ -384,7 +384,7 @@ def _keyed_value(
     value: Float64,
     minimum: Float64,
     maximum: Float64,
-    step: Optional[Float64],
+    step: OptionalNumber,
     towards_max: Int,
     *,
     home: Bool,

@@ -1,3 +1,4 @@
+from create.math import Number
 from create.render.autoscale import Autoscale
 from create.render.canvas import Canvas, _PersistentCanvasState
 
@@ -298,7 +299,7 @@ struct Context(Copyable, Movable):
         unless set."""
         return self._time_scale
 
-    def time_scale(mut self, scale: Float64) raises:
+    def time_scale(mut self, scale: Number) raises:
         """Run the program's time at `scale` times real time: `0.5` is slow
         motion, `2.0` double speed.
 
@@ -310,9 +311,9 @@ struct Context(Copyable, Movable):
         backwards; `0.0` stops time, though `time_paused` is the way to pause,
         as it keeps the scale to resume at.
         """
-        if not (scale >= 0.0):
+        if not (Float64(scale) >= 0.0):
             raise Error("time_scale must not be negative, got " + String(scale))
-        self._time_scale = scale
+        self._time_scale = Float64(scale)
 
     def time_paused(self) -> Bool:
         """Whether the run's scaled time is paused. `False` unless set."""
@@ -411,9 +412,9 @@ struct Context(Copyable, Movable):
 
     def rumble(
         mut self,
-        seconds: Float64,
-        low_frequency: Float64 = 1.0,
-        high_frequency: Float64 = 1.0,
+        seconds: Number,
+        low_frequency: Number = 1.0,
+        high_frequency: Number = 1.0,
         player: Int = 0,
     ):
         """Shake player `player`'s gamepad for `seconds`.
@@ -429,5 +430,10 @@ struct Context(Copyable, Movable):
         var pad = self.gamepad(player)
         if pad.connected:
             self._rumbles.append(
-                _Rumble(pad._id, low_frequency, high_frequency, seconds)
+                _Rumble(
+                    pad._id,
+                    Float64(low_frequency),
+                    Float64(high_frequency),
+                    Float64(seconds),
+                )
             )

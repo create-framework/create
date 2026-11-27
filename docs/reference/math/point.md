@@ -49,9 +49,7 @@ Implements `Copyable`, `Deinitable`, `Equatable`, `ImplicitlyCopyable`, `Movable
 
 ```mojo
 @staticmethod
-def __init__(out self, x: Float64, y: Float64)
-@staticmethod
-def __init__(out self, x: Int, y: Int)
+def __init__(out self, x: Number, y: Number)
 @staticmethod
 def __init__(out self, t: Tuple[Float64, Float64])
 @staticmethod
@@ -90,7 +88,7 @@ The square of `distance`, without its square root: a little faster, and enough t
 ### `lerp`
 
 ```mojo
-def lerp(self, other: Self, t: Float64) -> Self
+def lerp(self, other: Self, t: Number) -> Self
 ```
 
 A new point `t` of the way from this one to `other`; this one is unchanged. Not clamped: `t` outside 0..1 carries on past either end.

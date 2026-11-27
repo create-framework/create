@@ -1,6 +1,7 @@
 from std.memory import ArcPointer
 from std.os import listdir
 
+from create.math import Number
 from create._path import _caller_relative
 from create.image.image import Image
 from create.image.pixel_buffer import PixelBuffer
@@ -24,7 +25,7 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
     var _frames: ArcPointer[List[Image]]
     var fps: Float64
 
-    def __init__(out self, var frames: List[Image], fps: Float64 = 12.0) raises:
+    def __init__(out self, var frames: List[Image], fps: Number = 12.0) raises:
         """Build an animation from frames already in memory.
 
         Raises on an empty frame list: an animation with no frames has no valid
@@ -32,10 +33,10 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
         """
         if len(frames) == 0:
             raise Error("Animation needs at least one frame")
-        if fps <= 0.0:
+        if Float64(fps) <= 0.0:
             raise Error("Animation fps must be positive, got " + String(fps))
         self._frames = ArcPointer(frames^)
-        self.fps = fps
+        self.fps = Float64(fps)
 
     def frame_count(self) -> Int:
         """The number of frames."""
@@ -61,7 +62,7 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
         frame_height: Int,
         start: Int = 0,
         count: Int = 0,
-        fps: Float64 = 12.0,
+        fps: Number = 12.0,
     ) raises -> Animation:
         """Cut frames out of a sprite sheet, left to right then top to bottom.
 
@@ -137,7 +138,7 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
 
     @staticmethod
     @always_inline
-    def from_folder(path: String, fps: Float64 = 12.0) raises -> Animation:
+    def from_folder(path: String, fps: Number = 12.0) raises -> Animation:
         """Load every image in a directory as a frame, in natural number order.
 
         ```mojo
@@ -153,7 +154,7 @@ struct Animation(Copyable, ImplicitlyCopyable, Movable):
         not BMP, PNG or JPEG are skipped; a directory with no images at all
         raises rather than yielding an empty animation.
         """
-        return Animation._from_folder(_caller_relative(path), fps)
+        return Animation._from_folder(_caller_relative(path), Float64(fps))
 
     @staticmethod
     def _from_folder(path: String, fps: Float64) raises -> Animation:
