@@ -96,9 +96,14 @@ struct Point(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         writer.write("Point(", self.x, ", ", self.y, ")")
 
     def distance(self, other: Point) -> Float64:
+        """How far apart this point and `other` are: the length of the
+        vector between them."""
         return (self - other).magnitude()
 
     def distance_squared(self, other: Point) -> Float64:
+        """The square of `distance`, without its square root: a little
+        faster, and enough to compare distances, since one distance is
+        smaller than another exactly when its square is."""
         return (self - other).magnitude_squared()
 
     def lerp(self, other: Point, t: Float64) -> Point:
@@ -110,4 +115,5 @@ struct Point(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         )
 
     def xy(self) -> Tuple[Float64, Float64]:
+        """Its two numbers as a pair, to unpack: `var (x, y) = p.xy()`."""
         return (self.x, self.y)

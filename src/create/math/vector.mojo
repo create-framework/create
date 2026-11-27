@@ -95,22 +95,34 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         writer.write("Vector(", self.x, ", ", self.y, ")")
 
     def magnitude(self) -> Float64:
+        """How long it is: `Vector(3, 4).magnitude()` is 5, by Pythagoras'
+        theorem."""
         return sqrt(self.x * self.x + self.y * self.y)
 
     def magnitude_squared(self) -> Float64:
+        """The square of `magnitude`, without its square root: a little
+        faster, and enough to compare lengths."""
         return self.x * self.x + self.y * self.y
 
     def normalize(self) -> Vector:
+        """The vector pointing the same way, 1 long: its direction alone.
+        The zero vector has no direction and gives NaN, so check
+        `magnitude()` first where it can be zero."""
         var m = self.magnitude()
         return Vector(self.x / m, self.y / m)
 
     def dot(self, other: Vector) -> Float64:
+        """The dot product: how much the two point the same way. For two
+        vectors 1 long, 1 when they point the same way, 0 at right angles
+        and -1 when opposite."""
         return self.x * other.x + self.y * other.y
 
     def distance(self, other: Vector) -> Float64:
+        """The length of the difference between the two vectors."""
         return (self - other).magnitude()
 
     def distance_squared(self, other: Vector) -> Float64:
+        """The square of `distance`, without its square root."""
         return (self - other).magnitude_squared()
 
     def lerp(self, other: Vector, t: Float64) -> Vector:
@@ -140,12 +152,12 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return Vector(self.x * c - self.y * s, self.x * s + self.y * c)
 
     def with_length(self, length: Float64) -> Vector:
-        """This direction at `length`. Like `normalize`, the zero vector has
-        no direction and gives NaN."""
+        """This direction at `length`. The zero vector has no direction and
+        gives NaN, as with `normalize`."""
         return self * (length / self.magnitude())
 
     def limit(self, max_length: Float64) -> Vector:
-        """This vector, shortened to `max_length` if it is longer — a speed
+        """This vector, shortened to `max_length` if it is longer: a speed
         cap. Shorter vectors, the zero vector among them, are unchanged."""
         var length_squared = self.magnitude_squared()
         if length_squared <= max_length * max_length:
@@ -153,6 +165,7 @@ struct Vector(Copyable, Equatable, ImplicitlyCopyable, Movable, Writable):
         return self * (max_length / sqrt(length_squared))
 
     def xy(self) -> Tuple[Float64, Float64]:
+        """Its two numbers as a pair, to unpack: `var (x, y) = v.xy()`."""
         return (self.x, self.y)
 
     comptime ZERO = Vector(0.0, 0.0)

@@ -79,11 +79,15 @@ The vector of `length` pointing at `angle` radians, counter-clockwise from +x: `
 def magnitude(self) -> Float64
 ```
 
+How long it is: `Vector(3, 4).magnitude()` is 5, by Pythagoras' theorem.
+
 ### `magnitude_squared`
 
 ```mojo
 def magnitude_squared(self) -> Float64
 ```
+
+The square of `magnitude`, without its square root: a little faster, and enough to compare lengths.
 
 ### `normalize`
 
@@ -91,11 +95,15 @@ def magnitude_squared(self) -> Float64
 def normalize(self) -> Self
 ```
 
+The vector pointing the same way, 1 long: its direction alone. The zero vector has no direction and gives NaN, so check `magnitude()` first where it can be zero.
+
 ### `dot`
 
 ```mojo
 def dot(self, other: Self) -> Float64
 ```
+
+The dot product: how much the two point the same way. For two vectors 1 long, 1 when they point the same way, 0 at right angles and -1 when opposite.
 
 ### `distance`
 
@@ -103,11 +111,15 @@ def dot(self, other: Self) -> Float64
 def distance(self, other: Self) -> Float64
 ```
 
+The length of the difference between the two vectors.
+
 ### `distance_squared`
 
 ```mojo
 def distance_squared(self, other: Self) -> Float64
 ```
+
+The square of `distance`, without its square root.
 
 ### `lerp`
 
@@ -139,7 +151,7 @@ This vector turned by `angle` radians, counter-clockwise; its length is unchange
 def with_length(self, length: Float64) -> Self
 ```
 
-This direction at `length`. Like `normalize`, the zero vector has no direction and gives NaN.
+This direction at `length`. The zero vector has no direction and gives NaN, as with `normalize`.
 
 ### `limit`
 
@@ -147,13 +159,15 @@ This direction at `length`. Like `normalize`, the zero vector has no direction a
 def limit(self, max_length: Float64) -> Self
 ```
 
-This vector, shortened to `max_length` if it is longer — a speed cap. Shorter vectors, the zero vector among them, are unchanged.
+This vector, shortened to `max_length` if it is longer: a speed cap. Shorter vectors, the zero vector among them, are unchanged.
 
 ### `xy`
 
 ```mojo
 def xy(self) -> Tuple[Float64, Float64]
 ```
+
+Its two numbers as a pair, to unpack: `var (x, y) = v.xy()`.
 
 ## Special methods
 
