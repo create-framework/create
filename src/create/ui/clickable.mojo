@@ -19,5 +19,8 @@ trait Clickable(Hoverable):
 
     def released(self) -> Bool:
         """Whether it was clicked this frame: let go over it, after being
-        pressed on it. A press that starts elsewhere doesn't count."""
+        pressed on it. A press that starts elsewhere doesn't count. In a
+        `UI`, a widget that Enter, Space or a gamepad's south button press
+        as a click does (a button, checkbox, switch or dropdown) reports
+        that too."""
         ...

@@ -62,6 +62,7 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
     var enabled: Bool
     """Whether it reacts to the mouse. A disabled checkbox is faded."""
     var _pointer: _Pointer
+    var _activated: Bool
     var _changed: Bool
     var _look: _CheckboxLook
 
@@ -86,6 +87,7 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
         self.text_style = text_style
         self.enabled = enabled
         self._pointer = _Pointer()
+        self._activated = False
         self._changed = False
         self._look = _Theme.default().checkbox(
             box,
@@ -130,7 +132,8 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
             free=free,
             enabled=enabled,
         )
-        self._changed = self._pointer.released or (focus.activated and enabled)
+        self._activated = focus.activated and enabled
+        self._changed = self._pointer.released or self._activated
         if self._changed:
             self.checked = not self.checked
         self._look = theme.checkbox(
@@ -180,7 +183,10 @@ struct Checkbox(Clickable, Copyable, Movable, Widget):
         return self._pointer.held
 
     def released(self) -> Bool:
-        return self._pointer.released
+        """Whether it was clicked this frame: let go over it after being
+        pressed on it, or, in a `UI`, pressed with Enter, Space or a
+        gamepad's south button while it has focus."""
+        return self._pointer.released or self._activated
 
     def draw_to(self, mut canvas: Canvas):
         var box = _checkbox_box(self.rect, self._look.box.corner_radius)

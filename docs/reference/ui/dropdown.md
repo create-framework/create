@@ -135,6 +135,8 @@ def down(self) -> Bool
 def released(self) -> Bool
 ```
 
+Whether it was clicked this frame: let go over its field or its open list after being pressed on it, or, in a `UI`, pressed with Enter, Space or a gamepad's south button while it has focus.
+
 ### `draw_to`
 
 ```mojo

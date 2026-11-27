@@ -118,6 +118,38 @@ def test_enter_and_space_press_the_focused_button() raises -> None:
     assert_true(panel.ui[panel.buttons[0]].released())
 
 
+def _enter(mut ui: UI, mut context: Context) raises:
+    """Press and let go of Enter, a frame of `ui` between."""
+    var canvas = Canvas(400, 200)
+    next_frame(context)
+    press_key(context, Key.ENTER)
+    ui.update(context, canvas)
+    context.keyboard._key_up(Key.ENTER)
+
+
+def test_enter_reports_a_release_on_every_widget_it_presses() raises -> None:
+    var ui = UI()
+    var box = ui.add(Checkbox("Music", Rectangle((0, 60), 200, 40)))
+    var toggle = ui.add(Switch("Sound", Rectangle((0, 0), 200, 40)))
+    var size = ui.add(
+        Dropdown(["Small", "Large"], Rectangle((0, -60), 200, 40))
+    )
+    var context = Context()
+    point_at(context, (180, 95))  # on nothing
+    ui.focus(box)
+    _enter(ui, context)
+    assert_true(ui[box].released())
+    assert_true(ui[box].checked)
+    ui.focus(toggle)
+    _enter(ui, context)
+    assert_true(ui[toggle].released())
+    assert_true(ui[toggle].on)
+    ui.focus(size)
+    _enter(ui, context)
+    assert_true(ui[size].released())
+    assert_true(ui[size].is_open())
+
+
 def test_keys_do_nothing_after_a_click() raises -> None:
     var panel = _Panel()
     _ = panel.frame()
