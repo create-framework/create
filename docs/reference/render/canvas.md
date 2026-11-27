@@ -256,26 +256,26 @@ return or a raise.
 def style(
     mut self,
     *,
-    fill: Optional[Color] = None,
+    fill: OptionalColor = None,
     fill_gradient: Optional[Gradient] = None,
     fill_enabled: Optional[Bool] = None,
-    stroke: Optional[Color] = None,
+    stroke: OptionalColor = None,
     stroke_thickness: OptionalNumber = None,
     stroke_enabled: Optional[Bool] = None,
     stroke_alignment: Optional[StrokeAlign] = None,
     stroke_cap: Optional[StrokeCap] = None,
     stroke_dash: Optional[StrokeDash] = None,
     corner_radius: OptionalNumber = None,
-    text_color: Optional[Color] = None,
+    text_color: OptionalColor = None,
     font: Optional[Font] = None,
     font_size: OptionalNumber = None,
     font_weight: Optional[FontWeight] = None,
     font_italic: Optional[Bool] = None,
     text_alignment: Optional[Align] = None,
-    tint: Optional[Color] = None,
+    tint: OptionalColor = None,
     opacity: OptionalNumber = None,
     blend_mode: Optional[BlendMode] = None,
-    shadow: Optional[Color] = None,
+    shadow: OptionalColor = None,
     shadow_offset: Optional[Vector] = None,
     shadow_blur: OptionalNumber = None,
     shadow_spread: OptionalNumber = None,
@@ -1282,6 +1282,34 @@ opaque `background()` already drawn this frame stays either way.
 
 No effect on an offscreen canvas, which has no frames to open and
 starts transparent; it is only read back.
+
+### `colors`
+
+```mojo
+def colors(self) -> ColorScheme
+```
+
+The colour scheme a style's colour roles are taken from. The light one unless set.
+
+```mojo
+def colors(mut self, scheme: ColorScheme)
+```
+
+Take a style's colour roles, such as `ColorRole.PRIMARY`, from `scheme` from now on, and draw a `UI` and a widget in it unless they are given colours of their own.
+
+A role is turned into a colour when a style naming it is applied, so
+what was drawn before this call keeps its colours. It lasts until
+changed, so set it once in `create`:
+
+```mojo
+# In `create`:
+canvas.colors(ColorScheme.dark())
+
+# In `update`:
+canvas.background(canvas.colors().background)
+with canvas.style(fill=ColorRole.PRIMARY):
+    canvas.circle((0, 0), 40)  # the dark scheme's primary colour
+```
 
 ### `letterbox_color`
 

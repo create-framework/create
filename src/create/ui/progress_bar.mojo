@@ -4,7 +4,7 @@ from create.app import Context
 from create.geometry import Line, Rectangle
 from create.math import OptionalNumber, Point, clamp
 from create.render import Canvas, Style
-from .color_scheme import ColorScheme
+from create.color.color_scheme import ColorScheme
 from ._theme import _ProgressBarLook, _Theme
 from ._layout import _UNSIZED
 from .slider import _CONTROL_WIDTH
@@ -74,19 +74,9 @@ struct ProgressBar(Copyable, Movable, Widget):
     def update(mut self, mut context: Context, mut canvas: Canvas) raises:
         """Work out its look from its fields: call it before drawing it.
 
-        It is drawn in the light colours; give it others with `colors`."""
-        self._update(context, canvas, _Theme.default())
-
-    def update(
-        mut self,
-        mut context: Context,
-        mut canvas: Canvas,
-        *,
-        colors: ColorScheme,
-    ) raises:
-        """`update`, drawn in `colors`, such as `ColorScheme.dark()` on a
-        dark screen."""
-        self._update(context, canvas, _Theme.default(colors))
+        It is drawn in the canvas's colours,
+        `canvas.colors()`."""
+        self._update(context, canvas, _Theme.default(canvas.colors()))
 
     def _update(
         mut self,

@@ -99,13 +99,15 @@ def test_a_resolved_preset_fits_and_exact_lengths_do_not() raises -> None:
 def test_the_style_starts_solid_and_takes_a_dash() raises -> None:
     assert_equal(_ResolvedStyle().stroke_dash, StrokeDash.SOLID)
     var style = Style(stroke_dash=StrokeDash.DASHED)
-    assert_equal(style._resolved().stroke_dash, StrokeDash.DASHED)
+    assert_equal(
+        style._resolved(ColorScheme.light()).stroke_dash, StrokeDash.DASHED
+    )
     assert_true("stroke_dash=StrokeDash.DASHED" in String(style))
 
 
 def test_naming_a_dash_does_not_switch_the_stroke_on() raises -> None:
     var style = Style(stroke_enabled=False, stroke_dash=StrokeDash.DASHED)
-    assert_false(style._resolved().stroke_enabled)
+    assert_false(style._resolved(ColorScheme.light()).stroke_enabled)
 
 
 def test_a_command_records_a_preset_as_lengths() raises -> None:

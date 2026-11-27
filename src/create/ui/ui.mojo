@@ -16,7 +16,7 @@ from create.render import Align, Canvas, Drawable, Picture, Style, Text
 from .button import Button
 from .widget_handle import WidgetHandle
 from .checkbox import Checkbox
-from .color_scheme import ColorScheme
+from create.color.color_scheme import ColorScheme
 from .focus_ring import FocusRing
 from .state_layers import StateLayers
 from .label import Label
@@ -291,7 +291,11 @@ struct UI(Drawable, Movable):
     var _identity: ArcPointer[Int]
     """A cell of its own on the heap, whose address tells its handles from
     another `UI`'s: it stays put when the `UI` is moved."""
-    var _colors: ColorScheme
+    var _colors: Optional[ColorScheme]
+    """The colours set with `colors`, if any."""
+    var _canvas_colors: ColorScheme
+    """The canvas's colours at the last `update`, which it draws in unless
+    `_colors` is set."""
     var _styles: ArcPointer[_Styles]
     """What `style` sets, on the heap: seventeen `Style`s inline made a `UI`
     12 KB, and moving one through a pointer, as `run` moves a program,
@@ -363,7 +367,8 @@ struct UI(Drawable, Movable):
         self._tip_dismissed = False
         self._tip = None
         self._reveal = None
-        self._colors = ColorScheme.light()
+        self._colors = None
+        self._canvas_colors = ColorScheme.light()
         self._styles = ArcPointer(_Styles())
         self._corner_radius = _CORNER_RADIUS
         self._spacing = _SPACING
@@ -591,11 +596,15 @@ struct UI(Drawable, Movable):
     # ----------------------------------------------------------- the look
 
     def colors(self) -> ColorScheme:
-        """The colours its widgets are drawn in: the light ones unless
-        set."""
-        return self._colors
+        """The colours its widgets are drawn in: those set with
+        `colors(scheme)`, or else the canvas's, `canvas.colors()`, as of its
+        last `update`."""
+        return self._colors.or_else(self._canvas_colors)
 
-    def colors(mut self, colors: ColorScheme):
+    def colors(mut self, colors: Optional[ColorScheme]):
+        """Draw its widgets in `colors`, whatever the canvas's are, such as
+        one dark panel on a light screen; `None` follows the canvas's
+        again."""
         self._colors = colors
 
     def corner_radius(self) -> Float64:
@@ -781,16 +790,17 @@ struct UI(Drawable, Movable):
 
     def _theme(self) -> _Theme:
         """The look at the top level, outside any panel."""
+        var colors = self.colors()
         return _Theme(
-            colors=self._colors,
+            colors=colors,
             styles=self._styles,
             corner_radius=self._corner_radius,
             spacing=self._spacing,
             control_height=self._control_height,
             state_layers=self._state_layers,
             focus_ring=self._focus_ring,
-            surface=self._colors.surface,
-            content=self._colors.on_surface,
+            surface=colors.surface,
+            content=colors.on_surface,
         )
 
     # ------------------------------------------------------ every frame
@@ -801,6 +811,7 @@ struct UI(Drawable, Movable):
         Call it before drawing the tree, in the same transform."""
         if self._claimant == 0:
             self._claimant = context._new_claimant()
+        self._canvas_colors = canvas.colors()
         var frame = context.frame_count()
         self._frame = frame
         self._lay_out(context, canvas)

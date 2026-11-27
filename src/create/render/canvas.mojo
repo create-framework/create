@@ -50,6 +50,8 @@ from ._command import (
     text_command,
 )
 from .style import Style, _ResolvedStyle
+from create.color.color_scheme import ColorScheme
+from create.color.optional_color import OptionalColor
 from create.math import OptionalNumber
 from create._path import _caller_relative
 from ._command import RenderCommand
@@ -124,12 +126,16 @@ struct _PersistentCanvasState(Movable):
     var autoclear: Bool
     """Whether each frame opens with a clear, set through
     `canvas.autoclear`."""
+    var colors: ColorScheme
+    """The colour scheme a style's colour roles are taken from, set through
+    `canvas.colors`."""
 
     def __init__(out self) raises:
         self._backend = BackendHandle()
         self._view = Viewport()
         self.letterbox_color = Color.BLACK
         self.autoclear = True
+        self.colors = ColorScheme.light()
 
     def _set_viewport(
         mut self,
@@ -496,7 +502,7 @@ struct Canvas(Movable, _GeometryTarget):
         """The rectangle `text` covers when drawn in `style`, applied over the
         current style as `canvas.draw(text, style=style)` applies it."""
         var saved = self._style
-        self._style.apply(style)
+        self._style.apply(style, self._state.colors)
         try:
             var covered = self.bounds(text)
             self._style = saved
@@ -628,26 +634,26 @@ struct Canvas(Movable, _GeometryTarget):
     def style(
         mut self,
         *,
-        fill: Optional[Color] = None,
+        fill: OptionalColor = None,
         fill_gradient: Optional[Gradient] = None,
         fill_enabled: Optional[Bool] = None,
-        stroke: Optional[Color] = None,
+        stroke: OptionalColor = None,
         stroke_thickness: OptionalNumber = None,
         stroke_enabled: Optional[Bool] = None,
         stroke_alignment: Optional[StrokeAlign] = None,
         stroke_cap: Optional[StrokeCap] = None,
         stroke_dash: Optional[StrokeDash] = None,
         corner_radius: OptionalNumber = None,
-        text_color: Optional[Color] = None,
+        text_color: OptionalColor = None,
         font: Optional[Font] = None,
         font_size: OptionalNumber = None,
         font_weight: Optional[FontWeight] = None,
         font_italic: Optional[Bool] = None,
         text_alignment: Optional[Align] = None,
-        tint: Optional[Color] = None,
+        tint: OptionalColor = None,
         opacity: OptionalNumber = None,
         blend_mode: Optional[BlendMode] = None,
-        shadow: Optional[Color] = None,
+        shadow: OptionalColor = None,
         shadow_offset: Optional[Vector] = None,
         shadow_blur: OptionalNumber = None,
         shadow_spread: OptionalNumber = None,
@@ -671,14 +677,18 @@ struct Canvas(Movable, _GeometryTarget):
         ```
         """
         var guard = _StyleGuard[origin_of(self)](_canvas=self)
+        var colors = self._state.colors
         if fill:
-            self.fill(fill.value())
+            self.fill(fill.resolve(colors))
         # After the colour, which clears a gradient: given both, the gradient
         # paints and the colour is kept.
         if fill_gradient:
             self.fill(fill_gradient.value())
         if stroke or stroke_thickness:
-            self.stroke(stroke, stroke_thickness)
+            var color: Optional[Color] = None
+            if stroke:
+                color = stroke.resolve(colors)
+            self.stroke(color, stroke_thickness)
         # After the colors, which switch fill and stroke on: an explicit
         # `*_enabled=False` beside a color wins.
         if fill_enabled:
@@ -694,7 +704,7 @@ struct Canvas(Movable, _GeometryTarget):
         if corner_radius:
             self.corner_radius(corner_radius.value())
         if text_color:
-            self.text_color(text_color.value())
+            self.text_color(text_color.resolve(colors))
         if font:
             self.font(font.value())
         if font_size:
@@ -706,7 +716,7 @@ struct Canvas(Movable, _GeometryTarget):
         if text_alignment:
             self.text_alignment(text_alignment.value())
         if tint:
-            self.tint(tint.value())
+            self.tint(tint.resolve(colors))
         if opacity:
             self.opacity(opacity.value())
         if blend_mode:
@@ -718,8 +728,11 @@ struct Canvas(Movable, _GeometryTarget):
             or shadow_spread
             or shadow_inset
         ):
+            var color: Optional[Color] = None
+            if shadow:
+                color = shadow.resolve(colors)
             self.shadow(
-                shadow, shadow_offset, shadow_blur, shadow_spread, shadow_inset
+                color, shadow_offset, shadow_blur, shadow_spread, shadow_inset
             )
         if shadow_follows_transform:
             self.shadow_follows_transform(shadow_follows_transform.value())
@@ -745,7 +758,7 @@ struct Canvas(Movable, _GeometryTarget):
         ```
         """
         var guard = _StyleGuard[origin_of(self)](_canvas=self)
-        self._style.apply(style)
+        self._style.apply(style, self._state.colors)
         return guard^
 
     def _with_style(
@@ -1855,7 +1868,7 @@ struct Canvas(Movable, _GeometryTarget):
         the call reads better as a `with canvas.style(...)` block around it.
         """
         var saved = self._style
-        self._style.apply(style)
+        self._style.apply(style, self._state.colors)
         draw_geometry(shape, self)
         self._style = saved
 
@@ -1872,7 +1885,7 @@ struct Canvas(Movable, _GeometryTarget):
         ```
         """
         var saved = self._style
-        self._style.apply(style)
+        self._style.apply(style, self._state.colors)
         drawable.draw_to(self)
         self._style = saved
 
@@ -2190,6 +2203,32 @@ struct Canvas(Movable, _GeometryTarget):
         self._state._backend[].buffer.set_autoclear(
             enabled, clear_command(_AUTOCLEAR_COLOR)
         )
+
+    def colors(self) -> ColorScheme:
+        """The colour scheme a style's colour roles are taken from. The
+        light one unless set."""
+        return self._state.colors
+
+    def colors(mut self, scheme: ColorScheme):
+        """Take a style's colour roles, such as `ColorRole.PRIMARY`, from
+        `scheme` from now on, and draw a `UI` and a widget in it unless they
+        are given colours of their own.
+
+        A role is turned into a colour when a style naming it is applied, so
+        what was drawn before this call keeps its colours. It lasts until
+        changed, so set it once in `create`:
+
+        ```mojo
+        # In `create`:
+        canvas.colors(ColorScheme.dark())
+
+        # In `update`:
+        canvas.background(canvas.colors().background)
+        with canvas.style(fill=ColorRole.PRIMARY):
+            canvas.circle((0, 0), 40)  # the dark scheme's primary colour
+        ```
+        """
+        self._state.colors = scheme
 
     def letterbox_color(self) -> Color:
         """The colour of the bars outside the design area. Black unless set."""

@@ -113,6 +113,31 @@ drawn after it. A shape value keeps its own radius (see [Corner
 radius](../geometry/shapes.md#corner-radius)), so `with canvas.style(corner_radius=8):
 canvas.draw(rect)` does not round `rect`.
 
+## Colours by role
+
+**A style can name a colour by what it is for,** with a `ColorRole`, wherever it takes a colour:
+`Style(fill=ColorRole.PRIMARY)`, or `canvas.style(text_color=ColorRole.ON_SURFACE)`. The canvas's
+colour scheme, `canvas.colors()`, says which colour each role is: the light scheme unless set with
+`canvas.colors(scheme)`. The role becomes a colour when the style is applied, so a `Style` kept in a
+field follows the scheme when it changes, and what was drawn before keeps its colours. The roles,
+and the schemes, are the ones a `UI`'s widgets are drawn in (see [Themes and
+styling](../ui/themes.md#colours)):
+
+```mojo
+# In `create`:
+canvas.colors(ColorScheme.dark())
+
+# In `update`, with a `banner: Style` field built in `create` as
+# `Style(fill=ColorRole.PRIMARY, text_color=ColorRole.ON_PRIMARY)`:
+canvas.background(canvas.colors().background)
+with canvas.style(self.banner):
+    canvas.rectangle((0, canvas.top() - 30), canvas.width(), 60)
+    canvas.text("Level 1", (0, canvas.top() - 30))
+```
+
+The setters take a `Color`, since they change the style at once:
+`canvas.fill(canvas.colors().primary)` fills in the scheme's primary colour.
+
 ## Tint, opacity and blend modes
 
 These three settings apply to everything a render call draws, images included, but never to

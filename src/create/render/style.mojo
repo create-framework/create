@@ -6,6 +6,8 @@ from .stroke_cap import StrokeCap
 from .stroke_dash import StrokeDash
 from create.color.blend_mode import BlendMode
 from create.color.color import Color
+from create.color.color_scheme import ColorScheme
+from create.color.optional_color import OptionalColor
 from create.render.gradient import Gradient
 from create.text.font import Font
 from create.text.font_weight import FontWeight
@@ -61,26 +63,26 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     paints and the colour is kept for when it is cleared.
     """
 
-    var fill: Optional[Color]
+    var fill: OptionalColor
     var fill_gradient: Optional[Gradient]
     var fill_enabled: Optional[Bool]
-    var stroke: Optional[Color]
+    var stroke: OptionalColor
     var stroke_thickness: Optional[Float64]
     var stroke_enabled: Optional[Bool]
     var stroke_alignment: Optional[StrokeAlign]
     var stroke_cap: Optional[StrokeCap]
     var stroke_dash: Optional[StrokeDash]
     var corner_radius: Optional[Float64]
-    var text_color: Optional[Color]
+    var text_color: OptionalColor
     var font: Optional[Font]
     var font_size: Optional[Float64]
     var font_weight: Optional[FontWeight]
     var font_italic: Optional[Bool]
     var text_alignment: Optional[Align]
-    var tint: Optional[Color]
+    var tint: OptionalColor
     var opacity: Optional[Float64]
     var blend_mode: Optional[BlendMode]
-    var shadow: Optional[Color]
+    var shadow: OptionalColor
     var shadow_offset: Optional[Vector]
     var shadow_blur: Optional[Float64]
     var shadow_spread: Optional[Float64]
@@ -91,26 +93,26 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
     def __init__(
         out self,
         *,
-        fill: Optional[Color] = None,
+        fill: OptionalColor = None,
         fill_gradient: Optional[Gradient] = None,
         fill_enabled: Optional[Bool] = None,
-        stroke: Optional[Color] = None,
+        stroke: OptionalColor = None,
         stroke_thickness: OptionalNumber = None,
         stroke_enabled: Optional[Bool] = None,
         stroke_alignment: Optional[StrokeAlign] = None,
         stroke_cap: Optional[StrokeCap] = None,
         stroke_dash: Optional[StrokeDash] = None,
         corner_radius: OptionalNumber = None,
-        text_color: Optional[Color] = None,
+        text_color: OptionalColor = None,
         font: Optional[Font] = None,
         font_size: OptionalNumber = None,
         font_weight: Optional[FontWeight] = None,
         font_italic: Optional[Bool] = None,
         text_alignment: Optional[Align] = None,
-        tint: Optional[Color] = None,
+        tint: OptionalColor = None,
         opacity: OptionalNumber = None,
         blend_mode: Optional[BlendMode] = None,
-        shadow: Optional[Color] = None,
+        shadow: OptionalColor = None,
         shadow_offset: Optional[Vector] = None,
         shadow_blur: OptionalNumber = None,
         shadow_spread: OptionalNumber = None,
@@ -234,7 +236,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
         writer.write("Style(")
         var first = True
         if self.fill:
-            writer.write("" if first else ", ", "fill=", self.fill.value())
+            writer.write("" if first else ", ", "fill=", self.fill)
             first = False
         if self.fill_gradient:
             writer.write(
@@ -251,7 +253,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             )
             first = False
         if self.stroke:
-            writer.write("" if first else ", ", "stroke=", self.stroke.value())
+            writer.write("" if first else ", ", "stroke=", self.stroke)
             first = False
         if self.stroke_thickness:
             writer.write(
@@ -292,9 +294,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             )
             first = False
         if self.text_color:
-            writer.write(
-                "" if first else ", ", "text_color=", self.text_color.value()
-            )
+            writer.write("" if first else ", ", "text_color=", self.text_color)
             first = False
         if self.font:
             writer.write("" if first else ", ", "font=", self.font.value())
@@ -322,7 +322,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             )
             first = False
         if self.tint:
-            writer.write("" if first else ", ", "tint=", self.tint.value())
+            writer.write("" if first else ", ", "tint=", self.tint)
             first = False
         if self.opacity:
             writer.write(
@@ -335,7 +335,7 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             )
             first = False
         if self.shadow:
-            writer.write("" if first else ", ", "shadow=", self.shadow.value())
+            writer.write("" if first else ", ", "shadow=", self.shadow)
             first = False
         if self.shadow_offset:
             writer.write(
@@ -378,10 +378,11 @@ struct Style(Copyable, ImplicitlyCopyable, Movable, Writable):
             )
         writer.write(")")
 
-    def _resolved(self) -> _ResolvedStyle:
-        """This style applied to a fresh frame's: every part decided."""
+    def _resolved(self, colors: ColorScheme) -> _ResolvedStyle:
+        """This style applied to a fresh frame's, its roles taken from
+        `colors`: every part decided."""
         var resolved = _ResolvedStyle()
-        resolved.apply(self)
+        resolved.apply(self, colors)
         return resolved^
 
 
@@ -495,21 +496,22 @@ struct _ResolvedStyle(Copyable, ImplicitlyCopyable, Movable):
             or Bool(shadow_inset)
         )
 
-    def apply(mut self, style: Style):
-        """Apply `style`'s parts to this style, as the canvas setters of
-        the same names would apply them, in this order: a gradient after
+    def apply(mut self, style: Style, colors: ColorScheme):
+        """Apply `style`'s parts to this style, its colour roles taken from
+        `colors`, as the canvas setters of the same names would apply them,
+        in this order: a gradient after
         the fill colour, so given both the gradient paints, and each
         `*_enabled` after the parts it switches, so an explicit `False`
         wins."""
         if style.fill:
-            self.fill_color = style.fill.value()
+            self.fill_color = style.fill.resolve(colors)
             self.fill_gradient = None
             self.fill_enabled = True
         if style.fill_gradient:
             self.fill_gradient = style.fill_gradient
             self.fill_enabled = True
         if style.stroke:
-            self.stroke_color = style.stroke.value()
+            self.stroke_color = style.stroke.resolve(colors)
             self.stroke_enabled = True
         if style.stroke_thickness:
             self.stroke_thickness = style.stroke_thickness.value()
@@ -527,7 +529,7 @@ struct _ResolvedStyle(Copyable, ImplicitlyCopyable, Movable):
         if style.corner_radius:
             self.corner_radius = style.corner_radius.value()
         if style.text_color:
-            self.text_color = style.text_color.value()
+            self.text_color = style.text_color.resolve(colors)
         if style.font:
             self.font = style.font
         if style.font_size:
@@ -539,13 +541,13 @@ struct _ResolvedStyle(Copyable, ImplicitlyCopyable, Movable):
         if style.text_alignment:
             self.text_alignment = style.text_alignment.value()
         if style.tint:
-            self.tint = style.tint.value()
+            self.tint = style.tint.resolve(colors)
         if style.opacity:
             self.opacity = style.opacity.value()
         if style.blend_mode:
             self.blend_mode = style.blend_mode.value()
         if style.shadow:
-            self.shadow_color = style.shadow.value()
+            self.shadow_color = style.shadow.resolve(colors)
             self.shadow_enabled = True
         if style.shadow_offset:
             self.shadow_offset = style.shadow_offset.value()

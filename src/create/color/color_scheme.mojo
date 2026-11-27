@@ -1,15 +1,19 @@
 """`ColorScheme`, the colours widgets are drawn in."""
 
-from create.color import Color
+from .color import Color
+from .color_role import ColorRole
 
 
 @fieldwise_init
 struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
     """The colours widgets are drawn in, as pairs of roles: each colour a
     widget is filled with, and the `on_` colour for text and icons drawn on
-    it, chosen to read well together. A program gives its scheme to a `UI`
-    with `ui.colors(scheme)`, and draws its own things in it too, such as
-    `canvas.background(scheme.background)`.
+    it, chosen to read well together. A program gives its scheme to the
+    canvas with `canvas.colors(scheme)`, which widgets are drawn in, and
+    draws its own things in it too, such as
+    `canvas.background(scheme.background)`. A style names a role with
+    `ColorRole`, such as `Style(fill=ColorRole.PRIMARY)`, and `scheme[role]`
+    is the colour the scheme gives it.
 
     - **`primary`** is for the most important actions, such as a filled
       button; **`secondary`** and **`tertiary`** for less prominent ones and
@@ -322,6 +326,71 @@ struct ColorScheme(Copyable, ImplicitlyCopyable, Movable, Writable):
             on_surface,
         )
         return colors
+
+    def __getitem__(self, role: ColorRole) -> Color:
+        """The colour this scheme gives `role`: `scheme[ColorRole.PRIMARY]`
+        is `scheme.primary`."""
+        if role == ColorRole.PRIMARY:
+            return self.primary
+        elif role == ColorRole.ON_PRIMARY:
+            return self.on_primary
+        elif role == ColorRole.PRIMARY_CONTAINER:
+            return self.primary_container
+        elif role == ColorRole.ON_PRIMARY_CONTAINER:
+            return self.on_primary_container
+        elif role == ColorRole.SECONDARY:
+            return self.secondary
+        elif role == ColorRole.ON_SECONDARY:
+            return self.on_secondary
+        elif role == ColorRole.SECONDARY_CONTAINER:
+            return self.secondary_container
+        elif role == ColorRole.ON_SECONDARY_CONTAINER:
+            return self.on_secondary_container
+        elif role == ColorRole.TERTIARY:
+            return self.tertiary
+        elif role == ColorRole.ON_TERTIARY:
+            return self.on_tertiary
+        elif role == ColorRole.TERTIARY_CONTAINER:
+            return self.tertiary_container
+        elif role == ColorRole.ON_TERTIARY_CONTAINER:
+            return self.on_tertiary_container
+        elif role == ColorRole.ERROR:
+            return self.error
+        elif role == ColorRole.ON_ERROR:
+            return self.on_error
+        elif role == ColorRole.ERROR_CONTAINER:
+            return self.error_container
+        elif role == ColorRole.ON_ERROR_CONTAINER:
+            return self.on_error_container
+        elif role == ColorRole.SURFACE:
+            return self.surface
+        elif role == ColorRole.SURFACE_DIM:
+            return self.surface_dim
+        elif role == ColorRole.SURFACE_BRIGHT:
+            return self.surface_bright
+        elif role == ColorRole.ON_SURFACE:
+            return self.on_surface
+        elif role == ColorRole.ON_SURFACE_VARIANT:
+            return self.on_surface_variant
+        elif role == ColorRole.SURFACE_CONTAINER_LOWEST:
+            return self.surface_container_lowest
+        elif role == ColorRole.SURFACE_CONTAINER_LOW:
+            return self.surface_container_low
+        elif role == ColorRole.SURFACE_CONTAINER:
+            return self.surface_container
+        elif role == ColorRole.SURFACE_CONTAINER_HIGH:
+            return self.surface_container_high
+        elif role == ColorRole.SURFACE_CONTAINER_HIGHEST:
+            return self.surface_container_highest
+        elif role == ColorRole.OUTLINE:
+            return self.outline
+        elif role == ColorRole.OUTLINE_VARIANT:
+            return self.outline_variant
+        elif role == ColorRole.BACKGROUND:
+            return self.background
+        elif role == ColorRole.ON_BACKGROUND:
+            return self.on_background
+        return self.on_surface
 
     def _override(
         mut self,

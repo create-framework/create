@@ -150,11 +150,13 @@ self.ui.visible(self.advanced_settings, ticked)
 def colors(self) -> ColorScheme
 ```
 
-The colours its widgets are drawn in: the light ones unless set.
+The colours its widgets are drawn in: those set with `colors(scheme)`, or else the canvas's, `canvas.colors()`, as of its last `update`.
 
 ```mojo
-def colors(mut self, colors: ColorScheme)
+def colors(mut self, colors: Optional[ColorScheme])
 ```
+
+Draw its widgets in `colors`, whatever the canvas's are, such as one dark panel on a light screen; `None` follows the canvas's again.
 
 ### `corner_radius`
 

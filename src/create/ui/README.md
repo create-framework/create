@@ -13,7 +13,6 @@ rules.
 |---|---|
 | `_theme.mojo` | `_Theme`: the colours, the `ui.style` styles (`_Styles`), the settings and the surface, and one method per widget that resolves its parts' styles for its state; the state colours (`_stepped`, `_layer_opacity`, `_faded`) and `_content_on` |
 | `_text_buffer.mojo` | `_TextBuffer`, the editing behind a text field: the text, the caret, the selection, and what each key does to them |
-| `color_scheme.mojo` | `ColorScheme`, its `light`, `dark` and `from_seed` constructors and the seed's `_Palette`; `_contrast` and `_readable_on` |
 | `state_layers.mojo` | `StateLayers`, how strongly a widget shows its state |
 | `focus_ring.mojo` | `FocusRing`, the ring around a focused widget |
 | `ui.mojo` | `UI`, the widget tree: its nodes, each a `_Widget` variant of the built-in widgets and layout nodes, a parent, children, whether the tree enables and shows it, and its generation; `remove` and `visible`; `update` (layout, then the topmost widget under the pointer unless another tree holds the mouse, then focus moved for this frame's clicks, Tab, Escape and gamepad, then every widget in drawing order with its `_Focus` and whether its part of the tree is disabled, each panel passing its surface down, then the device claims) and `draw_to`, the focus ring last; `wants_mouse` and `wants_keyboard`; layout in two passes, sizes from the inside out, then places from the top level in; `_describe`, `_draw` and `_dispatch_mut`, the only code that knows which kinds of node it holds |
@@ -48,12 +47,12 @@ press and click. It then resolves the widget's look for that state from a `_Them
 Hover shows in the frame it happens. Anything that can fail, such as measuring text, happens in
 `update`, since `draw_to` can't raise.
 
-**Each widget's public `update` calls a private `_update`** with `_Theme.default(colors)`, in the
-light colours unless `update` is given others, and no tree. A `UI` calls `_update` itself, with its
-own theme, whether the widget is the topmost under the pointer (`free`), what its focus means for it
-(`_Focus`) and whether its part of the tree is disabled. A widget's own `enabled` field is left as
-the program set it: the tree's `disabled` is a separate argument, so enabling a part of the tree
-again restores each widget as it was.
+**Each widget's public `update` calls a private `_update`** with `_Theme.default(canvas.colors())`,
+in the canvas's colours, and no tree. A `UI` calls `_update` itself, with its own theme, whether the
+widget is the topmost under the pointer (`free`), what its focus means for it (`_Focus`) and whether
+its part of the tree is disabled. A widget's own `enabled` field is left as the program set it: the
+tree's `disabled` is a separate argument, so enabling a part of the tree again restores each widget
+as it was.
 
 ## The tree
 
@@ -193,12 +192,14 @@ colours, the `ui.style` styles (`_Styles`), the settings and the surface the wid
 method per widget (`button`, `slider`, …) resolves every part for the widget's state: hovered,
 pressed, dragged, focused or disabled. A part's look is `own.over(kind).over(defaults)`: the
 widget's own style for the part, over the `UI`'s style for that kind, over the defaults built from
-the colours and settings. `Style.over` means applying the base and then the style, so a part named
-on top switches on what the defaults switched off. One part can take what it leaves unset from
-another: a slider's active track from its track, a checkbox's ticked box from its box, a text
-field's placeholder from its text and its focused look from its container. A widget's text keeps
-only the text parts of its style (`_text_look`), so a shadow or outline given to a button belongs to
-its shape, not its letters.
+the colours and settings. It is resolved with `_ResolvedStyle.apply(look, colors)`, so a `ColorRole`
+in any of them becomes the theme's colour. A `UI` draws in `ui.colors(scheme)` if set, and otherwise
+in the canvas's colours, which `update` reads each frame. `Style.over` means applying the base and
+then the style, so a part named on top switches on what the defaults switched off. One part can take
+what it leaves unset from another: a slider's active track from its track, a checkbox's ticked box
+from its box, a text field's placeholder from its text and its focused look from its container. A
+widget's text keeps only the text parts of its style (`_text_look`), so a shadow or outline given to
+a button belongs to its shape, not its letters.
 
 **State colours step OKLCH lightness.** A hovered, pressed or dragged part's paint, its fill for a
 region and its stroke for a line or a point, is `_stepped`: its OKLCH lightness moved by the

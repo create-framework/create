@@ -4,7 +4,7 @@
 struct ColorScheme
 ```
 
-The colours widgets are drawn in, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. A program gives its scheme to a `UI` with `ui.colors(scheme)`, and draws its own things in it too, such as `canvas.background(scheme.background)`.
+The colours widgets are drawn in, as pairs of roles: each colour a widget is filled with, and the `on_` colour for text and icons drawn on it, chosen to read well together. A program gives its scheme to the canvas with `canvas.colors(scheme)`, which widgets are drawn in, and draws its own things in it too, such as `canvas.background(scheme.background)`. A style names a role with `ColorRole`, such as `Style(fill=ColorRole.PRIMARY)`, and `scheme[role]` is the colour the scheme gives it.
 
 - **`primary`** is for the most important actions, such as a filled
   button; **`secondary`** and **`tertiary`** for less prominent ones and
@@ -151,3 +151,13 @@ var warning = ColorScheme.from_seed(  # the same, with a yellow error
     Color.hex(0xE07A2E), error=Color.hex(0xE0B000)
 )
 ```
+
+## Special methods
+
+### `__getitem__`
+
+```mojo
+def __getitem__(self, role: ColorRole) -> Color
+```
+
+The colour this scheme gives `role`: `scheme[ColorRole.PRIMARY]` is `scheme.primary`.

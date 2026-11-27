@@ -121,6 +121,27 @@ def test_the_shared_style_and_colors_reach_every_widget() raises -> None:
     assert_equal(dark.color_at((-95, 0)), ColorScheme.dark().primary)
 
 
+def test_it_follows_the_canvas_colours_unless_given_its_own() raises -> None:
+    var ui = UI()
+    _ = ui.add(Button("A", Rectangle((0, 0), 80, 40)))
+    var context = Context()
+    point_at(context, (140, 90))
+    var canvas = _canvas()
+    canvas.colors(ColorScheme.dark())
+    ui.update(context, canvas)
+    canvas.draw(ui)
+    assert_equal(canvas.color_at((-35, 0)), ColorScheme.dark().primary)
+    assert_equal(ui.colors().primary, ColorScheme.dark().primary)
+    ui.colors(ColorScheme.light())  # its own, whatever the canvas's
+    var light = _canvas()
+    light.colors(ColorScheme.dark())
+    ui.update(context, light)
+    light.draw(ui)
+    assert_equal(light.color_at((-35, 0)), ColorScheme.light().primary)
+    ui.colors(None)  # the canvas's again
+    assert_equal(ui.colors().primary, ColorScheme.dark().primary)
+
+
 def test_under_a_camera_the_tree_is_hit_where_it_is_drawn() raises -> None:
     var ui = UI()
     var play = ui.add(Button("Play", Rectangle((300, 0), 100, 40)))
@@ -167,7 +188,7 @@ def test_each_style_call_keeps_the_kinds_it_leaves_out() raises -> None:
     var ui = UI()
     ui.style(button=Style(fill=Color.RED))
     ui.style(label=Style(font_size=30))
-    assert_equal(ui._styles[].button.fill.value(), Color.RED)
+    assert_true(ui._styles[].button.fill == Color.RED)
     assert_equal(ui._styles[].label.font_size.value(), 30.0)
     ui.style(button=Style())
     assert_false(Bool(ui._styles[].button.fill))

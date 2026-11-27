@@ -138,9 +138,12 @@ settings are:
 - `letterbox_color`, the bars outside the design under `FIT` (see
   [Coordinates](../basics/coordinates.md#design-size-and-autoscale)), black by default.
 - `antialiasing`, below.
+- `colors`, the colour scheme a style's colour roles are taken from, and widgets are drawn in (see
+  [Style](style.md#colours-by-role)), `ColorScheme.light()` by default.
 
-Each applies to the whole frame it is set in, not only to what is drawn after it, and reads back
-with no arguments (`canvas.antialiasing()`).
+Each reads back with no arguments (`canvas.antialiasing()`). Each but `colors` applies to the whole
+frame it is set in, not only to what is drawn after it; `colors` applies to the styles applied after
+it, since a role becomes a colour when its style is applied.
 
 ## Transforms and guards
 
