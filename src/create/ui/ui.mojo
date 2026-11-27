@@ -608,8 +608,9 @@ struct UI(Drawable, Movable):
         self._colors = colors
 
     def corner_radius(self) -> Float64:
-        """How round its widgets are: at the default, 16, a button is a
-        pill."""
+        """How round its controls' corners are: 4 unless set. A panel and
+        a popup are rounded twice as much, and a checkbox's box at most
+        4.5, so `corner_radius(0)` squares everything."""
         return self._corner_radius
 
     def corner_radius(mut self, radius: Float64):

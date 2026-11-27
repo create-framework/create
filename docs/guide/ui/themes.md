@@ -110,7 +110,7 @@ and read back without one, like the run's settings on `Context`:
 
 | Setting | Default | What it sets |
 |---|---|---|
-| `corner_radius` | 16 | How round a panel's corners are. The other widgets follow it: a text field is rounded by a quarter of it and a checkbox's box by an eighth, and a button is a pill at 16 or more and squarer below, so `self.ui.corner_radius(0)` squares them all |
+| `corner_radius` | 4 | How round the controls' corners are: buttons, fields, dropdowns, the highlight behind a tab, a tooltip. A panel and a dropdown's open list are rounded twice as much, so a control in a panel's corner follows its curve, and a checkbox's box at most 4.5, so it stays a box. `self.ui.corner_radius(0)` squares them all |
 | `spacing` | 8 | The gap between the widgets in a column or row. A panel's inside is inset by twice it, and a `Space` leaves twice it empty |
 | `control_height` | 40 | How tall a button, slider, checkbox or text field is when the `UI` sizes it |
 | `state_layers` | | How strongly a widget shows that it is hovered, pressed or disabled (see [below](#hovered-pressed-and-disabled)) |
@@ -119,7 +119,7 @@ and read back without one, like the run's settings on `Context`:
 ```mojo
 # In `create`, building the `ui` field:
 var ui = UI()
-ui.corner_radius(4)  # squarer widgets
+ui.corner_radius(8)  # rounder widgets
 ui.spacing(12)  # roomier columns and rows
 ```
 
