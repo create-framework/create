@@ -45,8 +45,9 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
     Each part is a shape drawn in a style of its own: `tab` is each tab, a
     rectangle with its text, with no fill or outline unless its style
     gives one; `selected_tab` is the selected one, taking what it leaves
-    unset from `tab`; and `indicator` is the line beneath the selected tab,
-    so its stroke is its colour and thickness.
+    unset from `tab`; `indicator` is the line beneath the selected tab, so
+    its stroke is its colour and thickness; and `divider` is a faint line
+    beneath them all, which the indicator sits on.
     """
 
     var options: List[String]
@@ -59,6 +60,7 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
     var tab: Style
     var selected_tab: Style
     var indicator: Style
+    var divider: Style
     var enabled: Bool
     """Whether it reacts to the mouse. Disabled tabs are faded."""
     var _pointer: _Pointer
@@ -79,6 +81,7 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
         tab: Style = Style(),
         selected_tab: Style = Style(),
         indicator: Style = Style(),
+        divider: Style = Style(),
         enabled: Bool = True,
     ):
         self.options = options^
@@ -87,6 +90,7 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
         self.tab = tab
         self.selected_tab = selected_tab
         self.indicator = indicator
+        self.divider = divider
         self.enabled = enabled
         self._pointer = _Pointer()
         self._pressed_tab = -1
@@ -96,6 +100,7 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
             tab,
             selected_tab,
             indicator,
+            divider,
             hovered=False,
             pressed=False,
             disabled=not enabled,
@@ -163,6 +168,7 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
             self.tab,
             self.selected_tab,
             self.indicator,
+            self.divider,
             hovered=self._pointer.hovered,
             pressed=self._pointer.looks_pressed(),
             disabled=not enabled,
@@ -178,6 +184,7 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
             self.tab,
             self.selected_tab,
             self.indicator,
+            self.divider,
             hovered=False,
             pressed=False,
             disabled=False,
@@ -249,6 +256,16 @@ struct Tabs(Clickable, Copyable, Movable, Widget):
         return self._pointer.released
 
     def draw_to(self, mut canvas: Canvas):
+        # the divider along the foot of them all, under the indicator
+        ref divider = self._look.divider
+        if divider.stroke_enabled:
+            var y = self.rect.bottom() + divider.stroke_thickness / 2
+            with canvas._with_style(divider):
+                canvas.draw(
+                    Line(
+                        Point(self.rect.left(), y), Point(self.rect.right(), y)
+                    )
+                )
         for i in range(len(self.options)):
             var area = self._tab_rect(i)
             var selected = i == self.selected

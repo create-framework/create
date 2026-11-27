@@ -255,6 +255,7 @@ def style(
     tabs_tab: Optional[Style] = None,
     tabs_selected_tab: Optional[Style] = None,
     tabs_indicator: Optional[Style] = None,
+    tabs_divider: Optional[Style] = None,
     number_field_container: Optional[Style] = None,
     number_field_text_style: Optional[Style] = None,
     number_field_buttons: Optional[Style] = None,

@@ -681,6 +681,7 @@ struct UI(Drawable, Movable):
         tabs_tab: Optional[Style] = None,
         tabs_selected_tab: Optional[Style] = None,
         tabs_indicator: Optional[Style] = None,
+        tabs_divider: Optional[Style] = None,
         number_field_container: Optional[Style] = None,
         number_field_text_style: Optional[Style] = None,
         number_field_buttons: Optional[Style] = None,
@@ -770,6 +771,8 @@ struct UI(Drawable, Movable):
             styles.tabs_selected_tab = tabs_selected_tab.value()
         if tabs_indicator:
             styles.tabs_indicator = tabs_indicator.value()
+        if tabs_divider:
+            styles.tabs_divider = tabs_divider.value()
         if number_field_container:
             styles.number_field_container = number_field_container.value()
         if number_field_text_style:
