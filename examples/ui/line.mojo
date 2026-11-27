@@ -10,5 +10,5 @@ def line(
     """A line of `page`: `name` on the left, in a quarter of it, leaving the
     rest for the widget the caller adds to it with `width=0, grow=3`."""
     var row = ui.add(Row(), page)
-    _ = ui.add(Label(name, alignment=Align.LEFT), row, width=0, grow=1)
+    _ = ui.add(Label(name), row, width=0, grow=1)
     return row

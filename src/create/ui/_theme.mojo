@@ -479,14 +479,14 @@ struct _Theme(Copyable, Movable):
         self, call: Style, alignment: Optional[Align], *, disabled: Bool
     ) -> _ResolvedStyle:
         """A label's text styled `call`, aligned by `alignment`, else by its
-        style's `text_alignment`, else centred."""
+        style's `text_alignment`, else against its left edge."""
         var look = call.over(self.styles[].label).over(
             Style(text_color=self.content).over(_body_text())
         )
         var resolved = _ResolvedStyle()
         resolved.apply(look, self.colors)
         resolved.text_alignment = alignment.or_else(
-            look.text_alignment.or_else(Align.CENTER)
+            look.text_alignment.or_else(Align.LEFT)
         )
         if disabled:
             resolved.text_color = _faded(
@@ -1190,8 +1190,9 @@ def _body_text() -> Style:
 
 
 def _label_text() -> Style:
-    """The text on buttons, unless styled."""
-    return Style(font_size=14, font_weight=FontWeight.MEDIUM)
+    """The text on buttons and tabs, unless styled: as large as the body
+    text beside them, and set apart by its weight."""
+    return Style(font_size=16, font_weight=FontWeight.MEDIUM)
 
 
 def _text_look(style: _ResolvedStyle, alignment: Align) -> _ResolvedStyle:

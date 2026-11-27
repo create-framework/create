@@ -32,7 +32,7 @@ def test_a_widget_with_no_size_takes_the_size_it_prefers() raises -> None:
     var placed = ui.add(Button("Placed", Rectangle((50, 50), 120, 30)))
     _laid_out(ui)
     var canvas = Canvas(10, 10)
-    canvas.font_size(14)
+    canvas.font_size(16)
     canvas.font_weight(FontWeight.MEDIUM)
     assert_almost_equal(ui[play].rect.width, canvas.text_width("Play") + 48)
     assert_equal(ui[play].rect.height, _CONTROL)

@@ -190,7 +190,7 @@ def test_a_ui_starts_with_the_default_tokens() raises -> None:
 def test_widgets_draw_their_text_in_the_default_styles() raises -> None:
     assert_equal(_body_text().font_size.value(), 16.0)
     assert_equal(_body_text().font_weight.value(), FontWeight.REGULAR)
-    assert_equal(_label_text().font_size.value(), 14.0)
+    assert_equal(_label_text().font_size.value(), 16.0)
     assert_equal(_label_text().font_weight.value(), FontWeight.MEDIUM)
     assert_false(Bool(_body_text().text_color))  # set where it is drawn
 

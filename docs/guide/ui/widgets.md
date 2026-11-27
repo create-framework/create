@@ -70,7 +70,7 @@ which is how a player changes their mind. `hovered()` is whether the pointer is 
 | `TextField(text, rect)` | A field to type a line of text into, holding `text` to start with | `text()`, `changed()` and `submitted()` |
 | `NumberField(value, minimum, maximum, rect)` | A number to type, with − and + buttons beside it | `value`, and `changed()` in the frame typing, a button, an arrow or a gamepad changes it |
 | `ProgressBar(value, rect)` | A bar filled as far as `value` has got, from 0 to 1 | Nothing |
-| `Label(text, rect, alignment)` | Text placed in `rect` | Nothing |
+| `Label(text, rect, alignment)` | Text placed in `rect`, against its left edge unless `alignment` says otherwise | Nothing |
 | `Panel(rect)` | A surface for other widgets to sit on | Nothing |
 
 - **A button** is filled in the colours' `primary` unless its `style` says otherwise. Four
@@ -240,7 +240,7 @@ for you, by what it is added inside:
   than stretched. `Column(align=Align.CENTER)` does so for every widget in the column, centring
   each, and `Align.LEFT` or `Align.RIGHT` sets them against a side; a row reads `Align.TOP`,
   `CENTER` or `BOTTOM` the same way. `align=` on `ui.add` sets one widget apart from the rest:
-  `ui.add(Label("Title"), column, align=Align.LEFT)`. A widget given a `width` in a column, or a
+  `ui.add(Button("Back"), column, align=Align.LEFT)`. A widget given a `width` in a column, or a
   `height` in a row, is centred unless it is aligned.
 
 ```mojo
@@ -249,7 +249,7 @@ var card = ui.add(Panel())
 var column = ui.add(Column(), card)
 _ = ui.add(Label("Settings", style=Style(font_size=22)), column)
 var line = ui.add(Row(), column)
-_ = ui.add(Label("Volume", alignment=Align.LEFT), line, width=80)
+_ = ui.add(Label("Volume"), line, width=80)
 var volume = ui.add(Slider(0.8, 0, 1), line, grow=1)  # the rest of the line
 _ = ui.add(Space(), column)
 var buttons = ui.add(Row(), column)
