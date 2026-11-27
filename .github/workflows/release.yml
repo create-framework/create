@@ -43,7 +43,11 @@ jobs:
         with:
           locked: true
           environments: package
+      # Named as published: without CREATE_RELEASE, the package's build
+      # string starts `local_` (see scripts/check_package.sh).
       - run: pixi run check-package build/package
+        env:
+          CREATE_RELEASE: "1"
       - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.platform }}

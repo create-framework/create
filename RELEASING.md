@@ -18,6 +18,11 @@ only check that sees Create as installed rather than as source. Besides the libr
 installs the [project template](examples/CONTRIBUTING.md#the-project-template) to
 `share/create/template`, where create-cli's `create new` reads it, and its test checks it is there.
 
+**A local build has a name of its own.** `pixi run check-package` names its package
+`create-X.Y.Z-local_h…`, and only the release workflow, which sets `CREATE_RELEASE`, builds the name
+it publishes, `create-X.Y.Z-h…`. pixi's cache keys packages by name, so a local build named like a
+release would be installed in its place on the machine that built it.
+
 **One Mojo minor version.** A `.mojoc` loads only on the compiler that built it, so the recipe
 builds against `mojo-compiler` at the minor version `pixi.toml` pins, and the run requirement allows
 that minor only (`upper_bound='x.x'`). So a change of Mojo version changes `pixi.toml` and `recipe/`

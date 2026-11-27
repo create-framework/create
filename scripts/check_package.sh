@@ -20,6 +20,14 @@ fi
 
 CREATE_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pixi.toml)
 export CREATE_VERSION
+# A package built to check it is named `create-X.Y.Z-local_h…`, never the
+# name the release publishes, or pixi's cache would serve it in place of the
+# published package of the same version. The release workflow sets
+# CREATE_RELEASE for the packages it uploads.
+if [ -z "${CREATE_RELEASE:-}" ]; then
+    CREATE_BUILD_LABEL=local_
+    export CREATE_BUILD_LABEL
+fi
 
 rattler-build build \
     --recipe recipe/recipe.yaml \
